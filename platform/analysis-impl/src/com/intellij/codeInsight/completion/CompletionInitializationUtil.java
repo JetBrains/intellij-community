@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.diagnostic.PluginException;
@@ -26,15 +26,17 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 
 @ApiStatus.Internal
@@ -94,9 +96,8 @@ public final class CompletionInitializationUtil {
     return context;
   }
 
-  @NotNull
-  public static CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
-                                                                CompletionProcess indicator, OffsetsInFile finalOffsets) {
+  public static @NotNull CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
+                                                                         CompletionProcess indicator, OffsetsInFile finalOffsets) {
     int offset = finalOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
     PsiFile fileCopy = finalOffsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
@@ -236,8 +237,7 @@ public final class CompletionInitializationUtil {
     }
   }
 
-  @NotNull
-  private static PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
+  private static @NotNull PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
     PsiElement insertedElement = offsets.getFile().findElementAt(offset);
     if (insertedElement == null && offsets.getFile().getTextLength() == offset) {
       insertedElement = PsiTreeUtil.getDeepestLast(offsets.getFile());
@@ -252,7 +252,7 @@ public final class CompletionInitializationUtil {
                            // we don't want to cache code fragment copies even if they appear to be physical
                            virtualFile != null && virtualFile.isInLocalFileSystem();
     if (mayCacheCopy) {
-      final Pair<PsiFile, Document> cached = SoftReference.dereference(file.getUserData(FILE_COPY_KEY));
+      final Pair<PsiFile, Document> cached = dereference(file.getUserData(FILE_COPY_KEY));
       if (cached != null && isCopyUpToDate(cached.second, cached.first, file)) {
         PsiFile copy = cached.first;
         CompletionAssertions.assertCorrectOriginalFile("Cached", file, copy);

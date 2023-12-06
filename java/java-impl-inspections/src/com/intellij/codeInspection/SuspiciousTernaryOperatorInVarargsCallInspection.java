@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -65,7 +67,7 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
     };
   }
 
-  private static class WrapInArrayInitializerFix implements LocalQuickFix {
+  private static class WrapInArrayInitializerFix extends PsiUpdateModCommandQuickFix {
 
     private final String myReplacementMessage;
     private final String myTypeName;
@@ -90,10 +92,7 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element == null || !element.isValid()) return;
-
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       CommentTracker ct = new CommentTracker();
       final String replacementText = String.format("new %s[]{%s}", myTypeName, ct.text(element));
       ct.replaceAndRestoreComments(element, replacementText);

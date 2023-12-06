@@ -9,29 +9,32 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.EnumSet;
+
+import static java.nio.file.StandardOpenOption.*;
 
 /**
- * Replacement of read-write file channel with shadow file size, valid when file manipulations happen in with this class only.
+ * Replacement of read-write file channel with shadow file size.
+ * Assumes file manipulations happen via this class only.
  */
 final class FileChannelWithSizeTracking {
   private static final Logger LOG = Logger.getInstance(FileChannelWithSizeTracking.class);
   private static final boolean doAssertions = SystemProperties.getBooleanProperty("idea.do.random.access.wrapper.assertions", false);
 
   private final Path myPath;
-  private final UnInterruptibleFileChannelHandle myChannelHandle;
+  private final ResilientFileChannel fileChannel;
+
+  //TODO RC: why it is volatile? It suggests mutlithreaded use, but the class itself doesn't look like it
+  //         is safe for multithreaded env
   private volatile long mySize;
 
-  FileChannelWithSizeTracking(@NotNull Path path) throws IOException {
-    Path parent = path.getParent();
+  FileChannelWithSizeTracking(final @NotNull Path path) throws IOException {
+    final Path parent = path.getParent();
     if (!Files.exists(parent)) {
       Files.createDirectories(parent);
     }
-    myChannelHandle =
-      new UnInterruptibleFileChannelHandle(path, EnumSet.of(StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
-    mySize = myChannelHandle.executeOperation(ch -> ch.size());
     myPath = path;
+    fileChannel = new ResilientFileChannel(path, READ, WRITE, CREATE);
+    mySize = fileChannel.size();
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Inst:" + this + "," + Thread.currentThread() + "," + getClass().getClassLoader());
@@ -40,7 +43,7 @@ final class FileChannelWithSizeTracking {
 
   long length() throws IOException {
     if (doAssertions) {
-      assert mySize == myChannelHandle.executeOperation(ch -> ch.size());
+      assert mySize == fileChannel.size();
     }
     return mySize;
   }
@@ -49,7 +52,7 @@ final class FileChannelWithSizeTracking {
     if (LOG.isTraceEnabled()) {
       LOG.trace("write:" + this + "," + Thread.currentThread() + "," + len + "," + addr);
     }
-    int written = myChannelHandle.executeOperation(ch -> ch.write(ByteBuffer.wrap(dst, off, len), addr));
+    int written = fileChannel.write(ByteBuffer.wrap(dst, off, len), addr);
     mySize = Math.max(written + addr, length());
   }
 
@@ -57,15 +60,14 @@ final class FileChannelWithSizeTracking {
     if (LOG.isTraceEnabled()) {
       LOG.trace("read:" + this + "," + Thread.currentThread() + "," + len + "," + addr);
     }
-    myChannelHandle.executeOperation(ch -> ch.read(ByteBuffer.wrap(dst, off, len), addr));
+    fileChannel.read(ByteBuffer.wrap(dst, off, len), addr);
   }
 
   void close() throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Closed:" + this + "," + Thread.currentThread() );
     }
-    force();
-    myChannelHandle.close();
+    fileChannel.close();
   }
 
   @Override
@@ -77,10 +79,6 @@ final class FileChannelWithSizeTracking {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Forcing:" + this + "," + Thread.currentThread() );
     }
-
-    myChannelHandle.executeOperation(ch -> {
-      ch.force(true);
-      return null;
-    });
+    fileChannel.force(true);
   }
 }

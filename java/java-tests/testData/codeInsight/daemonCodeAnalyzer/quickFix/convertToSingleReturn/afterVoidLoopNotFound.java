@@ -2,7 +2,7 @@
 class Test {
     void test2(String[] arr) {
         boolean finished = false;
-        for (String s : arr) {
+        for(String s : arr) {
             if (s.isEmpty()) {
                 System.out.println(s);
                 finished = true;

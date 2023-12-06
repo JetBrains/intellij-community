@@ -1,5 +1,4 @@
 // "Opt in for 'B' on containing class 'C'" "true"
-// WITH_STDLIB
 @RequiresOptIn
 annotation class A
 
@@ -19,3 +18,5 @@ class C {
         <caret>f2()
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix

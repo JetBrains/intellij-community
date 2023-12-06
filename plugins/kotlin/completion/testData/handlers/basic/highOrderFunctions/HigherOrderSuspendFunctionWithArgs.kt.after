@@ -5,5 +5,6 @@ fun main(args: Array<String>) {
     foo { s: String, c: Char -> <caret> }
 }
 
+// IGNORE_K2
 // ELEMENT: foo
 // TAIL_TEXT: " { String, Char -> ... } (p: suspend (String, Char) -> Boolean) (<root>)"

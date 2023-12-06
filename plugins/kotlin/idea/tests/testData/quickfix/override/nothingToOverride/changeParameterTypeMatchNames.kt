@@ -6,3 +6,5 @@ open class A {
 class B : A(){
     <caret>override fun f(z: String, x: String, t: String) {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix

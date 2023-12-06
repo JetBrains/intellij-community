@@ -4,9 +4,9 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -37,7 +38,8 @@ public final class BackgroundHighlightingUtil {
                                                    @NotNull Editor editor,
                                                    @NotNull BiFunction<? super PsiFile, ? super Editor, ? extends T> backgroundProcessor,
                                                    @NotNull TriConsumer<? super PsiFile, ? super Editor, ? super T> edtProcessor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
+    assert !(editor instanceof EditorWindow) : editor;
     if (!isValidEditor(editor)) return;
 
     int offsetBefore = editor.getCaretModel().getOffset();
@@ -94,7 +96,7 @@ public final class BackgroundHighlightingUtil {
   }
 
   @NotNull
-  static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
+  private static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
     PsiElement injectedElement = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
     if (injectedElement != null) {
       PsiFile injected = injectedElement.getContainingFile();

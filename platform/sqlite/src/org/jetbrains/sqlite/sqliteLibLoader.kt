@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ResourceUtil
-import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.sha256Hex
 import com.intellij.util.system.CpuArch
 import java.nio.file.Files
 import java.nio.file.Path
@@ -14,7 +14,7 @@ import java.nio.file.StandardCopyOption
 private var extracted = false
 
 // The version of the SQLite JDBC driver.
-private const val VERSION: String = "3.41.0-jb.2"
+private const val VERSION: String = "3.42.0-jb.0"
 
 /**
  * Loads the SQLite interface backend.
@@ -92,14 +92,14 @@ private fun extractAndLoadLibraryFile(libFolderForCurrentOS: String, libraryFile
   val extractedLibFileName = "sqlite-$VERSION-$libraryFileName"
   val targetDir = tempDir.resolve("sqlite-native").toAbsolutePath().normalize()
   val extractedLibFile = targetDir.resolve(extractedLibFileName)
-  if (!Files.exists(extractedLibFile) || expectedHash != DigestUtil.sha256Hex(extractedLibFile)) {
+  if (!Files.exists(extractedLibFile) || expectedHash != sha256Hex(extractedLibFile)) {
     Files.createDirectories(targetDir)
     classLoader.getResourceAsStream(nativeLibraryFilePath)!!.use { reader ->
       Files.copy(reader, extractedLibFile, StandardCopyOption.REPLACE_EXISTING)
     }
 
     // verify
-    val actualHash = DigestUtil.sha256Hex(extractedLibFile)
+    val actualHash = sha256Hex(extractedLibFile)
     if (expectedHash != actualHash) {
       throw RuntimeException("Failed to write a native library file at $extractedLibFile")
     }

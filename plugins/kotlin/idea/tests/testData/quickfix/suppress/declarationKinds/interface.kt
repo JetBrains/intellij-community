@@ -1,7 +1,8 @@
-// "Suppress 'REDUNDANT_NULLABLE' for interface C" "true"
+// "Suppress 'DIVISION_BY_ZERO' for interface C" "true"
 
 interface C {
-    var foo: String?<caret>?
+    fun foo() = 2 / <caret>0
 }
 
-// IGNORE_FIR
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

@@ -1,6 +1,6 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
-val v = 1
+const val v = 1
 
 enum class InlineOption {
     A, B

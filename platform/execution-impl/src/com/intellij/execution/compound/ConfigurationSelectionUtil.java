@@ -22,8 +22,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 public final class ConfigurationSelectionUtil {
-  @NotNull @NlsSafe
-  public static String getDisplayText(@NotNull RunConfiguration configuration, @Nullable ExecutionTarget target) {
+  public static @NotNull @NlsSafe String getDisplayText(@NotNull RunConfiguration configuration, @Nullable ExecutionTarget target) {
     return configuration.getType().getDisplayName() + " '" + configuration.getName() +
            "'" + (target != null && target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged() ?
            " | " + target.getDisplayName() : "");
@@ -35,9 +34,8 @@ public final class ConfigurationSelectionUtil {
                                       @NotNull List<? extends RunConfiguration> configurations,
                                       @NotNull BiConsumer<? super List<RunConfiguration>, ? super ExecutionTarget> onSelected) {
     return JBPopupFactory.getInstance().createListPopup(new MultiSelectionListPopupStep<RunConfiguration>(null, configurations) {
-      @Nullable
       @Override
-      public ListSeparator getSeparatorAbove(RunConfiguration value) {
+      public @Nullable ListSeparator getSeparatorAbove(RunConfiguration value) {
         int i = configurations.indexOf(value);
         if (i < 1) return null;
         RunConfiguration previous = configurations.get(i - 1);
@@ -54,9 +52,8 @@ public final class ConfigurationSelectionUtil {
         return true;
       }
 
-      @NotNull
       @Override
-      public String getTextFor(RunConfiguration value) {
+      public @NotNull String getTextFor(RunConfiguration value) {
         return value.getName();
       }
 
@@ -78,9 +75,8 @@ public final class ConfigurationSelectionUtil {
               return value.getIcon();
             }
 
-            @NotNull
             @Override
-            public String getTextFor(ExecutionTarget value) {
+            public @NotNull String getTextFor(ExecutionTarget value) {
               return value.getDisplayName();
             }
 
@@ -98,8 +94,7 @@ public final class ConfigurationSelectionUtil {
         return !getTargets(selectedValues).isEmpty();
       }
 
-      @NotNull
-      public List<ExecutionTarget> getTargets(List<? extends RunConfiguration> selectedValues) {
+      public @NotNull List<ExecutionTarget> getTargets(List<? extends RunConfiguration> selectedValues) {
         LinkedHashSet<ExecutionTarget> intersection = new LinkedHashSet<>();
         for (int i = 0; i < selectedValues.size(); i++) {
           RunConfiguration config = selectedValues.get(i);

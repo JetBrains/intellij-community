@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project
 
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.ide.lightEdit.LightEditUtil.PROJECT_NAME
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -13,18 +15,18 @@ import com.intellij.openapi.project.impl.projectInitListeners
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndex
+import com.intellij.serviceContainer.ComponentManagerImpl
+import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.file.Path
 
-internal class LightEditProjectImpl private constructor(projectPath: Path) : ProjectImpl(projectPath, NAME), LightEditCompatible {
-  companion object {
-    private val LOG = logger<LightEditProjectImpl>()
-    private const val NAME = "LightEditProject"
+private val projectPath: Path
+  get() = Path.of(PathManager.getConfigPath() + File.separator + "light-edit")
 
-    private val projectPath: Path
-      get() = Path.of(PathManager.getConfigPath() + File.separator + "light-edit")
-  }
-
+internal class LightEditProjectImpl private constructor(projectPath: Path) :
+  ProjectImpl(parent = ApplicationManager.getApplication() as ComponentManagerImpl,
+              filePath = projectPath,
+              projectName = PROJECT_NAME), LightEditCompatible {
   constructor() : this(projectPath)
 
   init {
@@ -32,7 +34,10 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
     customizeRegisteredComponents()
     componentStore.setPath(projectPath, false, null)
     runUnderModalProgressIfIsEdt {
-      preloadServicesAndCreateComponents(project = this@LightEditProjectImpl, preloadServices = true)
+      schedulePreloadServices(this@LightEditProjectImpl)
+      launch {
+        this@LightEditProjectImpl.createComponentsNonBlocking()
+      }
       projectInitListeners {
         it.execute(this@LightEditProjectImpl)
       }
@@ -42,7 +47,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
   private fun customizeRegisteredComponents() {
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
     if (pluginDescriptor == null) {
-      LOG.error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
+      logger<LightEditProjectImpl>().error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
       return
     }
 
@@ -72,11 +77,11 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
     throw IllegalStateException()
   }
 
-  override fun getName() = NAME
+  override fun getName(): String = PROJECT_NAME
 
-  override fun getLocationHash() = name
+  override fun getLocationHash(): String = name
 
-  override fun isOpen() = true
+  override fun isOpen(): Boolean = true
 
-  override fun isInitialized() = true
+  override fun isInitialized(): Boolean = true
 }

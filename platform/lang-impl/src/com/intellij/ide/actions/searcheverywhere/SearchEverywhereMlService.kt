@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Contract
 import javax.swing.ListCellRenderer
 
 @ApiStatus.Internal
-abstract class SearchEverywhereMlService {
+interface SearchEverywhereMlService {
   companion object {
     val EP_NAME: ExtensionPointName<SearchEverywhereMlService> = ExtensionPointName.create("com.intellij.searchEverywhereMlService")
 
@@ -30,35 +30,39 @@ abstract class SearchEverywhereMlService {
     }
   }
 
+  val shouldAllTabPrioritizeRecentFiles: Boolean
+
   /**
    * Indicates whether machine learning in Search Everywhere is enabled.
    * This method can return false if ML-ranking is disabled and no experiments are allowed
    * (see [com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlExperiment.isAllowed])
    */
-  abstract fun isEnabled(): Boolean
+  fun isEnabled(): Boolean
 
-  abstract fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo)
+  fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo)
 
   @Contract("_, _, _ -> new")
-  abstract fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
+  fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
                                       element: Any,
                                       priority: Int): SearchEverywhereFoundElementInfo
 
-  abstract fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
+  fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
                                keysTyped: Int, backspacesTyped: Int, searchQuery: String,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                                searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean)
 
-  abstract fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
+  fun onItemSelected(project: Project?, tabId: String,
+                              indexes: IntArray, selectedItems: List<Any>,
+                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                              closePopup: Boolean)
 
-  abstract fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
+  fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
 
-  abstract fun notifySearchResultsUpdated()
+  fun notifySearchResultsUpdated()
 
-  abstract fun onDialogClose()
+  fun onDialogClose()
 
-  abstract fun wrapRenderer(renderer: ListCellRenderer<Any>, listModel: SearchListModel): ListCellRenderer<Any>
+  fun wrapRenderer(renderer: ListCellRenderer<Any>, listModel: SearchListModel): ListCellRenderer<Any>
 
-  abstract fun buildListener(listModel: SearchListModel, resultsList: JBList<Any>, selectionTracker: SEListSelectionTracker): SearchListener?
+  fun buildListener(listModel: SearchListModel, resultsList: JBList<Any>, selectionTracker: SEListSelectionTracker): SearchListener?
 }

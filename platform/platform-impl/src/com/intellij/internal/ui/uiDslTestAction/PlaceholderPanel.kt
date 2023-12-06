@@ -92,13 +92,11 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
             }
           }
         checkBox("enabled")
-          .applyToComponent {
-            isSelected = true
-          }.onChanged { placeholder.enabled(it.isSelected) }
+          .selected(true)
+          .onChanged { placeholder.enabled(it.isSelected) }
         checkBox("visible")
-          .applyToComponent {
-            isSelected = true
-          }.onChanged { placeholder.visible(it.isSelected) }
+          .selected(true)
+          .onChanged { placeholder.visible(it.isSelected) }
       }
       row("Placeholder:") {
         placeholder = placeholder()

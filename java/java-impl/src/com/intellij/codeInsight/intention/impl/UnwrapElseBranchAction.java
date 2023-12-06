@@ -1,32 +1,37 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
+public class UnwrapElseBranchAction extends PsiUpdateModCommandAction<PsiKeyword> {
   private static final Logger LOG = Logger.getInstance(UnwrapElseBranchAction.class);
+  
+  public UnwrapElseBranchAction() {
+    super(PsiKeyword.class);
+  }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiElement parent = element.getParent();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiKeyword elseKeyword, @NotNull ModPsiUpdater updater) {
+    PsiElement parent = elseKeyword.getParent();
     if (parent instanceof PsiIfStatement ifStatement) {
       PsiStatement elseBranch = ifStatement.getElseBranch();
       PsiElement grandParent = ifStatement.getParent();
       if (elseBranch != null && grandParent != null) {
         if (!(grandParent instanceof PsiCodeBlock)) {
-          PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
           PsiBlockStatement blockStatement =
             (PsiBlockStatement)factory.createStatementFromText("{" + ifStatement.getText() + "}", ifStatement);
           blockStatement = (PsiBlockStatement)ifStatement.replace(blockStatement);
@@ -42,21 +47,19 @@ public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (element instanceof PsiKeyword keyword && keyword.getTokenType() == JavaTokenType.ELSE_KEYWORD &&
-        element.getParent() instanceof PsiIfStatement ifStatement) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiKeyword keyword) {
+    if (keyword.getTokenType() == JavaTokenType.ELSE_KEYWORD && keyword.getParent() instanceof PsiIfStatement ifStatement) {
       PsiStatement elseBranch = ifStatement.getElseBranch();
       if (elseBranch != null) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
         boolean thenCompletesNormally = ControlFlowUtils.statementMayCompleteNormally(thenBranch);
         boolean elseCompletesNormally = ControlFlowUtils.statementMayCompleteNormally(elseBranch);
         if (thenCompletesNormally && (elseCompletesNormally || !nextStatementMayBecomeUnreachable(ifStatement))) {
-          setText(JavaBundle.message("intention.unwrap.else.branch.changes.semantics"));
-          return true;
+          return Presentation.of(JavaBundle.message("intention.unwrap.else.branch.changes.semantics"));
         }
       }
     }
-    return false;
+    return null;
   }
 
   /**

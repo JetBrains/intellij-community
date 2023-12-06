@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang;
 
@@ -107,8 +107,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     }
   }
 
-  @Nullable
-  public TextRange getRangeToFold(PsiElement element) {
+  public @Nullable TextRange getRangeToFold(PsiElement element) {
     if (element instanceof XmlTag) {
       final ASTNode tagNode = element.getNode();
       XmlToken tagNameElement = XmlTagUtil.getStartTagNameElement((XmlTag)element);
@@ -228,8 +227,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     return foldingBuilder instanceof CustomFoldingBuilder ? ((CustomFoldingBuilder)foldingBuilder).getPlaceholderText(node, range) : null;
   }
 
-  @Nullable
-  private static String getEntityPlaceholder(@NotNull PsiElement psi) {
+  private static @Nullable String getEntityPlaceholder(@NotNull PsiElement psi) {
     try {
       String text = psi.getText();
       String fastPath = StringUtil.unescapeXmlEntities(text);
@@ -245,8 +243,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     return null;
   }
 
-  @Nullable
-  public static String getEntityValue(@Nullable String value) {
+  public static @Nullable String getEntityValue(@Nullable String value) {
     int i = value != null ? value.indexOf('#') : -1;
     if (i > 0) {
       int radix = 10;

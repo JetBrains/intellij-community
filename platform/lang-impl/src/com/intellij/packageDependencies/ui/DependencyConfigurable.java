@@ -1,17 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -21,6 +18,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +31,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class DependencyConfigurable implements Configurable, Configurable.NoScroll {
+public final class DependencyConfigurable implements Configurable, Configurable.NoScroll {
   private final Project myProject;
   private MyTableModel myDenyRulesModel;
   private MyTableModel myAllowRulesModel;
@@ -223,7 +221,7 @@ public class DependencyConfigurable implements Configurable, Configurable.NoScro
   }
 
 
-  private class RightColumn extends MyColumnInfo {
+  private final class RightColumn extends MyColumnInfo {
     RightColumn(final @NlsContexts.ColumnName String name) {
       super(name);
     }
@@ -239,7 +237,7 @@ public class DependencyConfigurable implements Configurable, Configurable.NoScro
     }
   }
 
-  private class LeftColumn extends MyColumnInfo {
+  private final class LeftColumn extends MyColumnInfo {
     LeftColumn(final @NlsContexts.ColumnName String name) {
       super(name);
     }
@@ -255,7 +253,7 @@ public class DependencyConfigurable implements Configurable, Configurable.NoScro
     }
   }
 
-  private static class MyTableModel extends ListTableModel<DependencyRule> implements EditableModel {
+  private static final class MyTableModel extends ListTableModel<DependencyRule> implements EditableModel {
     private final boolean myDenyRule;
 
     MyTableModel(final ColumnInfo[] columnInfos, final boolean isDenyRule) {
@@ -285,13 +283,9 @@ public class DependencyConfigurable implements Configurable, Configurable.NoScro
   /**
    * @return a JButton to open a dialog to edit this configurable
    */
-  public static JButton getConfigureButton() {
+  public static JButton getConfigureButton(@NotNull Project project) {
     var button = new JButton(CodeInsightBundle.message("jvm.inspections.dependency.configure.button.text"));
     button.addActionListener(e -> {
-      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
-      if (project == null) {
-        project = ProjectManager.getInstance().getDefaultProject();
-      }
       ShowSettingsUtil.getInstance().editConfigurable(button, new DependencyConfigurable(project));
     });
     return button;

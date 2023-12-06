@@ -2,6 +2,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -10,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -153,11 +154,18 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
                                          mavenLib.getDependencyScope());
       }
 
-      final Sdk jdk;
+      Sdk jdk;
       if (myJdk != null) {
-        VfsRootAccess.allowRootAccess(module, myJdk);
-        jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
-        ((ProjectJdkImpl)jdk).setVersionString(StringUtil.notNullize(IdeaTestUtil.getMockJdkVersion(myJdk), "java 1.5"));
+        jdk = IdeaTestUtil.createMockJdkFromLegacyPath(myJdk);
+        if (jdk == null) {
+          VfsRootAccess.allowRootAccess(module, myJdk);
+          jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
+          SdkModificator sdkModificator = jdk.getSdkModificator();
+          sdkModificator.setVersionString(StringUtil.notNullize(IdeaTestUtil.getMockJdkVersion(myJdk), "java 1.5"));
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            sdkModificator.commitChanges();
+          });
+        }
       }
       else {
         jdk = IdeaTestUtil.getMockJdk17();

@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -11,13 +12,13 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class ModuleChunk {
+public final class ModuleChunk {
   private static final NotNullFunction<JpsModule,String> GET_NAME = dom -> dom.getName();
   private final Set<JpsModule> myModules;
   private final boolean myContainsTests;
   private final Set<ModuleBuildTarget> myTargets;
 
-  public ModuleChunk(Set<ModuleBuildTarget> targets) {
+  public ModuleChunk(@NotNull Set<ModuleBuildTarget> targets) {
     boolean containsTests = false;
     myTargets = targets;
     myModules = new LinkedHashSet<>();
@@ -28,7 +29,7 @@ public class ModuleChunk {
     myContainsTests = containsTests;
   }
 
-  public @Nls String getPresentableShortName() {
+  public @Nls @NotNull String getPresentableShortName() {
     String first = myModules.iterator().next().getName();
     String name;
     if (myModules.size() > 1) {
@@ -47,12 +48,12 @@ public class ModuleChunk {
     return name;
   }
 
-  public String getName() {
+  public @NotNull String getName() {
     if (myModules.size() == 1) return myModules.iterator().next().getName();
     return StringUtil.join(myModules, GET_NAME, ",");
   }
 
-  public Set<JpsModule> getModules() {
+  public @NotNull Set<JpsModule> getModules() {
     return myModules;
   }
 
@@ -60,7 +61,7 @@ public class ModuleChunk {
     return myContainsTests;
   }
 
-  public Set<ModuleBuildTarget> getTargets() {
+  public @NotNull Set<ModuleBuildTarget> getTargets() {
     return myTargets;
   }
 

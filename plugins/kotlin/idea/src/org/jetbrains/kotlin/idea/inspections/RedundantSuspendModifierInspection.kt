@@ -47,7 +47,7 @@ class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
             holder.registerProblem(
                 suspendModifier,
                 KotlinBundle.message("redundant.suspend.modifier"),
-                IntentionWrapper(RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true))
+                IntentionWrapper(RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true).asIntention())
             )
         })
     }
@@ -66,12 +66,12 @@ class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
             if (kind is SuspendCallKind.FunctionCall) {
                 val resolvedCall = kind.element.getResolvedCall(bindingContext)
                 if (resolvedCall != null) {
-                    val isRecursiveCall = when (resolvedCall) {
-                        is VariableAsFunctionResolvedCall -> selfDescriptor == resolvedCall.functionCall.candidateDescriptor
-                        else -> selfDescriptor == resolvedCall.candidateDescriptor
+                    val isSelfCall = when (resolvedCall) {
+                        is VariableAsFunctionResolvedCall -> selfDescriptor == resolvedCall.functionCall.candidateDescriptor.original
+                        else -> selfDescriptor == resolvedCall.candidateDescriptor.original
                     }
 
-                    if (isRecursiveCall) {
+                    if (isSelfCall) {
                         return@anyDescendantOfType false
                     }
                 }

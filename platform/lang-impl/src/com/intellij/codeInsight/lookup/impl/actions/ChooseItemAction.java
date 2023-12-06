@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl.actions;
 
@@ -116,25 +116,25 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
     return liveTemplateLookup.getTemplateShortcut() == shortcutChar;
   }
 
-  public static class FocusedOnly extends ChooseItemAction {
+  public static final class FocusedOnly extends ChooseItemAction {
     public FocusedOnly() {
       super(new Handler(true, Lookup.NORMAL_SELECT_CHAR));
     }
   }
 
-  public static class Replacing extends ChooseItemAction {
+  public static final class Replacing extends ChooseItemAction {
     public Replacing() {
       super(new Handler(false, Lookup.REPLACE_SELECT_CHAR));
     }
   }
 
-  public static class CompletingStatement extends ChooseItemAction {
+  public static final class CompletingStatement extends ChooseItemAction {
     public CompletingStatement() {
       super(new Handler(true, Lookup.COMPLETE_STATEMENT_SELECT_CHAR));
     }
   }
 
-  public static class ChooseWithDot extends ChooseItemAction {
+  public static final class ChooseWithDot extends ChooseItemAction {
     public ChooseWithDot() {
       super(new Handler(false, '.'));
     }

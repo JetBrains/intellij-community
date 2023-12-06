@@ -70,7 +70,7 @@ class ButtonsGroupTest {
     panel {
       buttonsGroup {
         row { rb1 = radioButton("1").component }
-        row { rb2 = radioButton("2").applyToComponent { isSelected = true }.component }
+        row { rb2 = radioButton("2").selected(true).component }
       }
     }
 
@@ -79,7 +79,7 @@ class ButtonsGroupTest {
     panel {
       buttonsGroup {
         row { rb1 = cell(JRadioButton("1")).component }
-        row { rb2 = cell(JRadioButton("2")).applyToComponent { isSelected = true }.component }
+        row { rb2 = cell(JRadioButton("2")).selected(true).component }
       }
     }
 

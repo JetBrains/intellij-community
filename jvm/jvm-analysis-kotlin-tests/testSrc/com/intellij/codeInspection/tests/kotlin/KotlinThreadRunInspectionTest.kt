@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.codeInspection.tests.ThreadRunInspectionTestBase
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
+import com.intellij.jvm.analysis.internal.testFramework.ThreadRunInspectionTestBase
 import com.intellij.testFramework.TestDataPath
 
 private const val inspectionPath = "/codeInspection/threadrun"

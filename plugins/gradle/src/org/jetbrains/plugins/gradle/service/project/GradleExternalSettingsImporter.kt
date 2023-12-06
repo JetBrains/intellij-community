@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.project.stateStore
 import com.intellij.util.ObjectUtils.consumeIfCast
-import com.intellij.util.io.isDirectory
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -28,6 +27,7 @@ import org.jetbrains.plugins.gradle.settings.TestRunner.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.nio.file.Files
+import kotlin.io.path.isDirectory
 
 class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
   override fun process(project: Project,
@@ -143,7 +143,12 @@ class IDEAProjectFilesPostProcessor: ConfigurationHandler {
 
     activator.addTask(taskActivationEntry)
     val f =  File(projectData.linkedExternalProjectPath).toPath()
-    val extProjectDir = if (f.isDirectory()) { f } else { f.parent }
+    val extProjectDir = if (f.isDirectory()) {
+      f
+    }
+    else {
+      f.parent
+    }
 
     val dotIdeaDirPath = project.stateStore.projectFilePath.parent.systemIndependentPath
     val projectNode = ExternalSystemApiUtil.findProjectNode(project, projectData.owner, projectData.linkedExternalProjectPath) ?: return

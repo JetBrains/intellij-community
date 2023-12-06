@@ -17,10 +17,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.psi.JavaTokenType
-import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.uast.UDeclaration
@@ -90,7 +87,11 @@ fun isJava(language: Language?): Boolean {
   return language == JavaLanguage.INSTANCE
 }
 
-internal fun <T> lazyPub(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
-
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 internal inline fun <reified T : Any> Any?.asSafely(): @kotlin.internal.NoInfer T? = this as? T
+
+fun PsiElement?.isSemicolon(): Boolean {
+  if (this !is PsiJavaToken) return false
+
+  return tokenType == JavaTokenType.SEMICOLON
+}

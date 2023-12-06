@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
@@ -21,10 +21,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.getFontWithFallback
 import org.intellij.lang.annotations.JdkConstants
 import java.awt.*
 import java.awt.font.FontRenderContext
 import javax.swing.UIManager
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -63,7 +65,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     return calcHintTextWidth(text, fontMetrics)
   }
 
-  protected open fun useEditorFont() = useEditorFontFromSettings()
+  protected open fun useEditorFont(): Boolean = useEditorFontFromSettings()
 
   companion object {
     @JvmStatic
@@ -149,7 +151,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         val xStart = r.x
         val xEnd = r.x + r.width
         val y = r.y + ascent
-        val font = editor.getColorsScheme().getFont(EditorFontType.PLAIN)
+        val font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
         when (effectType) {
           EffectType.LINE_UNDERSCORE -> EffectPainter.LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
           EffectType.BOLD_LINE_UNDERSCORE -> EffectPainter.BOLD_LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
@@ -171,7 +173,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
         val backgroundBlendedGrayed = backgroundBlended.toGray()
         val textGrayed = attributes.foregroundColor.toGray()
-        val delta = Math.abs(backgroundBlendedGrayed - textGrayed)
+        val delta = abs(backgroundBlendedGrayed - textGrayed)
         return delta < 10
       }
       return false
@@ -209,7 +211,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
           editorFont.deriveFont(fontType, size)
         } else {
           val familyName = UIManager.getFont("Label.font").family
-          StartupUiUtil.getFontWithFallback(familyName, fontType, size)
+          getFontWithFallback(familyName = familyName, style = fontType, size = size)
         }
         val context = getCurrentContext(editor)
         metrics = FontInfo.getFontMetrics(font, context)
@@ -242,7 +244,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         EditorColorsManager.getInstance().globalScheme.editorFontName
       }
       else {
-        StartupUiUtil.getLabelFont().family
+        StartupUiUtil.labelFont.family
       }
       if (metrics != null && !metrics.isActual(editor, size, fontType, familyName)) {
         metrics = null
@@ -255,7 +257,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     }
 
     @JvmStatic
-    fun useEditorFontFromSettings() = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
+    fun useEditorFontFromSettings(): Boolean = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
 
     private fun getFont(editor: Editor, useEditorFont: Boolean): Font {
       return getFontMetrics(editor, useEditorFont).font
@@ -267,7 +269,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     }
 
     private val HINT_FONT_METRICS = Key.create<MyFontMetrics>("ParameterHintFontMetrics")
-    private const val BACKGROUND_ALPHA = 0.55f
+    const val BACKGROUND_ALPHA = 0.55f
   }
 
   // workaround for KT-12063 "IllegalAccessError when accessing @JvmStatic protected member of a companion object from a subclass"

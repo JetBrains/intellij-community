@@ -1,9 +1,9 @@
 import enum
-from _typeshed import StrOrBytesPath, SupportsWrite
+from _typeshed import Incomplete, StrOrBytesPath, SupportsWrite
 from collections.abc import Callable
-from socket import AddressFamily, SocketKind
+from socket import AF_INET6 as AF_INET6, AddressFamily, SocketKind
 from typing import Any, NamedTuple, TypeVar, overload
-from typing_extensions import Literal, TypeAlias
+from typing_extensions import Literal
 
 POSIX: bool
 WINDOWS: bool
@@ -31,23 +31,6 @@ STATUS_LOCKED: Literal["locked"]
 STATUS_WAITING: Literal["waiting"]
 STATUS_SUSPENDED: Literal["suspended"]
 STATUS_PARKED: Literal["parked"]
-
-_Status: TypeAlias = Literal[
-    "running",
-    "sleeping",
-    "disk-sleep",
-    "stopped",
-    "tracing-stop",
-    "zombie",
-    "dead",
-    "wake-kill",
-    "waking",
-    "idle",
-    "locked",
-    "waiting",
-    "suspended",
-    "parked",
-]
 
 CONN_ESTABLISHED: str
 CONN_SYN_SENT: str
@@ -134,7 +117,7 @@ class sconn(NamedTuple):
     laddr: addr | tuple[()]
     raddr: addr | tuple[()]
     status: str
-    pid: int
+    pid: int | None
 
 class snicaddr(NamedTuple):
     family: AddressFamily
@@ -148,6 +131,7 @@ class snicstats(NamedTuple):
     duplex: int
     speed: int
     mtu: int
+    flags: str
 
 class scpustats(NamedTuple):
     ctx_switches: int
@@ -238,7 +222,7 @@ class NoSuchProcess(Error):
     pid: Any
     name: Any
     msg: Any
-    def __init__(self, pid, name: Any | None = ..., msg: Any | None = ...) -> None: ...
+    def __init__(self, pid, name: Incomplete | None = None, msg: Incomplete | None = None) -> None: ...
 
 class ZombieProcess(NoSuchProcess):
     __module__: str
@@ -246,25 +230,27 @@ class ZombieProcess(NoSuchProcess):
     ppid: Any
     name: Any
     msg: Any
-    def __init__(self, pid, name: Any | None = ..., ppid: Any | None = ..., msg: Any | None = ...) -> None: ...
+    def __init__(
+        self, pid, name: Incomplete | None = None, ppid: Incomplete | None = None, msg: Incomplete | None = None
+    ) -> None: ...
 
 class AccessDenied(Error):
     __module__: str
     pid: Any
     name: Any
     msg: Any
-    def __init__(self, pid: Any | None = ..., name: Any | None = ..., msg: Any | None = ...) -> None: ...
+    def __init__(self, pid: Incomplete | None = None, name: Incomplete | None = None, msg: Incomplete | None = None) -> None: ...
 
 class TimeoutExpired(Error):
     __module__: str
     seconds: Any
     pid: Any
     name: Any
-    def __init__(self, seconds, pid: Any | None = ..., name: Any | None = ...) -> None: ...
+    def __init__(self, seconds, pid: Incomplete | None = None, name: Incomplete | None = None) -> None: ...
 
 _Func = TypeVar("_Func", bound=Callable[..., Any])
 
-def usage_percent(used, total, round_: int | None = ...) -> float: ...
+def usage_percent(used, total, round_: int | None = None) -> float: ...
 def memoize(fun: _Func) -> _Func: ...
 def memoize_when_activated(fun: _Func) -> _Func: ...
 def isfile_strict(path: StrOrBytesPath) -> bool: ...
@@ -276,7 +262,7 @@ def socktype_to_enum(num: int) -> SocketKind: ...
 @overload
 def conn_to_ntuple(fd: int, fam: int, type_: int, laddr, raddr, status: str, status_map, pid: int) -> sconn: ...
 @overload
-def conn_to_ntuple(fd: int, fam: int, type_: int, laddr, raddr, status: str, status_map, pid: None = ...) -> pconn: ...
+def conn_to_ntuple(fd: int, fam: int, type_: int, laddr, raddr, status: str, status_map, pid: None = None) -> pconn: ...
 def deprecated_method(replacement: str) -> Callable[[_Func], _Func]: ...
 
 class _WrapNumbers:
@@ -286,13 +272,17 @@ class _WrapNumbers:
     reminder_keys: Any
     def __init__(self) -> None: ...
     def run(self, input_dict, name): ...
-    def cache_clear(self, name: Any | None = ...) -> None: ...
+    def cache_clear(self, name: Incomplete | None = None) -> None: ...
     def cache_info(self): ...
 
 def wrap_numbers(input_dict, name: str): ...
-def bytes2human(n: int, format: str = ...) -> str: ...
+def open_binary(fname): ...
+def open_text(fname): ...
+def cat(fname, fallback=..., _open=...): ...
+def bcat(fname, fallback=...): ...
+def bytes2human(n: int, format: str = "%(value).1f%(symbol)s") -> str: ...
 def get_procfs_path() -> str: ...
 def term_supports_colors(file: SupportsWrite[str] = ...) -> bool: ...
-def hilite(s: str, color: str | None = ..., bold: bool = ...) -> str: ...
-def print_color(s: str, color: str | None = ..., bold: bool = ..., file: SupportsWrite[str] = ...) -> None: ...
+def hilite(s: str, color: str | None = None, bold: bool = False) -> str: ...
+def print_color(s: str, color: str | None = None, bold: bool = False, file: SupportsWrite[str] = ...) -> None: ...
 def debug(msg) -> None: ...

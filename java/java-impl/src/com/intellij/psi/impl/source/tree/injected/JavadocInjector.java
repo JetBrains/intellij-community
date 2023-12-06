@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lang.java.JShellLanguage;
@@ -54,20 +55,12 @@ public class JavadocInjector implements MultiHostInjector {
         return JShellLanguage.INSTANCE;
       }
 
-      final Language language = findRegisteredLanguage(langValueText);
+      final Language language = LanguageUtil.findRegisteredLanguage(langValueText);
       if (language != null) {
         return language;
       }
     }
     return PlainTextLanguage.INSTANCE;
-  }
-
-  private static @Nullable Language findRegisteredLanguage(@NotNull String langValueText) {
-    final Language language = Language.findLanguageByID(langValueText);
-    if (language != null) return language;
-
-    return ContainerUtil.find(Language.getRegisteredLanguages(),
-                              e -> e.getID().equalsIgnoreCase(langValueText));
   }
 
   @Override

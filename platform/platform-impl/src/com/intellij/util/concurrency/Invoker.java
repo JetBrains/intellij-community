@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -11,18 +12,18 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -79,7 +80,18 @@ public abstract class Invoker implements Disposable {
    * @return an object to control task processing
    */
   public final @NotNull <T> CancellablePromise<T> compute(@NotNull Supplier<? extends T> task) {
-    return promise(new Task<>(task));
+    return promise(new Task.Sync<>(task));
+  }
+
+  /**
+   * Computes the specified task immediately if the current thread is valid,
+   * or asynchronously after all pending tasks have been processed.
+   *
+   * @param task a task to execute on the valid thread
+   * @return an object to control task processing
+   */
+  public final @NotNull <T> CancellablePromise<T> computeAsync(@NotNull Supplier<Promise<? extends T>> task) {
+    return promise(new Task.Async<>(task));
   }
 
   /**
@@ -92,7 +104,7 @@ public abstract class Invoker implements Disposable {
    * @return an object to control task processing
    */
   public final @NotNull <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task) {
-    return promise(new Task<>(task), 0);
+    return promise(new Task.Sync<>(task), 0);
   }
 
   /**
@@ -127,7 +139,7 @@ public abstract class Invoker implements Disposable {
    * @return an object to control task processing
    */
   public final @NotNull CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
-    return promise(new Task<>(new Wrapper(task)), delay);
+    return promise(new Task.Sync<>(new Wrapper(task)), delay);
   }
 
   /**
@@ -159,7 +171,7 @@ public abstract class Invoker implements Disposable {
    * @param attempt an attempt to run the specified task
    * @param delay   milliseconds for the initial delay
    */
-  private void offerSafely(@NotNull Task<?> task, int attempt, int delay) {
+  private void offerSafely(@NotNull Task<?, ?> task, int attempt, int delay) {
     try {
       count.incrementAndGet();
       offer(() -> invokeSafely(task, attempt), delay);
@@ -175,43 +187,66 @@ public abstract class Invoker implements Disposable {
    * @param task    a task to execute on the valid thread
    * @param attempt an attempt to run the specified task
    */
-  private void invokeSafely(@NotNull Task<?> task, int attempt) {
-    try {
-      if (task.canInvoke(disposed)) {
-        if (getApplication() == null) {
-          task.run(); // is not interruptible in tests without application
-        }
-        else if (useReadAction != ThreeState.YES || isDispatchThread()) {
-          ProgressManager.getInstance().runProcess(task, indicator(task.promise));
-        }
-        else if (!runInReadActionWithWriteActionPriority(task, indicator(task.promise))) {
-          offerRestart(task, attempt);
-          return;
-        }
-        task.setResult();
-      }
-    }
-    catch (ProcessCanceledException | IndexNotReadyException exception) {
-      offerRestart(task, attempt);
-    }
-    catch (Throwable throwable) {
+  private void invokeSafely(@NotNull Task<?, ?> task, int attempt) {
+    try (AccessToken ignored = ClientId.withClientId(task.clientId)) {
       try {
-        LOG.error(throwable);
+        if (task.canInvoke(disposed)) {
+          if (!startTask(task, attempt)) return;
+          if (task instanceof Task.Async<?> t) {
+            Promise<?> incomplete = t.setDone();
+            if (incomplete != null) {
+              count.incrementAndGet();
+              incomplete
+                .onError(th -> handleTaskError(task, th, attempt))
+                .onProcessed(r -> count.decrementAndGet());
+            }
+          }
+          else if (task instanceof Task.Sync<?> t) {
+            t.setDone();
+          }
+        }
+      }
+      catch (Throwable throwable) {
+        handleTaskError(task, throwable, attempt);
       }
       finally {
-        task.promise.setError(throwable);
+        count.decrementAndGet();
       }
     }
-    finally {
-      count.decrementAndGet();
+  }
+
+  private void handleTaskError(@NotNull Task<?, ?> task, @NotNull Throwable throwable, int attempt) {
+    if (throwable instanceof ProcessCanceledException || throwable instanceof IndexNotReadyException) {
+      offerRestart(task, attempt);
+      return;
     }
+    try {
+      LOG.error(throwable);
+    }
+    finally {
+      task.promise.setError(throwable);
+    }
+  }
+
+  private boolean startTask(@NotNull Task<?, ?> task, int attempt) {
+    if (getApplication() == null) {
+      task.run(); // is not interruptible in tests without application
+    }
+    else if (useReadAction != ThreeState.YES || isDispatchThread()) {
+      ProgressManager.getInstance().runProcess(task, indicator(task.promise));
+    }
+    else if (!runInReadActionWithWriteActionPriority(task, indicator(task.promise))) {
+      offerRestart(task, attempt);
+      return false;
+    }
+    return true;
   }
 
   /**
    * @param task    a task to execute on the valid thread
    * @param attempt an attempt to run the specified task
    */
-  private void offerRestart(@NotNull Task<?> task, int attempt) {
+  private void offerRestart(@NotNull Task<?, ?> task, int attempt) {
     if (task.canRestart(disposed, attempt)) {
       offerSafely(task, attempt + 1, 10);
       if (LOG.isTraceEnabled()) LOG.debug("Task is restarted");
@@ -225,7 +260,7 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute on the valid thread
    * @return an object to control task processing
    */
-  private @NotNull <T> CancellablePromise<T> promise(@NotNull Task<T> task) {
+  private @NotNull <T> CancellablePromise<T> promise(@NotNull Task<T, ?> task) {
     if (!isValidThread()) {
       return promise(task, 0);
     }
@@ -241,7 +276,7 @@ public abstract class Invoker implements Disposable {
    * @param delay milliseconds for the initial delay
    * @return an object to control task processing
    */
-  private @NotNull <T> CancellablePromise<T> promise(@NotNull Task<T> task, int delay) {
+  private @NotNull <T> CancellablePromise<T> promise(@NotNull Task<T, ?> task, int delay) {
     if (delay < 0) {
       throw new IllegalArgumentException("delay must be non-negative: " + delay);
     }
@@ -255,13 +290,51 @@ public abstract class Invoker implements Disposable {
    * This data class is intended to combine a developer's task
    * with the corresponding object used to control its processing.
    */
-  static final class Task<T> implements Runnable {
+  static abstract class Task<T, R> implements Runnable {
     final AsyncPromise<T> promise = new AsyncPromise<>();
-    private final Supplier<? extends T> supplier;
+    private final Supplier<? extends R> supplier;
     private final String clientId;
-    private volatile T result;
+    private volatile R result;
 
-    Task(@NotNull Supplier<? extends T> supplier) {
+    static class Sync<T> extends Task<T, T> {
+      Sync(@NotNull Supplier<? extends T> supplier) {
+        super(supplier);
+      }
+
+      void setDone() {
+        setDone(getResult());
+      }
+    }
+    static class Async<T> extends Task<T, Promise<? extends T>> {
+      Async(@NotNull Supplier<? extends Promise<? extends T>> supplier) {
+        super(supplier);
+      }
+
+      @Nullable
+      Promise<? extends T> setDone() {
+        Promise<? extends T> res = getResult();
+        if (res == null) {
+          setDone(null);
+          return null;
+        }
+        if (res.getState() == Promise.State.PENDING) {
+          return res.onSuccess(r -> setDone(r));
+        }
+        try {
+          setDone(res.blockingGet(0));
+        }
+        catch (ExecutionException e) {
+          ExceptionUtil.rethrow(e.getCause());
+        }
+        catch (TimeoutException e) {
+          ExceptionUtil.rethrow(e);
+        }
+
+        return null;
+      }
+    }
+
+    Task(@NotNull Supplier<? extends R> supplier) {
       this.supplier = supplier;
       this.clientId = ClientId.getCurrentValue();
     }
@@ -294,8 +367,12 @@ public abstract class Invoker implements Disposable {
       return true;
     }
 
-    void setResult() {
-      promise.setResult(result);
+    R getResult() {
+      return result;
+    }
+
+    void setDone(T r) {
+      promise.setResult(r);
     }
 
     @Override
@@ -385,7 +462,7 @@ public abstract class Invoker implements Disposable {
   }
 
   public static final class Background extends Invoker {
-    private final Set<Thread> threads = ContainerUtil.newConcurrentSet();
+    private final Set<Thread> threads = ConcurrentCollectionFactory.createConcurrentSet();
     private final ScheduledExecutorService executor;
 
     /**

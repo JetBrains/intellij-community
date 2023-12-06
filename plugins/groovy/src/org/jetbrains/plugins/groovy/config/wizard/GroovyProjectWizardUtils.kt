@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GroovyProjectWizardUtils")
 package org.jetbrains.plugins.groovy.config.wizard
 
@@ -7,6 +7,7 @@ import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryFinished
+import com.intellij.ide.projectWizard.NewProjectWizardConstants
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.command.WriteCommandAction
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.util.application
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
@@ -41,9 +43,13 @@ fun <S> S.setupGroovySdkUI(builder: Panel) where S : NewProjectWizardStep, S : B
   })
   comboBox.specifyLocationActionName = GroovyBundle.message("dialog.title.specify.groovy.sdk")
   comboBox.addLoadingItem()
-  val pathToGroovyHome = groovyLibraryDescription.findPathToGroovyHome()
-  if (pathToGroovyHome != null) {
-    comboBox.addDistributionIfNotExists(LocalDistributionInfo(pathToGroovyHome.path))
+  application.executeOnPooledThread {
+    val pathToGroovyHome = groovyLibraryDescription.findPathToGroovyHome()
+    if (pathToGroovyHome != null) {
+      application.invokeLater {
+        comboBox.addDistributionIfNotExists(LocalDistributionInfo(pathToGroovyHome.path))
+      }
+    }
   }
   loadLatestGroovyVersions(object : DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
     override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
@@ -143,11 +149,11 @@ fun NewProjectWizardStep.logGroovySdkFinished(sdk: DistributionInfo?) {
   logGroovyLibraryFinished(type, version)
 }
 
-private fun getGroovySdkType(sdk: DistributionInfo?): String? {
+private fun getGroovySdkType(sdk: DistributionInfo?): String {
   return when (sdk) {
-    is FrameworkLibraryDistributionInfo -> "maven"
-    is LocalDistributionInfo -> "local"
-    null -> null
+    is FrameworkLibraryDistributionInfo -> NewProjectWizardConstants.GroovySdk.MAVEN
+    is LocalDistributionInfo -> NewProjectWizardConstants.GroovySdk.LOCAL
+    null -> NewProjectWizardConstants.GroovySdk.NONE
     else -> error("Unexpected distribution type: $sdk")
   }
 }

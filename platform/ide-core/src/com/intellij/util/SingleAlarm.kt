@@ -1,24 +1,34 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import org.jetbrains.annotations.ApiStatus
 
 class SingleAlarm @JvmOverloads constructor(
   private val task: Runnable,
   private val delay: Int,
   parentDisposable: Disposable?,
   threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
-  private val modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.NON_MODAL else null
+  private val modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null
 ) : Alarm(threadToUse, parentDisposable) {
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use main constructor", replaceWith = ReplaceWith("SingleAlarm(task, delay, parentDisposable, ThreadToUse.SWING_THREAD, modalityState)"))
   constructor(task: Runnable, delay: Int, modalityState: ModalityState, parentDisposable: Disposable)
     : this(task, delay, parentDisposable, ThreadToUse.SWING_THREAD, modalityState)
 
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
-    : this(task, delay, parentDisposable, threadToUse, if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.NON_MODAL else null)
+    : this(task = task,
+           delay = delay,
+           parentDisposable = parentDisposable,
+           threadToUse = threadToUse,
+           modalityState = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null)
 
-  constructor(task: Runnable, delay: Int) : this(task, delay, null, ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL)
+  constructor(task: Runnable, delay: Int) : this(task = task,
+                                                 delay = delay,
+                                                 parentDisposable = null,
+                                                 threadToUse = ThreadToUse.SWING_THREAD,
+                                                 modalityState = ModalityState.nonModal())
 
   init {
     if (threadToUse == ThreadToUse.SWING_THREAD && modalityState == null) {
@@ -58,7 +68,10 @@ class SingleAlarm @JvmOverloads constructor(
 
   companion object {
     fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable, task: () -> Unit): SingleAlarm {
-      return SingleAlarm(Runnable(task), delay, ThreadToUse.POOLED_THREAD, parentDisposable)
+      return SingleAlarm(task = Runnable(task),
+                         delay = delay,
+                         threadToUse = ThreadToUse.POOLED_THREAD,
+                         parentDisposable = parentDisposable)
     }
   }
 }

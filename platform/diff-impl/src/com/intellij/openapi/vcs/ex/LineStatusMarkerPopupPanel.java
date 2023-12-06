@@ -9,7 +9,6 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -24,6 +23,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -40,10 +40,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getDiffType;
+import static java.util.Collections.emptyList;
 
 public class LineStatusMarkerPopupPanel extends JPanel {
   private static final JBColor TOOLBAR_BACKGROUND_COLOR =
@@ -121,8 +121,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
   }
 
-  int getEditorTextOffset() {
-    return EditorFragmentComponent.createEditorFragmentBorder(myEditor).getBorderInsets(myEditorComponent).left;
+  private int getEditorTextOffset() {
+    return createEditorFragmentBorder().getBorderInsets(myEditorComponent).left;
   }
 
   @Override
@@ -145,20 +145,13 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
 
   public static void showPopupAt(@NotNull Editor editor,
-                                 @NotNull ActionToolbar toolbar,
-                                 @Nullable JComponent editorComponent,
-                                 @Nullable JComponent additionalInfoPanel,
+                                 @NotNull LineStatusMarkerPopupPanel panel,
                                  @Nullable Point mousePosition,
-                                 @NotNull Disposable childDisposable,
-                                 @Nullable DataProvider dataProvider) {
-    LineStatusMarkerPopupPanel popupPanel = new LineStatusMarkerPopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
-
-    if (dataProvider != null) DataManager.registerDataProvider(popupPanel, dataProvider);
-    toolbar.setTargetComponent(popupPanel);
-
-    LightweightHint hint = new LightweightHint(popupPanel);
-    HintListener closeListener = __ -> Disposer.dispose(childDisposable);
-    hint.addHintListener(closeListener);
+                                 @NotNull Disposable popupDisposable) {
+    LightweightHint hint = new LightweightHint(panel);
+    Disposer.register(popupDisposable, () -> UIUtil.invokeLaterIfNeeded(hint::hide));
+    hint.addHintListener(e -> Disposer.dispose(popupDisposable));
+    hint.setForceLightweightPopup(true);
 
     int line = editor.getCaretModel().getLogicalPosition().line;
     Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(line, 0), HintManager.UNDER);
@@ -168,12 +161,13 @@ public class LineStatusMarkerPopupPanel extends JPanel {
       if (delta < 0) delta += lineHeight;
       point.y = mousePosition.y + delta;
     }
-    point.x -= popupPanel.getEditorTextOffset(); // align main editor with the one in popup
+    point.x -= panel.getEditorTextOffset(); // align main editor with the one in popup
 
-    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING |
+                HintManager.HIDE_BY_ESCAPE;
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
 
-    ApplicationManager.getApplication().getMessageBus().connect(childDisposable)
+    ApplicationManager.getApplication().getMessageBus().connect(popupDisposable)
       .subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
         @Override
         public void hintShown(@NotNull Editor newEditor, @NotNull LightweightHint newHint, int flags, @NotNull HintHint hintInfo) {
@@ -187,7 +181,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
       });
 
     if (!hint.isVisible()) {
-      closeListener.hintHidden(new EventObject(hint));
+      Disposer.dispose(popupDisposable);
     }
   }
 
@@ -202,6 +196,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     field.addSettingsProvider(uEditor -> {
       uEditor.setVerticalScrollbarVisible(true);
       uEditor.setHorizontalScrollbarVisible(true);
+      uEditor.getSettings().setUseSoftWraps(false);
 
       uEditor.setRendererMode(true);
       uEditor.setBorder(null);
@@ -218,15 +213,15 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   }
 
   @NotNull
-  public static JComponent createEditorComponent(@NotNull Editor editor, @NotNull EditorTextField textField) {
-    JPanel editorComponent = JBUI.Panels.simplePanel(textField);
+  public static JComponent createEditorComponent(@NotNull Editor editor, @NotNull JComponent popupEditor) {
+    JPanel editorComponent = JBUI.Panels.simplePanel(popupEditor);
     editorComponent.setBorder(createEditorFragmentBorder());
     editorComponent.setBackground(getEditorBackgroundColor(editor));
     return editorComponent;
   }
 
   @NotNull
-  public static Border createEditorFragmentBorder() {
+  private static Border createEditorFragmentBorder() {
     Border outsideEditorBorder = JBUI.Borders.customLine(getBorderColor(), 1);
     Border insideEditorBorder = JBUI.Borders.empty(2);
     return BorderFactory.createCompoundBorder(outsideEditorBorder, insideEditorBorder);
@@ -262,8 +257,9 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                                          @NotNull EditorTextField textField,
                                                          @NotNull Document vcsDocument,
                                                          TextRange vcsTextRange,
-                                                         @NotNull FileType fileType) {
-    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType);
+                                                         @Nullable FileType fileType) {
+    FileType type = fileType != null ? fileType : PlainTextFileType.INSTANCE;
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, type);
     highlighter.setText(vcsDocument.getImmutableCharSequence());
     FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
     textField.addSettingsProvider(uEditor -> uEditor.setHighlighter(fragmentedHighlighter));
@@ -273,14 +269,22 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                                         @Nullable List<? extends DiffFragment> wordDiff) {
     if (wordDiff == null) return;
     textField.addSettingsProvider(uEditor -> {
-      for (DiffFragment fragment : wordDiff) {
-        int vcsStart = fragment.getStartOffset1();
-        int vcsEnd = fragment.getEndOffset1();
-        TextDiffType type = getDiffType(fragment);
-
-        DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
-      }
+      installEditorDiffHighlighters(uEditor, wordDiff);
     });
+  }
+
+  public static @NotNull List<RangeHighlighter> installEditorDiffHighlighters(@NotNull Editor editor,
+                                                                              @Nullable List<? extends DiffFragment> wordDiff) {
+    if (wordDiff == null) return emptyList();
+    List<RangeHighlighter> highlighters = new ArrayList<>();
+    for (DiffFragment fragment : wordDiff) {
+      int vcsStart = fragment.getStartOffset1();
+      int vcsEnd = fragment.getEndOffset1();
+      TextDiffType type = getDiffType(fragment);
+
+      highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, vcsStart, vcsEnd, type));
+    }
+    return highlighters;
   }
 
   public static void installMasterEditorWordHighlighters(@NotNull Editor editor,
@@ -315,5 +319,14 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     }
 
     Disposer.register(parentDisposable, () -> highlighters.forEach(RangeMarker::dispose));
+  }
+
+  public static @NotNull LineStatusMarkerPopupPanel create(@NotNull Editor editor,
+                                                           @NotNull ActionToolbar toolbar,
+                                                           @Nullable JComponent editorComponent,
+                                                           @Nullable JComponent additionalInfo) {
+    LineStatusMarkerPopupPanel panel = new LineStatusMarkerPopupPanel(editor, toolbar, editorComponent, additionalInfo);
+    toolbar.setTargetComponent(panel);
+    return panel;
   }
 }

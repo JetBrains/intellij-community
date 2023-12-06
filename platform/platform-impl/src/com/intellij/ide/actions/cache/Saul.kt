@@ -2,13 +2,13 @@
 package com.intellij.ide.actions.cache
 
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.*
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -44,11 +43,11 @@ class Saul {
   val sortedActions: List<RecoveryAction>
     get() = RECOVERY_ACTION_EP_NAME.extensionList.sortedByDescending { it.performanceRate }
 
-  val modificationRecoveryActionTracker = ModificationTracker { recoveryActionModificationCounter }
+  val modificationRecoveryActionTracker: ModificationTracker = ModificationTracker { recoveryActionModificationCounter }
 
-  fun sortThingsOut(recoveryScope: RecoveryScope, actions: Collection<RecoveryAction>) = RecoveryWorker(actions).start(recoveryScope)
+  fun sortThingsOut(recoveryScope: RecoveryScope, actions: Collection<RecoveryAction>): Unit = RecoveryWorker(actions).start(recoveryScope)
 
-  fun sortThingsOut(recoveryScope: RecoveryScope) = sortThingsOut(recoveryScope, sortedActions)
+  fun sortThingsOut(recoveryScope: RecoveryScope): Unit = sortThingsOut(recoveryScope, sortedActions)
 }
 
 private class RecoveryWorker(val actions: Collection<RecoveryAction>) {

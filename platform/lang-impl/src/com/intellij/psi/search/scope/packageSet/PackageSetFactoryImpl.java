@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.scope.packageSet;
 
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PackageSetFactoryImpl extends PackageSetFactory {
+public final class PackageSetFactoryImpl extends PackageSetFactory {
   private static final Logger LOG = Logger.getInstance(PackageSetFactoryImpl.class);
 
   public PackageSetFactoryImpl() {
@@ -69,7 +69,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     return new Parser(lexer).parse();
   }
 
-  private static class Parser {
+  private static final class Parser {
     private final Lexer myLexer;
 
     Parser(Lexer lexer) {
@@ -145,8 +145,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       return myLexer.getBufferSequence().subSequence(start, end).toString();
     }
 
-    @Nullable
-    private String parseModulePattern() throws ParsingException {
+    private @Nullable String parseModulePattern() throws ParsingException {
       if (myLexer.getTokenType() != ScopeTokenTypes.LBRACKET) return null;
       myLexer.advance();
       StringBuilder pattern = new StringBuilder();

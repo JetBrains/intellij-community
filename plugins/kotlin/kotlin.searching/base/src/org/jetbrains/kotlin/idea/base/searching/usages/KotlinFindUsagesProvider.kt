@@ -62,6 +62,7 @@ open class KotlinFindUsagesProviderBase : FindUsagesProvider {
             }
             is KtFunction -> {
                 //TODO: Correct FIR implementation
+                @Suppress("HardCodedStringLiteral")
                 return element.name?.let { "$it(...)" } ?: ""
             }
             is KtLabeledExpression -> {

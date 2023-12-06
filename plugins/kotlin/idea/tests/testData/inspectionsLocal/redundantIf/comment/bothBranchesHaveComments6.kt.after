@@ -1,0 +1,7 @@
+// HIGHLIGHT: INFORMATION
+fun foo(): Boolean {// comment explaining the `true` case
+    // comment explaining the `false` case
+    return !someComplexCondition()
+}
+
+fun someComplexCondition(): Boolean = true

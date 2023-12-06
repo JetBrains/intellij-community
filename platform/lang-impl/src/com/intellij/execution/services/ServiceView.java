@@ -91,7 +91,7 @@ abstract class ServiceView extends JPanel implements Disposable {
   }
 
   void onViewSelected(@NotNull ServiceViewDescriptor descriptor) {
-    descriptor.onNodeSelected();
+    descriptor.onNodeSelected(ContainerUtil.map(getSelectedItems(), ServiceViewItem::getValue));
     if (myAutoScrollToSourceHandler != null) {
       myAutoScrollToSourceHandler.onMouseClicked(this);
     }
@@ -138,6 +138,9 @@ abstract class ServiceView extends JPanel implements Disposable {
       if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
         ServiceViewItem item = ContainerUtil.getOnlyItem(serviceView.getSelectedItems());
         return item != null ? item.getValue() : null;
+      }
+      if (ServiceViewActionProvider.SERVICES_SELECTED_ITEMS.is(dataId)) {
+        return serviceView.getSelectedItems();
       }
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         List<ServiceViewItem> selection = serviceView.getSelectedItems();

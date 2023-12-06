@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.core.CoreBundle;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts.SystemNotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,9 +36,9 @@ import javax.swing.*;
  * }.setCancelText("Stop loading").queue();
  * </pre>
  *
- * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
- * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
- * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+ * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
+ * @see com.intellij.openapi.progress.TasksKt#withModalProgress
+ * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
  * @see ProgressManager#run(Task)
  */
 public abstract class Task implements TaskInfo, Progressive {
@@ -118,6 +119,7 @@ public abstract class Task implements TaskInfo, Progressive {
     return myParentComponent;
   }
 
+  @RequiresBlockingContext
   public final void queue() {
     ProgressManager.getInstance().run(this);
   }
@@ -194,7 +196,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
+   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
    */
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
     private final @NotNull PerformInBackgroundOption myBackgroundOption;
@@ -233,7 +235,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
     @Override
     public void processSentToBackground() {
-      myBackgroundOption.processSentToBackground();
+      //myBackgroundOption.processSentToBackground();
     }
 
     @Override
@@ -247,8 +249,8 @@ public abstract class Task implements TaskInfo, Progressive {
  }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
-   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgress
+   * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
    */
   public abstract static class Modal extends Task {
     public Modal(@Nullable Project project, @DialogTitle @NotNull String title, boolean canBeCancelled) {
@@ -267,9 +269,9 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
-   * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
-   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgress
+   * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
    */
   public abstract static class ConditionalModal extends Backgroundable {
     public ConditionalModal(@Nullable Project project,
@@ -333,7 +335,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
    */
   public abstract static class WithResult<T, E extends Exception> extends Task.Modal {
     private volatile T myResult;

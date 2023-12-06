@@ -2,7 +2,7 @@
 package com.maddyhome.idea.copyright.actions
 
 import com.intellij.copyright.CopyrightBundle
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -12,6 +12,8 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
@@ -37,10 +39,15 @@ private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandl
   override fun isEnabled(): Boolean = settings.UPDATE_COPYRIGHT
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
-    withContext(Dispatchers.Default) {
-      coroutineToIndicator {
-        val psiFiles = runReadAction { getPsiFiles(commitInfo.committedVirtualFiles) }
-        UpdateCopyrightProcessor(project, null, psiFiles, false).run()
+    val files = commitInfo.committedVirtualFiles
+    progressStep(1.0, CopyrightBundle.message("updating.copyrights.progress.message")) {
+      withContext(Dispatchers.Default) {
+        val psiFiles = readAction { getPsiFiles(files) }
+        withRawProgressReporter {
+          coroutineToIndicator {
+            UpdateCopyrightProcessor(project, null, psiFiles, false).run()
+          }
+        }
       }
     }
     FileDocumentManager.getInstance().saveAllDocuments()

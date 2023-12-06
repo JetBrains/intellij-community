@@ -10,7 +10,7 @@ public class ValueStaticConstructor {
   }
 
   public static void main(String[] args) {
-    final ValueStaticConstructor test = new ValueStaticConstructor.of(1);
+    final ValueStaticConstructor test = ValueStaticConstructor.of(1);
     System.out.println(test);
   }
 }

@@ -24,10 +24,13 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean =
     JBCefApp.isSupported() && file.getUserData(REQUEST_KEY) != null
 
+  override fun acceptRequiresReadAction(): Boolean = false
+
   override fun getEditorTypeId(): String = "html-editor"
 
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
+  @Suppress("CompanionObjectInExtension")
   companion object {
     private val REQUEST_KEY: Key<Request> = Key.create("html.editor.request.key")
     private val EDITOR_KEY: Key<FileEditor> = Key.create("html.editor.component.key")

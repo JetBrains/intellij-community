@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.DomainObjectSet;
@@ -81,7 +81,7 @@ public final class InternalIdeaModule implements IdeaModule {
 
   @Override
   public DomainObjectSet<? extends HierarchicalElement> getChildren() {
-    return ImmutableDomainObjectSet.of(Collections.<HierarchicalElement>emptySet());
+    return ImmutableDomainObjectSet.of(Collections.emptySet());
   }
 
   @Override

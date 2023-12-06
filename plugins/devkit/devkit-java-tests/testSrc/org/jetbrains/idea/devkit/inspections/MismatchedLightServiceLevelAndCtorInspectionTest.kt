@@ -7,28 +7,29 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.quickfix.MismatchedLightServiceLevelAndCtorInspectionTestBase
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/mismatchedLightServiceLevelAndCtor")
-class MismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLightServiceLevelAndCtorInspectionTestBase() {
+internal class MismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLightServiceLevelAndCtorInspectionTestBase() {
 
   private val NO_ARG_CTOR_FIX_NAME = QuickFixBundle.message("change.method.parameters.text", "()")
-  private val COROUTINE_SCOPE_PARAM_CTOR_FIX_NAME = QuickFixBundle.message("change.method.parameters.text", "(CoroutineScope scope)")
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/mismatchedLightServiceLevelAndCtor/"
 
   override fun getFileExtension() = "java"
 
-  fun testMakeProjectLevel1() {
-    doTest(annotateAsServiceFixName)
-  }
+  fun testFromAppToProjectLevel() { doTest(annotateAsServiceFixName) }
 
-  fun testMakeProjectLevel2() {
-    doTest(annotateAsServiceFixName)
-  }
+  fun testFromAppToProjectLevelCoroutineScope() { doTest(annotateAsServiceFixName) }
 
-  fun testRemoveProjectParam() {
-    doTest(NO_ARG_CTOR_FIX_NAME)
-  }
+  fun testFromDefaultToProjectLevel() { doTest(annotateAsServiceFixName) }
 
-  fun testChangeParamToCoroutineScope() {
-    doTest(COROUTINE_SCOPE_PARAM_CTOR_FIX_NAME)
-  }
+  fun testFromAppWrappedInArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
+
+  fun testFromEmptyArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
+
+  fun testRemoveProjectParam() { doTest(NO_ARG_CTOR_FIX_NAME) }
+
+  fun testAppLevelDefaultCtor() { doTest() }
+
+  fun testAppLevelNoArgCtor() { doTest() }
+
+  fun testAppLevelCoroutineScopeCtor() { doTest() }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.Disposable;
@@ -77,20 +77,17 @@ public interface JBTabs extends DropAreaAware {
   @Nullable
   TabInfo findInfo(Component component);
 
-  int getIndexOf(@Nullable final TabInfo tabInfo);
+  int getIndexOf(final @Nullable TabInfo tabInfo);
 
   void requestFocus();
 
-  JBTabs setNavigationActionBinding(String prevActionId, String nextActionId);
-  JBTabs setNavigationActionsEnabled(boolean enabled);
+  void setNavigationActionBinding(String prevActionId, String nextActionId);
 
   @NotNull
   JBTabs setPopupGroup(@NotNull ActionGroup popupGroup, @NotNull String place, boolean addNavigationGroup);
 
   @NotNull
-  JBTabs setPopupGroup(@NotNull Supplier<? extends ActionGroup> popupGroup,
-                       @NotNull String place,
-                       boolean addNavigationGroup);
+  JBTabs setPopupGroup(@NotNull Supplier<? extends ActionGroup> popupGroup, @NotNull String place, boolean addNavigationGroup);
 
   void resetDropOver(TabInfo tabInfo);
   Image startDropOver(TabInfo tabInfo, RelativePoint point);
@@ -99,11 +96,11 @@ public interface JBTabs extends DropAreaAware {
   Component getTabLabel(TabInfo tabInfo);
 
   @Override
-  @NotNull
-  default Rectangle getDropArea() {
-    Rectangle r = new Rectangle(getComponent().getBounds());
-    Insets insets = JBUI.insets(0);
+  default @NotNull Rectangle getDropArea() {
+    Rectangle r = new Rectangle(new Point(0, 0), getComponent().getSize());
     if (getTabCount() > 0) {
+      @SuppressWarnings("UseDPIAwareInsets")
+      Insets insets = JBUI.insets(0);
       Rectangle bounds = getTabLabel(getTabAt(0)).getBounds();
       switch (getPresentation().getTabsPosition()) {
         case top -> insets.top = bounds.height;
@@ -111,14 +108,13 @@ public interface JBTabs extends DropAreaAware {
         case bottom -> insets.bottom = bounds.height;
         case right -> insets.right = bounds.width;
       }
+      JBInsets.removeFrom(r, insets);
     }
-    JBInsets.removeFrom(r, insets);
     return r;
   }
 
 
   interface SelectionChangeHandler {
-    @NotNull
-    ActionCallback execute(final TabInfo info, final boolean requestFocus, @NotNull ActiveRunnable doChangeSelection);
+    @NotNull ActionCallback execute(TabInfo info, boolean requestFocus, @NotNull ActiveRunnable doChangeSelection);
   }
 }

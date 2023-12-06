@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader;
@@ -23,8 +23,7 @@ public final class MultiResolutionImageProvider {
    * A converter from {@link JBHiDPIScaledImage} to {@code MultiResolutionImage}.
    */
   private static final class Converter {
-    @Nullable
-    public static Image convert(Image jbImage) {
+    public static @Nullable Image convert(Image jbImage) {
       if (jbImage instanceof JBHiDPIScaledImage scaledImage) {
         Image lowResImage = ImageUtil.toBufferedImage(scaledImage, true);
         Image highResImage = ImageUtil.toBufferedImage(scaledImage);

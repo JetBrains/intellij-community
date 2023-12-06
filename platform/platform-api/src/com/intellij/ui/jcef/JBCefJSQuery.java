@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,7 @@ import java.util.function.Function;
  * @author tav
  */
 public final class JBCefJSQuery implements JBCefDisposable {
-  static private final boolean DEBUG_JS = Boolean.getBoolean("ide.browser.jcef.debug.js");
+  private static final boolean DEBUG_JS = Boolean.getBoolean("ide.browser.jcef.debug.js");
 
   private final @NotNull JSQueryFunc myFunc;
   private final @NotNull JBCefClient myJBCefClient;
@@ -41,8 +41,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
   /**
    * @return name of the global function JS must call to send query to Java
    */
-  @NotNull
-  public String getFuncName() {
+  public @NotNull String getFuncName() {
     return myFunc.myFuncName;
   }
 
@@ -52,8 +51,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
    * @param browser the associated CEF browser
    * @see JBCefClient.Properties#JS_QUERY_POOL_SIZE
    */
-  @NotNull
-  public static JBCefJSQuery create(@NotNull JBCefBrowserBase browser) {
+  public static @NotNull JBCefJSQuery create(@NotNull JBCefBrowserBase browser) {
     Function<Void, JBCefJSQuery> create = (v) -> {
       return new JBCefJSQuery(browser, new JSQueryFunc(browser.getJBCefClient()));
     };
@@ -85,8 +83,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
    *
    * @param queryResult the result (JS variable name, or JS value in single quotes) that will be passed to the Java handler {@link #addHandler(Function)}
    */
-  @NotNull
-  public String inject(@Nullable String queryResult) {
+  public @NotNull String inject(@Nullable String queryResult) {
     return inject(queryResult, "function(response) {}", "function(error_code, error_message) {}");
   }
 
@@ -97,8 +94,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
    * @param onSuccessCallback JS callback in format: {@code function(response) {}}
    * @param onFailureCallback JS callback in format: {@code function(error_code, error_message) {}}
    */
-  @NotNull
-  public String inject(@Nullable String queryResult, @NotNull String onSuccessCallback, @NotNull String onFailureCallback) {
+  public @NotNull String inject(@Nullable String queryResult, @NotNull String onSuccessCallback, @NotNull String onFailureCallback) {
     checkDisposed();
 
     if (queryResult != null && queryResult.isEmpty()) queryResult = "''";
@@ -195,9 +191,9 @@ public final class JBCefJSQuery implements JBCefDisposable {
   public static class Response {
     public static final int ERR_CODE_SUCCESS = 0;
 
-    @Nullable private final String myResponse;
+    private final @Nullable String myResponse;
     private final int myErrCode;
-    @Nullable private final String myErrMsg;
+    private final @Nullable String myErrMsg;
 
 
     public Response(@Nullable String response) {
@@ -210,8 +206,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
       myErrMsg = errMsg;
     }
 
-    @Nullable
-    public String response() {
+    public @Nullable String response() {
       return myResponse;
     }
 
@@ -219,8 +214,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
       return myErrCode;
     }
 
-    @Nullable
-    public String errMsg() {
+    public @Nullable String errMsg() {
       return myErrMsg;
     }
 

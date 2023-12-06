@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool;
@@ -6,15 +6,25 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UIdentifier;
 
+/**
+ * Base class for UAST-based (source-level) DevKit inspections.
+ * <p/>
+ * Notice different CTORs depending on visitor usage.
+ * <p/>
+ * Override {@link #isAllowed} to add additional constraints (e.g., required class in scope via {@link DevKitInspectionUtil#isClassAvailable})
+ * to skip running inspection completely whenever possible.
+ *
+ * @see DevKitInspectionUtil
+ * @see DevKitJvmInspection
+ */
 public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInspectionTool {
 
+  /**
+   * When overriding {@link #buildInternalVisitor} to create custom visitor.
+   */
   protected DevKitUastInspectionBase() {
   }
 
@@ -48,12 +58,5 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
       return new ProblemsHolder(manager, sourcePsi.getContainingFile(), isOnTheFly);
     }
     throw new IllegalStateException("Could not create problems holder");
-  }
-
-  protected static boolean hasMethodIdentifierEqualTo(@NotNull UCallExpression expression, String @NotNull ... methodNames) {
-    UIdentifier identifier = expression.getMethodIdentifier();
-    if (identifier == null) return false;
-    String methodName = identifier.getName();
-    return ArrayUtil.contains(methodName, methodNames);
   }
 }

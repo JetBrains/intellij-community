@@ -4,20 +4,20 @@ package com.intellij.collaboration.ui.codereview.details
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
-import com.intellij.collaboration.ui.util.bindDisabled
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
+import com.intellij.collaboration.ui.util.popup.PopupConfig
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -31,27 +31,28 @@ object CodeReviewDetailsCommitsComponentFactory {
   private const val COMPONENTS_GAP = 4
   private const val COMMIT_HASH_OFFSET = 8
 
-  fun <T> create(scope: CoroutineScope, changesVm: CodeReviewChangesViewModel<T>, commitPresenter: (T?) -> CommitPresenter): JComponent {
+  fun <T> create(scope: CoroutineScope, changesVm: CodeReviewChangesViewModel<T>,
+                 commitPresentation: (commit: T) -> CommitPresentation): JComponent {
     val commitsPopupTitle = JLabel().apply {
       font = JBFont.regular().asBold()
-      bindText(scope, changesVm.reviewCommits.map { commits ->
+      bindTextIn(scope, changesVm.reviewCommits.map { commits ->
         CollaborationToolsBundle.message("review.details.commits.title.text", commits.size)
       })
     }
-    val commitsPopup = createCommitChooserActionLink(scope, changesVm, commitPresenter)
+    val commitsPopup = scope.createCommitChooserActionLink(changesVm, commitPresentation)
     val nextCommitIcon = InlineIconButton(AllIcons.Chooser.Bottom).apply {
       withBackgroundHover = true
       actionListener = ActionListener { changesVm.selectNextCommit() }
-      bindVisibility(scope, changesVm.selectedCommit.map { it != null })
-      bindDisabled(scope, combine(changesVm.selectedCommitIndex, changesVm.reviewCommits) { selectedCommitIndex, commits ->
+      bindVisibilityIn(scope, changesVm.selectedCommit.map { it != null })
+      bindDisabledIn(scope, combine(changesVm.selectedCommitIndex, changesVm.reviewCommits) { selectedCommitIndex, commits ->
         selectedCommitIndex == commits.size - 1
       })
     }
     val previousCommitIcon = InlineIconButton(AllIcons.Chooser.Top).apply {
       withBackgroundHover = true
       actionListener = ActionListener { changesVm.selectPreviousCommit() }
-      bindVisibility(scope, changesVm.selectedCommit.map { it != null })
-      bindDisabled(scope, changesVm.selectedCommitIndex.map { it == 0 })
+      bindVisibilityIn(scope, changesVm.selectedCommit.map { it != null })
+      bindDisabledIn(scope, changesVm.selectedCommitIndex.map { it == 0 })
     }
 
     return HorizontalListPanel(COMPONENTS_GAP).apply {
@@ -62,15 +63,15 @@ object CodeReviewDetailsCommitsComponentFactory {
     }
   }
 
-  private fun <T> createCommitChooserActionLink(
-    scope: CoroutineScope,
+  private fun <T> CoroutineScope.createCommitChooserActionLink(
     changesVm: CodeReviewChangesViewModel<T>,
-    commitPresenter: (T?) -> CommitPresenter
+    commitPresentation: (commit: T) -> CommitPresentation
   ): JComponent {
+    val scope = this
     return ActionLink().apply {
       horizontalAlignment = SwingConstants.RIGHT
       setDropDownLinkIcon()
-      bindText(scope, combine(changesVm.selectedCommit, changesVm.reviewCommits) { selectedCommit, commits ->
+      bindTextIn(scope, combine(changesVm.selectedCommit, changesVm.reviewCommits) { selectedCommit, commits ->
         if (selectedCommit != null) {
           val metrics = getFontMetrics(font)
           val commitHashWidth = calculateCommitHashWidth(metrics, commits, changesVm::commitHash)
@@ -82,44 +83,47 @@ object CodeReviewDetailsCommitsComponentFactory {
           return@combine CollaborationToolsBundle.message("review.details.commits.popup.text", commits.size)
         }
       })
-      bindDisabled(scope, changesVm.reviewCommits.map { commits ->
+      bindDisabledIn(scope, changesVm.reviewCommits.map { commits ->
         commits.size <= 1
       })
-      addActionListener(createCommitPopupAction(scope, changesVm, commitPresenter))
+      addActionListener(scope.createCommitPopupAction(changesVm, commitPresentation))
     }
   }
 
-  private fun <T> createCommitPopupAction(
-    scope: CoroutineScope,
+  private fun <T> CoroutineScope.createCommitPopupAction(
     changesVm: CodeReviewChangesViewModel<T>,
-    commitPresenter: (T?) -> CommitPresenter
+    commitPresentation: (commit: T) -> CommitPresentation
   ): ActionListener {
     return ActionListener { event ->
-      val popupState: PopupState<JBPopup> = PopupState.forPopup()
       val parentComponent = event.source as? JComponent ?: return@ActionListener
       val point = RelativePoint.getSouthWestOf(parentComponent)
-      scope.launch {
-        val commits = changesVm.reviewCommits.value
+      launch {
+        val commits = changesVm.reviewCommits.first()
+        val commitsCount = commits.size
         val selectedCommit = changesVm.selectedCommit.stateIn(this).value
         val popupItems: List<T?> = mutableListOf<T?>(null).apply {
           addAll(commits)
         }
         val chosenCommit = ChooserPopupUtil.showChooserPopup(
           point,
-          popupState,
           popupItems,
           filteringMapper = { commit: T? ->
-            when (val presentation = commitPresenter(commit)) {
-              is CommitPresenter.SingleCommit -> presentation.title
-              is CommitPresenter.AllCommits -> CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
+            if (commit == null) {
+              CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount)
+            }
+            else {
+              commitPresentation(commit).titleHtml
             }
           },
-          renderer = CommitRenderer { commit: T? ->
-            SelectableWrapper(commitPresenter(commit), commit == selectedCommit)
-          }
+          renderer = CommitRenderer.createCommitRenderer(commitsCount) { commit: T? ->
+            SelectableWrapper(commit?.let(commitPresentation), commit == selectedCommit)
+          },
+          popupConfig = PopupConfig(
+            searchTextPlaceHolder = CollaborationToolsBundle.message("review.details.commits.search.placeholder")
+          )
         )
-
-        if (chosenCommit == null) changesVm.selectAllCommits() else changesVm.selectCommit(chosenCommit)
+        val index = chosenCommit?.let(commits::indexOf) ?: -1
+        changesVm.selectCommit(index)
       }
     }
   }

@@ -38,7 +38,7 @@ public class HgPullDialog extends DialogWrapper {
   private EditorComboBox myRepositoryURL;
   private String myCurrentRepositoryUrl;
 
-  public HgPullDialog(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable final HgRepository selectedRepo) {
+  public HgPullDialog(@NotNull Project project, @NotNull Collection<HgRepository> repositories, final @Nullable HgRepository selectedRepo) {
     super(project, false);
     this.project = project;
     hgRepositorySelector.setTitle(HgBundle.message("action.hg4idea.pull.select.repo"));
@@ -72,8 +72,7 @@ public class HgPullDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  public HgRepository getRepository() {
+  public @NotNull HgRepository getRepository() {
     return hgRepositorySelector.getRepository();
   }
 
@@ -81,7 +80,7 @@ public class HgPullDialog extends DialogWrapper {
     return myCurrentRepositoryUrl;
   }
 
-  private void setRoots(@NotNull Collection<HgRepository> repositories, @Nullable final HgRepository selectedRepo) {
+  private void setRoots(@NotNull Collection<HgRepository> repositories, final @Nullable HgRepository selectedRepo) {
     hgRepositorySelector.setRoots(repositories);
     hgRepositorySelector.setSelectedRoot(selectedRepo);
     onChangeRepository();

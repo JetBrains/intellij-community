@@ -41,6 +41,11 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
   }
 
   @Override
+  public TextMateCapture @Nullable [] getCaptureRules(Constants.@NotNull CaptureKey key) {
+    return getTargetNode().getCaptureRules(key);
+  }
+
+  @Override
   public boolean hasBackReference(Constants.@NotNull CaptureKey key, int group) {
     return getTargetNode().hasBackReference(key, group);
   }
@@ -63,7 +68,7 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
     return getTargetNode().findInRepository(ruleId);
   }
 
-  @NotNull
+  @Nullable
   @Override
   public CharSequence getScopeName() {
     return getTargetNode().getScopeName();

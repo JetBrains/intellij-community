@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public final class YamlGenericValueAdapter implements JsonValueAdapter {
+  private static final Pattern FLOAT_PATTERN = Pattern.compile("[-+]?(\\.[0-9]+|[0-9]+(\\.[0-9]*)?)([eE][-+]?[0-9]+)?");
+
   @NotNull private static final Set<String> NULLS = Set.of("null", "Null", "NULL", "~");
   @NotNull private static final Set<String> BOOLS = Set.of("true", "True", "TRUE", "false", "False", "FALSE");
   @NotNull private static final Set<String> INFS = Set.of(".inf", ".Inf", ".INF");
@@ -144,7 +146,7 @@ public final class YamlGenericValueAdapter implements JsonValueAdapter {
   private static boolean isFloat(@NotNull String s) {
     if (INFS.contains(trimSign(s)) || NANS.contains(s)) return true;
     if (hasTag(s, "float")) return true;
-    return Pattern.matches("[-+]?(\\.[0-9]+|[0-9]+(\\.[0-9]*)?)([eE][-+]?[0-9]+)?", s);
+    return FLOAT_PATTERN.matcher(s).matches();
   }
 
   @NotNull

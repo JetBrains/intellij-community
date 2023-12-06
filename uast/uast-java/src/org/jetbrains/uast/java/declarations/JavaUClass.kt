@@ -15,19 +15,22 @@ abstract class AbstractJavaUClass(
   givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), UClass, JavaUElementWithComments, UAnchorOwner, UDeclarationEx {
 
+  private val uastDeclarationsPart = UastLazyPart<List<UDeclaration>>()
+
   abstract override val javaPsi: PsiClass
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi get() = javaPsi
+  override val psi: PsiClass get() = javaPsi
 
-  override val uastDeclarations: List<UDeclaration> by lazyPub {
-    mutableListOf<UDeclaration>().apply {
-      addAll(fields)
-      addAll(initializers)
-      addAll(methods)
-      addAll(innerClasses)
+  override val uastDeclarations: List<UDeclaration>
+    get() = uastDeclarationsPart.getOrBuild {
+      mutableListOf<UDeclaration>().apply {
+        addAll(fields)
+        addAll(initializers)
+        addAll(methods)
+        addAll(innerClasses)
+      }
     }
-  }
 
   protected fun createJavaUTypeReferenceExpression(referenceElement: PsiJavaCodeReferenceElement): LazyJavaUTypeReferenceExpression =
     LazyJavaUTypeReferenceExpression(referenceElement, this) {
@@ -87,6 +90,9 @@ class JavaUAnonymousClass(
   uastParent: UElement?
 ) : AbstractJavaUClass(uastParent), UAnonymousClass, UAnchorOwner, PsiAnonymousClass by sourcePsi {
 
+  private val uastAnchorPart = UastLazyPart<UIdentifier?>()
+  private val fakeConstructorPart = UastLazyPart<JavaUMethod?>()
+
   @Suppress("OverridingDeprecatedMember")
   override val psi: PsiAnonymousClass get() = sourcePsi
 
@@ -106,38 +112,41 @@ class JavaUAnonymousClass(
 
   override fun convertParent(): UElement? = sourcePsi.parent.toUElementOfType<UObjectLiteralExpression>() ?: super.convertParent()
 
-  override val uastAnchor: UIdentifier? by lazyPub {
-    when (javaPsi) {
-      is PsiEnumConstantInitializer ->
-        (javaPsi.parent as? PsiEnumConstant)?.let { UIdentifier(it.nameIdentifier, this) }
-      else -> UIdentifier(sourcePsi.baseClassReference.referenceNameElement, this)
+  override val uastAnchor: UIdentifier?
+    get() = uastAnchorPart.getOrBuild {
+      when (javaPsi) {
+        is PsiEnumConstantInitializer ->
+          (javaPsi.parent as? PsiEnumConstant)?.let { UIdentifier(it.nameIdentifier, this) }
+        else -> UIdentifier(sourcePsi.baseClassReference.referenceNameElement, this)
+      }
     }
-  }
 
   override fun getSuperClass(): UClass? = super<AbstractJavaUClass>.getSuperClass()
   override fun getFields(): Array<UField> = super<AbstractJavaUClass>.getFields()
   override fun getInitializers(): Array<UClassInitializer> = super<AbstractJavaUClass>.getInitializers()
 
-  private val fakeConstructor: JavaUMethod? by lazyPub {
-    val psiClass = this.javaPsi
-    val physicalNewExpression = psiClass.parent.asSafely<PsiNewExpression>() ?: return@lazyPub null
-    val superConstructor = physicalNewExpression.resolveMethod()
-    val lightMethodBuilder = object : LightMethodBuilder(psiClass.manager, psiClass.language, "<anon-init>") {
-      init {
-        containingClass = psiClass
-        isConstructor = true
+  private val fakeConstructor: JavaUMethod?
+    get() = fakeConstructorPart.getOrBuild {
+      val psiClass = this.javaPsi
+      val physicalNewExpression = psiClass.parent.asSafely<PsiNewExpression>() ?: return@getOrBuild null
+      val superConstructor = physicalNewExpression.resolveMethod()
+      val lightMethodBuilder = object : LightMethodBuilder(psiClass.manager, psiClass.language, "<anon-init>") {
+        init {
+          containingClass = psiClass
+          isConstructor = true
+        }
+
+        override fun getNavigationElement(): PsiElement =
+          superConstructor?.navigationElement ?: psiClass.superClass?.navigationElement ?: super.getNavigationElement()
+
+        override fun getParent(): PsiElement = psiClass
+        override fun getModifierList(): PsiModifierList = superConstructor?.modifierList ?: super.getModifierList()
+        override fun getParameterList(): PsiParameterList = superConstructor?.parameterList ?: super.getParameterList()
+        override fun getDocComment(): PsiDocComment? = superConstructor?.docComment ?: super.getDocComment()
       }
 
-      override fun getNavigationElement(): PsiElement =
-        superConstructor?.navigationElement ?: psiClass.superClass?.navigationElement ?: super.getNavigationElement()
-      override fun getParent(): PsiElement = psiClass
-      override fun getModifierList(): PsiModifierList = superConstructor?.modifierList ?: super.getModifierList()
-      override fun getParameterList(): PsiParameterList = superConstructor?.parameterList ?: super.getParameterList()
-      override fun getDocComment(): PsiDocComment? = superConstructor?.docComment ?: super.getDocComment()
+      JavaUMethod(lightMethodBuilder, this@JavaUAnonymousClass)
     }
-
-    JavaUMethod(lightMethodBuilder, this@JavaUAnonymousClass)
-  }
 
   override fun getMethods(): Array<UMethod> {
     val constructor = fakeConstructor ?: return super<AbstractJavaUClass>.getMethods()

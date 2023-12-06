@@ -1,5 +1,6 @@
-// "Suppress 'REDUNDANT_NULLABLE' for var foo" "true"
+// "Suppress 'DIVISION_BY_ZERO' for var foo" "true"
 
-var foo: String?<caret>? = null
+var foo = 2 / <caret>0
 
-// IGNORE_FIR
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

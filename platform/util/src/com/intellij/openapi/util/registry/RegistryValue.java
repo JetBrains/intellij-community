@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
@@ -9,7 +9,9 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +30,7 @@ public class RegistryValue {
 
   private final Registry myRegistry;
   private final String myKey;
-  @Nullable private final RegistryKeyDescriptor myKeyDescriptor;
+  private final @Nullable RegistryKeyDescriptor myKeyDescriptor;
 
   private final List<RegistryValueListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -45,13 +47,11 @@ public class RegistryValue {
     myKeyDescriptor = keyDescriptor;
   }
 
-  @NotNull
-  public @NlsSafe String getKey() {
+  public @NotNull @NlsSafe String getKey() {
     return myKey;
   }
 
-  @NotNull
-  public @NlsSafe String asString() {
+  public @NotNull @NlsSafe String asString() {
     final String value = get(myKey, null, true);
     assert value != null : myKey;
     return value;
@@ -155,7 +155,7 @@ public class RegistryValue {
     final String s = get(myKey, null, true);
     if (s != null) {
       Color color = ColorHexUtil.fromHex(s, null);
-      if (color != null && myKey.contains("color")) {
+      if (color != null && (myKey.endsWith(".color") || myKey.endsWith(".color.dark") || myKey.endsWith(".color.light"))) {
         return color;
       }
       final String[] rgb = s.split(",");
@@ -170,8 +170,7 @@ public class RegistryValue {
     return defaultValue;
   }
 
-  @NotNull
-  public @NlsSafe String getDescription() {
+  public @NotNull @NlsSafe String getDescription() {
     if (myKeyDescriptor != null) {
       return myKeyDescriptor.getDescription();
     }
@@ -189,8 +188,7 @@ public class RegistryValue {
     return isChangedFromDefault(asString(), myRegistry);
   }
 
-  @Nullable
-  public String getPluginId() {
+  public @Nullable String getPluginId() {
     return myKeyDescriptor != null ? myKeyDescriptor.getPluginId() : null;
   }
 
@@ -248,14 +246,12 @@ public class RegistryValue {
   }
 
   public void setValue(String value) {
-    resetCache();
-
     RegistryValueListener globalValueChangeListener = myRegistry.getValueChangeListener();
     globalValueChangeListener.beforeValueChanged(this);
     for (RegistryValueListener each : myListeners) {
       each.beforeValueChanged(this);
     }
-
+    resetCache();
     myRegistry.getUserProperties().put(myKey, value);
     LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
 
@@ -289,7 +285,7 @@ public class RegistryValue {
     Disposer.register(parentDisposable, () -> setValue(prev));
   }
 
-  boolean isChangedSinceAppStart() {
+  public boolean isChangedSinceAppStart() {
     return myChangedSinceStart;
   }
 
@@ -305,6 +301,14 @@ public class RegistryValue {
   public void addListener(@NotNull RegistryValueListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, () -> myListeners.remove(listener));
+  }
+
+  public void addListener(@NotNull RegistryValueListener listener, @NotNull CoroutineScope coroutineScope) {
+    myListeners.add(listener);
+    Objects.requireNonNull(coroutineScope.getCoroutineContext().get(Job.Key)).invokeOnCompletion(__ -> {
+      myListeners.remove(listener);
+      return Unit.INSTANCE;
+    });
   }
 
   @Override

@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NonNls;
@@ -40,40 +38,34 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @Nullable
-  public NewVirtualFile findChild(@NotNull @NonNls final String name) {
+  public @Nullable NewVirtualFile findChild(final @NotNull @NonNls String name) {
     return null;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getCachedChildren() {
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public Iterable<VirtualFile> iterInDbChildren() {
+  public @NotNull Collection<VirtualFile> getCachedChildren() {
     return Collections.emptyList();
   }
 
   @Override
-  @NotNull
-  public NewVirtualFileSystem getFileSystem() {
+  public @NotNull Iterable<VirtualFile> iterInDbChildren() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public @NotNull NewVirtualFileSystem getFileSystem() {
     final VirtualFileSystemEntry parent = getParent();
     assert parent != null;
     return parent.getFileSystem();
   }
 
   @Override
-  @Nullable
-  public NewVirtualFile refreshAndFindChild(@NotNull final String name) {
+  public @Nullable NewVirtualFile refreshAndFindChild(final @NotNull String name) {
     return null;
   }
 
   @Override
-  @Nullable
-  public NewVirtualFile findChildIfCached(@NotNull final String name) {
+  public @Nullable NewVirtualFile findChildIfCached(final @NotNull String name) {
     return null;
   }
 
@@ -101,13 +93,12 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @NotNull
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
 
     return VfsUtilCore.inputStreamSkippingBOM(
       preloadedContent == null ?
-      getPersistence().getInputStream(this) :
+      owningPersistentFS().getInputStream(this) :
       new DataInputStream(new UnsyncByteArrayInputStream(preloadedContent)),
       this
     );
@@ -123,11 +114,11 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
     checkNotTooLarge(null);
     final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
     if (preloadedContent != null) return preloadedContent;
-    byte[] bytes = getPersistence().contentsToByteArray(this, cacheContent);
+    byte[] bytes = owningPersistentFS().contentsToByteArray(this, cacheContent);
     if (!isCharsetSet()) {
       // optimisation: take the opportunity to not load bytes again in getCharset()
-      // use getByFile() to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
-      FileType fileType = ObjectUtils.notNull(((FileTypeManagerEx)FileTypeManager.getInstance()).getByFile(this), UnknownFileType.INSTANCE);
+      // use getFileTypeByFile(..., bytes) to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
+      FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByFile(this, bytes);
 
       if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary() && bytes.length != 0) {
         try {
@@ -144,24 +135,22 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @NotNull
-  public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     checkNotTooLarge(requestor);
-    return VfsUtilCore.outputStreamAddingBOM(getPersistence().getOutputStream(this, requestor, modStamp, timeStamp), this);
+    return VfsUtilCore.outputStreamAddingBOM(owningPersistentFS().getOutputStream(this, requestor, modStamp, timeStamp), this);
   }
 
   @Override
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     checkNotTooLarge(requestor);
     // NB not using VirtualFile.getOutputStream() to avoid unneeded BOM skipping/writing
-    try (OutputStream outputStream = getPersistence().getOutputStream(this, requestor, newModificationStamp, newTimeStamp)) {
+    try (OutputStream outputStream = owningPersistentFS().getOutputStream(this, requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
     }
   }
 
-  @Nullable
   @Override
-  public String getDetectedLineSeparator() {
+  public @Nullable String getDetectedLineSeparator() {
     if (isDirectory()) {
       throw new IllegalArgumentException("getDetectedLineSeparator() must not be called for a directory");
     }
@@ -189,9 +178,8 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
     getSegment().setUserMap(myId, map);
   }
 
-  @NotNull
   @Override
-  protected KeyFMap getUserMap() {
+  protected @NotNull KeyFMap getUserMap() {
     return getSegment().getUserMap(this, myId);
   }
 

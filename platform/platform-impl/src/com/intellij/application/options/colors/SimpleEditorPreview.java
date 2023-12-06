@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -40,7 +40,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.List;
 import java.util.*;
 
-public class SimpleEditorPreview implements PreviewPanel {
+public final class SimpleEditorPreview implements PreviewPanel {
   private final ColorSettingsPage myPage;
 
   private final EditorEx myEditor;
@@ -118,7 +118,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     return myEditor;
   }
 
-  private void navigate(boolean select, @NotNull final LogicalPosition pos) {
+  private void navigate(boolean select, final @NotNull LogicalPosition pos) {
     int offset = myEditor.logicalPositionToOffset(pos);
     final SyntaxHighlighter highlighter = myPage.getHighlighter();
 
@@ -143,18 +143,16 @@ public class SimpleEditorPreview implements PreviewPanel {
     }
   }
 
-  @Nullable
-  private  HighlightData getDataFromOffset(int offset) {
+  private @Nullable HighlightData getDataFromOffset(int offset) {
     for (HighlightData highlightData : myHighlightData) {
-      if (offset >= highlightData.getStartOffset() && offset <= highlightData.getEndOffset()) {
+      if (offset >= highlightData.getStartOffset() && offset < highlightData.getEndOffset()) {
         return highlightData;
       }
     }
     return null;
   }
 
-  @Nullable
-  private static String selectItem(HighlighterIterator itr, SyntaxHighlighter highlighter) {
+  private static @Nullable String selectItem(HighlighterIterator itr, SyntaxHighlighter highlighter) {
     IElementType tokenType = itr.getTokenType();
     if (tokenType == null) return null;
 
@@ -235,7 +233,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     }
   }
 
-  private void scrollHighlightInView(@Nullable final List<? extends HighlightData> highlightDatas) {
+  private void scrollHighlightInView(final @Nullable List<? extends HighlightData> highlightDatas) {
     if (highlightDatas == null) return;
 
     boolean needScroll = true;
@@ -249,7 +247,8 @@ public class SimpleEditorPreview implements PreviewPanel {
     }
     if (needScroll && minOffset != Integer.MAX_VALUE) {
       LogicalPosition pos = myEditor.offsetToLogicalPosition(minOffset);
-      myEditor.getScrollingModel().scrollTo(pos, ScrollType.MAKE_VISIBLE);
+      myEditor.getCaretModel().moveToOffset(minOffset);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
   }
 
@@ -335,7 +334,7 @@ public class SimpleEditorPreview implements PreviewPanel {
 
 
   @Override
-  public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
+  public void addListener(final @NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 
@@ -363,11 +362,10 @@ public class SimpleEditorPreview implements PreviewPanel {
     myHighlightData.addAll(rainbowMarkup);
   }
 
-  @NotNull
-  private List<HighlightData> setupRainbowHighlighting(@NotNull final RainbowColorSettingsPage page,
-                                                       @NotNull final List<HighlightData> initialMarkup,
-                                                       final TextAttributesKey @NotNull [] rainbowTempKeys,
-                                                       boolean isRainbowOn) {
+  private @NotNull List<HighlightData> setupRainbowHighlighting(final @NotNull RainbowColorSettingsPage page,
+                                                                final @NotNull List<HighlightData> initialMarkup,
+                                                                final TextAttributesKey @NotNull [] rainbowTempKeys,
+                                                                boolean isRainbowOn) {
     int colorCount = rainbowTempKeys.length;
     if (colorCount == 0) {
       return initialMarkup;
@@ -428,9 +426,8 @@ public class SimpleEditorPreview implements PreviewPanel {
     return rainbowMarkup;
   }
 
-  @NotNull
-  private HighlightData getRainbowTemp(TextAttributesKey @NotNull [] rainbowTempKeys,
-                                       int startOffset, int endOffset) {
+  private @NotNull HighlightData getRainbowTemp(TextAttributesKey @NotNull [] rainbowTempKeys,
+                                                int startOffset, int endOffset) {
     String id = myEditor.getDocument().getText(TextRange.create(startOffset, endOffset));
     int index = UsedColors.getOrAddColorIndex((EditorImpl)myEditor, id, rainbowTempKeys.length);
     return new HighlightData(startOffset, endOffset, rainbowTempKeys[index]);

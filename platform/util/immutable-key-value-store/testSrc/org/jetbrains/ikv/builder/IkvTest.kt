@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ikv.builder
 
+import com.intellij.util.lang.Ikv
+import com.intellij.util.lang.Xxh3
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.ikv.Ikv
-import org.jetbrains.xxh3.Xxh3
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
@@ -23,7 +23,7 @@ internal class IkvTest {
       sizeAwareIkvWriter(file).use { writer ->
         for (i in 0 until count) {
           val data = random.nextBytes(random.nextInt(64, 512))
-          val key = Xxh3.hash32(data)
+          val key = Xxh3.hash(data).toInt()
           writer.write(writer.entry(key), data)
           list.add(Pair(key, data))
         }
@@ -41,7 +41,7 @@ internal class IkvTest {
     val file = tempDir!!.resolve("db")
 
     val data = random.nextBytes(random.nextInt(64, 512))
-    val key = Xxh3.hash32(data)
+    val key = Xxh3.hash(data).toInt()
 
     Files.createDirectories(file.parent)
     sizeAwareIkvWriter(file).use { writer ->
@@ -58,7 +58,7 @@ internal class IkvTest {
     val file = tempDir!!.resolve("db")
 
     val data = random.nextBytes(random.nextInt(64, 512))
-    val key = Xxh3.hash32(data)
+    val key = Xxh3.hash(data).toInt()
 
     Files.createDirectories(file.parent)
     sizeUnawareIkvWriter(file).use { writer ->

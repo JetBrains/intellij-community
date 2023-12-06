@@ -5,7 +5,6 @@ import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.runners.ExecutionUtil
-import com.intellij.ide.macro.MacroManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.diagnostic.Logger
@@ -27,7 +26,6 @@ class RunToolbarProcessMainAction(process: RunToolbarProcess, executor: Executor
           val mainSlotData = slotManager.mainSlotData
 
           mainSlotData.environment?.let { environment ->
-            MacroManager.getInstance().cacheMacrosPreview(e.getDataContext())
             ExecutionUtil.restart(environment)
           } ?: run {
             ExecutorRegistryImpl.RunnerHelper.run(project, it.configuration, it, e.dataContext, executor)

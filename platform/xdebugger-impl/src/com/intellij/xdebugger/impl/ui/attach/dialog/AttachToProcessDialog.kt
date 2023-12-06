@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.icons.AllIcons
@@ -5,10 +6,12 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.ui.ValidationInfo
@@ -31,6 +34,7 @@ import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogUiInvisibleDebuggerProvider
+import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachToProcessViewProvider
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.getActionPresentation
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
@@ -48,11 +52,14 @@ open class AttachToProcessDialog(
   private val project: Project,
   private val attachDebuggerProviders: List<XAttachDebuggerProvider>,
   private val attachHostProviders: List<XAttachHostProvider<XAttachHost>>,
-  isLocalViewDefault: Boolean = true,
+  dataContext: DataContext = DataContext.EMPTY_CONTEXT,
+  defaultHostType: AttachDialogHostType = AttachDialogHostType.LOCAL,
   parentComponent: JComponent? = null) : DialogWrapper(project, parentComponent, true, IdeModalityType.MODELESS) {
 
   companion object {
     internal const val ATTACH_DIALOG_SELECTED_DEBUGGER = "ATTACH_DIALOG_SELECTED_DEBUGGER"
+
+    private val logger = Logger.getInstance(AttachToProcessDialog::class.java)
   }
 
   protected val filterTextField = SearchTextField(false).apply {
@@ -80,7 +87,7 @@ open class AttachToProcessDialog(
     })
   }
 
-  private val state = AttachDialogState(disposable)
+  private val state = AttachDialogState(disposable, dataContext)
 
   private val filterTypingMergeQueue: MergingUpdateQueue = MergingUpdateQueue(
     "Attach to process search typing merging queue",
@@ -97,11 +104,11 @@ open class AttachToProcessDialog(
   private val columnsLayout = application.getService(AttachDialogColumnsLayoutService::class.java).getColumnsLayout()
 
   private val localAttachView = AttachToLocalProcessView(project, state, columnsLayout, attachDebuggerProviders)
-  private val remoteAttachView = AttachToRemoteProcessView(project, state, columnsLayout, attachHostProviders, attachDebuggerProviders)
-  private val allViews = listOf(localAttachView, remoteAttachView)
+  private val externalAttachViews: List<AttachToProcessView>
+  private val allViews: List<AttachToProcessView>
   private var currentAttachView = AtomicLazyProperty<AttachToProcessView> { localAttachView }
 
-  private val viewsPanel = panel { row { segmentedButton(allViews) { it.getName() }.bind(currentAttachView) } }
+  private val viewsPanel: DialogPanel
 
   private val viewPanel = JPanel(MigLayout("ins 0, fill, gap 0, novisualpadding")).apply {
     minimumSize = Dimension(columnsLayout.getMinimumViewWidth(), JBUI.scale(400))
@@ -113,11 +120,21 @@ open class AttachToProcessDialog(
   init {
     title = XDebuggerBundle.message("xdebugger.attach.action").trimEnd('.')
 
+    externalAttachViews = XAttachToProcessViewProvider
+      .getProcessViews(project, state, columnsLayout, attachDebuggerProviders, attachHostProviders)
+    allViews = listOf(localAttachView) + externalAttachViews
+    viewsPanel = panel { row { segmentedButton(allViews) { text = it.getName() }.bind(currentAttachView) } }
+
     northToolbar = createNorthToolbar()
     viewPanel.add(filterTextField, "wrap, grow")
     updateProblemStripe()
     currentAttachView.afterChange { updateView(it) }
-    currentAttachView.set(if (!isLocalViewDefault && attachHostProviders.any()) remoteAttachView else localAttachView)
+    val view = when (defaultHostType) {
+      AttachDialogHostType.LOCAL -> localAttachView
+      else -> externalAttachViews.firstOrNull { it.getHostType() == defaultHostType } ?: localAttachView
+    }
+
+    currentAttachView.set(view)
 
     currentAttachView.afterChange { AttachDialogStatisticsCollector.hostSwitched(it) } // register view switch logging only after initialization
 
@@ -152,11 +169,11 @@ open class AttachToProcessDialog(
     state.selectedDebuggerItem.afterChange {
       updateProblemStripe(if (it != null && it.getGroups().isEmpty()) XDebuggerBundle.message("xdebugger.attach.dialog.no.debuggers.is.available.message") else null)
       attachAction.setItem(it)
-      getOkButton().options = attachAction.options
+      getOkOptionButton()?.options = attachAction.options
     }
     state.selectedDebuggersFilter.afterChange {
       attachAction.onFilterUpdated()
-      getOkButton().options = attachAction.options
+      getOkOptionButton()?.options = attachAction.options
     }
     okAction.isEnabled = false
 
@@ -245,7 +262,7 @@ open class AttachToProcessDialog(
           return
         }
         if (isNonPrintable(e.keyCode)) return
-        filterTextField.text = filterTextField.text + e.keyChar
+        filterTextField.text += e.keyChar
       }
     }
     list.getFocusedComponent().addKeyListener(keyListener)
@@ -256,7 +273,19 @@ open class AttachToProcessDialog(
   }
 
   private fun getAttachAction(): AttachAction = okAction as AttachAction
-  private fun getOkButton(): JBOptionButton = getButton(okAction) as JBOptionButton
+  private fun getOkOptionButton(): JBOptionButton? {
+    val button = getButton(okAction)
+    if (button == null) {
+      logger.error("Ok button is not available")
+      return null
+    }
+    if (button !is JBOptionButton) {
+      logger.warn("Attach dialog OK button is not an ${JBOptionButton::class.java.simpleName} (Actual button type is ${button::class.java}). Do you have 'ide.allow.merge.buttons' registry value disabled?")
+      return null
+    }
+
+    return button
+  }
 
   private fun updateView(view: AttachToProcessView) {
     if (viewPanel.components.size > 1) {
@@ -426,7 +455,7 @@ open class AttachToProcessDialog(
       return panel {
         row {
           label(XDebuggerBundle.message("xdebugger.attach.view.message")).gap(RightGap.SMALL)
-          segmentedButton(AttachViewType.values().toList()) { it.displayText }.bind(state.selectedViewType)
+          segmentedButton(AttachViewType.values().toList()) { text = it.displayText }.bind(state.selectedViewType)
         }
       }
     }
@@ -498,8 +527,11 @@ open class AttachToProcessDialog(
     return AttachViewActionWrapper(view, action)
   }
 
-  fun setShowLocalView(localViewDefault: Boolean) {
-    val viewToSelect = if (localViewDefault) localAttachView else remoteAttachView
+  fun setAttachView(hostType: AttachDialogHostType) {
+    val viewToSelect = when (hostType) {
+      AttachDialogHostType.LOCAL -> localAttachView
+      else -> externalAttachViews.firstOrNull { it.getHostType() == hostType } ?: localAttachView
+    }
     if (currentAttachView.get() == viewToSelect) {
       return
     }

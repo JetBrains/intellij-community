@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -127,7 +128,7 @@ public class ReferenceChainLink {
   private void markExpensive(Project project) {
     Set<ReferenceChainLink> expensive = project.getUserData(EXPENSIVE_LINKS);
     if (expensive == null) {
-      project.putUserData(EXPENSIVE_LINKS, expensive = ContainerUtil.newConcurrentSet());
+      project.putUserData(EXPENSIVE_LINKS, expensive = ConcurrentCollectionFactory.createConcurrentSet());
     }
     expensive.add(this);
   }

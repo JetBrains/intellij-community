@@ -1,0 +1,29 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.beforeResolveHighlightingVisitor"
+            interface="org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <defaultHighlightingSettingProvider implementation="org.jetbrains.kotlin.idea.highlighter.KotlinDefaultHighlightingSettingsProvider"/>
+
+    <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinBeforeResolveHighlightingPass$Registrar"/>
+    <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.highlighter.KotlinProblemHighlightFilter"/>
+    <problemFileHighlightFilter implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinProblemFileHighlightFilter"/>
+
+    <lang.syntaxHighlighterFactory language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.highlighting.KotlinSyntaxHighlighterFactory"/>
+    <syntaxHighlighter factoryClass="org.jetbrains.kotlin.idea.base.highlighting.KotlinSyntaxHighlighterFactory"/>
+    <colorSettingsPage implementation="org.jetbrains.kotlin.idea.highlighter.KotlinColorSettingsPage"/>
+    <additionalTextAttributes scheme="Default" file="colorScheme/Default_Kotlin.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorScheme/Darcula_Kotlin.xml"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinRainbowVisitor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.base.highlighting.beforeResolve.DeclarationHighlightingExtension"/>
+    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.base.highlighting.beforeResolve.AnnotationsHighlightingExtension"/>
+  </extensions>
+
+</idea-plugin>

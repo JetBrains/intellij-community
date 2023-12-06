@@ -9,3 +9,4 @@ fun test(i: Int, j: Int) {
         else -> { /* other code */ }
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix

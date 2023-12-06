@@ -3,18 +3,20 @@
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.util.indexing.*
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.DataInput
 import java.io.DataOutput
 
+private const val KOTLIN_DOT_FILE_EXTENSION = ".${KotlinFileType.EXTENSION}"
+
 class KotlinPackageSourcesMemberNamesIndex internal constructor() : FileBasedIndexExtension<String, Collection<String>>() {
     companion object {
-        val NAME: ID<String, Collection<String>> = ID.create(KotlinPackageSourcesMemberNamesIndex::class.java.canonicalName)
+        val NAME: ID<String, Collection<String>> = ID.create(KotlinPackageSourcesMemberNamesIndex::class.java.simpleName)
     }
 
     private val KEY_DESCRIPTOR = EnumeratorStringDescriptor()
@@ -28,7 +30,7 @@ class KotlinPackageSourcesMemberNamesIndex internal constructor() : FileBasedInd
     override fun getValueExternalizer() = StringSetExternalizer
 
     override fun getInputFilter(): FileBasedIndex.InputFilter =
-        FileBasedIndex.InputFilter { file -> file.extension == KotlinFileType.EXTENSION || file.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX }
+        FileTypeInputFilterPredicate(KotlinFileType.INSTANCE)
 
     override fun getVersion(): Int = 2
 

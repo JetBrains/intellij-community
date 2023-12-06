@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 // FIR_IDENTICAL
 fun returnFun() {}
 
@@ -7,5 +6,6 @@ fun usage(a: Int?) {
     return
 }
 
+// IGNORE_K2
 // ORDER: return
 // ORDER: returnFun

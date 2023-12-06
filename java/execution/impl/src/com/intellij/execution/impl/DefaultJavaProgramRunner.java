@@ -19,6 +19,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -282,7 +283,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     protected abstract void perform(AnActionEvent e, ProcessProxy proxy, ProcessHandler handler);
   }
 
-  public static final class ControlBreakAction extends ProxyBasedAction {
+  public static final class ControlBreakAction extends ProxyBasedAction implements ActionRemoteBehaviorSpecification.Disabled {
     private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Thread Dumper", 1);
 
     public ControlBreakAction() {
@@ -322,7 +323,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
               List<ThreadState> threads = ThreadDumpParser.parse(text);
               ApplicationManager.getApplication().invokeLater(
                 () -> DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), scope),
-                ModalityState.NON_MODAL);
+                ModalityState.nonModal());
             }
             catch (AttachNotSupportedException e) {
               LOG.debug(e);
@@ -395,7 +396,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
         }
       });
 
-      getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.TOOLBAR);
+      getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.MORE_GROUP);
     }
 
     @Override
@@ -495,7 +496,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     AnalyzeStacktraceUtil.ConsoleFactory factory = states.size() > 1 ? new ThreadDumpConsoleFactory(project, states) : null;
     String title = JavaCompilerBundle.message("tab.title.thread.dump", DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis()));
     ApplicationManager.getApplication().invokeLater(
-      () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.NON_MODAL);
+      () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.nonModal());
   }
 
   public static final class SoftExitAction extends ProxyBasedAction {

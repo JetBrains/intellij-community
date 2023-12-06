@@ -2,7 +2,6 @@
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.NonExtendable
@@ -13,8 +12,7 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
   /** @deprecated please use {@link NullableLazyValue#volatileLazyNullable} instead */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected VolatileNullableLazyValue() { }
+  VolatileNullableLazyValue() { }
 
   @Override
   @SuppressWarnings("DuplicatedCode")
@@ -35,18 +33,5 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
   @Override
   public boolean isComputed() {
     return myComputed;
-  }
-
-  /** @deprecated please use {@link NullableLazyValue#volatileLazyNullable} instead */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  public static @NotNull <T> VolatileNullableLazyValue<T> createValue(@NotNull Factory<? extends T> value) {
-    return new VolatileNullableLazyValue<T>() {
-      @Override
-      protected @Nullable T compute() {
-        return value.create();
-      }
-    };
   }
 }

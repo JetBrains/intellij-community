@@ -19,12 +19,13 @@ import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
-import org.jetbrains.kotlin.idea.completion.lookups.withSymbolInfo
+import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
 
 class TypeLookupElementFactory {
-    fun KtAnalysisSession.createLookup(type: KtType): LookupElement? {
+    context(KtAnalysisSession)
+fun createLookup(type: KtType): LookupElement? {
         val renderedType = type.render(TYPE_RENDERING_OPTIONS_SHORT_NAMES, position = Variance.INVARIANT)
         val lookupObject = TypeLookupObject(type.render(TYPE_RENDERING_OPTIONS, position = Variance.INVARIANT))
 
@@ -32,7 +33,7 @@ class TypeLookupElementFactory {
 
         val element = LookupElementBuilder.create(lookupObject, renderedType)
             .withInsertHandler(TypeInsertHandler)
-            .let { if (symbol != null) withSymbolInfo(symbol, it) else it }
+            .let { if (symbol != null) withClassifierSymbolInfo(symbol, it) else it }
 
         return when (type) {
             is KtTypeParameterType -> element
@@ -48,17 +49,22 @@ class TypeLookupElementFactory {
         }
     }
 
-    fun KtAnalysisSession.createLookup(symbol: KtClassifierSymbol): LookupElement? {
+    context(KtAnalysisSession)
+fun createLookup(symbol: KtClassifierSymbol): LookupElement? {
         val (relativeNameAsString, fqNameAsString) = when (symbol) {
             is KtTypeParameterSymbol -> symbol.name.asString().let { it to it }
-            is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.let { it.relativeClassName.asString() to it.asFqNameString() }
+
+            is KtClassLikeSymbol -> when (val classId = symbol.classIdIfNonLocal) {
+                null -> symbol.name?.asString()?.let { it to it }
+                else -> classId.relativeClassName.asString() to classId.asFqNameString()
+            }
         } ?: return null
 
         val tailText = (symbol as? KtClassLikeSymbol)?.let { getTailText(symbol, usePackageFqName = true) }
 
         return LookupElementBuilder.create(TypeLookupObject(fqNameAsString), relativeNameAsString)
             .withInsertHandler(TypeInsertHandler)
-            .let { withSymbolInfo(symbol, it) }
+            .let { withClassifierSymbolInfo(symbol, it) }
             .withTailText(tailText)
     }
 

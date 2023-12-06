@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -14,7 +14,6 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
@@ -24,6 +23,7 @@ import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Paths
+import kotlin.io.path.readText
 import kotlin.properties.Delegates
 
 internal class ProjectStoreTest {
@@ -74,7 +74,7 @@ internal class ProjectStoreTest {
       file.write(file.readText().replace("""<option name="AAvalue" value="foo" />""", """<option name="AAvalue" value="newValue" />"""))
 
       refreshProjectConfigDir(project)
-      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+      StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 
@@ -163,6 +163,14 @@ internal class ProjectStoreTest {
       project.setProjectName(name)
       project.stateStore.save()
       assertThat(store.getNameFile()).doesNotExist()
+
+      project.setProjectName("<html><img src=http:ip:port/attack.png> </html>")
+      project.stateStore.save()
+      assertThat(store.getNameFile()).doesNotExist()
+
+      project.setProjectName("a < b or b > c")
+      project.stateStore.save()
+      assertThat(store.getNameFile()).hasContent("a b or b > c")
     }
   }
 
@@ -227,7 +235,7 @@ internal class ProjectStoreTest {
       val newProjectPath = tempDirManager.newPath()
       val newProject = projectManager.openProjectAsync(newProjectPath, OpenProjectTask { isNewProject = true; isRefreshVfsNeeded = false })!!
       newProject.useProjectAsync {
-        saveSettings(newProject, forceSavingAllSettings = true)
+        newProject.stateStore.save(forceSavingAllSettings = true)
         val miscXml = newProjectPath.resolve(".idea/misc.xml").readText()
         assertThat(miscXml).contains("AATestComponent")
         assertThat(miscXml).contains("""<option name="AAvalue" value="foo" />""")

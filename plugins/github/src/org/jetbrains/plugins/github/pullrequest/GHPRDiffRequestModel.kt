@@ -12,4 +12,5 @@ interface GHPRDiffRequestModel {
 
   fun addAndInvokeRequestChainListener(disposable: Disposable, listener: () -> Unit)
   fun addFilePathSelectionListener(listener: () -> Unit)
+  fun addFilePathSelectionListener(disposable: Disposable, listener: () -> Unit)
 }

@@ -4,12 +4,14 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDomAnnotatorTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
 
   @Test
-  fun testAnnotatePlugin() {
+  fun testAnnotatePlugin() = runBlocking {
     val modulePom = createModulePom("m", """
 <parent>
   <groupId>test</groupId>
@@ -27,7 +29,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </build>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -59,7 +61,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testAnnotateDependency() {
+  fun testAnnotateDependency() = runBlocking {
     val modulePom = createModulePom("m", """
 <parent>
   <groupId>test</groupId>
@@ -76,7 +78,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </dependencies>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -110,7 +112,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testAnnotateDependencyWithEmptyRelativePath() {
+  fun testAnnotateDependencyWithEmptyRelativePath() = runBlocking {
     val modulePom = createModulePom("m", """
 <parent>
   <groupId>test</groupId>
@@ -128,7 +130,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </dependencies>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>

@@ -18,31 +18,52 @@ public class JavaHighlightErrorFilter extends HighlightErrorFilter {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiExpressionStatement && !PsiUtil.isStatement(parent)) {
         // unterminated expression statement which is not a statement at all:
-        // let's report it as not-a-statement instead 
-        // (see HighlightUtil.checkNotAStatement); it's more visible and provides 
+        // let's report it as not-a-statement instead
+        // (see HighlightUtil.checkNotAStatement); it's more visible and provides
         // more useful fixes.
         return false;
       }
       else {
         // reporting missing semicolons after an unclosed string literal is not useful.
-        PsiElement prevLeaf = PsiTreeUtil.prevCodeLeaf(element);
-        if (prevLeaf instanceof PsiJavaToken token) {
-          IElementType type = token.getTokenType();
-          if (type == JavaTokenType.STRING_LITERAL) {
-            String text = token.getText();
-            if (text.length() == 1 || !StringUtil.endsWithChar(text, '"')) {
-              return false;
-            }
-          }
-          else if (type == JavaTokenType.CHARACTER_LITERAL) {
-            String text = token.getText();
-            if (text.length() == 1 || !StringUtil.endsWithChar(text, '\'')) {
-              return false;
-            }
-          }
-        }
+        if (isAfterUnclosedStringLiteral(element)) return false;
+      }
+    }
+    else if (description.equals(JavaPsiBundle.message("expected.comma.or.rparen"))) {
+      if (isAfterUnclosedStringLiteral(element)) return false;
+    }
+    else if (description.equals(JavaPsiBundle.message("expected.class.or.interface"))) {
+      String text = element.getText();
+      if ((text.equals(PsiKeyword.SEALED) || text.equals(PsiKeyword.NON_SEALED)) &&
+          PsiTreeUtil.skipWhitespacesAndCommentsForward(element) instanceof PsiClass) {
+        return false;
       }
     }
     return true;
+  }
+
+  private static boolean isAfterUnclosedStringLiteral(@NotNull PsiErrorElement element) {
+    PsiElement prevLeaf = PsiTreeUtil.prevCodeLeaf(element);
+    if (prevLeaf instanceof PsiJavaToken token) {
+      IElementType type = token.getTokenType();
+      if (type == JavaTokenType.STRING_LITERAL) {
+        String text = token.getText();
+        if (text.length() == 1 || !StringUtil.endsWithChar(text, '"')) {
+          return true;
+        }
+      }
+      else if (type == JavaTokenType.CHARACTER_LITERAL) {
+        String text = token.getText();
+        if (text.length() == 1 || !StringUtil.endsWithChar(text, '\'')) {
+          return true;
+        }
+      }
+      else if (type == JavaTokenType.STRING_TEMPLATE_END) {
+        String text = token.getText();
+        if (text.length() == 1 || !StringUtil.endsWithChar(text, '"')) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

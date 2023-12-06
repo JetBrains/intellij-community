@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="microba" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.michaelbaranov.microba:microba:0.4.5-jb.1" />
+    <properties include-transitive-deps="false" maven-id="com.michaelbaranov.microba:microba:0.4.5-jb.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/michaelbaranov/microba/microba/0.4.5-jb.1/microba-0.4.5-jb.1.jar">
+          <sha256sum>dad321d5c6e522ef41f427665b4c5277c8ae72541c7b9df2ba63cb75f2831be1</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/michaelbaranov/microba/microba/0.4.5-jb.1/microba-0.4.5-jb.1.jar!/" />
     </CLASSES>

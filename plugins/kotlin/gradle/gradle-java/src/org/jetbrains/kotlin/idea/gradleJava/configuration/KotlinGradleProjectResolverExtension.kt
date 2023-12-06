@@ -13,21 +13,23 @@ import com.intellij.openapi.util.io.FileUtil
 import org.gradle.api.artifacts.Dependency
 import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.gradle.tooling.model.idea.IdeaModule
+import org.gradle.tooling.model.idea.IdeaProject
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
+import org.jetbrains.kotlin.config.convertPathsToSystemIndependent
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinGradleSourceSetDataNodes
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
+import org.jetbrains.kotlin.idea.gradleJava.internLargeArguments
+import org.jetbrains.kotlin.idea.gradleJava.interner
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
-import org.jetbrains.kotlin.idea.projectModel.CachedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.PsiPrecedences
-import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency
@@ -38,7 +40,6 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
-import java.lang.reflect.Proxy
 import java.util.*
 
 val DataNode<out ModuleData>.kotlinGradleProjectDataNodeOrNull: DataNode<KotlinGradleProjectData>?
@@ -75,21 +76,8 @@ var DataNode<out ModuleData>.hasKotlinPlugin: Boolean
         kotlinGradleProjectDataOrFail.hasKotlinPlugin = value
     }
 
-@Suppress("TYPEALIAS_EXPANSION_DEPRECATION")
-@Deprecated("Use KotlinGradleSourceSetData#compilerArgumentsBySourceSet instead", level = DeprecationLevel.ERROR)
-var DataNode<out ModuleData>.compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet?
-    @Suppress("DEPRECATION_ERROR")
-    get() = compilerArgumentsBySourceSet()
-    set(value) = throw UnsupportedOperationException("Changing of compilerArguments is available only through GradleSourceSetData.")
-
 var DataNode<ModuleData>.kotlinTaskPropertiesBySourceSet
         by CopyableDataNodeUserDataProperty(Key.create<KotlinTaskPropertiesBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
-
-@Suppress("TYPEALIAS_EXPANSION_DEPRECATION", "DEPRECATION_ERROR")
-fun DataNode<out ModuleData>.compilerArgumentsBySourceSet(): CompilerArgumentsBySourceSet? =
-    ExternalSystemApiUtil.findAllRecursively(this, KotlinGradleSourceSetData.KEY).ifNotEmpty {
-        map { it.data }.filter { it.sourceSetName != null }.associate { it.sourceSetName!! to it.compilerArguments }
-    }
 
 @Deprecated("Use KotlinGradleSourceSetData#additionalVisibleSourceSets instead", level = DeprecationLevel.ERROR)
 var DataNode<out ModuleData>.additionalVisibleSourceSets: AdditionalVisibleSourceSetsBySourceSet
@@ -139,20 +127,11 @@ var DataNode<out ModuleData>.implementedModuleNames: List<String>
     get() = when (data) {
         is GradleSourceSetData -> ExternalSystemApiUtil.find(this, KotlinGradleSourceSetData.KEY)?.data?.implementedModuleNames
             ?: error("Failed to find KotlinGradleSourceSetData for $this")
+
         else -> ExternalSystemApiUtil.find(this@implementedModuleNames, KotlinGradleProjectData.KEY)?.data?.implementedModuleNames
             ?: error("Failed to find KotlinGradleProjectData for $this")
     }
     set(value) = throw UnsupportedOperationException("Changing of implementedModuleNames is available only through KotlinGradleSourceSetData.")
-
-
-@Deprecated("Use KotlinGradleSourceSetData#dependenciesCache instead", level = DeprecationLevel.ERROR)
-// Project is usually the same during all import, thus keeping Map Project->Dependencies makes model a bit more complicated but allows to avoid future problems
-var DataNode<out ModuleData>.dependenciesCache: MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>>
-    get() = kotlinGradleProjectDataOrFail.dependenciesCache
-    set(value) = with(kotlinGradleProjectDataOrFail.dependenciesCache) {
-        clear()
-        putAll(value)
-    }
 
 
 @Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
@@ -166,8 +145,6 @@ var DataNode<out ModuleData>.pureKotlinSourceFolders: MutableCollection<String>
 
 class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() {
     private val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
-    private val cacheManager = KotlinCompilerArgumentsCacheMergeManager
-
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
         return setOf(KotlinGradleModelBuilder::class.java, KotlinTarget::class.java, RandomUtils::class.java, Unit::class.java)
@@ -186,7 +163,6 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
 
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
         return super.createModule(gradleModule, projectDataNode)?.also {
-            cacheManager.mergeCache(gradleModule, resolverCtx)
             initializeModuleData(gradleModule, it, projectDataNode, resolverCtx)
         }
     }
@@ -234,9 +210,14 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
     }
 
     private fun initializeGradleSourceSetsData(kotlinModel: KotlinGradleModel, mainModuleNode: DataNode<ModuleData>) {
-        kotlinModel.cachedCompilerArgumentsBySourceSet.forEach { (sourceSetName, cachedArgs) ->
+        kotlinModel.compilerArgumentsBySourceSet.forEach { (sourceSetName, arguments) ->
             KotlinGradleSourceSetData(sourceSetName).apply {
-                cachedArgsInfo = cachedArgs.copyIfNeeded() as CachedExtractedArgsInfo
+                val platformKind = detectPlatformKindByPlugin(mainModuleNode) ?: detectPlatformByLibrary(mainModuleNode)
+                compilerArguments = (platformKind?.createArguments() ?: K2JVMCompilerArguments())
+                    .apply { parseCommandLineArguments(arguments, this) }
+                    .apply { convertPathsToSystemIndependent() }
+                    .apply { internLargeArguments(mainModuleNode.interner) }
+
                 additionalVisibleSourceSets = kotlinModel.additionalVisibleSourceSets.getValue(sourceSetName)
                 kotlinPluginVersion = kotlinModel.kotlinTaskProperties.getValue(sourceSetName).pluginVersion
                 mainModuleNode.kotlinGradleProjectDataNodeOrFail.createChild(KotlinGradleSourceSetData.KEY, this)
@@ -286,9 +267,11 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
                         getDependencyByFiles(dependency.projectDependencyArtifacts, outputToSourceSet, sourceSetByName)
                     }
                 }
+
                 is FileCollectionDependency -> {
                     getDependencyByFiles(dependency.files, outputToSourceSet, sourceSetByName)
                 }
+
                 else -> null
             }
         }
@@ -412,7 +395,8 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
 
 
     private fun findModuleById(ideProject: DataNode<ProjectData>, gradleModule: IdeaModule, moduleId: String): DataNode<ModuleData>? {
-        val isCompositeProject = resolverCtx.models.ideaProject != gradleModule.project
+        val ideaProject = resolverCtx.models.getModel(IdeaProject::class.java)
+        val isCompositeProject = ideaProject != gradleModule.project
         val compositePrefix =
             if (isCompositeProject && moduleId.startsWith(":")) gradleModule.project.name
             else ""
@@ -483,10 +467,5 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
             Key.create<MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>>>("MODULE_DEPENDENCIES_CACHE"),
             hashMapOf()
         )
-
-        private fun CachedArgsInfo<*>.copyIfNeeded(): CachedArgsInfo<*> =
-            if (Proxy.isProxyClass(this.javaClass)) createCachedArgsInfo(this, HashMap<Any, Any>())
-            else this
-
     }
 }

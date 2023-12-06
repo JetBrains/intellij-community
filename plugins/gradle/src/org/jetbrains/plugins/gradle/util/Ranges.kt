@@ -6,7 +6,7 @@ internal val INF: Nothing? = null
 internal fun <T : Comparable<T>> range(vararg ranges: Pair<T?, T?>) =
   Ranges.valueOf(ranges.toList())
 
-internal class Ranges<T : Comparable<T>> private constructor(
+class Ranges<T : Comparable<T>> private constructor(
   private val ranges: List<Range<T>>
 ) {
 
@@ -16,6 +16,10 @@ internal class Ranges<T : Comparable<T>> private constructor(
 
   fun <R : Comparable<R>> map(transform: (T) -> R): Ranges<R> {
     return Ranges(ranges.map { it.map(transform) })
+  }
+
+  override fun toString(): String {
+    return ranges.joinToString("∪") { it.toString() }
   }
 
   companion object {
@@ -43,6 +47,14 @@ private class Range<T : Comparable<T>> private constructor(
 
   fun <R : Comparable<R>> map(transform: (T) -> R): Range<R> {
     return Range(leftBound.map(transform), rightBound.map(transform))
+  }
+
+  override fun toString(): String {
+    val leftBracket = if (leftBound.isInclusive) "[" else "("
+    val rightBracket = if (rightBound.isInclusive) "]" else ")"
+    val leftValue = if (leftBound == Bound.Inf) "-∞" else leftBound.value.toString()
+    val rightValue = if (rightBound == Bound.Inf) "∞" else rightBound.value.toString()
+    return "$leftBracket$leftValue,$rightValue$rightBracket"
   }
 
   private sealed interface Bound<out T> {

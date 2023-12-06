@@ -6,7 +6,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.Pair;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -19,10 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @State(name = "StructuralSearchPlugin", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ConfigurationManager implements PersistentStateComponent<Element> {
@@ -34,8 +30,10 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   private final List<Configuration> configurations = new SmartList<>();
   private final List<Configuration> historyConfigurations = new SmartList<>();
-  private final ConfigurationManagerState myApplicationState;
+  private final ConfigurationManagerState myIdeState;
+  private final ProjectConfigurationManagerState myProjectState;
   private final Project myProject;
+  private boolean myLastSaveWasInProject = false;
 
   public static ConfigurationManager getInstance(@NotNull Project project) {
     return project.getService(ConfigurationManager.class);
@@ -43,7 +41,8 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   public ConfigurationManager(Project project) {
     myProject = project;
-    myApplicationState = ConfigurationManagerState.getInstance();
+    myIdeState = ConfigurationManagerState.getInstance();
+    myProjectState = ProjectConfigurationManagerState.getInstance(project);
   }
 
   @Override
@@ -61,13 +60,12 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     readConfigurations(element, configurations, tmp);
     migrate(configurations);
     for (Configuration configuration : tmp) {
-      configuration.getMatchOptions().initScope(myProject);
       addHistoryConfiguration(configuration);
     }
     Collections.reverse(historyConfigurations);
   }
   /**
-   * Stores configurations at the application level. Before the configurations where stored in the workspace file.
+   * Stores configurations at the application level. Before the configurations where stored in the project workspace file.
    */
   private void migrate(@NotNull List<? extends Configuration> configurations) {
     if (configurations.isEmpty()) {
@@ -75,16 +73,17 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     }
     outer:
     for (Configuration configuration : configurations) {
-      Configuration existing = myApplicationState.get(configuration.getRefName());
+      Configuration existing = myIdeState.get(configuration.getRefName());
       while (existing != null) {
         if (configuration.equals(existing)) {
           continue outer;
         }
         configuration.setName(configuration.getName() + '~');
-        existing = myApplicationState.get(configuration.getRefName());
+        existing = myIdeState.get(configuration.getRefName());
       }
-      myApplicationState.add(configuration);
+      myIdeState.add(configuration);
     }
+    configurations.clear();
   }
 
   public void addHistoryConfiguration(@NotNull Configuration configuration) {
@@ -108,14 +107,11 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   @TestOnly
   public void addConfiguration(Configuration configuration) {
-    myApplicationState.add(configuration);
+    myIdeState.add(configuration);
   }
 
-  public void removeConfiguration(Configuration configuration) {
-    if (Registry.is("ssr.save.templates.to.ide.instead.of.project.workspace")) {
-      myApplicationState.remove(configuration.getRefName());
-    }
-    configurations.remove(configuration);
+  public void removeConfiguration(Configuration configuration, boolean ide) {
+    (ide ? myIdeState : myProjectState).remove(configuration.getRefName());
   }
 
   public static void writeConfigurations(@NotNull Element element, @NotNull Collection<? extends Configuration> configurations) {
@@ -125,12 +121,12 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   private static void writeConfigurations(@NotNull Element element,
                                           @NotNull Collection<? extends Configuration> configurations,
                                           @NotNull Collection<? extends Configuration> historyConfigurations) {
-    for (final Configuration configuration : configurations) {
+    for (Configuration configuration : configurations) {
       configuration.getMatchOptions().setScope(null);
       saveConfiguration(element, configuration);
     }
 
-    for (final Configuration historyConfiguration : historyConfigurations) {
+    for (Configuration historyConfiguration : historyConfigurations) {
       final Element infoElement = saveConfiguration(element, historyConfiguration);
       infoElement.setAttribute(SAVE_HISTORY_ATTR_NAME, "1");
     }
@@ -151,7 +147,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   private static void readConfigurations(@NotNull Element element,
                                          @NotNull Collection<? super Configuration> configurations,
                                          @NotNull Collection<? super Configuration> historyConfigurations) {
-    for (final Element pattern : element.getChildren()) {
+    for (Element pattern : element.getChildren()) {
       final Configuration config = readConfiguration(pattern);
       if (config == null) continue;
 
@@ -181,44 +177,33 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   }
 
   /**
-   * @return the names of all configurations, both user defined and built in.
+   * @return the names of all configurations, both user defined, from the project and built in.
    */
   public List<String> getAllConfigurationNames() {
-    final Stream<Configuration> stream = Stream.concat(StructuralSearchUtil.getPredefinedTemplates().stream(), getConfigurations().stream());
-    return stream.map(c -> c.getRefName()).collect(Collectors.toList());
+    return ContainerUtil.map(getAllConfigurations(), c -> c.getRefName());
   }
 
   public List<Configuration> getAllConfigurations() {
-    final Stream<Configuration> stream = Stream.concat(StructuralSearchUtil.getPredefinedTemplates().stream(), getConfigurations().stream());
-    return stream.collect(Collectors.toList());
+    return ContainerUtil.concat(StructuralSearchUtil.getPredefinedTemplates(), getIdeConfigurations(), getProjectConfigurations());
   }
 
   @NotNull
-  public Collection<Configuration> getConfigurations() {
-    if (Registry.is("ssr.save.templates.to.ide.instead.of.project.workspace")) {
-      return myApplicationState.getAll();
-    }
-    else {
-      return Collections.unmodifiableList(configurations);
-    }
+  public List<Configuration> getIdeConfigurations() {
+    return myIdeState.getAll();
+  }
+
+  @NotNull
+  public List<Configuration> getProjectConfigurations() {
+    return myProjectState.getAll();
   }
 
   @Nullable
   public Configuration findConfigurationByName(String name) {
-    if (Registry.is("ssr.save.templates.to.ide.instead.of.project.workspace")) {
-      final Configuration ideConfiguration = myApplicationState.get(name);
-      if (ideConfiguration != null) return ideConfiguration;
-    }
-    else {
-      final Configuration configuration = findConfigurationByName(configurations, name);
-      if (configuration != null) return configuration;
-    }
-    return findConfigurationByName(StructuralSearchUtil.getPredefinedTemplates(), name);
-  }
-
-  @Nullable
-  private static Configuration findConfigurationByName(Collection<? extends Configuration> configurations, final String name) {
-    return ContainerUtil.find(configurations, config -> config.getRefName().equals(name));
+    Configuration projectConfiguration = myProjectState.get(name); // project overrides local
+    if (projectConfiguration != null) return projectConfiguration;
+    final Configuration ideConfiguration = myIdeState.get(name);
+    if (ideConfiguration != null) return ideConfiguration;
+    return ContainerUtil.find(StructuralSearchUtil.getPredefinedTemplates(), config -> config.getRefName().equals(name));
   }
 
   @Nullable
@@ -238,33 +223,20 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   @NotNull
   public List<Configuration> getHistoryConfigurations() {
+    for (Configuration configuration : historyConfigurations) {
+      configuration.getMatchOptions().initScope(myProject);
+    }
     return Collections.unmodifiableList(historyConfigurations);
   }
 
   public boolean showSaveTemplateAsDialog(@NotNull Configuration newConfiguration) {
-    if (Registry.is("ssr.save.templates.to.ide.instead.of.project.workspace")) {
-      return showSaveTemplateAsDialog(newConfiguration, myProject,
-                                      n -> myApplicationState.get(n) != null,
-                                      c -> {
-                                        myApplicationState.add(c);
-                                        configurations.remove(c);
-                                        configurations.add(c);
-                                      });
-    }
-    return showSaveTemplateAsDialog(configurations, newConfiguration, myProject);
-  }
-
-  public static boolean showSaveTemplateAsDialog(@NotNull Configuration newConfiguration,
-                                                 @NotNull Project project,
-                                                 @NotNull Predicate<? super String> nameExistsPredicate,
-                                                 @NotNull Consumer<? super Configuration> namedConfigurationConsumer) {
-    String name = showInputDialog(newConfiguration.getName(), project);
-    while (name != null && nameExistsPredicate.test(name)) {
+    Pair<@NlsSafe String, Boolean> nameAndProject = showInputDialog(newConfiguration.getName());
+    while (nameAndProject.first != null && (nameAndProject.second ? myProjectState : myIdeState).get(nameAndProject.first) != null) {
       final int answer =
         Messages.showYesNoDialog(
-          project,
+          myProject,
           SSRBundle.message("overwrite.message"),
-          SSRBundle.message("overwrite.title", name),
+          SSRBundle.message("overwrite.title", nameAndProject.first),
           SSRBundle.message("button.replace"),
           Messages.getCancelButton(),
           Messages.getQuestionIcon()
@@ -272,50 +244,49 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
       if (answer == Messages.YES) {
         break;
       }
-      name = showInputDialog(name, project);
+      nameAndProject = showInputDialog(nameAndProject.first);
     }
-    if (name != null) {
-      newConfiguration.setName(name);
+    if (nameAndProject.first != null) {
+      newConfiguration.setName(nameAndProject.first);
       newConfiguration.setUuid(null);
-      namedConfigurationConsumer.accept(newConfiguration.copy());
+      myLastSaveWasInProject = nameAndProject.second;
+      (nameAndProject.second ? myProjectState : myIdeState).add(newConfiguration.copy());
       return true;
     }
     return false;
   }
 
-  public static boolean showSaveTemplateAsDialog(@NotNull Collection<Configuration> configurations,
-                                                 @NotNull Configuration newConfiguration,
-                                                 @NotNull Project project) {
-    return showSaveTemplateAsDialog(newConfiguration, project,
-                                    n -> findConfigurationByName(configurations, n) != null,
-                                    c -> {
-                                      configurations.remove(c);
-                                      configurations.add(c);
-                                    });
-  }
-
   /**
    * @return the name entered by the user, or null if the dialog was cancelled
    */
-  private static @Nullable @NlsSafe String showInputDialog(@NotNull String initial, @NotNull Project project) {
-    return Messages.showInputDialog(
-      project,
-      SSRBundle.message("template.name.button"),
-      SSRBundle.message("save.template.description.button"),
-      Messages.getQuestionIcon(),
-      initial,
-      null
-    );
+  private @NotNull Pair<@Nullable @NlsSafe String, Boolean> showInputDialog(@NotNull String initial) {
+    return Messages.showInputDialogWithCheckBox(SSRBundle.message("template.name.label"),
+                                                SSRBundle.message("save.template.title"),
+                                                SSRBundle.message("checkbox.save.in.project"),
+                                                myLastSaveWasInProject,
+                                                true,
+                                                Messages.getQuestionIcon(),
+                                                initial,
+                                                null);
   }
 
   @State(name = "StructuralSearch", storages = @Storage("structuralSearch.xml"), category = SettingsCategory.CODE)
-  private static class ConfigurationManagerState implements PersistentStateComponent<Element> {
+  private static final class ProjectConfigurationManagerState extends AbstractConfigurationManagerState {
+    public static ProjectConfigurationManagerState getInstance(Project project) {
+      return project.getService(ProjectConfigurationManagerState.class);
+    }
+  }
 
-    public final Map<String, Configuration> configurations = new LinkedHashMap<>();
-
+  @State(name = "StructuralSearch", storages = @Storage("structuralSearch.xml"), category = SettingsCategory.CODE)
+  private static final class ConfigurationManagerState extends AbstractConfigurationManagerState {
     public static ConfigurationManagerState getInstance() {
       return ApplicationManager.getApplication().getService(ConfigurationManagerState.class);
     }
+  }
+
+  private static sealed abstract class AbstractConfigurationManagerState implements PersistentStateComponent<Element> {
+
+    public final Map<String, Configuration> configurations = new LinkedHashMap<>();
 
     public void add(Configuration configuration) {
       configuration.getMatchOptions().setScope(null);
@@ -330,8 +301,8 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
       configurations.remove(name);
     }
 
-    public Collection<Configuration> getAll() {
-      return Collections.unmodifiableCollection(configurations.values());
+    public List<Configuration> getAll() {
+      return new ArrayList<>(configurations.values());
     }
 
     @Nullable

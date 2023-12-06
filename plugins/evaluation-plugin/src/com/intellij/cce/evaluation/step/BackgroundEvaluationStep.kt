@@ -1,10 +1,9 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.evaluation.HeadlessEvaluationAbortHandler
-import com.intellij.cce.evaluation.UIEvaluationAbortHandler
 import com.intellij.cce.util.CommandLineProgress
-import com.intellij.cce.util.IdeaProgress
 import com.intellij.cce.util.Progress
 import com.intellij.cce.util.TeamcityProgress
 import com.intellij.cce.workspace.EvaluationWorkspace
@@ -16,7 +15,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.FutureResult
 
-abstract class BackgroundEvaluationStep(protected val project: Project, private val isHeadless: Boolean) : EvaluationStep {
+abstract class BackgroundEvaluationStep(protected val project: Project) : EvaluationStep {
   protected companion object {
     val LOG = Logger.getInstance(BackgroundEvaluationStep::class.java)
   }
@@ -27,7 +26,7 @@ abstract class BackgroundEvaluationStep(protected val project: Project, private 
     val result = FutureResult<EvaluationWorkspace?>()
     val task = object : Task.Backgroundable(project, name, true) {
       override fun run(indicator: ProgressIndicator) {
-        createProgress(indicator, title).wrapWithProgress {
+        createProgress(title).wrapWithProgress {
           result.set(runInBackground(workspace, it))
         }
       }
@@ -46,11 +45,10 @@ abstract class BackgroundEvaluationStep(protected val project: Project, private 
     return result.get()
   }
 
-  private val evaluationAbortedHandler = if (isHeadless) HeadlessEvaluationAbortHandler() else UIEvaluationAbortHandler(project)
+  private val evaluationAbortedHandler = HeadlessEvaluationAbortHandler()
 
-  private fun createProgress(indicator: ProgressIndicator, title: String) = when {
+  private fun createProgress(title: String) = when {
     System.getenv("TEAMCITY_VERSION") != null -> TeamcityProgress(title)
-    isHeadless -> CommandLineProgress(title)
-    else -> IdeaProgress(indicator, title)
+    else -> CommandLineProgress(title)
   }
 }

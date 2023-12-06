@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.internal
 
@@ -14,10 +14,11 @@ import com.intellij.util.ui.TimerUtil
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import kotlin.math.pow
 
 internal class ShowPoweredProgressAction : AnAction("Show Powered Progress") {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val builder = DialogBuilder()
@@ -63,7 +64,7 @@ internal class ShowPoweredProgressAction : AnAction("Show Powered Progress") {
     val timer = TimerUtil.createNamedTimer("progresses", 1) {
       for ((index, progress) in progresses.withIndex()) {
         values[index].set((values[index].get() + 1) % MAX)
-        progress.value = (MAX * Math.pow((values[index].get().toDouble() / MAX.toDouble()), powers[index].get())).toInt()
+        progress.value = (MAX * (values[index].get().toDouble() / MAX.toDouble()).pow(powers[index].get())).toInt()
       }
     }
     timer.isRepeats = true

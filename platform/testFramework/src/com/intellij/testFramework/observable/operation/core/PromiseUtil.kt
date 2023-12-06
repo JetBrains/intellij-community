@@ -16,4 +16,4 @@ fun <R> ObservableOperationTrace.waitForOperationAndPumpEdt(
 
 fun ObservableOperationTrace.waitForOperationCompletionAndPumpEdt(
   completionTimeout: Duration
-) = waitForOperationCompletion(completionTimeout) { waitForPromiseAndPumpEdt(it) }
+): Unit = waitForOperationCompletion(completionTimeout) { waitForPromiseAndPumpEdt(it) }

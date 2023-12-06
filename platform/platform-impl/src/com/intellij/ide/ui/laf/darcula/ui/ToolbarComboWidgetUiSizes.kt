@@ -4,8 +4,9 @@ package com.intellij.ide.ui.laf.darcula.ui
 import com.intellij.ui.scale.JBUIScale
 
 object ToolbarComboWidgetUiSizes {
+
   @JvmStatic
-  val gapBeforeSeparator: Int get() = JBUIScale.scale(5)
+  val separatorGap: Int get() = JBUIScale.scale(3)
 
   @JvmStatic
   val gapAfterLeftIcons: Int get() = JBUIScale.scale(6)
@@ -14,5 +15,5 @@ object ToolbarComboWidgetUiSizes {
   val gapBeforeRightIcons: Int get() = JBUIScale.scale(4)
 
   @JvmStatic
-  val gapBeforeExpandIcon: Int get() = JBUIScale.scale(2)
+  val gapBeforeExpandIcon: Int get() = JBUIScale.scale(3)
 }

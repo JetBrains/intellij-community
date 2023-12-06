@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.uast.*
+import org.jetbrains.uast.expressions.UInjectionHost
 
 fun literalExpression(): ULiteralExpressionPattern = ULiteralExpressionPattern()
 
@@ -51,9 +52,9 @@ fun <T : UElement> capture(clazz: Class<T>): UElementPattern.Capture<T> = UEleme
 
 fun <T : UExpression> expressionCapture(clazz: Class<T>): UExpressionPattern.Capture<T> = UExpressionPattern.Capture(clazz)
 
-fun ProcessingContext.withRequestedPsi(psiElement: PsiElement) = this.apply { put(REQUESTED_PSI_ELEMENT, psiElement) }
+fun ProcessingContext.withRequestedPsi(psiElement: PsiElement): ProcessingContext = this.apply { put(REQUESTED_PSI_ELEMENT, psiElement) }
 
-fun withRequestedPsi(psiElement: PsiElement) = ProcessingContext().withRequestedPsi(psiElement)
+fun withRequestedPsi(psiElement: PsiElement): ProcessingContext = ProcessingContext().withRequestedPsi(psiElement)
 
 open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz: Class<T>) : ObjectPattern<T, Self>(clazz) {
   fun withSourcePsiCondition(pattern: PatternCondition<PsiElement>): Self =
@@ -90,29 +91,26 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     parentPattern.accepts(it, context) || it.uastParent?.let { parentPattern.accepts(it, context) } ?: false
   }
 
+  fun withStringRoomExpression(parentPattern: ElementPattern<out UElement>): Self = filterWithContext { it, context ->
+    if (it !is UExpression) return@filterWithContext false
+    val uHost = wrapULiteral(it) as? UInjectionHost ?: return@filterWithContext false
+    val room = uHost.getStringRoomExpression()
+
+    parentPattern.accepts(room, context)
+  }
+
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
 
 private val constructorOrMethodCall = setOf(UastCallKind.CONSTRUCTOR_CALL, UastCallKind.METHOD_CALL)
 
-private val IS_UAST_CALL_EXPRESSION_PARAMETER: Key<Boolean> = Key.create("UAST_CALL_EXPRESSION_PARAMETER")
-
 private fun isCallExpressionParameter(argumentExpression: UExpression,
                                       parameterIndex: Int,
                                       callPattern: ElementPattern<UCallExpression>, context: ProcessingContext): Boolean {
-  val sharedContext = context.sharedContext
-  val isCallParameter = sharedContext.get(IS_UAST_CALL_EXPRESSION_PARAMETER, argumentExpression)
-  if (isCallParameter == java.lang.Boolean.FALSE) {
-    return false
-  }
-
-  val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2)
-  if (call == null || call.kind !in constructorOrMethodCall) {
-    sharedContext.put(IS_UAST_CALL_EXPRESSION_PARAMETER, argumentExpression, java.lang.Boolean.FALSE)
-    return false
-  }
+  val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2) ?: return false
 
   return callPattern.accepts(call, context)
+         && call.kind in constructorOrMethodCall
          && call.getArgumentForParameter(parameterIndex)?.let(::wrapULiteral) == wrapULiteral(argumentExpression)
 }
 
@@ -128,9 +126,9 @@ private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPatte
 class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionPattern>(UCallExpression::class.java) {
 
   fun withReceiver(classPattern: ElementPattern<PsiClass>): UCallExpressionPattern =
-    filterWithContext { it, context -> (it.receiverType as? PsiClassType)?.resolve()?.let { classPattern.accepts(it, context) } ?: false }
+    filterWithContext { it, context -> (it.receiverType as? PsiClassType)?.takeIf { it.isValid }?.resolve()?.let { classPattern.accepts(it, context) } ?: false }
 
-  fun withMethodName(methodName: String): UCallExpressionPattern = withMethodName(string().equalTo(methodName))
+  fun withMethodName(methodName: String): UCallExpressionPattern = withMethodNames(listOf(methodName))
 
   fun withAnyResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = withResolvedMethod(method, true)
 
@@ -154,10 +152,15 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
     }
   }
 
+  @Deprecated(message = "Use withMethodNames with list of names")
   fun withMethodName(namePattern: ElementPattern<String>): UCallExpressionPattern = filterWithContext { it, context ->
     it.methodName?.let {
       namePattern.accepts(it, context)
     } ?: false
+  }
+
+  fun withMethodNames(names: Collection<String>): UCallExpressionPattern {
+    return filter { it.isMethodNameOneOf(names) }
   }
 
   fun constructor(classPattern: ElementPattern<PsiClass>, parameterCount: Int): UCallExpressionPattern = filterWithContext { it, context ->

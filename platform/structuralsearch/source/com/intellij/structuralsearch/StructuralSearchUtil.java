@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -8,6 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
@@ -199,5 +203,20 @@ public final class StructuralSearchUtil {
       return patternContexts.get(0);
     }
     return patternContexts.stream().filter(context -> context.getId().equals(id)).findFirst().orElse(patternContexts.get(0));
+  }
+
+  public static boolean compileForeignElement(@NotNull PsiElement element, GlobalCompilingVisitor myCompilingVisitor) {
+    final StructuralSearchProfile profile = getProfileByPsiElement(element);
+    if (profile == null) {
+      return false;
+    }
+    profile.compile(new PsiElement[]{element}, myCompilingVisitor);
+    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    MatchingHandler handler = pattern.getHandler(element);
+    if (handler instanceof TopLevelMatchingHandler topLevelMatchingHandler) {
+      // unwrap
+      pattern.setHandler(element, topLevelMatchingHandler.getDelegate());
+    }
+    return true;
   }
 }

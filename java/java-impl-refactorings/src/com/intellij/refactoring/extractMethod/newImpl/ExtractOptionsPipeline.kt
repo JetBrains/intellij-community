@@ -14,7 +14,6 @@ import com.intellij.psi.*
 import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiElementProcessor
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
@@ -126,7 +125,7 @@ object ExtractMethodPipeline {
     if (statement != null && JavaHighlightUtil.isSuperOrThisCall(statement, true, true)) {
       return extractOptions.copy(isStatic = true)
     }
-    val shouldBeStatic = PsiUtil.getEnclosingStaticElement(extractOptions.elements.first(), null) != null
+    val shouldBeStatic = PsiUtil.getEnclosingStaticElement(extractOptions.elements.first(), extractOptions.targetClass) != null
     return extractOptions.copy(isStatic = shouldBeStatic)
   }
 
@@ -165,41 +164,34 @@ object ExtractMethodPipeline {
     return selectedOption
   }
 
-  private fun findReferencedVariable(expression: PsiExpression?): PsiVariable? {
-    val normalizedExpression = PsiUtil.skipParenthesizedExprDown(expression)
-    val referenceExpression = normalizedExpression as? PsiReferenceExpression
-    return referenceExpression?.resolve() as? PsiVariable
-  }
-
   private fun getSimpleArrayAccess(arrayReference: PsiElement): PsiExpression? {
     val arrayAccess = PsiTreeUtil.getParentOfType(arrayReference, PsiArrayAccessExpression::class.java)
     return arrayAccess?.takeIf { !RefactoringUtil.isAssignmentLHS(arrayAccess)
                                  && arrayAccess.arrayExpression == arrayReference && arrayAccess.indexExpression is PsiReference }
   }
 
-  private fun findFoldableGroup(variable: PsiVariable, scope: LocalSearchScope): List<PsiExpression>? {
-    val references: List<PsiElement> = ReferencesSearch.search(variable, scope).map { it.element }.toList()
-    val arrayAccesses = references.mapNotNull { reference -> getSimpleArrayAccess(reference) }
-    return arrayAccesses.takeIf { arrayAccesses.size == references.size }
+  private fun findAllArrayAccesses(inputParameter: InputParameter): List<PsiExpression>? {
+    return inputParameter.references.map { reference -> getSimpleArrayAccess(reference) ?: return null }
   }
 
-  private fun isNestedExpressionGroup(parentGroup: List<PsiElement>, nestedGroup: List<PsiElement>): Boolean {
-    return nestedGroup.all { nested -> parentGroup.any { parent -> PsiTreeUtil.isAncestor(parent, nested, false) } }
+  private fun isInsideParentGroup(parents: List<PsiElement>, children: List<PsiElement>): Boolean {
+    return children.all { child -> parents.any { parent -> PsiTreeUtil.isAncestor(parent, child, false) } }
   }
 
   fun foldParameters(parameters: List<InputParameter>, scope: LocalSearchScope): List<InputParameter> {
-    val variables = parameters.mapNotNull { parameter -> findReferencedVariable(parameter.references.firstOrNull()) }
-    val foldableVariables = variables.filter { variable -> variable.type is PsiArrayType }
-    val foldableGroups = foldableVariables
-      .mapNotNull { variable -> findFoldableGroup(variable, scope) }
-      .filter { group -> areSame(group) }
-      .filter { group -> group.all { expression -> ParametersFolder.isSafeToFoldArrayAccess(scope, expression) } }
-    val foldableGroupsWithCoveredParameters = foldableGroups
-      .associateWith { foldableGroup -> parameters.filter { parameter -> isNestedExpressionGroup(foldableGroup, parameter.references) } }
+    val foldableArrayGroups: List<List<PsiExpression>> = parameters
+      .mapNotNull { parameter -> findAllArrayAccesses(parameter) }
+      .filter { arrayAccesses -> isSafeToFoldArrayAccesses(arrayAccesses, scope) }
+    val groupParameters: Map<List<PsiExpression>, List<InputParameter>> = foldableArrayGroups
+      .associateWith { arrayGroup -> parameters.filter { parameter -> isInsideParentGroup(arrayGroup, parameter.references) } }
       .filter { (_, coveredParameters) -> coveredParameters.size >= 2 }
-    val coveredParameters = foldableGroupsWithCoveredParameters.values.flatten()
-    val newParameters = foldableGroupsWithCoveredParameters.keys.map { foldableGroup -> inputParameterOf(foldableGroup) }
+    val coveredParameters = groupParameters.values.flatten().toSet()
+    val newParameters = groupParameters.keys.map { foldableGroup -> inputParameterOf(foldableGroup) }
     return parameters - coveredParameters + newParameters
+  }
+
+  private fun isSafeToFoldArrayAccesses(arrayAccesses: List<PsiExpression>, scope: LocalSearchScope): Boolean {
+    return areSame(arrayAccesses) && arrayAccesses.all { expression -> ParametersFolder.isSafeToFoldArrayAccess(scope, expression) }
   }
 
   fun asConstructor(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
@@ -236,7 +228,7 @@ object ExtractMethodPipeline {
     val name = member.name ?: return null
     val type = when (member) {
       is PsiField -> member.type
-      is PsiClass -> PsiTypesUtil.getClassType(member)
+      is PsiClass -> usages.firstOrNull()?.type ?: PsiTypesUtil.getClassType(member)
       else -> return null
     }
     return InputParameter(usages, StringUtil.decapitalize(name), type)

@@ -1,5 +1,6 @@
 MainKt.class
 public val kotlin.String.<1>exProp: kotlin.String /* compiled code */
+    public final get
 
 public val <T> testData.libraries.Pair<T, T>.<3>exProp: kotlin.String /* compiled code */
  Pair.class

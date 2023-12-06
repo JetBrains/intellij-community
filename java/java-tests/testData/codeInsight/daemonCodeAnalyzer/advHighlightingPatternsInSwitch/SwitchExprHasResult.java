@@ -17,7 +17,7 @@ class Test {
     return switch (i) {
       case Integer ii -> {
         switch (i) {
-          case default -> {
+          default -> {
             yield "fsdfs";
           }
         }
@@ -39,12 +39,12 @@ class Test {
 
   String nestedPattern(Object o) {
     return switch (o) {
-      <error descr="Switch expression rule should produce result in all execution paths">case</error> default -> {
+       <error descr="Switch expression rule should produce result in all execution paths">default</error> -> {
         switch (o) {
           case Integer i -> {
             System.out.println(); // completes normally
           }
-          case default -> {
+          default -> {
             yield "fsdfsd";
           }
         }
@@ -56,7 +56,7 @@ class Test {
 
   String switchNestingExpressionStatement(Object o1, Object o2) {
     return switch (o1) {
-      case default -> {
+      default -> {
         switch (o2) {
           case String s2 -> {
             yield "string, string";

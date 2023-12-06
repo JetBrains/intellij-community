@@ -2,7 +2,7 @@
 <body>
 <p>Reports invalid usages of <a href="https://docs.python.org/3/library/typing.html#typing.ClassVar">ClassVar</a> annotations.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 from typing import ClassVar
 
 
@@ -17,6 +17,6 @@ class Cat:
 Cat.color = "black"  # OK
 my_cat = Cat(5)
 my_cat.color = "gray"  # Error, setting class variable on instance
-</pre>
+</code></pre>
 </body>
 </html>

@@ -13,19 +13,12 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.base.projectStructure.withLanguageVersionSettings
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.cli.common.output.writeAllTo
 import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
-import org.jetbrains.kotlin.codegen.ClassBuilderFactory
-import org.jetbrains.kotlin.codegen.GenerationUtils
-import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -37,19 +30,28 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
+data class TestCompileConfiguration(
+    val lambdasGenerationScheme: JvmClosureGenerationScheme,
+    val languageVersion: LanguageVersion?,
+    val enabledLanguageFeatures: Collection<LanguageFeature>,
+)
+
 open class DebuggerTestCompilerFacility(
+    private val project: Project,
     files: List<TestFileWithModule>,
     private val jvmTarget: JvmTarget,
-    private val useIrBackend: Boolean,
-    private val lambdasGenerationScheme: JvmClosureGenerationScheme,
+    private val compileConfig: TestCompileConfiguration,
 ) {
     private val kotlinStdlibPath = TestKotlinArtifacts.kotlinStdlib.absolutePath
 
-    private val mainFiles: TestFilesByLanguageAndPlatform
+    protected val mainFiles: TestFilesByLanguageAndPlatform
     private val libraryFiles: TestFilesByLanguageAndPlatform
     private val mavenArtifacts = mutableListOf<String>()
 
     init {
+        if (compileConfig.languageVersion?.usesK2 == true && compileConfig.lambdasGenerationScheme != JvmClosureGenerationScheme.INDY) {
+            throw IllegalArgumentException("There is no point in test K2 with old lambdas generation scheme")
+        }
         val splitFiles = splitByTarget(files)
         mainFiles = splitByLanguage(splitFiles.main)
         libraryFiles = splitByLanguage(splitFiles.library)
@@ -63,7 +65,7 @@ open class DebuggerTestCompilerFacility(
 
         val testFiles = libSrcPath.walk().filter { it.isFile }.toList().map {
             val path = it.toRelativeString(libSrcPath)
-            TestFileWithModule(DebuggerTestModule.Jvm, path, FileUtil.loadFile(it, true))
+            TestFileWithModule(DebuggerTestModule.Jvm.Default, path, FileUtil.loadFile(it, true))
         }
 
         val libraryFiles = splitByLanguage(testFiles)
@@ -97,12 +99,8 @@ open class DebuggerTestCompilerFacility(
         if (kotlinStdlibInMavenArtifacts() == null)
             mavenArtifacts.add(kotlinStdlibPath)
 
-        val options = mutableListOf("-jvm-target", jvmTarget.description,
-                                    "-Xlambdas=${lambdasGenerationScheme.description}")
-
-        if (!useIrBackend) {
-            options.add("-Xuse-old-backend")
-        }
+        val options = mutableListOf("-jvm-target", jvmTarget.description)
+        options.addAll(getCompilerOptionsCommonForLibAndSource())
 
         if (kotlinJvm.isNotEmpty()) {
             KotlinCompilerStandalone(
@@ -120,56 +118,30 @@ open class DebuggerTestCompilerFacility(
                 classesDir
             )
         }
+        classesDir.refreshAndToVirtualFile()?.let { KtUsefulTestCase.refreshRecursively(it) }
     }
 
-    // Returns the qualified name of the main test class.
-    open fun compileTestSources(
+    fun compileTestSourcesWithCli(
         module: Module,
         jvmSrcDir: File,
         commonSrcDir: File,
+        scriptSrcDir: File,
         classesDir: File,
-        libClassesDir: File,
-        languageVersionSettings: LanguageVersionSettings? = null
-    ): String = with(mainFiles) {
+        libClassesDir: File
+    ) = with(mainFiles) {
         resources.copy(jvmSrcDir)
         resources.copy(classesDir) // sic!
         (kotlinJvm + java).copy(jvmSrcDir)
+        kotlinScripts.copy(scriptSrcDir)
         kotlinCommon.forEach { testFile -> testFile.copy(commonSrcDir.resolve(testFile.module.name)) }
-
-        lateinit var allKtFiles: List<KtFile>
-        lateinit var jvmKtFiles: List<KtFile>
-        val project = module.project
-        doWriteAction {
-            jvmKtFiles = createPsiFilesAndCollectKtFiles(kotlinJvm + java, jvmSrcDir, project)
-            val commonKtFiles = kotlinCommon.groupBy { it.module }.flatMap { (module, files) ->
-                createPsiFilesAndCollectKtFiles(files, commonSrcDir.resolve(module.name), project)
-            }
-            allKtFiles = jvmKtFiles + commonKtFiles
-        }
-
-        if (allKtFiles.isEmpty()) {
-            error("No Kotlin files found")
-        }
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(classesDir)
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libClassesDir)
 
-        lateinit var mainClassName: String
-
-        fun compileKotlinFiles() {
-            mainClassName = if (kotlinCommon.isNotEmpty()) {
-                compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir)
-                analyzeAndFindMainClass(project, jvmKtFiles)
-            } else {
-                compileKotlinFilesInIdeAndFindMainClass(project, allKtFiles, classesDir)
-            }
-        }
-
-        doWriteAction {
-            if (languageVersionSettings != null) {
-                module.withLanguageVersionSettings(languageVersionSettings, ::compileKotlinFiles)
-            } else {
-                compileKotlinFiles()
+        if (kotlinJvm.isNotEmpty() || kotlinCommon.isNotEmpty()) {
+            val options = getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir)
+            doWriteAction {
+                compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir, options)
             }
         }
 
@@ -181,103 +153,75 @@ open class DebuggerTestCompilerFacility(
                 classesDir
             )
         }
-
-        return mainClassName
     }
 
-    open fun compileTestSources(
-        project: Project,
-        srcDir: File,
-        classesDir: File,
-        classBuilderFactory: ClassBuilderFactory = ClassBuilderFactories.BINARIES
-    ): CompilationResult = with(mainFiles) {
-        val testFiles = kotlinJvm + java
-        testFiles.copy(srcDir)
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(srcDir)
-
-        lateinit var ktFiles: List<KtFile>
-        doWriteAction {
-            ktFiles = createPsiFilesAndCollectKtFiles(testFiles, srcDir, project)
-        }
-
-        return runReadAction {
-            compileKotlinFilesInIde(project, ktFiles, classesDir, classBuilderFactory)
+    fun creatKtFiles(jvmSrcDir: File, commonSrcDir: File, scriptsSrcDir: File): TestSourcesKtFiles = with(mainFiles) {
+        return doWriteAction<TestSourcesKtFiles> {
+            val jvmKtFiles = createPsiFilesAndCollectKtFiles(kotlinJvm + java, jvmSrcDir)
+            val commonKtFiles = kotlinCommon.groupBy { it.module }.flatMap { (module, files) ->
+                createPsiFilesAndCollectKtFiles(files, commonSrcDir.resolve(module.name))
+            }
+            val scriptKtFiles = createPsiFilesAndCollectKtFiles(kotlinScripts, scriptsSrcDir)
+            val allKtFiles = jvmKtFiles + commonKtFiles + scriptKtFiles
+            if (allKtFiles.isEmpty()) {
+                error("No Kotlin files found")
+            }
+            TestSourcesKtFiles(jvmKtFiles, commonKtFiles, scriptKtFiles)
         }
     }
 
-    private fun compileKotlinFilesWithCliCompiler(jvmSrcDir: File, commonSrcDir: File, classesDir: File) {
+    private fun compileKotlinFilesWithCliCompiler(
+        jvmSrcDir: File, commonSrcDir: File, classesDir: File,
+        libClassesDir: File, options: List<String>,
+    ) {
         KotlinCompilerStandalone(
             listOf(jvmSrcDir, commonSrcDir), target = classesDir,
-            options = listOf(
-                "-Xuse-ir=$useIrBackend",
-                "-Xcommon-sources=${commonSrcDir.absolutePath}",
-                "-Xmulti-platform",
-                "-Xlambdas=${lambdasGenerationScheme.description}"
-            ),
-            classpath = mavenArtifacts.map(::File)
+            options = options,
+            classpath = mavenArtifacts.map(::File) + libClassesDir,
+            compileKotlinSourcesBeforeJava = false,
         ).compile()
     }
 
-    protected open fun analyzeAndFindMainClass(project: Project, jvmKtFiles: List<KtFile>): String {
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(jvmKtFiles)
-
-        val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(jvmKtFiles)
-        analysisResult.throwIfError()
-
-        return findMainClass(analysisResult.bindingContext, resolutionFacade.languageVersionSettings, jvmKtFiles)?.asString()
-            ?: error("Cannot find main class name")
+    protected open fun getCompileOptionsForMainSources(jvmSrcDir: File, commonSrcDir: File): List<String> {
+        return getCompilerOptionsCommonForLibAndSource()
     }
 
-    data class CompilationResult(
-        val analysisResult: AnalysisResult,
-        val generationState: GenerationState,
-        val resolutionFacade: ResolutionFacade
-    )
-
-    private fun compileKotlinFilesInIde(
-        project: Project,
-        files: List<KtFile>,
-        classesDir: File,
-        classBuilderFactory: ClassBuilderFactory = ClassBuilderFactories.BINARIES
-    ): CompilationResult {
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeWithForcedPlatform(files, JvmPlatforms.unspecifiedJvmPlatform)
-
-        val analysisResult = try {
-            resolutionFacade.analyzeWithAllCompilerChecks(files)
-        } catch (_: ProcessCanceledException) {
-            // allow module's descriptors update due to dynamic loading of Scripting Support Libraries for .kts files
-            resolutionFacade.analyzeWithAllCompilerChecks(files)
+    private fun getCompilerOptionsCommonForLibAndSource(): List<String> {
+        val options = mutableListOf(
+            "-Xlambdas=${compileConfig.lambdasGenerationScheme.description}",
+        )
+        if (compileConfig.languageVersion != null) {
+            options.add("-language-version=${compileConfig.languageVersion}")
         }
-        analysisResult.throwIfError()
-
-        val configuration = CompilerConfiguration()
-        configuration.put(JVMConfigurationKeys.JVM_TARGET, jvmTarget)
-        configuration.put(JVMConfigurationKeys.IR, useIrBackend)
-        configuration.put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
-        configuration.put(JVMConfigurationKeys.LAMBDAS, lambdasGenerationScheme)
-
-        val state = GenerationUtils.generateFiles(project, files, configuration, classBuilderFactory, analysisResult) {
-            generateDeclaredClassFilter(GenerationState.GenerateClassFilter.GENERATE_ALL)
-        }
-
-        val extraDiagnostics = state.collectedExtraJvmDiagnostics
-        if (!extraDiagnostics.isEmpty()) {
-            val compoundMessage = extraDiagnostics.joinToString("\n") { DefaultErrorMessages.render(it) }
-            error("One or more errors occurred during code generation: \n$compoundMessage")
-        }
-
-        state.factory.writeAllTo(classesDir)
-
-        return CompilationResult(analysisResult, state, resolutionFacade)
+        options.addAll(compileConfig.enabledLanguageFeatures.map { "-XXLanguage:+$it" })
+        return options
     }
 
-    protected open fun compileKotlinFilesInIdeAndFindMainClass(project: Project, files: List<KtFile>, classesDir: File): String {
-        val (analysisResult, _, resolutionFacade) = compileKotlinFilesInIde(project, files, classesDir)
-        return findMainClass(analysisResult.bindingContext, resolutionFacade.languageVersionSettings, files)?.asString()
-            ?: error("Cannot find main class name")
+    open fun analyzeSources(ktFiles: List<KtFile>): Pair<LanguageVersionSettings, AnalysisResult> {
+        return runReadAction {
+            val resolutionFacade = KotlinCacheService.getInstance(project)
+                .getResolutionFacadeWithForcedPlatform(ktFiles, JvmPlatforms.unspecifiedJvmPlatform)
+            val analysisResult = try {
+                resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
+            } catch (_: ProcessCanceledException) {
+                // allow module's descriptors update due to dynamic loading of Scripting Support Libraries for .kts files
+                resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
+            }
+            analysisResult.throwIfError()
+            resolutionFacade.languageVersionSettings to analysisResult
+        }
     }
 
-    private fun createPsiFilesAndCollectKtFiles(testFiles: List<TestFile>, srcDir: File, project: Project): List<KtFile> {
+    // Returns the qualified name of the main test class.
+    fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String {
+        return runReadAction {
+            val (languageVersionSettings, analysisResult) = analyzeSources(jvmKtFiles)
+            findMainClass(analysisResult.bindingContext, languageVersionSettings, jvmKtFiles)?.asString()
+                ?: error("Cannot find main class name")
+        }
+    }
+
+    private fun createPsiFilesAndCollectKtFiles(testFiles: List<TestFile>, srcDir: File): List<KtFile> {
         val ktFiles = mutableListOf<KtFile>()
         for (file in testFiles) {
             val ioFile = File(srcDir, file.name)
@@ -331,9 +275,12 @@ class TestFilesByTarget(val main: List<TestFileWithModule>, val library: List<Te
 class TestFilesByLanguageAndPlatform(
     val kotlinJvm: List<TestFileWithModule>,
     val kotlinCommon: List<TestFileWithModule>,
+    val kotlinScripts: List<TestFileWithModule>,
     val java: List<TestFileWithModule>,
     val resources: List<TestFileWithModule>
 )
+
+class TestSourcesKtFiles(val jvmKtFiles: List<KtFile>, val commonKtFiles: List<KtFile>, val scriptKtFiles: List<KtFile>)
 
 private fun splitByTarget(files: List<TestFileWithModule>): TestFilesByTarget {
     val main = mutableListOf<TestFileWithModule>()
@@ -350,6 +297,7 @@ private fun splitByTarget(files: List<TestFileWithModule>): TestFilesByTarget {
 private fun splitByLanguage(files: List<TestFileWithModule>): TestFilesByLanguageAndPlatform {
     val kotlinJvm = mutableListOf<TestFileWithModule>()
     val kotlinCommon = mutableListOf<TestFileWithModule>()
+    val kotlinScripts = mutableListOf<TestFileWithModule>()
     val java = mutableListOf<TestFileWithModule>()
     val resources = mutableListOf<TestFileWithModule>()
 
@@ -358,11 +306,12 @@ private fun splitByLanguage(files: List<TestFileWithModule>): TestFilesByLanguag
         val extension = file.name.substringAfterLast(".", missingDelimiterValue = "")
 
         val container = when (extension) {
-            "kt", "kts" ->
+            "kt" ->
                 when (file.module) {
                     is DebuggerTestModule.Common -> kotlinCommon
                     is DebuggerTestModule.Jvm -> kotlinJvm
                 }
+            "kts" -> kotlinScripts
             "java" -> java
             else -> resources
         }
@@ -370,5 +319,9 @@ private fun splitByLanguage(files: List<TestFileWithModule>): TestFilesByLanguag
         container += file
     }
 
-    return TestFilesByLanguageAndPlatform(kotlinJvm = kotlinJvm, kotlinCommon = kotlinCommon, java = java, resources = resources)
+    return TestFilesByLanguageAndPlatform(
+        kotlinJvm = kotlinJvm, kotlinCommon = kotlinCommon,
+        kotlinScripts = kotlinScripts,
+        java = java, resources = resources
+    )
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -53,22 +39,19 @@ import java.util.List;
  * Describes step of compilation process which copies resources files from source and resource roots of a Java module.
  */
 public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDescriptor> {
-  @NotNull
-  private final ResourcesTargetType myTargetType;
+  private final @NotNull ResourcesTargetType myTargetType;
 
   public ResourcesTarget(@NotNull JpsModule module, @NotNull ResourcesTargetType targetType) {
     super(targetType, module);
     myTargetType = targetType;
   }
 
-  @Nullable
-  public File getOutputDir() {
+  public @Nullable File getOutputDir() {
     return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, myTargetType.isTests());
   }
 
-  @NotNull
   @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
+  public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
     return ContainerUtil.createMaybeSingletonList(getOutputDir());
   }
 
@@ -83,13 +66,12 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<ResourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
+  public @NotNull List<ResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
     List<ResourceRootDescriptor> roots = new ArrayList<>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
@@ -124,14 +106,13 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     return false;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return "Resources for '" + getModule().getName() + "' " + (myTargetType.isTests() ? "tests" : "production");
   }
 
   @Override
-  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
     int fingerprint = 0;
     final BuildRootIndex rootIndex = pd.getBuildRootIndex();
     final PathRelativizerService relativizer = pd.dataManager.getRelativizer();

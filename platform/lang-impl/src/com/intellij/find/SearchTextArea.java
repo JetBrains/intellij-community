@@ -17,7 +17,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +27,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
@@ -76,6 +74,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   private final JBScrollPane myScrollPane;
   private final ActionButton myHistoryPopupButton;
   private boolean myMultilineEnabled = true;
+  private boolean myShowNewLineButton = true;
 
   /**
    * @deprecated infoMode is not used. Use the other constructor.
@@ -205,9 +204,10 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     iconsPanelWrapper.add(p, BorderLayout.WEST);
     iconsPanelWrapper.add(myExtraActionsPanel, BorderLayout.CENTER);
 
+    Border border = getBorder() == null ? JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchField.borderInsets()) : getBorder();
     removeAll();
     setLayout(new BorderLayout(JBUIScale.scale(3), 0));
-    setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchField.borderInsets()));
+    setBorder(border);
 
     add(historyButtonWrapper, BorderLayout.WEST);
     add(myScrollPane, BorderLayout.CENTER);
@@ -221,7 +221,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
 
     boolean showClearIcon = !StringUtil.isEmpty(myTextArea.getText());
-    boolean showNewLine = myMultilineEnabled;
+    boolean showNewLine = myMultilineEnabled && myShowNewLineButton;
     boolean wrongVisibility =
       ((myClearButton.getParent() == null) == showClearIcon) || ((myNewLineButton.getParent() == null) == showNewLine);
 
@@ -230,18 +230,25 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       myIconsPanel.removeAll();
       myIconsPanel.setLayout(new BorderLayout());
       myIconsPanel.add(myClearButton, BorderLayout.CENTER);
-      myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
-      myIconsPanel.setPreferredSize(myIconsPanel.getPreferredSize());
+      if (showNewLine) myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
+      resetPreferredSize(myIconsPanel);
       if (!showClearIcon) myIconsPanel.remove(myClearButton);
-      if (!showNewLine) myIconsPanel.remove(myNewLineButton);
       myIconsPanel.revalidate();
       myIconsPanel.repaint();
+    }
+    else {
+      resetPreferredSize(myIconsPanel);
     }
     myScrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.setVerticalScrollBarPolicy(multiline ? VERTICAL_SCROLLBAR_AS_NEEDED : VERTICAL_SCROLLBAR_NEVER);
     myScrollPane.getHorizontalScrollBar().setVisible(multiline);
     myScrollPane.revalidate();
     doLayout();
+  }
+
+  private void resetPreferredSize(JComponent component) {
+    component.setPreferredSize(null);
+    component.setPreferredSize(myIconsPanel.getPreferredSize());
   }
 
   public List<Component> setExtraActions(AnAction... actions) {
@@ -299,6 +306,11 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     updateIconsLayout();
   }
 
+  public void setShowNewLineButton(boolean show) {
+    myShowNewLineButton = show;
+    updateIconsLayout();
+  }
+
   @NotNull
   public JTextArea getTextArea() {
     return myTextArea;
@@ -325,9 +337,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   @Deprecated
   public void setInfoText(@SuppressWarnings("unused") String info) {}
 
-  private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
-    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
-
+  private final class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
     ShowHistoryAction() {
       super(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
             FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
@@ -338,7 +348,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
-      if (myPopupState.isRecentlyHidden() || project == null) return; // do not show new popup
+      if (project == null) return;
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(project);
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();
@@ -346,11 +356,13 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       Dimension size = historyList.getPreferredSize();
       size.width = Math.min(size.width, getWidth() + 200);
       historyList.setPreferredSize(size);
-      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null, myPopupState);
+      historyList.getAccessibleContext()
+        .setAccessibleName(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"));
+      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
     }
   }
 
-  private class ClearAction extends DumbAwareAction implements LightEditCompatible {
+  private final class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
       super(ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmall : AllIcons.Actions.Close);
       getTemplatePresentation().setHoveredIcon(
@@ -364,7 +376,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
   }
 
-  private class NewLineAction extends DumbAwareAction implements LightEditCompatible {
+  private final class NewLineAction extends DumbAwareAction implements LightEditCompatible {
     NewLineAction() {
       super(FindBundle.message("find.new.line"), null, AllIcons.Actions.SearchNewLine);
       setShortcutSet(new CustomShortcutSet(NEW_LINE_KEYSTROKE));
@@ -405,7 +417,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
   }
 
-  private static class PseudoSeparatorBorder implements Border {
+  private static final class PseudoSeparatorBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       g.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());

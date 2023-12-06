@@ -1,40 +1,56 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.CommonBundle
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.Disposable
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
-import com.intellij.ui.AppUIUtil
-import com.intellij.ui.Gray
-import com.intellij.ui.JBColor
-import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
+import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
+import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.scale.ScaleContextCache
+import com.intellij.util.ui.*
 import com.jetbrains.JBR
+import com.jetbrains.WindowDecorations.CustomTitleBar
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
-import java.util.*
+import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.border.Border
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
-internal abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
+internal const val HEADER_HEIGHT_DFM = 30
+internal const val HEADER_HEIGHT_COMPACT = 32
+internal const val HEADER_HEIGHT_NORMAL = 40
+
+private val windowBorderThicknessInPhysicalPx: Int = run {
+  // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
+  // calculated once on desktop session start, so it should be okay to store once per IDE session.
+  val scale = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration.defaultTransform.scaleY
+  floor(scale).toInt()
+}
+
+internal fun updateWinControlsTheme(background: Color, customTitleBar: CustomTitleBar) {
+  customTitleBar.putProperty("controls.dark", ColorUtil.isDark(background))
+  customTitleBar.putProperty("controls.background.hovered", UIManager.getColor("TitlePane.Button.hoverBackground"))
+}
+
+internal sealed class CustomHeader(@JvmField internal val window: Window) : JPanel() {
   companion object {
     val H: Int
       get() = 12
@@ -44,91 +60,124 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     val LABEL_BORDER: JBEmptyBorder
       get() = JBUI.Borders.empty(V, 0)
 
-    private val windowBorderThicknessInPhysicalPx: Int = run {
-      // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
-      // calculated once on desktop session start, so it should be okay to store once per IDE session.
-      val scale = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration.defaultTransform.scaleY
-      floor(scale).toInt()
+    internal fun createCloseAction(header: CustomHeader): Action {
+      return CustomFrameAction(name = CommonBundle.getCloseButtonText(), icon = AllIcons.Windows.CloseSmall, action = header::close)
+    }
+
+    fun enableCustomHeader(w: Window) {
+      JBR.getWindowDecorations()?.let {
+        val bar = it.createCustomTitleBar()
+        bar.height = 1f
+        if (w is Dialog) {
+          it.setCustomTitleBar(w, bar)
+        }
+        else if (w is Frame) {
+          it.setCustomTitleBar(w, bar)
+        }
+      }
+    }
+
+    fun ensureClickTransparent(originalComponent: Component) {
+      var cmp = originalComponent.parent
+      while (cmp != null) {
+        if (cmp is CustomHeader) {
+          cmp.customTitleBar?.let { bar ->
+            val listener = HeaderClickTransparentListener(bar)
+            originalComponent.addMouseListener(listener)
+            originalComponent.addMouseMotionListener(listener)
+          }
+          return
+        }
+        cmp = cmp.parent
+      }
     }
   }
 
-  private var windowListener: WindowAdapter
-  private val componentListener: ComponentListener
-  private val iconProvider = ScaleContext.Cache(::getFrameIcon)
+  private val windowListener = object : WindowAdapter() {
+    override fun windowActivated(ev: WindowEvent?) {
+      setActive(true)
+    }
 
-  protected var myActive = false
+    override fun windowDeactivated(ev: WindowEvent?) {
+      setActive(false)
+    }
+
+    override fun windowStateChanged(e: WindowEvent?) {
+      windowStateChanged()
+    }
+  }
+
+  private val componentListener = object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent?) {
+      SwingUtilities.invokeLater { updateCustomTitleBar() }
+    }
+  }
+
+  private val iconProvider = ScaleContextCache {
+    loadSmallApplicationIcon(scaleContext = it)
+  }
+
+  @JvmField
+  internal var isActive = false
 
   private var customFrameTopBorder: CustomFrameTopBorder? = null
 
-  private val icon: Icon
-    get() = getFrameIcon()
-
-  private fun getFrameIcon(): Icon {
-    val scaleContext = ScaleContext.create(window)
-    //scaleContext.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
-    return iconProvider.getOrProvide(scaleContext)!!
-  }
-
-  protected open fun getFrameIcon(scaleContext: ScaleContext): Icon {
-    val size = (JBUIScale.scale(16f) * UISettings.defFontScale).toInt()
-    return AppUIUtil.loadSmallApplicationIcon(scaleContext, size)
-  }
+  @ApiStatus.Internal
+  val customTitleBar: CustomTitleBar?
 
   protected val productIcon: JComponent by lazy {
     createProductIcon()
   }
 
-  protected val buttonPanes: CustomFrameTitleButtons by lazy {
-    createButtonsPane()
-  }
-
   init {
     isOpaque = true
     background = getHeaderBackground()
-    myActive = window.isActive
-
-    fun onClose() {
-      Disposer.dispose(this)
-    }
-
-    windowListener = object : WindowAdapter() {
-      override fun windowActivated(ev: WindowEvent?) {
-        setActive(true)
-      }
-
-      override fun windowDeactivated(ev: WindowEvent?) {
-        setActive(false)
-      }
-
-      override fun windowClosed(e: WindowEvent?) {
-        onClose()
-      }
-
-      override fun windowStateChanged(e: WindowEvent?) {
-        windowStateChanged()
-      }
-    }
-
-    componentListener = object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent?) {
-        SwingUtilities.invokeLater { updateCustomDecorationHitTestSpots() }
-      }
-    }
+    isActive = window.isActive
 
     setCustomFrameTopBorder()
+
+    customTitleBar = JBR.getWindowDecorations()?.createCustomTitleBar()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    customTitleBar?.let {
+      updateWinControlsTheme(background = background, customTitleBar = it)
+    }
+
+    updateSize()
+  }
+
+  protected open fun updateSize() {
+    if (!ExperimentalUI.isNewUI()) {
+      return
+    }
+
+    val size = preferredSize
+    size.height = JBUI.scale(
+      when {
+        (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier = {
+          computeMainActionGroups(CustomActionsSchema.getInstance())
+        }) == true -> {
+          HEADER_HEIGHT_DFM
+        }
+        UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
+        else -> HEADER_HEIGHT_NORMAL
+      }
+    )
+    preferredSize = size
+    minimumSize = size
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
 
   protected fun setCustomFrameTopBorder(isTopNeeded: () -> Boolean = { true }, isBottomNeeded: () -> Boolean = { false }) {
-    customFrameTopBorder = CustomFrameTopBorder(isTopNeeded, isBottomNeeded)
+    customFrameTopBorder = CustomFrameTopBorder(isTopNeeded = isTopNeeded, isBottomNeeded = isBottomNeeded, header = this)
     border = customFrameTopBorder
   }
 
-  abstract fun createButtonsPane(): CustomFrameTitleButtons
-
   open fun windowStateChanged() {
-    updateCustomDecorationHitTestSpots()
+    updateCustomTitleBar()
   }
 
   protected var added = false
@@ -137,7 +186,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     super.addNotify()
     added = true
     installListeners()
-    updateCustomDecorationHitTestSpots()
+    updateCustomTitleBar()
     customFrameTopBorder!!.addNotify()
   }
 
@@ -162,50 +211,53 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     window.removeComponentListener(componentListener)
   }
 
-  protected fun updateCustomDecorationHitTestSpots() {
-    if (!added || !JBR.isCustomWindowDecorationSupported()) {
+  protected open fun updateCustomTitleBar() {
+    if (!added || customTitleBar == null) {
       return
     }
-    val decor = JBR.getCustomWindowDecoration()
-    if ((window is JDialog && window.isUndecorated) ||
-        (window is JFrame && window.isUndecorated)) {
-      decor.setCustomDecorationHitTestSpots(window, Collections.emptyList())
-      decor.setCustomDecorationTitleBarHeight(window, 0)
+
+    if ((window is JDialog && window.isUndecorated) || (window is JFrame && window.isUndecorated)) {
+      setCustomTitleBar(null)
     }
     else {
-      if (height == 0) return
-      val toList = getHitTestSpots().map { java.util.Map.entry(it.first.getRectangleOn(window), it.second) }.toList()
-      decor.setCustomDecorationHitTestSpots(window, toList)
-      decor.setCustomDecorationTitleBarHeight(window, height + window.insets.top - insets.bottom)
+      if (height == 0) {
+        return
+      }
+
+      customTitleBar.height = (height - insets.bottom).toFloat()
+      setCustomTitleBar(customTitleBar)
     }
   }
 
-  /**
-   * Pairs of rectangles and integer constants from {@link com.jetbrains.CustomWindowDecoration} describing type of the spot
-   */
-  abstract fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>>
+  private fun setCustomTitleBar(titleBar: CustomTitleBar?) {
+    JBR.getWindowDecorations()?.let {
+      if (window is Dialog) {
+        it.setCustomTitleBar(window, titleBar)
+      }
+      else if (window is Frame) {
+        it.setCustomTitleBar(window, titleBar)
+      }
+    }
+  }
 
   private fun setActive(value: Boolean) {
-    myActive = value
+    isActive = value
     updateActive()
-    updateCustomDecorationHitTestSpots()
+    updateCustomTitleBar()
   }
 
   protected open fun updateActive() {
-    buttonPanes.isSelected = myActive
-    buttonPanes.updateVisibility()
     customFrameTopBorder?.repaintBorder()
 
-    background = getHeaderBackground(myActive)
+    val headerBackground = getHeaderBackground(isActive)
+    background = headerBackground
+    customTitleBar?.let {
+      updateWinControlsTheme(background = headerBackground, customTitleBar = it)
+    }
   }
-
-  protected val myCloseAction: Action = CustomFrameAction(CommonBundle.getCloseButtonText(), AllIcons.Windows.CloseSmall) { close() }
 
   protected fun close() {
     window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
-  }
-
-  override fun dispose() {
   }
 
   protected class CustomFrameAction(@NlsActions.ActionText name: String, icon: Icon, val action: () -> Unit) : AbstractAction(name, icon) {
@@ -218,7 +270,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
     val ic = object : JLabel() {
       override fun getIcon(): Icon {
-        return this@CustomHeader.icon
+        return iconProvider.getOrProvide(ScaleContext.create(window))!!
       }
     }
     ic.addMouseListener(object : MouseAdapter() {
@@ -235,153 +287,176 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   }
 
   open fun addMenuItems(menu: JPopupMenu) {
-    val closeMenuItem = menu.add(myCloseAction)
+    val closeMenuItem = menu.add(createCloseAction(this))
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
   }
 
-  inner class CustomFrameTopBorder(val isTopNeeded: () -> Boolean = { true }, val isBottomNeeded: () -> Boolean = { false }) : Border {
-    // Bottom border is a line between a window title/main menu area and the frame content.
-    private val bottomBorderWidthLogicalPx = JBUI.scale(1)
+  override fun getAccessibleContext(): AccessibleContext {
+    if (accessibleContext == null) {
+      accessibleContext = AccessibleCustomHeader()
+      accessibleContext.accessibleName = UIBundle.message("frame.header.accessible.group.name")
+    }
+    return accessibleContext
+  }
 
-    // In reality, Windows uses #262626 with alpha-blending with alpha=0.34, but we have no (easy) way of doing the same, so let's just
-    // use the value on white background (since it is most noticeable on white).
-    //
-    // Unfortunately, DWM doesn't offer an API to determine this value, so it has to be hardcoded here.
-    private val defaultActiveBorder = Color(0x707070)
-    private val inactiveColor = Color(0xaaaaaa)
+  private inner class AccessibleCustomHeader: AccessibleJPanel() {
+    override fun getAccessibleRole() = AccessibilityUtils.GROUPED_ELEMENTS
+  }
+}
 
-    private val menuBarBorderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
-    private var colorizationAffectsBorders: Boolean = false
-    private var activeColor: Color = defaultActiveBorder
+internal class CustomFrameTopBorder(@JvmField val isTopNeeded: () -> Boolean = { true },
+                                    @JvmField val isBottomNeeded: () -> Boolean = { false },
+                                    @JvmField val header: CustomHeader) : Border {
+  // The bottom border is a line between a window title/main menu area and the frame content.
+  private val bottomBorderWidthLogicalPx = JBUI.scale(1)
 
-    private fun calculateAffectsBorders(): Boolean {
+  // In reality, Windows uses #262626 with alpha-blending with alpha=0.34, but we have no (easy) way of doing the same, so let's just
+  // use the value on a white background (since it is most noticeable on white).
+  //
+  // Unfortunately, DWM doesn't offer an API to determine this value, so it has to be hardcoded here.
+  private val defaultActiveBorder = Color(0x707070)
+  private val inactiveColor = Color(0xaaaaaa)
+
+  private val menuBarBorderColor = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
+  private var colorizationAffectsBorders: Boolean = false
+  private var activeColor = defaultActiveBorder
+
+  private fun calculateAffectsBorders(): Boolean {
+    if (SystemInfoRt.isWindows) {
       val windowsBuild = SystemInfo.getWinBuildNumber() ?: 0
-      if (windowsBuild < 17763) return true // should always be active on older versions on Windows
-      return Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
+      if (windowsBuild < 17763) {
+        // should always be active on older versions on Windows
+        return true
+      }
+    }
+    return Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
+  }
+
+  private fun calculateActiveBorderColor(): Color {
+    if (!colorizationAffectsBorders) {
+      return defaultActiveBorder
     }
 
-    private fun calculateActiveBorderColor(): Color {
-      if (!colorizationAffectsBorders)
-        return defaultActiveBorder
+    try {
+      val toolkit = Toolkit.getDefaultToolkit()
+      val colorizationColor = toolkit.getDesktopProperty("win.dwm.colorizationColor") as Color?
+      if (colorizationColor != null) {
+        // The border color is a result of an alpha blend of colorization color and #D9D9D9 with the alpha value set by the
+        // colorization color balance.
+        var colorizationColorBalance = toolkit.getDesktopProperty("win.dwm.colorizationColorBalance") as Int?
+        if (colorizationColorBalance != null) {
+          if (colorizationColorBalance > 100) {
+            // May be caused by custom Windows themes installed.
+            colorizationColorBalance = 100
+          }
 
-      try {
-        val toolkit = Toolkit.getDefaultToolkit()
-        val colorizationColor = toolkit.getDesktopProperty("win.dwm.colorizationColor") as Color?
-        if (colorizationColor != null) {
-          // The border color is a result of an alpha blend of colorization color and #D9D9D9 with the alpha value set by the
-          // colorization color balance.
-          var colorizationColorBalance = toolkit.getDesktopProperty("win.dwm.colorizationColorBalance") as Int?
-          if (colorizationColorBalance != null) {
-            if (colorizationColorBalance > 100) {
-              // May be caused by custom Windows themes installed.
-              colorizationColorBalance = 100
-            }
+          // If the desktop setting "Automatically pick an accent color from my background" is active, then the border
+          // color should be the same as the colorization color read from the registry. To detect that setting, we use the
+          // fact that colorization color balance is set to 0xfffffff3 when the setting is active.
+          if (colorizationColorBalance < 0)
+            colorizationColorBalance = 100
 
-            // If the desktop setting "Automatically pick an accent color from my background" is active, then the border
-            // color should be the same as the colorization color read from the registry. To detect that setting, we use the
-            // fact that colorization color balance is set to 0xfffffff3 when the setting is active.
-            if (colorizationColorBalance < 0)
-              colorizationColorBalance = 100
-
-            return when (colorizationColorBalance) {
-              0 -> Color(0xD9D9D9)
-              100 -> colorizationColor
-              else -> {
-                val alpha = colorizationColorBalance / 100.0f
-                val remainder = 1 - alpha
-                val r = (colorizationColor.red * alpha + 0xD9 * remainder).roundToInt()
-                val g = (colorizationColor.green * alpha + 0xD9 * remainder).roundToInt()
-                val b = (colorizationColor.blue * alpha + 0xD9 * remainder).roundToInt()
-                Color(r, g, b)
-              }
+          return when (colorizationColorBalance) {
+            0 -> Color(0xD9D9D9)
+            100 -> colorizationColor
+            else -> {
+              val alpha = colorizationColorBalance / 100.0f
+              val remainder = 1 - alpha
+              val r = (colorizationColor.red * alpha + 0xD9 * remainder).roundToInt()
+              val g = (colorizationColor.green * alpha + 0xD9 * remainder).roundToInt()
+              val b = (colorizationColor.blue * alpha + 0xD9 * remainder).roundToInt()
+              Color(r, g, b)
             }
           }
         }
-
-        return colorizationColor
-               ?: toolkit.getDesktopProperty("win.frame.activeBorderColor") as Color?
-               ?: menuBarBorderColor
-      }
-      catch (t: Throwable) {
-        // Should be as fail-safe as possible, since any errors during border coloring could lead to an IDE being broken.
-        logger<CustomHeader>().error(t)
-        return defaultActiveBorder
-      }
-    }
-
-    private fun calculateWindowBorderThicknessInLogicalPx(): Double {
-      return windowBorderThicknessInPhysicalPx.toDouble() / JBUIScale.sysScale(window)
-    }
-
-    private val listeners = mutableListOf<Pair<String, PropertyChangeListener>>()
-    private inline fun listenForPropertyChanges(vararg propertyNames: String, crossinline action: () -> Unit) {
-      val toolkit = Toolkit.getDefaultToolkit()
-      val listener = PropertyChangeListener { action() }
-      for (property in propertyNames) {
-        toolkit.addPropertyChangeListener(property, listener)
-        listeners.add(property to listener)
-      }
-    }
-
-    fun addNotify() {
-      colorizationAffectsBorders = calculateAffectsBorders()
-      listenForPropertyChanges("win.dwm.colorizationColor.affects.borders") {
-        colorizationAffectsBorders = calculateAffectsBorders()
-        activeColor = calculateActiveBorderColor() // active border color is dependent on whether colorization affects borders or not
       }
 
-      activeColor = calculateActiveBorderColor()
-      listenForPropertyChanges("win.dwm.colorizationColor", "win.dwm.colorizationColorBalance", "win.frame.activeBorderColor") {
-        activeColor = calculateActiveBorderColor()
-      }
+      return colorizationColor
+             ?: toolkit.getDesktopProperty("win.frame.activeBorderColor") as Color?
+             ?: menuBarBorderColor
     }
-
-    fun removeNotify() {
-      val toolkit = Toolkit.getDefaultToolkit()
-      for ((propertyName, listener) in listeners)
-        toolkit.removePropertyChangeListener(propertyName, listener)
-      listeners.clear()
+    catch (t: Throwable) {
+      // Should be as fail-safe as possible, since any errors during border coloring could lead to an IDE being broken.
+      logger<CustomHeader>().error(t)
+      return defaultActiveBorder
     }
-
-    fun repaintBorder() {
-      val borderInsets = getBorderInsets(this@CustomHeader)
-
-      val thickness = calculateWindowBorderThicknessInLogicalPx()
-      repaint(0, 0, width, ceil(thickness).toInt())
-      repaint(0, height - borderInsets.bottom, width, borderInsets.bottom)
-    }
-
-    private val shouldDrawTopBorder: Boolean
-      get() {
-        val drawTopBorderActive = myActive && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF()) // omit in Darcula with colorization disabled
-        val drawTopBorderInactive = !myActive && UIUtil.isUnderIntelliJLaF()
-        return drawTopBorderActive || drawTopBorderInactive
-      }
-
-    override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-      val thickness = calculateWindowBorderThicknessInLogicalPx()
-      if (isTopNeeded() && shouldDrawTopBorder) {
-        g.color = if (myActive) activeColor else inactiveColor
-        LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble(), LinePainter2D.StrokeType.INSIDE,
-                            thickness)
-      }
-
-      if (isBottomNeeded()) {
-        g.color = menuBarBorderColor
-        val y1 = y + height - bottomBorderWidthLogicalPx
-        LinePainter2D.paint(g as Graphics2D, x.toDouble(), y1.toDouble(), width.toDouble(), y1.toDouble())
-      }
-    }
-
-    override fun getBorderInsets(c: Component): Insets {
-      val thickness = calculateWindowBorderThicknessInLogicalPx()
-      val top = if (isTopNeeded() && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF())) ceil(thickness).toInt() else 0
-      val bottom = if (isBottomNeeded()) bottomBorderWidthLogicalPx else 0
-      return Insets(top, 0, bottom, 0)
-    }
-
-    override fun isBorderOpaque(): Boolean = true
   }
+
+  private fun calculateWindowBorderThicknessInLogicalPx(): Double {
+    return windowBorderThicknessInPhysicalPx.toDouble() / JBUIScale.sysScale(header.window)
+  }
+
+  private val listeners = mutableListOf<Pair<String, PropertyChangeListener>>()
+  private inline fun listenForPropertyChanges(vararg propertyNames: String, crossinline action: () -> Unit) {
+    val toolkit = Toolkit.getDefaultToolkit()
+    val listener = PropertyChangeListener { action() }
+    for (property in propertyNames) {
+      toolkit.addPropertyChangeListener(property, listener)
+      listeners.add(property to listener)
+    }
+  }
+
+  fun addNotify() {
+    colorizationAffectsBorders = calculateAffectsBorders()
+    listenForPropertyChanges("win.dwm.colorizationColor.affects.borders") {
+      colorizationAffectsBorders = calculateAffectsBorders()
+      activeColor = calculateActiveBorderColor() // active border color is dependent on whether colorization affects borders or not
+    }
+
+    activeColor = calculateActiveBorderColor()
+    listenForPropertyChanges("win.dwm.colorizationColor", "win.dwm.colorizationColorBalance", "win.frame.activeBorderColor") {
+      activeColor = calculateActiveBorderColor()
+    }
+  }
+
+  fun removeNotify() {
+    val toolkit = Toolkit.getDefaultToolkit()
+    for ((propertyName, listener) in listeners) {
+      toolkit.removePropertyChangeListener(propertyName, listener)
+    }
+    listeners.clear()
+  }
+
+  fun repaintBorder() {
+    val borderInsets = getBorderInsets(header)
+
+    val thickness = calculateWindowBorderThicknessInLogicalPx()
+    header.repaint(0, 0, header.width, ceil(thickness).toInt())
+    header.repaint(0, header.height - borderInsets.bottom, header.width, borderInsets.bottom)
+  }
+
+  private val shouldDrawTopBorder: Boolean
+    get() {
+      val drawTopBorderActive = header.isActive && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF()) // omit in Darcula with colorization disabled
+      val drawTopBorderInactive = !header.isActive && UIUtil.isUnderIntelliJLaF()
+      return drawTopBorderActive || drawTopBorderInactive
+    }
+
+  override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+    val thickness = calculateWindowBorderThicknessInLogicalPx()
+    if (isTopNeeded() && shouldDrawTopBorder) {
+      g.color = if (header.isActive) activeColor else inactiveColor
+      LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble(), LinePainter2D.StrokeType.INSIDE,
+                          thickness)
+    }
+
+    if (isBottomNeeded()) {
+      g.color = menuBarBorderColor
+      val y1 = y + height - bottomBorderWidthLogicalPx
+      LinePainter2D.paint(g as Graphics2D, x.toDouble(), y1.toDouble(), width.toDouble(), y1.toDouble())
+    }
+  }
+
+  override fun getBorderInsets(c: Component): Insets {
+    val thickness = calculateWindowBorderThicknessInLogicalPx()
+    val top = if (isTopNeeded() && (colorizationAffectsBorders || StartupUiUtil.isUnderIntelliJLaF())) ceil(thickness).toInt() else 0
+    val bottom = if (isBottomNeeded()) bottomBorderWidthLogicalPx else 0
+    val left = header.customTitleBar?.leftInset?.toInt() ?: 0
+    val right = header.customTitleBar?.rightInset?.toInt() ?: 0
+    return Insets(top, left, bottom, right)
+  }
+
+  override fun isBorderOpaque(): Boolean = true
 }
 
 

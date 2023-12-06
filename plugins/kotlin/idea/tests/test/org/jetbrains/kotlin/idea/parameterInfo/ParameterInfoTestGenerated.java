@@ -332,6 +332,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/OtherConstructorFromSecondary.kt");
         }
 
+        @TestMetadata("ParameterHighlighting.kt")
+        public void testParameterHighlighting() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ParameterHighlighting.kt");
+        }
+
         @TestMetadata("ParameterNameAnnotationConflict.kt")
         public void testParameterNameAnnotationConflict() throws Exception {
             runTest("testData/parameterInfo/functionCall/ParameterNameAnnotationConflict.kt");

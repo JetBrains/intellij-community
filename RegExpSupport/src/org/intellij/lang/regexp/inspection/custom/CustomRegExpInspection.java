@@ -8,16 +8,21 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ui.CustomInspectionActions;
+import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
@@ -27,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 
@@ -39,32 +45,8 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
   public final List<RegExpInspectionConfiguration> myConfigurations = new SmartList<>();
   private InspectionProfileImpl mySessionProfile;
 
-  public CustomRegExpInspection() {
-    /*
-    final FileType javaFileType = FileTypeManager.getInstance().getStdFileType("JAVA");
-    final RegExpInspectionConfiguration one = new RegExpInspectionConfiguration("No spaces within parentheses");
-    one.patterns.add(new RegExpInspectionConfiguration.InspectionPattern("(\\()\\s+|\\s+(\\))", null, FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS, "$1"));
-    one.suppressId = "NoSpaces";
-    one.description = "We don't like spaces within parentheses in our code style";
-    myConfigurations.add(one);
-
-    final RegExpInspectionConfiguration two = new RegExpInspectionConfiguration("No more than one empty line in Java");
-    two.patterns.add(new RegExpInspectionConfiguration.InspectionPattern("\\n\\n\\n+", javaFileType, FindModel.SearchContext.EXCEPT_STRING_LITERALS, "\n\n"));
-    two.suppressId = "EmptyLines";
-    two.description = "One empty line should be enough for everybody";
-    myConfigurations.add(two);
-
-    final RegExpInspectionConfiguration three = new RegExpInspectionConfiguration("Trailing whitespace");
-    three.patterns.add(new RegExpInspectionConfiguration.InspectionPattern(" +\\n", PlainTextFileType.INSTANCE, FindModel.SearchContext.ANY, ""));
-    three.patterns.add(new RegExpInspectionConfiguration.InspectionPattern("\t+\\n", PlainTextFileType.INSTANCE, FindModel.SearchContext.ANY, ""));
-    three.description = "Trailing whitespace is unnecessary";
-    myConfigurations.add(three);
-
-    final RegExpInspectionConfiguration four = new RegExpInspectionConfiguration("Multiple spaces in Java");
-    four.patterns.add(new RegExpInspectionConfiguration.InspectionPattern("(?<=\\S) {2,}", javaFileType, FindModel.SearchContext.EXCEPT_COMMENTS, " "));
-    four.description = "Double spaced";
-    myConfigurations.add(four);
-    */
+  public static CustomRegExpInspection getCustomRegExpInspection(@NotNull InspectionProfile profile) {
+    return (CustomRegExpInspection)CustomInspectionActions.getInspection(profile, SHORT_NAME);
   }
 
   @Override
@@ -156,7 +138,7 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
       else {
         HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME);
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.nonModal());
   }
 
   private static boolean isMetaDataChanged(@NotNull RegExpInspectionConfiguration configuration, @NotNull HighlightDisplayKey key) {
@@ -205,7 +187,25 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
     return myConfigurations;
   }
 
-  private static class CustomRegExpQuickFix implements LocalQuickFix {
+  @NotNull
+  public InspectionMetaDataDialog createMetaDataDialog(Project project, @NotNull String profileName, @Nullable RegExpInspectionConfiguration configuration) {
+    Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator = name -> {
+      for (RegExpInspectionConfiguration current : myConfigurations) {
+        if ((configuration == null || !configuration.getUuid().equals(current.getUuid())) &&
+            current.getName().equals(name)) {
+          return RegExpBundle.message("dialog.message.inspection.with.name.exists.warning", name);
+        }
+      }
+      return null;
+    };
+    if (configuration == null) {
+      return new InspectionMetaDataDialog(project, profileName, nameValidator);
+    }
+    return new InspectionMetaDataDialog(project, profileName, nameValidator, configuration.getName(), configuration.getDescription(),
+                                        configuration.getProblemDescriptor(), configuration.getSuppressId());
+  }
+
+  private static class CustomRegExpQuickFix extends PsiUpdateModCommandQuickFix {
     private final int myStartOffset;
     private final int myEndOffset;
     private final String myReplacement;
@@ -234,8 +234,8 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiFile file = descriptor.getPsiElement().getContainingFile();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiFile file = element.getContainingFile();
       final Document document = file.getViewProvider().getDocument();
       if (myOriginal.equals(document.getText(TextRange.create(myStartOffset, myEndOffset)))) {
         document.replaceString(myStartOffset, myEndOffset, myReplacement);

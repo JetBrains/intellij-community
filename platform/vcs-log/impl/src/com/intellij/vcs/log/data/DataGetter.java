@@ -17,20 +17,18 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
+import com.intellij.vcs.log.VcsLogCommitDataCache;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface DataGetter<T extends VcsShortCommitDetails> {
+public interface DataGetter<T extends VcsShortCommitDetails> extends VcsLogCommitDataCache<T> {
 
   @NotNull
-  T getCommitData(int hash);
+  T getCachedDataOrPlaceholder(int hash);
 
   void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<? super List<T>> consumer,
                        @NotNull Consumer<? super Throwable> errorConsumer, @Nullable ProgressIndicator indicator);
-
-  @Nullable
-  T getCommitDataIfAvailable(int hash);
 }

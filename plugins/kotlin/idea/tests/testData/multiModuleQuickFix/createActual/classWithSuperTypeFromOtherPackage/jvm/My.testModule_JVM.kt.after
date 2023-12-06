@@ -1,0 +1,9 @@
+// My: to be implemented
+// DISABLE-ERRORS
+// IGNORE_K2
+package my
+
+import other.Another
+import other.Other
+
+actual class My : Other<Another>()

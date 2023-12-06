@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.RightMarginForm;
@@ -25,11 +11,15 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JTextField myKeepBlankLines;
@@ -46,7 +36,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JCheckBox myInEmptyTag;
   private JCheckBox myWrapText;
   private JCheckBox myKeepLineBreaksInText;
-  private JComboBox myWhiteSpaceAroundCDATA;
+  private JComboBox<String> myWhiteSpaceAroundCDATA;
   private JCheckBox myKeepWhitespaceInsideCDATACheckBox;
   private JBScrollPane myJBScrollPane;
   private JPanel myRightMarginPanel;
@@ -55,10 +45,12 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
     installPreviewPanel(myPreviewPanel);
-
     fillWrappingCombo(myWrapAttributes);
-
     addPanelToWatch(myPanel);
+    myWhiteSpaceAroundCDATA.setModel(new CollectionComboBoxModel<@Nls String>(
+      Arrays.asList(XmlBundle.message("preserve"),
+                    XmlBundle.message("remove.keep.with.tags"),
+                    XmlBundle.message("add.new.lines"))));
   }
 
   @Override
@@ -89,7 +81,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     myRightMarginForm.apply(settings);
   }
 
-  private int getIntValue(JTextField keepBlankLines) {
+  private static int getIntValue(JTextField keepBlankLines) {
     try {
       return Integer.parseInt(keepBlankLines.getText());
     }
@@ -165,7 +157,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     return myRightMarginForm.isModified(settings);
   }
 
-  private boolean wrapText(final CodeStyleSettings settings) {
+  private static boolean wrapText(final CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     return xmlSettings.XML_TEXT_WRAP == CommonCodeStyleSettings.WRAP_AS_NEEDED;
   }
@@ -181,8 +173,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   @Override
-  @NotNull
-  protected FileType getFileType() {
+  protected @NotNull FileType getFileType() {
     return XmlFileType.INSTANCE;
   }
 

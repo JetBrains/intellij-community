@@ -4,12 +4,13 @@ package org.jetbrains.kotlin.idea.framework
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.projectRoots.*
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.util.Consumer
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.facet.KotlinBaseFacetBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -27,7 +28,7 @@ class KotlinSdkType : SdkType("KotlinSDK") {
             if (!checkIfNeeded()) return // do not create Kotlin SDK
 
             val newSdkName = SdkConfigurationUtil.createUniqueSdkName(INSTANCE, "", projectSdks.toList())
-            val newJdk = ProjectJdkImpl(newSdkName, INSTANCE)
+            val newJdk = ProjectJdkTable.getInstance().createSdk(newSdkName, INSTANCE)
             INSTANCE.setupSdkPaths(newJdk)
 
             ApplicationManager.getApplication().invokeAndWait {
@@ -37,6 +38,19 @@ class KotlinSdkType : SdkType("KotlinSDK") {
                         ProjectJdkTable.getInstance().addJdk(newJdk, disposable)
                     } else {
                         ProjectJdkTable.getInstance().addJdk(newJdk)
+                    }
+                }
+            }
+        }
+
+        @TestOnly
+        fun removeKotlinSdkInTests() {
+            invokeAndWaitIfNeeded {
+                runWriteAction {
+                    val sdkTable = ProjectJdkTable.getInstance()
+                    val kotlinSdks = sdkTable.allJdks.filter { it.sdkType is KotlinSdkType }
+                    for (kotlinSdk in kotlinSdks) {
+                        sdkTable.removeJdk(kotlinSdk)
                     }
                 }
             }
@@ -63,9 +77,9 @@ class KotlinSdkType : SdkType("KotlinSDK") {
         sdkCreatedCallback.consume(createSdkWithUniqueName(sdkModel.sdks.toList()))
     }
 
-    fun createSdkWithUniqueName(existingSdks: Collection<Sdk>): ProjectJdkImpl {
+    fun createSdkWithUniqueName(existingSdks: Collection<Sdk>): Sdk {
         val sdkName = suggestSdkName(SdkConfigurationUtil.createUniqueSdkName(this, "", existingSdks), "")
-        return ProjectJdkImpl(sdkName, this)
+        return ProjectJdkTable.getInstance().createSdk(sdkName, this)
     }
 
     override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator) = null

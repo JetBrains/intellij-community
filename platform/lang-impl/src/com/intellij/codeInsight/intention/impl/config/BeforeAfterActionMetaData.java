@@ -32,13 +32,15 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   private static final @NonNls String AFTER_TEMPLATE_PREFIX = "after";
   protected final ClassLoader myLoader;
   protected final String myDescriptionDirectoryName;
+  private boolean mySkipBeforeAfter;
   private TextDescriptor[] myExampleUsagesBefore;
   private TextDescriptor[] myExampleUsagesAfter;
   protected TextDescriptor myDescription;
 
-  public BeforeAfterActionMetaData(@Nullable ClassLoader loader, @NotNull String descriptionDirectoryName) {
+  public BeforeAfterActionMetaData(@Nullable ClassLoader loader, @NotNull String descriptionDirectoryName, boolean skipBeforeAfter) {
     myLoader = loader;
     myDescriptionDirectoryName = descriptionDirectoryName;
+    mySkipBeforeAfter = skipBeforeAfter;
   }
 
   public BeforeAfterActionMetaData(@NotNull TextDescriptor description,
@@ -72,7 +74,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
           String extension = extensionFileNameMatcher.getExtension();
           for (int i = 0; ; i++) {
             String resourcePath = getResourceLocation(prefix + "." + extension + (i == 0 ? "" : Integer.toString(i))
-                                  + suffix);
+                                                      + suffix);
             URL resource = myLoader.getResource(resourcePath);
             if (resource == null) break;
             urls.add(new ResourceTextDescriptor(myLoader, resourcePath));
@@ -80,7 +82,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
         }
       }
     }
-    if (urls.isEmpty()) {
+    if (urls.isEmpty() && !mySkipBeforeAfter) {
       URL descriptionUrl = myLoader.getResource(getResourceLocation(DESCRIPTION_FILE_NAME));
       String url = descriptionUrl.toExternalForm();
       URL descriptionDirectory = null;
@@ -118,6 +120,10 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
       myExampleUsagesAfter = retrieveURLs(AFTER_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX);
     }
     return myExampleUsagesAfter;
+  }
+
+  public boolean isSkipBeforeAfter() {
+    return mySkipBeforeAfter;
   }
 
   @Override

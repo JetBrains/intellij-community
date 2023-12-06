@@ -1,5 +1,7 @@
 // FIR_IDENTICAL
 // WITH_STDLIB
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 fun global() {
     fun inner() {
 

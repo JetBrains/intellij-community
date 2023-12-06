@@ -9,6 +9,7 @@ import de.plushnikov.intellij.plugin.processor.handler.FieldNameConstantsHandler
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,7 +22,7 @@ import java.util.Optional;
  *
  * @author alanachtenberg
  */
-public class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProcessor {
+public final class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProcessor {
 
   public FieldNameConstantsProcessor() {
     super(PsiClass.class, LombokClassNames.FIELD_NAME_CONSTANTS);
@@ -35,7 +36,7 @@ public class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProce
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     final Collection<PsiMember> psiMembers = filterMembers(psiClass, psiAnnotation);
     if (!psiMembers.isEmpty()) {
       final String typeName = FieldNameConstantsHandler.getTypeName(psiClass, psiAnnotation);

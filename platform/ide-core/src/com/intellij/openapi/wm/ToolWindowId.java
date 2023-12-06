@@ -9,6 +9,9 @@ public interface ToolWindowId {
   String FAVORITES_VIEW = "Favorites";
   String BOOKMARKS = "Bookmarks";
   String ANT_BUILD = "Ant";
+  /**
+   * Please don't use it as a default debug executor, unless {@link com.intellij.execution.executors.DefaultDebugExecutor} is inaccessible.
+   */
   String DEBUG = "Debug";
   String RUN = "Run";
 
@@ -21,12 +24,19 @@ public interface ToolWindowId {
   String FIND = "Find";
   String HIERARCHY = "Hierarchy";
   String TODO_VIEW = "TODO";
-  String DEPENDENCIES = "Dependency Viewer";
+  String ANALYZE_DEPENDENCIES = "Dependency Viewer";
+  String BUILD_DEPENDENCIES = "Dependencies";
   String VCS = "Version Control";
   String COMMIT = "Commit";
   String MODULES_DEPENDENCIES = "Module Dependencies";
   String DUPLICATES = "Duplicates";
   String EXTRACT_METHOD = "Extract Method";
+  /**
+   * @deprecated Not used in v2.
+   * Consider using {@link com.intellij.platform.backend.documentation.DocumentationResult#asyncDocumentation}
+   * instead of accessing the tool window directly.
+   */
+  @Deprecated(forRemoval = true)
   String DOCUMENTATION = "Documentation";
   String TASKS = "Time Tracking";
   String DATABASE_VIEW = "Database";

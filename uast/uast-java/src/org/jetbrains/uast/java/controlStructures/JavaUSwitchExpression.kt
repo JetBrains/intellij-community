@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
@@ -13,9 +13,15 @@ class JavaUSwitchExpression(
   override val sourcePsi: PsiSwitchBlock,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), USwitchExpression {
-  override val expression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.expression, this) }
 
-  override val body: JavaUSwitchEntryList by lazyPub { JavaUSwitchEntryList(sourcePsi, this) }
+  private val expressionPart = UastLazyPart<UExpression>()
+  private val bodyPart = UastLazyPart<JavaUSwitchEntryList>()
+
+  override val expression: UExpression
+    get() = expressionPart.getOrBuild { JavaConverter.convertOrEmpty(sourcePsi.expression, this) }
+
+  override val body: JavaUSwitchEntryList
+    get() = bodyPart.getOrBuild { JavaUSwitchEntryList(sourcePsi, this) }
 
   override val switchIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.SWITCH_KEYWORD), this)
@@ -31,12 +37,12 @@ class JavaUSwitchEntryList(
   override val kind: UastSpecialExpressionKind
     get() = JavaSpecialExpressionKinds.SWITCH
 
-  override fun asRenderString() = expressions.joinToString("\n") {
+  override fun asRenderString(): String = expressions.joinToString("\n") {
     it.asRenderString().withMargin
   }
 
-  private val switchEntries: Lazy<List<JavaUSwitchEntry>> = lazyPub {
-    val statements = sourcePsi.body?.statements ?: return@lazyPub emptyList<JavaUSwitchEntry>()
+  private val switchEntries: Lazy<List<JavaUSwitchEntry>> = lazy(LazyThreadSafetyMode.NONE) {
+    val statements = sourcePsi.body?.statements ?: return@lazy emptyList<JavaUSwitchEntry>()
     var currentLabels = listOf<PsiSwitchLabelStatementBase>()
     var currentBody = listOf<PsiStatement>()
     val result = mutableListOf<JavaUSwitchEntry>()
@@ -69,11 +75,10 @@ class JavaUSwitchEntryList(
       result += JavaUSwitchEntry(currentLabels, currentBody, this)
     }
     result
-
   }
 
   override val expressions: List<UExpression>
-      get() = switchEntries.value
+    get() = switchEntries.value
 
   internal fun findUSwitchEntryForLabel(switchLabelStatement: PsiSwitchLabelStatementBase): JavaUSwitchEntry? {
     if (switchEntries.isInitialized()) return switchEntries.value.find { it.labels.contains(switchLabelStatement) }
@@ -98,7 +103,6 @@ class JavaUSwitchEntryList(
     val psiSwitchLabelStatement = statement.prevSiblings.filterIsInstance<PsiSwitchLabelStatement>().firstOrNull() ?: return null
     return findUSwitchEntryForLabel(psiSwitchLabelStatement)
   }
-
 }
 
 private val PsiElement.nextSiblings: Sequence<PsiElement> get() = generateSequence(this) { it.nextSibling }
@@ -111,49 +115,55 @@ class JavaUSwitchEntry(
   givenParent: UElement?,
   private val addDummyBreak: Boolean = false
 ) : JavaAbstractUExpression(givenParent), USwitchClauseExpressionWithBody {
-  override val sourcePsi: PsiSwitchLabelStatementBase = labels.first()
 
-  override val caseValues: List<UExpression> by lazyPub {
-    labels.flatMap {
-      if (it.isDefaultCase) {
-        listOf(JavaUDefaultCaseExpression(it, this))
-      }
-      else {
-        it.caseLabelElementList?.elements.orEmpty().map { element ->
-          if (element is PsiExpression) JavaConverter.convertOrEmpty(element, this)
-          else UnknownJavaExpression(element, this)
+  private val caseValuesPart = UastLazyPart<List<UExpression>>()
+  private val bodyPart = UastLazyPart<UExpressionList>()
+
+  override val sourcePsi: PsiSwitchLabelStatementBase
+    get() = labels.first()
+
+  override val caseValues: List<UExpression>
+    get() = caseValuesPart.getOrBuild {
+      labels.flatMap {
+        if (it.isDefaultCase) {
+          listOf(JavaUDefaultCaseExpression(it, this))
+        }
+        else {
+          it.caseLabelElementList?.elements.orEmpty().map { element ->
+            if (element is PsiExpression) JavaConverter.convertOrEmpty(element, this)
+            else UnknownJavaExpression(element, this)
+          }
         }
       }
     }
-  }
 
-  override val body: UExpressionList by lazyPub {
-    object : JavaUExpressionList(sourcePsi, JavaSpecialExpressionKinds.SWITCH_ENTRY, this) {
+  override val body: UExpressionList
+    get() = bodyPart.getOrBuild {
+      object : JavaUExpressionList(sourcePsi, JavaSpecialExpressionKinds.SWITCH_ENTRY, this) {
+        override val expressions: List<UExpression>
 
-      override val expressions: List<UExpression>
+        init {
+          val expressions = ArrayList<UExpression>(this@JavaUSwitchEntry.statements.size)
+          for (statement in this@JavaUSwitchEntry.statements) {
+            expressions.add(JavaConverter.convertOrEmpty(statement, this))
+          }
+          if (addDummyBreak) {
+            val lastValueExpressionPsi = expressions.lastOrNull()?.sourcePsi as? PsiExpression
+            if (lastValueExpressionPsi != null)
+              expressions[expressions.size - 1] = DummyYieldExpression(lastValueExpressionPsi, this,
+                                                                       this@JavaUSwitchEntry.sourcePsi.enclosingSwitchBlock)
+          }
 
-      init {
-        val expressions = ArrayList<UExpression>(this@JavaUSwitchEntry.statements.size)
-        for (statement in this@JavaUSwitchEntry.statements) {
-          expressions.add(JavaConverter.convertOrEmpty(statement, this))
+          this.expressions = expressions
         }
-        if (addDummyBreak) {
-          val lastValueExpressionPsi = expressions.lastOrNull()?.sourcePsi as? PsiExpression
-          if (lastValueExpressionPsi != null)
-            expressions[expressions.size - 1] = DummyYieldExpression(lastValueExpressionPsi, this,
-                                                                     this@JavaUSwitchEntry.sourcePsi.enclosingSwitchBlock)
+
+        override fun asRenderString() = buildString {
+          appendLine("{")
+          expressions.forEach { appendLine(it.asRenderString().withMargin) }
+          appendLine("}")
         }
-
-        this.expressions = expressions
-      }
-
-      override fun asRenderString() = buildString {
-        appendLine("{")
-        expressions.forEach { appendLine(it.asRenderString().withMargin) }
-        appendLine("}")
       }
     }
-  }
 }
 
 internal class DummyYieldExpression(
@@ -161,6 +171,9 @@ internal class DummyYieldExpression(
   override val uastParent: UElement?,
   private val enclosingSwitchBlock: PsiSwitchBlock?
 ) : UYieldExpression {
+
+  private val expressionPart = UastLazyPart<UExpression?>()
+
   override val javaPsi: PsiElement? = null
   override val sourcePsi: PsiElement? = null
   override val psi: PsiElement?
@@ -170,7 +183,8 @@ internal class DummyYieldExpression(
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 
-  override val expression: UExpression? by lazyPub { JavaConverter.convertExpression(expressionPsi, this, UExpression::class.java) }
+  override val expression: UExpression?
+    get() = expressionPart.getOrBuild { JavaConverter.convertExpression(expressionPsi, this, UExpression::class.java) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

@@ -20,6 +20,7 @@ class Handler {
 
 class Test3 {
     private val handler = Handler()
+
     private val someRunnable: Runnable = object : Runnable {
         override fun run() {
             handler.postDelayed(this, 1000)

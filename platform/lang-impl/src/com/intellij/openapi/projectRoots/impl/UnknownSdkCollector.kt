@@ -68,7 +68,7 @@ data class UnknownSdkSnapshot(
     return this.sdkState == other.sdkState
   }
 
-  override fun hashCode() = Objects.hash(totallyUnknownSdks.size, resolvableSdks.size, sdkState)
+  override fun hashCode(): Int = Objects.hash(totallyUnknownSdks.size, resolvableSdks.size, sdkState)
 }
 
 private data class MissingSdkInfo(
@@ -197,7 +197,7 @@ open class UnknownSdkCollector(private val myProject: Project) : UnknownSdkBlock
         throw e
       } catch (t: Throwable) {
         LOG.warn("Failed to contribute SDKs with ${it.javaClass.name}. ${t.message}", t)
-        listOf<UnknownSdk>()
+        listOf()
       }
 
       for (unknownSdk in contrib) {

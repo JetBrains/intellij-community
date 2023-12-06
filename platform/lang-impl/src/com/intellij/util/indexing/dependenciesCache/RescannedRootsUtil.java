@@ -39,17 +39,17 @@ final class RescannedRootsUtil {
   private static List<IndexableIteratorBuilder> createBuildersForReincludedFiles(@NotNull Project project,
                                                                                  @NotNull Collection<VirtualFile> reincludedRoots,
                                                                                  @NotNull List<? extends SyntheticLibraryDescriptor> librariesDescriptorsAfter) {
-    ReincludedRootsUtil.Data data = ReincludedRootsUtil.createBuildersDataForReincludedFiles(project, reincludedRoots);
-    if(data.rootsFromAdditionalLibraryRootsProviders().isEmpty()){
-      return data.builders();
-    }
-    List<IndexableIteratorBuilder> builders = new ArrayList<>(data.builders());
-    builders.addAll(createSyntheticLibraryIteratorBuilders(librariesDescriptorsAfter, data.rootsFromAdditionalLibraryRootsProviders()));
+    ReincludedRootsUtil.Classifier classifier = ReincludedRootsUtil.classifyFiles(project, reincludedRoots);
+    List<IndexableIteratorBuilder> builders = new ArrayList<>(classifier.createBuildersFromWorkspaceFiles());
+    builders.addAll(classifier.createBuildersFromFilesFromIndexableSetContributors(project));
+    builders.addAll(createSyntheticLibraryIteratorBuilders(librariesDescriptorsAfter,
+                                                           classifier.getFilesFromAdditionalLibraryRootsProviders()));
     return builders;
   }
 
   private static Collection<SyntheticLibraryIteratorBuilder> createSyntheticLibraryIteratorBuilders(List<? extends SyntheticLibraryDescriptor> librariesDescriptorsAfter,
                                                                                                     Collection<VirtualFile> files) {
+    if (files.isEmpty()) return Collections.emptyList();
     List<SyntheticLibraryIteratorBuilder> builders = new ArrayList<>();
     for (SyntheticLibraryDescriptor lib : librariesDescriptorsAfter) {
       List<VirtualFile> roots = new ArrayList<>();

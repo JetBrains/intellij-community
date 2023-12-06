@@ -76,27 +76,27 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
   ) {
     override fun toBaseState(config: TargetEnvironmentConfiguration): OneTargetState = config.toOneTargetState()
 
-    override fun fromOneState(state: ContributedStateBase) = when (state) {
+    override fun fromOneState(state: ContributedStateBase): TargetEnvironmentConfiguration? = when (state) {
       is OneTargetState -> state.toTargetConfiguration()
       else -> super.fromOneState(state) // unexpected, but I do not want to fail just in case
     }
   }
 
   class TargetsListState : BaseState() {
-    var projectDefaultTargetUuid by string()
+    var projectDefaultTargetUuid: String? by string()
 
     @get: XCollection(style = XCollection.Style.v2)
-    var targets by list<OneTargetState>()
+    var targets: MutableList<OneTargetState> by list()
   }
 
   @Tag("target")
   class OneTargetState : ContributedConfigurationsList.ContributedStateBase() {
     @get:Attribute("uuid")
-    var uuid by string()
+    var uuid: String? by string()
 
     @get: XCollection(style = XCollection.Style.v2)
     @get: Property(surroundWithTag = false)
-    var runtimes by list<ContributedConfigurationsList.ContributedStateBase>()
+    var runtimes: MutableList<ContributedConfigurationsList.ContributedStateBase> by list()
 
     fun toTargetConfiguration(): TargetEnvironmentConfiguration? {
       return TargetEnvironmentType.EXTENSION_NAME.deserializeState(this)?.also { result ->
@@ -106,7 +106,7 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     }
 
     companion object {
-      fun TargetEnvironmentConfiguration.toOneTargetState() = OneTargetState().also { state ->
+      fun TargetEnvironmentConfiguration.toOneTargetState(): OneTargetState = OneTargetState().also { state ->
         state.loadFromConfiguration(this)
         state.uuid = uuid
         state.runtimes = runtimes.state.configs

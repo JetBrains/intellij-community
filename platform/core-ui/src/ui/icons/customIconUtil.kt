@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import org.jetbrains.annotations.ApiStatus
-import java.net.MalformedURLException
-import java.net.URL
 import javax.swing.Icon
 import kotlin.math.roundToInt
 
@@ -37,43 +35,30 @@ fun scaleIconOrLoadCustomVersion(icon: Icon, scale: Float): Icon {
   return if (icon is ScalableIcon) icon.scale(scale) else IconUtil.scale(icon = icon, ancestor = null, scale = scale)
 }
 
-private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int): Icon? {
-  val resolver = icon.resolver ?: return null
-  var foundIcon: Icon? = null
-
-  val coords = resolver.getCoords()
-  if (coords != null) {
-    val path = coords.first
-    if (!path.endsWith(".svg")) {
-      return null
-    }
-
-    val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
-    foundIcon = IconLoader.findIcon(path = modifiedPath, classLoader = coords.second)
-  }
-  else {
-    val url = resolver.url
-    val path = url?.toString()
-    if (path == null || !path.endsWith(".svg")) {
-      return null
-    }
-
-    val modified = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
-    try {
-      foundIcon = IconLoader.findIcon(URL(modified))
-    }
-    catch (ignore: MalformedURLException) {
-    }
+private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int, isDark: Boolean? = null): Icon? {
+  val coords = icon.getCoords() ?: return null
+  val path = coords.first
+  if (!path.endsWith(".svg")) {
+    return null
   }
 
+  val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
+  val foundIcon = findIconUsingNewImplementation(path = modifiedPath, classLoader = coords.second) ?: return null
   if (foundIcon is CachedImageIcon &&
-      foundIcon.getIconWidth() == JBUIScale.scale(width) && foundIcon.getIconHeight() == JBUIScale.scale(height)) {
-    return foundIcon
+      foundIcon.getIconWidth() == JBUIScale.scale(width) &&
+      foundIcon.getIconHeight() == JBUIScale.scale(height)) {
+    if (isDark == null) {
+      return foundIcon.withAnotherIconModifications(icon)
+    }
+    else {
+      return foundIcon.getDarkIcon(isDark = isDark)
+    }
   }
   return null
 }
 
-/** @param size the size before system scaling (without JBUIScale.scale)
+/**
+ * @param size the size before system scaling (without `JBUIScale.scale`)
  */
 @ApiStatus.Internal
 fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
@@ -82,14 +67,27 @@ fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
   }
 
   var cachedIcon: Icon = icon
-  if (cachedIcon !is CachedImageIcon && cachedIcon is RetrievableIcon) {
-    cachedIcon = cachedIcon.retrieveIcon()
-  }
-  if (cachedIcon is CachedImageIcon) {
-    val version = loadIconCustomVersion(icon = cachedIcon, width = size, height = size)
-    if (version != null) {
-      return version
+  if (cachedIcon !is CachedImageIcon) {
+    if (cachedIcon is RetrievableIcon) {
+      cachedIcon = cachedIcon.retrieveIcon()
+    }
+    if (cachedIcon !is CachedImageIcon) {
+      val result = icon.scale(JBUIScale.scale(1.0f) * size / icon.iconWidth)
+      return result
     }
   }
-  return icon.scale(JBUIScale.scale(1.0f) * size / icon.iconWidth)
+
+  return loadIconCustomVersionOrScale(icon = cachedIcon, size = size, isDark = null)
+}
+
+@ApiStatus.Internal
+fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boolean? = null): Icon {
+  if (icon.iconWidth == JBUIScale.scale(size)) {
+    return if (isDark == null) icon else icon.getDarkIcon(isDark)
+  }
+
+  loadIconCustomVersion(icon = icon, width = size, height = size, isDark = isDark)?.let {
+    return it
+  }
+  return icon.scale(scale = (JBUIScale.scale(1.0f) * size) / icon.getRawIconWidth(), isDark = isDark)
 }

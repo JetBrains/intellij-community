@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHolderUtilKt;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
-import org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactory;
+import org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactoryKt;
 import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
@@ -26,7 +27,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.Collection;
 import java.util.List;
 
-public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
+final class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
 
   private static final String JB_COLOR_FQN = JBColor.class.getCanonicalName();
   private static final String NAMED_COLOR_METHOD_NAME = "namedColor";
@@ -91,13 +92,8 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
   private static void registerProblem(@NotNull String key,
                                       @NotNull ProblemsHolder holder,
                                       @NotNull UCallExpression expression) {
-    UIdentifier identifier = expression.getMethodIdentifier();
-    if (identifier == null) return;
-    PsiElement identifierPsi = identifier.getPsi();
-    if (identifierPsi == null) return;
-
-    holder.registerProblem(identifierPsi,
-                           DevKitThemesBundle.message("inspections.unregistered.named.color", key), new LocalQuickFix() {
+    ProblemHolderUtilKt.registerUProblem(holder, expression,
+                                         DevKitThemesBundle.message("inspections.unregistered.named.color", key), new LocalQuickFix() {
 
         @Nls(capitalization = Nls.Capitalization.Sentence)
         @NotNull
@@ -114,7 +110,7 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
         @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
           final Collection<VirtualFile> metadataFiles =
-            FilenameIndex.getAllFilesByExt(project, ThemeMetadataJsonSchemaProviderFactory.EXTENSION);
+            FilenameIndex.getAllFilesByExt(project, ThemeMetadataJsonSchemaProviderFactoryKt.THEME_METADATA_JSON_EXTENSION);
           if (metadataFiles.isEmpty()) return;
 
           final PsiFile[] psiFiles =

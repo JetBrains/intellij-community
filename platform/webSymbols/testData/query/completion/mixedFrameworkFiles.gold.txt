@@ -1,5 +1,21 @@
 [
  {
+  name: "foo-bad",
+  priority: NORMAL,
+  source: {
+   matchedName: "js/properties/fooBad",
+   origin: "web-components@1.0.0 (<none>)",
+   complete: true,
+   priority: NORMAL,
+   segments: [
+    {
+     name-part: "fooBad",
+     symbol: <self>,
+    },
+   ],
+  },
+ },
+ {
   name: "foo-bar",
   priority: NORMAL,
   proximity: 1,
@@ -28,6 +44,9 @@
    origin: "web-components@1.0.0 (<none>)",
    complete: true,
    priority: NORMAL,
+   properties: {
+    read-only: true,
+   },
    segments: [
     {
      name-part: "fooBaz",

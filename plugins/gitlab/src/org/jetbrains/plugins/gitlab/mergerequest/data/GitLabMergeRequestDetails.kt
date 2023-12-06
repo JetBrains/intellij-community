@@ -6,18 +6,20 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import java.util.*
 
-open class GitLabMergeRequestDetails(
-  override val iid: String,
-  open val title: @NlsSafe String,
-  open val createdAt: Date,
-  open val author: GitLabUserDTO,
-  open val mergeStatus: GitLabMergeStatus,
-  open val state: GitLabMergeRequestState,
-  open val draft: Boolean,
-  open val assignees: List<GitLabUserDTO>,
-  open val reviewers: List<GitLabUserDTO>,
-  open val webUrl: @NlsSafe String
-) : GitLabMergeRequestId {
+data class GitLabMergeRequestDetails(
+  val iid: String,
+  val title: @NlsSafe String,
+  val createdAt: Date,
+  val author: GitLabUserDTO,
+  val mergeStatus: GitLabMergeStatus,
+  val isMergeable: Boolean,
+  val state: GitLabMergeRequestState,
+  val draft: Boolean,
+  val assignees: List<GitLabUserDTO>,
+  val reviewers: List<GitLabUserDTO>,
+  val webUrl: @NlsSafe String,
+  val labels: List<String>
+) {
 
   companion object {
     fun fromRestDTO(dto: GitLabMergeRequestShortRestDTO): GitLabMergeRequestDetails =
@@ -25,13 +27,15 @@ open class GitLabMergeRequestDetails(
         dto.iid,
         dto.title,
         dto.createdAt,
-        dto.author,
+        GitLabUserDTO.fromRestDTO(dto.author),
         dto.mergeStatusEnum,
+        dto.mergeable,
         dto.stateEnum,
         dto.draft,
-        dto.assignees,
-        dto.reviewers,
-        dto.webUrl
+        dto.assignees.map(GitLabUserDTO::fromRestDTO),
+        dto.reviewers.map(GitLabUserDTO::fromRestDTO),
+        dto.webUrl,
+        dto.labels
       )
   }
 }

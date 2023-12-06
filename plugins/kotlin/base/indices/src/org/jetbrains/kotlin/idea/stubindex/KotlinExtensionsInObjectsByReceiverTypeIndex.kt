@@ -10,11 +10,12 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 class KotlinExtensionsInObjectsByReceiverTypeIndex internal constructor() : StringStubIndexExtension<KtCallableDeclaration>() {
     companion object Helper : KotlinExtensionsByReceiverTypeStubIndexHelper() {
         override val indexKey: StubIndexKey<String, KtCallableDeclaration> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinExtensionsInObjectsByReceiverTypeIndex")
+            StubIndexKey.createIndexKey(KotlinExtensionsInObjectsByReceiverTypeIndex::class.java.simpleName)
     }
 
     override fun getKey(): StubIndexKey<String, KtCallableDeclaration> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinExtensionsInObjectsByReceiverTypeIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> {
         return Helper[key, project, scope]
     }

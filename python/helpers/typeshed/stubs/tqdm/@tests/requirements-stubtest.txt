@@ -1,6 +1,0 @@
-tensorflow
-pandas
-dask
-rich
-requests
-slack-sdk

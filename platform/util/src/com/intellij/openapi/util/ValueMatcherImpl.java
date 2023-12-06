@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,7 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeIf<T>, ValueKey.Be
     NOT_MATCHED, IGNORING, SKIPPING, MATCHING, MATCHED, FINISHED
   }
 
-  private @NotNull final String myKey;
+  private final @NotNull String myKey;
   private @NotNull State myState = State.NOT_MATCHED;
   private T myValue;
 
@@ -25,9 +25,8 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeIf<T>, ValueKey.Be
     return myKey;
   }
 
-  @NotNull
   @Override
-  public <TT> ValueKey.BeforeThen<T, TT> ifEq(@NotNull ValueKey<TT> key) {
+  public @NotNull <TT> ValueKey.BeforeThen<T, TT> ifEq(@NotNull ValueKey<TT> key) {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");
@@ -64,9 +63,8 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeIf<T>, ValueKey.Be
     }
   }
 
-  @Nullable
   @Override
-  public T orNull() {
+  public @Nullable T orNull() {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");
@@ -79,9 +77,8 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeIf<T>, ValueKey.Be
     }
   }
 
-  @NotNull
   @Override
-  public ValueKey.BeforeThen<T, T1> or(@NotNull ValueKey<T1> key) {
+  public @NotNull ValueKey.BeforeThen<T, T1> or(@NotNull ValueKey<T1> key) {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");
@@ -103,9 +100,8 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeIf<T>, ValueKey.Be
     return this;
   }
 
-  @NotNull
   @Override
-  public ValueKey.BeforeIf<T> then(T1 value) {
+  public @NotNull ValueKey.BeforeIf<T> then(T1 value) {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");
@@ -126,9 +122,8 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeIf<T>, ValueKey.Be
     return this;
   }
 
-  @NotNull
   @Override
-  public ValueKey.BeforeIf<T> thenGet(@NotNull Supplier<? extends T1> fn) {
+  public @NotNull ValueKey.BeforeIf<T> thenGet(@NotNull Supplier<? extends T1> fn) {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");

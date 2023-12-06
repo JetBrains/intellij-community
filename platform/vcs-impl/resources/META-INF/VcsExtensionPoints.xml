@@ -206,13 +206,19 @@
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
-    <extensionPoint name="vcs.delayedCommitMessageProvider"
-                    interface="com.intellij.vcs.commit.DelayedCommitMessageProvider"
-                    dynamic="true"/>
+    <extensionPoint name="vcs.lineStatusClientIdRenderer"
+                    interface="com.intellij.openapi.vcs.ex.LineStatusClientIdRenderer"
+                    area="IDEA_PROJECT"
+                    dynamic="false"/>
 
     <extensionPoint name="vcs.envCustomizer"
                     interface="com.intellij.openapi.vcs.VcsEnvCustomizer"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.vcsSymlinkResolver"
+                    interface="com.intellij.vcs.VcsSymlinkResolver"
+                    area="IDEA_PROJECT"
+                    dynamic="false"/>
 
     <extensionPoint name="vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>

@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.ui.project.path
 
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
+import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.annotations.Nls
 
 interface WorkingDirectoryInfo : FileChooserInfo, LabeledSettingsFragmentInfo {
@@ -17,5 +18,8 @@ interface WorkingDirectoryInfo : FileChooserInfo, LabeledSettingsFragmentInfo {
 
   val emptyFieldError: @Nls(capitalization = Nls.Capitalization.Sentence) String
 
-  val externalProjects: List<ExternalProject>
+  val externalProjectModificationTracker: ModificationTracker
+    get() = ModificationTracker.NEVER_CHANGED
+
+  suspend fun collectExternalProjects(): List<ExternalProject>
 }

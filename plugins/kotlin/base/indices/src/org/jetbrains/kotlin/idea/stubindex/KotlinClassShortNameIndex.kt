@@ -16,12 +16,17 @@ class KotlinClassShortNameIndex internal constructor() : StringStubIndexExtensio
             return KotlinClassShortNameIndex()
         }
 
+        @JvmField
+        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        val INSTANCE: KotlinClassShortNameIndex = KotlinClassShortNameIndex()
+
         override val indexKey: StubIndexKey<String, KtClassOrObject> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex")
     }
 
     override fun getKey(): StubIndexKey<String, KtClassOrObject> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinClassShortNameIndex[key, project, scope]"))
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
         return Helper[shortName, project, scope]
     }

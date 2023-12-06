@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -62,8 +62,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
     return color == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
   }
 
-  @Nullable
-  protected Object updateElement() {
+  protected @Nullable Object updateElement() {
     return getElement();
   }
 
@@ -114,28 +113,12 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
   @Deprecated
-  public final void setNodeText(String text, String tooltip, boolean hasError) {
-    clearColoredText();
-    SimpleTextAttributes attributes = hasError ? getErrorAttributes() : getPlainAttributes();
-    getTemplatePresentation().addText(new ColoredFragment(text, tooltip, attributes));
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated
   public final void setPlainText(String aText) {
     clearColoredText();
     getTemplatePresentation().addText(new ColoredFragment(aText, getPlainAttributes()));
   }
 
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated
-  public final void clearColoredText() {
+  private void clearColoredText() {
     getTemplatePresentation().clearText();
   }
 
@@ -145,16 +128,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
    */
   @Deprecated
   public final void addColoredFragment(String aText, SimpleTextAttributes aAttributes) {
-    addColoredFragment(aText, null, aAttributes);
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated
-  public final void addColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
-    getTemplatePresentation().addText(new ColoredFragment(aText, toolTip, aAttributes));
+    getTemplatePresentation().addText(new ColoredFragment(aText, null, aAttributes));
   }
 
   /**
@@ -212,9 +186,8 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
   }
 
-  @NotNull
   @Override
-  public LeafState getLeafState() {
+  public @NotNull LeafState getLeafState() {
     if (isAlwaysShowPlus()) return LeafState.NEVER;
     if (isAlwaysLeaf()) return LeafState.ALWAYS;
     return LeafState.DEFAULT;

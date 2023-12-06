@@ -1,13 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
-import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.*
@@ -16,15 +17,18 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.editor.reloadFromDisk
-import com.intellij.testFramework.utils.vfs.*
+import com.intellij.testFramework.utils.vfs.deleteChildrenRecursively
+import com.intellij.testFramework.utils.vfs.deleteRecursively
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.XmlSerializer
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.util.onFailureCatching
-import org.jetbrains.plugins.gradle.testFramework.util.refreshAndWait
-import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
+import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
 import java.nio.file.Path
 import java.util.*
 
@@ -34,7 +38,6 @@ internal class FileTestFixtureImpl(
 ) : FileTestFixture {
 
   private var isInitialized: Boolean = false
-  private var isSuppressedErrors: Boolean = false
   private lateinit var errors: MutableList<Throwable>
   private lateinit var snapshots: MutableMap<Path, Optional<String>>
   private lateinit var excludedFiles: Set<Path>
@@ -47,7 +50,6 @@ internal class FileTestFixtureImpl(
 
   override fun setUp() {
     isInitialized = false
-    isSuppressedErrors = false
     errors = ArrayList()
     snapshots = HashMap()
 
@@ -56,26 +58,22 @@ internal class FileTestFixtureImpl(
     fixtureRoot = createFixtureRoot(relativePath)
     fixtureStateFile = createFixtureStateFile()
 
-    val oldState = readFixtureState()
-
-    installFixtureFilesWatcher()
-
     val configuration = createFixtureConfiguration()
 
     excludedFiles = configuration.excludedFiles
       .map { root.toNioPath().getResolvedPath(it) }
       .toSet()
 
-    withSuppressedErrors {
-      repairFixtureCaches(oldState)
-    }
+    val oldState = readFixtureState()
     dumpFixtureState()
 
-    withSuppressedErrors {
-      runBlocking {
-        configureFixtureCaches(configuration)
-      }
+    runBlocking(Dispatchers.Default) {
+      repairFixtureCaches(oldState)
+
+      configureFixtureCaches(configuration)
     }
+
+    installFixtureFilesWatcher()
 
     isInitialized = true
     dumpFixtureState()
@@ -105,23 +103,21 @@ internal class FileTestFixtureImpl(
     }
   }
 
-  private fun repairFixtureCaches(state: State) {
+  private suspend fun repairFixtureCaches(state: State) {
     val isInitialized = state.isInitialized ?: false
-    val isSuppressedErrors = state.isSuppressedErrors ?: false
     val errors = state.errors ?: emptyList()
     val snapshots = state.snapshots ?: emptyMap()
-    if (!isInitialized || isSuppressedErrors || errors.isNotEmpty()) {
+    if (!isInitialized || errors.isNotEmpty()) {
       invalidateFixtureCaches()
+      return
     }
-    else {
-      for ((path, text) in snapshots) {
-        revertFile(path.toNioPath(), text)
-      }
+    for ((path, text) in snapshots) {
+      revertFile(Path.of(path), text)
     }
   }
 
-  private fun invalidateFixtureCaches() {
-    runWriteActionAndWait {
+  private suspend fun invalidateFixtureCaches() {
+    writeAction {
       root.deleteChildrenRecursively { it != fixtureStateFile }
     }
   }
@@ -129,7 +125,7 @@ internal class FileTestFixtureImpl(
   private fun dumpFixtureState() {
     val errors = errors.map { it.message ?: it.toString() }
     val snapshots = snapshots.entries.associate { (k, v) -> k.toCanonicalPath() to v.orElse(null) }
-    writeFixtureState(State(isInitialized, isSuppressedErrors, errors, snapshots))
+    writeFixtureState(State(isInitialized, errors, snapshots))
   }
 
   private fun readFixtureState(): State {
@@ -142,10 +138,8 @@ internal class FileTestFixtureImpl(
   }
 
   private fun writeFixtureState(state: State) {
-    runWriteActionAndWait {
-      val element = XmlSerializer.serialize(state)
-      JDOMUtil.write(element, fixtureStateFile.toNioPath())
-    }
+    val element = XmlSerializer.serialize(state)
+    JDOMUtil.write(element, fixtureStateFile.toNioPath())
   }
 
   private fun createFixtureConfiguration(): Configuration {
@@ -158,7 +152,7 @@ internal class FileTestFixtureImpl(
         invalidateFixtureCaches()
         configuration.createFiles(root)
       }
-      root.refreshAndWait()
+      root.refreshAndAwait()
     }
       .onFailureCatching { invalidateFixtureCaches() }
       .getOrThrow()
@@ -173,7 +167,7 @@ internal class FileTestFixtureImpl(
   }
 
   private fun getErrors(): List<Throwable> {
-    runBlocking { root.refreshAndWait() }
+    runBlocking { root.refreshAndAwait() }
     return errors
   }
 
@@ -225,16 +219,9 @@ internal class FileTestFixtureImpl(
     return file.readText()
   }
 
-  override fun suppressErrors(isSuppressedErrors: Boolean) {
-    this.isSuppressedErrors = isSuppressedErrors
-    dumpFixtureState()
-  }
-
   override fun addIllegalOperationError(message: String) {
-    if (!isSuppressedErrors) {
-      errors.add(Exception(message))
-      dumpFixtureState()
-    }
+    errors.add(Exception(message))
+    dumpFixtureState()
   }
 
   private fun installFixtureFilesWatcher() {
@@ -274,7 +261,6 @@ internal class FileTestFixtureImpl(
 
   private data class State(
     var isInitialized: Boolean? = null,
-    var isSuppressedErrors: Boolean? = null,
     var errors: List<String>? = null,
     var snapshots: Map<String, String?>? = null
   )

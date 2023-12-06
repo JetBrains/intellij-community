@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.module
 
 import com.intellij.icons.AllIcons
@@ -36,7 +36,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.function.Supplier
 import javax.swing.Icon
 
-class IdePluginModuleBuilder : StarterModuleBuilder() {
+internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   private val PLUGIN_TYPE_KEY: Key<PluginType> = Key.create("ide.plugin.type")
 
@@ -48,7 +48,7 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   override fun getProjectTypes(): List<StarterProjectType> = emptyList()
   override fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
-  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_11.toJavaVersion()
+  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_17.toJavaVersion()
 
   override fun getLanguages(): List<StarterLanguage> {
     return listOf(KOTLIN_STARTER_LANGUAGE) // Java and Kotlin both are available out of the box
@@ -104,7 +104,9 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
                                        ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.GRADLE_WRAPPER_PROPERTIES)))
 
       assets.addAll(standardAssetsProvider.getGradlewAssets())
-      assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+      if (starterContext.isCreatingNewProject) {
+        assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+      }
 
       val packagePath = getPackagePath(starterContext.group, starterContext.artifact)
       if (starterContext.language == JAVA_STARTER_LANGUAGE) {
@@ -191,7 +193,7 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
 
     override fun addFieldsBefore(layout: Panel) {
       layout.row(DevKitBundle.message("module.builder.type")) {
-        segmentedButton(listOf(PluginType.PLUGIN, PluginType.THEME)) { it.messagePointer.get() }
+        segmentedButton(listOf(PluginType.PLUGIN, PluginType.THEME)) { text = it.messagePointer.get() }
           .bind(typeProperty)
       }.bottomGap(BottomGap.SMALL)
 

@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -27,11 +28,11 @@ public abstract class CompositeFilePathHolder implements FileHolder {
   }
 
   @Override
-  public void cleanAndAdjustScope(@NotNull VcsModifiableDirtyScope scope) {
+  public void cleanUnderScope(@NotNull VcsDirtyScope scope) {
     AbstractVcs vcs = scope.getVcs();
     FilePathHolder holder = myMap.get(vcs);
     if (holder != null) {
-      holder.cleanAndAdjustScope(scope);
+      holder.cleanUnderScope(scope);
     }
   }
 
@@ -50,11 +51,9 @@ public abstract class CompositeFilePathHolder implements FileHolder {
       .anyMatch(holder -> holder instanceof VcsManagedFilesHolder && ((VcsManagedFilesHolder)holder).isInUpdatingMode());
   }
 
-  public boolean containsFile(@NotNull FilePath file) {
-    AbstractVcs vcs = myVcsManager.getVcsFor(file);
-    if (vcs == null) return false;
-    FilePathHolder holder = myMap.get(vcs);
-    return holder != null && holder.containsFile(file);
+  public boolean containsFile(@NotNull FilePath file, @NotNull VcsRoot vcsRoot) {
+    FilePathHolder holder = myMap.get(vcsRoot.getVcs());
+    return holder != null && holder.containsFile(file, vcsRoot.getPath());
   }
 
   @NotNull

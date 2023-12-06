@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
@@ -23,16 +23,15 @@ interface CompilationContext {
   fun isStepSkipped(step: String): Boolean = options.buildStepsToSkip.contains(step)
 
   /**
-   * Stable java executable from Java SDK used to compile project and do other stuff,
-   * not a JBR to assert compatibility with a standard Java Runtime
+   * Stable java executable from Java SDK used to compile a project and do other stuff,
+   * not a JBR to assert compatibility with a standard Java Runtime.
    */
   val stableJavaExecutable: Path
 
   /**
-   * Stable JDK used to compile project and run utilities,
-   * not a JBR to assert compatibility with a standard Java Runtime
+   * Stable JDK used to compile a project and run utilities, not a JBR to assert compatibility with a standard Java Runtime.
    */
-  val stableJdkHome: Path
+  suspend fun getStableJdkHome(): Path
 
   /**
    * @return directory with compiled project classes, 'url' attribute value of 'output' tag from .idea/misc.xml by default
@@ -74,5 +73,7 @@ interface CompilationTasks {
   fun buildProjectArtifacts(artifactNames: Set<String>)
 
   fun resolveProjectDependencies()
+  
+  fun generateRuntimeModuleRepository()
 }
 

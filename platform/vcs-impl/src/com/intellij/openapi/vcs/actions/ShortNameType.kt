@@ -52,6 +52,7 @@ enum class ShortNameType(private val typeId: @NonNls String,
       val rawName = StringUtil.collapseWhiteSpace(input)
 
       var name = rawName
+      var nameFromEmail = false
 
       val emailStart = name.indexOf('<')
       val emailEnd = name.indexOf('>')
@@ -68,7 +69,10 @@ enum class ShortNameType(private val typeId: @NonNls String,
           prefix.isNotEmpty() && suffix.isNotEmpty() -> "$prefix $suffix"
           prefix.isNotEmpty() -> prefix
           suffix.isNotEmpty() -> suffix
-          else -> email
+          else -> {
+            nameFromEmail = true
+            email
+          }
         }
       }
 
@@ -93,27 +97,30 @@ enum class ShortNameType(private val typeId: @NonNls String,
       val atIndex = name.indexOf("@")
       if (atIndex > 0 && !name.contains(" ")) {
         // "vasya.pupkin@email.com" -> "vasya.pupkin"
-        name = name.substring(0, atIndex)
+        nameFromEmail = true
+        name = name.substring(0, atIndex).replace(DELIMITERS_REGEX, " ")
       }
 
-      name = name.replace(DELIMITERS_REGEX, " ")
-
-      val strings = name.split(" ").filter { it.isNotBlank() }
-      if (strings.isEmpty()) return rawName
+      val nameParts = name.split(" ").filter { it.isNotBlank() }
+      if (nameParts.isEmpty()) return rawName
 
       if (type == INITIALS) {
-        return strings.joinToString(separator = "") { it[0].uppercase(Locale.getDefault()) }
+        return nameParts
+          .flatMap { it.split(DELIMITERS_REGEX) }
+          .filter { it.isNotBlank() }
+          .joinToString(separator = "") { it[0].uppercase(Locale.getDefault()) }
       }
 
-      val userName = when (type) {
-        FIRSTNAME -> strings.first()
-        LASTNAME -> strings.last()
+      var firstOrLastName = when (type) {
+        FIRSTNAME -> nameParts.first()
+        LASTNAME -> nameParts.last()
         else -> throw IllegalArgumentException(type.name)
       }
-      return userName.replaceFirstChar {
-        if (it.isLowerCase()) it.titlecase(Locale.getDefault())
-        else it.toString()
+      if (nameFromEmail && firstOrLastName.isNotEmpty() && firstOrLastName[0].isLowerCase()) {
+        // emails are usually written in lowercase and names are usually capitalized, so transform it:
+        firstOrLastName = firstOrLastName.replaceFirstChar { it.titlecase(Locale.getDefault()) }
       }
+      return firstOrLastName
     }
   }
 }

@@ -1,9 +1,15 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.util.keyFMap.KeyFMap
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatCollection
+import kotlin.reflect.KProperty1
 
 class CodeCellLinesChecker(private val description: String,
+                           private val intervalsComparator: Comparator<NotebookCellLines.Interval> = makeIntervalComparatorIgnoringData(),
+                           private val markersComparator: Comparator<NotebookCellLinesLexer.Marker> = makeMarkerComparatorIgnoringData(),
                            private val editorGetter: () -> EditorImpl) : (CodeCellLinesChecker.() -> Unit) -> Unit {
   private var markers: MutableList<NotebookCellLinesLexer.Marker>? = null
   private var intervals: MutableList<NotebookCellLines.Interval>? = null
@@ -17,9 +23,10 @@ class CodeCellLinesChecker(private val description: String,
       markers = mutableListOf()
     }
 
-    fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int) {
+    fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int, language: Language) {
       markers!!.add(
-        NotebookCellLinesLexer.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length))
+        NotebookCellLinesLexer.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length,
+                                      data = makeLanguageData(language)))
     }
   }
 
@@ -31,8 +38,20 @@ class CodeCellLinesChecker(private val description: String,
   }
 
   class IntervalsSetter(private val list: MutableList<NotebookCellLines.Interval>, private val startOrdinal: Int) {
-    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, markers: NotebookCellLines.MarkersAtLines) {
-      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers, null)
+    fun interval(cellType: NotebookCellLines.CellType,
+                 lines: IntRange,
+                 markers: NotebookCellLines.MarkersAtLines,
+                 language: Language) {
+      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers, makeLanguageData(language))
+    }
+
+    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, language: Language) {
+      val markers =
+        if (cellType == NotebookCellLines.CellType.RAW && lines.first == 0)
+          NotebookCellLines.MarkersAtLines.NO
+        else
+          NotebookCellLines.MarkersAtLines.TOP
+      interval(cellType, lines, markers, language)
     }
   }
 
@@ -105,15 +124,31 @@ class CodeCellLinesChecker(private val description: String,
         """.trimMargin("|||")
 
       markers.let { markers ->
-        assertThat(makeMarkersFromIntervals(editor.document, codeCellLines.intervals).filter { it.offset >= markersStartOffset })
+        assertThatCollection(makeMarkersFromIntervals(editor.document, codeCellLines.intervals).filter { it.offset >= markersStartOffset })
           .describedAs("Markers: $descr")
+          .usingElementComparator(markersComparator.toJavaComparatorNonNullable())
           .isEqualTo(markers)
       }
       intervals?.let { intervals ->
-        assertThat(codeCellLines.intervalsIterator(intervalsStartLine).asSequence().toList())
+        assertThatCollection(codeCellLines.intervalsIterator(intervalsStartLine).asSequence().toList())
           .describedAs("Intervals: $descr")
+          .usingElementComparator(intervalsComparator.toJavaComparatorNonNullable())
           .isEqualTo(intervals)
       }
+    }
+
+    // actually this should match intervalsComparator
+    fun toPrettyString(interval: NotebookCellLines.Interval): String {
+      fun <T> field(property: KProperty1<NotebookCellLines.Interval, T>): String =
+        "${property.name} = ${property.get(interval)}"
+
+      return listOf(
+        field(NotebookCellLines.Interval::ordinal),
+        field(NotebookCellLines.Interval::type),
+        field(NotebookCellLines.Interval::lines),
+        field(NotebookCellLines.Interval::markers),
+        field(NotebookCellLines.Interval::language),
+      ).joinToString(", ", prefix = "Interval(", postfix = ")")
     }
 
     fun List<Pair<List<NotebookCellLines.Interval>, List<NotebookCellLines.Interval>>>.prettyListeners() =
@@ -121,9 +156,9 @@ class CodeCellLinesChecker(private val description: String,
         """
         Call #$idx
           Before:
-        ${pair.first.joinToString { "    $it" }}
+        ${pair.first.joinToString { "    ${toPrettyString(it)}" }}
           After:
-        ${pair.second.joinToString { "    $it" }}
+        ${pair.second.joinToString { "    ${toPrettyString(it)}" }}
         """.trimIndent()
       }
 
@@ -135,4 +170,32 @@ class CodeCellLinesChecker(private val description: String,
         """.trimMargin("|||"))
       .isEqualTo(expectedIntervalListenerCalls.prettyListeners())
   }
+
+  companion object {
+    fun makeIntervalComparatorIgnoringData(): Comparator<NotebookCellLines.Interval> =
+      compareBy<NotebookCellLines.Interval> { it.ordinal }
+        .thenBy { it.type }
+        .thenBy { it.lines.first }
+        .thenBy { it.lines.last }
+        .thenBy { it.markers }
+        .thenBy { it.language.id }
+
+    fun makeMarkerComparatorIgnoringData(): Comparator<NotebookCellLinesLexer.Marker> =
+      compareBy<NotebookCellLinesLexer.Marker> { it.ordinal }
+        .thenBy { it.type }
+        .thenBy { it.offset }
+        .thenBy { it.length }
+
+    // workaround for kotlin type system
+    private fun <T> Comparator<T>.toJavaComparatorNonNullable(): java.util.Comparator<Any?> =
+      object : java.util.Comparator<Any?> {
+        override fun compare(o1: Any?, o2: Any?): Int {
+          return this@toJavaComparatorNonNullable.compare(o1 as T, o2 as T)
+        }
+      }
+
+    private fun makeLanguageData(language: Language) =
+      KeyFMap.EMPTY_MAP.plus(NotebookCellLines.INTERVAL_LANGUAGE_KEY, language)
+  }
 }
+

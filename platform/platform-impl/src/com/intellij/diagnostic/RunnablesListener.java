@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.util.messages.Topic;
@@ -11,39 +11,29 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.EnumMap;
 import java.util.Objects;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public interface RunnablesListener {
-
   @Topic.AppLevel
-  Topic<RunnablesListener> TOPIC = new Topic<>(RunnablesListener.class,
-                                               Topic.BroadcastDirection.TO_DIRECT_CHILDREN,
-                                               true);
+  Topic<RunnablesListener> TOPIC = new Topic<>(RunnablesListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   SimpleDateFormat DEFAULT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
   DecimalFormat DEFAULT_DURATION_FORMAT = new DecimalFormat("0.00");
 
-  default void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass,
-                               @NotNull Collection<InvocationDescription> descriptions) { }
+  default void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass, @NotNull Collection<InvocationDescription> descriptions) { }
 
   default void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations,
-                                  @NotNull Collection<InvocationsInfo> infos,
+                                  @NotNull Collection<InvocationInfo> infos,
                                   @NotNull Collection<WrapperDescription> wrappers) { }
 
-  default void locksAcquired(@NotNull Collection<LockAcquirementDescription> acquirements) { }
-
   final class InvocationDescription implements Comparable<InvocationDescription> {
-
     private final @NotNull String myProcessId;
     private final long myStartedAt;
     private final long myFinishedAt;
 
-    InvocationDescription(@NotNull String processId,
-                          long startedAt,
-                          long finishedAt) {
+    InvocationDescription(@NotNull String processId, long startedAt, long finishedAt) {
       myProcessId = processId;
       myStartedAt = startedAt;
       myFinishedAt = finishedAt;
@@ -63,10 +53,6 @@ public interface RunnablesListener {
 
     public long getFinishedAt() {
       return myFinishedAt;
-    }
-
-    public @NotNull Date getFinishDateTime() {
-      return new Date(getFinishedAt());
     }
 
     public long getDuration() {
@@ -107,12 +93,11 @@ public interface RunnablesListener {
     }
   }
 
-  final class InvocationsInfo implements Comparable<InvocationsInfo> {
-
-    static @NotNull InvocationsInfo computeNext(@NotNull String fqn,
-                                                long duration,
-                                                @Nullable InvocationsInfo info) {
-      return new InvocationsInfo(fqn,
+  final class InvocationInfo implements Comparable<InvocationInfo> {
+    static @NotNull RunnablesListener.InvocationInfo computeNext(@NotNull String fqn,
+                                                                 long duration,
+                                                                 @Nullable RunnablesListener.InvocationInfo info) {
+      return new InvocationInfo(fqn,
                                  info != null ? info.myCount : 0,
                                  (info != null ? info.myDuration : 0) + duration);
     }
@@ -121,9 +106,7 @@ public interface RunnablesListener {
     private final int myCount;
     private final long myDuration;
 
-    private InvocationsInfo(@NotNull String fqn,
-                            int count,
-                            long duration) {
+    private InvocationInfo(@NotNull String fqn, int count, long duration) {
       myFQN = fqn;
       myCount = 1 + count;
       myDuration = duration;
@@ -142,7 +125,7 @@ public interface RunnablesListener {
     }
 
     @Override
-    public int compareTo(@NotNull InvocationsInfo info) {
+    public int compareTo(@NotNull RunnablesListener.InvocationInfo info) {
       int result = Integer.compare(info.myCount, myCount);
 
       return result != 0 ?
@@ -155,7 +138,7 @@ public interface RunnablesListener {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      InvocationsInfo info = (InvocationsInfo)o;
+      InvocationInfo info = (InvocationInfo)o;
       return myCount == info.myCount &&
              myDuration == info.myDuration &&
              myFQN.equals(info.myFQN);
@@ -226,80 +209,6 @@ public interface RunnablesListener {
              "FQN='" + myFQN + '\'' +
              ", usagesCount=" + myUsagesCount +
              '}';
-    }
-  }
-
-  final class LockAcquirementDescription implements Comparable<LockAcquirementDescription> {
-
-    static @NotNull LockAcquirementDescription computeNext(@NotNull String fqn,
-                                                           @Nullable LockAcquirementDescription description,
-                                                           @NotNull LockKind lockKind) {
-      EnumMap<LockKind, Long> acquirements = description == null ?
-                                             createMapWithDefaultValue() :
-                                             new EnumMap<>(description.myAcquirements);
-
-      //noinspection ConstantConditions
-      acquirements.compute(lockKind,
-                           (ignored, count) -> count + 1);
-      return new LockAcquirementDescription(fqn, acquirements);
-    }
-
-    private final @NotNull String myFQN;
-    private final @NotNull EnumMap<LockKind, Long> myAcquirements;
-
-    private LockAcquirementDescription(@NotNull String fqn,
-                                       @NotNull EnumMap<LockKind, Long> acquirements) {
-      myFQN = fqn;
-      myAcquirements = acquirements;
-    }
-
-    public @NotNull String getFQN() {
-      return myFQN;
-    }
-
-    public long getCount(@NotNull LockKind lockKind) {
-      return myAcquirements.get(lockKind);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      LockAcquirementDescription that = (LockAcquirementDescription)o;
-      return myFQN.equals(that.myFQN) &&
-             myAcquirements.equals(that.myAcquirements);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myFQN, myAcquirements);
-    }
-
-    @Override
-    public int compareTo(@NotNull LockAcquirementDescription description) {
-      for (LockKind kind : LockKind.values()) {
-        int result = Long.compare(getCount(kind), description.getCount(kind));
-        if (result != 0) return result;
-      }
-
-      return myFQN.compareTo(description.myFQN);
-    }
-
-    @Override
-    public @NotNull String toString() {
-      return "LockAcquirementDescription{" +
-             "FQN='" + myFQN + '\'' +
-             ", acquirements=" + myAcquirements +
-             '}';
-    }
-
-    private static @NotNull EnumMap<LockKind, Long> createMapWithDefaultValue() {
-      EnumMap<LockKind, Long> result = new EnumMap<>(LockKind.class);
-      for (LockKind kind : LockKind.values()) {
-        result.put(kind, 0L);
-      }
-      return result;
     }
   }
 }

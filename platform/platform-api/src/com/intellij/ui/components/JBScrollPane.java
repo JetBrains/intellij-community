@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -247,14 +247,16 @@ public class JBScrollPane extends JScrollPane {
               myTouchScroll = TouchScroll.create();
             }
             myTouchScroll.processMouseWheelEvent(event, myDelegate::mouseWheelMoved);
-          } else if (UISettings.getShadowInstance().getAnimatedScrolling()) {
+          }
+          else if (UISettings.getShadowInstance().getAnimatedScrolling()) {
             if (mySmoothScroll == null) {
               mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
                 return ScrollSettings.isEligibleFor(pane);
               });
             }
             mySmoothScroll.processMouseWheelEvent(event, myDelegate::mouseWheelMoved);
-          } else {
+          }
+          else {
             if (LatchingScroll.isEnabled()) {
               if (myLatchingScroll == null) myLatchingScroll = new LatchingScroll();
               if (myLatchingScroll.shouldBeIgnored(event)) {
@@ -314,9 +316,8 @@ public class JBScrollPane extends JScrollPane {
     return new JBScrollBar(Adjustable.VERTICAL);
   }
 
-  @NotNull
   @Override
-  public JScrollBar createHorizontalScrollBar() {
+  public @NotNull JScrollBar createHorizontalScrollBar() {
     return new JBScrollBar(Adjustable.HORIZONTAL);
   }
 

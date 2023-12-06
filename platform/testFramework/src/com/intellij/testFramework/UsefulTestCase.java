@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -76,6 +76,8 @@ import static org.junit.Assume.assumeTrue;
  * <p>
  * To use JUnit 4, annotate your test subclass with {@code @RunWith(JUnit4.class)} or any other (like {@code Parametrized.class}),
  * and you are all set.
+ * If you're looking for JUnit 4 for Assume support and still have JUnit 3 tests,
+ * consider using {@code @RunWith(JUnit38AssumeSupportRunner.class)}.
  * <p>
  * Don't annotate the JUnit 3 {@linkplain #setUp()}/{@linkplain #tearDown()} methods as {@code @Before}/{@code @After},
  * and don't call them from other {@code @Before}/{@code @After} methods.
@@ -123,10 +125,14 @@ public abstract class UsefulTestCase extends TestCase {
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
-  private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
+  private static CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
     initializeTestEnvironment();
+  }
+
+  protected void setDefaultCodeInsightSettings(@NotNull CodeInsightSettings settings) {
+    defaultSettings = settings;
   }
 
   /**
@@ -236,7 +242,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  // some brilliant tests override setup and change setup flow in an alien way - quite unsafe to fix now
+  // some brilliant tests override setup and change the setup-flow in an alien way - quite unsafe to fix now
   protected final void setupTempDir() throws IOException {
     if (myTempDir == null && shouldContainTempFiles()) {
       myTempDir = createGlobalTempDirectory();
@@ -290,7 +296,7 @@ public abstract class UsefulTestCase extends TestCase {
       () -> {
         if (isIconRequired()) {
           IconManager.Companion.deactivate();
-          IconLoader.clearCacheInTests();
+          IconLoader.INSTANCE.clearCacheInTests();
         }
       },
       () -> disposeRootDisposable(),
@@ -678,13 +684,22 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, T @NotNull ... expected) {
-    assertContainsElements(collection, Arrays.asList(expected));
+    assertContainsElements("", collection, expected);
+  }
+
+  @SafeVarargs
+  public static <T> void assertContainsElements(@NotNull String message, @NotNull Collection<? extends T> collection, T @NotNull ... expected) {
+    assertContainsElements(message, collection, Arrays.asList(expected));
   }
 
   public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
+    assertContainsElements("", collection, expected);
+  }
+
+  public static <T> void assertContainsElements(@NotNull String message, @NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
     List<T> copy = new ArrayList<>(collection);
     copy.retainAll(expected);
-    assertSameElements(toString(collection), copy, expected);
+    assertSameElements(messageForCollection(message, collection), copy, expected);
   }
 
   public static @NotNull String toString(Object @NotNull [] collection, @NotNull String separator) {
@@ -693,13 +708,27 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, T @NotNull ... notExpected) {
-    assertDoesntContain(collection, Arrays.asList(notExpected));
+    assertDoesntContain("", collection, notExpected);
   }
 
   public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
+    assertDoesntContain("", collection, notExpected);
+  }
+
+  @SafeVarargs
+  public static <T> void assertDoesntContain(@NotNull String message, @NotNull Collection<? extends T> collection, T @NotNull ... notExpected) {
+    assertDoesntContain(message, collection, Arrays.asList(notExpected));
+  }
+
+  public static <T> void assertDoesntContain(@NotNull String message, @NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
     List<T> expected = new ArrayList<>(collection);
     expected.removeAll(notExpected);
-    assertSameElements(collection, expected);
+    assertSameElements(messageForCollection(message, collection), collection, expected);
+  }
+
+  @NotNull
+  private static <T> String messageForCollection(@NotNull String message, @NotNull Collection<? extends T> collection) {
+    return (message.isBlank() ? "" : message + "\n") + toString(collection);
   }
 
   public static @NotNull String toString(@NotNull Collection<?> collection, @NotNull String separator) {
@@ -790,14 +819,14 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
     if (collection.size() != 1) {
-      Assert.assertEquals(collection.toString(), 1, collection.size());
+      Assert.assertEquals(toString(collection), 1, collection.size());
     }
     return collection.iterator().next();
   }
 
   public static <T> T assertOneElement(T @NotNull [] ts) {
     if (ts.length != 1) {
-      Assert.assertEquals(Arrays.toString(ts), 1, ts.length);
+      Assert.assertEquals(toString(Arrays.asList(ts)), 1, ts.length);
     }
     return ts[0];
   }
@@ -823,7 +852,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertEmpty(@NotNull Collection<?> collection) {
     if (!collection.isEmpty()) {
-      assertEmpty(collection.toString(), collection);
+      assertEmpty(toString(collection), collection);
     }
   }
 
@@ -881,6 +910,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static @NotNull String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
+  }
+
+  public final @NotNull String getQualifiedTestMethodName() {
+    return String.format("%s.%s", this.getClass().getName(), getName());
   }
 
   protected @NotNull String getTestDirectoryName() {
@@ -961,7 +994,7 @@ public abstract class UsefulTestCase extends TestCase {
       String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
         int modifiers = field.getModifiers();
-        if ((modifiers & Modifier.FINAL) == 0 && (modifiers & Modifier.STATIC) == 0 && !field.getType().isPrimitive()) {
+        if (!Modifier.isFinal(modifiers) && !Modifier.isStatic(modifiers) && !field.getType().isPrimitive()) {
           field.setAccessible(true);
           field.set(test, null);
         }
@@ -995,7 +1028,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * @return true for a test which performs a lot of computations to test resource consumption, not correctness.
-   * Such test should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
+   * Such tests should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
    * If you want your test to be treated as "Performance", mention "Performance" word in its class/method name.
    * For example: {@code public void testHighlightingPerformance()}
    */
@@ -1005,20 +1038,14 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * @return true for a test which performs a lot of computations <b>and</b> does care about the correctness of operations it performs.
-   * Such test should typically avoid performing expensive checks, e.g., data structure consistency complex validations.
+   * Such tests should typically avoid performing expensive checks, e.g., data structure consistency complex validations.
    * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */
   public final boolean isStressTest() {
     String testName = getName();
     String className = getClass().getSimpleName();
-    return TestFrameworkUtil.isPerformanceTest(testName, className) ||
-           containsStressWords(testName) ||
-           containsStressWords(className);
-  }
-
-  private static boolean containsStressWords(@Nullable String name) {
-    return name != null && (name.contains("Stress") || name.contains("Slow"));
+    return TestFrameworkUtil.isStressTest(testName, className);
   }
 
   public static void doPostponedFormatting(@NotNull Project project) {

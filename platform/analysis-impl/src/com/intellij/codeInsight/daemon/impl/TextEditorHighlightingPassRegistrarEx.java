@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
@@ -34,14 +19,11 @@ public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHi
     return (TextEditorHighlightingPassRegistrarEx)getInstance(project);
   }
 
-  @NotNull
-  public abstract List<@NotNull TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
-                                                                              @NotNull Editor editor,
-                                                                              int @NotNull [] passesToIgnore);
-  @NotNull
-  public abstract List<@NotNull TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
-                                                                                  @NotNull Document document,
-                                                                                  @NotNull HighlightInfoProcessor highlightInfoProcessor);
-  @NotNull
-  public abstract Iterable<DirtyScopeTrackingHighlightingPassFactory> getDirtyScopeTrackingFactories();
+  public abstract @NotNull List<@NotNull TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
+                                                                                       @NotNull Editor editor,
+                                                                                       int @NotNull [] passesToIgnore);
+  public abstract @NotNull List<@NotNull TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
+                                                                                           @NotNull Document document,
+                                                                                           @NotNull HighlightInfoProcessor highlightInfoProcessor);
+  public abstract @NotNull Iterable<DirtyScopeTrackingHighlightingPassFactory> getDirtyScopeTrackingFactories();
 }

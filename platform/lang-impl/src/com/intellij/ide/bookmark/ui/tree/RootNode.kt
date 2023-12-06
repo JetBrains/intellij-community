@@ -21,7 +21,7 @@ internal class RootNode(panel: BookmarksView) : AbstractTreeNode<BookmarksView>(
   private val BookmarkGroup.anyLineBookmark
     get() = getBookmarks().any { it is LineBookmark }
 
-  override fun isAlwaysShowPlus() = true
+  override fun isAlwaysShowPlus(): Boolean = true
   override fun getChildren(): List<AbstractTreeNode<*>> {
     val nodes = cache.getNodes(bookmarksManager?.groups?.filter { !value.isPopup || it.anyLineBookmark } ?: emptyList())
     return when {

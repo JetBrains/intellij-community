@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.toolwindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.NonEmptyActionGroup
+import com.intellij.internal.statistic.devkit.PlatformStatisticsDevkitIcons
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.DEFAULT_RECORDER
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.getLogProvidersInTestMode
 import com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction
@@ -17,7 +18,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.ContentFactory
-
+import javax.swing.Icon
 
 /**
  * Creates a toolwindow with feature usage statistics event log
@@ -45,7 +46,10 @@ private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware
     })
   }
 
-  override fun isApplicable(project: Project) = StatisticsRecorderUtil.isAnyTestModeEnabled()
+  override val icon: Icon
+    get() =  PlatformStatisticsDevkitIcons.StatisticsEventLog
+
+  override suspend fun isApplicableAsync(project: Project) = StatisticsRecorderUtil.isAnyTestModeEnabled()
 }
 
 private fun createNewSessionActionGroup(project: Project): NonEmptyActionGroup {

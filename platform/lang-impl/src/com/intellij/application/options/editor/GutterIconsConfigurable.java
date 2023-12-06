@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.*;
@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -40,7 +41,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   @NonNls public static final String ID = "editor.preferences.gutterIcons";
 
   private JPanel myPanel;
@@ -146,7 +147,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     if (myShowGutterIconsJBCheckBox.isSelected() != editorSettings.areGutterIconsShown()) {
       editorSettings.setGutterIconsShown(myShowGutterIconsJBCheckBox.isSelected());
-      EditorOptionsPanel.reinitAllEditors();
+      EditorOptionsPanelKt.reinitAllEditors();
     }
     for (GutterIconDescriptor descriptor : myDescriptors) {
       LineMarkerSettings.getSettings().setEnabled(descriptor, myList.isItemSelected(descriptor));
@@ -239,7 +240,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
   @TestOnly
   public List<GutterIconDescriptor> getDescriptors() { return myDescriptors; }
 
-  public static class ShowSettingsAction extends DumbAwareAction {
+  public static final class ShowSettingsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
     public ShowSettingsAction() {
     }
 

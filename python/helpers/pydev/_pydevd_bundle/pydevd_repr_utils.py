@@ -32,16 +32,22 @@ def _get_series_variable_repr(series, max_items=MAX_REPR_ITEM_SIZE):
 
 
 def _get_df_variable_repr(data_frame):
-    # Avoid using df.iteritems() or df.values[i], because it works very slow for large data frames
-    # df.__str__() is already optimised and works fast enough
-    res = []
+    # Avoid using df.iteritems() or df.values[i], because it works very slow for
+    # large data frames. df.__str__() is already optimised and works fast enough.
+    data_preview = []
+    column_row = 0
+
     rows = str(data_frame).split('\n')
     for (i, r) in enumerate(rows):
-        if i == 0:
-            res.append(r.strip())
-        else:
-            res.append("[%s]" % r)
-    return ' '.join(res)
+        if i != column_row:
+            data_preview.append("[%s]" % r)
+
+        if r == '':
+            column_row = i + 1
+
+    # The string provided is used for column name completion
+    # by JupyterVarsFrameExecutor.parseFrameVars
+    return '{} {}'.format(list(data_frame.columns), ' '.join(data_preview))
 
 
 def _trim_string_repr_if_needed(value, do_trim=True, max_length=MAX_REPR_LENGTH):
@@ -159,6 +165,16 @@ if IS_PY3K:
             result = _get_external_collection_repr(x)
             if result is not None:
                 return result
+
+            # if `__repr__` is overridden, then use `reprlib`
+            if x.__class__.__repr__ != object.__repr__:
+                return super().repr_instance(x, level)
+
+            # if `__str__` is overridden, then return str(x)
+            if x.__class__.__str__ != object.__str__:
+                return str(x)
+
+            # else use `reprlib`
             return super().repr_instance(x, level)
 
 
@@ -177,7 +193,11 @@ else:
                     return ('%s' % take_first_n_coll_elements(value, MAX_REPR_ITEM_SIZE)).rstrip(')]}') + '...'
                 return None
 
-        # other types
+        # if `__repr__` is overridden, then return repr(value)
+        if hasattr(value.__class__, "__repr__"):
+            return repr(value)
+
+        # else
         return str(value)
 
 

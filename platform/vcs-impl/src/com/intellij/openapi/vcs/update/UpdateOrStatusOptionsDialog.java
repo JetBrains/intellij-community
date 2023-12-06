@@ -77,6 +77,17 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   }
 
   @Override
+  public void doCancelAction() {
+    if (getCancelAction().isEnabled()) {
+      for (Configurable configurable : myConfigurables) {
+        configurable.cancel();
+      }
+    }
+
+    super.doCancelAction();
+  }
+
+  @Override
   protected boolean shouldSaveOptionsOnCancel() {
     return false;
   }

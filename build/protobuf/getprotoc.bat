@@ -5,7 +5,7 @@
 ::   @echo on
 @echo off
 
-if not defined PROTOC_VERSION set PROTOC_VERSION=3.19.4
+if not defined PROTOC_VERSION set PROTOC_VERSION=3.24.2
 
 if not defined PROTOC_BIN_DIR (
   for /f %%i in ('git.exe rev-parse --show-toplevel') do set "toplevel=%%~fi"
@@ -17,9 +17,6 @@ if not defined PROTOC_CACHE_DIR (
   set "PROTOC_CACHE_DIR=%PROTOC_BIN_DIR%\..\cache"
 )
 if not exist "%PROTOC_CACHE_DIR%" mkdir "%PROTOC_CACHE_DIR%"
-
-call:getprotoc 3.5.1 || goto :exit
-move /y "%PROTOC_BIN_DIR%\protoc-3.5.1.exe" "%PROTOC_BIN_DIR%\protoc-java6.exe" >nul
 
 call:getprotoc || goto :exit
 

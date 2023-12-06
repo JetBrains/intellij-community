@@ -2,12 +2,14 @@
 package com.intellij.coverage;
 
 import com.intellij.history.LocalHistory;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -16,7 +18,6 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.vcsUtil.VcsUtil;
@@ -25,6 +26,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.util.Date;
 import java.util.List;
 
@@ -159,8 +161,10 @@ public class LineHistoryMapper {
 
 
   private String @NotNull [] getLinesFromBytes(byte @NotNull [] oldContent) {
-    final String text = LoadTextUtil.getTextByBinaryPresentation(oldContent, myFile, false, false).toString();
-    return LineTokenizer.tokenize(text, false);
+    try (AccessToken ignore = ProjectLocator.withPreferredProject(myFile, myProject)) {
+      String text = LoadTextUtil.getTextByBinaryPresentation(oldContent, myFile, false, false).toString();
+      return LineTokenizer.tokenize(text, false);
+    }
   }
 
   private String @NotNull [] getUpToDateLines() {

@@ -119,8 +119,10 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
         var y = 2;
         println(0);
         println(1);
-        println(y);""")
+        println(y);""", "Test.java")
     assertEquals("""
+      // Test.java
+      ---------------------
       1 : var #!y!# = 2;
       ---------------------
       4 : println(#!y!#);""".trimIndent(), diffs)
@@ -134,8 +136,9 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
     assertEquals("""1 : String s = "#-\-#'Scare#-\-#' quotes";""", diffs)
   }
 
-  private fun createDiffs(origText: String, modifiedText: String): String {
-    return fromCustomDiff(project, CustomDiff(JavaFileType.INSTANCE, origText, modifiedText)).createDiffs().map { diffInfo ->
+  private fun createDiffs(origText: String, modifiedText: String, fileName: String? = null): String {
+    return fromCustomDiff(CustomDiff(JavaFileType.INSTANCE, fileName, origText, modifiedText, true)).diffs.joinToString(
+      separator = "\n---------------------\n") { diffInfo ->
       val addends = diffInfo.fragments.flatMap { fragment ->
         listOf(fragment.start to when (fragment.type) {
           IntentionPreviewDiffResult.HighlightingType.ADDED -> "#+"
@@ -155,8 +158,8 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
         }
       }
       withHighlighters.split("\n").mapIndexed { index, s ->
-        String.format("%-2d: ", diffInfo.startLine + index) + s
+        if (diffInfo.startLine == -1) s else String.format("%-2d: ", diffInfo.startLine + index) + s
       }.joinToString(separator = "\n")
-    }.joinToString(separator = "\n---------------------\n")
+    }
   }
 }

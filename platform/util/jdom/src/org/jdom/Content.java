@@ -112,9 +112,6 @@ public abstract class Content extends CloneBase implements Serializable {
      * Represents {@link Element} content
      */
     Element,
-    /**
-     * Represents {@link ProcessingInstruction} content
-     */
     ProcessingInstruction,
     /**
      * Represents {@link EntityRef} content

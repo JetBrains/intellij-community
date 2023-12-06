@@ -9,9 +9,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
@@ -36,9 +37,19 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
 
     fun doTest(unused: String) {
         setupMppProjectFromDirStructure(dataFile())
-        val directiveFileText = project.findFileWithCaret().text
-        withCustomCompilerOptions(directiveFileText, project, module) {
-            doQuickFixTest(fileName())
+        val actionFile = project.findFileWithCaret()
+        val virtualFilePath = actionFile.virtualFile!!.toNioPath()
+
+        val ignoreDirective = if (isFirPlugin()) {
+            IgnoreTests.DIRECTIVES.IGNORE_K2
+        } else {
+            IgnoreTests.DIRECTIVES.IGNORE_K1
+        }
+        IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, ignoreDirective) {
+            val directiveFileText = actionFile.text
+            withCustomCompilerOptions(directiveFileText, project, module) {
+                doQuickFixTest(fileName())
+            }
         }
     }
 
@@ -124,8 +135,6 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                     TestCase.assertFalse(logFile.exists())
                 }
 
-            } catch (e: ComparisonFailure) {
-                throw e
             } catch (e: AssertionError) {
                 throw e
             } catch (e: Throwable) {
@@ -153,7 +162,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
             setActiveEditor(editedFile.findExistingEditor() ?: createEditor(editedFile.virtualFile))
             try {
                 checkResultByFile(afterFileInTestData.relativeTo(File(testDataPath)).path)
-            } catch (e: ComparisonFailure) {
+            } catch (e: FileComparisonFailure) {
                 KotlinTestUtils.assertEqualsToFile(afterFileInTestData, editor)
             }
         }

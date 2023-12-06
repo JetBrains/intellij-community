@@ -16,6 +16,6 @@ object GitLabBundle : DynamicBundle(BUNDLE) {
     getMessage(key, *params)
 
   @JvmStatic
-  fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) @NonNls String, vararg params: Any): Supplier<String?> =
+  fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) @NonNls String, vararg params: Any): Supplier<String> =
     getLazyMessage(key, *params)
 }

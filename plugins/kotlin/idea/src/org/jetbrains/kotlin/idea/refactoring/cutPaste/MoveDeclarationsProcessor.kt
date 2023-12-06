@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -18,7 +19,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsTransferableData.Companion.STUB_RENDERER
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
+import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.psi.*
@@ -126,7 +129,7 @@ class MoveDeclarationsProcessor(
             psiDocumentManager.commitDocument(sourceDocument)
         }
 
-        val mover = object : Mover {
+        val mover = object : KotlinMover {
             override fun invoke(declaration: KtNamedDeclaration, targetContainer: KtElement): KtNamedDeclaration {
                 val index = stubDeclarations.indexOf(declaration)
                 assert(index >= 0)
@@ -137,10 +140,10 @@ class MoveDeclarationsProcessor(
 
         val declarationProcessor = MoveKotlinDeclarationsProcessor(
             MoveDeclarationsDescriptor(
-                moveSource = MoveSource(stubDeclarations),
-                moveTarget = KotlinMoveTargetForExistingElement(targetPsiFile),
-                delegate = MoveDeclarationsDelegate.TopLevel,
-                project = project
+              moveSource = KotlinMoveSource(stubDeclarations),
+              moveTarget = KotlinMoveTarget.ExistingElement(targetPsiFile),
+              delegate = KotlinMoveDeclarationDelegate.TopLevel,
+              project = project
             ),
             mover
         )
@@ -151,13 +154,14 @@ class MoveDeclarationsProcessor(
             }
         } ?: return
 
-        project.executeWriteCommand(commandName, commandGroupId) {
+        project.executeCommand(commandName, commandGroupId) {
             project.runRefactoringAndKeepDelayedRequests { declarationProcessor.execute(declarationUsages) }
-
-            psiDocumentManager.doPostponedOperationsAndUnblockDocument(sourceDocument)
-            val insertedStubRange = stubRangeAndDeclarations.first
-            assert(insertedStubRange.isValid)
-            sourceDocument.deleteString(insertedStubRange.startOffset, insertedStubRange.endOffset)
+            runWriteAction {
+                psiDocumentManager.doPostponedOperationsAndUnblockDocument(sourceDocument)
+                val insertedStubRange = stubRangeAndDeclarations.first
+                assert(insertedStubRange.isValid)
+                sourceDocument.deleteString(insertedStubRange.startOffset, insertedStubRange.endOffset)
+            }
         }
     }
 

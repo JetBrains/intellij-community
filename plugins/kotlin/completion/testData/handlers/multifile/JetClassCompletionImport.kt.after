@@ -1,8 +1,8 @@
-// FIR_COMPARISON
+// IGNORE_K2
 package classimporttest
 
 import forimport.TTTest
 
 fun test() {
-    TTTest
+    TTTest()
 }

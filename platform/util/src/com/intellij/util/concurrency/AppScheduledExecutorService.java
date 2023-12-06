@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +24,7 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCa
 @ApiStatus.Internal
 public final class AppScheduledExecutorService extends SchedulingWrapper {
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
-  @NotNull private final String myName;
+  private final @NotNull String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
 
   private static final class Holder {
@@ -49,9 +49,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     private BiConsumer<? super Thread, ? super Runnable> newThreadListener;
     private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
 
-    @NotNull
     @Override
-    public Thread newThread(@NotNull final Runnable r) {
+    public @NotNull Thread newThread(final @NotNull Runnable r) {
       Thread thread = myThreadFactory.newThread(r);
       thread.setName(POOLED_THREAD_PREFIX + counter.incrementAndGet());
 
@@ -74,9 +73,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     getCountingThreadFactory().setNewThreadListener(threadListener);
   }
 
-  @NotNull
   @Override
-  public List<Runnable> shutdownNow() {
+  public @NotNull List<Runnable> shutdownNow() {
     return notAllowedMethodCall();
   }
 
@@ -118,9 +116,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     return super.awaitTermination(deadline - System.nanoTime(), TimeUnit.NANOSECONDS);
   }
 
-  @NotNull
   @TestOnly
-  public String statistics() {
+  public @NotNull String statistics() {
     return myName + " threads created counter = " + getCountingThreadFactory().counter;
   }
 
@@ -138,7 +135,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
   }
 
-  static class BackendThreadPoolExecutor extends ThreadPoolExecutor implements ContextPropagatingExecutor {
+  static final class BackendThreadPoolExecutor extends ThreadPoolExecutor {
 
     BackendThreadPoolExecutor(@NotNull ThreadFactory factory,
                               long keepAliveTime,
@@ -147,13 +144,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     }
 
     @Override
-    public void executeRaw(@NotNull Runnable command) {
-      super.execute(command);
-    }
-
-    @Override
     public void execute(@NotNull Runnable command) {
-      executeRaw(capturePropagationAndCancellationContext(command));
+      super.execute(capturePropagationAndCancellationContext(command));
     }
 
     @Override
@@ -177,8 +169,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
       super.shutdown();
     }
 
-    @NotNull
-    private List<Runnable> superShutdownNow() {
+    private @NotNull List<Runnable> superShutdownNow() {
       return super.shutdownNow();
     }
 
@@ -188,9 +179,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
       notAllowedMethodCall();
     }
 
-    @NotNull
     @Override
-    public List<Runnable> shutdownNow() {
+    public @NotNull List<Runnable> shutdownNow() {
       return notAllowedMethodCall();
     }
 

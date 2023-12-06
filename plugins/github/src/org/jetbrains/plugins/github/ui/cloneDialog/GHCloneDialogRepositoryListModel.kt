@@ -83,15 +83,13 @@ internal class GHCloneDialogRepositoryListModel : AbstractListModel<GHRepository
     for (repo in repos) {
       val item = GHRepositoryListItem.Repo(account, details, repo)
       val isNew = repoSet.add(repo)
-      if (isNew) {
-        toAdd.add(item)
-      }
-      else {
+      if (!isNew) {
         val idx = items.indexOf(item)
         items.removeAt(idx)
         fireIntervalRemoved(this, startOffset + idx, startOffset + idx)
         endOffset--
       }
+      toAdd.add(item)
     }
     items.addAll(toAdd)
     fireIntervalAdded(this, endOffset, endOffset + toAdd.size)

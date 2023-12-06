@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import java.awt.Component
@@ -23,9 +24,9 @@ abstract class GroupInputDialog<C : JComponent>(project: Project?, parent: Compo
 
   abstract val component: C
 
-  override fun getPreferredFocusedComponent() = component
+  override fun getPreferredFocusedComponent(): C = component
 
-  override fun doValidate() = ComponentValidator.getInstance(component).orElse(null)?.validationInfo
+  override fun doValidate(): ValidationInfo? = ComponentValidator.getInstance(component).orElse(null)?.validationInfo
 
   override fun createCenterPanel(): JComponent? = DialogPanel(VerticalLayout(5)).apply {
     add(JLabel(BookmarkBundle.message("dialog.group.message.label")).apply { labelFor = component })

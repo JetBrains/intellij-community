@@ -1,44 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.debugger.test
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.codegen.ClassBuilderFactory
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
+import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration
 import org.jetbrains.kotlin.idea.debugger.test.TestFileWithModule
-import java.io.File
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.psi.KtFile
 
 internal class K2DebuggerTestCompilerFacility(
     private val project: Project,
     files: List<TestFileWithModule>,
     jvmTarget: JvmTarget,
-    useIrBackend: Boolean,
-    lambdasGenerationScheme: JvmClosureGenerationScheme,
-) : DebuggerTestCompilerFacility(files, jvmTarget, useIrBackend, lambdasGenerationScheme) {
-    override fun compileTestSources(
-        project: Project,
-        srcDir: File,
-        classesDir: File,
-        classBuilderFactory: ClassBuilderFactory
-    ): CompilationResult {
-        return withTestServicesNeededForCodeCompilation(project) {
-            super.compileTestSources(project, srcDir, classesDir, classBuilderFactory)
-        }
-    }
+    compileConfig: TestCompileConfiguration,
+) : DebuggerTestCompilerFacility(project, files, jvmTarget, compileConfig) {
 
-    override fun compileTestSources(
-        module: Module,
-        jvmSrcDir: File,
-        commonSrcDir: File,
-        classesDir: File,
-        libClassesDir: File,
-        languageVersionSettings: LanguageVersionSettings?
-    ): String {
+    override fun analyzeSources(ktFiles: List<KtFile>): Pair<LanguageVersionSettings, AnalysisResult> {
         return withTestServicesNeededForCodeCompilation(project) {
-            super.compileTestSources(module, jvmSrcDir, commonSrcDir, classesDir, libClassesDir, languageVersionSettings)
+            super.analyzeSources(ktFiles)
         }
     }
 }

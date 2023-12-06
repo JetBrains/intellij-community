@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.*;
@@ -10,37 +10,35 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UParameter;
 
 import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.lang.jvm.actions.AnnotationRequestsKt.annotationRequest;
 
-public class SerializableCtorInspection extends DevKitUastInspectionBase {
+final class SerializableCtorInspection extends DevKitUastInspectionBase {
 
   private static final String PROPERTY_MAPPING_ANNOTATION = "com.intellij.serialization.PropertyMapping";
 
-  public SerializableCtorInspection() {
+  SerializableCtorInspection() {
     super(UClass.class);
   }
 
   @Override
   protected boolean isAllowed(@NotNull ProblemsHolder holder) {
-    return super.isAllowed(holder) && propertyMappingAnnotationPresent(holder);
-  }
-
-  private static boolean propertyMappingAnnotationPresent(@NotNull ProblemsHolder holder) {
-    Project project = holder.getProject();
-    return JavaPsiFacade.getInstance(project).findClass(PROPERTY_MAPPING_ANNOTATION, holder.getFile().getResolveScope()) != null;
+    return super.isAllowed(holder) &&
+           DevKitInspectionUtil.isClassAvailable(holder, PROPERTY_MAPPING_ANNOTATION);
   }
 
   @Override
@@ -50,11 +48,9 @@ public class SerializableCtorInspection extends DevKitUastInspectionBase {
     ProblemsHolder holder = createProblemsHolder(aClass, manager, isOnTheFly);
     for (UMethod constructor : getConstructors(aClass)) {
       if (!isAnnotatedWithPropertyMapping(constructor)) {
-        PsiElement constructorAnchor = UElementKt.getSourcePsiElement(constructor.getUastAnchor());
-        if (constructorAnchor != null) {
-          holder.registerProblem(constructorAnchor, DevKitBundle.message("inspection.serializable.constructor.message"),
-                                 createFixes(aClass, holder, constructor));
-        }
+        ProblemHolderUtilKt.registerUProblem(holder, constructor,
+                                             DevKitBundle.message("inspection.serializable.constructor.message"),
+                                             createFixes(aClass, holder, constructor));
       }
     }
     return holder.getResultsArray();

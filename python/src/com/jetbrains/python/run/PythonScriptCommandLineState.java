@@ -17,17 +17,18 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -210,7 +211,11 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
    * @see com.intellij.terminal.ProcessHandlerTtyConnector
    */
   private boolean emulateTerminal() {
-    return myConfig.emulateTerminal() && !PythonSdkUtil.isRemote(getSdk());
+    if (PythonSdkUtil.isRemote(getSdk()) && !Registry.is("python.use.targets.api")) {
+      // do not allow to emulate terminal for legacy non-target remote interpreters logic
+      return false;
+    }
+    return myConfig.emulateTerminal();
   }
 
   @Override
@@ -251,24 +256,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
-  protected @NotNull ProcessHandler createProcessHandler(@NotNull Process process,
-                                                         @NotNull String commandLineString,
-                                                         @NotNull TargetEnvironment targetEnvironment,
-                                                         @NotNull TargetedCommandLine commandLine) {
-    if (emulateTerminal()) {
-      return new OSProcessHandler(process, commandLineString, commandLine.getCharset()) {
-        @Override
-        protected @NotNull BaseOutputReader.Options readerOptions() {
-          return BaseOutputReader.Options.forTerminalPtyProcess();
-        }
-      };
-    }
-    else {
-      return super.createProcessHandler(process, commandLineString, targetEnvironment, commandLine);
-    }
-  }
-
-  @Override
   protected @NotNull PythonExecution buildPythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest) {
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     PythonExecution pythonExecution;
@@ -284,6 +271,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       PythonScriptExecution pythonScriptExecution = new PythonScriptExecution();
       String scriptPath = myConfig.getScriptName();
       if (!StringUtil.isEmptyOrSpaces(scriptPath)) {
+        scriptPath = getExpandedScriptName(myConfig);
         pythonScriptExecution.setPythonScriptPath(getTargetPath(targetEnvironmentRequest, Path.of(scriptPath)));
       }
       pythonExecution = pythonScriptExecution;
@@ -315,14 +303,14 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     }
     else {
       if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
-        scriptParameters.addParameter(myConfig.getScriptName());
+        scriptParameters.addParameter(getExpandedScriptName(myConfig));
       }
     }
 
     scriptParameters.addParameters(getExpandedScriptParameters(myConfig));
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
-      commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
+      commandLine.setWorkDirectory(getExpandedWorkingDir(myConfig));
     }
     String inputFile = myConfig.getInputFile();
     if (myConfig.isRedirectInput() && !StringUtil.isEmptyOrSpaces(inputFile)) {
@@ -340,5 +328,15 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   private static @NotNull List<String> getExpandedScriptParameters(@NotNull PythonRunConfiguration config) {
     final String parameters = config.getScriptParameters();
     return ProgramParametersConfigurator.expandMacrosAndParseParameters(parameters);
+  }
+
+  public static @NotNull String getExpandedWorkingDir(@NotNull AbstractPythonRunConfiguration config) {
+    final String workingDirectory = config.getWorkingDirectory();
+    return ProgramParametersUtil.expandPathAndMacros(workingDirectory, config.getModule(), config.getProject());
+  }
+
+  public static @NotNull String getExpandedScriptName(@NotNull PythonRunConfiguration config) {
+    final String scriptName = config.getScriptName();
+    return ProgramParametersUtil.expandPathAndMacros(scriptName, config.getModule(), config.getProject());
   }
 }

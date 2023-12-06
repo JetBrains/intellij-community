@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -110,7 +111,7 @@ class ConcurrentBitSetTest {
     long distinctIndexNumber = Arrays.stream(indicesToSet).distinct().count();
     ExecutorService executor = create4ThreadsExecutor();
     try {
-      Set<Thread> threadUsed = ContainerUtil.newConcurrentSet();
+      Set<Thread> threadUsed = ConcurrentCollectionFactory.createConcurrentSet();
       Semaphore threadReady = new Semaphore();
       for (int it = 0; it < N; it++) {
         ConcurrentBitSet bitSet = ConcurrentBitSet.create();
@@ -197,7 +198,7 @@ class ConcurrentBitSetTest {
     ExecutorService executor = create4ThreadsExecutor();
     PlatformTestUtil.startPerformanceTest("testParallelReadPerformance", 35_000, ()-> {
       Semaphore threadReady = new Semaphore();
-      Set<Thread> threadUsed = ContainerUtil.newConcurrentSet();
+      Set<Thread> threadUsed = ConcurrentCollectionFactory.createConcurrentSet();
       boundedParallelRun(executor, threadUsed, threadReady, N, __-> {
         int r = 0;
         for (int j = 0; j < len; j++) {

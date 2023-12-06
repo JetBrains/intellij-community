@@ -4,7 +4,6 @@ package git4idea.remote
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.sortRepositories
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -42,7 +41,7 @@ private val LOG = logger<GitConfigureRemotesDialog>()
 class GitConfigureRemotesDialog(val project: Project, val repositories: Collection<GitRepository>) :
     DialogWrapper(project, true, getModalityType()) {
 
-  private val git = service<Git>()
+  private val git = Git.getInstance()
 
   private val NAME_COLUMN = 0
   private val URL_COLUMN = 1
@@ -222,15 +221,17 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
 
   private inner class MyCellRenderer : ColoredTableCellRenderer() {
     override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-      if (value is RepoNode) {
-        append(value.getPresentableString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-      }
-      else if (value is RemoteNode) {
-        if (repositories.size > 1) append("", SimpleTextAttributes.REGULAR_ATTRIBUTES, REMOTE_PADDING, SwingConstants.LEFT)
-        append(value.getPresentableString())
-      }
-      else if (value is String) {
-        append(value)
+      when (value) {
+        is RepoNode -> {
+          append(value.getPresentableString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+        }
+        is RemoteNode -> {
+          if (repositories.size > 1) append("", SimpleTextAttributes.REGULAR_ATTRIBUTES, REMOTE_PADDING, SwingConstants.LEFT)
+          append(value.getPresentableString())
+        }
+        is String -> {
+          append(value)
+        }
       }
       border = null
     }

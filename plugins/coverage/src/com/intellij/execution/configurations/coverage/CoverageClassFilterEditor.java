@@ -39,13 +39,18 @@ class CoverageClassFilterEditor extends ClassFilterEditor {
         protected @Nullable PsiPackage getPsiPackage(String newQualifiedName) {
           return JavaPsiFacade.getInstance(myProject).findPackage(newQualifiedName);
         }
+
+        @Override
+        protected boolean canExpandInSpeedSearch() {
+          return true;
+        }
       };
     if (chooser.showAndGet()) {
       List<PsiPackage> packages = chooser.getSelectedPackages();
       if (!packages.isEmpty()) {
         for (final PsiPackage aPackage : packages) {
           final String fqName = aPackage.getQualifiedName();
-          final String pattern = fqName.length() > 0 ? fqName + ".*" : "*";
+          final String pattern = fqName.isEmpty() ? "*" : fqName + ".*";
           myTableModel.addRow(createFilter(pattern));
         }
         int row = myTableModel.getRowCount() - 1;

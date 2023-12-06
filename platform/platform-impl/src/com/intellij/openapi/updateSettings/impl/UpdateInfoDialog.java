@@ -34,6 +34,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,7 +48,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final @Nullable Collection<PluginDownloader> myUpdatedPlugins;
   private final boolean myWriteProtected;
   private final @Nullable Pair<@NlsContexts.Label String, Boolean> myLicenseInfo;
-  private final @Nullable File myTestPatch;
+  private final @Nullable Path myTestPatch;
 
   public UpdateInfoDialog(@Nullable Project project,
                           @NotNull PlatformUpdates.Loaded loadedResult,
@@ -75,7 +76,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   @SuppressWarnings("HardCodedStringLiteral")
   UpdateInfoDialog(@Nullable Project project,
                    @NotNull PlatformUpdates.Loaded loadedResult,
-                   @Nullable File patchFile) {
+                   @Nullable Path patchFile) {
     super(true);
     myProject = project;
     myLoadedResult = loadedResult;
@@ -203,7 +204,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
       return;  // update cancelled
     }
 
-    new Task.Backgroundable(null, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
+    new Task.Backgroundable(myProject, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
@@ -229,7 +230,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
             .createNotification(title, message, NotificationType.ERROR)
             .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.downloading.patch.open"), () -> BrowserUtil.browse(downloadUrl)))
             .setDisplayId("ide.patch.download.failed")
-            .notify(null);
+            .notify(myProject);
 
           return;
         }
@@ -249,7 +250,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
               .createNotification(title, message, NotificationType.INFORMATION)
               .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.ready.restart"), () -> restartLaterAndRunCommand(command)))
               .setDisplayId("ide.update.suggest.restart")
-              .notify(null);
+              .notify(myProject);
           }
         }
         else {

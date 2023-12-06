@@ -8,6 +8,7 @@ fun test() {
     }
 }
 
+// IGNORE_K2
 // EXIST: {"lookupString":"addAll","tailText":"(elements: Iterable<T>) for MutableCollection<in T> in kotlin.collections"}
 // EXIST: {"lookupString":"addAll","tailText":"(elements: Sequence<T>) for MutableCollection<in T> in kotlin.collections"}
 // EXIST: {"lookupString":"addAll","tailText":"(elements: Array<out T>) for MutableCollection<in T> in kotlin.collections"}

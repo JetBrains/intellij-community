@@ -6,7 +6,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 
-@Service
+@Service(Service.Level.PROJECT)
 class GHHostedRepositoriesManager(project: Project, cs: CoroutineScope) : HostedGitRepositoriesManager<GHGitRepositoryMapping> {
 
   @VisibleForTesting
@@ -26,8 +25,12 @@ class GHHostedRepositoriesManager(project: Project, cs: CoroutineScope) : Hosted
       mutableSetOf(GithubServerPath.DEFAULT_SERVER) + accounts.map { it.server }
     }.distinctUntilChanged()
 
-    val discoveredServersFlow = gitRemotesFlow.discoverServers(accountsServersFlow) {
-      checkForDedicatedServer(it)
+    val discoveredServersFlow = gitRemotesFlow.discoverServers(accountsServersFlow) { remote ->
+      GitHostingUrlUtil.findServerAt(LOG, remote) {
+        val server = GithubServerPath.from(it.toString())
+        val metadata = service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).await()
+        if (metadata != null) server else null
+      }
     }.runningFold(emptySet<GithubServerPath>()) { accumulator, value ->
       accumulator + value
     }.distinctUntilChanged()
@@ -45,33 +48,6 @@ class GHHostedRepositoriesManager(project: Project, cs: CoroutineScope) : Hosted
 
   override val knownRepositoriesState: StateFlow<Set<GHGitRepositoryMapping>> =
     knownRepositoriesFlow.stateIn(cs, getStateSharingStartConfig(), emptySet())
-
-  private suspend fun checkForDedicatedServer(remote: GitRemoteUrlCoordinates): GithubServerPath? {
-    val uri = GitHostingUrlUtil.getUriFromRemoteUrl(remote.url)
-    LOG.debug("Extracted URI $uri from remote ${remote.url}")
-    if (uri == null) return null
-
-    val host = uri.host ?: return null
-    val path = uri.path ?: return null
-    val pathParts = path.removePrefix("/").split('/').takeIf { it.size >= 2 } ?: return null
-    val serverSuffix = if (pathParts.size == 2) null else pathParts.subList(0, pathParts.size - 2).joinToString("/", "/")
-
-    for (server in listOf(
-      GithubServerPath(false, host, null, serverSuffix),
-      GithubServerPath(true, host, null, serverSuffix),
-      GithubServerPath(true, host, 8080, serverSuffix)
-    )) {
-      LOG.debug("Looking for GHE server at $server")
-      try {
-        service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).await()
-        LOG.debug("Found GHE server at $server")
-        return server
-      }
-      catch (ignored: Throwable) {
-      }
-    }
-    return null
-  }
 
   companion object {
     private val LOG = logger<GHHostedRepositoriesManager>()

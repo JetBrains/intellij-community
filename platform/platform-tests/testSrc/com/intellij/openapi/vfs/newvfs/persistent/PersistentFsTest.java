@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.CacheSwitcher;
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -32,6 +33,8 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.testFramework.utils.vfs.SkipVFSHealthCheck;
+import com.intellij.testFramework.utils.vfs.CheckVFSHealthRule;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,7 +52,6 @@ import org.junit.Test;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -63,6 +65,8 @@ import java.util.jar.Manifest;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.*;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -75,7 +79,8 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class PersistentFsTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory tempDirectory = new TempDirectory();
+  @Rule public final TempDirectory tempDirectory = new TempDirectory();
+  @Rule public final CheckVFSHealthRule checkVFSHealth = new CheckVFSHealthRule();
 
   @Test
   public void testAccessingFileByID() {
@@ -93,36 +98,31 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                PersistentFS.getInstance().findFileById(id));
   }
 
-  @NotNull
-  private static VirtualFile refreshAndFind(File file) {
-    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file), file.getPath());
-  }
-
   @Test
   public void testFileContentHash() throws Exception {
-    File file = tempDirectory.newFile("test.txt", "one".getBytes(StandardCharsets.UTF_8));
+    File file = tempDirectory.newFile("test.txt", "one".getBytes(UTF_8));
     VirtualFile vFile = refreshAndFind(file);
-    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+    PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
 
-    byte[] hash = PersistentFSImpl.getContentHashIfStored(vFile);
+    byte[] hash = pfs.contentHashIfStored(vFile);
     assertNull(hash);  // content is not yet loaded
 
     vFile.contentsToByteArray();
-    hash = PersistentFSImpl.getContentHashIfStored(vFile);
+    hash = pfs.contentHashIfStored(vFile);
     assertNotNull(hash);
 
     WriteAction.runAndWait(() -> VfsUtil.saveText(vFile, "two"));
-    byte[] newHash = PersistentFSImpl.getContentHashIfStored(vFile);
+    byte[] newHash = pfs.contentHashIfStored(vFile);
     assertNotNull(newHash);
     assertFalse(Arrays.equals(hash, newHash));  // different contents should have different hashes
 
     WriteAction.runAndWait(() -> VfsUtil.saveText(vFile, "one"));
-    newHash = PersistentFSImpl.getContentHashIfStored(vFile);
+    newHash = pfs.contentHashIfStored(vFile);
     assertArrayEquals(hash, newHash);  // equal contents should have the equal hashes
 
     VfsTestUtil.deleteFile(vFile);
-    assertNotNull(fs.contentsToByteArray(vFile));  // deleted files preserve content, and thus hash
-    assertArrayEquals(hash, PersistentFSImpl.getContentHashIfStored(vFile));
+    assertNotNull(pfs.contentsToByteArray(vFile));  // deleted files preserve content, and thus hash
+    assertArrayEquals(hash, pfs.contentHashIfStored(vFile));
   }
 
   @Test
@@ -148,17 +148,6 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testFindRootMustCreateFileWithYetAnotherCanonicalPath() {
     checkMustCreateRootWithCanonicalPath("x...jar");
-  }
-
-  private void checkMustCreateRootWithCanonicalPath(String jarName) {
-    File x = tempDirectory.newFile(jarName);
-    refreshAndFind(x);
-    JarFileSystem jfs = JarFileSystem.getInstance();
-    String path = x.getPath() + "/../" + x.getName() + JarFileSystem.JAR_SEPARATOR;
-    NewVirtualFile root = PersistentFS.getInstance().findRoot(path, jfs);
-    assertNotNull(path, root);
-    assertFalse(root.getPath(), root.getPath().contains("../"));
-    assertFalse(root.getPath(), root.getPath().contains("/.."));
   }
 
   @Test
@@ -192,6 +181,56 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       assertTrue("fs=" + fs, fs instanceof LocalFileSystem);
       assertFalse("fs=" + fs, fs instanceof TempFileSystem);
     }
+  }
+
+  @Ignore("Unstable (see FIXME inside)")
+  @Test
+  public void rootsAreReloadedAfterVFSReconnect() {
+    PersistentFS pfs = PersistentFS.getInstance();
+    VirtualFile root0 = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+    NewVirtualFileSystem tempFS = (NewVirtualFileSystem)root0.getFileSystem();
+    NewVirtualFile root1 = pfs.findRoot("/root1", tempFS);
+    NewVirtualFile root2 = pfs.findRoot("/root2", tempFS);
+    NewVirtualFile root3 = pfs.findRoot("/root3", tempFS);
+    for (VirtualFile root : pfs.getRoots()) {
+      System.out.println(root);
+    }
+
+    VirtualFile root0TestFile = VfsTestUtil.createFile(root0, "/test-file");
+    VirtualFile root1TestFile = VfsTestUtil.createFile(root1, "/test-file");
+    VirtualFile root2TestFile = VfsTestUtil.createFile(root2, "/test-file");
+    VirtualFile root3TestFile = VfsTestUtil.createFile(root3, "/test-file");
+
+    //reconnect:
+    ((PersistentFSImpl)pfs).disconnect();
+    //FIXME in a short window while PFS is disconnected async services could come and get 'already disposed'
+    //      exception, which fails the test in its .tearDown()
+    ((PersistentFSImpl)pfs).connect();
+
+    assertEquals("No roots must be loaded yet", pfs.getRoots().length, 0);
+
+    NewVirtualFile root1_2 = pfs.findRoot("/root1", tempFS);
+    assertArrayEquals("root1 must be loaded since explicitly queried",
+                      pfs.getRoots(), new VirtualFile[]{root1_2});
+
+    assertNotNull(
+      "/root1/test-file must be successfully found (root1 was explicitly loaded)",
+      pfs.findFileById(((VirtualFileWithId)root1TestFile).getId())
+    );
+
+    assertNotNull(
+      "temp:///test-file must be successfully found (root0 must be auto-loaded)",
+      pfs.findFileById(((VirtualFileWithId)root0TestFile).getId())
+    );
+
+    assertNotNull(
+      "/root2/test-file must be successfully found (root2 must be auto-loaded)",
+      pfs.findFileById(((VirtualFileWithId)root2TestFile).getId())
+    );
+    assertNotNull(
+      "/root3/test-file must be successfully found (root3 must be auto-loaded)",
+      pfs.findFileById(((VirtualFileWithId)root3TestFile).getId())
+    );
   }
 
   @Test
@@ -240,7 +279,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     // It starts the real testing "after a restart" - i.e. when launched for the second time using the same system directory.
     // In terms of the persistence, "subDir/" is partially loaded and "subSubDir/" is fully loaded.
 
-    String testDirName = UsefulTestCase.TEMP_DIR_MARKER + getTestName(false);
+    String testDirName = TEMP_DIR_MARKER + getTestName(false);
     Path nestedTestDir = tempDirectory.getRootPath().getParent().resolve(testDirName + "/subDir/subSubDir");
     boolean secondRun = Files.exists(nestedTestDir.getParent().getParent());
 
@@ -290,7 +329,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testGlobalFSModCountIncreasesOnMostFileAttributesModifications() throws IOException {
     VirtualFile vFile = tempDirectory.newVirtualFile("file.txt");
-    HeavyPlatformTestCase.setBinaryContent(vFile, "x".getBytes(StandardCharsets.UTF_8)); // make various listeners update their VFS views
+    HeavyPlatformTestCase.setBinaryContent(vFile, "x".getBytes(UTF_8)); // make various listeners update their VFS views
     ManagingFS managingFS = ManagingFS.getInstance();
     int globalFsModCount = managingFS.getFilesystemModificationCount();
 
@@ -305,7 +344,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     int finalGlobalModCount = globalFsModCount;
 
-    HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Processing, "This test wants no indices flush", ()-> {
+    HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Processing, "This test wants no indices flush", () -> {
       WriteAction.runAndWait(() -> {
         try {
           vFile.setWritable(true);  // 1 change
@@ -322,7 +361,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
         // we check in write action to avoid observing background thread to index stuff
         final int changesCount = 3; //flags, content, length, +...
         assertTrue(
-          "fsModCount(="+managingFS.getFilesystemModificationCount()+") should +3 at least since before (="+finalGlobalModCount+")",
+          "fsModCount(=" + managingFS.getFilesystemModificationCount() + ") should +3 at least since before (=" + finalGlobalModCount + ")",
           managingFS.getFilesystemModificationCount() >= finalGlobalModCount + changesCount);
       });
     });
@@ -340,7 +379,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     FileAttribute attribute = new FileAttribute("test.attribute", 1, true);
     WriteAction.runAndWait(() -> {
-      try(DataOutputStream output = attribute.writeFileAttribute(vFile)) {
+      try (DataOutputStream output = attribute.writeFileAttribute(vFile)) {
         DataInputOutputUtil.writeINT(output, 1);
       }
     });
@@ -359,40 +398,6 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertFalse(FSRecords.isDirty());
   }
 
-  private static void checkEvents(String expectedEvents, VFileEvent... eventsToApply) {
-    StringBuilder log = new StringBuilder();
-
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    try {
-      connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-        @Override
-        public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-          log("Before:", events);
-        }
-
-        @Override
-        public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-          log("After:", events);
-        }
-
-        private void log(String prefix, List<? extends VFileEvent> events) {
-          log.append(prefix);
-          for (VFileEvent e : events) {
-            log.append(' ').append(e.getClass().getSimpleName()).append("->").append(PathUtil.getFileName(e.getPath()));
-          }
-          log.append('\n');
-        }
-      });
-
-      WriteCommandAction.runWriteCommandAction(null, () -> RefreshQueue.getInstance().processEvents(false, List.of(eventsToApply)));
-    }
-    finally {
-      connection.disconnect();
-    }
-
-    assertEquals(expectedEvents, log.toString());
-  }
-
   @Test
   public void testProcessEventsMustIgnoreDeleteDuplicates() {
     VirtualFile file = tempDirectory.newVirtualFile("file.txt");
@@ -402,8 +407,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileDeleteEvent->file.txt
                   """,
 
-                new VFileDeleteEvent(this, file, false),
-                new VFileDeleteEvent(this, file, false));
+                new VFileDeleteEvent(this, file),
+                new VFileDeleteEvent(this, file));
   }
 
   @Test
@@ -415,9 +420,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileCreateEvent->xx.created VFileDeleteEvent->file.txt
                   """,
 
-                new VFileDeleteEvent(this, file, false),
-                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null),
-                new VFileDeleteEvent(this, file, false));
+                new VFileDeleteEvent(this, file),
+                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, null),
+                new VFileDeleteEvent(this, file));
   }
 
   @Test
@@ -429,9 +434,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileDeleteEvent->d
                   """,
 
-                new VFileDeleteEvent(this, file.getParent(), false),
-                new VFileDeleteEvent(this, file, false),
-                new VFileDeleteEvent(this, file, false));
+                new VFileDeleteEvent(this, file.getParent()),
+                new VFileDeleteEvent(this, file),
+                new VFileDeleteEvent(this, file));
   }
 
   @Test
@@ -443,8 +448,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileCreateEvent->xx.created
                   """,
 
-                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null),
-                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null)                );
+                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, null),
+                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, null));
   }
 
   @Test
@@ -458,10 +463,10 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileDeleteEvent->c
                   """,
 
-                new VFileDeleteEvent(this, file, false),
-                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null),
-                new VFileCreateEvent(this, file.getParent(), "xx.created2", false, null, null, false, null),
-                new VFileDeleteEvent(this, file.getParent(), false));
+                new VFileDeleteEvent(this, file),
+                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, null),
+                new VFileCreateEvent(this, file.getParent(), "xx.created2", false, null, null, null),
+                new VFileDeleteEvent(this, file.getParent()));
   }
 
   @Test
@@ -475,8 +480,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileDeleteEvent->test.txt
                   """,
 
-                new VFileContentChangeEvent(this, vFile.getParent(), 0, 0, false),
-                new VFileDeleteEvent(this, vFile, false));
+                new VFileContentChangeEvent(this, vFile.getParent(), 0, 0),
+                new VFileDeleteEvent(this, vFile));
   }
 
   @Test
@@ -491,9 +496,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileDeleteEvent->c
                   """,
 
-                new VFileDeleteEvent(this, file, false),
-                new VFileDeleteEvent(this, file.getParent(), false),
-                new VFileDeleteEvent(this, file2, false));
+                new VFileDeleteEvent(this, file),
+                new VFileDeleteEvent(this, file.getParent()),
+                new VFileDeleteEvent(this, file2));
   }
 
   @Test
@@ -505,9 +510,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileContentChangeEvent->test.txt VFilePropertyChangeEvent->test.txt VFilePropertyChangeEvent->test.txt
                   """,
 
-                new VFileContentChangeEvent(this, file, 0, 1, false),
-                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_WRITABLE, false, true, false),
-                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_ENCODING, StandardCharsets.ISO_8859_1, StandardCharsets.UTF_8, false));
+                new VFileContentChangeEvent(this, file, 0, 1),
+                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_WRITABLE, false, true),
+                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_ENCODING, ISO_8859_1, UTF_8));
   }
 
   @Test
@@ -523,7 +528,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   """,
 
                 new VFileMoveEvent(this, testTxt, newParent),
-                new VFileDeleteEvent(this, newParent, false));
+                new VFileDeleteEvent(this, newParent));
   }
 
   @Test
@@ -539,7 +544,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   """,
 
                 new VFileCopyEvent(this, file, newParent, "new.txt"),
-                new VFileDeleteEvent(this, file, false));
+                new VFileDeleteEvent(this, file));
   }
 
   @Test
@@ -554,8 +559,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFilePropertyChangeEvent->test2.txt
                   """,
 
-                new VFileDeleteEvent(this, file2, false),
-                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_NAME, file.getName(), file2.getName(), false));
+                new VFileDeleteEvent(this, file2),
+                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_NAME, file.getName(), file2.getName()));
   }
 
   @Test
@@ -619,16 +624,11 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertEquals(Collections.emptyList(), ((VirtualDirectoryImpl)vd1).getCachedChildren());
   }
 
-  private static void assertChildrenAreLoaded(VirtualFile file) {
-    assertTrue("children not loaded: " + file, ((VirtualDirectoryImpl)file).allChildrenLoaded());
-    assertTrue("children not loaded: " + file, PersistentFS.getInstance().areChildrenLoaded(file));
-  }
-
   @Test
   public void testRenameInBackgroundDoesntLeadToDuplicateFilesError() throws IOException {
     assumeFalse("Case-insensitive OS expected, can't run on " + SystemInfo.OS_NAME, SystemInfo.isFileSystemCaseSensitive);
 
-    File file = tempDirectory.newFile("rename.txt", "x".getBytes(StandardCharsets.UTF_8));
+    File file = tempDirectory.newFile("rename.txt", "x".getBytes(UTF_8));
     VirtualFile vfile = refreshAndFind(file);
     VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)vfile.getParent();
     assertFalse(vTemp.allChildrenLoaded());
@@ -665,30 +665,37 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  @SkipVFSHealthCheck
   public void testConcurrentListAllDoesntCauseDuplicateFileIds() throws Exception {
-    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+    PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    Application application = ApplicationManager.getApplication();
+    int enoughAttempts = 1000;
+    for (int attempt = 0; attempt < enoughAttempts; attempt++) {
+      File file1 = tempDirectory.newFile("dir." + attempt + "/file1", "text1".getBytes(UTF_8));
+      Path file2 = file1.toPath().resolveSibling("file2");
 
-    for (int i = 0; i < 10; i++) {
-      File file = tempDirectory.newFile("d" + i + "/file.txt", "x".getBytes(StandardCharsets.UTF_8));
-      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)refreshAndFind(file).getParent();
+      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)refreshAndFind(file1).getParent();
       assertFalse(vTemp.allChildrenLoaded());
-      Files.writeString(file.toPath().resolveSibling("new.txt"), "new");
-      Future<List<? extends ChildInfo>> f1 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
-      Future<List<? extends ChildInfo>> f2 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
+      Files.writeString(file2, "text2");
+
+      Future<List<? extends ChildInfo>> f1 = application.executeOnPooledThread(() -> pfs.listAll(vTemp));
+      Future<List<? extends ChildInfo>> f2 = application.executeOnPooledThread(() -> pfs.listAll(vTemp));
       List<? extends ChildInfo> children1 = f1.get();
       List<? extends ChildInfo> children2 = f2.get();
+
       int[] nameIds1 = children1.stream().mapToInt(n -> n.getNameId()).toArray();
       int[] nameIds2 = children2.stream().mapToInt(n -> n.getNameId()).toArray();
 
       // there can be one or two children, depending on whether the VFS refreshed in time or not.
       // but in any case, there must not be duplicate ids (i.e. files with the same name but different getId())
-      for (int i1 = 0; i1 < nameIds1.length; i1++) {
-        int nameId1 = nameIds1[i1];
-        int i2 = ArrayUtil.find(nameIds2, nameId1);
-        if (i2 >= 0) {
-          int id1 = children1.get(i1).getId();
-          int id2 = children2.get(i2).getId();
-          assertEquals("Duplicate ids found. children1=" + children1 + "; children2=" + children2, id1, id2);
+      for (int nameIndexIn1 = 0; nameIndexIn1 < nameIds1.length; nameIndexIn1++) {
+        int nameId1 = nameIds1[nameIndexIn1];
+        int nameIndexIn2 = ArrayUtil.find(nameIds2, nameId1);
+        if (nameIndexIn2 >= 0) {
+          int childId1 = children1.get(nameIndexIn1).getId();
+          int childId2 = children2.get(nameIndexIn2).getId();
+          assertEquals("[attempt: " + attempt + "] duplicate ids found: \nchildren1=" + children1 + "\nchildren2=" + children2,
+                       childId1, childId2);
         }
       }
     }
@@ -698,7 +705,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testMustNotDuplicateIdsOnRenameWithCaseChanged() {
     PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
 
-    File file = tempDirectory.newFile("file.txt", "x".getBytes(StandardCharsets.UTF_8));
+    File file = tempDirectory.newFile("file.txt", "x".getBytes(UTF_8));
     VirtualFile vDir = refreshAndFind(file.getParentFile());
     VirtualFile vf = assertOneElement(vDir.getChildren());
     assertEquals("file.txt", vf.getName());
@@ -711,7 +718,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
         try {
           Files.move(file.toPath(), file.toPath().resolveSibling(newName), StandardCopyOption.ATOMIC_MOVE);
         }
-        catch (NoSuchFileException ignored) { }
+        catch (NoSuchFileException ignored) {
+        }
         catch (IOException e) {
           throw new UncheckedIOException(e);
         }
@@ -720,7 +728,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     }
     for (int i = 0; i < 10; i++) {
       Future<?> f = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        for (int u=0; u<100; u++) {
+        for (int u = 0; u < 100; u++) {
           List<? extends ChildInfo> infos = fs.listAll(vDir);
           assertOneElement(infos);
         }
@@ -735,42 +743,11 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     });
   }
 
-  public static class TracingJarFileSystemTestWrapper extends JarFileSystemImpl {
-    private final AtomicInteger myAttributeCallCount = new AtomicInteger();
-
-    @Override
-    public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
-      myAttributeCallCount.incrementAndGet();
-      return super.getAttributes(file);
-    }
-
-    private int getAttributeCallCount() {
-      return myAttributeCallCount.get();
-    }
-
-    @Override
-    public @NotNull String getProtocol() {
-      return "jar-wrapper";
-    }
-  }
-
-  private static File zipWithEntry(String fileName, File generationDir, File outputDir, String entryName, String entryContent) throws IOException {
-    File zipFile = new File(generationDir, fileName);
-    try (Compressor.Zip zip = new Compressor.Zip(zipFile)) {
-      zip.addFile(entryName, entryContent.getBytes(StandardCharsets.UTF_8));
-    }
-
-    File outputFile = new File(outputDir, fileName);
-    try (OutputStream out = Files.newOutputStream(outputFile.toPath())) {
-      Files.copy(zipFile.toPath(), out);  // unlike `Files#copy(Path, Path)`, allows to overwrite an opened file on Windows
-    }
-    VfsUtil.markDirtyAndRefresh(false, true, true, outputFile);
-    return outputFile;
-  }
-
   @Test
   public void testReadOnlyFsCachesLength() throws IOException {
-    String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jar-wrapper\" physical=\"true\"/>";
+    String text = "<virtualFileSystem implementationClass=\"" +
+                  TracingJarFileSystemTestWrapper.class.getName() +
+                  "\" key=\"jar-wrapper\" physical=\"true\"/>";
     Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, "com.intellij"));
 
     try {
@@ -785,7 +762,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       file.refresh(false, false);
       assertTrue(file.isValid());
-      assertEquals(contents[0], new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+      assertEquals(contents[0], new String(file.contentsToByteArray(), UTF_8));
       TracingJarFileSystemTestWrapper fs = (TracingJarFileSystemTestWrapper)file.getFileSystem();
 
       zipFile = zipWithEntry(jarName, generationDir, testDir, entryName, contents[1]);
@@ -793,14 +770,14 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       int attrCallCount = fs.getAttributeCallCount();
       file.refresh(false, false);
       assertTrue(file.isValid());
-      assertEquals(contents[1], new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+      assertEquals(contents[1], new String(file.contentsToByteArray(), UTF_8));
 
       zipFile = zipWithEntry(jarName, generationDir, testDir, entryName, contents[2]);
       VfsUtil.markDirtyAndRefresh(false, true, true, zipFile);
       assertNotEquals(attrCallCount, fs.getAttributeCallCount());  // we should read length from physical FS
       file.refresh(false, false);
       assertTrue(file.isValid());
-      assertEquals(contents[2], new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+      assertEquals(contents[2], new String(file.contentsToByteArray(), UTF_8));
 
       attrCallCount = fs.getAttributeCallCount();
       for (int i = 0; i < 3; i++) {
@@ -815,7 +792,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
   @Test
   public void testDoNotRecalculateLengthIfEndOfInputStreamIsNotReached() throws IOException {
-    String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jar-wrapper\" physical=\"true\"/>";
+    String text = "<virtualFileSystem implementationClass=\"" +
+                  TracingJarFileSystemTestWrapper.class.getName() +
+                  "\" key=\"jar-wrapper\" physical=\"true\"/>";
     Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, "com.intellij"));
 
     try {
@@ -844,7 +823,6 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
         // just close
       }
       assertEquals(attributeCallCount, fs.getAttributeCallCount());
-
     }
     finally {
       runInEdtAndWait(() -> Disposer.dispose(disposable));
@@ -861,16 +839,17 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     VirtualFile jarVFile = JarFileSystem.getInstance().getJarRootForLocalFile(vFile);
     FileUtil.delete(jarFile);
     List<VFileEvent> events = new ArrayList<>();
-    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
-        events.addAll(e);
-      }
-    });
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+        @Override
+        public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
+          events.addAll(e);
+        }
+      });
 
     jarVFile.refresh(false, false);
-    events.sort(Comparator.comparing((VFileEvent e) ->e.getFile().getUrl()));
-    assertEqualUnorderedEvents(events, new VFileDeleteEvent(this, vFile, false), new VFileDeleteEvent(this, jarVFile, false));
+    events.sort(Comparator.comparing((VFileEvent e) -> e.getFile().getUrl()));
+    assertEqualUnorderedEvents(events, new VFileDeleteEvent(this, vFile), new VFileDeleteEvent(this, jarVFile));
   }
 
   @Test
@@ -885,17 +864,18 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     File newJarFile = zipWithEntry("test2.jar", generationDir, testDir, "x.java", "class X{}");
     FileUtil.copy(newJarFile, jarFile);
     List<VFileEvent> events = new ArrayList<>();
-    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
-        events.addAll(e);
-      }
-    });
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+        @Override
+        public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
+          events.addAll(e);
+        }
+      });
 
     ((JarFileSystemImpl)JarFileSystem.getInstance()).markDirtyAndRefreshVirtualFileDeepInsideJarForTest(webXml);
 
-    assertEqualUnorderedEvents(events, new VFileDeleteEvent(this, webXml, false),
-                 new VFileContentChangeEvent(this, vFile, 0, 0, false));
+    assertEqualUnorderedEvents(events, new VFileDeleteEvent(this, webXml),
+                               new VFileContentChangeEvent(this, vFile, 0, 0));
   }
 
   @Test
@@ -914,23 +894,24 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     VirtualFile vFILE = refreshAndFind(FILE);
 
     List<VFileEvent> events = new ArrayList<>();
-    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
-        for (VFileEvent event : e) {
-          VirtualFile evFile = event.getFile();
-          if (vDir.equals(evFile.getParent())) {
-            events.add(event);
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+        @Override
+        public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
+          for (VFileEvent event : e) {
+            VirtualFile evFile = event.getFile();
+            if (vDir.equals(evFile.getParent())) {
+              events.add(event);
+            }
           }
         }
-      }
-    });
+      });
 
     FileUtil.writeToFile(file, "content");
     vFile.refresh(false, false);
     vFILE.refresh(false, false);
     assertEqualUnorderedEvents(events,
-                               new VFileContentChangeEvent(this, vFile, -1, -1, true));
+                               new VFileContentChangeEvent(this, vFile, -1, -1));
 
     events.clear();
 
@@ -938,7 +919,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     vFile.refresh(false, false);
     vFILE.refresh(false, false);
     assertEqualUnorderedEvents(events,
-                               new VFileContentChangeEvent(this, vFILE,-1,-1, true));
+                               new VFileContentChangeEvent(this, vFILE, -1, -1));
 
     events.clear();
 
@@ -946,8 +927,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     FileUtil.writeToFile(FILE, "content2");
     vDir.refresh(false, true);
     assertEqualUnorderedEvents(events,
-                               new VFileContentChangeEvent(this, vFile,-1,-1,true),
-                               new VFileContentChangeEvent(this, vFILE,-1,-1,true));
+                               new VFileContentChangeEvent(this, vFile, -1, -1),
+                               new VFileContentChangeEvent(this, vFILE, -1, -1));
 
     events.clear();
 
@@ -955,8 +936,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     FileUtil.delete(FILE);
     vDir.refresh(false, true);
     assertEqualUnorderedEvents(events,
-                               new VFileDeleteEvent(this, vFile,false),
-                               new VFileDeleteEvent(this, vFILE,false));
+                               new VFileDeleteEvent(this, vFile),
+                               new VFileDeleteEvent(this, vFILE));
 
     events.clear();
 
@@ -964,26 +945,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertTrue(FILE.createNewFile());
     vDir.refresh(false, true);
     assertEqualUnorderedEvents(events,
-                               new VFileCreateEvent(this, vDir, vFile.getName(),false, null, null, true, null),
-                               new VFileCreateEvent(this, vDir, vFILE.getName(),false, null, null, true, null));
-  }
-
-  private void assertEqualUnorderedEvents(List<? extends VFileEvent> actual, VFileEvent... expected) {
-    Set<VFileEvent> act = new HashSet<>(ContainerUtil.map(actual, e -> ignoreCrazyVFileContentChangedEquals(e)));
-    Set<VFileEvent> exp = new HashSet<>(ContainerUtil.map(expected, e -> ignoreCrazyVFileContentChangedEquals(e)));
-    if (!act.equals(exp)) {
-      String expectedString = UsefulTestCase.toString(Arrays.asList(expected));
-      String actualString = UsefulTestCase.toString(actual);
-      assertEquals(expectedString, actualString);
-      fail("Warning! 'toString' does not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
-    }
-  }
-
-  private VFileEvent ignoreCrazyVFileContentChangedEquals(VFileEvent exp) {
-    if (exp instanceof VFileContentChangeEvent) {
-      exp = new VFileContentChangeEvent(this, ((VFileContentChangeEvent)exp).getFile(), 0, 0, -1, -1, -1, -1, true);
-    }
-    return exp;
+                               new VFileCreateEvent(this, vDir, vFile.getName(), false, null, null, null),
+                               new VFileCreateEvent(this, vDir, vFILE.getName(), false, null, null, null));
   }
 
   @Test
@@ -992,19 +955,20 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     VirtualFile vFile = HeavyPlatformTestCase.createChildData(vDir, "file.txt");
     UIUtil.pump();
     List<VFileEvent> events = new ArrayList<>();
-    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
-        for (VFileEvent event : e) {
-          VirtualFile evFile = event.getFile();
-          if (vDir.equals(evFile.getParent())) {
-            events.add(event);
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+        @Override
+        public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
+          for (VFileEvent event : e) {
+            VirtualFile evFile = event.getFile();
+            if (vDir.equals(evFile.getParent())) {
+              events.add(event);
+            }
           }
         }
-      }
-    });
+      });
 
-    WriteAction.runAndWait(()->vFile.setBinaryContent(new byte[]{1,2,3}));
+    WriteAction.runAndWait(() -> vFile.setBinaryContent(new byte[]{1, 2, 3}));
     VFileEvent event = assertOneElement(events);
     assertInstanceOf(event, VFileContentChangeEvent.class);
 
@@ -1038,7 +1002,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     final int xxxFooBarId = ((NewVirtualFile)xxxFooBar).getId();
     final int someTxtId = ((NewVirtualFile)someTxt).getId();
 
-    CacheSwitcher.INSTANCE.switchIndexAndVfs(null, null, "resetting vfs", () -> { return null; });
+    CacheSwitcher.INSTANCE.switchIndexAndVfs(null, null, "resetting vfs", () -> {
+      return null;
+    });
 
     PersistentFSImpl.moveChildrenRecords(firstDirId, secondDirId);
 
@@ -1055,22 +1021,130 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
   @Test
   public void testContentReadingWhileModification() throws IOException {
-    byte[] initialContent = StringUtil.repeat("one_two", 500_000).getBytes(StandardCharsets.UTF_8);
+    byte[] initialContent = StringUtil.repeat("one_two", 500_000).getBytes(UTF_8);
     File file = tempDirectory.newFile("test.txt", initialContent);
     VirtualFile vFile = refreshAndFind(file);
     int id = ((VirtualFileWithId)vFile).getId();
     vFile.contentsToByteArray();
 
-    DataInputStream stream = FSRecords.readContent(id);
+    InputStream stream = FSRecords.getInstance().readContent(id);
     assertNotNull(stream);
     byte[] bytes = stream.readNBytes(initialContent.length);
     assertArrayEquals(initialContent, bytes);
-    DataInputStream stream2 = FSRecords.readContent(id);
+    InputStream stream2 = FSRecords.getInstance().readContent(id);
     byte[] portion1 = stream2.readNBytes(40);
-    FSRecords.writeContent(id, ByteArraySequence.EMPTY, true);
-    DataInputStream stream3 = FSRecords.readContent(id);
+    FSRecords.getInstance().writeContent(id, ByteArraySequence.EMPTY, true);
+    InputStream stream3 = FSRecords.getInstance().readContent(id);
     assertEquals(-1, stream3.read());
     byte[] portion2 = stream2.readNBytes(initialContent.length - 40);
     assertArrayEquals(initialContent, ArrayUtil.mergeArrays(portion1, portion2));
+  }
+
+
+  private static void checkEvents(String expectedEvents, VFileEvent... eventsToApply) {
+    StringBuilder log = new StringBuilder();
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    try {
+      connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+        @Override
+        public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
+          log("Before:", events);
+        }
+
+        @Override
+        public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+          log("After:", events);
+        }
+
+        private void log(String prefix, List<? extends VFileEvent> events) {
+          log.append(prefix);
+          for (VFileEvent e : events) {
+            log.append(' ').append(e.getClass().getSimpleName()).append("->").append(PathUtil.getFileName(e.getPath()));
+          }
+          log.append('\n');
+        }
+      });
+
+      WriteCommandAction.runWriteCommandAction(null, () -> RefreshQueue.getInstance().processEvents(false, List.of(eventsToApply)));
+    }
+    finally {
+      connection.disconnect();
+    }
+
+    assertEquals(expectedEvents, log.toString());
+  }
+
+  private static void assertChildrenAreLoaded(VirtualFile file) {
+    assertTrue("children not loaded: " + file, ((VirtualDirectoryImpl)file).allChildrenLoaded());
+    assertTrue("children not loaded: " + file, PersistentFS.getInstance().areChildrenLoaded(file));
+  }
+
+  private static class TracingJarFileSystemTestWrapper extends JarFileSystemImpl {
+    private final AtomicInteger myAttributeCallCount = new AtomicInteger();
+
+    @Override
+    public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
+      myAttributeCallCount.incrementAndGet();
+      return super.getAttributes(file);
+    }
+
+    private int getAttributeCallCount() {
+      return myAttributeCallCount.get();
+    }
+
+    @Override
+    public @NotNull String getProtocol() {
+      return "jar-wrapper";
+    }
+  }
+
+  private static File zipWithEntry(String fileName, File generationDir, File outputDir, String entryName, String entryContent)
+    throws IOException {
+    File zipFile = new File(generationDir, fileName);
+    try (Compressor.Zip zip = new Compressor.Zip(zipFile)) {
+      zip.addFile(entryName, entryContent.getBytes(UTF_8));
+    }
+
+    File outputFile = new File(outputDir, fileName);
+    try (OutputStream out = Files.newOutputStream(outputFile.toPath())) {
+      Files.copy(zipFile.toPath(), out);  // unlike `Files#copy(Path, Path)`, allows to overwrite an opened file on Windows
+    }
+    VfsUtil.markDirtyAndRefresh(false, true, true, outputFile);
+    return outputFile;
+  }
+
+  private void assertEqualUnorderedEvents(List<? extends VFileEvent> actual, VFileEvent... expected) {
+    Set<VFileEvent> act = new HashSet<>(ContainerUtil.map(actual, e -> ignoreCrazyVFileContentChangedEquals(e)));
+    Set<VFileEvent> exp = new HashSet<>(ContainerUtil.map(expected, e -> ignoreCrazyVFileContentChangedEquals(e)));
+    if (!act.equals(exp)) {
+      String expectedString = UsefulTestCase.toString(Arrays.asList(expected));
+      String actualString = UsefulTestCase.toString(actual);
+      assertEquals(expectedString, actualString);
+      fail("Warning! 'toString' does not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
+    }
+  }
+
+  private VFileEvent ignoreCrazyVFileContentChangedEquals(VFileEvent exp) {
+    if (exp instanceof VFileContentChangeEvent) {
+      exp = new VFileContentChangeEvent(this, ((VFileContentChangeEvent)exp).getFile(), 0, 0, -1, -1, -1, -1);
+    }
+    return exp;
+  }
+
+  @NotNull
+  private static VirtualFile refreshAndFind(File file) {
+    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file), file.getPath());
+  }
+
+  private void checkMustCreateRootWithCanonicalPath(String jarName) {
+    File x = tempDirectory.newFile(jarName);
+    refreshAndFind(x);
+    JarFileSystem jfs = JarFileSystem.getInstance();
+    String path = x.getPath() + "/../" + x.getName() + JarFileSystem.JAR_SEPARATOR;
+    NewVirtualFile root = PersistentFS.getInstance().findRoot(path, jfs);
+    assertNotNull(path, root);
+    assertFalse(root.getPath(), root.getPath().contains("../"));
+    assertFalse(root.getPath(), root.getPath().contains("/.."));
   }
 }

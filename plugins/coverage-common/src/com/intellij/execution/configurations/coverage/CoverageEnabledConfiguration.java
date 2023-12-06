@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.CoverageEngine;
@@ -25,11 +25,11 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
 
   public static final Key<CoverageEnabledConfiguration> COVERAGE_KEY = Key.create("com.intellij.coverage");
 
-  @NonNls protected static final String COVERAGE_ENABLED_ATTRIBUTE_NAME = "enabled";
-  @NonNls protected static final String COVERAGE_RUNNER = "runner";
-  @NonNls protected static final String TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME = "per_test_coverage_enabled";
-  @NonNls protected static final String COVERAGE_TYPE_ATTRIBUTE_NAME = "sample_coverage";
-  @NonNls protected static final String TRACK_TEST_FOLDERS = "track_test_folders";
+  protected static final @NonNls String COVERAGE_ENABLED_ATTRIBUTE_NAME = "enabled";
+  protected static final @NonNls String COVERAGE_RUNNER = "runner";
+  protected static final @NonNls String TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME = "per_test_coverage_enabled";
+  protected static final @NonNls String COVERAGE_TYPE_ATTRIBUTE_NAME = "sample_coverage";
+  protected static final @NonNls String TRACK_TEST_FOLDERS = "track_test_folders";
 
   private final Project myProject;
   private final RunConfigurationBase<?> myConfiguration;
@@ -38,10 +38,10 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   private String myRunnerId;
   private CoverageRunner myCoverageRunner;
   private boolean myTrackPerTestCoverage = true;
-  private boolean myTracing = false;
+  private boolean myBranchCoverage = false;
   private boolean myTrackTestFolders = false;
 
-  @NonNls protected String myCoverageFilePath;
+  protected @NonNls String myCoverageFilePath;
   private CoverageSuite myCurrentCoverageSuite;
 
   public CoverageEnabledConfiguration(@NotNull RunConfigurationBase<?> configuration) {
@@ -61,24 +61,23 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     myIsCoverageEnabled = isCoverageEnabled;
   }
 
-  public boolean isTracingEnabled() {
-    return myTracing;
+  public boolean isBranchCoverageEnabled() {
+    return myBranchCoverage;
   }
 
-  public void setTracingEnabled(final boolean tracing) {
-    myTracing = tracing;
+  public void setBranchCoverage(final boolean branchCoverage) {
+    myBranchCoverage = branchCoverage;
   }
 
   public String getRunnerId() {
     return myRunnerId;
   }
 
-  @Nullable
-  public CoverageRunner getCoverageRunner() {
+  public @Nullable CoverageRunner getCoverageRunner() {
     return myCoverageRunner;
   }
 
-  public void setCoverageRunner(@Nullable final CoverageRunner coverageRunner) {
+  public void setCoverageRunner(final @Nullable CoverageRunner coverageRunner) {
     myCoverageRunner = coverageRunner;
     myRunnerId = coverageRunner != null ? coverageRunner.getId() : null;
     myCoverageFilePath = null;
@@ -129,13 +128,13 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   }
 
 
-  public static boolean isApplicableTo(@NotNull final RunConfigurationBase runConfiguration) {
+  public static boolean isApplicableTo(final @NotNull RunConfigurationBase runConfiguration) {
     final CoverageEnabledConfiguration configuration = runConfiguration.getCopyableUserData(COVERAGE_KEY);
     if (configuration != null) {
       return true;
     }
 
-    for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
+    for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensionList()) {
       if (engine.isApplicableTo(runConfiguration)) {
         return true;
       }
@@ -144,11 +143,10 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     return false;
   }
 
-  @NotNull
-  public static CoverageEnabledConfiguration getOrCreate(@NotNull final RunConfigurationBase runConfiguration) {
+  public static @NotNull CoverageEnabledConfiguration getOrCreate(final @NotNull RunConfigurationBase runConfiguration) {
     CoverageEnabledConfiguration configuration = runConfiguration.getCopyableUserData(COVERAGE_KEY);
     if (configuration == null) {
-      for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
+      for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensionList()) {
         if (engine.isApplicableTo(runConfiguration)) {
           configuration = engine.createCoverageEnabledConfiguration(runConfiguration);
           break;
@@ -162,9 +160,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     return configuration;
   }
 
-  @Nullable
-  @NonNls
-  public String getCoverageFilePath() {
+  public @Nullable @NonNls String getCoverageFilePath() {
     if (myCoverageFilePath == null) {
       myCoverageFilePath = createCoverageFile();
     }
@@ -181,7 +177,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     myTrackPerTestCoverage = testTrackingAttribute == null || Boolean.valueOf(testTrackingAttribute).booleanValue();
 
     // line/branch coverage
-    myTracing = !Boolean.parseBoolean(element.getAttributeValue(COVERAGE_TYPE_ATTRIBUTE_NAME, "true"));
+    myBranchCoverage = !Boolean.parseBoolean(element.getAttributeValue(COVERAGE_TYPE_ATTRIBUTE_NAME, "true"));
 
     // track test folders
     final String trackTestFolders = element.getAttributeValue(TRACK_TEST_FOLDERS);
@@ -214,7 +210,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     }
 
     // line/branch coverage
-    if (myTracing) {
+    if (myBranchCoverage) {
       element.setAttribute(COVERAGE_TYPE_ATTRIBUTE_NAME, String.valueOf(false));
     }
 
@@ -232,14 +228,12 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     }
   }
 
-  @Nullable
-  @NonNls
-  protected String createCoverageFile() {
+  protected @Nullable @NonNls String createCoverageFile() {
     if (myCoverageRunner == null) {
       return null;
     }
 
-    @NonNls final String coverageRootPath = PathManager.getSystemPath() + File.separator + "coverage";
+    final @NonNls String coverageRootPath = PathManager.getSystemPath() + File.separator + "coverage";
     final String path = coverageRootPath + File.separator + FileUtil.sanitizeFileName(myProject.getName()) + coverageFileNameSeparator()
                         + FileUtil.sanitizeFileName(myConfiguration.getName()) + "." + myCoverageRunner.getDataFileExtension();
 

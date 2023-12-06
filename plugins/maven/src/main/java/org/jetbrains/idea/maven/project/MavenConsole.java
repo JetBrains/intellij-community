@@ -17,164 +17,79 @@ package org.jetbrains.idea.maven.project;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
-import org.jetbrains.idea.maven.execution.RunnerBundle;
-import org.jetbrains.idea.maven.server.MavenServerConsole;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 import java.text.MessageFormat;
-import java.util.List;
 
+/**
+ * @deprecated Use MavenSyncConsole instead
+ */
+@Deprecated
 public abstract class MavenConsole {
   private static final String LINE_SEPARATOR = System.lineSeparator();
-  private final List<ProcessListener> myProcessListeners = new SmartList<>();
-  private final List<AttachProcessListener> myAttachProcessListeners = new SmartList<>();
-
 
   public enum OutputType {
     NORMAL, SYSTEM, ERROR
   }
 
   private final int myOutputLevel;
-  private boolean isFinished;
 
   private static final BiMap<String, Integer> PREFIX_TO_LEVEL = ImmutableBiMap.of(
-    "DEBUG", MavenServerConsole.LEVEL_DEBUG,
-    "INFO", MavenServerConsole.LEVEL_INFO,
-    "WARNING", MavenServerConsole.LEVEL_WARN,
-    "ERROR", MavenServerConsole.LEVEL_ERROR,
-    "FATAL_ERROR", MavenServerConsole.LEVEL_FATAL
+    "DEBUG", MavenServerConsoleIndicator.LEVEL_DEBUG,
+    "INFO", MavenServerConsoleIndicator.LEVEL_INFO,
+    "WARNING", MavenServerConsoleIndicator.LEVEL_WARN,
+    "ERROR", MavenServerConsoleIndicator.LEVEL_ERROR,
+    "FATAL_ERROR", MavenServerConsoleIndicator.LEVEL_FATAL
   );
 
-  public interface AttachProcessListener {
-    void beforeProcessAttached(@NotNull ProcessHandler processHandler);
+  @Deprecated(forRemoval = true)
+  public MavenConsole(MavenExecutionOptions.LoggingLevel outputLevel, boolean ignored) {
+    this(outputLevel);
   }
 
-  public MavenConsole(MavenExecutionOptions.LoggingLevel outputLevel, boolean printStackTrace) {
+  public MavenConsole(MavenExecutionOptions.LoggingLevel outputLevel) {
     myOutputLevel = outputLevel.getLevel();
   }
 
-  public boolean isSuppressed(int level) {
+  private boolean isSuppressed(int level) {
     return level < myOutputLevel;
   }
 
-  public void addProcessListener(ProcessListener processListener) {
-    myProcessListeners.add(processListener);
-  }
-
-  public void addAttachProcessListener(AttachProcessListener listener) {
-    myAttachProcessListeners.add(listener);
-  }
-
+  @Deprecated(forRemoval = true)
   public boolean isSuppressed(String line) {
     return isSuppressed(getLevel(line));
-  }
-
-
-  public abstract boolean canPause();
-
-  public abstract boolean isOutputPaused();
-
-  public abstract void setOutputPaused(boolean outputPaused);
-
-  public boolean isFinished() {
-    return isFinished;
-  }
-
-  public void finish() {
-    isFinished = true;
-  }
-
-  public void attachToProcess(ProcessHandler processHandler) {
-    for (ProcessListener listener : myProcessListeners) {
-      processHandler.addProcessListener(listener);
-    }
-    for (AttachProcessListener listener : myAttachProcessListeners) {
-      listener.beforeProcessAttached(processHandler);
-    }
-  }
-
-  public void printException(Throwable throwable) {
-    systemMessage(MavenServerConsole.LEVEL_ERROR, RunnerBundle.message("embedded.build.failed"), throwable);
   }
 
   public void systemMessage(int level, String string, Throwable throwable) {
     printMessage(level, string, throwable);
   }
 
-  public void printMessage(int level, String string, Throwable throwable) {
+  private void printMessage(int level, String string, Throwable throwable) {
     if (isSuppressed(level)) return;
 
     OutputType type = OutputType.NORMAL;
     if (throwable != null
-        || level == MavenServerConsole.LEVEL_WARN
-        || level == MavenServerConsole.LEVEL_ERROR
-        || level == MavenServerConsole.LEVEL_FATAL) {
+        || level == MavenServerConsoleIndicator.LEVEL_WARN
+        || level == MavenServerConsoleIndicator.LEVEL_ERROR
+        || level == MavenServerConsoleIndicator.LEVEL_FATAL) {
       type = OutputType.ERROR;
     }
 
     doPrint(composeLine(level, string), type);
 
-    if (level == MavenServerConsole.LEVEL_FATAL) {
-      setOutputPaused(false);
-    }
-
     if (throwable != null) {
       String throwableText = ExceptionUtil.getThrowableText(throwable);
       if (Registry.is("maven.print.import.stacktraces") || ApplicationManager.getApplication().isUnitTestMode()) { //NO-UT-FIX
-        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsole.LEVEL_ERROR, throwableText), type);
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsoleIndicator.LEVEL_ERROR, throwableText), type);
       }
       else {
-        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsole.LEVEL_ERROR, throwable.getMessage()), type);
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsoleIndicator.LEVEL_ERROR, throwable.getMessage()), type);
       }
     }
-  }
-  // todo
-  // if (throwable != null) {
-  //  String message = null;
-  //
-  //  Throwable temp = throwable;
-  //  while (temp != null) {
-  //    if (temp instanceof AbstractMojoExecutionException) {
-  //      message = appendExecutionFailureMessage(message, temp.getMessage());
-  //      message = appendExecutionFailureMessage(message, ((AbstractMojoExecutionException)temp).getLongMessage());
-  //
-  //      if (temp.getCause() != null) {
-  //        message = appendExecutionFailureMessage(message, temp.getCause().getMessage());
-  //      }
-  //      break;
-  //    }
-  //    temp = temp.getCause();
-  //  }
-  //
-  //  if (message == null) message = throwable.getMessage();
-  //
-  //  if (message != null) {
-  //    message += LINE_SEPARATOR;
-  //    doPrint(LINE_SEPARATOR + composeLine(LEVEL_ERROR, message), type);
-  //  }
-  //
-  //  if (myPrintStrackTrace) {
-  //    doPrint(LINE_SEPARATOR + StringUtil.getThrowableText(throwable), OutputType.ERROR);
-  //  }
-  //  else {
-  //    doPrint(LINE_SEPARATOR +
-  //            "To view full stack traces, please go to the Settings->Maven and check the 'Print Exception Stack Traces' box." +
-  //            LINE_SEPARATOR,
-  //            type);
-  //  }
-  //}
-
-  private static String appendExecutionFailureMessage(String message, String newMessage) {
-    if (message == null) return newMessage;
-    if (newMessage == null) return message;
-    return message + LINE_SEPARATOR + LINE_SEPARATOR + newMessage;
   }
 
   protected abstract void doPrint(String text, OutputType type);
@@ -195,7 +110,7 @@ public abstract class MavenConsole {
 
   private static int getLevelByPrefix(String prefix) {
     Integer level = PREFIX_TO_LEVEL.get(prefix);
-    return level != null ? level : MavenServerConsole.LEVEL_WARN;
+    return level != null ? level : MavenServerConsoleIndicator.LEVEL_WARN;
   }
 
   private static String composeLine(int level, String message) {

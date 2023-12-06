@@ -9,6 +9,14 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.markdown" />
+    <orderEntry type="module" module-name="intellij.markdown.fenceInjection" />
+    <orderEntry type="module" module-name="intellij.markdown.frontmatter" />
+    <orderEntry type="module" module-name="intellij.markdown.frontmatter.toml" />
+    <orderEntry type="module" module-name="intellij.markdown.frontmatter.yaml" />
+    <orderEntry type="module" module-name="intellij.markdown.images" />
+    <orderEntry type="module" module-name="intellij.markdown.model" />
+    <orderEntry type="module" module-name="intellij.markdown.spellchecker" />
+    <orderEntry type="module" module-name="intellij.markdown.xml" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
@@ -24,5 +32,6 @@
     <orderEntry type="library" name="jetbrains.markdown" level="project" />
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module" module-name="intellij.yaml" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
   </component>
 </module>

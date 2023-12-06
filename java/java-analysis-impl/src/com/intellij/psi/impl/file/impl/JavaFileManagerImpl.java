@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -77,7 +78,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   }
 
   private @NotNull List<Pair<PsiClass, VirtualFile>> doFindClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName, myManager.getProject(), scope);
+    Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().getClasses(qName, myManager.getProject(), scope);
     if (classes.isEmpty()) return Collections.emptyList();
 
     List<Pair<PsiClass, VirtualFile>> result = new ArrayList<>(classes.size());
@@ -140,7 +141,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     GlobalSearchScope excludingScope = new LibSrcExcludingScope(scope);
 
     Project project = myManager.getProject();
-    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, project, excludingScope));
+    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().getModules(moduleName, project, excludingScope));
 
     Set<VirtualFile> shadowedRoots = new HashSet<>();
     for (VirtualFile manifest : JavaSourceModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
@@ -164,12 +165,18 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
       CachedValuesManager valuesManager = CachedValuesManager.getManager(project);
       ProjectRootModificationTracker rootModificationTracker = ProjectRootModificationTracker.getInstance(project);
       for (Module module : ModuleManager.getInstance(project).getModules()) {
-        String targetModuleName = valuesManager
-          .getCachedValue(module, () -> CachedValueProvider.Result.create(LightJavaModule.moduleName(module.getName()),
-                                                                          rootModificationTracker));
-        if (moduleName.equals(targetModuleName)) {
-          VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
-          if (sourceRoots.length > 0) {
+        VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
+        if (sourceRoots.length > 0) {
+          String virtualAutoModuleName = VirtualManifestProvider.getAttributeValue(module, PsiJavaModule.AUTO_MODULE_NAME);
+          if (moduleName.equals(virtualAutoModuleName)) {
+            results.add(LightJavaModule.create(myManager, sourceRoots[0], moduleName));
+            break;
+          }
+
+          String defaultModuleName = valuesManager.getCachedValue(module, () ->
+            CachedValueProvider.Result.create(LightJavaModule.moduleName(module.getName()), rootModificationTracker)
+          );
+          if (moduleName.equals(defaultModuleName)) {
             results.add(LightJavaModule.create(myManager, sourceRoots[0], moduleName));
             break;
           }

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -10,6 +9,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -18,24 +18,27 @@ import org.jetbrains.kotlin.types.isError
 
 class SpecifyTypeExplicitlyInDestructuringAssignmentIntention : SelfTargetingRangeIntention<KtDestructuringDeclaration>(
     KtDestructuringDeclaration::class.java, KotlinBundle.lazyMessage("specify.all.types.explicitly.in.destructuring.declaration")
-), LowPriorityAction {
+) {
     override fun applicabilityRange(element: KtDestructuringDeclaration): TextRange? {
         if (element.containingFile is KtCodeFragment) return null
-        val entries = element.noTypeReferenceEntries()
+        val entries = element.entriesWithoutExplicitTypes()
         if (entries.isEmpty()) return null
         if (entries.any { SpecifyTypeExplicitlyIntention.getTypeForDeclaration(it).isError }) return null
-        return TextRange(element.startOffset, element.initializer?.let { it.startOffset - 1 } ?: element.endOffset)
+        val endOffset = element.initializer?.let { it.startOffset - 1 } ?: element.endOffset
+        return TextRange(element.startOffset, endOffset)
     }
 
     override fun applyTo(element: KtDestructuringDeclaration, editor: Editor?) {
-        val entries = element.noTypeReferenceEntries()
-        if (editor != null && element.getParentOfType<KtParameterList>(false) == null)
+        val entries = element.entriesWithoutExplicitTypes()
+        if (editor != null && element.getParentOfType<KtParameterList>(strict = false) == null) {
             SpecifyTypeExplicitlyIntention.addTypeAnnotationWithTemplate(editor, entries.iterator())
-        else
-            entries.forEach {
-                it.setType(SpecifyTypeExplicitlyIntention.getTypeForDeclaration(it))
+        } else {
+            for (entry in entries) {
+                entry.setType(SpecifyTypeExplicitlyIntention.getTypeForDeclaration(entry))
             }
+        }
     }
 }
 
-private fun KtDestructuringDeclaration.noTypeReferenceEntries() = entries.filter { it.typeReference == null }
+private fun KtDestructuringDeclaration.entriesWithoutExplicitTypes(): List<KtDestructuringDeclarationEntry> =
+    entries.filter { it.typeReference == null }

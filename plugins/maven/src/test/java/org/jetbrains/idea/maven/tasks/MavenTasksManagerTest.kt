@@ -1,19 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks
 
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.maven.testFramework.MavenCompilingTestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.junit.Test
-import java.util.List
 
 class MavenTasksManagerTest : MavenCompilingTestCase() {
   @Test
-  fun `test run execute before build tasks`() {
-    importProject("""
+  fun `test run execute before build tasks`() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -27,7 +27,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun `test run execute before build tasks in the same module`() {
+  fun `test run execute before build tasks in the same module`() = runBlocking {
     createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -59,7 +59,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </parent>
                   """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     val parametersList = mutableListOf<MavenRunnerParameters>()
     subscribeToMavenGoalExecution("generate-sources", parametersList)
     addCompileTask(m1File.path, "generate-sources")
@@ -68,7 +68,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun `test don't run execute before build tasks in another module` () {
+  fun `test don't run execute before build tasks in another module` () = runBlocking {
     createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -100,7 +100,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </parent>
                   """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     val parametersList = mutableListOf<MavenRunnerParameters>()
     subscribeToMavenGoalExecution("generate-sources", parametersList)
     addCompileTask(m1File.path, "generate-sources")
@@ -109,7 +109,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun `test group tasks by goal` () {
+  fun `test group tasks by goal` () = runBlocking {
     var p = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -141,7 +141,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </parent>
                   """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     val parametersList = mutableListOf<MavenRunnerParameters>()
     subscribeToMavenGoalExecution("generate-sources", parametersList)
     addCompileTask(m1File.path, "generate-sources")
@@ -157,7 +157,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
   private fun addCompileTask(pomPath: String, goal: String) {
     val mavenTasksManager = MavenTasksManager.getInstance(myProject)
     val task = MavenCompilerTask(pomPath, goal)
-    mavenTasksManager.addCompileTasks(List.of(task), MavenTasksManager.Phase.BEFORE_COMPILE)
+    mavenTasksManager.addCompileTasks(listOf(task), MavenTasksManager.Phase.BEFORE_COMPILE)
   }
 
   private fun subscribeToMavenGoalExecution(goal: String, parametersList: MutableList<MavenRunnerParameters>) {

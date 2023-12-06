@@ -3,6 +3,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -65,13 +67,11 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
           fixes = new LocalQuickFix[]{new LoopTransformationFix(noConversionToDoWhile)};
         }
         else {
-          SetInspectionOptionFix setInspectionOptionFix =
-            new SetInspectionOptionFix(ConditionalBreakInInfiniteLoopInspection.this,
-                                       "noConversionToDoWhile",
-                                       JavaBundle.message(
-                                         "inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"),
-                                       true);
-          fixes = new LocalQuickFix[]{new LoopTransformationFix(noConversionToDoWhile), setInspectionOptionFix};
+          var setInspectionOptionFix = new UpdateInspectionOptionFix(
+            ConditionalBreakInInfiniteLoopInspection.this, "noConversionToDoWhile",
+            JavaBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"),
+            true);
+          fixes = new LocalQuickFix[]{new LoopTransformationFix(noConversionToDoWhile), LocalQuickFix.from(setInspectionOptionFix)};
         }
         ProblemHighlightType highlightType;
         if (!allowConditionFusion && !context.isInfiniteLoop) {
@@ -140,6 +140,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
       }
       if (noConversionToDoWhile) return null;
       PsiIfStatement last = tryCast(statements[statements.length - 1], PsiIfStatement.class);
+      if (last != null && last.getElseBranch() != null) return null;
       PsiExpression lastBreakCondition = extractBreakCondition(last, loopStatement, isBreakInThen);
       if (lastBreakCondition == null || !isBreakInThen.get()) return null;
       if (!isEndlessLoop &&
@@ -223,7 +224,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     }
   }
 
-  private static class LoopTransformationFix implements LocalQuickFix {
+  private static class LoopTransformationFix extends PsiUpdateModCommandQuickFix {
     private final boolean noConversionToDoWhile;
 
     private LoopTransformationFix(boolean noConversionToDoWhile) {
@@ -238,8 +239,8 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiConditionalLoopStatement loop = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiConditionalLoopStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiConditionalLoopStatement loop = PsiTreeUtil.getParentOfType(element, PsiConditionalLoopStatement.class);
       if (loop == null) return;
       Context context = Context.from(loop, noConversionToDoWhile, false);
       if (context == null) return;

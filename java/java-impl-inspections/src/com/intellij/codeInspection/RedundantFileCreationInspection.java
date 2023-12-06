@@ -2,6 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -96,7 +98,7 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
     return false;
   }
 
-  private static class DeleteRedundantFileCreationFix implements LocalQuickFix {
+  private static class DeleteRedundantFileCreationFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -105,8 +107,7 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiNewExpression newExpression)) return;
 
       final PsiExpressionList argList = newExpression.getArgumentList();

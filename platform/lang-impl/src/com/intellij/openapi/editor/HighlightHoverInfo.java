@@ -16,12 +16,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.Ref;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.WidthBasedLayout;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,12 +55,7 @@ record HighlightHoverInfo(@Tooltip @NotNull String tooltip, @Nullable TooltipAct
   ) {
     Ref<WrapperPanel> wrapperPanelRef = new Ref<>();
     Ref<LightweightHint> mockHintRef = new Ref<>();
-    HintHint hintHint = new HintHint().setAwtTooltip(true).setRequestFocus(requestFocus);
-
-    if (ExperimentalUI.isNewUI()) {
-      hintHint.setTextFg(JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND).
-               setTextBg(JBUI.CurrentTheme.Editor.Tooltip.BACKGROUND);
-    }
+    HintHint hintHint = new HintHint().setAwtTooltip(true).setRequestFocus(requestFocus).setStatus(HintHint.Status.Info);
 
     LightweightHint hint = renderer.createHint(editor, new Point(), false, EDITOR_INFO_GROUP, hintHint, highlightActions, false, expand -> {
       LineTooltipRenderer newRenderer = renderer.createRenderer(renderer.getText(), expand ? 1 : 0);

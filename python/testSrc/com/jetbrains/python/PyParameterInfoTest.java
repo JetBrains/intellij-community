@@ -816,7 +816,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         final Map<String, PsiElement> marks = loadTest(4);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
-        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("*, a: int, b: int = ...", new String[]{"*, a: int"});
+        // non-working case PY-39461
+        //feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, b: int = ...", new String[]{"a: int, "});
         feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int = ..., b: int", new String[]{"*, a: int"});
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int = ..., b: int = ...", new String[]{"*, a: int"});
       }
@@ -977,10 +978,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testInitializingTypeVar() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-    feignCtrlP(offset).check("self: TypeVar, name: str, *constraints, bound: Any | None = ..., " +
-                             "covariant: bool = ..., contravariant: bool = ...",
-                             new String[]{"name: str, "},
-                             new String[]{"self: TypeVar, "});
+    feignCtrlP(offset).check(Arrays.asList("self: TypeVar, name: str, *constraints, bound: Any | None = None, covariant: bool = False, " +
+                                           "contravariant: bool = False, infer_variance: bool = False",
+                                           "self: TypeVar, name: str, *constraints, bound: Any | None = None, covariant: bool = False, " +
+                                           "contravariant: bool = False"),
+                             Arrays.asList(new String[]{"name: str, "}, new String[]{"name: str, "}),
+                             Arrays.asList(new String[]{"self: TypeVar, "}, new String[]{"self: TypeVar, "}));
   }
 
   // PY-36008
@@ -1127,6 +1130,43 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(test.get("<arg2>").getTextOffset()).check(
       "parameter: MyClassWithVeryVeryVeryLongName | Upper | int, short_param: str"
       , new String[]{"short_param: str"});
+  }
+
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnClass() {
+    final Map<String, PsiElement> marks = loadTest(4);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("b: int, *, a: int", new String[]{"b: int, "});
+    // non-working case PY-39461
+    //feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, b: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+  }
+
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnField() {
+    final Map<String, PsiElement> marks = loadTest(4);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("b: int, *, a: int", new String[]{"b: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, b: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+  }
+
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnClassOverridingHierarchy() {
+    final Map<String, PsiElement> marks = loadTest(3);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int", new String[]{"a: int"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+  }
+
+  // PY-61139
+  public void testDoNotInferLiteralStringForParametersWithStrLiteralDefaultValue() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("s: str = 'foo'", new String[]{"s: str = 'foo'"});
   }
 
   @NotNull

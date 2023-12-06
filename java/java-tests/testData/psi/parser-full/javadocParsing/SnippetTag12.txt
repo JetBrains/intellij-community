@@ -10,8 +10,8 @@ PsiJavaFile:SnippetTag12.java
       PsiSnippetDocTag
         PsiDocToken:DOC_INLINE_TAG_START('{')
         PsiDocToken:DOC_TAG_NAME('@snippet')
-        PsiWhiteSpace(' ')
         PsiSnippetDocTagValue
+          PsiWhiteSpace(' ')
           PsiDocToken:DOC_TAG_VALUE_QUOTE('"')
           PsiWhiteSpace('\n ')
           PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')

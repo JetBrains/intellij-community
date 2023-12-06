@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.*
@@ -6,7 +6,6 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.EffectType
@@ -18,7 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import com.intellij.util.containers.ConcurrentIntObjectMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Title
@@ -26,36 +25,37 @@ import java.awt.Dimension
 import java.awt.Rectangle
 import java.util.function.Supplier
 
-class ProviderWithSettings<T: Any>(
+internal class ProviderWithSettings<T : Any>(
   val info: ProviderInfo<T>,
   var settings: T
 ) {
   val configurable: ImmediateConfigurable by lazy { provider.createConfigurable(settings) }
 
   val provider: InlayHintsProvider<T>
-  get() = info.provider
+    get() = info.provider
   val language: Language
-  get() = info.language
+    get() = info.language
 }
 
-fun <T : Any> ProviderWithSettings<T>.withSettingsCopy(): ProviderWithSettings<T> {
+internal fun <T : Any> ProviderWithSettings<T>.withSettingsCopy(): ProviderWithSettings<T> {
   val settingsCopy = copySettings(settings, provider)
   return ProviderWithSettings(info, settingsCopy)
 }
 
-fun <T : Any> ProviderWithSettings<T>.getCollectorWrapperFor(file: PsiFile, editor: Editor, language: Language): CollectorWithSettings<T>? {
+internal fun <T : Any> ProviderWithSettings<T>.getCollectorWrapperFor(file: PsiFile,
+                                                                      editor: Editor,
+                                                                      language: Language,
+                                                                      sink: InlayHintsSinkImpl): CollectorWithSettings<T>? {
   val key = provider.key
-  val sink = InlayHintsSinkImpl(editor)
   val collector = provider.getCollectorFor(file, editor, settings, sink) ?: return null
   return CollectorWithSettings(collector, key, language, sink)
 }
 
-internal fun <T : Any> ProviderWithSettings<T>.getPlaceholdersCollectorFor(file: PsiFile, editor: Editor): CollectorWithSettings<T>? {
+internal fun <T : Any> ProviderWithSettings<T>.getPlaceholderCollectorFor(file: PsiFile, editor: Editor): CollectorWithSettings<T>? {
   val key = provider.key
   val sink = InlayHintsSinkImpl(editor)
   val collector = provider.getPlaceholdersCollectorFor(file, editor, settings, sink) ?: return null
-
-  return CollectorWithSettings(collector, key, language, sink)
+  return CollectorWithSettings(collector = collector, key = key, language = language, sink = sink)
 }
 
 internal fun <T : Any> InlayHintsProvider<T>.withSettings(language: Language, config: InlayHintsSettings): ProviderWithSettings<T> {
@@ -63,8 +63,9 @@ internal fun <T : Any> InlayHintsProvider<T>.withSettings(language: Language, co
   return ProviderWithSettings(ProviderInfo(language, this), settings)
 }
 
-internal fun <T : Any> InlayHintsProvider<T>.getActualSettings(config: InlayHintsSettings, language: Language): T =
-  config.findSettings(key, language) { createSettings() }
+internal fun <T : Any> InlayHintsProvider<T>.getActualSettings(config: InlayHintsSettings, language: Language): T {
+  return config.findSettings(key, language) { createSettings() }
+}
 
 internal fun <T : Any> copySettings(from: T, provider: InlayHintsProvider<T>): T {
   val settings = provider.createSettings()
@@ -91,27 +92,13 @@ class CollectorWithSettings<T : Any>(
   }
 
   /**
-   * Collects hints from the file and apply them to editor.
-   * Doesn't expect other hints in editor.
+   * Collects hints from the file and apply them to the editor.
+   * Doesn't expect other hints in the editor.
    * Use only for settings preview.
    */
   fun collectTraversingAndApply(editor: Editor, file: PsiFile, enabled: Boolean) {
     val hintsBuffer = collectTraversing(editor, file, enabled)
     applyToEditor(file, editor, hintsBuffer)
-  }
-
-  /**
-   * Same as [collectTraversingAndApply] but invoked on bg thread
-   */
-  fun collectTraversingAndApplyOnEdt(editor: Editor, file: PsiFile, enabled: Boolean) {
-    val hintsBuffer = collectTraversing(editor, file, true)
-    if (!enabled) {
-      val builder = strikeOutBuilder(editor)
-      addStrikeout(hintsBuffer.inlineHints, builder) { root, constraints -> HorizontalConstrainedPresentation(root, constraints) }
-      addStrikeout(hintsBuffer.blockAboveHints, builder) { root, constraints -> BlockConstrainedPresentation(root, constraints) }
-      addStrikeout(hintsBuffer.blockBelowHints, builder) { root, constraints -> BlockConstrainedPresentation(root, constraints) }
-    }
-    invokeLater { applyToEditor(file, editor, hintsBuffer) }
   }
 
   fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
@@ -129,12 +116,11 @@ class CollectorWithSettings<T : Any>(
   }
 }
 
-internal fun <T: Any> addStrikeout(inlineHints: Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, T>>>,
-                          builder: TextAttributesEffectsBuilder,
-                          factory: (RootInlayPresentation<*>, T?) -> ConstrainedPresentation<*, T>
-) {
-  inlineHints.forEach {
-    it.value.replaceAll { presentation ->
+internal fun <T : Any> addStrikeout(inlineHints: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, T>>>,
+                                    builder: TextAttributesEffectsBuilder,
+                                    factory: (RootInlayPresentation<*>, T?) -> ConstrainedPresentation<*, T>) {
+  for (entry in inlineHints.entrySet()) {
+    entry.value.replaceAll { presentation ->
       val transformer = AttributesTransformerPresentation(presentation.root) { builder.applyTo(it) }
       val rootPresentation = RecursivelyUpdatingRootPresentation(transformer)
       factory(rootPresentation, presentation.constraints)
@@ -154,7 +140,7 @@ fun InlayPresentation.fireUpdateEvent(previousDimension: Dimension) {
   fireContentChanged()
 }
 
-fun InlayPresentation.dimension() = Dimension(width, height)
+fun InlayPresentation.dimension(): Dimension = Dimension(width, height)
 
 private typealias ConstrPresent<C> = ConstrainedPresentation<*, C>
 
@@ -178,20 +164,8 @@ object InlayHintsUtils {
       ConfigureInlayHintsProviderAction(providerKey)
     )
 
-  fun getDefaultInlayHintsProviderCasePopupActions(
-    providerKey: SettingsKey<*>,
-    providerName: Supplier<@Nls(capitalization = Title) String>,
-    caseId: String,
-    caseName: Supplier<@Nls(capitalization = Title) String>
-  ): List<AnAction> =
-    listOf(
-      DisableInlayHintsProviderCaseAction(providerKey, providerName, caseId, caseName),
-      DisableInlayHintsProviderAction(providerKey, providerName, true),
-      ConfigureInlayHintsProviderAction(providerKey)
-    )
-
   /**
-   * Function updates list of old presentations with new list, taking into account priorities.
+   * Function updates list of old presentations with a new list, taking into account priorities.
    * Both lists must be sorted.
    *
    * @return list of updated constrained presentations
@@ -261,18 +235,18 @@ object InlayHintsUtils {
   /**
    * @return true iff updated
    */
-  private fun <Content : Any>RootInlayPresentation<Content>.updateIfSame(
+  private fun <Content : Any> RootInlayPresentation<Content>.updateIfSame(
     newPresentation: RootInlayPresentation<*>,
     editor: Editor,
     factory: InlayPresentationFactory
-  ) : Boolean {
+  ): Boolean {
     if (key != newPresentation.key) return false
     @Suppress("UNCHECKED_CAST")
     return update(newPresentation.content as Content, editor, factory)
   }
 
   /**
-   * Note that the range may still be invalid if document doesn't match PSI
+   * Note that the range may still be invalid if a document doesn't match PSI
    */
   fun getTextRangeWithoutLeadingCommentsAndWhitespaces(element: PsiElement): TextRange {
     val start = SyntaxTraverser.psiApi().children(element).firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: element

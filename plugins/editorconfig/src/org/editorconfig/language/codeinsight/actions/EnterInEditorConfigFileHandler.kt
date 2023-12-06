@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight.actions
 
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
@@ -15,7 +15,7 @@ import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigPsiFile
 
 // Those functions look somewhat C-ish...
-class EnterInEditorConfigFileHandler : EnterHandlerDelegateAdapter() {
+internal class EnterInEditorConfigFileHandler : EnterHandlerDelegateAdapter() {
   override fun preprocessEnter(
     file: PsiFile,
     editor: Editor,
@@ -50,9 +50,7 @@ class EnterInEditorConfigFileHandler : EnterHandlerDelegateAdapter() {
     return Result.Stop
   }
 
-  private companion object {
-    private val WHITE_SPACE = "\\s".toRegex()
-    private fun isWhitespace(char: Char?) = char != null && WHITE_SPACE.matches(char.toString())
-    private fun isCommentStart(char: Char?) = char != null && "#;".contains(char)
-  }
+  private val WHITE_SPACE = "\\s".toRegex()
+  private fun isWhitespace(char: Char?) = char != null && WHITE_SPACE.matches(char.toString())
+  private fun isCommentStart(char: Char?) = char != null && "#;".contains(char)
 }

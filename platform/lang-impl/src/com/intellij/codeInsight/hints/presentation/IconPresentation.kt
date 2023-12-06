@@ -12,7 +12,7 @@ import javax.swing.Icon
  * Draws image. If you need to position image inside inlay, use [InsetPresentation]
  */
 class IconPresentation(icon: Icon, private val component: Component) : BasePresentation() {
-  var icon = icon
+  var icon: Icon = icon
   set(value) {
     field = value
     fireContentChanged()

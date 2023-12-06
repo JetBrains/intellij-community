@@ -16,6 +16,7 @@ class OtherKlass {
 }
 
 fun main(args: Array<String>) {
+    println(args)
     Klass()
     OtherKlass()
 }

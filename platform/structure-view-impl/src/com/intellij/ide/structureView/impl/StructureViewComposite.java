@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.structureView.impl;
 
@@ -10,6 +10,7 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ public class StructureViewComposite implements StructureView {
     }
   }
 
+  @RequiresBackgroundThread
   public boolean isOutdated() {
     return false;
   }
@@ -118,9 +120,6 @@ public class StructureViewComposite implements StructureView {
       @Override public TreeElement @NotNull [] getChildren() { return EMPTY_ARRAY;} 
       @Nullable @Override public String getPresentableText() { return null;} 
       @Nullable @Override public Icon getIcon(boolean unused) { return null;}
-      @Override public void navigate(boolean requestFocus) {} 
-      @Override public boolean canNavigate() { return false;} 
-      @Override public boolean canNavigateToSource() { return false;}
     }
     return new M();
   }

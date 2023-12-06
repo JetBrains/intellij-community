@@ -45,6 +45,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.*;
@@ -75,7 +76,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 
-public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider, Disposable {
+public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitList, DataProvider, CopyProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
   private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
@@ -131,7 +132,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), this);
 
-    initColumnModel();
+    setColumnModel(new MyTableColumnModel(myProperties));
     onColumnOrderSettingChanged();
     setRootColumnSize();
     subscribeOnNewUiSwitching();
@@ -162,6 +163,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     ScrollingUtil.installActions(this, false);
   }
 
+  @Override
+  public boolean getAutoCreateColumnsFromModel() {
+    // otherwise sizes are recalculated after each TableColumn re-initialization
+    return false;
+  }
+
   public @NotNull @NonNls String getId() {
     return myId;
   }
@@ -170,14 +177,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public void dispose() {
   }
 
+  @Override
   public @NotNull VcsLogCommitSelection getSelection() {
     return getModel().createSelection(getSelectedRows());
-  }
-
-  private void initColumnModel() {
-    TableColumnModel columnModel = new MyTableColumnModel(myProperties);
-    setColumnModel(columnModel);
-    setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
   }
 
   protected void updateEmptyText() {
@@ -239,8 +241,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with default order.");
-    updateOrder(myProperties, getVisibleColumns());
-    return null;
+    List<VcsLogColumn<?>> visibleColumns = getVisibleColumns();
+    if (!visibleColumns.isEmpty()) {
+      updateOrder(myProperties, visibleColumns);
+      return null;
+    }
+    List<VcsLogColumn<?>> validColumnOrder = makeValidColumnOrder(columnOrder);
+    updateOrder(myProperties, validColumnOrder);
+    return validColumnOrder;
   }
 
   private @NotNull List<Integer> getVisibleColumnIndices() {
@@ -254,7 +262,16 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public @NotNull List<VcsLogColumn<?>> getVisibleColumns() {
     return ContainerUtil.map(getVisibleColumnIndices(),
-                                  columnModelIndex -> VcsLogColumnManager.getInstance().getColumn(columnModelIndex));
+                             columnModelIndex -> VcsLogColumnManager.getInstance().getColumn(columnModelIndex));
+  }
+
+  public boolean isColumnVisible(@NotNull VcsLogColumn<?> column) {
+    for (int i = 0; i < getVisibleColumnCount(); i++) {
+      if (VcsLogColumnManager.getInstance().getColumn(getColumnModel().getColumn(i).getModelIndex()) == column) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private int getVisibleColumnCount() {
@@ -508,7 +525,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       .ifEq(VcsDataKeys.VCS).thenGet(() -> {
         int[] selectedRows = getSelectedRows();
         if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-        Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRootAtRow(row));
+        Set<VirtualFile> roots = ContainerUtil.map2SetNotNull(Ints.asList(selectedRows), row -> getModel().getRootAtRow(row));
         if (roots.size() == 1) {
           return myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getSupportedVcs();
         }
@@ -534,6 +551,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
           if (i != selectedRows.length - 1) sb.append("\n");
         }
         return sb.toString();
+      })
+      .ifEq(VcsLogInternalDataKeys.VCS_LOG_GRAPH_TABLE).thenGet(() -> {
+        return this;
       })
       .orNull();
   }
@@ -626,7 +646,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                                        baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
     int commitId = rowInfo.getCommit();
-    VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
+    VcsShortCommitDetails details = myLogData.getCommitMetadataCache().getCachedData(commitId);
     if (details != null) {
       int columnModelIndex = convertColumnIndexToModel(column);
       List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> {
@@ -685,6 +705,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Override
   public @NotNull GraphTableModel getModel() {
     return (GraphTableModel)super.getModel();
+  }
+
+  @Override
+  public @NotNull GraphTableModel getListModel() {
+    return getModel();
   }
 
   @NotNull
@@ -890,7 +915,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       getExpandableItemsHandler().setEnabled(true);
     }
 
-    private class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
+    private static class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
       @Override
       public @Nullable Object getTagAt(@NotNull MouseEvent e) {
         return ObjectUtils.tryCast(super.getTagAt(e), SimpleColoredComponent.BrowserLauncherTag.class);

@@ -41,7 +41,7 @@ internal class CreateMethodAction(
     return super.isAvailable(project, file, target) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
   }
 
-  override fun getRenderData() = JvmActionGroup.RenderData { request.methodName }
+  override fun getRenderData(): JvmActionGroup.RenderData = JvmActionGroup.RenderData { request.methodName }
 
   override fun getFamilyName(): String = message("create.method.from.usage.family")
 

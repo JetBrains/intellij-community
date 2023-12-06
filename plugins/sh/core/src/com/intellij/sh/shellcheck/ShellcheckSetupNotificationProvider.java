@@ -43,7 +43,7 @@ public class ShellcheckSetupNotificationProvider implements EditorNotificationPr
       Runnable onFailure = () -> Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"),
                                                                            message("sh.shellcheck.cannot.download"),
                                                                            NotificationType.ERROR));
-      panel.createActionLabel(message("sh.install"), () -> ShShellcheckUtil.download(null, onSuccess, onFailure));
+      panel.createActionLabel(message("sh.install"), () -> ShShellcheckUtil.download(project, onSuccess, onFailure));
       //noinspection DialogTitleCapitalization
       panel.createActionLabel(message("sh.no.thanks"), () -> {
         ShSettings.setShellcheckPath(ShSettings.I_DO_MIND_SUPPLIER.get());

@@ -25,7 +25,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
-import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.jetbrains.idea.maven.project.MavenEmbeddersManager.FOR_POST_PROCESSING;
 
 public class MavenArchetypeManager {
@@ -183,7 +182,7 @@ public class MavenArchetypeManager {
     if (localIndex == null) return;
     Path artifactPath = MavenUtil.getArtifactPath(Path.of(localIndex.getRepositoryPathOrUrl()), mavenId, "jar", null);
     if (artifactPath != null && artifactPath.toFile().exists()) {
-      MavenIndicesManager.getInstance(myProject).addArtifactIndexAsync(mavenId, artifactPath.toFile());
+      MavenIndicesManager.getInstance(myProject).scheduleArtifactIndexing(mavenId, artifactPath.toFile());
     }
   }
 
@@ -191,12 +190,12 @@ public class MavenArchetypeManager {
   private <R> R executeWithMavenEmbedderWrapper(Function<MavenEmbedderWrapper, R> function) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenEmbeddersManager manager = projectsManager.getEmbeddersManager();
-    String baseDir = EMPTY;
+    String baseDir = "";
     List<MavenProject> projects = projectsManager.getRootProjects();
     if (!projects.isEmpty()) {
       baseDir = MavenUtil.getBaseDir(projects.get(0).getDirectoryFile()).toString();
     }
-    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, baseDir, baseDir);
+    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, baseDir);
     try {
       return function.apply(mavenEmbedderWrapper);
     }
@@ -208,7 +207,7 @@ public class MavenArchetypeManager {
   @Nullable
   private <R> R executeWithMavenEmbedderWrapperNullable(Function<MavenEmbedderWrapper, R> function) {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
-    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, EMPTY, EMPTY);
+    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, "");
     try {
       return function.apply(mavenEmbedderWrapper);
     }
@@ -271,8 +270,8 @@ public class MavenArchetypeManager {
   }
 
   @NotNull
-  private Path getUserArchetypesFile() {
-    return MavenIndicesManager.getInstance(myProject).getIndicesDir().resolve("UserArchetypes.xml");
+  private static Path getUserArchetypesFile() {
+    return MavenSystemIndicesManager.getInstance().getIndicesDir().resolve("UserArchetypes.xml");
   }
 
   private static void saveUserArchetypes(List<MavenArchetype> userArchetypes, @NotNull Path userArchetypesPath) {

@@ -1,159 +1,52 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DeprecatedCallableAddReplaceWith")
+
 package com.intellij.util.flow
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import com.intellij.platform.util.coroutines.flow.collectLatestUndispatched
+import com.intellij.platform.util.coroutines.flow.debounceBatch
+import com.intellij.platform.util.coroutines.flow.mapStateIn
+import com.intellij.platform.util.coroutines.flow.throttle
+import com.intellij.platform.util.coroutines.flow.zipWithNext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 
-/**
- * Returns a cold flow, which emits values of [this] flow not more often than the given [timeout][timeMs].
- *
- * Example:
- * ```kotlin
- * flow {
- *   delay(40)
- *   emit(1) // first value is always emitted
- *   delay(40)
- *   emit(2) // skipped because the emission happened within the timeout from the first emission
- *   delay(40)
- *   emit(3) // emitted as the latest value after the timeout from the first emission
- *   delay(40)
- *   emit(4) // last value is emitted after the given timeout
- * }.throttle(100)
- * ```
- * produces the following emissions
- * ```text
- * 1, 3, 4
- * ```
- */
+@Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
 fun <X> Flow<X>.throttle(timeMs: Long): Flow<X> {
-  if (timeMs <= 0) {
-    return this
-  }
-  return channelFlow {
-    val latch = Channel<Unit>()
-    val latchJob = launch(start = CoroutineStart.UNDISPATCHED) {
-      while (isActive) {
-        latch.send(Unit)
-        delay(timeMs)
-      }
-    }
-    try {
-      collectLatest {
-        latch.receive()
-        @Suppress("EXPERIMENTAL_API_USAGE")
-        send(it)
-      }
-    }
-    finally {
-      latchJob.cancel()
-      latch.close()
-    }
-  }
+  return throttle(timeMs)
 }
 
-/**
- * If the flow has an element available, then the element is passed into [action]
- * without dispatching as per [CoroutineStart.UNDISPATCHED].
- * When the next element arrives, the [action] is cancelled as in [collectLatest].
- * After that the function delegates to [collectLatest] as is.
- */
+@Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
 suspend fun <X> SharedFlow<X>.collectLatestUndispatched(action: suspend (value: X) -> Unit) {
-  coroutineScope {
-    val firstJob = launch(start = CoroutineStart.UNDISPATCHED) {
-      action(first())
-    }
-    drop(1).first() // wait for next element to arrive
-    firstJob.cancel()
-    collectLatest(action)
-  }
+  collectLatestUndispatched(action)
 }
 
-private object UNINITIALIZED
-
-/**
- * Returns a cold flow containing the results of applying the given transform function
- * to each pair of two adjacent elements in this flow.
- *
- * Example:
- * ```kotlin
- * flow {
- *   emit(1)
- *   emit(2)
- *   emit(3)
- *   emit(4)
- * }.zipWithNext { a, b ->
- *   println("($a, $b)")
- * }.collect()
- * ```
- * produces the following output
- * ```
- * (1,2)
- * (2,3)
- * (3,4)
- * ```
- *
- * The returned flow is empty if [this] flow is empty or emits only a single element.
- *
- * See also: [Sequence.zipWithNext]
- */
+@Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
 fun <T, R> Flow<T>.zipWithNext(transform: suspend (a: T, b: T) -> R): Flow<R> {
-  return flow {
-    var current: Any? = UNINITIALIZED
-    collect { value ->
-      if (current !== UNINITIALIZED) {
-        @Suppress("UNCHECKED_CAST")
-        emit(transform(current as T, value))
-      }
-      current = value
-    }
-  }
+  return zipWithNext(transform)
 }
 
-/**
- * See: [zipWithNext]
- */
-fun <T> Flow<T>.zipWithNext(): Flow<Pair<T, T>> = zipWithNext { a, b -> a to b }
+@Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
+fun <T> Flow<T>.zipWithNext(): Flow<Pair<T, T>> {
+  return zipWithNext()
+}
 
-/**
- * Returns a cold flow, which emits values of [this] flow in chunks no often than the given [duration][duration].
- *
- * Example:
- * ```kotlin
- * flow {
- *   delay(40)
- *   emit(1)
- *   delay(40)
- *   emit(2)
- *   delay(120)
- *   emit(3)
- *   delay(120)
- *   emit(4)
- * }.chunked(100.milliseconds)
- * ```
- * produces the following emissions
- * ```text
- * [1, 2], [3], [4]
- * ```
- */
-fun <T> Flow<T>.debounceBatch(duration: Duration) = channelFlow {
-  val mutex = Mutex()
-  val buffer = mutableListOf<T>()
-  var job: Job? = null
-  collect {
-    mutex.withLock {
-      buffer.add(it)
-      job?.cancel()
-      job = launch {
-        delay(duration)
-        mutex.withLock {
-          send(buffer.toList())
-          buffer.clear()
-        }
-      }
-    }
-  }
+@Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
+fun <T> Flow<T>.debounceBatch(duration: Duration): Flow<List<T>> {
+  return debounceBatch(duration)
+}
+
+@ApiStatus.Experimental
+@Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
+fun <T, M> StateFlow<T>.mapStateIn(
+  coroutineScope: CoroutineScope,
+  started: SharingStarted = SharingStarted.Eagerly,
+  transform: (value: T) -> M
+): StateFlow<M> {
+  return mapStateIn(coroutineScope, started, transform)
 }

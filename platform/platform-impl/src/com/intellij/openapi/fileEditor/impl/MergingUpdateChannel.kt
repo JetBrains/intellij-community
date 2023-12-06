@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration
 
+// https://github.com/Kotlin/kotlinx.coroutines/issues/1302
 internal class MergingUpdateChannel<T>(private val delay: Duration, private val update: suspend (Collection<T>) -> Unit) {
   private val updateChannel = Channel<T>(Channel.UNLIMITED)
 
@@ -21,12 +22,12 @@ internal class MergingUpdateChannel<T>(private val delay: Duration, private val 
       delay(delay)
 
       toUpdate.clear()
-      // collect unique collection
+      // collect a unique collection
       // do-while - avoid calling isEmpty each 50ms, suspend to get the first item
       do {
-        val file = updateChannel.receive()
-        if (receiveFilter(file)) {
-          toUpdate.add(file)
+        val item = updateChannel.receive()
+        if (receiveFilter(item)) {
+          toUpdate.add(item)
         }
       }
       while (!updateChannel.isEmpty)

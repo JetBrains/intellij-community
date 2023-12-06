@@ -19,19 +19,19 @@ internal interface SelectionPolicy {
   fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int>
 }
 
-internal fun fromIndex(index: Int) = if (index <= 0) SelectMostRelevant else SelectIndex(index)
+internal fun fromIndex(index: Int): SelectionPolicy = if (index <= 0) SelectMostRelevant else SelectIndex(index)
 
 internal object SelectMostRelevant : SelectionPolicy {
-  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>) =
+  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int> =
     listOf(popup.calcSelectedIndex(model.items.toTypedArray(), popup.trimmedText))
 }
 
 internal data class SelectIndex(private val selectedIndex: Int) : SelectionPolicy {
-  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>) = listOf(selectedIndex)
+  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int> = listOf(selectedIndex)
 }
 
 internal data class SelectObject(private val selected: Any) : SelectionPolicy {
-  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>) = listOf(model.items.indexOf(selected))
+  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int> = listOf(model.items.indexOf(selected))
 }
 
 internal object PreserveSelection : SelectionPolicy {
@@ -44,5 +44,5 @@ internal object PreserveSelection : SelectionPolicy {
 }
 
 internal data class SelectionSnapshot(private val pattern: String, internal val chosenElements: Set<Any>) {
-  fun hasSamePattern(popup: ChooseByNameBase) = popup.transformPattern(pattern) == popup.transformPattern(popup.trimmedText)
+  fun hasSamePattern(popup: ChooseByNameBase): Boolean = popup.transformPattern(pattern) == popup.transformPattern(popup.trimmedText)
 }

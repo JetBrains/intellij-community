@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.vcs.ex.*;
+import com.intellij.openapi.vcs.ex.ChangedLines;
+import com.intellij.openapi.vcs.ex.ChangesBlock;
+import com.intellij.openapi.vcs.ex.Range;
+import com.intellij.openapi.vcs.ex.VisibleRangeMerger;
 import com.intellij.openapi.vcs.ex.VisibleRangeMerger.FlagsProvider;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.LinePainter2D;
@@ -81,15 +81,21 @@ public final class LineStatusMarkerDrawUtil {
 
   public static void paintDefault(@NotNull Editor editor,
                                   @NotNull Graphics g,
-                                  @NotNull LineStatusTrackerI<?> tracker,
+                                  @NotNull List<? extends Range> ranges,
                                   @NotNull FlagsProvider<DefaultLineFlags> flagsProvider,
                                   int framingBorder) {
-    List<? extends Range> ranges = tracker.getRanges();
-    if (ranges == null) return;
+    paintDefault(editor, g, ranges, flagsProvider, LineStatusMarkerColorScheme.DEFAULT, framingBorder);
+  }
 
+  public static void paintDefault(@NotNull Editor editor,
+                                  @NotNull Graphics g,
+                                  @NotNull List<? extends Range> ranges,
+                                  @NotNull FlagsProvider<DefaultLineFlags> flagsProvider,
+                                  @NotNull LineStatusMarkerColorScheme colorScheme,
+                                  int framingBorder) {
     List<ChangesBlock<DefaultLineFlags>> blocks = VisibleRangeMerger.merge(editor, ranges, flagsProvider, g.getClipBounds());
     for (ChangesBlock<DefaultLineFlags> block : blocks) {
-      paintChangedLines((Graphics2D)g, editor, block.changes, framingBorder);
+      paintChangedLines((Graphics2D)g, editor, block.changes, colorScheme, framingBorder);
     }
   }
 
@@ -97,7 +103,15 @@ public final class LineStatusMarkerDrawUtil {
                                        @NotNull Editor editor,
                                        @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
                                        int framingBorder) {
-    Color borderColor = getGutterBorderColor(editor);
+    paintChangedLines(g, editor, block, LineStatusMarkerColorScheme.DEFAULT, framingBorder);
+  }
+
+  public static void paintChangedLines(@NotNull Graphics2D g,
+                                       @NotNull Editor editor,
+                                       @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
+                                       @NotNull LineStatusMarkerColorScheme colorScheme,
+                                       int framingBorder) {
+    Color borderColor = LineStatusMarkerColorScheme.DEFAULT.getBorderColor(editor);
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     Color gutterBackgroundColor = gutter.getBackground();
 
@@ -122,9 +136,9 @@ public final class LineStatusMarkerDrawUtil {
           !change.flags.isIgnored) {
         int start = change.y1;
         int end = change.y2;
-        Color gutterColor = getGutterColor(change.type, editor);
+        Color gutterColor = colorScheme.getColor(editor, change.type);
         int line = gutter.getHoveredFreeMarkersLine();
-        if (line != -1 && editor.xyToLogicalPosition(new Point(x, start)).line <= line && line < editor.xyToLogicalPosition(new Point(x, end)).line) {
+        if (isRangeHovered(editor, line, x, start, end)) {
           paintRect(g, gutterColor, null, x - 1, start, endX + 2, end);
         } else {
           paintRect(g, gutterColor, null, x, start, endX, end);
@@ -138,7 +152,7 @@ public final class LineStatusMarkerDrawUtil {
             change.flags.isIgnored) {
           int start = change.y1;
           int end = change.y2;
-          Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
+          Color ignoredBorderColor = colorScheme.getIgnoredBorderColor(editor, change.type);
           paintRect(g, null, ignoredBorderColor, x, start, endX, end);
         }
       }
@@ -151,15 +165,21 @@ public final class LineStatusMarkerDrawUtil {
       if (change.y1 == change.y2) {
         int start = change.y1;
         if (!change.flags.isIgnored) {
-          Color gutterColor = getGutterColor(change.type, editor);
+          Color gutterColor = colorScheme.getColor(editor, change.type);
           paintTriangle(g, editor, gutterColor, borderColor, x, endX, start);
         }
         else {
-          Color ignoredBorderColor = borderColor != null ? borderColor : getIgnoredGutterBorderColor(change.type, editor);
+          Color ignoredBorderColor = borderColor != null ? borderColor : colorScheme.getIgnoredBorderColor(editor, change.type);
           paintTriangle(g, editor, null, ignoredBorderColor, x, endX, start);
         }
       }
     }
+  }
+
+  public static boolean isRangeHovered(@NotNull Editor editor, int line, int x, int start, int end) {
+    return line != -1 &&
+           editor.xyToLogicalPosition(new Point(x, start)).line <= line &&
+           line < editor.xyToLogicalPosition(new Point(x, end)).line;
   }
 
   public static void paintRange(@NotNull Graphics g,
@@ -175,7 +195,7 @@ public final class LineStatusMarkerDrawUtil {
     }
   }
 
-  public static void paintSimpleRange(Graphics g, Editor editor, int line1, int line2, @Nullable Color color) {
+  public static void paintSimpleRange(@NotNull Graphics g, @NotNull Editor editor, int line1, int line2, @Nullable Color color) {
     IntPair horizontalArea = getGutterArea(editor);
     int x = horizontalArea.first;
     int endX = horizontalArea.second;
@@ -183,7 +203,7 @@ public final class LineStatusMarkerDrawUtil {
     int y = lineToY(editor, line1);
     int endY = lineToY(editor, line2);
 
-    Color borderColor = getGutterBorderColor(editor);
+    Color borderColor = LineStatusMarkerColorScheme.DEFAULT.getBorderColor(editor);
     if (endY != y) {
       paintRect((Graphics2D)g, color, borderColor, x, y, endX, endY);
     }
@@ -195,10 +215,14 @@ public final class LineStatusMarkerDrawUtil {
   @NotNull
   public static IntPair getGutterArea(@NotNull Editor editor) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
+    int x = 1; // leave 1px for brace highlighters
     if (ExperimentalUI.isNewUI()) {
+      x += gutter.getExtraLineMarkerFreePaintersAreaOffset();
       x += 2; //IDEA-286352
       return new IntPair(x, x + (int)(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4) * getEditorScale(editor))));
+    }
+    else {
+      x += gutter.getLineMarkerFreePaintersAreaOffset();
     }
     int endX = gutter.getWhitespaceSeparatorOffset();
     return new IntPair(x, endX);
@@ -277,61 +301,8 @@ public final class LineStatusMarkerDrawUtil {
   }
 
   @Nullable
-  public static Color getGutterColor(byte type, @Nullable Editor editor) {
-    final EditorColorsScheme scheme = getColorScheme(editor);
-    return switch (type) {
-      case Range.INSERTED -> scheme.getColor(EditorColors.ADDED_LINES_COLOR);
-      case Range.DELETED -> scheme.getColor(EditorColors.DELETED_LINES_COLOR);
-      case Range.MODIFIED -> scheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
-      case Range.EQUAL -> scheme.getColor(EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
-      default -> {
-        assert false;
-        yield null;
-      }
-    };
-  }
-
-  @Nullable
-  public static Color getErrorStripeColor(@NotNull Range range) {
-    return getErrorStripeColor(range.getType());
-  }
-
-  @Nullable
   public static Color getErrorStripeColor(byte type) {
-    final EditorColorsScheme scheme = getColorScheme(null);
-    return switch (type) {
-      case Range.INSERTED -> scheme.getAttributes(DiffColors.DIFF_INSERTED).getErrorStripeColor();
-      case Range.DELETED -> scheme.getAttributes(DiffColors.DIFF_DELETED).getErrorStripeColor();
-      case Range.MODIFIED -> scheme.getAttributes(DiffColors.DIFF_MODIFIED).getErrorStripeColor();
-      default -> {
-        assert false;
-        yield null;
-      }
-    };
-  }
-
-  @Nullable
-  public static Color getIgnoredGutterBorderColor(byte type, @Nullable Editor editor) {
-    final EditorColorsScheme scheme = getColorScheme(editor);
-    return switch (type) {
-      case Range.INSERTED -> scheme.getColor(EditorColors.IGNORED_ADDED_LINES_BORDER_COLOR);
-      case Range.DELETED -> scheme.getColor(EditorColors.IGNORED_DELETED_LINES_BORDER_COLOR);
-      case Range.MODIFIED, Range.EQUAL -> scheme.getColor(EditorColors.IGNORED_MODIFIED_LINES_BORDER_COLOR);
-      default -> {
-        assert false;
-        yield null;
-      }
-    };
-  }
-
-  @Nullable
-  public static Color getGutterBorderColor(@Nullable Editor editor) {
-    return getColorScheme(editor).getColor(EditorColors.BORDER_LINES_COLOR);
-  }
-
-  @NotNull
-  private static EditorColorsScheme getColorScheme(@Nullable Editor editor) {
-    return editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+    return LineStatusMarkerColorScheme.DEFAULT.getErrorStripeColor(type);
   }
 
   public static class DiffStripeTextAttributes extends TextAttributes {

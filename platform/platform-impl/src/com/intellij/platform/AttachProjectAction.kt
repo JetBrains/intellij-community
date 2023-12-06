@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isProjectDirectoryExistsUsingIo
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -97,7 +97,7 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
                                  IdeBundle.message("dialog.title.attach.project.error"))
       }
       else {
-        runBlockingModal(project, ActionsBundle.message("action.AttachProject.text")) {
+        runWithModalProgressBlocking(project, ActionsBundle.message("action.AttachProject.text")) {
           attachToProjectAsync(projectToClose = project, projectDir = Path.of(FileUtil.toSystemDependentName(baseDir.path)))
         }
       }

@@ -17,10 +17,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -50,6 +52,11 @@ public class TabbedShowHistoryAction extends DumbAwareAction {
       .toList();
 
     if (selectedFiles.isEmpty()) return false;
+
+    List<FilePath> symlinkedPaths = getContextSymlinkedPaths(project, context);
+    if (symlinkedPaths != null && canShowNewFileHistory(project, symlinkedPaths)) {
+      return true;
+    }
 
     if (canShowNewFileHistory(project, selectedFiles)) {
       return ContainerUtil.all(selectedFiles, path -> AbstractVcs.fileInVcsByFileStatus(project, path));
@@ -89,14 +96,30 @@ public class TabbedShowHistoryAction extends DumbAwareAction {
     return ObjectUtils.chooseNotNull(selectedPath.getVirtualFile(), selectedPath.getVirtualFileParent());
   }
 
+  @Nullable
+  private static List<FilePath> getContextSymlinkedPaths(@NotNull Project project, @NotNull DataContext context) {
+    VirtualFile file = VcsContextUtil.selectedFile(context);
+    VirtualFile vcsFile = VcsUtil.resolveSymlink(project, file);
+    return vcsFile != null ? Collections.singletonList(VcsUtil.getFilePath(vcsFile)) : null;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = Objects.requireNonNull(e.getProject());
+
+    List<FilePath> symlinkedPaths = getContextSymlinkedPaths(project, e.getDataContext());
+    if (symlinkedPaths != null && canShowNewFileHistory(project, symlinkedPaths)) {
+      showNewFileHistory(project, symlinkedPaths);
+      return;
+    }
+
     List<FilePath> selectedFiles = VcsContextUtil.selectedFilePaths(e.getDataContext());
     if (canShowNewFileHistory(project, selectedFiles)) {
       showNewFileHistory(project, selectedFiles);
+      return;
     }
-    else if (selectedFiles.size() == 1) {
+
+    if (selectedFiles.size() == 1) {
       FilePath path = Objects.requireNonNull(ContainerUtil.getFirstItem(selectedFiles));
       AbstractVcs vcs = Objects.requireNonNull(ChangesUtil.getVcsForFile(Objects.requireNonNull(getExistingFileOrParent(path)), project));
       showOldFileHistory(project, vcs, path);

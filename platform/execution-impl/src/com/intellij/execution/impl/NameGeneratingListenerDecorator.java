@@ -8,7 +8,7 @@ import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
 
 
-public class NameGeneratingListenerDecorator implements RefactoringElementListener, UndoRefactoringElementListener {
+public final class NameGeneratingListenerDecorator implements RefactoringElementListener, UndoRefactoringElementListener {
   private final LocatableConfiguration myConfiguration;
   private final RefactoringElementListener myListener;
 

@@ -36,7 +36,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.swing.JPanel
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class DocumentationToolWindowManager(
   private val project: Project,
   private val cs: CoroutineScope,
@@ -141,17 +141,17 @@ internal class DocumentationToolWindowManager(
 
   /**
    * Creates a new reusable tab if no reusable tab exists,
-   * orders it to display [request],
+   * orders it to display [requests],
    * and makes it visible.
    */
-  fun showInToolWindow(request: DocumentationRequest) {
+  fun showInToolWindow(requests: List<DocumentationRequest>) {
     val reusableContent = getReusableContent()
     if (reusableContent == null) {
-      val browser = DocumentationBrowser.createBrowser(project, initialRequest = request)
+      val browser = DocumentationBrowser.createBrowser(project, requests)
       showInNewTab(DocumentationUI(project, browser))
     }
     else {
-      reusableContent.toolWindowUI.browser.resetBrowser(request)
+      reusableContent.toolWindowUI.browser.resetBrowser(requests.first())
       makeVisible(reusableContent)
     }
   }

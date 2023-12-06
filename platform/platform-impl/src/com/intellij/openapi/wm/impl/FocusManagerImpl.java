@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
@@ -43,8 +44,6 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
-  private final IdeEventQueue myQueue;
-
   private final Map<Window, Component> myLastFocused = ContainerUtil.createWeakValueMap();
   private final Map<Window, Component> myLastFocusedAtDeactivation = ContainerUtil.createWeakValueMap();
 
@@ -53,9 +52,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   private IdeFrame myLastFocusedFrame;
 
   public FocusManagerImpl() {
-    myQueue = IdeEventQueue.getInstance();
-
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
 
     StartupUiUtil.addAwtListener(e -> {
       if (e instanceof FocusEvent fe) {
@@ -165,7 +162,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @Override
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality) {
     AtomicBoolean immediate = new AtomicBoolean(true);
-    myQueue.executeWhenAllFocusEventsLeftTheQueue(() -> {
+    IdeEventQueue.getInstance().executeWhenAllFocusEventsLeftTheQueue((ContextAwareRunnable) () -> {
       if (immediate.get()) {
         boolean expired = runnable instanceof ExpirableRunnable && ((ExpirableRunnable)runnable).isExpired();
         if (!expired) {
@@ -174,7 +171,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
       }
       else {
         // "Write-safe context" when postponed due to `TransactionGuardImpl#wrapLaterInvocation`
-        ApplicationManager.getApplication().invokeLater(() -> doWhenFocusSettlesDown(runnable, modality), modality);
+        ApplicationManager.getApplication().invokeLater((ContextAwareRunnable) () -> doWhenFocusSettlesDown(runnable, modality), modality);
       }
     });
     immediate.set(false);

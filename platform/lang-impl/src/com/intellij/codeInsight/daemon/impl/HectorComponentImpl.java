@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -46,7 +46,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 
-class HectorComponentImpl extends JPanel implements HectorComponent {
+final class HectorComponentImpl extends JPanel implements HectorComponent {
   private static final Logger LOG = Logger.getInstance(HectorComponent.class);
 
   private WeakReference<JBPopup> myHectorRef;
@@ -220,8 +220,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
     }
   }
 
-  @Nullable
-  private JBPopup getOldHector(){
+  private @Nullable JBPopup getOldHector(){
     if (myHectorRef == null) return null;
     JBPopup hector = myHectorRef.get();
     if (hector == null || !hector.isVisible()){

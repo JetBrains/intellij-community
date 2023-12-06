@@ -76,7 +76,7 @@ public final class ToolingSerializer {
   }
 
   @Nullable
-  public <T> T read(@NotNull byte[] object, @NotNull Class<T> modelClazz) throws IOException, SerializationServiceNotFoundException {
+  public <T> T read(byte @NotNull [] object, @NotNull Class<T> modelClazz) throws IOException, SerializationServiceNotFoundException {
     assert myModelBuildersClassLoader == null;
     return getService(modelClazz, true).read(object, modelClazz);
   }

@@ -31,6 +31,6 @@ class StoreNewLayoutAction : DumbAwareAction() {
     e.presentation.isEnabled = e.project != null
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
 }

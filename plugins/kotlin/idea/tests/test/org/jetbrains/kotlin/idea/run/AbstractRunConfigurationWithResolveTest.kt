@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiManager
+import com.intellij.testFramework.DumbModeTestUtils
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -14,13 +16,16 @@ import org.jetbrains.kotlin.idea.base.projectStructure.withLanguageVersionSettin
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.checkers.languageVersionSettingsFromText
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.withCustomLanguageAndApiVersion
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import java.util.concurrent.atomic.AtomicReference
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 
 abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfigurationTest() {
     fun testMainInTest() {
@@ -124,7 +129,7 @@ abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfiguratio
                 findMainClassFile(module, mainClassName, true)
             } else {
                 val findMainClassFileResult = AtomicReference<KtFile>()
-                DumbServiceImpl.getInstance(project).runInDumbMode {
+                DumbModeTestUtils.runInDumbModeSynchronously(project) {
                     findMainClassFileResult.set(findMainClassFile(module, mainClassName, true))
                 }
                 findMainClassFileResult.get()

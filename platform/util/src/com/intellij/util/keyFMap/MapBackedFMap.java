@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
@@ -44,9 +44,8 @@ final class MapBackedFMap extends Int2ObjectOpenHashMap<Object> implements KeyFM
     assert size() > ArrayBackedFMap.ARRAY_THRESHOLD;
   }
 
-  @NotNull
   @Override
-  public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
+  public @NotNull <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
     int keyCode = key.hashCode();
     assert keyCode >= 0 : key;
     //noinspection unchecked
@@ -54,9 +53,8 @@ final class MapBackedFMap extends Int2ObjectOpenHashMap<Object> implements KeyFM
     return value == oldValue ? this : new MapBackedFMap(this, keyCode, value);
   }
 
-  @NotNull
   @Override
-  public KeyFMap minus(@NotNull Key<?> key) {
+  public @NotNull KeyFMap minus(@NotNull Key<?> key) {
     int oldSize = size();
     int keyCode = key.hashCode();
     if (!containsKey(keyCode)) {

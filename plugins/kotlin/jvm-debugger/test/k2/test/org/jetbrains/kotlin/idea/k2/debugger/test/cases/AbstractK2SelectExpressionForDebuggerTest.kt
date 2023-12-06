@@ -2,11 +2,17 @@
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases
 
 import org.jetbrains.kotlin.idea.debugger.test.AbstractSelectExpressionForDebuggerTestWithAnalysisApi
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.nio.file.Paths
 
 abstract class AbstractK2SelectExpressionForDebuggerTest : AbstractSelectExpressionForDebuggerTestWithAnalysisApi() {
     override fun isFirPlugin(): Boolean = true
+
+    override fun getProjectDescriptor(): KotlinLightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
 
     override fun doTest(unused: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(

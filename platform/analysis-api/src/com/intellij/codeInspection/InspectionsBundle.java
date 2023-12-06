@@ -9,19 +9,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class InspectionsBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "messages.InspectionsBundle";
-  private static final InspectionsBundle INSTANCE = new InspectionsBundle();
+public final class InspectionsBundle {
+  public static final @NonNls String BUNDLE = "messages.InspectionsBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(InspectionsBundle.class, BUNDLE);
 
-  private InspectionsBundle() { super(BUNDLE); }
+  private InspectionsBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.containsKey(key) ? INSTANCE.getMessage(key, params) : InspectionsDeprecatedMessagesBundle.message(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.containsKey(key) ? INSTANCE.getLazyMessage(key, params) : InspectionsDeprecatedMessagesBundle.messagePointer(key, params);
   }
 }

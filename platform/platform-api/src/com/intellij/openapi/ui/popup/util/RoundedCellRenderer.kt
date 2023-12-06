@@ -10,8 +10,8 @@ import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-class RoundedCellRenderer<T>(private val renderer: ListCellRenderer<T>) : ListCellRenderer<T> {
-
+class RoundedCellRenderer<T> @JvmOverloads constructor(private val renderer: ListCellRenderer<T>,
+                                                       private val fixedHeight: Boolean = true) : ListCellRenderer<T> {
   override fun getListCellRendererComponent(list: JList<out T>, value: T, index: Int, isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
     if (!ExperimentalUI.isNewUI()) {
@@ -22,7 +22,11 @@ class RoundedCellRenderer<T>(private val renderer: ListCellRenderer<T>) : ListCe
     val rowBackground = getBackground(unselectedComponent, list)
     val component = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     val result = wrap(component, rowBackground)
-    PopupUtil.configListRendererFixedHeight(result)
+    if (fixedHeight)  {
+      PopupUtil.configListRendererFixedHeight(result)
+    } else {
+      PopupUtil.configListRendererFlexibleHeight(result)
+    }
     if (isSelected) {
       result.selectionColor = getBackground(component, list)
     }

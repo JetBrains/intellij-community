@@ -2,10 +2,17 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 
 abstract class AbstractContinuationStackTraceTest : KotlinDescriptorTestCaseWithStackFrames() {
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
         printStackTrace()
     }
+}
+
+abstract class AbstractK1IdeK2CodeContinuationStackTraceTest : AbstractContinuationStackTraceTest() {
+    override val compileWithK2 = true
+
+    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
 }

@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui
 
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
+import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
@@ -14,8 +16,8 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.isInKotlinAwareSourceRoot
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinAwareMoveFilesOrDirectoriesProcessor
 import org.jetbrains.kotlin.idea.refactoring.move.getOrCreateDirectory
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinAwareMoveFilesOrDirectoriesProcessor
 import org.jetbrains.kotlin.idea.refactoring.move.updatePackageDirective
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector
 import org.jetbrains.kotlin.psi.KtElement
@@ -61,7 +63,7 @@ internal class KotlinAwareMoveFilesOrDirectoriesModel(
 
     private fun checkedGetTargetDirectory(): PsiDirectory {
         try {
-            return getOrCreateDirectory(targetDirectoryName, project)
+            return getOrCreateDirectory(project, targetDirectoryName)
         } catch (e: IncorrectOperationException) {
             throw ConfigurationException(KotlinBundle.message("text.cannot.create.target.directory.0", targetDirectoryName))
         }
@@ -87,6 +89,7 @@ internal class KotlinAwareMoveFilesOrDirectoriesModel(
         }
 
         if (DumbService.isDumb(project)) {
+            DumbModeBlockedFunctionalityCollector.logFunctionalityBlocked(project, DumbModeBlockedFunctionality.Kotlin)
             throw ConfigurationException(KotlinBundle.message("text.move.refactoring.not.available.during.indexing"))
         }
     }

@@ -26,11 +26,14 @@ import com.intellij.refactoring.classMembers.MemberInfoTooltipManager;
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 import org.jetbrains.java.generate.template.TemplateResource;
@@ -154,8 +157,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       final ArrayList<MemberInfo> list = new ArrayList<>();
 
       for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
-        PsiField field = (PsiField)equalsMemberInfo.getMember();
-        if (!(field.getType() instanceof PsiPrimitiveType)) {
+        if (mayNeedNullCheck((PsiField)equalsMemberInfo.getMember())) {
           list.add(myFieldsToNonNull.get(equalsMemberInfo.getMember()));
         }
       }
@@ -227,11 +229,8 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     if (step + 1 == getNonNullStepCode()) {
       if (templateDependsOnFieldsNullability()) {
         for (MemberInfo classField : myClassFields) {
-          if (classField.isChecked()) {
-            PsiField field = (PsiField)classField.getMember();
-            if (!(field.getType() instanceof PsiPrimitiveType)) {
-              return getNonNullStepCode();
-            }
+          if (classField.isChecked() && mayNeedNullCheck((PsiField)classField.getMember())) {
+            return getNonNullStepCode();
           }
         }
       }
@@ -241,9 +240,14 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     return super.getNextStep(step);
   }
 
+  private static boolean mayNeedNullCheck(PsiField field) {
+    PsiType type = field.getType();
+    return !(type instanceof PsiPrimitiveType) && !(type instanceof PsiArrayType);
+  }
+
   private static boolean templateDependsOnFieldsNullability() {
     final EqualsHashCodeTemplatesManager templatesManager = EqualsHashCodeTemplatesManager.getInstance();
-    final String notNullCheckPresent = "\\.notNull[^\\w]";
+    final String notNullCheckPresent = "\\.notNull\\W";
     final Pattern pattern = Pattern.compile(notNullCheckPresent);
     return pattern.matcher(templatesManager.getDefaultEqualsTemplate().getTemplate()).find() ||
            pattern.matcher(templatesManager.getDefaultHashcodeTemplate().getTemplate()).find();
@@ -252,7 +256,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   @Override
   protected void addSteps() {
     if (myEqualsPanel != null) {
-      addStep(new TemplateChooserStep(myClass.hasModifierProperty(PsiModifier.FINAL), myClass));
+      addStep(new TemplateChooserStep(myClass));
     }
     super.addSteps();
   }
@@ -286,9 +290,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
     @Override
     public boolean isMemberEnabled(MemberInfo member) {
-      if (!(member.getMember() instanceof PsiField field)) return false;
-      final PsiType type = field.getType();
-      return JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5) || !PsiAdapter.isNestedArray(type);
+      return member.getMember() instanceof PsiField;
     }
 
     @Override
@@ -337,14 +339,14 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   private final class TemplateChooserStep extends StepAdapter {
     private final JComponent myPanel;
 
-    private TemplateChooserStep(boolean isFinal, PsiClass psiClass) {
+    private TemplateChooserStep(PsiClass psiClass) {
       myPanel = new JPanel(new VerticalFlowLayout());
       final JPanel templateChooserPanel = new JPanel(new BorderLayout());
       final JLabel templateChooserLabel = new JLabel(JavaBundle.message("generate.equals.hashcode.template"));
       templateChooserPanel.add(templateChooserLabel, BorderLayout.WEST);
 
-
       final ComboBox<String> comboBox = new ComboBox<>();
+      comboBox.setSwingPopup(false);
       final ComponentWithBrowseButton<ComboBox<?>> comboBoxWithBrowseButton =
         new ComponentWithBrowseButton<>(comboBox, new MyEditTemplatesListener(psiClass, myPanel, comboBox));
       templateChooserLabel.setLabelFor(comboBox);
@@ -353,7 +355,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       setupCombobox(manager, comboBox, psiClass, invalid);
       comboBox.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(@NotNull final ActionEvent M) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           String item = (String)comboBox.getSelectedItem();
           manager.setDefaultTemplate(item);
           updateErrorMessage(item, invalid, manager, comboBox);
@@ -364,23 +366,36 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       templateChooserPanel.add(comboBoxWithBrowseButton, BorderLayout.CENTER);
       myPanel.add(templateChooserPanel);
 
-      final JCheckBox checkbox = new NonFocusableCheckBox(JavaBundle.message("generate.equals.hashcode.accept.sublcasses"));
-      checkbox.setSelected(!isFinal && CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
-      checkbox.setEnabled(!isFinal);
-      checkbox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull final ActionEvent M) {
-          CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = checkbox.isSelected();
-        }
-      });
-      myPanel.add(checkbox);
-      myPanel.add(new JLabel(JavaBundle.message("generate.equals.hashcode.accept.sublcasses.explanation")));
+      boolean useInstanceof = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
+      JPanel panel = new JPanel();
+      panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+      JLabel label = new JLabel(JavaBundle.message("generate.equals.hashcode.type.comparison.label"));
+      label.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
+      panel.add(label);
+      ContextHelpLabel contextHelp = ContextHelpLabel.create(JavaBundle.message("generate.equals.hashcode.comparison.table"));
+      contextHelp.setBorder(JBUI.Borders.empty(UIUtil.LARGE_VGAP, 2, 0, 0));
+      panel.add(contextHelp);
+      JRadioButton instanceofButton =
+        new JRadioButton(JavaBundle.message("generate.equals.hashcode.instanceof.type.comparison"), useInstanceof);
+      instanceofButton.setBorder(JBUI.Borders.emptyLeft(16));
+      JRadioButton getClassButton =
+        new JRadioButton(JavaBundle.message("generate.equals.hashcode.getclass.type.comparison"), !useInstanceof);
+      getClassButton.setBorder(JBUI.Borders.emptyLeft(16));
+      ButtonGroup group = new ButtonGroup();
+      group.add(instanceofButton);
+      group.add(getClassButton);
+      instanceofButton.addActionListener(e -> CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = true);
+      getClassButton.addActionListener(e -> CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = false);
+      myPanel.add(panel);
+      myPanel.add(instanceofButton);
+      myPanel.add(getClassButton);
 
       final JCheckBox gettersCheckbox = new NonFocusableCheckBox(JavaBundle.message("generate.equals.hashcode.use.getters"));
+      gettersCheckbox.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
       gettersCheckbox.setSelected(CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE);
       gettersCheckbox.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(@NotNull final ActionEvent M) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE = gettersCheckbox.isSelected();
         }
       });
@@ -400,7 +415,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         }
       }
       else {
-        setErrorText("", comboBox);
+        setErrorText(null, comboBox);
       }
     }
 
@@ -409,7 +424,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       return myPanel;
     }
 
-    private void setupCombobox(EqualsHashCodeTemplatesManager templatesManager,
+    private static void setupCombobox(EqualsHashCodeTemplatesManager templatesManager,
                                       ComboBox<String> comboBox,
                                       PsiClass psiClass,
                                       Set<String> invalid) {
@@ -436,7 +451,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       comboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
     }
 
-    private class MyEditTemplatesListener implements ActionListener {
+    private static class MyEditTemplatesListener implements ActionListener {
       private final PsiClass myPsiClass;
       private final JComponent myParent;
       private final ComboBox<String> myComboBox;
@@ -453,7 +468,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         final EqualsHashCodeTemplatesPanel ui = new EqualsHashCodeTemplatesPanel(myPsiClass.getProject(), EqualsHashCodeTemplatesManager.getInstance());
         ui.selectNodeInTree(templatesManager.getDefaultTemplateBaseName());
         ShowSettingsUtil.getInstance().editConfigurable(myParent, ui);
-        setupCombobox(templatesManager, myComboBox, myPsiClass, new HashSet<String>());
+        setupCombobox(templatesManager, myComboBox, myPsiClass, new HashSet<>());
       }
     }
   }

@@ -206,7 +206,30 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
                                            (PsiTypeParameterListOwner)patternNamedElement,
                                            (PsiTypeParameterListOwner)replacementNamedElement);
       }
+
+      if (originalNamedElement instanceof PsiMethodCallExpression &&
+          patternNamedElement instanceof PsiMethodCallExpression &&
+          replacementNamedElement instanceof PsiMethodCallExpression) {
+        copyQualifierIfNotReplaced((PsiMethodCallExpression)originalNamedElement,
+                                   (PsiMethodCallExpression)patternNamedElement,
+                                   (PsiMethodCallExpression)replacementNamedElement);
+      }
     }
+  }
+
+  private static void copyQualifierIfNotReplaced(PsiMethodCallExpression originalCall,
+                                                 PsiMethodCallExpression patternCall,
+                                                 PsiMethodCallExpression replacementCall) {
+    PsiExpression qualifier = originalCall.getMethodExpression().getQualifierExpression();
+    if (qualifier == null) {
+      return;
+    }
+    PsiReferenceExpression referenceExpression = replacementCall.getMethodExpression();
+    if (patternCall.getMethodExpression().getQualifierExpression() != null ||
+        referenceExpression.getQualifierExpression() != null) {
+      return;
+    }
+    referenceExpression.setQualifierExpression(qualifier);
   }
 
   private static void copyClassType(PsiClass originalClass, PsiClass patternClass, PsiClass replacementClass) {
@@ -453,7 +476,11 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       return;
     }
     if (listContext) {
-      if (replacements.length > 1) {
+      if (replacements.length == 1 && replacements[0] instanceof PsiExpressionListStatement statement) {
+        PsiElement[] children = statement.getExpressionList().getChildren();
+        elementParent.addRangeBefore(children[0], children[children.length - 1], elementToReplace);
+      }
+      else if (replacements.length > 1) {
         final PsiElement replacement = elementParent.addRangeBefore(replacements[0], replacements[replacements.length - 1], elementToReplace);
         copyUnmatchedElements(elementToReplace, replacement, info);
       }
@@ -795,6 +822,15 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         namedElements.put(name, named);
         named.acceptChildren(this);
       }
+    }
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      String name = expression.getMethodExpression().getReferenceName();
+      if (!namedElements.containsKey(name)) {
+        namedElements.put(name, expression);
+      }
+      super.visitMethodCallExpression(expression);
     }
 
     @Override

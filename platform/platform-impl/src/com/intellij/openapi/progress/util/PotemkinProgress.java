@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ import java.util.function.Consumer;
 public final class PotemkinProgress extends ProgressWindow implements PingProgress {
   private final Application myApp = ApplicationManager.getApplication();
   private final EventStealer myEventStealer;
-  private final PerformanceWatcher myWatcher = PerformanceWatcher.getInstanceOrNull();
+  private final PerformanceWatcher myWatcher = PerformanceWatcher.Companion.getInstanceIfCreated();
   private long myLastUiUpdate = System.currentTimeMillis();
   private long myLastInteraction = myLastUiUpdate;
   private long myLastWatcherPing = myLastUiUpdate;
@@ -47,7 +48,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
                           @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
     super(cancelText != null,false, project, parentComponent, cancelText);
     setTitle(title);
-    myApp.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myApp.getService(DialogWrapperPeerFactory.class); // make sure the service is created
     myEventStealer = startStealingInputEvents(this::dispatchInputEvent, this);
   }
@@ -63,17 +64,16 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
 
     // problem (IDEA-192282): LWCToolkit event might be posted before PotemkinProgress appears,
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
-
-    //noinspection SpellCheckingInspection
     String eventString = event.toString();
     return eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") || // [tav] todo: remove in 2022.2
            (event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent") // see JBR-4208
-           && !eventString.contains(",runnable=com.intellij.openapi.actionSystem.impl.ActionMenu$$Lambda")); // see IDEA-291469 Menu on macOs is invoked inside checkCanceled
+            // see IDEA-291469 Menu on macOS is invoked inside checkCanceled (PotemkinProgress)
+            && !(eventString.contains(",runnable=com.intellij.openapi.actionSystem.impl.ActionMenu$$Lambda") ||
+                 eventString.contains(",runnable=com.intellij.platform.ide.menu.MacNativeActionMenuKt$$Lambda")));
   }
 
-  @NotNull
   @Override
-  protected ProgressDialog getDialog() {
+  protected @NotNull ProgressDialog getDialog() {
     return Objects.requireNonNull(super.getDialog());
   }
 
@@ -145,7 +145,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
 
   /** Executes the action in EDT, paints itself inside checkCanceled calls. */
   public void runInSwingThread(@NotNull Runnable action) {
-    myApp.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     try {
       ProgressManager.getInstance().runProcess(action, this);
     }
@@ -158,7 +158,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
 
   /** Executes the action in a background thread, block Swing thread, handles selected input events and paints itself periodically. */
   public void runInBackground(@NotNull Runnable action) {
-    myApp.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     try {
       executeInModalContext(() -> {
@@ -196,7 +196,11 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     private EventStealer(@NotNull Disposable parent, @NotNull Consumer<? super InputEvent> inputConsumer) {
       myInputEventDispatcher = inputConsumer;
       IdeEventQueue.getInstance().addPostEventListener(event -> {
-        if (event instanceof MouseEvent || event instanceof KeyEvent && event.getID() != KeyEvent.KEY_TYPED) {
+        if (event instanceof MouseEvent) {
+          myInputEvents.offer((InputEvent)event);
+          return true;
+        }
+        else if (event instanceof KeyEvent && event.getID() != KeyEvent.KEY_TYPED) {
           myInputEvents.offer((InputEvent)event);
           return true;
         }

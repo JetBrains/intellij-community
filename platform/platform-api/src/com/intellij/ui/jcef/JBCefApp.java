@@ -1,22 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.execution.Platform;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.IdeBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
@@ -26,18 +16,16 @@ import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefApp;
 import org.cef.CefSettings;
-import org.cef.CefSettings.LogSeverity;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
+import org.cef.misc.BoolRef;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.*;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,23 +43,18 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
  */
 public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
-  private static String ourLinuxDistribution = null;
-
-  public static final @NotNull NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = NotNullLazyValue.createValue(() -> {
-    return NotificationGroup.create("JCEF", NotificationDisplayType.BALLOON, true, null, null, null);
-  });
-
-  private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
+  private static final boolean SKIP_VERSION_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_version_check");
+  private static final boolean SKIP_MODULE_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_module_check");
 
   private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 104;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
-  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 9;
+  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 12;
 
-  @NotNull private final CefApp myCefApp;
+  private final @NotNull CefApp myCefApp;
 
-  @NotNull private final CefSettings myCefSettings;
+  private final @NotNull CefSettings myCefSettings;
 
-  @NotNull private final Disposable myDisposable = new Disposable() {
+  private final @NotNull Disposable myDisposable = new Disposable() {
     @Override
     public void dispose() {
       myCefApp.dispose();
@@ -92,239 +75,26 @@ public final class JBCefApp {
     boolean started = false;
     try {
       started = CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
-    } catch (UnsatisfiedLinkError e) {
+    }
+    catch (UnsatisfiedLinkError e) {
       LOG.error(e.getMessage());
     }
     if (!started) {
       if (SystemInfoRt.isLinux) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          try {
-            Process proc = Runtime.getRuntime().exec("ldd " + System.getProperty("java.home") + "/lib/libjcef.so");
-            StringBuilder missingLibs = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream(), StandardCharsets.UTF_8))) {
-              String line;
-              String delim = " => ";
-              String prevLib = null;
-              while ((line = reader.readLine()) != null) {
-                if (line.contains("not found") && !line.contains("libjvm")) {
-                  String[] split = line.split(delim);
-                  if (split.length != 2) continue;
-                  String lib = split[0];
-                  if (lib.equals(prevLib)) continue;
-                  if (missingLibs.length() > 0) missingLibs.append(", ");
-                  missingLibs.append(lib);
-                  prevLib = lib;
-                }
-              }
-            }
-            if (proc.waitFor() == 0 && missingLibs.length() > 0) {
-              String msg = IdeBundle.message("notification.content.jcef.missingLibs", missingLibs);
-              Notification notification = NOTIFICATION_GROUP.getValue().
-                createNotification(IdeBundle.message("notification.title.jcef.startFailure"), msg, NotificationType.ERROR);
-              //noinspection DialogTitleCapitalization
-              notification.addAction(new AnAction(IdeBundle.message("action.jcef.followInstructions")) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent e) {
-                  BrowserUtil.open(MISSING_LIBS_SUPPORT_URL);
-                }
-              });
-              notification.notify(null);
-            }
-          }
-          catch (Throwable t) {
-            LOG.error("failed to identify JCEF missing libs", t);
-          }
-        });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> SettingsHelper.showNotificationMissingLibraries());
       }
       throw new IllegalStateException("CefApp failed to start");
     }
-    CefSettings settings = config.getCefSettings();
-    settings.windowless_rendering_enabled = isOffScreenRenderingModeEnabled();
-    settings.log_severity = getLogLevel();
-    settings.log_file = System.getProperty("ide.browser.jcef.log.path",
-      System.getProperty("user.home") + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log");
-    if (settings.log_file.trim().isEmpty())
-      settings.log_file = null;
-    //todo[tav] IDEA-260446 & IDEA-260344 However, without proper background the CEF component flashes white in dark themes
-    //settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
-    int port = Registry.intValue("ide.browser.jcef.debug.port");
-    if (ApplicationManager.getApplication().isInternal() && port > 0) {
-      settings.remote_debugging_port = port;
-    }
 
-    settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
-
-    if (Registry.is("ide.browser.jcef.sandbox.enable")) {
-      LOG.info("JCEF-sandbox is enabled");
-      settings.no_sandbox = false;
-
-      if (SystemInfoRt.isWindows) {
-        String sandboxPtr = System.getProperty("jcef.sandbox.ptr");
-        if (sandboxPtr != null && !sandboxPtr.trim().isEmpty()) {
-          if (isSandboxSupported())
-            settings.browser_subprocess_path = "";
-          else {
-            LOG.info("JCEF-sandbox was disabled because current jcef version doesn't support sandbox");
-            settings.no_sandbox = true;
-          }
-        } else {
-          LOG.info("JCEF-sandbox was disabled because java-process initialized without sandbox");
-          settings.no_sandbox = true;
-        }
-      } else if (SystemInfoRt.isMac) {
-        ProcessHandle.Info i = ProcessHandle.current().info();
-        Optional<String> processAppPath = i.command();
-        if (processAppPath.isPresent() && processAppPath.get().endsWith("/bin/java")) {
-          // Sandbox must be disabled when user runs IDE from debugger (otherwise dlopen will fail)
-          LOG.info("JCEF-sandbox was disabled (to enable you should start IDE from launcher)");
-          settings.no_sandbox = true;
-        }
-      } else if (SystemInfoRt.isLinux) {
-        String linuxDistrib = readLinuxDistribution();
-        if (
-          linuxDistrib != null &&
-          (linuxDistrib.contains("debian") || linuxDistrib.contains("centos"))
-        ) {
-          if (Boolean.getBoolean("ide.browser.jcef.sandbox.disable_linux_os_check")) {
-            LOG.warn("JCEF sandbox enabled via VM-option 'disable_linux_os_check', OS: " + linuxDistrib);
-          } else {
-            LOG.info("JCEF sandbox was disabled because of unsupported OS: " + linuxDistrib
-                     + ". To skip this check run IDE with VM-option -Dide.browser.jcef.sandbox.disable_linux_os_check=true");
-            settings.no_sandbox = true;
-          }
-        }
-      }
-    }
-
-    String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
-      .getProviders()
-      .stream()
-      .flatMap(p -> {
-        LOG.debug("got options: [" + p.getOptions() + "] from:" + p.getClass().getName());
-        return p.getOptions().stream();
-      })
-      .distinct()
-      .toArray(String[]::new);
-
-    String[] args = ArrayUtil.mergeArrays(config.getAppArgs(), argsFromProviders);
-
-    JBCefProxySettings proxySettings = JBCefProxySettings.getInstance();
-    String[] proxyArgs = null;
-    if (proxySettings.USE_PROXY_PAC) {
-      if (proxySettings.USE_PAC_URL) {
-        proxyArgs = new String[] {"--proxy-pac-url=" + proxySettings.PAC_URL + ":" + proxySettings.PROXY_PORT};
-      }
-      else {
-        proxyArgs = new String[] {"--proxy-auto-detect"};
-      }
-    }
-    else if (proxySettings.USE_HTTP_PROXY) {
-      proxyArgs = new String[] {"--proxy-server=" + proxySettings.PROXY_HOST + ":" + proxySettings.PROXY_PORT};
-    }
-    if (proxyArgs != null) args = ArrayUtil.mergeArrays(args, proxyArgs);
-
-    if (Registry.is("ide.browser.jcef.gpu.disable")) {
-      // Add possibility to disable GPU (see IDEA-248140)
-      args = ArrayUtil.mergeArrays(args, "--disable-gpu", "--disable-gpu-compositing");
-    }
-
-    final boolean trackGPUCrashes = Registry.is("ide.browser.jcef.gpu.infinitecrash");
-    if (trackGPUCrashes) args = ArrayUtil.mergeArrays(args, "--disable-gpu-process-crash-limit");
-
-    // Sometimes it's useful to be able to pass any additional keys (see IDEA-248140)
-    // NOTE: List of keys: https://peter.sh/experiments/chromium-command-line-switches/
-    String extraArgsProp = System.getProperty("ide.browser.jcef.extra.args", "");
-    if (!extraArgsProp.isEmpty()) {
-      String[] extraArgs = extraArgsProp.split(",");
-      if (extraArgs.length > 0) {
-        LOG.debug("add extra CEF args: [" + Arrays.toString(extraArgs) + "]");
-        args = ArrayUtil.mergeArrays(args, extraArgs);
-      }
-    }
-
-    CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));
+    CefSettings settings = SettingsHelper.loadSettings(config);
+    BoolRef trackGPUCrashes = new BoolRef(false);
+    String[] args = SettingsHelper.loadArgs(config, settings, trackGPUCrashes);
+    CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
     myCefSettings = settings;
     myCefApp = CefApp.getInstance(settings);
-    LOG.info(String.format("jcef version: %s | cmd args: %s", myCefApp.getVersion().getJcefVersion(), Arrays.toString(args)));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
 
-  private static LogSeverity getLogLevel() {
-    String level = System.getProperty("ide.browser.jcef.log.level", "disable").toLowerCase(Locale.ENGLISH);
-    return switch (level) {
-      case "disable" -> LogSeverity.LOGSEVERITY_DISABLE;
-      case "verbose" -> LogSeverity.LOGSEVERITY_VERBOSE;
-      case "info" -> LogSeverity.LOGSEVERITY_INFO;
-      case "warning" -> LogSeverity.LOGSEVERITY_WARNING;
-      case "error" -> LogSeverity.LOGSEVERITY_ERROR;
-      case "fatal" -> LogSeverity.LOGSEVERITY_FATAL;
-      case "default" -> LogSeverity.LOGSEVERITY_DEFAULT;
-      default -> LogSeverity.LOGSEVERITY_DEFAULT;
-    };
-  }
-
-  private static @Nullable String readLinuxDistributionFromOsRelease() {
-    String fileName = "/etc/os-release";
-    File f = new File(fileName);
-    if (!f.exists()) return null;
-
-    try {
-      BufferedReader br = new BufferedReader(new FileReader(fileName));
-      String line;
-      while ((line = br.readLine()) != null) {
-        if (line.startsWith("NAME="))
-          return line.replace("NAME=", "").replace("\"", "").toLowerCase();
-      }
-    } catch (IOException e) {
-      LOG.error(e);
-    }
-    return null;
-  }
-
-  private static @Nullable String readLinuxDistributionFromLsbRelease() {
-    String fileName = "/etc/lsb-release";
-    File f = new File(fileName);
-    if (!f.exists()) return null;
-
-    try {
-      BufferedReader br = new BufferedReader(new FileReader(fileName));
-      String line;
-      while ((line = br.readLine()) != null) {
-        if (line.startsWith("DISTRIB_DESCRIPTION"))
-          return line.replace("DISTRIB_DESCRIPTION=", "").replace("\"", "").toLowerCase();
-      }
-    } catch (IOException e) {
-      LOG.error(e);
-    }
-    return null;
-  }
-
-  private static String readLinuxDistribution() {
-    if (ourLinuxDistribution == null) {
-      if (SystemInfoRt.isLinux) {
-        String readResult = readLinuxDistributionFromLsbRelease();
-        if (readResult == null)
-          readResult = readLinuxDistributionFromOsRelease();
-        ourLinuxDistribution = readResult == null ? "linux" : readResult;
-      } else {
-        ourLinuxDistribution = "";
-      }
-    }
-
-    return ourLinuxDistribution;
-  }
-
-  private static boolean isSandboxSupported() {
-    JCefVersionDetails version;
-    try {
-      version = JCefAppConfig.getVersionDetails();
-    }
-    catch (Throwable e) {
-      LOG.error("JCEF runtime version is not supported");
-      return false;
-    }
-    return version.cefVersion.major >= 104 && version.apiVersion.minor >= 9;
-  }
 
   @NotNull
   Disposable getDisposable() {
@@ -337,8 +107,7 @@ public final class JBCefApp {
    *
    * @throws IllegalStateException when JCEF initialization is not possible in current env
    */
-  @NotNull
-  public static JBCefApp getInstance() {
+  public static @NotNull JBCefApp getInstance() {
     if (Holder.INSTANCE == null) {
       synchronized (Holder.class) {
         if (Holder.INSTANCE == null) {
@@ -357,10 +126,9 @@ public final class JBCefApp {
   }
 
   private static final class Holder {
-    @Nullable static volatile JBCefApp INSTANCE = init();
+    static volatile @Nullable JBCefApp INSTANCE = init();
 
-    @Nullable
-    static JBCefApp init() {
+    static @Nullable JBCefApp init() {
       ourInitialized.set(true);
       JCefAppConfig config = null;
       if (isSupported()) {
@@ -378,7 +146,8 @@ public final class JBCefApp {
       if (config != null) {
         try {
           app = new JBCefApp(config);
-        } catch (IllegalStateException ignore) {
+        }
+        catch (IllegalStateException ignore) {
         }
       }
       return app;
@@ -415,39 +184,48 @@ public final class JBCefApp {
         return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
       }
       if (GraphicsEnvironment.isHeadless() &&
-          !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled"))
-      {
+          !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled")) {
         return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
       }
-      JCefVersionDetails version;
-      try {
-        version = JCefAppConfig.getVersionDetails();
+      if (!SKIP_VERSION_CHECK) {
+        JCefVersionDetails version;
+        try {
+          version = JCefAppConfig.getVersionDetails();
+        }
+        catch (Throwable e) {
+          return unsupported.apply("JCEF runtime version is not supported");
+        }
+        if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
+          return unsupported.apply("JCEF: minimum supported CEF major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
+                                   ", current is " + version.cefVersion.major);
+        }
+        if (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION > version.apiVersion.major ||
+            (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION == version.apiVersion.major &&
+             MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor)) {
+          return unsupported.apply("JCEF: minimum supported API version is " +
+                                   MIN_SUPPORTED_JCEF_API_MAJOR_VERSION + "." + MIN_SUPPORTED_JCEF_API_MINOR_VERSION +
+                                   ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
+        }
       }
-      catch (Throwable e) {
-        return unsupported.apply("JCEF runtime version is not supported");
+      String altCefPath = System.getProperty("ALT_CEF_FRAMEWORK_DIR", null);
+      if (altCefPath == null || altCefPath.isEmpty()) {
+        altCefPath = System.getenv("ALT_CEF_FRAMEWORK_DIR");
       }
-      if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
-        return unsupported.apply("JCEF: minimum supported CEF major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
-                                 ", current is " + version.cefVersion.major);
+
+      final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK;
+      if (!skipModuleCheck) {
+        URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
+        if (url == null) {
+          return unsupported.apply("JCefAppConfig.class not found");
+        }
+        String path = url.toString();
+        String name = JCefAppConfig.class.getName().replace('.', '/');
+        boolean isJbrModule = path != null && path.contains("/jcef/" + name);
+        if (!isJbrModule) {
+          return unsupported.apply("JCefAppConfig.class is not from a JBR module, url: " + path);
+        }
       }
-      if (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION > version.apiVersion.major ||
-          (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION == version.apiVersion.major &&
-           MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor))
-      {
-        return unsupported.apply("JCEF: minimum supported API version is " +
-                                 MIN_SUPPORTED_JCEF_API_MAJOR_VERSION + "." + MIN_SUPPORTED_JCEF_API_MINOR_VERSION +
-                                 ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
-      }
-      URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
-      if (url == null) {
-        return unsupported.apply("JCefAppConfig.class not found");
-      }
-      String path = url.toString();
-      String name = JCefAppConfig.class.getName().replace('.', '/');
-      boolean isJbrModule = path != null && path.contains("/jcef/" + name);
-      if (!isJbrModule) {
-        LOG.warn("JCefAppConfig is not from a JBR module, path: " + path);
-      }
+
       ourSupported = new AtomicBoolean(true);
       return true;
     }
@@ -468,8 +246,13 @@ public final class JBCefApp {
     return myCefSettings.cache_path;
   }
 
+  @Contract(pure = true)
   @NotNull
-  public JBCefClient createClient() {
+  public Integer getRemoteDebuggingPort() {
+    return myCefSettings.remote_debugging_port;
+  }
+
+  public @NotNull JBCefClient createClient() {
     return createClient(false);
   }
 
@@ -487,13 +270,17 @@ public final class JBCefApp {
    * @see JBCefBrowserBuilder#setOffScreenRendering(boolean)
    */
   public static boolean isOffScreenRenderingModeEnabled() {
-    return RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
+    return SettingsHelper.isOffScreenRenderingModeEnabled();
   }
 
   static void checkOffScreenRenderingModeEnabled() {
     if (!isOffScreenRenderingModeEnabled()) {
       throw new IllegalStateException("off-screen rendering mode is disabled: 'ide.browser.jcef.osr.enabled=false'");
     }
+  }
+
+  public static NotificationGroup getNotificationGroup() {
+    return SettingsHelper.NOTIFICATION_GROUP.getValue();
   }
 
   /**
@@ -537,9 +324,11 @@ public final class JBCefApp {
     private final int myGPUCrashLimit;
     private int myGPUCrashCounter = 0;
     private boolean myNotificationShown = false;
+    private final String myArgs;
 
     MyCefAppHandler(String @Nullable [] args, boolean trackGPUCrashes) {
       super(args);
+      myArgs = Arrays.toString(args);
       myGPUCrashLimit = trackGPUCrashes ? Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10) : -1;
     }
 
@@ -559,6 +348,13 @@ public final class JBCefApp {
     }
 
     @Override
+    public void stateHasChanged(CefApp.CefAppState state) {
+      if (state.equals(CefApp.CefAppState.INITIALIZED)) {
+        LOG.info(String.format("jcef version: %s | cmd args: %s", CefApp.getInstance().getVersion().getJcefVersion(), myArgs));
+      }
+    }
+
+    @Override
     public void onContextInitialized() {
       for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
         getInstance().myCefApp.registerSchemeHandlerFactory(f.getSchemeName(), f.getDomainName(), f);
@@ -572,32 +368,11 @@ public final class JBCefApp {
         JBCefFileSchemeHandlerFactory.FILE_SCHEME_NAME, "", new JBCefFileSchemeHandlerFactory());
     }
 
-    //@Override
+    @Override
     public void onBeforeChildProcessLaunch(String command_line) {
       if (myGPUCrashLimit >= 0 && command_line != null && command_line.contains("--type=gpu-process")) {
         if (++myGPUCrashCounter > myGPUCrashLimit && !myNotificationShown) {
-          Notification notification = NOTIFICATION_GROUP.getValue().createNotification(
-            IdeBundle.message("notification.content.jcef.gpucrash.title"),
-            IdeBundle.message("notification.content.jcef.gpucrash.message"),
-            NotificationType.ERROR);
-          //noinspection DialogTitleCapitalization
-          notification.addAction(new AnAction(IdeBundle.message("notification.content.jcef.gpucrash.action.restart")) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-              ApplicationManager.getApplication().restart();
-            }
-          });
-          //noinspection DialogTitleCapitalization
-          if (!Registry.is("ide.browser.jcef.gpu.disable")) {
-            notification.addAction(new AnAction(IdeBundle.message("notification.content.jcef.gpucrash.action.disable")) {
-              @Override
-              public void actionPerformed(@NotNull AnActionEvent e) {
-                Registry.get("ide.browser.jcef.gpu.disable").setValue(true);
-                ApplicationManager.getApplication().restart();
-              }
-            });
-          }
-          notification.notify(null);
+          ApplicationManager.getApplication().executeOnPooledThread(() -> SettingsHelper.showNotificationDisableGPU());
           myNotificationShown = true;
         }
       }

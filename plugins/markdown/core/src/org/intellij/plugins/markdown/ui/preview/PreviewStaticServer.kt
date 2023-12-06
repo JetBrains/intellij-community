@@ -9,6 +9,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ide.BuiltInServerManager.Companion.getInstance
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.FileResponses.checkCache
@@ -112,12 +113,6 @@ class PreviewStaticServer : HttpRequestHandler() {
       val url = parseEncoded(raw)
       requireNotNull(url) { "Could not parse url!" }
       return getInstance().addAuthToken(url).toExternalForm()
-    }
-
-    @Deprecated("Use PreviewStaticServer.getStaticUrl(ResourceProvider, String) instead")
-    @JvmStatic
-    fun getStaticUrl(staticPath: String): String {
-      return getStaticUrl(instance.defaultResourceProvider, staticPath)
     }
 
     /**

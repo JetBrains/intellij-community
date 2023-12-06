@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +18,7 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
   /**
    * Creates type of targets which are not {@link #isFileBased() file based}, consider using {@link #BuildTargetType(String, boolean)} instead
    */
-  protected BuildTargetType(String typeId) {
+  protected BuildTargetType(@NotNull String typeId) {
     this(typeId, false);
   }
 
@@ -41,12 +27,12 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
    * @param fileBased {@code true} if targets of this type operate only on files under their source roots
    * @see #isFileBased()
    */
-  protected BuildTargetType(String typeId, boolean fileBased) {
+  protected BuildTargetType(@NotNull String typeId, boolean fileBased) {
     myTypeId = typeId;
     myFileBased = fileBased;
   }
 
-  public final String getTypeId() {
+  public final @NotNull String getTypeId() {
     return myTypeId;
   }
 
@@ -65,14 +51,12 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
    * @param model the model instance representing a project.
    * @return the list of targets.
    */
-  @NotNull
-  public abstract List<T> computeAllTargets(@NotNull JpsModel model);
+  public abstract @NotNull List<T> computeAllTargets(@NotNull JpsModel model);
 
   /**
    * @return implementation of {@link BuildTargetLoader} class which will be used to deserialize targets of this type from compiler caches
    */
-  @NotNull
-  public abstract BuildTargetLoader<T> createLoader(@NotNull JpsModel model);
+  public abstract @NotNull BuildTargetLoader<T> createLoader(@NotNull JpsModel model);
 
   /**
    * Return {@code true} if targets of this type operate only on files under their {@link BuildTarget#computeRootDescriptors source roots}.

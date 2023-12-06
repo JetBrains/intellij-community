@@ -8,13 +8,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -144,8 +142,8 @@ public interface VcsLogProvider {
    * @return file history handler or null if unsupported.
    */
   @Nullable
-  default VcsLogFileHistoryHandler getFileHistoryHandler() {
-    return null;
+  default VcsLogFileHistoryHandler getFileHistoryHandler(Project project) {
+    return VcsLogFileHistoryHandler.getByVcs(project, getSupportedVcs());
   }
 
   /**
@@ -194,29 +192,5 @@ public interface VcsLogProvider {
 
     @NotNull
     Set<VcsRef> getRefs();
-  }
-
-  /**
-   * @deprecated replaced by {@link VcsLogProvider#readMetadata(VirtualFile, List, Consumer)}.
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  default List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
-    throws VcsException {
-    CollectConsumer<VcsShortCommitDetails> collectConsumer = new CollectConsumer<>();
-    readMetadata(root, hashes, collectConsumer);
-    return new ArrayList<>(collectConsumer.getResult());
-  }
-
-  /**
-   * @deprecated replaced by {@link VcsLogProvider#readFullDetails(VirtualFile, List, Consumer)}.
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  default List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
-    throws VcsException {
-    List<VcsFullCommitDetails> result = new ArrayList<>();
-    readFullDetails(root, hashes, result::add);
-    return result;
   }
 }

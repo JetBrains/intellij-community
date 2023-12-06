@@ -34,7 +34,6 @@ public class PyPostfixTemplateProvider implements PostfixTemplateProvider {
     new PyForEnumeratePostfixTemplate("enum", this),
     new PyIsNonePostfixTemplate(this),
     new PyIsNotNonePostfixTemplate(this),
-    new PyIsNotNonePostfixTemplate(this),
     new PyPrintPostfixTemplate(this),
     new PyMainPostfixTemplate(this),
     new PyLenPostfixTemplate(this)

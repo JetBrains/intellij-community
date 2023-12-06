@@ -15,7 +15,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.PsiUtilCore.ensureValid
 import com.intellij.psi.util.PsiUtilCore.getVirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -33,30 +33,50 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
   @RequiresBackgroundThread
   override fun findParent(item: NavBarItem): NavBarItem? {
     if (item !is PsiNavBarItem) return null
-    if (!item.data.isValid) return null
+
+    try {
+      ensureValid(item.data)
+    } catch (t: Throwable) {
+      return null
+    }
 
     // TODO: cache all roots? (like passing through NavBarModelBuilder.traverseToRoot)
     // TODO: hash all roots? (Set instead of Sequence)
-    val projectFileIndex = ProjectRootManager.getInstance(item.data.project).fileIndex
-    val defaultRoots = item.data.project.getBaseDirectories()
-    val oldEpRoots = additionalRoots(item.data.project)
-    val allRoots = (defaultRoots + oldEpRoots).filter { it.parent == null || !projectFileIndex.isInContent(it.parent) }
 
-    if (getVirtualFile(item.data) in allRoots) return null
+    val project = runCatching { item.data.project }.getOrNull()
 
-    val parent = fromOldExtensions({ ext ->
+    if (project != null) {
+      val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
+      val defaultRoots = project.getBaseDirectories()
+      val oldEpRoots = additionalRoots(project)
+      val allRoots = (defaultRoots + oldEpRoots).filter { it.parent == null || !projectFileIndex.isInContent(it.parent) }
+
+      if (getVirtualFile(item.data) in allRoots) {
+        return null
+      }
+    }
+
+    val parentWithProvider = fromOldExtensions({ ext ->
       try {
-        ext.getParent(item.data)
+        Pair(ext.getParent(item.data), ext)
       }
       catch (pce: ProcessCanceledException) {
         // implementations may throw PCE manually, try to replace it with expected exception
         ProgressManager.checkCanceled()
-        null
+        Pair(null, ext)
       }
-    }, { parent ->
-      parent != item.data
+    }, { parentWithProvider ->
+      val (parent, _) = parentWithProvider
+      parent != null && parent != item.data
     })
-    if (parent == null || !parent.isValid) return null
+    if (parentWithProvider == null) {
+      return null
+    }
+    val (parent, parentProvider) = parentWithProvider
+    if (parent == null) {
+      return null
+    }
+    ensurePsiFromExtensionIsValid(parent, "Extension returned invalid parent", parentProvider.javaClass)
 
     val containingFile = parent.containingFile
     if (containingFile != null && containingFile.virtualFile == null) return null
@@ -171,14 +191,14 @@ private fun additionalRoots(project: Project): Iterable<VirtualFile> {
 
 internal fun ensurePsiFromExtensionIsValid(psi: PsiElement, message: String, clazz: Class<*>? = null) {
   try {
-    PsiUtilCore.ensureValid(psi)
+    ensureValid(psi)
   }
   catch (t: Throwable) {
     if (clazz != null) {
-      throw PluginException.createByClass(message, t, clazz)
+      throw PluginException.createByClass("$message, psi class: ${psi.javaClass.canonicalName}", t, clazz)
     }
     else {
-      throw IllegalStateException(message, t)
+      throw IllegalStateException("$message, psi class: ${psi.javaClass.canonicalName}", t)
     }
   }
 }

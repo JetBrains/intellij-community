@@ -108,9 +108,7 @@ private class AmendChangeWrapper(override val userObject: EditedCommitDetails) :
 
     other as AmendChangeWrapper
 
-    if (userObject.commit.id != other.userObject.commit.id) return false
-
-    return true
+    return userObject.commit.id == other.userObject.commit.id
   }
 
   override fun toString(): String = userObject.commit.subject
@@ -125,9 +123,7 @@ private class ChangeListWrapper(override val userObject: ChangeList) : ChangesVi
 
     other as ChangeListWrapper
 
-    if (userObject.name != other.userObject.name) return false
-
-    return true
+    return userObject.name == other.userObject.name
   }
 
   override fun hashCode(): Int = userObject.name.hashCode()

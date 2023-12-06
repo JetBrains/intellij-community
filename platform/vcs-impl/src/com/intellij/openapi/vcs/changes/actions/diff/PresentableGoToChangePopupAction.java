@@ -137,11 +137,11 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
       init();
 
       AsyncChangesTree viewer = getViewer();
-      AsyncChangesTree.RequestId requestId = viewer.requestRefresh();
+      viewer.requestRefresh();
 
       if (myChanges.getSelectedIndex() != -1) {
         UiNotifyConnector.doWhenFirstShown(this, () -> {
-          viewer.invokeAfterRefresh(requestId, () -> {
+          viewer.invokeAfterRefresh(() -> {
             DefaultMutableTreeNode toSelect = TreeUtil.findNode(myViewer.getRoot(), node -> {
               return node instanceof GenericChangesBrowserNode &&
                      ((GenericChangesBrowserNode)node).getIndex() == myChanges.getSelectedIndex();

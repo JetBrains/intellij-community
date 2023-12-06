@@ -130,9 +130,11 @@ public final class JavaModuleGraphUtil {
   private static PsiJavaModule findDescriptionByModuleInner(@NotNull Module module, boolean inTests) {
     Project project = module.getProject();
     GlobalSearchScope moduleScope = module.getModuleScope();
+    String virtualAutoModuleName = VirtualManifestProvider.getAttributeValue(module, PsiJavaModule.AUTO_MODULE_NAME);
     if (!DumbService.isDumb(project) &&
         FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, moduleScope).isEmpty() &&
-        FilenameIndex.getVirtualFilesByName("MANIFEST.MF", moduleScope).isEmpty()) {
+        FilenameIndex.getVirtualFilesByName("MANIFEST.MF", moduleScope).isEmpty() &&
+        virtualAutoModuleName == null) {
       return null;
     }
     JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
@@ -160,6 +162,10 @@ public final class JavaModuleGraphUtil {
             name != null ? LightJavaModule.create(PsiManager.getInstance(project), manifest.getParent().getParent(), name) : null;
           return Result.create(result, manifestPsi, ProjectRootModificationTracker.getInstance(project));
         });
+      }
+      List<VirtualFile> sourceSourceRoots = rootManager.getSourceRoots(JavaSourceRootType.SOURCE);
+      if (virtualAutoModuleName != null && !sourceSourceRoots.isEmpty()) {
+        return LightJavaModule.create(PsiManager.getInstance(project), sourceSourceRoots.get(0), virtualAutoModuleName);
       }
     }
 
@@ -282,7 +288,7 @@ public final class JavaModuleGraphUtil {
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);
     for (String key : index.getAllKeys(project)) {
-      for (PsiJavaModule module : index.get(key, project, scope)) {
+      for (PsiJavaModule module : index.getModules(key, project, scope)) {
         visit(module, relations, transitiveEdges);
       }
     }

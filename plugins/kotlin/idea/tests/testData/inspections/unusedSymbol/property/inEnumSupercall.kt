@@ -4,8 +4,12 @@ val TOP_LEVEL = 5
 
 enum class MyEnum(value: Int) {
     VALUE(TOP_LEVEL)
+    init {
+       println(value)
+    }
 }
 
 fun main(args: Array<String>) {
+    println(args)
     MyEnum.VALUE
 }

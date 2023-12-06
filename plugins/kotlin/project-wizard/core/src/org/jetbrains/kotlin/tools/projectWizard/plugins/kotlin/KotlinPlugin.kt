@@ -12,11 +12,14 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.fold
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settingValidator
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
-import org.jetbrains.kotlin.tools.projectWizard.core.service.*
+import org.jetbrains.kotlin.tools.projectWizard.core.service.FileSystemWizardService
+import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionKind
+import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionProviderService
+import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildFileIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.RepositoryIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.SourcesetSourceType
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.withIrs
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.ModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
@@ -26,7 +29,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.pomIR
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectPath
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
-import java.nio.file.Path
 
 class KotlinPlugin(context: Context) : Plugin(context) {
     override val path = pluginPath
@@ -135,9 +137,8 @@ class KotlinPlugin(context: Context) : Plugin(context) {
             runBefore(BuildSystemPlugin.createModules)
             withAction {
                 val version = version.propertyValue
-                if (version.kind.isStable) return@withAction UNIT_SUCCESS
                 val pluginRepository = version.buildSystemPluginRepository(buildSystemType)
-                BuildSystemPlugin.pluginRepositoreis.addValues(pluginRepository) andThen
+                BuildSystemPlugin.pluginRepositories.addValues(pluginRepository) andThen
                         updateBuildFiles { buildFile ->
                             buildFile.withIrs(
                                 version.repositories
@@ -147,28 +148,21 @@ class KotlinPlugin(context: Context) : Plugin(context) {
             }
         }
 
-        val createResourceDirectories by booleanSetting("Generate Resource Folders", GenerationPhase.PROJECT_GENERATION) {
-            defaultValue = value(true)
-        }
-
         val createSourcesetDirectories by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runAfter(createModules)
             withAction {
-                fun Path?.createKotlinAndResourceDirectories(moduleConfigurator: ModuleConfigurator): TaskResult<Unit> {
-                    if (this == null) return UNIT_SUCCESS
-                    return with(service<FileSystemWizardService>()) {
-                        createDirectory(this@createKotlinAndResourceDirectories / moduleConfigurator.kotlinDirectoryName) andThen
-                                if (createResourceDirectories.settingValue) {
-                                    createDirectory(this@createKotlinAndResourceDirectories / moduleConfigurator.resourcesDirectoryName)
-                                } else {
-                                    UNIT_SUCCESS
-                                }
-                    }
-                }
-
                 forEachModule { moduleIR ->
-                    moduleIR.sourcesets.mapSequenceIgnore { sourcesetIR ->
-                        sourcesetIR.path.createKotlinAndResourceDirectories(moduleIR.originalModule.configurator)
+                    // We do not create test or resource folders when creating a compact project
+                    moduleIR.sourcesets
+                        .filter { it.sourcesetType != SourcesetType.test || !StructurePlugin.useCompactProjectStructure.settingValue }
+                        .mapSequenceIgnore { sourcesetIR ->
+                        sourcesetIR.sourcePaths.filter {
+                          it.key != SourcesetSourceType.RESOURCES || !StructurePlugin.useCompactProjectStructure.settingValue
+                        }.values.mapSequence {
+                            with(service<FileSystemWizardService>()) {
+                                createDirectory(it)
+                            }
+                        }
                     }
                 }
             }
@@ -192,8 +186,7 @@ class KotlinPlugin(context: Context) : Plugin(context) {
     override val settings: List<PluginSetting<*, *>> =
         listOf(
             projectKind,
-            modules,
-            createResourceDirectories,
+            modules
         )
 
     override val pipelineTasks: List<PipelineTask> =

@@ -19,19 +19,19 @@ class SlowContributorDetector: SearchListener {
   private val contributorsWithEvents = HashSet<String>()
 
   override fun searchStarted(pattern: String,
-                             contributors: Collection<SearchEverywhereContributor<*>>) = restart()
+                             contributors: Collection<SearchEverywhereContributor<*>>): Unit = restart()
 
-  override fun elementsAdded(list: List<SearchEverywhereFoundElementInfo>) = updateContributorsWithEvents(list)
+  override fun elementsAdded(list: List<SearchEverywhereFoundElementInfo>): Unit = updateContributorsWithEvents(list)
 
-  override fun elementsRemoved(list: List<SearchEverywhereFoundElementInfo>) = updateContributorsWithEvents(list)
+  override fun elementsRemoved(list: List<SearchEverywhereFoundElementInfo>): Unit = updateContributorsWithEvents(list)
 
   private fun updateContributorsWithEvents(list: Collection<SearchEverywhereFoundElementInfo>) {
     list.mapNotNull { it.contributor?.searchProviderId }.let { contributorsWithEvents.addAll(it) }
   }
 
-  override fun contributorWaits(contributor: SearchEverywhereContributor<*>) = logContributorFinished(contributor)
+  override fun contributorWaits(contributor: SearchEverywhereContributor<*>): Unit = logContributorFinished(contributor)
 
-  override fun contributorFinished(contributor: SearchEverywhereContributor<*>, hasMore: Boolean) = logContributorFinished(contributor)
+  override fun contributorFinished(contributor: SearchEverywhereContributor<*>, hasMore: Boolean): Unit = logContributorFinished(contributor)
 
   override fun searchFinished(hasMoreContributors: Map<SearchEverywhereContributor<*>, Boolean>) {
     hasMoreContributors.forEach { (contributor, _) -> logContributorFinished(contributor) }
@@ -57,7 +57,7 @@ class SlowContributorDetector: SearchListener {
 
   private fun logContributorFinished(contributor: SearchEverywhereContributor<*>) {
     if (finishedContributors.containsKey(contributor.searchProviderId)) return
-    if (PossibleSlowContributor.checkSlow(contributor)) return //don't worry about contributors already marked as slow
+    if (!EssentialContributor.checkEssential(contributor)) return //don't worry about contributors which are not essential
     finishedContributors[contributor.searchProviderId] = System.currentTimeMillis() - startTimestamp!!
   }
 
@@ -81,7 +81,7 @@ class SlowContributorDetector: SearchListener {
 
 
   private fun reportSlowContributor(id: String, delay: Long) {
-    LOG.warn("Contributor [$id] is too slow (took $delay ms to finish). Slow contributors should implement PossibleSlowContributor interface")
+    LOG.warn("Contributor [$id] is too slow (took $delay ms to finish). But it is marked as EssentialContributor and can slow down the search process")
   }
 
   private fun calculatePercentileEdge(delays: Collection<Long>): Long {

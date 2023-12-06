@@ -21,6 +21,7 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 
 public final class ExternalAppUtil {
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @NotNull
   public static Result sendIdeRequest(@NotNull String entryPoint, int idePort, @NotNull String handlerId, @Nullable String bodyContent) {
     try {
@@ -46,11 +47,15 @@ public final class ExternalAppUtil {
       }
 
       HttpResponse<String> response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
-      if (response.statusCode() == HttpURLConnection.HTTP_OK) {
-        return Result.success(response.body());
+      int statusCode = response.statusCode();
+      if (statusCode == HttpURLConnection.HTTP_OK) {
+        return Result.success(statusCode, response.body());
+      }
+      else if (statusCode == HttpURLConnection.HTTP_NO_CONTENT) {
+        return Result.success(statusCode, null);
       }
       else {
-        return Result.error(response.body());
+        return Result.error(statusCode, response.body());
       }
     }
     catch (IOException | InterruptedException | NoSuchAlgorithmException | KeyManagementException e) {
@@ -104,21 +109,31 @@ public final class ExternalAppUtil {
 
   public static class Result {
     public final boolean isError;
+    public final int statusCode;
     public final String response;
     public final String error;
 
-    private Result(String response, String error, boolean isError) {
+    private Result(int statusCode, String response, String error, boolean isError) {
+      this.statusCode = statusCode;
       this.response = response;
       this.error = error;
       this.isError = isError;
     }
 
-    public static Result success(@Nullable String response) {
-      return new Result(response, null, false);
+    public static Result success(int statusCode, @Nullable String response) {
+      return new Result(statusCode, response, null, false);
     }
 
-    public static Result error(@Nullable String error) {
-      return new Result(null, error != null ? error : "No response", true);
+    public static Result error(int statusCode, @Nullable String error) {
+      return new Result(statusCode, null, error, true);
+    }
+
+    public @NotNull String getPresentableError() {
+      String msg = "Could not communicate with IDE: " + statusCode;
+      if (error != null && !error.isEmpty()) {
+        msg += " - " + error;
+      }
+      return msg;
     }
   }
 }

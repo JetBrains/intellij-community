@@ -10,7 +10,10 @@ class PythonLanguageIntrospectable(val config: PythonLanguageRuntimeConfiguratio
   override fun introspect(subject: LanguageRuntimeType.Introspectable): CompletableFuture<PythonLanguageRuntimeConfiguration> {
     val pythonExecutable = "python3"
     val pythonExecutablePathFuture = subject
-      .promiseExecuteScript(listOf(WHICH_BINARY, pythonExecutable))
+      .promiseExecuteScript(PythonExecutableIntrospectorVariant.WHICH_BINARY.getScript(pythonExecutable))
+      .thenComposeIf({ it.exitCode != 0 || it.stdout.firstOutputLine() == null }) {
+        subject.promiseExecuteScript(PythonExecutableIntrospectorVariant.SH_TYPE_BINARY.getScript(pythonExecutable))
+      }
       .thenApply {
         if (it.exitCode == 0) {
           it.stdout.firstOutputLine()?.let { firstStdoutLine -> config.pythonInterpreterPath = firstStdoutLine }
@@ -31,9 +34,18 @@ class PythonLanguageIntrospectable(val config: PythonLanguageRuntimeConfiguratio
     return userHomeFuture.thenApply { config }
   }
 
-  companion object {
-    private const val WHICH_BINARY = "/usr/bin/which"
+  private enum class PythonExecutableIntrospectorVariant {
+    WHICH_BINARY {
+      override fun getScript(pythonExecutable: String) = listOf("/usr/bin/which", pythonExecutable)
+    },
+    SH_TYPE_BINARY {
+      override fun getScript(pythonExecutable: String) = listOf("sh", "-c", "type -P ${pythonExecutable}")
+    };
 
+    abstract fun getScript(pythonExecutable: String): List<String>
+  }
+
+  companion object {
     private fun String.firstOutputLine(): String? = trim().let { trimmedOutput ->
       val iterator = trimmedOutput.lineSequence().iterator()
       if (iterator.hasNext()) iterator.next() else null

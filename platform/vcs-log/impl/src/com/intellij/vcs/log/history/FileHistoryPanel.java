@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -30,6 +31,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
+import com.intellij.vcs.log.ui.frame.ComponentQuickActionProvider;
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitSelectionListenerForDetails;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -95,6 +97,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     };
     myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
     mySpeedSearch = new FileHistorySpeedSearch(myProject, logData.getIndex(), logData.getStorage(), myGraphTable);
+    mySpeedSearch.setupListeners();
 
     myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
       return new CommitDetailsPanel(commit -> {
@@ -229,29 +232,37 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         return null;
       })
       .ifEq(VcsLogInternalDataKeys.LOG_UI_PROPERTIES).then(myProperties)
-      .ifEq(VcsDataKeys.VCS_FILE_REVISION).thenGet(() -> {
-        List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
-        if (details.isEmpty()) return null;
-        return myFileHistoryModel.createRevision(getFirstItem(details));
-      })
-      .ifEq(VcsDataKeys.VCS_FILE_REVISIONS).thenGet(() -> {
-        List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
-        if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-        return ContainerUtil.mapNotNull(details, myFileHistoryModel::createRevision).toArray(new VcsFileRevision[0]);
-      })
       .ifEq(VcsDataKeys.FILE_PATH).then(myFilePath)
-      .ifEq(VcsDataKeys.VCS_VIRTUAL_FILE).thenGet(() -> {
-        List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
-        if (details.isEmpty()) return null;
-        VcsCommitMetadata detail = Objects.requireNonNull(getFirstItem(details));
-        return FileHistoryUtil.createVcsVirtualFile(myFileHistoryModel.createRevision(detail));
-      })
-      .ifEq(CommonDataKeys.VIRTUAL_FILE).thenGet(myFilePath::getVirtualFile)
       .ifEq(VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS).thenGet(() -> Collections.singleton(myRoot))
       .ifEq(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION).then(false)
       .ifEq(VcsLogInternalDataKeys.LOG_DIFF_HANDLER).thenGet(() -> myFileHistoryModel.getDiffHandler())
       .ifEq(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW).thenGet(() -> myEditorDiffPreview)
       .ifEq(VcsLogInternalDataKeys.FILE_HISTORY_MODEL).thenGet(() -> myFileHistoryModel.createSnapshot())
+      .ifEq(QuickActionProvider.KEY).thenGet(() -> new ComponentQuickActionProvider(this))
+      .ifEq(PlatformCoreDataKeys.BGT_DATA_PROVIDER).thenGet(() -> {
+        List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
+        FileHistoryModel modelSnapshot = myFileHistoryModel.createSnapshot();
+        return (slowId) -> getSlowData(slowId, modelSnapshot, details);
+      })
+      .orNull();
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull FileHistoryModel model, @NotNull List<VcsCommitMetadata> details) {
+    return ValueKey.match(dataId)
+      .ifEq(VcsDataKeys.VCS_FILE_REVISION).thenGet(() -> {
+        if (details.isEmpty()) return null;
+        return model.createRevision(getFirstItem(details));
+      })
+      .ifEq(VcsDataKeys.VCS_FILE_REVISIONS).thenGet(() -> {
+        if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+        return ContainerUtil.mapNotNull(details, model::createRevision).toArray(new VcsFileRevision[0]);
+      })
+      .ifEq(CommonDataKeys.VIRTUAL_FILE).thenGet(myFilePath::getVirtualFile)
+      .ifEq(VcsDataKeys.VCS_VIRTUAL_FILE).thenGet(() -> {
+        if (details.isEmpty()) return null;
+        VcsCommitMetadata detail = Objects.requireNonNull(getFirstItem(details));
+        return FileHistoryUtil.createVcsVirtualFile(model.createRevision(detail));
+      })
       .orNull();
   }
 

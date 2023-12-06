@@ -54,7 +54,6 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
@@ -85,10 +84,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   public static final Key<Boolean> LIGHTWEIGHT_CONTENT_MARKER = Key.create("LightweightContent");
 
-  @NonNls private static final String LAYOUT = "Runner.Layout";
-  @NonNls private static final String SETTINGS = "XDebugger.Settings";
-  @NonNls private static final String VIEW_POPUP = "Runner.View.Popup";
-  @NonNls static final String VIEW_TOOLBAR = "Runner.View.Toolbar";
+  private static final @NonNls String LAYOUT = "Runner.Layout";
+  private static final @NonNls String SETTINGS = "XDebugger.Settings";
+  private static final @NonNls String VIEW_POPUP = "Runner.View.Popup";
+  static final @NonNls String VIEW_TOOLBAR = "Runner.View.Toolbar";
 
   private ShowDebugContentAction myShowDebugContentAction = null;
 
@@ -240,7 +239,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     getGrids().forEach(grid -> grid.setToolbarBefore(value));
 
     myContextActions.clear();
-    updateTabsUI(false);
+
+    rebuildToolbar();
+    Set<String> usedNames = new HashSet<>();
+    for (TabInfo each : myTabs.getTabs()) {
+      updateTabUI(each, usedNames);
+    }
+    myTabs.updateTabActions(false);
   }
 
   void setTopLeftActionsVisible(boolean visible) {
@@ -473,8 +478,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return myWindow;
   }
 
-  @NotNull
-  public JBTabs getTabs() { return myTabs; }
+  public @NotNull JBTabs getTabs() { return myTabs; }
 
   public AnAction @NotNull[] getViewActions() {
     return myViewActions.getChildren(null);
@@ -505,11 +509,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   void processBounce(Content content, final boolean activate) {
-    final GridImpl grid = getGridFor(content, false);
-    if (grid == null) return;
-
-    final TabInfo tab = myTabs.findInfo(grid);
+    final TabInfo tab = findTabInfoFor(content);
     if (tab == null) return;
+    final GridImpl grid = getGridFor(tab);
 
     if (getSelectedGrid() != grid) {
       tab.setAlertIcon(content.getAlertIcon());
@@ -1127,7 +1129,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       hasToolbarContent |= updateTabUI(each, usedNames);
     }
     int tabsCount = tabs.size() + myChildren.stream().mapToInt(child -> child.myTabs.getTabCount()).sum();
-    myTabs.getPresentation().setHideTabs(!hasToolbarContent && tabsCount <= 1 && myOriginal == null);
+    boolean hideTabs = !hasToolbarContent && tabsCount <= 1 && myOriginal == null;
+    myTabs.getPresentation().setHideTabs(hideTabs);
     myTabs.updateTabActions(validateNow);
 
     if (validateNow) {
@@ -1269,12 +1272,16 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   @Override
   public @Nullable Grid findGridFor(@NotNull Content content) {
+    TabInfo tabInfo = findTabInfoFor(content);
+    return tabInfo != null ? getGridFor(tabInfo) : null;
+  }
+
+  private @Nullable TabInfo findTabInfoFor(@NotNull Content content) {
     TabImpl tab = (TabImpl)getStateFor(content).getTab();
     for (TabInfo each : myTabs.getTabs()) {
       TabImpl t = getTabFor(each);
-      if (t != null && t.equals(tab)) return getGridFor(each);
+      if (t != null && t.equals(tab)) return each;
     }
-
     return null;
   }
 
@@ -1530,7 +1537,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return myToDisposeRemovedContent;
   }
 
-  private static class MyDropAreaPainter extends AbstractPainter {
+  private static final class MyDropAreaPainter extends AbstractPainter {
     private Shape myBoundingBox;
 
     @Override
@@ -1602,7 +1609,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
+  private final class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
     private boolean myWasEverAdded;
 
     MyComponent() {
@@ -1836,17 +1843,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   @Override
   public ActionCallback select(final @NotNull Content content, final boolean requestFocus) {
-    final GridImpl grid = (GridImpl)findGridFor(content);
-    if (grid == null) return ActionCallback.DONE;
-
-
-    final TabInfo info = myTabs.findInfo(grid);
+    final TabInfo info = findTabInfoFor(content);
     if (info == null) return ActionCallback.DONE;
-
+    final GridImpl grid = getGridFor(info);
 
     final ActionCallback result = new ActionCallback();
     myTabs.select(info, false).doWhenDone(() -> grid.select(content, requestFocus).notifyWhenDone(result));
-
 
     return result;
   }
@@ -1913,7 +1915,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return (DockManagerImpl)DockManager.getInstance(myProject);
   }
 
-  class MyDragOutDelegate implements TabInfo.DragOutDelegate {
+  final class MyDragOutDelegate implements TabInfo.DragOutDelegate {
     private DragSession mySession;
 
     @Override
@@ -1955,7 +1957,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  class DockableGrid implements DockableContent<List<Content>> {
+  final class DockableGrid implements DockableContent<List<Content>> {
     private final Image myImg;
     private final Presentation myPresentation;
     private final Dimension myPreferredSize;
@@ -2016,7 +2018,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  public static class ShowDebugContentAction extends AnAction implements DumbAware {
+  public static final class ShowDebugContentAction extends AnAction implements DumbAware {
     public static final String ACTION_ID = "ShowDebugContent";
 
     private RunnerContentUi myContentUi;
@@ -2048,7 +2050,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private static class ToggleSeparateWatches extends DumbAwareToggleAction {
+  private static final class ToggleSeparateWatches extends DumbAwareToggleAction {
 
     private final @NotNull ToggleAction delegate;
     private final boolean myInverted;
@@ -2082,9 +2084,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private void fireContentClosed(Content content) {
+  private void fireContentClosed(@Nullable Content content) {
     for (Listener each : myDockingListeners) {
-      each.contentRemoved(content);
+      // dirty hack to not pass null here, listener implementation do not take this value into account
+      each.contentRemoved(content != null ? content : new Object());
     }
   }
 

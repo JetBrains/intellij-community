@@ -1,5 +1,5 @@
 class AAA {
-    var x = 42
+    var x: Int = 42
         set(x) {
             field += x
         }

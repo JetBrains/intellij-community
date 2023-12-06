@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -174,7 +175,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       if (ScrollToTestSourceAction.isScrollEnabled(this)) {
         ReadAction
           .nonBlocking(() -> TestsUIUtil.getOpenFileDescriptor(testProxy, this))
-          .finishOnUiThread(ModalityState.NON_MODAL, descriptor -> {
+          .finishOnUiThread(ModalityState.nonModal(), descriptor -> {
             if (descriptor != null) {
               OpenSourceUtil.navigate(false, descriptor);
             }
@@ -462,7 +463,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @Override
   public boolean hasTestSuites() {
-    return getRoot().getChildren().size() > 0;
+    return !getRoot().getChildren().isEmpty();
   }
 
   @Override
@@ -659,6 +660,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       repaint();
       // else color will be according failed/passed tests
     }
+
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myTreeView.setAccessibleStatus(myStatusLine.getStateText());
+    });
   }
 
   private boolean isUndefined() {
@@ -768,6 +773,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myHistoryFileName;
   }
 
+  AnAction[] getToolbarActions() { return myToolbarPanel.actionsToMerge; }
+
+  AnAction[] getAdditionalToolbarActions() { return myToolbarPanel.additionalActionsToMerge; }
+
+
+  @Override
+  protected void hideToolbar() {
+    super.hideToolbar();
+    myToolbarPanel.setVisible(false);
+  }
+
   private static class MySaveHistoryTask extends Task.Backgroundable {
 
     private final TestConsoleProperties myConsoleProperties;
@@ -820,17 +836,35 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         String url = proxy.getLocationUrl();
         if (url != null && proxy.getLocator() != null) {
           String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
-          DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
-            Project project = getProject();
-            TestStackTraceParser info = getStackTraceParser(proxy, url, project);
-            TestStateStorage storage = TestStateStorage.getInstance(project);
-            storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
-                                                                configurationName == null ? 0 : configurationName.hashCode(),
-                                                                info.getFailedLine(), info.getFailedMethodName(),
-                                                                info.getErrorMessage(), info.getTopLocationLine()));
-          });
+          boolean isConfigurationDumbAware = myConfiguration != null && myConfiguration.getType().isDumbAware();
+          boolean isSMTestLocatorDumbAware = DumbService.isDumbAware(proxy.getLocator());
+          if (isConfigurationDumbAware && isSMTestLocatorDumbAware) {
+            ApplicationManager.getApplication().runReadAction(() -> {
+              writeTestState(proxy, url, configurationName);
+            });
+          }
+          else {
+            if (isConfigurationDumbAware /*&& !isSMTestLocatorDumbAware*/) {
+              LOG.warn("Configuration " + myConfiguration.getType() +
+                       " is dumb aware, but it's test locator " + proxy.getLocator() + " is not. " +
+                       "It leads to an hanging update task on finishing a test case in dumb mode.");
+            }
+            DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
+              writeTestState(proxy, url, configurationName);
+            });
+          }
         }
       }
+    }
+
+    private void writeTestState(@NotNull SMTestProxy proxy, @NotNull String url, @Nullable String configurationName) {
+      Project project = getProject();
+      TestStackTraceParser info = getStackTraceParser(proxy, url, project);
+      TestStateStorage storage = TestStateStorage.getInstance(project);
+      storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
+                                                          configurationName == null ? 0 : configurationName.hashCode(),
+                                                          info.getFailedLine(), info.getFailedMethodName(),
+                                                          info.getErrorMessage(), info.getTopLocationLine()));
     }
 
     private TestStackTraceParser getStackTraceParser(@NotNull SMTestProxy proxy, @NotNull String url, @NotNull Project project) {

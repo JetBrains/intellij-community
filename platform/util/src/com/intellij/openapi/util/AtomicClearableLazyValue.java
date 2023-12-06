@@ -3,6 +3,9 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Use {@link com.intellij.util.concurrency.SynchronizedClearableLazy} instead.
+ */
 public abstract class AtomicClearableLazyValue<T> extends ClearableLazyValue<T> {
   @Override
   public final synchronized @NotNull T getValue() {

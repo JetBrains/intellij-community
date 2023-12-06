@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -14,8 +14,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 
 public final class ActiveWindowsWatcher {
-
-  private final static LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
+  private static final LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
 
   public static boolean isTheCurrentWindowOnTheActivatedList(Window w) {
     updateActivatedWindowSet();
@@ -79,7 +78,7 @@ public final class ActiveWindowsWatcher {
     throw new IllegalArgumentException("The window after "  + w.getName() +  " has not been found");
   }
 
-  private static @NotNull Window[] getWindows(@NotNull Window w) {
+  private static Window @NotNull [] getWindows(@NotNull Window w) {
     if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm && activatedWindows.size() > 1) {
       return activatedWindows.stream()
         .filter(window -> window == w || Foundation.invoke(MacUtil.getWindowFromJavaWindow(window), "isOnActiveSpace").booleanValue())

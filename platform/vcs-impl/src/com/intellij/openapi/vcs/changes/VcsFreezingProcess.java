@@ -58,19 +58,21 @@ public class VcsFreezingProcess {
     LOG.debug("finished.");
   }
 
-  private static void saveAndBlockInAwt() {
+  private void saveAndBlockInAwt() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
+      StoreReloadManager.Companion.getInstance(myProject).blockReloadingProjectOnExternalChanges();
       FileDocumentManager.getInstance().saveAllDocuments();
+
       SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
       saveAndSyncHandler.blockSaveOnFrameDeactivation();
       saveAndSyncHandler.blockSyncOnFrameActivation();
     });
   }
 
-  private static void unblockInAwt() {
+  private void unblockInAwt() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+      StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
+
       SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
       saveAndSyncHandler.unblockSaveOnFrameDeactivation();
       saveAndSyncHandler.unblockSyncOnFrameActivation();

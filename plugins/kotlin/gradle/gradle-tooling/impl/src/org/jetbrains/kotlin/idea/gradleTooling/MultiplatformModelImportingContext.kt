@@ -7,9 +7,9 @@ import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.ENABLE_KGP
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMultiplatformImportReflection
 import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 interface HasDependencyResolver {
@@ -19,8 +19,8 @@ interface HasDependencyResolver {
 
 interface MultiplatformModelImportingContext : KotlinSourceSetContainer, HasDependencyResolver {
     val project: Project
+    val interner: Interner
     val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
-    val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper
 
     val importReflection: KotlinMultiplatformImportReflection?
     val kotlinExtensionReflection: KotlinExtensionReflection
@@ -63,23 +63,44 @@ interface MultiplatformModelImportingContext : KotlinSourceSetContainer, HasDepe
 
 internal fun MultiplatformModelImportingContext.getProperty(property: GradleImportProperties): Boolean = project.getProperty(property)
 
-internal fun Project.getProperty(property: GradleImportProperties): Boolean {
-    val explicitValueIfAny = try {
-        (findProperty(property.id) as? String)?.toBoolean()
+/**
+ * HMPP is enabled by default since 1.6.x version, and since the 1.9.20 it is impossible to turn back the old mode.
+ * In 1.9.20 we still set this property to true on KGP side so IDE's without this commit will behave correctly.
+ *
+ * If you are writing the new code -- you are free to assume that HMPP is enabled and do nothing for the old mode.
+ *
+ * We could remove this code completely from IDEA once we stop supporting the KGP with versions <= 1.9.0.
+ * My bet is that in K2 plugin we could not support non-HMPP mode at all and let the code for K1 just rot.
+ */
+internal val MultiplatformModelImportingContext.isHMPPEnabled: Boolean
+    get() =
+        when (project.readProperty("kotlin.mpp.enableGranularSourceSetsMetadata")) {
+            // KGP [1.6.0<=>1.9.20] set this property to true by default
+            true -> true
+
+            // it is possible to set this property to false only in KGP < 1.9.20, and we respect the disabling HMPP in such cases
+            false -> false
+
+            // since 2.0.0+ explicitValueIfAny should be null => HMPP is enabled
+            null -> true
+        }
+
+internal fun Project.readProperty(propertyId: String): Boolean? =
+    try {
+        (findProperty(propertyId) as? String)?.toBoolean()
     } catch (e: Exception) {
-        logger.error("Error while trying to read property $property from project $project", e)
+        logger.error("Error while trying to read property $propertyId from project $project", e)
         null
     }
 
-    return explicitValueIfAny ?: property.defaultValue
-}
+internal fun Project.getProperty(property: GradleImportProperties): Boolean =
+    readProperty(property.id) ?: property.defaultValue
 
 internal enum class GradleImportProperties(val id: String, val defaultValue: Boolean) {
-    IS_HMPP_ENABLED("kotlin.mpp.enableGranularSourceSetsMetadata", false),
     COERCE_ROOT_SOURCE_SETS_TO_COMMON("kotlin.mpp.coerceRootSourceSetsToCommon", true),
     IMPORT_ORPHAN_SOURCE_SETS("import_orphan_source_sets", true),
-    INCLUDE_ANDROID_DEPENDENCIES("kotlin.include.android.dependencies", false),
-    ENABLE_KGP_DEPENDENCY_RESOLUTION("kotlin.mpp.import.enableKgpDependencyResolution", true)
+    ENABLE_KGP_DEPENDENCY_RESOLUTION("kotlin.mpp.import.enableKgpDependencyResolution", true),
+    LEGACY_TEST_SOURCE_SET_DETECTION("kotlin.mpp.import.legacyTestSourceSetDetection", false),
     ;
 }
 
@@ -92,16 +113,18 @@ internal class MultiplatformModelImportingContextImpl(
     override val importReflection: KotlinMultiplatformImportReflection?,
     override val kotlinExtensionReflection: KotlinExtensionReflection,
     override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?,
-    override val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper,
     modelBuilderContext: ModelBuilderContext
 ) : MultiplatformModelImportingContext {
 
+    override val interner: Interner = Interner()
 
     /** see [initializeSourceSets] */
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set
 
-    override val dependencyResolver = DependencyResolverImpl(project, false, true, SourceSetCachedFinder(modelBuilderContext))
+    private val downloadSources = java.lang.Boolean.parseBoolean(System.getProperty("idea.gradle.download.sources", "true"))
+
+    override val dependencyResolver = DependencyResolverImpl(modelBuilderContext, project, false, downloadSources)
     override val dependencyMapper = KotlinDependencyMapper()
 
     /** see [initializeCompilations] */

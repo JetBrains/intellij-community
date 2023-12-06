@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -14,18 +14,12 @@ class BundledRuntimeTest {
   @Test
   fun download(): Unit = runBlocking(Dispatchers.IO) {
     withCompilationContext { context ->
-      val bundledRuntime = BundledRuntimeImpl(context.options, context.paths, context.dependenciesProperties, context.messages::error, context.messages::info)
+      val bundledRuntime = BundledRuntimeImpl(context)
       val currentJbr = bundledRuntime.getHomeForCurrentOsAndArch()
       var spottedCurrentJbrInDownloadVariants = false
       for (prefix in JetBrainsRuntimeDistribution.ALL) {
         for (os in OsFamily.ALL) {
           for (arch in JvmArchitecture.ALL) {
-            if (os == OsFamily.WINDOWS && arch == JvmArchitecture.aarch64) {
-              // Not supported yet
-              // https://youtrack.jetbrains.com/issue/JBR-2074
-              continue
-            }
-
             val home = try {
               bundledRuntime.extract(prefix.artifactPrefix, os, arch)
             }
@@ -56,14 +50,7 @@ class BundledRuntimeTest {
   fun currentArchDownload() {
     withCompilationContext { context ->
       val currentJbrHome = runBlocking(Dispatchers.IO) {
-        BundledRuntimeImpl(
-          options = context.options,
-          paths = context.paths,
-          dependenciesProperties = context.dependenciesProperties,
-          error = context.messages::error,
-          info = context.messages::info
-        )
-          .getHomeForCurrentOsAndArch()
+        BundledRuntimeImpl(context).getHomeForCurrentOsAndArch()
       }
       val javaExe = JdkDownloader.getJavaExecutable(currentJbrHome)
       val process = ProcessBuilder(javaExe.toString(), "-version")

@@ -10,9 +10,9 @@ abstract class AbstractObservableProperty<T> : ObservableProperty<T> {
 
   private val changeDispatcher = SingleEventDispatcher.create<T>()
 
-  protected fun fireChangeEvent(value: T) =
+  protected fun fireChangeEvent(value: T): Unit =
     changeDispatcher.fireEvent(value)
 
-  override fun afterChange(parentDisposable: Disposable?, listener: (T) -> Unit) =
+  override fun afterChange(parentDisposable: Disposable?, listener: (T) -> Unit): Unit =
     changeDispatcher.whenEventHappened(parentDisposable, listener)
 }

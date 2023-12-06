@@ -41,7 +41,7 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
     terminalArrangementManager.setToolWindow(toolWindow);
   }
 
-  private static class SmartCommandExecutionToggleAction extends DumbAwareToggleAction {
+  private static final class SmartCommandExecutionToggleAction extends DumbAwareToggleAction {
     private final TerminalCommandHandlerOptions myOptions;
 
     private SmartCommandExecutionToggleAction(TerminalCommandHandlerOptions options) {

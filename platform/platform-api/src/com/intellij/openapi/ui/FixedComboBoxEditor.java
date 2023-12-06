@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -25,12 +25,10 @@ import java.lang.reflect.Method;
  * Use this editor if you wish your combobox editor to look good on Macs.
  */
 public class FixedComboBoxEditor implements ComboBoxEditor {
-  @NotNull
-  private final JBTextField myField = UIUtil.isUnderDefaultMacTheme() ? new MacComboBoxTextField() : new JBTextField();
+  private final @NotNull JBTextField myField = UIUtil.isUnderDefaultMacTheme() ? new MacComboBoxTextField() : new JBTextField();
   private Object oldValue;
 
-  @NotNull
-  public JBTextField getField() {
+  public @NotNull JBTextField getField() {
     return myField;
   }
 
@@ -84,8 +82,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
 
   @Override public void removeActionListener(ActionListener l) {}
 
-  @Nullable
-  private static ComboPopup getComboboxPopup(JComboBox comboBox) {
+  private static @Nullable ComboPopup getComboboxPopup(JComboBox comboBox) {
     ComboBoxUI ui = comboBox.getUI();
     ComboPopup popup = null;
     if (ui instanceof BasicComboBoxUI) {

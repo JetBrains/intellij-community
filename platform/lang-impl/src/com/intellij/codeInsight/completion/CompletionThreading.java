@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,15 +10,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.concurrency.Semaphore;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 interface CompletionThreading {
 
@@ -31,16 +27,13 @@ interface WeighingDelegate extends Consumer<CompletionResult> {
   void waitFor();
 }
 
-class SyncCompletion extends CompletionThreadingBase {
+final class SyncCompletion extends CompletionThreadingBase {
   private final List<CompletionResult> myBatchList = new ArrayList<>();
 
   @Override
   public Future<?> startThread(final ProgressIndicator progressIndicator, Runnable runnable) {
     ProgressManager.getInstance().runProcess(runnable, progressIndicator);
-
-    FutureResult<Object> result = new FutureResult<>();
-    result.set(true);
-    return result;
+    return CompletableFuture.completedFuture(true);
   }
 
   @Override
@@ -76,7 +69,7 @@ class SyncCompletion extends CompletionThreadingBase {
   }
 }
 
-class AsyncCompletion extends CompletionThreadingBase {
+final class AsyncCompletion extends CompletionThreadingBase {
   private static final Logger LOG = Logger.getInstance(AsyncCompletion.class);
   private final ArrayList<CompletionResult> myBatchList = new ArrayList<>();
   private final LinkedBlockingQueue<Computable<Boolean>> myQueue = new LinkedBlockingQueue<>();
@@ -101,7 +94,7 @@ class AsyncCompletion extends CompletionThreadingBase {
   @Override
   public WeighingDelegate delegateWeighing(final CompletionProgressIndicator indicator) {
 
-    class WeighItems implements Runnable {
+    final class WeighItems implements Runnable {
       @Override
       public void run() {
         try {

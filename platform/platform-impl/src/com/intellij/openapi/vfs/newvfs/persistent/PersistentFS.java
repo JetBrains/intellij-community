@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
@@ -23,21 +24,24 @@ import java.util.function.Function;
 import static com.intellij.util.BitUtil.isSet;
 
 public abstract class PersistentFS extends ManagingFS {
-  static final class Flags {
-    static final int CHILDREN_CACHED = 0x01;
-    static final int IS_DIRECTORY = 0x02;
-    static final int IS_READ_ONLY = 0x04;
-    static final int MUST_RELOAD_CONTENT = 0x08;
-    static final int IS_SYMLINK = 0x10;
-    static final int IS_SPECIAL = 0x20;
-    static final int IS_HIDDEN = 0x40;
-    static final int MUST_RELOAD_LENGTH = 0x80;
-    static final int CHILDREN_CASE_SENSITIVE = 0x100;  // 'true' if this directory can contain files differing only in the case
-    static final int CHILDREN_CASE_SENSITIVITY_CACHED = 0x200;  // 'true' if this directory's case sensitivity is known
-    static final int FREE_RECORD_FLAG = 0x400;
-    static final int OFFLINE_BY_DEFAULT = 0x800;
+  @ApiStatus.Internal
+  public interface Flags {
+    //@formatter:off
+    int CHILDREN_CACHED                  =           0b0001;
+    int IS_DIRECTORY                     =           0b0010;
+    int IS_READ_ONLY                     =           0b0100;
+    int MUST_RELOAD_CONTENT              =           0b1000;
 
-    static final int MASK = 0xFFF;
+    int IS_SYMLINK                       =      0b0001_0000;
+    int IS_SPECIAL                       =      0b0010_0000;
+    int IS_HIDDEN                        =      0b0100_0000;
+    int MUST_RELOAD_LENGTH               =      0b1000_0000;
+    int CHILDREN_CASE_SENSITIVE          = 0b0001_0000_0000;  // 'true' if this directory can contain files differing only in the case
+    int CHILDREN_CASE_SENSITIVITY_CACHED = 0b0010_0000_0000;  // 'true' if this directory's case sensitivity is known
+    int FREE_RECORD_FLAG                 = 0b0100_0000_0000;
+    int OFFLINE_BY_DEFAULT               = 0b1000_0000_0000;
+    //@formatter:on
+    static int getAllValidFlags() { return 0xFFF; }
   }
 
   @MagicConstant(flagsFromClass = Flags.class)
@@ -64,8 +68,7 @@ public abstract class PersistentFS extends ManagingFS {
   @ApiStatus.Internal
   public abstract ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs);
 
-  @NotNull
-  public abstract String getName(int id);
+  public abstract @NotNull String getName(int id);
 
   public abstract long getLastRecordedLength(@NotNull VirtualFile file);
 
@@ -82,12 +85,15 @@ public abstract class PersistentFS extends ManagingFS {
 
   public static @NotNull FileAttributes.CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
     if (!isDirectory(attributes)) {
-      throw new IllegalArgumentException("CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
+      throw new IllegalArgumentException(
+        "CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
     }
     if (!isSet(attributes, Flags.CHILDREN_CASE_SENSITIVITY_CACHED)) {
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
-    return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE) ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+    return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE)
+           ? FileAttributes.CaseSensitivity.SENSITIVE
+           : FileAttributes.CaseSensitivity.INSENSITIVE;
   }
 
   public abstract int storeUnlinkedContent(byte @NotNull [] bytes);
@@ -113,5 +119,5 @@ public abstract class PersistentFS extends ManagingFS {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public abstract @NotNull VfsLog getVfsLog();
+  public abstract @Nullable VfsLog getVfsLog();
 }

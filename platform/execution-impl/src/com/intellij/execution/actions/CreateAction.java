@@ -40,7 +40,7 @@ public class CreateAction extends BaseRunConfigurationAction {
   }
 
   @Override
-  protected void updatePresentation(final Presentation presentation, @NotNull final String actionText, final ConfigurationContext context) {
+  protected void updatePresentation(final Presentation presentation, final @NotNull String actionText, final ConfigurationContext context) {
     choosePolicy(context).update(presentation, context, actionText);
   }
 
@@ -55,8 +55,8 @@ public class CreateAction extends BaseRunConfigurationAction {
     return Holder.EDIT;
   }
 
-  private static abstract class BaseCreatePolicy {
-    public void update(final Presentation presentation, final ConfigurationContext context, @NotNull final String actionText) {
+  private abstract static class BaseCreatePolicy {
+    public void update(final Presentation presentation, final ConfigurationContext context, final @NotNull String actionText) {
       updateText(presentation, actionText);
     }
     
@@ -84,7 +84,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
   }
 
-  private static class EditPolicy extends CreateAndEditPolicy {
+  private static final class EditPolicy extends CreateAndEditPolicy {
     @Override
     protected void perform(RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -94,7 +94,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
   }
 
-  private static class Holder {
+  private static final class Holder {
     private static final BaseCreatePolicy CREATE_AND_EDIT = new CreateAndEditPolicy();
     private static final BaseCreatePolicy EDIT = new EditPolicy();
     private static final BaseCreatePolicy DISABLED = new BaseCreatePolicy() {

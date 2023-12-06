@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-// package: jakarta.annotation:jakarta.annotation-api
+// packages: jakarta.annotation:jakarta.annotation-api
 class JakartaAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override

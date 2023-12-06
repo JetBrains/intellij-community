@@ -5,6 +5,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -18,6 +19,7 @@ public final class MavenDataKeys {
   public static final DataKey<Map<String, MavenProfileKind>> MAVEN_PROFILES = DataKey.create("MAVEN_PROFILES");
   public static final DataKey<Collection<MavenArtifact>> MAVEN_DEPENDENCIES = DataKey.create("MAVEN_DEPENDENCIES");
   public static final DataKey<JTree> MAVEN_PROJECTS_TREE = DataKey.create("MAVEN_PROJECTS_TREE");
+  public static final DataKey<MavenRepositoryInfo> MAVEN_REPOSITORY = DataKey.create("MAVEN_REPOSITORY");
 
   private MavenDataKeys() {
   }

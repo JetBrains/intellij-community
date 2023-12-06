@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
@@ -25,6 +24,7 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,7 +71,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private final String mySanitizedName;
   private final Path myProjectPath;
   private final boolean myIsDirectoryBasedProject;
-  private SdkLeakTracker myOldSdks;
+  private SdkLeakTracker mySdkLeakTracker;
 
   private AccessToken projectTracker;
 
@@ -97,7 +97,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
     InjectedLanguageManagerImpl.pushInjectors(getProject());
-    myOldSdks = new SdkLeakTracker();
+    mySdkLeakTracker = new SdkLeakTracker();
   }
 
   @Override
@@ -165,8 +165,8 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     });
     actions.add(() -> LightPlatformTestCase.checkEditorsReleased());
     actions.add(() -> {
-      if (myOldSdks != null) {
-        myOldSdks.checkForJdkTableLeaks();
+      if (mySdkLeakTracker != null) {
+        mySdkLeakTracker.checkForJdkTableLeaks();
       }
     });
     // project is disposed by now, no point in passing it
@@ -177,7 +177,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   private void setUpProject() throws Exception {
     OpenProjectTask options = OpenProjectTaskBuilderKt.createTestOpenProjectOptions(true, project -> {
-      project.getMessageBus().simpleConnect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      project.getMessageBus().simpleConnect().subscribe(ModuleListener.TOPIC, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project __, @NotNull Module module) {
           if (myModule == null) {

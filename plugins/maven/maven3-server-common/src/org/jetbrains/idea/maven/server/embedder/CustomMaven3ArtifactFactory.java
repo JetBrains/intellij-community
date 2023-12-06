@@ -97,15 +97,15 @@ public class CustomMaven3ArtifactFactory extends DefaultArtifactFactory {
     return a != null ? new CustomMaven3Artifact(a) : null;
   }
 
-  private String checkValue(String value) {
+  private static String checkValue(String value) {
     return value == null || value.trim().length() == 0 ? "error" : value;
   }
 
-  private String checkVersion(String value) {
+  private static String checkVersion(String value) {
     return value == null ? "unknown" : value;
   }
 
-  private VersionRange checkVersionRange(VersionRange range) {
+  private static VersionRange checkVersionRange(VersionRange range) {
     return range == null ? UNKNOWN_VERSION_RANGE : range;
   }
 }

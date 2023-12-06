@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -7,20 +7,19 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.platform.workspace.storage.CodeGeneratorVersions
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.workspaceModel.storage.CodeGeneratorVersions
-import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
-import org.jetbrains.kotlin.parsing.parseNumericLiteral
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 private val LOG = logger<WorkspaceImplObsoleteInspection>()
 
-class WorkspaceImplObsoleteInspection: LocalInspectionTool() {
+internal class WorkspaceImplObsoleteInspection: LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
     override fun visitClass(klass: KtClass) {
@@ -56,6 +55,6 @@ private class RegenerateWorkspaceModelFix(psiElement: PsiElement) : LocalQuickFi
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
     val module = projectFileIndex.getModuleForFile(file.virtualFile)
-    WorkspaceModelGenerator.generate(project, module!!)
+    WorkspaceModelGenerator.getInstance(project).generate(module!!)
   }
 }

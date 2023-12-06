@@ -8,19 +8,18 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
+import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginSet
-import com.intellij.idea.*
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.application.impl.RwLockHolder
 import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
@@ -30,8 +29,6 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
@@ -45,6 +42,12 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
+import com.intellij.platform.ide.bootstrap.callAppInitialized
+import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
+import com.intellij.platform.ide.bootstrap.initConfigurationStore
+import com.intellij.platform.ide.bootstrap.preloadCriticalServices
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
@@ -56,11 +59,13 @@ import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.SystemProperties
+import com.intellij.util.WalkingState
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -70,7 +75,7 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 private var applicationInitializationResult: Result<Unit>? = null
-const val LEAKED_PROJECTS = "leakedProjects"
+const val LEAKED_PROJECTS: String = "leakedProjects"
 
 val isApplicationInitialized: Boolean
   get() = applicationInitializationResult?.isSuccess == true
@@ -104,7 +109,17 @@ fun loadApp() {
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
+  // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside with open-telemetry-metrics.*.csv)
+  System.setProperty("idea.diagnostic.opentelemetry.file",
+                     PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString())
+
   enableCoroutineDump()
+  JBR.getJstack()?.includeInfoFrom {
+    """
+    $COROUTINE_DUMP_HEADER
+    ${dumpCoroutines(stripDump = false)}
+    """
+  }
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true
@@ -116,23 +131,22 @@ fun loadApp(setupEventQueue: Runnable) {
 
 @TestOnly
 private fun loadAppInUnitTestMode(isHeadless: Boolean) {
-  val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
+  val loadedModuleFuture = PluginManagerCore.initPluginFuture
 
-  val rwLockHolder = RwLockHolder()
   val awtBusyThread = AppScheduledExecutorService.getPeriodicTasksThread()
   EdtInvocationManager.invokeAndWaitIfNeeded {
     // Instantiate `AppDelayQueue` which starts "periodic tasks thread" which we'll mark busy to prevent this EDT from dying.
     // That thread was chosen because we know for sure it's running. Needed for EDT not to exit suddenly
     AWTAutoShutdown.getInstance().notifyThreadBusy(awtBusyThread)
-    rwLockHolder.initialize(Thread.currentThread())
   }
 
-  val app = ApplicationImpl(isHeadless, rwLockHolder)
+  val app = ApplicationImpl(isHeadless)
   BundleBase.assertOnMissedKeys(true)
   // do not crash AWT on exceptions
   AWTExceptionHandler.register()
   Disposer.setDebugMode(true)
   Logger.setUnitTestMode()
+  WalkingState.setUnitTestMode()
 
   Disposer.register(app) {
     AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
@@ -145,25 +159,29 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   try {
     // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
     val pluginSet = loadedModuleFuture.asCompletableFuture().get(40, TimeUnit.SECONDS)
-    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
+    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
 
-    initConfigurationStore(app)
+    val task = suspend {
+      initConfigurationStore(app)
 
-    addKeysFromPlugins()
-    Registry.markAsLoaded()
+      addKeysFromPlugins()
+      Registry.markAsLoaded()
+
+      preloadServicesAndCallAppInitializedListeners(app)
+    }
 
     if (EDT.isCurrentThreadEdt()) {
-      runBlockingModalWithRawProgressReporter(ModalTaskOwner.guess(), "") {
-        preloadServicesAndCallAppInitializedListeners(app, pluginSet)
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+        task()
       }
     }
     else {
       runBlocking(Dispatchers.Default) {
-        preloadServicesAndCallAppInitializedListeners(app, pluginSet)
+        task()
       }
     }
 
-    StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED)
+    LoadingState.setCurrentState(LoadingState.APP_STARTED)
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
   }
   catch (e: InterruptedException) {
@@ -171,28 +189,20 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
 }
 
-private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl, pluginSet: PluginSet) {
+private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl) {
   coroutineScope {
     withTimeout(Duration.ofSeconds(40).toMillis()) {
-      preloadCriticalServices(app)
-      app.preloadServices(
-        modules = pluginSet.getEnabledModules(),
-        activityPrefix = "",
-        syncScope = this,
-        asyncScope = app.coroutineScope,
-      )
+      preloadCriticalServices(app = app,
+                              asyncScope = app.coroutineScope,
+                              appRegistered = CompletableDeferred(value = null),
+                              initLafJob = CompletableDeferred(value = null),
+                              initAwtToolkitAndEventQueueJob = null)
     }
 
-    app.createInitOldComponentsTask()?.let { loadComponentInEdtTask ->
-      withContext(Dispatchers.EDT) {
-        loadComponentInEdtTask()
-      }
-    }
-    app.loadAppComponents()
-  }
-
-  coroutineScope {
+    @Suppress("TestOnlyProblems")
     callAppInitialized(getAppInitializedListeners(app), app.coroutineScope)
+
+    LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
 }
 
@@ -293,10 +303,8 @@ fun Application.cleanupApplicationCaches() {
   (serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl)?.cleanupForNextTest()
   if (serviceIfCreated<VirtualFileManager>() != null) {
     val localFileSystem = LocalFileSystem.getInstance()
-    if (localFileSystem != null) {
-      runInEdtAndWait {
-        (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
-      }
+    runInEdtAndWait {
+      (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
     }
   }
 }

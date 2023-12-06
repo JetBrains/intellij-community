@@ -30,7 +30,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see getTargetPaths
  */
 internal fun createTargetedPositionConverter(debugProcess: PyDebugProcess,
-                                             pathMapper: PyTargetPathMapper): PyPositionConverter {
+                                             pathMapper: PyRemotePathMapper): PyPositionConverter {
   return PyRemotePositionConverter(debugProcess, pathMapper)
 }
 

@@ -9,15 +9,18 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -129,7 +132,7 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
   }
 
   private static Color getColorByKey(TextAttributesKey colorKey) {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(colorKey).getForegroundColor();
+    return JBColor.lazy(() -> Objects.requireNonNullElse(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(colorKey).getForegroundColor(), UIUtil.getListForeground()));
   }
 
   private static @NotNull Color getDefaultForegroundColor() {
@@ -220,7 +223,7 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
       null,
       null,
       inverse,
-      effectType == null ? Collections.emptyList() : Collections.singletonList(effectType),
+      ContainerUtil.createMaybeSingletonList(effectType),
       fontType
     );
   }
@@ -305,11 +308,11 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
     return new ConsoleViewContentType(attribute, attrs);
   }
 
-  private static Color getColor(int colorIndex, Color enforcedColor, Supplier<? extends Color> getDefaultColor) {
+  private static Color getColor(int colorIndex, Color enforcedColor, @NotNull Supplier<? extends @NotNull Color> getDefaultColor) {
     if (enforcedColor != null) {
       return enforcedColor;
     }
 
-    return colorIndex != -1 ? getAnsiColor(colorIndex) : getDefaultColor.get();
+    return colorIndex != -1 ? getAnsiColor(colorIndex) : JBColor.lazy(getDefaultColor);
   }
 }

@@ -4,10 +4,9 @@ package com.intellij.ide.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ui.ideScaleIndicator.IdeScaleIndicatorManager
 import com.intellij.ide.ui.*
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
@@ -17,20 +16,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.ValidationInfoBuilder
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.APP)
-class IdeScaleTransformer : Disposable {
-  private val settingsUtils get() = UISettingsUtils.instance
-  private var lastSetScale: Float? = null
+internal class IdeScaleTransformer {
+  private val settingsUtils: UISettingsUtils
+    get() = UISettingsUtils.getInstance()
 
-  init {
-    Disposer.register(ApplicationManager.getApplication(), this)
-  }
+  private var lastSetScale: Float? = null
 
   internal fun uiSettingsChanged() {
     if (lastSetScale?.percentValue != settingsUtils.currentIdeScale.percentValue) {
@@ -39,7 +34,9 @@ class IdeScaleTransformer : Disposable {
   }
 
   internal fun setupLastSetScale() {
-    if (lastSetScale == null) lastSetScale = settingsUtils.currentIdeScale
+    if (lastSetScale == null) {
+      lastSetScale = settingsUtils.currentIdeScale
+    }
   }
 
   private fun scale() {
@@ -51,7 +48,9 @@ class IdeScaleTransformer : Disposable {
   private fun tweakEditorFont() {
     for (editor in EditorFactory.getInstance().allEditors) {
       if (editor is EditorEx) {
-        if (editor.isDisposed) continue
+        if (editor.isDisposed) {
+          continue
+        }
 
         editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true)
         editor.setFontSize(if (editor.editorKind == EditorKind.CONSOLE) settingsUtils.scaledConsoleFontSize
@@ -61,11 +60,10 @@ class IdeScaleTransformer : Disposable {
   }
 
   private fun notifyAllAndUpdateUI() {
-    LafManager.getInstance().updateUI()
+    serviceIfCreated<LafManager>()?.updateUI()
     EditorUtil.reinitSettings()
   }
 
-  @Internal
   class Settings {
     companion object {
       private const val SCALING_STEP = 0.1f
@@ -73,17 +71,19 @@ class IdeScaleTransformer : Disposable {
       private const val PRESENTATION_MODE_MAX_SCALE = 4f
       private val ideScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f)
       private val presentationModeScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f, 2.25f, 2.5f, 2.75f, 3f)
-      val currentScaleOptions get() = scaleOptions(UISettings.getInstance().presentationMode)
+      val currentScaleOptions: List<Float> get() = scaleOptions(UISettings.getInstance().presentationMode)
 
       private fun scaleOptions(isPresentation: Boolean) = if (isPresentation) presentationModeScaleOptions else ideScaleOptions
 
-      fun createIdeScaleComboboxModel() =
-        CollectionComboBoxModel(scaleOptions(false).map { it.percentStringValue },
-                                UISettings.getInstance().ideScale.percentStringValue)
+      fun createIdeScaleComboboxModel(): CollectionComboBoxModel<String> {
+        return CollectionComboBoxModel(scaleOptions(false).map { it.percentStringValue },
+                                       UISettings.getInstance().ideScale.percentStringValue)
+      }
 
-      fun createPresentationModeScaleComboboxModel() =
-        CollectionComboBoxModel(scaleOptions(true).map { it.percentStringValue },
-                                UISettings.getInstance().presentationModeIdeScale.percentStringValue)
+      fun createPresentationModeScaleComboboxModel(): CollectionComboBoxModel<String> {
+        return CollectionComboBoxModel(scaleOptions(true).map { it.percentStringValue },
+                                       UISettings.getInstance().presentationModeIdeScale.percentStringValue)
+      }
 
       fun validatePresentationModePercentScaleInput(builder: ValidationInfoBuilder, comboBox: ComboBox<String>): ValidationInfo? {
         val message = validatePresentationModePercentScaleInput(comboBox.item) ?: return null
@@ -100,8 +100,8 @@ class IdeScaleTransformer : Disposable {
 
       @Nls
       private fun validatePresentationModePercentScale(scale: Float): String? {
-        if (scale.percentValue < PRESENTATION_MODE_MIN_SCALE.percentValue
-            || scale.percentValue > PRESENTATION_MODE_MAX_SCALE.percentValue) {
+        if (scale.percentValue < PRESENTATION_MODE_MIN_SCALE.percentValue ||
+            scale.percentValue > PRESENTATION_MODE_MAX_SCALE.percentValue) {
           return IdeBundle.message("presentation.mode.ide.scale.out.of.range.number.message.format",
                                    PRESENTATION_MODE_MIN_SCALE.percentValue,
                                    PRESENTATION_MODE_MAX_SCALE.percentValue)
@@ -115,20 +115,25 @@ class IdeScaleTransformer : Disposable {
         val scaleOption = isPresentation?.let { scaleOptions(it) } ?: currentScaleOptions
         scaleOption.firstOrNull { string == it.percentStringValue }?.let { return it }
 
-        if (string.last() == '%') string = string.dropLast(1)
+        if (string.last() == '%') {
+          string = string.dropLast(1)
+        }
+
         val value = string.toFloatOrNull() ?: return null
-        if (value.toInt().toFloat() != value) return null
-        if (value <= 0f) return null
-        return value / 100
+        return if ((value.toInt().toFloat() != value) || value <= 0f) null else value / 100
       }
 
-      fun increasedScale() = scaleWithIndexShift(true,
-                                                 UISettingsUtils.instance.currentIdeScale,
-                                                 UISettings.getInstance().presentationMode)
+      fun increasedScale(): Float? {
+        return scaleWithIndexShift(isNext = true,
+                                   scale = UISettingsUtils.getInstance().currentIdeScale,
+                                   isPresentation = UISettings.getInstance().presentationMode)
+      }
 
-      fun decreasedScale() = scaleWithIndexShift(false,
-                                                 UISettingsUtils.instance.currentIdeScale,
-                                                 UISettings.getInstance().presentationMode)
+      fun decreasedScale(): Float? {
+        return scaleWithIndexShift(isNext = false,
+                                   scale = UISettingsUtils.getInstance().currentIdeScale,
+                                   isPresentation = UISettings.getInstance().presentationMode)
+      }
 
       private fun scaleWithIndexShift(isNext: Boolean, scale: Float, isPresentation: Boolean): Float? {
         val scaleOptions = scaleOptions(isPresentation)
@@ -136,23 +141,21 @@ class IdeScaleTransformer : Disposable {
         val shift = if (isNext) 1 else -1
         val lessOrEqualScale = scaleOptions.getOrNull(lessOrEqualScaleIndex)
 
-        val result: Float? =
-          if (isPresentation && (scale <= scaleOptions.first() - SCALING_STEP
-                                 || scale >= scaleOptions.last() + SCALING_STEP)) {
+        val result: Float? = when {
+          isPresentation && (scale <= scaleOptions.first() - SCALING_STEP || scale >= scaleOptions.last() + SCALING_STEP) -> {
             scale + SCALING_STEP * shift
           }
-          else if (lessOrEqualScale != null) {
+          lessOrEqualScale != null -> {
             if (lessOrEqualScale.percentValue == scale.percentValue || shift > 0) {
               val nextScale = scaleOptions.getOrNull(lessOrEqualScaleIndex + shift)
-
-              if (isPresentation && nextScale == null) scale + SCALING_STEP * shift
-              else nextScale
+              if (isPresentation && nextScale == null) scale + SCALING_STEP * shift else nextScale
             }
             else lessOrEqualScale
           }
-          else if (lessOrEqualScaleIndex < 0 && shift > 0) scaleOptions.first()
-          else if (lessOrEqualScaleIndex >= scaleOptions.size && shift < 0) scaleOptions.last()
-          else null
+          lessOrEqualScaleIndex < 0 && shift > 0 -> scaleOptions.first()
+          lessOrEqualScaleIndex >= scaleOptions.size && shift < 0 -> scaleOptions.last()
+          else -> null
+        }
 
         return result?.takeIf { !isPresentation || validatePresentationModePercentScale(it) == null }
       }
@@ -169,22 +172,19 @@ class IdeScaleTransformer : Disposable {
   }
 
   companion object {
-    @JvmStatic
-    val instance: IdeScaleTransformer get() = service<IdeScaleTransformer>()
+    fun getInstance(): IdeScaleTransformer = service<IdeScaleTransformer>()
   }
-
-  override fun dispose() {}
 }
 
-class IdeScalePostStartupActivity : ProjectActivity {
+private class IdeScalePostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    IdeScaleTransformer.instance.setupLastSetScale()
-    IdeScaleIndicatorManager.setup(project)
+    IdeScaleTransformer.getInstance().setupLastSetScale()
+    IdeScaleIndicatorManager.getInstance(project)
   }
 }
 
-class IdeScaleSettingsListener : UISettingsListener {
+private class IdeScaleSettingsListener : UISettingsListener {
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    IdeScaleTransformer.instance.uiSettingsChanged()
+    IdeScaleTransformer.getInstance().uiSettingsChanged()
   }
 }

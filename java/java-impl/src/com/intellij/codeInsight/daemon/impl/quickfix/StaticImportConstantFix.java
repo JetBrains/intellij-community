@@ -40,33 +40,37 @@ class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCod
   }
 
   @Override
+  protected @NotNull String getMemberKindPresentableText() {
+    return QuickFixBundle.message("static.import.constant.kind.text");
+  }
+
+  @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return generatePreview(file, (__, field) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, field, field.getName(), field.getContainingClass()));
   }
 
-  @NotNull
   @Override
-  List<PsiField> getMembersToImport(boolean applicableOnly, int maxResults) {
+  StaticMembersProcessor.@NotNull MembersToImport<PsiField> getMembersToImport(int maxResults) {
     Project project = myReferencePointer.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     PsiJavaCodeReferenceElement element = myReferencePointer.getElement();
     String name = element != null ? element.getReferenceName() : null;
-    if (name == null) return Collections.emptyList();
+    if (name == null) return new StaticMembersProcessor.MembersToImport<>(Collections.emptyList(), Collections.emptyList());
     if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element) ||
         element.getParent() instanceof PsiTypeElement ||
         element.getParent() instanceof PsiAnnotation) {
-      return Collections.emptyList();
+      return new StaticMembersProcessor.MembersToImport<>(Collections.emptyList(), Collections.emptyList());
     }
     StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<>(element, toAddStaticImports(), maxResults) {
       @Override
-      protected boolean isApplicable(@NotNull PsiField field, @NotNull PsiElement place) {
+      protected ApplicableType isApplicable(@NotNull PsiField field, @NotNull PsiElement place) {
         ProgressManager.checkCanceled();
         PsiType fieldType = field.getType();
         return isApplicableFor(fieldType);
       }
     };
     cache.processFieldsWithName(name, processor, element.getResolveScope(), null);
-    return processor.getMembersToImport(applicableOnly);
+    return processor.getMembersToImport();
   }
 
   @Override

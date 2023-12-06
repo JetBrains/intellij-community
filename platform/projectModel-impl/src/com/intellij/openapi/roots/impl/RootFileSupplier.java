@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -15,9 +14,9 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.VirtualFileUrls;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,69 +75,6 @@ public class RootFileSupplier {
   @Nullable 
   public VirtualFile findFile(@NotNull VirtualFileUrl virtualFileUrl) {
     return VirtualFileUrls.getVirtualFile(virtualFileUrl);
-  }
-
-  public static RootFileSupplier forBranch(ModelBranch branch) {
-    return new RootFileSupplier() {
-      @Override
-      public VirtualFile @NotNull [] getExcludedRoots(LibraryEx library) {
-        return ContainerUtil.mapNotNull(library.getExcludedRootUrls(), this::findFileByUrl).toArray(VirtualFile.EMPTY_ARRAY);
-      }
-
-      @Override
-      protected VirtualFile @NotNull [] getLibraryRoots(LibraryOrSdkOrderEntry entry, OrderRootType type) {
-        return ContainerUtil.mapNotNull(entry.getRootUrls(type), this::findFileByUrl).toArray(VirtualFile.EMPTY_ARRAY);
-      }
-
-      @Override
-      public VirtualFile @NotNull [] getLibraryRoots(Library library, OrderRootType type) {
-        return ContainerUtil.mapNotNull(library.getUrls(type), this::findFileByUrl).toArray(VirtualFile.EMPTY_ARRAY);
-      }
-
-      @Override
-      VirtualFile @NotNull [] getSdkRoots(@NotNull Sdk sdk, OrderRootType type) {
-        return ContainerUtil.mapNotNull(sdk.getRootProvider().getUrls(type), this::findFileByUrl).toArray(VirtualFile.EMPTY_ARRAY);
-      }
-
-      @Override
-      protected @Nullable VirtualFile getContentRoot(ContentEntry contentEntry) {
-        return findFileByUrl(contentEntry.getUrl());
-      }
-
-      @Override
-      protected @Nullable VirtualFile getSourceRoot(SourceFolder sourceFolder) {
-        return findFileByUrl(sourceFolder.getUrl());
-      }
-
-      @Override
-      public @Nullable VirtualFile findFile(@NotNull VirtualFileUrl virtualFileUrl) {
-        return findFileByUrl(virtualFileUrl.getUrl());
-      }
-
-      @Override
-      protected @NotNull List<@NotNull VirtualFile> getUnloadedContentRoots(UnloadedModuleDescription description) {
-        return ContainerUtil.mapNotNull(description.getContentRoots(), p -> findFileByUrl(p.getUrl()));
-      }
-
-      @Override
-      @Nullable
-      public VirtualFile correctRoot(@NotNull VirtualFile file, @NotNull Object container, @Nullable Object containerProvider) {
-        file = super.correctRoot(file, container, containerProvider);
-        if (file != null) {
-          file = branch.findFileCopy(file);
-          if (!file.isValid()) {
-            return null;
-          }
-        }
-        return file;
-      }
-
-      @Override
-      public @Nullable VirtualFile findFileByUrl(String url) {
-        return branch.findFileByUrl(url);
-      }
-
-    };
   }
 
   public static boolean ensureValid(@NotNull VirtualFile file, @NotNull Object container, @Nullable Object containerProvider) {

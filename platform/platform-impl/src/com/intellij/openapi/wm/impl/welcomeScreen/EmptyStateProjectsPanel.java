@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.DataManager;
@@ -17,7 +17,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FocusUtil;
 import com.intellij.util.ui.JBUI;
@@ -75,8 +74,7 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
     addToCenter(mainPanel);
   }
 
-  @NotNull
-  private static ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
+  private static @NotNull ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
     ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, actionGroup, true) {
       private boolean wasFocusRequested = false;
       @Override
@@ -84,11 +82,11 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
                                     @NotNull List<? extends AnAction> newVisibleActions) {
         super.actionsUpdated(forced, newVisibleActions);
         if (forced && !newVisibleActions.isEmpty() && getComponents().length > 0 && !wasFocusRequested) {
-          ObjectUtils.doIfNotNull(FocusUtil.findFocusableComponentIn(getComponents()[0], null),
-                                  component -> {
-                                    wasFocusRequested =true;
-                                    return IdeFocusManager.getGlobalInstance().requestFocus(component, true);
-                                  });
+          Component obj = FocusUtil.findFocusableComponentIn(getComponents()[0], null);
+          if (obj != null) {
+            wasFocusRequested = true;
+            IdeFocusManager.getGlobalInstance().requestFocus(obj, true);
+          }
         }
       }
     };
@@ -100,16 +98,14 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
     return actionToolbar;
   }
 
-  @NotNull
-  private static DropDownLink<String> createLinkWithPopup(@NotNull ActionGroup group) {
+  private static @NotNull DropDownLink<String> createLinkWithPopup(@NotNull ActionGroup group) {
     return new DropDownLink<>(group.getTemplateText(), link
       -> JBPopupFactory.getInstance().createActionGroupPopup(
       null, group, DataManager.getInstance().getDataContext(link),
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true));
   }
 
-  @NotNull
-  private static JBLabel createTitle() {
+  private static @NotNull JBLabel createTitle() {
     JBLabel titleLabel = new JBLabel(getApplicationTitle(), SwingConstants.CENTER);
     titleLabel.setOpaque(false);
     Font componentFont = titleLabel.getFont();
@@ -118,8 +114,7 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
     return titleLabel;
   }
 
-  @NotNull
-  static JBLabel createCommentLabel(@NlsContexts.HintText @NotNull String text) {
+  static @NotNull JBLabel createCommentLabel(@NlsContexts.HintText @NotNull String text) {
     JBLabel commentFirstLabel = new JBLabel(text, SwingConstants.CENTER);
     commentFirstLabel.setOpaque(false);
     commentFirstLabel.setForeground(UIUtil.getContextHelpForeground());

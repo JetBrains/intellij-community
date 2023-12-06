@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionsReportConverter;
@@ -40,10 +40,10 @@ public final class PlainTextFormatter implements InspectionsReportConverter {
   }
 
   @Override
-  public void convert(@NotNull final String rawDataDirectoryPath,
-                      @Nullable final String outputPath,
-                      @NotNull final Map<String, Tools> tools,
-                      @NotNull final List<? extends File> inspectionsResults) throws ConversionException {
+  public void convert(final @NotNull String rawDataDirectoryPath,
+                      final @Nullable String outputPath,
+                      final @NotNull Map<String, Tools> tools,
+                      final @NotNull List<? extends File> inspectionsResults) throws ConversionException {
     final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
 
     Source xslSource;
@@ -156,9 +156,9 @@ public final class PlainTextFormatter implements InspectionsReportConverter {
     }
   }
 
-  private int getMaxFileColonLineNumLength(@NotNull final File inspectionResultData,
-                                           @NotNull final InspectionToolWrapper toolWrapper,
-                                           @NotNull final List problems) {
+  private int getMaxFileColonLineNumLength(final @NotNull File inspectionResultData,
+                                           final @NotNull InspectionToolWrapper toolWrapper,
+                                           final @NotNull List problems) {
     int maxFileColonLineLength = 0;
     for (Object problem : problems) {
       final Element fileElement = ((Element)problem).getChild(FILE_ELEMENT);
@@ -179,20 +179,19 @@ public final class PlainTextFormatter implements InspectionsReportConverter {
     System.err.println(msg);
   }
 
-  private boolean resultsIgnored(@NotNull final File file,
-                                 @NotNull final InspectionToolWrapper toolWrapper) {
+  private boolean resultsIgnored(final @NotNull File file,
+                                 final @NotNull InspectionToolWrapper toolWrapper) {
     // TODO: check according to config
     return false;
   }
 
-  @NotNull
-  private String getPath(@NotNull final Element fileElement) {
+  private @NotNull String getPath(final @NotNull Element fileElement) {
     return fileElement.getText().replace("file://$PROJECT_DIR$", ".");
   }
 
-  private void writeInspectionDescription(@NotNull final Writer w,
-                                          @NotNull final InspectionToolWrapper toolWrapper,
-                                          @NotNull final Transformer transformer)
+  private void writeInspectionDescription(final @NotNull Writer w,
+                                          final @NotNull InspectionToolWrapper toolWrapper,
+                                          final @NotNull Transformer transformer)
     throws IOException, ConversionException {
 
     final StringWriter descrWriter = new StringWriter();
@@ -220,8 +219,7 @@ public final class PlainTextFormatter implements InspectionsReportConverter {
     }
   }
 
-  @NotNull
-  private String getToolPresentableName(@NotNull final InspectionToolWrapper toolWrapper) throws IOException {
+  private @NotNull String getToolPresentableName(final @NotNull InspectionToolWrapper toolWrapper) throws IOException {
     final StringBuilder buff = new StringBuilder();
 
     // inspection name

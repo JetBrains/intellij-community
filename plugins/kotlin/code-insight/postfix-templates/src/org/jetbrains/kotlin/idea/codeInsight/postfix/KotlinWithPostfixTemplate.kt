@@ -38,6 +38,7 @@ private object WhenTargetFilter : (KtExpression) -> Boolean {
     }
 }
 
-private fun KtAnalysisSession.isWithTargetType(type: KtType): Boolean {
+context(KtAnalysisSession)
+private fun isWithTargetType(type: KtType): Boolean {
     return !type.isUnit && !type.isMarkedNullable && !type.isPrimitive
 }

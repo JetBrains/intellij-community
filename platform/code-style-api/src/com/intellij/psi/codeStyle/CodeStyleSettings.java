@@ -6,6 +6,7 @@ import com.intellij.configurationStore.Property;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -174,7 +175,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   public void copyFrom(CodeStyleSettings from) {
     CommonCodeStyleSettings.copyPublicFields(from, this);
-    CommonCodeStyleSettings.copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
+    OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
     mySoftMargins.setValues(from.getDefaultSoftMargins());
     myExcludedFiles.setDescriptors(from.getExcludedFiles().getDescriptors());
     copyCustomSettingsFrom(from);
@@ -522,8 +523,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       return null;
     }
   }
-
-  public boolean ENABLE_SECOND_REFORMAT;
   // endregion
 
   //----------------------------------------------------------------------------------------
@@ -721,8 +720,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   @ApiStatus.Internal
   public @NotNull IndentOptions getIndentOptionsByFile(@NotNull Project project, @NotNull VirtualFile file, @Nullable TextRange formatRange) {
-    return ProjectLocator.computeWithPreferredProject(file, project, () ->
-      getIndentOptionsByFile(project, file, formatRange, false, null));
+    try (AccessToken ignored = ProjectLocator.withPreferredProject(file, project)) {
+      return getIndentOptionsByFile(project, file, formatRange, false, null);
+    }
   }
 
   @ApiStatus.Internal

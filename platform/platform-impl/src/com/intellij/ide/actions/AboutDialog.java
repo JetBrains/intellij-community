@@ -1,59 +1,83 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.AboutPopupDescriptionProvider;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.LicensingFacade;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.vfs.DiskQueryRelay;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class AboutDialog extends DialogWrapper {
+import static java.util.Objects.requireNonNullElse;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
+
+public final class AboutDialog extends DialogWrapper {
+  private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
 
   /**
-   * Use paragraph to support copy/paste multilines
+   * See {@link org.jetbrains.intellij.build.impl.DistributionJARsBuilderKt#createBuildThirdPartyLibraryListJob}.
    */
-  private static final String EOL = "<p>";
+  private static final String THIRD_PARTY_LIBRARIES_FILE = "license/third-party-libraries.html";
 
   private final List<String> myInfo = new ArrayList<>();
 
   public AboutDialog(@Nullable Project project) {
     super(project, false);
-    String appName = ApplicationNamesInfo.getInstance().getFullProductName();
+    String appName = getFullNameForAboutDialog();
     setResizable(false);
     setTitle(IdeBundle.message("about.popup.about.app", appName));
 
@@ -64,7 +88,7 @@ public class AboutDialog extends DialogWrapper {
   protected JComponent createSouthPanel() {
     JComponent result = super.createSouthPanel();
 
-    // Register copy action on buttons panel only, because it conflicts with copyable labels in center panel
+    // Registering the copy action only on the buttons panel, because it conflicts with copyable labels in the center panel
     new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -77,7 +101,7 @@ public class AboutDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     Icon appIcon = AppUIUtil.loadApplicationIcon(ScaleContext.create(), 60);
     Box box = getText();
     JLabel icon = new JLabel(appIcon);
@@ -115,43 +139,26 @@ public class AboutDialog extends DialogWrapper {
     catch (Exception ignore) { }
   }
 
-  public String getExtendedAboutText() {
-    return StringUtil.join(myInfo, "\n") + "\n" + AboutPopup.getExtraInfo();
-  }
-
-  @SuppressWarnings("DuplicatedCode")
   private Box getText() {
     Box box = Box.createVerticalBox();
     List<String> lines = new ArrayList<>();
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-    String appName = appInfo.getFullApplicationName(); //NON-NLS
+
+    @NlsSafe String appName = appInfo.getFullApplicationName();
     String edition = ApplicationNamesInfo.getInstance().getEditionName();
     if (edition != null) appName += " (" + edition + ")";
     box.add(label(appName, JBFont.h3().asBold()));
     box.add(Box.createVerticalStrut(10));
     myInfo.add(appName);
 
-    String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
-    String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
-    Date timestamp = appInfo.getBuildDate().getTime();
-    if (appInfo.getBuild().isSnapshot()) {
-      String time = new SimpleDateFormat("HH:mm").format(timestamp);
-      buildInfo += IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(timestamp), time);
-      buildInfoNonLocalized += MessageFormat.format(", built on {0} at {1}",
-                                                    DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(timestamp), time);
-    }
-    else {
-      buildInfo += IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(timestamp));
-      buildInfoNonLocalized += MessageFormat.format(", built on {0}",
-                                                    DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(timestamp));
-    }
-    lines.add(buildInfo);
+    @NotNull Pair<String, String> result = getBuildInfo(appInfo);
+    lines.add(result.first);
     lines.add("");
-    myInfo.add(buildInfoNonLocalized);
+    myInfo.add(result.second);
 
     LicensingFacade la = LicensingFacade.getInstance();
     if (la != null) {
-      final String licensedTo = la.getLicensedToMessage(); //NON-NLS
+      String licensedTo = la.getLicensedToMessage();
       if (licensedTo != null) {
         lines.add(licensedTo);
         myInfo.add(licensedTo);
@@ -179,38 +186,57 @@ public class AboutDialog extends DialogWrapper {
     //Print extra information from plugins
     ExtensionPointName<AboutPopupDescriptionProvider> ep = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
     for (AboutPopupDescriptionProvider aboutInfoProvider : ep.getExtensions()) {
-      String description = aboutInfoProvider.getDescription(); //NON-NLS
+      String description = aboutInfoProvider.getDescription();
       if (description != null) {
         lines.add(description);
         lines.add("");
       }
     }
 
-    String text = String.join(EOL, lines); //NON-NLS
+    @NlsSafe String text = String.join("<p>", lines);  // joining with paragraph separators for better-looking copied text
     box.add(label(text, getDefaultTextFont()));
     addEmptyLine(box);
 
     //Link to open-source projects
-    HyperlinkLabel openSourceSoftware = new HyperlinkLabel();
-    //noinspection DialogTitleCapitalization
-    openSourceSoftware.setTextWithHyperlink(IdeBundle.message("about.box.powered.by.open.source"));
+    HyperlinkLabel openSourceSoftware = hyperlinkLabel(IdeBundle.message("about.box.powered.by"));
     openSourceSoftware.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-        AboutPopup.showOpenSoftwareSources(ObjectUtils.notNull(AboutPopup.loadThirdPartyLibraries(), ""));
+        showOssInfo(box);
       }
     });
-    openSourceSoftware.setFont(getDefaultTextFont());
-    JBLabel poweredBy = new JBLabel(IdeBundle.message("about.box.powered.by") + " ").withFont(getDefaultTextFont());
-    BorderLayoutPanel panel = JBUI.Panels.simplePanel(openSourceSoftware).addToLeft(poweredBy);
-    panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    box.add(panel);
+    box.add(openSourceSoftware);
 
     //Copyright
-    box.add(label(AboutPopup.getCopyrightText(), getDefaultTextFont()));
+    var year = Integer.toString(LocalDate.now().getYear());
+    var copyright = hyperlinkLabel(IdeBundle.message("about.box.copyright", appInfo.getCopyrightStart(), year, appInfo.getCompanyName()));
+    copyright.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+        BrowserUtil.browse(appInfo.getCompanyURL());
+      }
+    });
+    box.add(copyright);
     addEmptyLine(box);
 
     return box;
+  }
+
+  public static @NotNull Pair<String, String> getBuildInfo(ApplicationInfo appInfo) {
+    String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
+    String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
+    Date buildDate = appInfo.getBuildDate().getTime();
+    String formattedBuildDate = DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(buildDate);
+    if (appInfo.getBuild().isSnapshot()) {
+      String buildTime = new SimpleDateFormat("HH:mm").format(buildDate);
+      buildInfo += IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(buildDate), buildTime);
+      buildInfoNonLocalized += MessageFormat.format(", built on {0} at {1}", formattedBuildDate, buildTime);
+    }
+    else {
+      buildInfo += IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(buildDate));
+      buildInfoNonLocalized += MessageFormat.format(", built on {0}", formattedBuildDate);
+    }
+    return Pair.create(buildInfo, buildInfoNonLocalized);
   }
 
   private static JBFont getDefaultTextFont() {
@@ -222,8 +248,143 @@ public class AboutDialog extends DialogWrapper {
   }
 
   private static JLabel label(@NlsContexts.Label String text, JBFont font) {
-    JBLabel label = new JBLabel(text).withFont(font);
+    var label = new JBLabel(text).withFont(font);
     label.setCopyable(true);
     return label;
+  }
+
+  private static HyperlinkLabel hyperlinkLabel(@NlsContexts.LinkLabel String textWithLink) {
+    var hyperlinkLabel = new HyperlinkLabel();
+    hyperlinkLabel.setTextWithHyperlink(textWithLink);
+    hyperlinkLabel.setFont(getDefaultTextFont());
+    return hyperlinkLabel;
+  }
+
+  public String getExtendedAboutText() {
+    var text = new StringBuilder();
+
+    myInfo.forEach(s -> text.append(s).append('\n'));
+
+    text.append(SystemInfo.getOsNameAndVersion()).append('\n');
+
+    for (var aboutInfoProvider : EP_NAME.getExtensions()) {
+      var description = aboutInfoProvider.getDescription();
+      if (description != null) {
+        text.append(description).append('\n');
+      }
+    }
+
+    text.append("GC: ")
+      .append(ManagementFactory.getGarbageCollectorMXBeans().stream().map(GarbageCollectorMXBean::getName).collect(Collectors.joining(", ")))
+      .append('\n');
+
+    text.append("Memory: ").append(Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE).append("M\n");
+
+    text.append("Cores: ").append(Runtime.getRuntime().availableProcessors()).append('\n');
+
+    if (UIUtil.isMetalRendering()) {
+      text.append("Metal Rendering is ON\n");
+    }
+
+    var changedValues = Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault).toList();
+    if (!changedValues.isEmpty()) {
+      text.append("Registry:\n");
+      changedValues.forEach(v -> text.append("  ").append(v.getKey()).append('=').append(v.asString()).append('\n'));
+    }
+
+    var extraPlugins = PluginManagerCore.getLoadedPlugins().stream().filter(p -> !p.isBundled()).toList();
+    if (!extraPlugins.isEmpty()) {
+      text.append("Non-Bundled Plugins:\n");
+      extraPlugins.forEach(p -> text.append("  ").append(p.getPluginId().getIdString()).append(" (").append(p.getVersion()).append(")\n"));
+    }
+
+    if (PlatformUtils.isIntelliJ()) {
+      var kotlinPlugin = PluginManagerCore.getPlugin(PluginId.findId("org.jetbrains.kotlin"));
+      if (kotlinPlugin != null) {
+        text.append("Kotlin: ").append(kotlinPlugin.getVersion()).append('\n');
+      }
+    }
+
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
+      text.append("Current Desktop: ").append(requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "Undefined")).append('\n');
+    }
+
+    return text.toString();
+  }
+
+  private static void showOssInfo(JComponent component) {
+    @NlsSafe String licenseText;
+    try {
+      var title = IdeBundle.message("progress.third.party.software");
+      licenseText = ProgressManager.getInstance().run(new Task.WithResult<String, IOException>(null, component, title, true) {
+        @Override
+        protected String compute(@NotNull ProgressIndicator indicator) throws IOException {
+          return DiskQueryRelay.compute(() -> {
+            var content = Files.readString(Path.of(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE));
+            var matcher = Pattern.compile("(\\d+)px").matcher(content);
+            var sb = new StringBuilder();
+            while (matcher.find()) {
+              matcher.appendReplacement(sb, JBUIScale.scale(Integer.parseInt(matcher.group(1))) + "px");
+            }
+            matcher.appendTail(sb);
+            content = sb.toString();
+            if (StartupUiUtil.isUnderDarcula()) {
+              content = content.replace("779dbd", "5676a0");
+            }
+            return content;
+          });
+        }
+      });
+    }
+    catch (IOException e) {
+      Logger.getInstance(AboutDialog.class).error(e);
+      return;
+    }
+
+    var dialog = new DialogWrapper(true) {
+      {
+        init();
+        setAutoAdjustable(false);
+        setOKButtonText(CommonBundle.message("close.action.name"));
+      }
+
+      @Override
+      protected JComponent createCenterPanel() {
+        var viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
+        viewer.setFocusable(true);
+        viewer.addHyperlinkListener(new BrowserHyperlinkListener());
+        viewer.setText(licenseText);
+
+        var styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, \"Helvetica Neue\", Helvetica, Arial, sans-serif;}");
+        styleSheet.addRule("body {margin-top:0;padding-top:0;}");
+        styleSheet.addRule("body {font-size:" + JBUIScale.scaleFontSize((float)14) + "pt;}");
+
+        viewer.setCaretPosition(0);
+        viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
+
+        var scrollPane = new JBScrollPane(viewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+
+        var centerPanel = new JPanel(new BorderLayout(JBUIScale.scale(5), JBUIScale.scale(5)));
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+        return centerPanel;
+      }
+
+      @Override
+      protected Action @NotNull [] createActions() {
+        return new Action[]{getOKAction()};
+      }
+    };
+
+    dialog.setTitle(IdeBundle.message("dialog.title.third.party.software",
+                                      getFullNameForAboutDialog(),
+                                      ApplicationInfo.getInstance().getFullVersion()));
+    dialog.setSize(JBUIScale.scale(750), JBUIScale.scale(650));
+    dialog.show();
+  }
+
+  private static @NotNull String getFullNameForAboutDialog() {
+    if (!PlatformUtils.isJetBrainsClient()) return ApplicationNamesInfo.getInstance().getFullProductName();
+    return IdeBundle.message("dialog.message.jetbrains.client.for.ide", ApplicationNamesInfo.getInstance().getFullProductName());
   }
 }

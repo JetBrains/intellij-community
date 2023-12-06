@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.isDirectory
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -25,6 +24,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
@@ -55,9 +55,6 @@ internal class IdeScriptDependenciesProvider(project: Project) : ScriptDependenc
 }
 
 /**
- * **Please, note** that [ScriptConfigurationManager] should not be used directly.
- * Instead, consider using [org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptImplementationSwitcher].
- *
  * Facade for loading and caching Kotlin script files configuration.
  *
  * This service also starts indexing of new dependency roots and runs highlighting
@@ -127,12 +124,6 @@ interface ScriptConfigurationManager {
         fun getInstance(project: Project): ScriptConfigurationManager = project.service()
 
         @JvmStatic
-        fun allExtraRoots(project: Project): Collection<VirtualFile> {
-            val manager = getInstance(project)
-            return manager.getAllScriptsDependenciesClassFiles() + manager.getAllScriptDependenciesSources()
-        }
-
-        @JvmStatic
         fun compositeScriptConfigurationManager(project: Project) =
             getInstance(project).cast<CompositeScriptConfigurationManager>()
 
@@ -165,10 +156,10 @@ object ClasspathToVfsConverter {
 
     private val Path.fileType: FileType get(){
         return when {
-            notExists() -> FileType.NOT_EXISTS
-            isDirectory() -> FileType.DIRECTORY
-            isRegularFile() -> FileType.REGULAR_FILE
-            else -> FileType.UNKNOWN
+          notExists() -> FileType.NOT_EXISTS
+          isDirectory() -> FileType.DIRECTORY
+          isRegularFile() -> FileType.REGULAR_FILE
+          else -> FileType.UNKNOWN
         }
     }
 

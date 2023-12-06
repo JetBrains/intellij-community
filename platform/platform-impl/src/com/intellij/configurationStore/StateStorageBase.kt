@@ -10,14 +10,15 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
-abstract class StateStorageBase<T : Any> : StateStorage {
-  companion object {
-    private val LOG = logger<StateStorageBase<*>>()
-  }
+private val LOG = logger<StateStorageBase<*>>()
 
+abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
 
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
+
+  protected open val saveStorageDataOnReload: Boolean
+    get() = true
 
   override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
     return getState(component, componentName, stateClass, reload, mergeInto)
@@ -43,17 +44,26 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   }
 
   protected fun getStorageData(reload: Boolean = false): T {
-    val storageData = storageDataRef.get()
-    if (storageData != null && !reload) {
-      return storageData
+    val currentStorageData = storageDataRef.get()
+    if (currentStorageData != null && !reload) {
+      return currentStorageData
     }
 
     val newStorageData = loadData()
-    if (storageDataRef.compareAndSet(storageData, newStorageData)) {
+    if (reload && !saveStorageDataOnReload) {
+      // it means, that you MUST invoke save all settings after reload
+      if (storageDataRef.compareAndSet(currentStorageData, null)) {
+        return newStorageData
+      }
+      else {
+        return getStorageData(reload = true)
+      }
+    }
+    else if (storageDataRef.compareAndSet(currentStorageData, newStorageData)) {
       return newStorageData
     }
     else {
-      return getStorageData(false)
+      return getStorageData(reload = false)
     }
   }
 

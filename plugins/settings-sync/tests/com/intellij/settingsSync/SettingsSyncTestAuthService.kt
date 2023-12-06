@@ -1,8 +1,9 @@
 package com.intellij.settingsSync
 
-import com.intellij.openapi.Disposable
+import com.intellij.settingsSync.auth.DummyJBAccountInfoService
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBAccountInfoService
+import java.util.function.Consumer
 
 internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
   override fun isLoggedIn(): Boolean {
@@ -18,6 +19,10 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
       else null
   }
 
+  override fun getAccountInfoService(): JBAccountInfoService {
+    return DummyJBAccountInfoService
+  }
+
   override fun login() {
   }
 
@@ -25,6 +30,6 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
     return false
   }
 
-  override fun addListener(listener: SettingsSyncAuthService.Listener, disposable: Disposable) {
+  override fun invalidateJBA(userId: String) {
   }
 }

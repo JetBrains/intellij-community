@@ -1,13 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.SmoothAutoScroller;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.paint.RectanglePainter2D;
@@ -129,6 +133,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
+  /**
+   * Starts measuring the next expand operation if the tree supports that
+   * <p>
+   *   Internal API for statistics. Called by the UI and certain actions right before a path is expanded.
+   *   It's up to the tree then to stop measuring at the right moment and send the value to the collector.
+   * </p>
+   * @param path the path that will be expanded
+   */
+  @ApiStatus.Internal
+  public void startMeasuringExpandDuration(@NotNull TreePath path) {
+  }
+
   public boolean isEmpty() {
     return 0 >= getRowCount();
   }
@@ -141,8 +157,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * @return a strategy which determines if a wide selection should be drawn for a target row (it's number is
    * {@link Condition#value(Object) given} as an argument to the strategy)
    */
-  @NotNull
-  protected Condition<Integer> getWideSelectionBackgroundCondition() {
+  protected @NotNull Condition<Integer> getWideSelectionBackgroundCondition() {
     return Conditions.alwaysTrue();
   }
 
@@ -155,15 +170,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return isEmpty();
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 
   @Override
-  @NotNull
-  public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
+  public @NotNull ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
   }
 
@@ -200,7 +213,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     if (myBusyIcon != null) {
       remove(myBusyIcon);
-      Disposer.dispose(myBusyIcon);
+      myBusyIcon.dispose();
       myBusyIcon = null;
     }
   }
@@ -269,11 +282,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   private void updateBusy() {
-    if (myBusy) {
+    boolean shouldPaintBusyIcon = myBusy && shouldShowBusyIconIfNeeded();
+
+    if (shouldPaintBusyIcon) {
       if (myBusyIcon == null) {
         myBusyIcon = new AsyncProcessIcon(toString());
         myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
+        myBusyIcon.setToolTipText(IdeBundle.message("tooltip.text.update.is.in.progress.click.to.cancel"));
         add(myBusyIcon);
         myBusyIcon.addMouseListener(new MouseAdapter() {
           @Override
@@ -286,26 +302,20 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           }
         });
       }
+
+      myBusyIcon.resume();
+      myBusyIcon.setVisible(true);
+      updateBusyIconLocation();
     }
 
-    if (myBusyIcon != null) {
-      if (myBusy) {
-        if (shouldShowBusyIconIfNeeded()) {
-          myBusyIcon.resume();
-          myBusyIcon.setToolTipText(IdeBundle.message("tooltip.text.update.is.in.progress.click.to.cancel"));
+    if (!shouldPaintBusyIcon && myBusyIcon != null) {
+      myBusyIcon.suspend();
+      myBusyIcon.setVisible(false);
+      SwingUtilities.invokeLater(() -> {
+        if (myBusyIcon != null) {
+          repaint();
         }
-      }
-      else {
-        myBusyIcon.suspend();
-        myBusyIcon.setToolTipText(null);
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
-          if (myBusyIcon != null) {
-            repaint();
-          }
-        });
-      }
-      updateBusyIconLocation();
+      });
     }
   }
 
@@ -379,18 +389,15 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   @Override
-  @Nullable
-  public Color getPathBackground(@NotNull TreePath path, int row) {
+  public @Nullable Color getPathBackground(@NotNull TreePath path, int row) {
     return isFileColorsEnabled() && !Registry.is("ide.file.colors.at.left") ? getFileColorForPath(path) : null;
   }
 
-  @Nullable
-  public Color getFileColorForRow(int row) {
+  public @Nullable Color getFileColorForRow(int row) {
     TreePath path = getPathForRow(row);
     return path != null ? getFileColorForPath(path) : null;
   }
-  @Nullable
-  public Color getFileColorForPath(@NotNull TreePath path) {
+  public @Nullable Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
     if (component instanceof LoadingNode) {
       Object[] pathObjects = path.getPath();
@@ -401,8 +408,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return getFileColorFor(TreeUtil.getUserObject(component));
   }
 
-  @Nullable
-  public Color getFileColorFor(Object object) {
+  public @Nullable Color getFileColorFor(Object object) {
     return null;
   }
 
@@ -657,6 +663,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     @Override
     protected void fireValueChanged(TreeSelectionEvent e) {
       if (myHeldSelection == null) {
+        ActivityTracker.getInstance().inc();
         super.fireValueChanged(e);
       }
     }
@@ -903,8 +910,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * @param y vertical location in the tree
    * @return the deepest visible component of the renderer
    */
-  @Nullable
-  public Component getDeepestRendererComponentAt(int x, int y) {
+  public @Nullable Component getDeepestRendererComponentAt(int x, int y) {
     int row = getRowForLocation(x, y);
     if (row >= 0) {
       TreeCellRenderer renderer = getCellRenderer();

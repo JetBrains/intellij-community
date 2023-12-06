@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,11 +12,11 @@ import java.util.*;
 
 @SuppressWarnings("NotNullFieldNotInitialized")
 public class FeatureDescriptor {
-  @NotNull private String myId;
-  @Nullable private String myDisplayName;
-  @Nullable private final String myGroupId;
-  @Nullable private String myTipId;
-  @Nullable private Set<String> myDependencies;
+  private @NotNull String myId;
+  private @Nullable String myDisplayName;
+  private final @Nullable String myGroupId;
+  private @Nullable String myTipId;
+  private @Nullable Set<String> myDependencies;
   private int myDaysBeforeFirstShowUp = 1;
   private int myDaysBetweenSuccessiveShowUps = 3;
   private int myMinUsageCount = 1;
@@ -29,23 +29,23 @@ public class FeatureDescriptor {
   private long myLastTimeShown;
   private long myLastTimeUsed;
   private int myShownCount;
-  @Nullable private final ProductivityFeaturesProvider myProvider;
+  private final @Nullable ProductivityFeaturesProvider myProvider;
 
-  @NonNls private static final String ATTRIBUTE_COUNT = "count";
-  @NonNls private static final String ATTRIBUTE_LAST_SHOWN = "last-shown";
-  @NonNls private static final String ATTRIBUTE_LAST_USED = "last-used";
-  @NonNls private static final String ATTRIBUTE_SHOWN_COUNT = "shown-count";
-  @NonNls private static final String ATTRIBUTE_ID = "id";
-  @NonNls private static final String ATTRIBUTE_TIP_ID = "tip-id";
-  @NonNls private static final String ATTRIBUTE_FIRST_SHOW = "first-show";
-  @NonNls private static final String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
-  @NonNls private static final String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
-  @NonNls private static final String ATTRIBUTE_UTILITY_SCORE = "utility-score";
-  @NonNls private static final String ATTRIBUTE_SHOW_IN_GUIDE = "show-in-guide";
-  @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
-  @NonNls private static final String ELEMENT_DEPENDENCY = "dependency";
-  @NonNls private static final String ELEMENT_TRACK_ACTION = "track-action";
-  @NonNls private static final String ELEMENT_TRACK_INTENTION = "track-intention";
+  private static final @NonNls String ATTRIBUTE_COUNT = "count";
+  private static final @NonNls String ATTRIBUTE_LAST_SHOWN = "last-shown";
+  private static final @NonNls String ATTRIBUTE_LAST_USED = "last-used";
+  private static final @NonNls String ATTRIBUTE_SHOWN_COUNT = "shown-count";
+  private static final @NonNls String ATTRIBUTE_ID = "id";
+  private static final @NonNls String ATTRIBUTE_TIP_ID = "tip-id";
+  private static final @NonNls String ATTRIBUTE_FIRST_SHOW = "first-show";
+  private static final @NonNls String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
+  private static final @NonNls String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
+  private static final @NonNls String ATTRIBUTE_UTILITY_SCORE = "utility-score";
+  private static final @NonNls String ATTRIBUTE_SHOW_IN_GUIDE = "show-in-guide";
+  private static final @NonNls String ATTRIBUTE_CLASS_NAME = "class-name";
+  private static final @NonNls String ELEMENT_DEPENDENCY = "dependency";
+  private static final @NonNls String ELEMENT_TRACK_ACTION = "track-action";
+  private static final @NonNls String ELEMENT_TRACK_INTENTION = "track-intention";
 
   FeatureDescriptor(@NotNull GroupDescriptor group, @Nullable ProductivityFeaturesProvider provider, @NotNull Element featureElement) {
     myGroupId = group.getId();
@@ -121,8 +121,7 @@ public class FeatureDescriptor {
     }
   }
 
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
@@ -133,7 +132,7 @@ public class FeatureDescriptor {
   /**
    * @deprecated Use {@code getTipId()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable String getTipFileName() {
     return myTipId;
   }
@@ -150,8 +149,7 @@ public class FeatureDescriptor {
     return myIntentionEvents;
   }
 
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     if (myDisplayName == null) {
       myDisplayName = FeatureStatisticsBundle.message(myId);
     }

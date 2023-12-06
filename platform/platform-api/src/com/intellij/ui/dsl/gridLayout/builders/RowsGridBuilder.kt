@@ -16,7 +16,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   private val layout = panel.layout as GridLayout
 
-  val grid = grid ?: layout.rootGrid
+  val grid: Grid = grid ?: layout.rootGrid
 
   var columnsCount: Int = 0
     private set
@@ -27,7 +27,8 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   private var defaultVerticalAlign = VerticalAlign.CENTER
   private var defaultBaselineAlign = false
 
-  private var x = 0
+  var x: Int = 0
+    private set
   private var y = GRID_EMPTY
 
   fun columnsGaps(value: List<UnscaledGapsX>): RowsGridBuilder {
@@ -54,6 +55,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun cell(component: JComponent,
            width: Int = 1,
            horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
@@ -108,6 +110,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun constraints(width: Int = 1,
                   horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
                   verticalAlign: VerticalAlign = defaultVerticalAlign,
@@ -154,6 +157,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun subGrid(width: Int = 1,
               horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
               verticalAlign: VerticalAlign = defaultVerticalAlign,
@@ -185,6 +189,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun subGridBuilder(width: Int = 1,
                      horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
                      verticalAlign: VerticalAlign = defaultVerticalAlign,

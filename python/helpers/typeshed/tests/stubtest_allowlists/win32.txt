@@ -1,40 +1,21 @@
 ctypes.GetLastError  # Is actually a pointer
-distutils.archive_util.getgrnam
-distutils.archive_util.getpwnam
-distutils.msvccompiler.HKEYS
-locale.[A-Z0-9_]+  # Constants that should be moved to _locale and re-exported conditionally
-locale.nl_langinfo  # Function that should be moved to _locale and re-exported conditionally
-mmap.PAGESIZE
 # alias for a class defined elsewhere,
 # mypy infers the variable has type `(*args) -> DupHandle` but stubtest infers the runtime type as <class DupHandle>
 multiprocessing.reduction.AbstractReducer.DupHandle
-msilib.text.dirname
-msvcrt.CRT_ASSEMBLY_VERSION
-selectors.KqueueSelector
-signal.SIGEMT
-signal.SIGINFO
-winsound.SND_APPLICATION
-xmlrpc.server.fcntl
 
 # Exists at runtime, but missing from stubs
-_msi.MSIError
-distutils.msvccompiler.MSVCCompiler.manifest_get_embed_info
-distutils.msvccompiler.MSVCCompiler.manifest_setup_ldargs
-distutils.msvccompiler.OldMSVCCompiler
-msvcrt.SetErrorMode
-ssl.SSLSocket.recvmsg
-ssl.SSLSocket.recvmsg_into
-ssl.SSLSocket.sendmsg
-winreg.HKEYType.handle
+encodings.mbcs
+encodings.oem
+nt
+_winapi.CreateFileMapping
+_winapi.MapViewOfFile
+_winapi.OpenFileMapping
+_winapi.VirtualQuerySize
 
 
 # ==========
 # Allowlist entries that cannot or should not be fixed
 # ==========
-
-# Aliases for OSError
-builtins.WindowsError.characters_written
-winreg.error.characters_written
 
 # Modules that do not exist on Windows systems
 _curses
@@ -56,9 +37,15 @@ syslog
 termios
 xxlimited
 
+# multiprocessing.popen_fork, popen_forkserver, and popen_spawn_posix exist on Windows but fail to import
+multiprocessing.popen_fork
+multiprocessing.popen_forkserver
+multiprocessing.popen_spawn_posix
+
 # Modules that rely on _curses
 curses
 curses.ascii
+curses.has_key
 curses.panel
 curses.textpad
 
@@ -69,7 +56,8 @@ tty
 # pathlib functions that rely on modules that don't exist on Windows
 pathlib.Path.owner
 pathlib.Path.group
-# pathlib methods that exist on Windows, but always raise NotImplementedError,
-# so are omitted from the stub
-pathlib.Path.is_mount
-pathlib.WindowsPath.is_mount
+
+# Added in a patch release, backported to all security branches,
+# but have yet to find their way to all GitHub Actions images
+(sys.get_int_max_str_digits)?
+(sys.set_int_max_str_digits)?

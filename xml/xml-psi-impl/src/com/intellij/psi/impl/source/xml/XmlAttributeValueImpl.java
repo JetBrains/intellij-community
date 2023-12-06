@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationWithSeparator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -47,9 +48,8 @@ public class XmlAttributeValueImpl extends XmlElementImpl
     }
   }
 
-  @NotNull
   @Override
-  public String getValue() {
+  public @NotNull String getValue() {
     // it is more correct way to strip quotes since injected xml may have quotes encoded
     String text = getText();
     ASTNode startQuote = findChildByType(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER);
@@ -77,7 +77,12 @@ public class XmlAttributeValueImpl extends XmlElementImpl
 
   @Override
   public PsiReference @NotNull [] getReferences(PsiReferenceService.@NotNull Hints hints) {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, hints);
+    PsiReference[] psiReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, hints);
+    Integer offset = hints.offsetInElement;
+    if (offset != null) {
+      return PsiDynaReference.filterByOffset(psiReferences, offset);
+    }
+    return psiReferences;
   }
 
   @Override
@@ -129,8 +134,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl
   }
 
   @Override
-  @NotNull
-  public LiteralTextEscaper<XmlAttributeValueImpl> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<XmlAttributeValueImpl> createLiteralTextEscaper() {
     return new XmlAttributeLiteralEscaper(this);
   }
 
@@ -234,9 +238,8 @@ public class XmlAttributeValueImpl extends XmlElementImpl
     return DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties();
   }
 
-  @Nullable
   @Override
-  public String getPropertyDescription(@Nullable String name) {
+  public @Nullable String getPropertyDescription(@Nullable String name) {
     return DefaultRegExpPropertiesProvider.getInstance().getPropertyDescription(name);
   }
 

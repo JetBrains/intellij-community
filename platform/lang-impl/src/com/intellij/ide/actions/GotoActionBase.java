@@ -188,20 +188,6 @@ public abstract class GotoActionBase extends AnAction {
                         ChooseByNameModelEx.getItemProvider(model, getPsiContext(e)));
   }
 
-  /**
-   * @deprecated use other overloaded methods
-   */
-  @Deprecated(forRemoval = true)
-  protected <T> void showNavigationPopup(AnActionEvent e,
-                                         ChooseByNameModel model,
-                                         final GotoActionCallback<T> callback,
-                                         @Nullable @Nls final String findUsagesTitle,
-                                         boolean useSelectionFromEditor,
-                                         final boolean allowMultipleSelection,
-                                         final DefaultChooseByNameItemProvider itemProvider) {
-    showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection, (ChooseByNameItemProvider)itemProvider);
-  }
-
   protected <T> void showNavigationPopup(AnActionEvent e,
                                          ChooseByNameModel model,
                                          final GotoActionCallback<T> callback,
@@ -258,7 +244,7 @@ public abstract class GotoActionBase extends AnAction {
         }
       }
 
-      private void updateHistory(@Nullable String text) {
+      private static void updateHistory(@Nullable String text) {
         if (!StringUtil.isEmptyOrSpaces(text)) {
           List<String> history = ourHistory.get(myInAction);
           if (history == null) history = new ArrayList<>();

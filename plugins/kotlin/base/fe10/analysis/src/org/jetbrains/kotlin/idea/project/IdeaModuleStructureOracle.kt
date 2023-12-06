@@ -25,7 +25,7 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
     override fun findAllReversedDependsOnPaths(module: ModuleDescriptor): List<ModulePath> {
         val currentPath: Stack<ModuleInfo> = Stack()
 
-        return sequence<ModuleInfoPath> {
+        return sequence {
             val root = module.moduleInfo
             if (root != null) {
                 yieldPathsFromSubgraph(
@@ -45,7 +45,7 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
     override fun findAllDependsOnPaths(module: ModuleDescriptor): List<ModulePath> {
         val currentPath: Stack<ModuleInfo> = Stack()
 
-        return sequence<ModuleInfoPath> {
+        return sequence {
             val root = module.moduleInfo
             if (root != null) {
                 yieldPathsFromSubgraph(

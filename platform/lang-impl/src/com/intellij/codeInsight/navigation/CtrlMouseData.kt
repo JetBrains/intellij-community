@@ -3,9 +3,8 @@
 package com.intellij.codeInsight.navigation
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges
 import com.intellij.lang.documentation.psi.isNavigatableQuickDoc
-import com.intellij.lang.documentation.psi.psiDocumentationTarget
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTarget
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
@@ -56,7 +55,7 @@ internal fun symbolCtrlMouseData(
     return targetCtrlMouseData(
       ranges,
       isNavigatable = declared || isNavigatableQuickDoc(elementAtOffset, psi),
-      target = psiDocumentationTarget(psi, elementAtOffset)
+      target = psiDocumentationTargets(psi, elementAtOffset).first() //TODO support multi-targeting
     )
   }
   return targetCtrlMouseData(
@@ -73,8 +72,23 @@ internal fun psiCtrlMouseData(
   return targetCtrlMouseData(
     ranges = getReferenceRanges(leafElement),
     isNavigatable = isNavigatableQuickDoc(leafElement, targetElement),
-    target = psiDocumentationTarget(targetElement, leafElement)
+    target = psiDocumentationTargets(targetElement, leafElement).first() //TODO support multi-targeting
   )
+}
+
+@Internal
+internal fun getReferenceRanges(elementAtPointer: PsiElement): List<TextRange> {
+  if (!elementAtPointer.isPhysical) {
+    return emptyList()
+  }
+  var textOffset = elementAtPointer.textOffset
+  val range = elementAtPointer.textRange
+              ?: throw AssertionError("Null range for " + elementAtPointer + " of " + elementAtPointer.javaClass)
+  if (textOffset < range.startOffset || textOffset < 0) {
+    LOG.error("Invalid text offset " + textOffset + " of element " + elementAtPointer + " of " + elementAtPointer.javaClass)
+    textOffset = range.startOffset
+  }
+  return listOf(TextRange(textOffset, range.endOffset))
 }
 
 internal fun targetCtrlMouseData(

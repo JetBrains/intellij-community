@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -40,7 +25,7 @@ import java.util.Collection;
 /**
  * @author Dmitry Batkovich
  */
-public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix implements HighPriorityAction {
+public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix {
   public static final ArgumentFixerActionFactory REGISTAR = new MyFixerActionFactory();
 
   protected WrapObjectWithOptionalOfNullableFix(final @NotNull PsiExpressionList list,
@@ -52,9 +37,8 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
 
   @NotNull
   @Override
-  public String getText() {
-    PsiExpressionList list = myArgList.getElement();
-    if (list != null && list.getExpressionCount() == 1) {
+  public String getText(@NotNull PsiExpressionList list) {
+    if (list.getExpressionCount() == 1) {
       return QuickFixBundle.message("wrap.with.optional.single.parameter.text");
     }
     else {
@@ -63,27 +47,20 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return PsiUtil.isLanguageLevel8OrHigher(file) && super.isAvailable(project, editor, file);
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiExpressionList list = myArgList.getElement();
-    if (list == null) return null;
-    return new WrapObjectWithOptionalOfNullableFix(PsiTreeUtil.findSameElementInCopy(list, target), myIndex, myToType,
-                                                   myArgumentFixerActionFactory);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList list) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(context.file())) return null;
+    Presentation presentation = super.getPresentation(context, list);
+    return presentation == null ? null : presentation.withPriority(PriorityAction.Priority.HIGH);
   }
 
   public static IntentionAction createFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
-    return new MyFix(expression, type);
+    return new MyFix(expression, type).asIntention();
   }
 
-  private static class MyFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-    @SafeFieldForPreview // used only in isAvailable
+  private static class MyFix extends PsiUpdateModCommandAction<PsiExpression> {
     private final PsiType myType;
 
-    protected MyFix(@Nullable PsiElement element, @Nullable PsiType type) {
+    protected MyFix(@NotNull PsiExpression element, @Nullable PsiType type) {
       super(element);
       myType = type;
     }
@@ -96,27 +73,14 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
     }
 
     @Override
-    public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
-                       @Nullable Editor editor,
-                       @NotNull PsiElement startElement,
-                       @NotNull PsiElement endElement) {
-      startElement.replace(getModifiedExpression((PsiExpression)getStartElement()));
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expression, @NotNull ModPsiUpdater updater) {
+      expression.replace(getModifiedExpression(expression));
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project,
-                               @NotNull PsiFile file,
-                               @NotNull PsiElement startElement,
-                               @NotNull PsiElement endElement) {
-      return BaseIntentionAction.canModify(startElement) &&
-             PsiUtil.isLanguageLevel8OrHigher(startElement) && areConvertible(((PsiExpression) startElement).getType(), myType);
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return getFamilyName();
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression expression) {
+      if (!(PsiUtil.isLanguageLevel8OrHigher(expression) && areConvertible(expression.getType(), myType))) return null;
+      return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH);
     }
   }
 
@@ -134,8 +98,8 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
     }
 
     @Override
-    public MethodArgumentFix createFix(final PsiExpressionList list, final int i, final PsiType toType) {
-      return new WrapObjectWithOptionalOfNullableFix(list, i, toType, this);
+    public IntentionAction createFix(final PsiExpressionList list, final int i, final PsiType toType) {
+      return new WrapObjectWithOptionalOfNullableFix(list, i, toType, this).asIntention();
     }
   }
 

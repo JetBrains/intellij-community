@@ -70,6 +70,8 @@ public interface PluginDescriptor {
 
   @Nullable @NlsSafe String getCategory();
 
+  default @Nullable @Nls String getDisplayCategory() { return getCategory(); }
+
   @Nullable String getVendorEmail();
 
   @Nullable String getVendorUrl();
@@ -98,11 +100,6 @@ public interface PluginDescriptor {
    */
   @ApiStatus.Internal
   default boolean isImplementationDetail() {
-    return false;
-  }
-
-  @ApiStatus.Experimental
-  default boolean isOnDemand() {
     return false;
   }
 

@@ -4,6 +4,7 @@ package com.intellij.platform.backend.documentation
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import java.util.function.Consumer
 
 /**
@@ -23,6 +24,7 @@ import java.util.function.Consumer
  * ```
  */
 @Experimental
+@OverrideOnly
 fun interface BlockingDocumentationContentFlow {
 
   /**

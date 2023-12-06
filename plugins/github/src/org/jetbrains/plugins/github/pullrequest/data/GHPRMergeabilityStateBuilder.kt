@@ -1,13 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.util.containers.nullize
-import org.jetbrains.plugins.github.api.data.*
+import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
+import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
+import org.jetbrains.plugins.github.api.data.GHCommitCheckSuiteConclusion
+import org.jetbrains.plugins.github.api.data.GHCommitStatusContextState
+import org.jetbrains.plugins.github.api.data.GHRefUpdateRule
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeStateStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState.ChecksState
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 
 class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val prHtmlUrl: String,
                                    private val mergeabilityData: GHPullRequestMergeabilityData) {
@@ -17,18 +19,12 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
   private var isRestricted = false
   private var requiredApprovingReviewsCount = 0
 
-  fun withRestrictions(securityService: GHPRSecurityService, baseBranchProtectionRules: GHBranchProtectionRules) {
-    canOverrideAsAdmin = baseBranchProtectionRules.enforceAdmins?.enabled == false &&
-                         securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.ADMIN)
-    requiredContexts = baseBranchProtectionRules.requiredStatusChecks?.contexts.orEmpty()
-
-    val restrictions = baseBranchProtectionRules.restrictions
-    val allowedLogins = restrictions?.users?.map { it.login }.nullize()
-    val allowedTeams = restrictions?.teams?.map { it.slug }.nullize()
-    isRestricted = (allowedLogins != null && !allowedLogins.contains(securityService.currentUser.login)) ||
-                   (allowedTeams != null && !securityService.isUserInAnyTeam(allowedTeams))
-
-    requiredApprovingReviewsCount = baseBranchProtectionRules.requiredPullRequestReviews?.requiredApprovingReviewCount ?: 0
+  fun withRestrictions(currentUserIsAdmin: Boolean, refUpdateRule: GHRefUpdateRule) {
+    // TODO: load via PullRequest.viewerCanMergeAsAdmin when we update the min version
+    canOverrideAsAdmin = /*baseBranchProtectionRules.enforceAdmins?.enabled == false &&*/currentUserIsAdmin
+    requiredContexts = refUpdateRule.requiredStatusCheckContexts.filterNotNull()
+    isRestricted = !refUpdateRule.viewerCanPush
+    requiredApprovingReviewsCount = refUpdateRule.requiredApprovingReviewCount ?: 0
   }
 
   fun build(): GHPRMergeabilityState {
@@ -38,45 +34,18 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
       GHPullRequestMergeableState.UNKNOWN -> null
     }
 
-    var failedChecks = 0
-    var pendingChecks = 0
-    var successfulChecks = 0
-
-    val lastCommit = mergeabilityData.commits.nodes.lastOrNull()?.commit
+    val ciJobs = mutableListOf<CodeReviewCIJob>()
+    val lastCommit = mergeabilityData.commits.lastOrNull()?.commit
     val contexts = lastCommit?.status?.contexts.orEmpty()
-    for (context in contexts) {
-      when (context.state) {
-        GHCommitStatusContextState.ERROR,
-        GHCommitStatusContextState.FAILURE -> failedChecks++
-        GHCommitStatusContextState.EXPECTED,
-        GHCommitStatusContextState.PENDING -> pendingChecks++
-        GHCommitStatusContextState.SUCCESS -> successfulChecks++
-      }
+    contexts.forEach { context ->
+      val status = CodeReviewCIJob(context.context, context.state.toCiState(), context.isRequired, context.targetUrl)
+      ciJobs.add(status)
     }
 
-    val checkSuites = lastCommit?.checkSuites?.nodes.orEmpty()
-    for (suite in checkSuites) {
-      when (suite.status) {
-        GHCommitCheckSuiteStatusState.IN_PROGRESS,
-        GHCommitCheckSuiteStatusState.QUEUED,
-        GHCommitCheckSuiteStatusState.PENDING,
-        GHCommitCheckSuiteStatusState.WAITING,
-        GHCommitCheckSuiteStatusState.REQUESTED -> pendingChecks++
-        GHCommitCheckSuiteStatusState.COMPLETED -> {
-          when (suite.conclusion) {
-            GHCommitCheckSuiteConclusion.ACTION_REQUIRED -> failedChecks++
-            GHCommitCheckSuiteConclusion.CANCELLED -> successfulChecks++
-            GHCommitCheckSuiteConclusion.FAILURE -> failedChecks++
-            GHCommitCheckSuiteConclusion.NEUTRAL -> successfulChecks++
-            GHCommitCheckSuiteConclusion.SKIPPED -> successfulChecks++
-            GHCommitCheckSuiteConclusion.STALE -> failedChecks++
-            GHCommitCheckSuiteConclusion.STARTUP_FAILURE -> failedChecks++
-            GHCommitCheckSuiteConclusion.SUCCESS -> successfulChecks++
-            GHCommitCheckSuiteConclusion.TIMED_OUT -> failedChecks++
-            null -> failedChecks++
-          }
-        }
-      }
+    val checkSuites = lastCommit?.checkSuites.orEmpty()
+    checkSuites.flatMap { checkSuite -> checkSuite.checkRuns }.forEach { checkRun ->
+      val status = CodeReviewCIJob(checkRun.name, checkRun.conclusion.toCiState(), checkRun.isRequired, checkRun.url)
+      ciJobs.add(status)
     }
 
     val canBeMerged = when {
@@ -85,14 +54,13 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
       else -> false
     }
 
-    val summaryChecksState = getChecksSummaryState(failedChecks, pendingChecks, successfulChecks)
     val checksState = when (mergeabilityData.mergeStateStatus) {
       GHPullRequestMergeStateStatus.CLEAN,
       GHPullRequestMergeStateStatus.DIRTY,
       GHPullRequestMergeStateStatus.DRAFT,
       GHPullRequestMergeStateStatus.HAS_HOOKS,
       GHPullRequestMergeStateStatus.UNKNOWN,
-      GHPullRequestMergeStateStatus.UNSTABLE -> summaryChecksState
+      GHPullRequestMergeStateStatus.UNSTABLE -> null
       GHPullRequestMergeStateStatus.BEHIND -> ChecksState.BLOCKING_BEHIND
       GHPullRequestMergeStateStatus.BLOCKED -> {
         if (requiredContexts.isEmpty()
@@ -100,7 +68,7 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
               .filter { it.state == GHCommitStatusContextState.SUCCESS }
               .map { it.context }
               .containsAll(requiredContexts)) {
-          summaryChecksState
+          null
         }
         else ChecksState.BLOCKING_FAILING
       }
@@ -113,18 +81,33 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
 
     return GHPRMergeabilityState(headRefOid, prHtmlUrl,
                                  hasConflicts,
-                                 failedChecks, pendingChecks, successfulChecks,
-                                 checksState,
+                                 ciJobs,
                                  canBeMerged, mergeabilityData.canBeRebased,
                                  isRestricted, actualRequiredApprovingReviewsCount)
   }
 
-  private fun getChecksSummaryState(failed: Int, pending: Int, successful: Int): ChecksState {
-    return when {
-      failed > 0 -> ChecksState.FAILING
-      pending > 0 -> ChecksState.PENDING
-      successful > 0 -> ChecksState.SUCCESSFUL
-      else -> ChecksState.NONE
+  private fun GHCommitStatusContextState.toCiState(): CodeReviewCIJobState {
+    return when (this) {
+      GHCommitStatusContextState.ERROR,
+      GHCommitStatusContextState.EXPECTED,
+      GHCommitStatusContextState.FAILURE -> CodeReviewCIJobState.FAILED
+      GHCommitStatusContextState.PENDING -> CodeReviewCIJobState.PENDING
+      GHCommitStatusContextState.SUCCESS -> CodeReviewCIJobState.SUCCESS
+    }
+  }
+
+  private fun GHCommitCheckSuiteConclusion?.toCiState(): CodeReviewCIJobState {
+    return when (this) {
+      null -> CodeReviewCIJobState.PENDING
+      GHCommitCheckSuiteConclusion.ACTION_REQUIRED,
+      GHCommitCheckSuiteConclusion.CANCELLED,
+      GHCommitCheckSuiteConclusion.NEUTRAL,
+      GHCommitCheckSuiteConclusion.STALE,
+      GHCommitCheckSuiteConclusion.STARTUP_FAILURE,
+      GHCommitCheckSuiteConclusion.TIMED_OUT,
+      GHCommitCheckSuiteConclusion.FAILURE -> CodeReviewCIJobState.FAILED
+      GHCommitCheckSuiteConclusion.SKIPPED -> CodeReviewCIJobState.SKIPPED
+      GHCommitCheckSuiteConclusion.SUCCESS -> CodeReviewCIJobState.SUCCESS
     }
   }
 }

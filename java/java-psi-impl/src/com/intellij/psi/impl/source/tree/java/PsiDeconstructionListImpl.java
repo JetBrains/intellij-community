@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 public class PsiDeconstructionListImpl extends CompositePsiElement implements PsiDeconstructionList {
-  private final TokenSet PRIMARY_PATTERN_SET = TokenSet.create(TYPE_TEST_PATTERN, DECONSTRUCTION_PATTERN, PARENTHESIZED_PATTERN);
+  private final TokenSet PRIMARY_PATTERN_SET = TokenSet.create(TYPE_TEST_PATTERN, DECONSTRUCTION_PATTERN, PARENTHESIZED_PATTERN, UNNAMED_PATTERN);
 
   public PsiDeconstructionListImpl() {
     super(DECONSTRUCTION_LIST);

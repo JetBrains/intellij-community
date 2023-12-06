@@ -16,6 +16,7 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -219,8 +220,8 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public @Nullable String execTableCommand(String threadId,
                                            String frameId,
                                            String command,
-                                           TableCommandType commandType) throws PyDebuggerException {
-    return debugger(threadId).execTableCommand(threadId, frameId, command, commandType);
+                                           TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
+    return debugger(threadId).execTableCommand(threadId, frameId, command, commandType, tableCommandParameters);
   }
 
   @Override

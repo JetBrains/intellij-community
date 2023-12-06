@@ -2,65 +2,53 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplaceWithListAccessFix implements IntentionActionWithFixAllOption {
-  private final PsiArrayAccessExpression myArrayAccessExpression;
-
+public class ReplaceWithListAccessFix extends PsiUpdateModCommandAction<PsiArrayAccessExpression> {
   public ReplaceWithListAccessFix(@NotNull PsiArrayAccessExpression arrayAccessExpression) {
-    myArrayAccessExpression = arrayAccessExpression;
+    super(arrayAccessExpression);
   }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return QuickFixBundle.message("replace.with.list.access.text");
-  }
-
+  
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return QuickFixBundle.message("replace.with.list.access.text");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myArrayAccessExpression.isValid()) return false;
-    if (!TypeConversionUtil.areTypesAssignmentCompatible(PsiTypes.intType(), myArrayAccessExpression.getIndexExpression())) {
-      return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiArrayAccessExpression arrayAccess) {
+    if (!TypeConversionUtil.areTypesAssignmentCompatible(PsiTypes.intType(), arrayAccess.getIndexExpression())) {
+      return null;
     }
-    final PsiElement parent = myArrayAccessExpression.getParent();
+    final PsiElement parent = arrayAccess.getParent();
     if (parent instanceof PsiAssignmentExpression) {
       final PsiExpression lExpression = ((PsiAssignmentExpression)parent).getLExpression();
-      if (lExpression.equals(myArrayAccessExpression) && !(parent.getParent() instanceof PsiExpressionStatement)) {
-        return false;
+      if (lExpression.equals(arrayAccess) && !(parent.getParent() instanceof PsiExpressionStatement)) {
+        return null;
       }
     }
 
-    final PsiExpression arrayExpression = myArrayAccessExpression.getArrayExpression();
+    final PsiExpression arrayExpression = arrayAccess.getArrayExpression();
     final PsiType type = arrayExpression.getType();
-    final PsiType listType = createUtilListType(project);
+    final PsiType listType = createUtilListType(context.project(), arrayAccess);
 
-    if (type == null || listType == null) return false;
-
-
-    return listType.isAssignableFrom(type);
+    if (type == null || listType == null || !listType.isAssignableFrom(type)) return null;
+    return Presentation.of(getFamilyName()).withFixAllOption(this);
   }
 
   @Nullable
-  private PsiType createUtilListType(@NotNull Project project) {
+  private static PsiType createUtilListType(@NotNull Project project, @NotNull PsiArrayAccessExpression arrayAccess) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiClass listClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_LIST, myArrayAccessExpression.getResolveScope());
+    final PsiClass listClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_LIST, arrayAccess.getResolveScope());
 
     if (listClass == null) return null;
 
@@ -69,25 +57,26 @@ public class ReplaceWithListAccessFix implements IntentionActionWithFixAllOption
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiExpression arrayExpression = myArrayAccessExpression.getArrayExpression();
-    final PsiExpression indexExpression = myArrayAccessExpression.getIndexExpression();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiArrayAccessExpression arrayAccess, @NotNull ModPsiUpdater updater) {
+    final PsiExpression arrayExpression = arrayAccess.getArrayExpression();
+    final PsiExpression indexExpression = arrayAccess.getIndexExpression();
 
     if (indexExpression == null) return;
 
+    Project project = context.project();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
-    final PsiElement parent = myArrayAccessExpression.getParent();
+    final PsiElement parent = arrayAccess.getParent();
     if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       final PsiExpression lExpression = assignmentExpression.getLExpression();
       final PsiExpression rExpression = assignmentExpression.getRExpression();
-      if (lExpression.equals(myArrayAccessExpression) && parent.getParent() instanceof PsiExpressionStatement && rExpression != null) {
+      if (lExpression.equals(arrayAccess) && parent.getParent() instanceof PsiExpressionStatement && rExpression != null) {
         replaceWithSet(factory, codeStyleManager, arrayExpression, indexExpression, rExpression, assignmentExpression);
         return;
       }
     }
-    replaceWithGet(factory, codeStyleManager, arrayExpression, indexExpression, myArrayAccessExpression);
+    replaceWithGet(factory, codeStyleManager, arrayExpression, indexExpression, arrayAccess);
   }
 
   private static void replaceWithGet(@NotNull PsiElementFactory factory,
@@ -113,16 +102,5 @@ public class ReplaceWithListAccessFix implements IntentionActionWithFixAllOption
       anchor
     );
     anchor.replace(codeStyleManager.reformat(listAccess));
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Nullable
-  @Override
-  public FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new ReplaceWithListAccessFix(PsiTreeUtil.findSameElementInCopy(myArrayAccessExpression, target));
   }
 }

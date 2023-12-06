@@ -4,9 +4,9 @@ package com.intellij.performance.performancePlugin
 import com.intellij.performance.performancePlugin.commands.AssertKotlinFileInSpecificRootCommand
 import com.intellij.performance.performancePlugin.commands.ClearLibraryCaches
 import com.intellij.performance.performancePlugin.commands.ClearSourceCaches
-import com.intellij.performance.performancePlugin.commands.FindUsagesKotlinCommand
 import com.intellij.performance.performancePlugin.commands.GCCommand
 import com.intellij.performance.performancePlugin.commands.KotlinEditorOptionsChangeCommand
+import com.intellij.performance.performancePlugin.commands.CreateKotlinFileCommand
 import com.jetbrains.performancePlugin.CommandProvider
 import com.jetbrains.performancePlugin.CreateCommand
 
@@ -19,7 +19,7 @@ class KotlinPluginCommandProvider : CommandProvider {
             GCCommand.PREFIX to CreateCommand(::GCCommand),
             AssertKotlinFileInSpecificRootCommand.PREFIX to CreateCommand(::AssertKotlinFileInSpecificRootCommand),
             KotlinEditorOptionsChangeCommand.PREFIX to CreateCommand(::KotlinEditorOptionsChangeCommand),
-            FindUsagesKotlinCommand.PREFIX to CreateCommand(::FindUsagesKotlinCommand),
+            CreateKotlinFileCommand.PREFIX to CreateCommand(::CreateKotlinFileCommand)
         )
     }
 }

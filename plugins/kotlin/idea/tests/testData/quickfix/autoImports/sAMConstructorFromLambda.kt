@@ -8,3 +8,5 @@ fun foo() {
             <caret>Comparator { x: Int, y: Int -> x - y }
     )
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+/* IGNORE_K2 */

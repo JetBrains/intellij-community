@@ -19,6 +19,8 @@ _pydevd_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_pydevd_dir)
 
 IS_PY36_OR_GREATER = sys.version_info > (3, 6)
+IS_PY311_OR_GREATER = sys.version_info > (3, 11)
+IS_PY312_OR_GREATER = sys.version_info > (3, 12)
 
 
 def process_args():
@@ -51,7 +53,18 @@ def process_args():
 
 
 def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
-                    target_arch, extended=False):
+                    target_arch, extended=False, should_add_python_3_12_suffix=True):
+    """
+    :param dir_name: directory where the Cython file is located
+    :param extension_name: name of the .pyx or .c file to build extension from, e.g.
+      'pydevd_cython' or 'pydevd_frame_evaluator_39_310'
+    :param target_pydevd_name: name of the resulting extension
+    :param force_cython: if False, build from the C file, use ``.pyx`` otherwise
+    :param target_arch: target architecture, e.g. amd64
+    :param extended: add ``_ext`` to the name of the extension package name
+    :param should_add_python_3_12_suffix: whether to add a Python 3.12 specific suffixes
+      to the build files
+    """
     pyx_file = os.path.join(os.path.dirname(__file__), dir_name,
                             "%s.pyx" % (extension_name,))
     has_pxd = False
@@ -80,6 +93,8 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
             has_pxd = True
 
         assert os.path.exists(pyx_file)
+        if has_pxd:
+            assert os.path.exists(new_pxd_file)
 
     try:
         from distutils.extension import Extension
@@ -99,19 +114,29 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
                 ["%s/%s.pyx" % (dir_name, target_pydevd_name,)],
                 extra_compile_args=extra_compile_args,
                 extra_link_args=extra_link_args,
-            ), force=True)
+                ),
+                # See: https://cython.readthedocs.io/en/latest/src/userguide/migrating_to_cy30.html#binding-functions
+                compiler_directives={'binding': False},
+                force=True)
         else:
             # Always compile the .c (and not the .pyx) file (which we should keep
             # up-to-date by running build_tools/build.py).
+
+            # The C file for Python 3.11 and older is incompatible with
+            # Python 3.12.
+            effective_c_file_name = "%s.c" % (
+                extension_name + "_312" if IS_PY312_OR_GREATER and should_add_python_3_12_suffix else extension_name
+            )
+
             ext_modules = [Extension(
                 "%s%s.%s" % (dir_name, "_ext" if extended else "", target_pydevd_name),
-                [os.path.join(dir_name, "%s.c" % target_pydevd_name), ],
+                [os.path.join(dir_name, effective_c_file_name)],
                 # uncomment to generate pdbs for visual studio.
                 # extra_compile_args=["-Zi", "/Od"],
                 # extra_link_args=["-debug"],
                 extra_compile_args=extra_compile_args,
                 extra_link_args=extra_link_args,
-            )]
+                )]
 
         setup(
             name="Cythonize",
@@ -138,62 +163,17 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
                 except:  # noqa: 722
                     import traceback
                     traceback.print_exc()
-        else:
-            if force_cython and extension_name == "pydevd_frame_evaluator":
-                # Store the updated version-specific C file.
-                new_c_file = os.path.join(os.path.dirname(__file__), dir_name,
-                                          "%s.c" % (extension_name,))
-                shutil.copy(new_c_file, os.path.join(
-                    _find_cython_module_dir(), "pydevd_frame_evaluator.c"))
 
 
-_frame_evaluator_cython_mod_dir = None
-
-
-def _find_cython_module_dir():
-    """Finds the version-specific frame evaluator Cython module directory."""
-    global _frame_evaluator_cython_mod_dir
-    if _frame_evaluator_cython_mod_dir:
-        return _frame_evaluator_cython_mod_dir
-    cython_modules_dir = os.path.join(_pydevd_dir, "_pydevd_frame_eval", "cython")
-    major_version, minor_version = sys.version_info[:2]
-    for subdir in os.listdir(cython_modules_dir):
-        if not os.path.isdir(os.path.join(cython_modules_dir, subdir)):
-            continue
-        start, end = subdir.split('_')
-        start, end = int(start[1:]), int(end[1:])
-        if start <= minor_version <= end:
-            _frame_evaluator_cython_mod_dir =  os.path.join(cython_modules_dir, subdir)
-            return _frame_evaluator_cython_mod_dir
-    raise RuntimeError("Failed to find a compatible frame evaluator module"
-                       " for Python %d.%d" % (major_version, minor_version))
-
-
-class FrameEvalModuleBuildContext:
-    def __init__(self):
-        pydevd_frame_eval_dir_name = "_pydevd_frame_eval"
-        self.cython_modules_dir_path = os.path.join(
-            _pydevd_dir, pydevd_frame_eval_dir_name, "cython")
-        self._pxd_file = os.path.join(
-            _pydevd_dir, pydevd_frame_eval_dir_name, "pydevd_frame_evaluator.pxd")
-        self._pyx_file = os.path.join(
-            _pydevd_dir, pydevd_frame_eval_dir_name, "pydevd_frame_evaluator.pyx")
-        self._c_file = os.path.join(
-            _pydevd_dir, pydevd_frame_eval_dir_name, "pydevd_frame_evaluator.c")
-
-    def __enter__(self):
-        module_dir = _find_cython_module_dir()
-        compatible_c = os.path.join(module_dir, "pydevd_frame_evaluator.c")
-        shutil.copy(compatible_c, self._c_file)
-        compatible_pxd = os.path.join(module_dir, "pydevd_frame_evaluator.pxd")
-        compatible_pyx = os.path.join(module_dir, "pydevd_frame_evaluator.pyx")
-        shutil.copy(compatible_pxd, self._pxd_file)
-        shutil.copy(compatible_pyx, self._pyx_file)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        os.remove(self._c_file)
-        os.remove(self._pxd_file)
-        os.remove(self._pyx_file)
+def get_frame_eval_extension_name():
+    version = sys.version_info[:2]
+    if (3, 6) <= version <= (3, 8):
+        return "pydevd_frame_evaluator_36_38"
+    elif (3, 9) <= version <= (3, 10):
+        return "pydevd_frame_evaluator_39_310"
+    else:
+        raise RuntimeError("Frame evaluation is not supported for the Python version"
+                           "%s.%s" % (version[0], version[1]))
 
 
 def create_init_py_files(extension_folder, subdir_names_to_ignore=None):
@@ -205,7 +185,7 @@ def create_init_py_files(extension_folder, subdir_names_to_ignore=None):
     subdir_names_to_ignore = subdir_names_to_ignore or []
     for folder in (f for f in os.listdir(extension_folder)
                    if f not in subdir_names_to_ignore
-                   and os.path.isdir(os.path.join(extension_folder, f))):
+                      and os.path.isdir(os.path.join(extension_folder, f))):
         file = os.path.join(folder, "__init__.py")
         if not os.path.exists(file):
             open(file, 'a').close()
@@ -224,15 +204,18 @@ def main():
         "_pydevd_bundle", extension_name, target_pydevd_name, force_cython, target_arch,
         extended)
 
-    if IS_PY36_OR_GREATER:
-        extension_name = "pydevd_frame_evaluator"
+    if IS_PY36_OR_GREATER and not IS_PY311_OR_GREATER:
+        extension_name = get_frame_eval_extension_name()
         frame_eval_dir_name = "_pydevd_frame_eval"
-
         target_frame_eval = target_frame_eval or extension_name
 
-        with FrameEvalModuleBuildContext():
-            build_extension(frame_eval_dir_name, extension_name, target_frame_eval,
-                            force_cython, target_arch, extended)
+        build_extension(frame_eval_dir_name, extension_name, target_frame_eval,
+                        force_cython, target_arch, extended)
+
+    if IS_PY312_OR_GREATER:
+        extension_name = "pydevd_pep_669_tracing_cython"
+        build_extension("_pydevd_bundle", extension_name, extension_name,
+                        force_cython, target_arch, extended, False)
 
     if extension_folder:
         create_init_py_files(extension_folder, subdir_names_to_ignore=["build"])

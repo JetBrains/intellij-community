@@ -3,29 +3,57 @@
 package org.jetbrains.kotlin.idea.completion.lookups
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtUsualClassTypeRenderer
+import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.types.Variance
 
 internal object CompletionShortNamesRenderer {
-    fun KtAnalysisSession.renderFunctionParameters(function: KtFunctionLikeSymbol, substitutor: KtSubstitutor): String {
-        return function.valueParameters.joinToString(", ", "(", ")") { renderFunctionParameter(it, substitutor) }
+    context(KtAnalysisSession)
+    fun renderFunctionParameters(function: KtFunctionLikeSignature<*>): String {
+        return function.valueParameters.joinToString(", ", "(", ")") { renderFunctionParameter(it) }
     }
 
-    fun KtAnalysisSession.renderVariable(function: KtVariableLikeSymbol, substitutor: KtSubstitutor): String {
-        return renderReceiver(function, substitutor)
+    context(KtAnalysisSession)
+    fun renderFunctionalTypeParameters(functionalType: KtFunctionalType): String =
+        functionalType.parameterTypes.joinToString(separator = ", ", prefix = "(", postfix = ")") {
+            it.render(rendererVerbose, position = Variance.INVARIANT)
+        }
+
+    context(KtAnalysisSession)
+    fun renderVariable(variable: KtVariableLikeSignature<*>): String {
+        return renderReceiver(variable)
     }
 
-    private fun KtAnalysisSession.renderReceiver(symbol: KtCallableSymbol, substitutor: KtSubstitutor): String {
-        val receiverType = symbol.receiverType?.let { substitutor.substitute(it) } ?: return ""
-        return receiverType.render(renderer, position = Variance.INVARIANT) + "."
+    context(KtAnalysisSession)
+    private fun renderReceiver(variable: KtVariableLikeSignature<*>): String {
+        val receiverType = variable.receiverType ?: return ""
+        return receiverType.render(rendererVerbose, position = Variance.INVARIANT) + "."
     }
 
-    private fun KtAnalysisSession.renderFunctionParameter(param: KtValueParameterSymbol, substitutor: KtSubstitutor): String =
-        "${if (param.isVararg) "vararg " else ""}${param.name.asString()}: ${
-            substitutor.substitute(param.returnType).render(renderer, position = Variance.INVARIANT)
-        }"
+    context(KtAnalysisSession)
+    private fun renderFunctionParameter(parameter: KtVariableLikeSignature<KtValueParameterSymbol>): String =
+        "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
+            parameter.returnType.renderNonErrorOrUnsubstituted(parameter.symbol.returnType)
+        }${if (parameter.symbol.hasDefaultValue) " = ..." else ""}"
 
     val renderer = KtTypeRendererForSource.WITH_SHORT_NAMES
+    val rendererVerbose = renderer.with {
+        usualClassTypeRenderer = KtUsualClassTypeRenderer.AS_CLASS_TYPE_WITH_TYPE_ARGUMENTS_VERBOSE
+    }
+}
+
+context(KtAnalysisSession)
+internal fun KtType.renderNonErrorOrUnsubstituted(
+    unsubstituted: KtType,
+    renderer: KtTypeRenderer = CompletionShortNamesRenderer.rendererVerbose
+): String {
+    val typeToRender = this.takeUnless { it is KtErrorType } ?: unsubstituted
+    return typeToRender.render(renderer, position = Variance.INVARIANT)
 }

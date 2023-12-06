@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION") // declared for import com.intellij.codeInsight.completion.CompletionProgressIndicator
 
 package com.intellij.internal
@@ -52,14 +52,14 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.ScrollingUtil
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import java.io.File
 import java.util.*
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
 import javax.swing.JComponent
-import javax.swing.JLabel
 
 private data class CompletionTime(var cnt: Int, var time: Long)
 
@@ -156,7 +156,7 @@ internal class CompletionQualityStatsAction : AnAction() {
               val descriptor = OpenFileDescriptor(project, file)
               newEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true) ?:
                           throw Exception("Can't open text editor for file: ${file.name}")
-            }, ModalityState.NON_MODAL)
+            }, ModalityState.nonModal())
 
             val text = document.text
             try {
@@ -357,13 +357,13 @@ internal class CompletionQualityStatsAction : AnAction() {
         catch (e: Throwable) {
           LOG.error(e)
         }
-                                                        }, ModalityState.NON_MODAL)
+                                                        }, ModalityState.nonModal())
 
       return Pair(result, total)
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null
@@ -419,7 +419,7 @@ class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper
       }
     }
 
-    val combo = ComboBox<FileType>(model)
+    val combo = ComboBox(model)
 
     combo.renderer = FileTypeRenderer()
 
@@ -428,11 +428,12 @@ class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper
 
   override fun createCenterPanel(): JComponent {
     return panel {
-      row(label = JLabel("File type:")) {
-        fileTypeCombo()
+      row("File type:") {
+        cell(fileTypeCombo)
       }
-      row(label = JLabel("Scope:")) {
-        scopeChooserCombo()
+      row("Scope:") {
+        cell(scopeChooserCombo)
+          .align(AlignX.FILL)
       }
     }
   }

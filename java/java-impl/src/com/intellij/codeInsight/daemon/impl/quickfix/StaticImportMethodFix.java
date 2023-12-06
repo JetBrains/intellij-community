@@ -40,22 +40,26 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
   }
 
   @Override
+  protected @NotNull String getMemberKindPresentableText() {
+    return QuickFixBundle.message("static.import.method.kind.text");
+  }
+
+  @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return generatePreview(file, (__, method) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, method, method.getName(), method.getContainingClass()));
   }
 
-  @NotNull
   @Override
-  List<PsiMethod> getMembersToImport(boolean applicableOnly, int maxResults) {
+  StaticMembersProcessor.@NotNull MembersToImport<PsiMethod> getMembersToImport(int maxResults) {
     Project project = myReferencePointer.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     PsiMethodCallExpression element = myReferencePointer.getElement();
     PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
     String name = reference == null ? null : reference.getReferenceName();
-    if (name == null) return Collections.emptyList();
+    if (name == null) return new StaticMembersProcessor.MembersToImport<>(Collections.emptyList(), Collections.emptyList());
     StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), maxResults);
     cache.processMethodsWithName(name, element.getResolveScope(), processor);
-    return processor.getMembersToImport(applicableOnly);
+    return processor.getMembersToImport();
   }
 
   @Override
@@ -89,7 +93,7 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
     }
 
     @Override
-    protected boolean isApplicable(@NotNull PsiMethod method, @NotNull PsiElement place) {
+    protected ApplicableType isApplicable(@NotNull PsiMethod method, @NotNull PsiElement place) {
       ProgressManager.checkCanceled();
       PsiExpressionList argumentList = ((PsiMethodCallExpression)place).getArgumentList();
       MethodCandidateInfo candidateInfo =
@@ -97,10 +101,10 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
       PsiSubstitutor substitutorForMethod = candidateInfo.getSubstitutor();
       if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
         PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
-        if (returnType == null) return true;
+        if (returnType == null) return ApplicableType.APPLICABLE;
         return isApplicableFor(returnType);
       }
-      return false;
+      return ApplicableType.NONE;
     }
   }
 }

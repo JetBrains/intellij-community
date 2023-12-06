@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -20,7 +20,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerListener;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.index.GitIndexUtil;
@@ -95,11 +98,10 @@ public final class GitMergeUtil {
   }
 
 
-  @Nullable
-  private static GitRevisionNumber findOriginalRevisionNumber(@NotNull Project project,
-                                                              @NotNull VirtualFile root,
-                                                              @Nullable VcsRevisionNumber yoursRevision,
-                                                              @Nullable VcsRevisionNumber theirsRevision) {
+  private static @Nullable GitRevisionNumber findOriginalRevisionNumber(@NotNull Project project,
+                                                                        @NotNull VirtualFile root,
+                                                                        @Nullable VcsRevisionNumber yoursRevision,
+                                                                        @Nullable VcsRevisionNumber theirsRevision) {
     if (yoursRevision == null || theirsRevision == null) return null;
     try {
       return GitHistoryUtils.getMergeBase(project, root, yoursRevision.asString(), theirsRevision.asString());
@@ -110,8 +112,7 @@ public final class GitMergeUtil {
     }
   }
 
-  @Nullable
-  private static GitRevisionNumber resolveMergeHead(@NotNull Project project, @NotNull VirtualFile root) {
+  private static @Nullable GitRevisionNumber resolveMergeHead(@NotNull Project project, @NotNull VirtualFile root) {
     try {
       return GitRevisionNumber.resolve(project, root, MERGE_HEAD);
     }
@@ -140,8 +141,7 @@ public final class GitMergeUtil {
     return null;
   }
 
-  @Nullable
-  private static GitRevisionNumber readRevisionFromFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull File file) {
+  private static @Nullable GitRevisionNumber readRevisionFromFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull File file) {
     if (!file.exists()) return null;
     String revision = DvcsUtil.tryLoadFileOrReturn(file, null, CharsetToolkit.UTF8);
     if (revision == null) return null;
@@ -155,8 +155,7 @@ public final class GitMergeUtil {
     }
   }
 
-  @Nullable
-  private static GitRevisionNumber resolveHead(@NotNull Project project, @NotNull VirtualFile root) {
+  private static @Nullable GitRevisionNumber resolveHead(@NotNull Project project, @NotNull VirtualFile root) {
     try {
       return GitRevisionNumber.resolve(project, root, "HEAD");
     }
@@ -223,10 +222,9 @@ public final class GitMergeUtil {
   }
 
 
-  @NotNull
-  private static Trinity<String, String, String> getAffectedBlobs(@NotNull Project project,
-                                                                  @NotNull VirtualFile root,
-                                                                  @NotNull FilePath path) {
+  private static @NotNull Trinity<String, String, String> getAffectedBlobs(@NotNull Project project,
+                                                                           @NotNull VirtualFile root,
+                                                                           @NotNull FilePath path) {
     try {
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.LS_FILES);
       h.addParameters("--exclude-standard", "--unmerged", "-z");
@@ -268,12 +266,11 @@ public final class GitMergeUtil {
     }
   }
 
-  @Nullable
-  private static FilePath getBlobPathInRevision(@NotNull Project project,
-                                                @NotNull VirtualFile root,
-                                                @NotNull FilePath path,
-                                                @Nullable String blob,
-                                                @Nullable VcsRevisionNumber revision) {
+  private static @Nullable FilePath getBlobPathInRevision(@NotNull Project project,
+                                                          @NotNull VirtualFile root,
+                                                          @NotNull FilePath path,
+                                                          @Nullable String blob,
+                                                          @Nullable VcsRevisionNumber revision) {
     if (blob == null || revision == null) return null;
 
     // fast check if file was not renamed
@@ -283,12 +280,11 @@ public final class GitMergeUtil {
     return doGetBlobPathInRevision(project, root, blob, revision, null);
   }
 
-  @Nullable
-  private static FilePath doGetBlobPathInRevision(@NotNull Project project,
-                                                  @NotNull final VirtualFile root,
-                                                  @NotNull final String blob,
-                                                  @NotNull VcsRevisionNumber revision,
-                                                  @Nullable FilePath path) {
+  private static @Nullable FilePath doGetBlobPathInRevision(@NotNull Project project,
+                                                            final @NotNull VirtualFile root,
+                                                            final @NotNull String blob,
+                                                            @NotNull VcsRevisionNumber revision,
+                                                            @Nullable FilePath path) {
     final FilePath[] result = new FilePath[1];
     final boolean[] pathAmbiguous = new boolean[1];
 
@@ -357,8 +353,7 @@ public final class GitMergeUtil {
       handler.endOptions();
       handler.addParameters(paths);
 
-      GitCommandResult result = Git.getInstance().runCommand(handler);
-      if (!result.success()) throw new VcsException(result.getErrorOutputAsJoinedString());
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 

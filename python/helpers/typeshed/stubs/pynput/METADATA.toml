@@ -1,4 +1,5 @@
 version = "1.7.*"
+upstream_repository = "https://github.com/moses-palmer/pynput"
 
 [tool.stubtest]
-skip = true  # A display server (e.g. X11) is required to import pynput
+platforms = ["darwin", "linux", "win32"]

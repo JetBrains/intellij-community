@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
@@ -28,6 +29,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -37,12 +39,12 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 
-public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
+public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance(CaretImpl.class);
   private static final Key<CaretVisualAttributes> VISUAL_ATTRIBUTES_KEY = new Key<>("CaretAttributes");
 
   private final EditorImpl myEditor;
-  @NotNull private final CaretModelImpl myCaretModel;
+  private final @NotNull CaretModelImpl myCaretModel;
   private boolean isValid = true;
   private Throwable myDisposalTrace;
 
@@ -130,9 +132,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     });
   }
 
-  @NotNull
   @Override
-  public CaretModel getCaretModel() {
+  public @NotNull CaretModel getCaretModel() {
     return myCaretModel;
   }
 
@@ -202,10 +203,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           newLineNumber++;
         }
       }
-      else if (!editorSettings.isVirtualSpace() && lineShift == 0 && columnShift == -1) {
+      else if (lineShift == 0 && columnShift == -1) {
         if (newColumnNumber < 0 && newLineNumber > 0) {
           newLineNumber--;
-          newColumnNumber = EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber);
+          if (editorSettings.isVirtualSpace()) {
+            newColumnNumber = myEditor.offsetToVisualPosition(Math.max(0, oldOffset - 1)).column;
+          } else {
+            newColumnNumber = EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber);
+          }
         }
       }
 
@@ -314,7 +319,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   }
 
   @Override
-  public void moveToLogicalPosition(@NotNull final LogicalPosition pos) {
+  public void moveToLogicalPosition(final @NotNull LogicalPosition pos) {
     myCaretModel.doWithCaretMerging(() -> moveToLogicalPosition(pos, false, null, false, true));
   }
 
@@ -470,8 +475,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private void updateOffsetsFromLogicalPosition() {
     int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
     PositionMarker oldMarker = myPositionMarker;
-    myPositionMarker = new PositionMarker(offset);
-    oldMarker.dispose();
+    if (!oldMarker.isValid() || oldMarker.getStartOffset() != offset || oldMarker.getEndOffset() != offset) {
+      myPositionMarker = new PositionMarker(offset);
+      oldMarker.dispose();
+    }
     myLeansTowardsLargerOffsets = myLogicalCaret.leansForward;
     myLogicalColumnAdjustment = myLogicalCaret.column - myEditor.offsetToLogicalPosition(offset).column;
   }
@@ -519,11 +526,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   }
 
   @Override
-  public void moveToVisualPosition(@NotNull final VisualPosition pos) {
+  public void moveToVisualPosition(final @NotNull VisualPosition pos) {
     moveToVisualPosition(pos, true);
   }
 
-  private void moveToVisualPosition(@NotNull final VisualPosition pos, boolean fireListeners) {
+  private void moveToVisualPosition(final @NotNull VisualPosition pos, boolean fireListeners) {
     myCaretModel.doWithCaretMerging(() -> doMoveToVisualPosition(pos, fireListeners));
   }
 
@@ -637,17 +644,15 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     return !myCaretModel.myIsInUpdate;
   }
 
-  @NotNull
   @Override
-  public LogicalPosition getLogicalPosition() {
+  public @NotNull LogicalPosition getLogicalPosition() {
     assertNotUpdating();
     updateCachedStateIfNeeded();
     return myLogicalCaret;
   }
 
-  @NotNull
   @Override
-  public VisualPosition getVisualPosition() {
+  public @NotNull VisualPosition getVisualPosition() {
     assertNotUpdating();
     updateCachedStateIfNeeded();
     return myVisibleCaret;
@@ -801,9 +806,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     return clone;
   }
 
-  @Nullable
   @Override
-  public Caret clone(boolean above) {
+  public @Nullable Caret clone(boolean above) {
     assertIsDispatchThread();
     int lineShift = above ? -1 : 1;
     LogicalPosition oldPosition = getLogicalPosition();
@@ -919,10 +923,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     return getOffset();
   }
 
-  @NotNull
   @Override
-  public VisualPosition getSelectionStartPosition() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public @NotNull VisualPosition getSelectionStartPosition() {
+    ThreadingAssertions.assertEventDispatchThread();
     VisualPosition position;
     SelectionMarker marker = mySelectionMarker;
     if (hasSelection()) {
@@ -944,7 +947,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   }
 
   LogicalPosition getSelectionStartLogicalPosition() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LogicalPosition position;
     SelectionMarker marker = mySelectionMarker;
     if (hasSelection()) {
@@ -973,10 +976,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     return getOffset();
   }
 
-  @NotNull
   @Override
-  public VisualPosition getSelectionEndPosition() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public @NotNull VisualPosition getSelectionEndPosition() {
+    ThreadingAssertions.assertEventDispatchThread();
     VisualPosition position;
     SelectionMarker marker = mySelectionMarker;
     if (hasSelection()) {
@@ -998,7 +1000,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   }
 
   LogicalPosition getSelectionEndLogicalPosition() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LogicalPosition position;
     SelectionMarker marker = mySelectionMarker;
     if (hasSelection()) {
@@ -1077,9 +1079,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     doSetSelection(startPositionToUse, startOffset, endPositionToUse, endOffset, true, updateSystemSelection, true);
   }
 
-  void doSetSelection(@NotNull final VisualPosition startPosition,
+  void doSetSelection(final @NotNull VisualPosition startPosition,
                       final int _startOffset,
-                      @NotNull final VisualPosition endPosition,
+                      final @NotNull VisualPosition endPosition,
                       final int _endOffset,
                       final boolean visualPositionAware,
                       final boolean updateSystemSelection,
@@ -1090,7 +1092,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       myUnknownDirection = false;
       final Document doc = myEditor.getDocument();
 
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       int textLength = doc.getTextLength();
       if (startOffset < 0 || startOffset > textLength) {
@@ -1192,7 +1194,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return;
     }
     myCaretModel.doWithCaretMerging(() -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       myUnknownDirection = false;
       RangeMarker marker = mySelectionMarker;
       if (marker != null && marker.isValid()) {
@@ -1236,9 +1238,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     return caretOffset;
   }
 
-  @NotNull
   @Override
-  public VisualPosition getLeadSelectionPosition() {
+  public @NotNull VisualPosition getLeadSelectionPosition() {
     SelectionMarker marker = mySelectionMarker;
     VisualPosition caretPosition = getVisualPosition();
     if (isVirtualSelectionEnabled() && !hasSelection()) {
@@ -1276,13 +1277,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   @Override
   public void selectLineAtCaret() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myCaretModel.doWithCaretMerging(() -> EditorActionUtil.selectEntireLines(this, true));
   }
 
   @Override
   public void selectWordAtCaret(final boolean honorCamelWordsSettings) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myCaretModel.doWithCaretMerging(() -> {
       removeSelection();
       final EditorSettings settings = myEditor.getSettings();
@@ -1308,9 +1309,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     });
   }
 
-  @Nullable
   @Override
-  public String getSelectedText() {
+  public @Nullable String getSelectedText() {
     if (!hasSelection()) {
       return null;
     }
@@ -1353,14 +1353,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   }
 
   @Override
-  @NotNull
-  public EditorImpl getEditor() {
+  public @NotNull EditorImpl getEditor() {
     return myEditor;
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "Caret at " + (myDocumentUpdateCounter == myCaretModel.myDocumentUpdateCounter ? myVisibleCaret : getOffset()) +
            (mySelectionMarker == null ? "" : ", selection marker: " + mySelectionMarker);
   }
@@ -1375,9 +1373,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     return myEditor.myView.isAtBidiRunBoundary(getVisualPosition());
   }
 
-  @NotNull
   @Override
-  public CaretVisualAttributes getVisualAttributes() {
+  public @NotNull CaretVisualAttributes getVisualAttributes() {
     CaretVisualAttributes attrs = getUserData(VISUAL_ATTRIBUTES_KEY);
     return attrs == null ? CaretVisualAttributes.DEFAULT : attrs;
   }
@@ -1388,9 +1385,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     requestRepaint(myVerticalInfo);
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return "{valid: " + isValid +
            ", update counter: " + myDocumentUpdateCounter +
            ", position: " + myPositionMarker +
@@ -1411,8 +1407,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
            ", visual column adjustment: " + myVisualColumnAdjustment + '}';
   }
 
-  @Nullable
-  private VisualPosition getRangeMarkerStartPosition() {
+  private @Nullable VisualPosition getRangeMarkerStartPosition() {
     invalidateRangeMarkerVisualPositions(mySelectionMarker);
     return myRangeMarkerStartPosition;
   }
@@ -1421,8 +1416,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     myRangeMarkerStartPosition = startPosition;
   }
 
-  @Nullable
-  private VisualPosition getRangeMarkerEndPosition() {
+  private @Nullable VisualPosition getRangeMarkerEndPosition() {
     invalidateRangeMarkerVisualPositions(mySelectionMarker);
     return myRangeMarkerEndPosition;
   }
@@ -1513,9 +1507,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   final class PositionMarker extends RangeMarkerImpl {
     private PositionMarker(int offset) {
       super(myEditor.getDocument(), offset, offset, false, true);
-      if (offset < 0) {
-        throw new IllegalArgumentException("invalid offset: "+offset+"; document length="+myEditor.getDocument().getTextLength());
-      }
       myCaretModel.myPositionMarkerTree.addInterval(this, offset, offset, false, false, false, 0);
     }
 
@@ -1529,8 +1520,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     @Override
     protected void changedUpdateImpl(@NotNull DocumentEvent e) {
       int oldOffset = intervalStart();
-      super.changedUpdateImpl(e);
-      if (isValid()) {
+      RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+      long newRange = isValid() && node != null ? applyChange(e, node.toScalarRange(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight()) : -1;
+
+      if (newRange != -1) {
+        setRange(newRange);
         // Under certain conditions, when text is inserted at caret position, we position caret at the end of inserted text.
         // Ideally, client code should be responsible for positioning caret after document modification, but in case of
         // postponed formatting (after PSI modifications), this is hard to implement, so a heuristic below is used.
@@ -1547,7 +1541,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
       else {
         setValid(true);
-        int newOffset = Math.min(intervalStart(), e.getOffset() + e.getNewLength());
+        int newOffset = Math.min(getStartOffset(), e.getOffset() + e.getNewLength());
         if (!e.getDocument().isInBulkUpdate() && e.isWholeTextReplaced()) {
           try {
             int line = ((DocumentEventImpl)e).translateLineViaDiff(myLogicalCaret.line);
@@ -1575,7 +1569,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
     }
 
-    private boolean needToShiftWhiteSpaces(final DocumentEvent e) {
+    private static boolean needToShiftWhiteSpaces(final DocumentEvent e) {
       return e.getOffset() > 0 && Character.isWhitespace(e.getDocument().getImmutableCharSequence().charAt(e.getOffset() - 1)) &&
              CharArrayUtil.containsOnlyWhiteSpaces(e.getNewFragment()) && !CharArrayUtil.containLineBreaks(e.getNewFragment());
     }

@@ -2,13 +2,13 @@
 package com.intellij.refactoring.safeDelete.api
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.search.SearchScope
 
 interface SafeDeleteTarget {
   fun createPointer(): Pointer<out SafeDeleteTarget>
 
-  fun targetPresentation() : TargetPresentation 
+  fun targetPresentation() : TargetPresentation
   
   fun declarations() : Collection<PsiSafeDeleteDeclarationUsage>
   

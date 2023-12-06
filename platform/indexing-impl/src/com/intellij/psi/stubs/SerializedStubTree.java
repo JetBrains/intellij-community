@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -15,9 +15,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ApiStatus.Internal
 public final class SerializedStubTree {
@@ -28,10 +26,54 @@ public final class SerializedStubTree {
   // stub forward indexes
   final byte[] myIndexedStubBytes;
   final int myIndexedStubByteLength;
-  private Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> myIndexedStubs;
-
+  private final DeserializedIndexedStubs myDeserializedIndexedStubs;
   private final @NotNull StubTreeSerializer mySerializationManager;
   private final @NotNull StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
+
+  private static class DeserializedIndexedStubs {
+    private enum RestoreState {
+      NOT_RESTORED, INCOMPLETE, RESTORED
+    }
+    private volatile @NotNull RestoreState myState;
+    private volatile @Nullable("nullable when myState == NOT_RESTORED") Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> myMap;
+
+    DeserializedIndexedStubs(@NotNull Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> map) {
+      myState = RestoreState.RESTORED;
+      myMap = Collections.unmodifiableMap(map);
+    }
+
+    DeserializedIndexedStubs() {
+      myState = RestoreState.NOT_RESTORED;
+    }
+
+    synchronized Map<Object, StubIdList> getIfRestored(StubIndexKey<?, ?> indexKey) {
+      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> map = myMap;
+      return map != null ? map.get(indexKey) : null;
+    }
+
+    synchronized void setRestoredMap(Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> restoredMap) {
+      if (myState == RestoreState.NOT_RESTORED || myState == RestoreState.INCOMPLETE) {
+        myState = RestoreState.RESTORED;
+        myMap = Collections.unmodifiableMap(restoredMap);
+      }
+    }
+
+    synchronized void setPartialMap(Map<Object, StubIdList> partialMap, StubIndexKey<?, ?> stubIndexKey) {
+      if (myState == RestoreState.RESTORED) {
+        return;
+      }
+      if (myState == RestoreState.NOT_RESTORED) {
+        myState = RestoreState.INCOMPLETE;
+        myMap = new HashMap<>(1);
+      }
+      Objects.requireNonNull(myMap).put(stubIndexKey, partialMap);
+    }
+
+    @Override
+    public String toString() {
+      return "map=" + myMap + ",state=" + myState;
+    }
+  }
 
   public SerializedStubTree(byte @NotNull [] treeBytes,
                             int treeByteLength,
@@ -44,7 +86,7 @@ public final class SerializedStubTree {
     myTreeByteLength = treeByteLength;
     myIndexedStubBytes = indexedStubBytes;
     myIndexedStubByteLength = indexedStubByteLength;
-    myIndexedStubs = indexedStubs;
+    myDeserializedIndexedStubs = indexedStubs == null ? new DeserializedIndexedStubs() : new DeserializedIndexedStubs(indexedStubs);
     myStubIndexesExternalizer = stubIndexesExternalizer;
     mySerializationManager = serializationManager;
   }
@@ -97,29 +139,33 @@ public final class SerializedStubTree {
       outStub.size(),
       reSerializedIndexBytes,
       reSerializedIndexByteLength,
-      myIndexedStubs,
+      myDeserializedIndexedStubs.myMap,
       newForwardIndexSerializer,
       newSerializationManager
     );
   }
 
-  @ApiStatus.Internal
-  @NotNull
-  public StubForwardIndexExternalizer<?> getStubIndexesExternalizer() {
-    return myStubIndexesExternalizer;
-  }
-
   void restoreIndexedStubs() throws IOException {
-    if (myIndexedStubs == null) {
-      myIndexedStubs = myStubIndexesExternalizer.read(new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength)));
+    if (myDeserializedIndexedStubs.myState != DeserializedIndexedStubs.RestoreState.RESTORED) {
+      myDeserializedIndexedStubs.setRestoredMap(myStubIndexesExternalizer.read(new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength))));
     }
   }
 
   <K> StubIdList restoreIndexedStubs(@NotNull StubIndexKey<K, ?> indexKey, @NotNull K key) throws IOException {
-    Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> incompleteMap = myStubIndexesExternalizer.doRead(new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength)), indexKey, key);
-    if (incompleteMap == null) return null;
-    Map<Object, StubIdList> map = incompleteMap.get(indexKey);
-    return map == null ? null : map.get(key);
+    Map<Object, StubIdList> incompleteMap = myDeserializedIndexedStubs.getIfRestored(indexKey);
+    if (incompleteMap == null) {
+      DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength));
+      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> readData = myStubIndexesExternalizer.doRead(dataInputStream, indexKey, null);
+      if (readData == null) {
+        readData = Collections.emptyMap();
+      }
+      incompleteMap = readData.get(indexKey);
+      if (incompleteMap == null) {
+        incompleteMap = Collections.emptyMap();
+      }
+      myDeserializedIndexedStubs.setPartialMap(incompleteMap, indexKey);
+    }
+    return incompleteMap.get(key);
   }
 
   public @NotNull Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> getStubIndicesValueMap() {
@@ -129,7 +175,7 @@ public final class SerializedStubTree {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return myIndexedStubs;
+    return myDeserializedIndexedStubs.myMap;
   }
 
   public @NotNull Stub getStub() throws SerializerNotFoundException {
@@ -140,11 +186,17 @@ public final class SerializedStubTree {
   }
 
   public @NotNull SerializedStubTree withoutStub() {
+    try {
+      restoreIndexedStubs();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return new SerializedStubTree(ArrayUtil.EMPTY_BYTE_ARRAY,
                                   0,
                                   myIndexedStubBytes,
                                   myIndexedStubByteLength,
-                                  myIndexedStubs,
+                                  myDeserializedIndexedStubs.myMap,
                                   myStubIndexesExternalizer,
                                   mySerializationManager);
   }
@@ -215,6 +267,11 @@ public final class SerializedStubTree {
       myTreeHash = digest.digest();
     }
     return myTreeHash;
+  }
+
+  @Override
+  public String toString() {
+    return "Stub[" + myDeserializedIndexedStubs + "]";
   }
 
   // TODO replace it with separate StubTreeLoader implementation

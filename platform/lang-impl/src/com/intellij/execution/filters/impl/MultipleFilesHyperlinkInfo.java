@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters.impl;
 
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
@@ -23,7 +24,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -31,9 +31,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -50,7 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApiStatus.Internal
-public class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperlinkInfo {
+public final class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperlinkInfo {
   private final List<? extends VirtualFile> myVirtualFiles;
   private final int myLineNumber;
   private final Project myProject;
@@ -72,7 +69,6 @@ public class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements Fil
 
   @Override
   public void navigate(@NotNull final Project project, @Nullable RelativePoint hyperlinkLocationPoint) {
-    List<PsiFile> currentFiles = new ArrayList<>();
     Editor originalEditor;
     if (hyperlinkLocationPoint != null) {
       DataManager dataManager = DataManager.getInstance();
@@ -82,48 +78,40 @@ public class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements Fil
       originalEditor = null;
     }
 
-    ApplicationManager.getApplication().runReadAction(() -> {
-      for (VirtualFile file : myVirtualFiles) {
-        if (!file.isValid()) continue;
+    JFrame frame = WindowManager.getInstance().getFrame(project);
+    int width = frame != null ? frame.getSize().width : 200;
+    GotoFileCellRenderer renderer = new GotoFileCellRenderer(width);
 
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-        if (psiFile != null) {
-          PsiElement navigationElement = psiFile.getNavigationElement(); // Sources may be downloaded.
-          if (navigationElement instanceof PsiFile) {
-            currentFiles.add((PsiFile)navigationElement);
-            continue;
-          }
-          currentFiles.add(psiFile);
+    new PsiTargetNavigator<>(() -> getFiles(project))
+      .title(ExecutionBundle.message("popup.title.choose.target.file"))
+      .presentationProvider(element -> renderer.computePresentation(element))
+      .navigate(hyperlinkLocationPoint, ExecutionBundle.message("popup.title.choose.target.file"), project, file -> {
+        open(file.getVirtualFile(), originalEditor);
+        return true;
+      });
+  }
+
+  @NotNull
+  private List<PsiFile> getFiles(@NotNull Project project) {
+    List<PsiFile> currentFiles = new ArrayList<>();
+    for (VirtualFile file : myVirtualFiles) {
+      if (!file.isValid()) continue;
+
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile != null) {
+        PsiElement navigationElement = psiFile.getNavigationElement(); // Sources may be downloaded.
+        if (navigationElement instanceof PsiFile) {
+          currentFiles.add((PsiFile)navigationElement);
+          continue;
         }
-      }
-    });
-
-    if (currentFiles.isEmpty()) return;
-
-    if (currentFiles.size() == 1) {
-      open(currentFiles.get(0).getVirtualFile(), originalEditor);
-    }
-    else {
-      JFrame frame = WindowManager.getInstance().getFrame(project);
-      int width = frame != null ? frame.getSize().width : 200;
-      JBPopup popup = JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(currentFiles)
-        .setRenderer(new GotoFileCellRenderer(width))
-        .setTitle(ExecutionBundle.message("popup.title.choose.target.file"))
-        .setItemChosenCallback(file -> open(file.getVirtualFile(), originalEditor))
-        .createPopup();
-      if (hyperlinkLocationPoint != null) {
-        popup.show(hyperlinkLocationPoint);
-      }
-      else {
-        popup.showInFocusCenter();
+        currentFiles.add(psiFile);
       }
     }
+    return currentFiles;
   }
 
   private void open(@NotNull VirtualFile file, Editor originalEditor) {
-    Document document = ProjectLocator.computeWithPreferredProject(file, myProject, () ->
-      FileDocumentManager.getInstance().getDocument(file));
+    Document document = FileDocumentManager.getInstance().getDocument(file, myProject);
     int offset = 0;
     if (document != null && myLineNumber >= 0 && myLineNumber < document.getLineCount()) {
       offset = document.getLineStartOffset(myLineNumber);

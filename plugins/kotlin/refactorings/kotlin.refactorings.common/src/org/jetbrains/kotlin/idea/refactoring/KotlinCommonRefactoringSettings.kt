@@ -19,6 +19,50 @@ interface KotlinCommonRefactoringSettings {
     var RENAME_SEARCH_IN_COMMENTS_FOR_PROPERTY: Boolean
     var RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION: Boolean
     var RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER: Boolean
+    var MOVE_PREVIEW_USAGES: Boolean
+    var MOVE_SEARCH_IN_COMMENTS: Boolean
+    var MOVE_SEARCH_FOR_TEXT: Boolean
+    var MOVE_SEARCH_REFERENCES: Boolean
+    var MOVE_MPP_DECLARATIONS: Boolean
+    var INTRODUCE_DECLARE_WITH_VAR: Boolean
+    var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
+
+    /**
+     * Indicates whether automatic file rename based on changed type name is suggested
+     */
+    var renameFileNames: Boolean
+
+    /**
+     * Indicates whether automatic variable rename based on changed type name is suggested
+     */
+    var renameVariables: Boolean
+
+    /**
+     * Indicates whether automatic parameter rename based on changed parameter name in super function is suggested
+     */
+    var renameParameterInHierarchy: Boolean
+
+    /**
+     * Indicates whether automatic inheritors rename based on changed super class name is suggested
+     */
+    var renameInheritors: Boolean
+
+    /**
+     * Indicates whether automatic functions rename based on changed overloaded function name is suggested
+     */
+    var renameOverloads: Boolean
+
+    /**
+     * Indicates whether automatic test methods rename based on changed production methods name is suggested
+     */
+    var renameTestMethods: Boolean
+
+    var INLINE_LOCAL_THIS: Boolean
+    var INLINE_PROPERTY_KEEP: Boolean
+    var INLINE_METHOD_THIS: Boolean
+    var INLINE_METHOD_KEEP: Boolean
+    var INLINE_TYPE_ALIAS_THIS: Boolean
+    var INLINE_TYPE_ALIAS_KEEP: Boolean
 
     companion object {
         @JvmStatic

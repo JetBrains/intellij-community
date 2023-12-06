@@ -8,6 +8,7 @@ import com.intellij.psi.tree.OuterLanguageElementType;
 import org.intellij.markdown.flavours.gfm.GFMElementTypes;
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition;
+import org.intellij.plugins.markdown.lang.parser.blocks.CommentElementTypesKt;
 import org.intellij.plugins.markdown.lang.parser.blocks.DefinitionListMarkerProvider;
 import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider;
 import org.jetbrains.annotations.ApiStatus;
@@ -89,10 +90,11 @@ public interface MarkdownElementTypes {
   IElementType ATX_5 = MarkdownStubElementTypes.ATX_5;
   IElementType ATX_6 = MarkdownStubElementTypes.ATX_6;
 
-  org.intellij.markdown.MarkdownElementType COMMENT = new org.intellij.markdown.MarkdownElementType("COMMENT", true);
+  org.intellij.markdown.MarkdownElementType COMMENT = new org.intellij.markdown.MarkdownElementType("COMMENT", false);
 
   IElementType LINK_COMMENT = platformType(COMMENT);
 
+  IElementType COMMENT_VALUE = platformType(CommentElementTypesKt.getCOMMENT_VALUE(org.intellij.markdown.MarkdownElementTypes.INSTANCE));
 
   @ApiStatus.Experimental
   IElementType DEFINITION_LIST = platformType(DefinitionListMarkerProvider.DEFINITION_LIST);

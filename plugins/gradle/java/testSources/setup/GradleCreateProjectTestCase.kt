@@ -74,10 +74,10 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   }
 
   private fun configureWizardStepSettings(step: NewProjectWizardStep, moduleInfo: ModuleInfo, parentData: ProjectData?) {
-    step.baseData!!.name = moduleInfo.name
-    step.baseData!!.path = testRoot.toNioPath().getResolvedPath(moduleInfo.relativePath).parent.toCanonicalPath()
     step.languageData!!.language = "Java"
     step.javaBuildSystemData!!.buildSystem = "Gradle"
+    step.baseData!!.name = moduleInfo.name
+    step.baseData!!.path = testRoot.toNioPath().getResolvedPath(moduleInfo.relativePath).parent.toCanonicalPath()
     step.javaGradleData!!.gradleDsl = when (moduleInfo.useKotlinDsl) {
       true -> GradleNewProjectWizardStep.GradleDsl.KOTLIN
       else -> GradleNewProjectWizardStep.GradleDsl.GROOVY
@@ -96,7 +96,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   ): Project {
     val wizard = createAndConfigureWizard(group, null, configure)
     return closeOpenedProjectsIfFailAsync {
-      awaitProjectReload(wait = wait) {
+      awaitAnyGradleProjectReload(wait = wait) {
         blockingContext {
           invokeAndWaitIfNeeded {
             val project = NewProjectUtil.createFromWizard(wizard, null)!!
@@ -116,7 +116,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   ): Module? {
     val wizard = createAndConfigureWizard(group, project, configure)
     return closeOpenedProjectsIfFailAsync {
-      awaitProjectReload(wait = wait) {
+      awaitAnyGradleProjectReload(wait = wait) {
         blockingContext {
           invokeAndWaitIfNeeded {
             val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
@@ -128,26 +128,28 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
     }
   }
 
-  private fun createAndConfigureWizard(
+  private suspend fun createAndConfigureWizard(
     group: String,
     project: Project?,
     configure: NewProjectWizardStep.() -> Unit
   ): AbstractProjectWizard {
-    return invokeAndWaitIfNeeded {
-      val modulesProvider = DefaultModulesProvider.createForProject(project)
-      val wizard = NewProjectWizard(project, modulesProvider, null)
-      try {
-        wizard.runWizard {
-          this as ProjectTypeStep
-          Assertions.assertTrue(setSelectedTemplate(group, null))
-          val step = customStep as NewProjectWizardStep
-          step.configure()
+    return blockingContext {
+      invokeAndWaitIfNeeded {
+        val modulesProvider = DefaultModulesProvider.createForProject(project)
+        val wizard = NewProjectWizard(project, modulesProvider, null)
+        try {
+          wizard.runWizard {
+            this as ProjectTypeStep
+            Assertions.assertTrue(setSelectedTemplate(group, null))
+            val step = customStep as NewProjectWizardStep
+            step.configure()
+          }
         }
+        finally {
+          Disposer.dispose(wizard.disposable)
+        }
+        wizard
       }
-      finally {
-        Disposer.dispose(wizard.disposable)
-      }
-      wizard
     }
   }
 

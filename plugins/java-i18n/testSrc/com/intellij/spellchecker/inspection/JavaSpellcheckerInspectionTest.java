@@ -2,7 +2,9 @@
 package com.intellij.spellchecker.inspection;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -11,13 +13,8 @@ public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureT
   }
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.addClass("package org.jetbrains.annotations;" +
-                       "import java.lang.annotation.*;" +
-                       "@Retention(RetentionPolicy.CLASS)" +
-                       "@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE, ElementType.PACKAGE})" +
-                       "public @interface NonNls {}");
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   public void testCorrectJava() { doTest(); }
@@ -44,6 +41,7 @@ public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureT
   public void testNonNlsLocalVariableAndComment() { doTest(); }
   public void testFieldComment() { doTest(); }
   public void testDoNotCheckDerivedNames() { doTest(); }
+  public void testSkipDateTime() { doTest(); }
 
   private void doTest() {
     myFixture.enableInspections(SpellcheckerInspectionTestCase.getInspectionTools());

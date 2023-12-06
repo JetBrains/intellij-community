@@ -7,7 +7,7 @@ class FakeModule(object):
         raise AttributeError
 
 
-sys.modules['extra'] = FakeModule()
+sys.modules['mod.extra'] = FakeModule()
 
 del FakeModule
 del lib

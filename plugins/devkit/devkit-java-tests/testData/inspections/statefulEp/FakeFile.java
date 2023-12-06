@@ -1,8 +1,10 @@
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 
 public class FakeFile {
-  final com.intellij.psi.PsiElement pe;
-  final com.intellij.psi.PsiReference r;
+  final PsiElement pe;
+  final PsiReference r;
   Project p;
   final Project pf;
 

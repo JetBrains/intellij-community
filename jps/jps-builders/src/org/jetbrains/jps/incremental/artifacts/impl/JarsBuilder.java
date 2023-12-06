@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,14 +96,19 @@ public final class JarsBuilder {
     }
   }
 
-  private void copyJars() throws IOException {
+  private void copyJars() {
     for (Map.Entry<JarInfo, File> entry : myBuiltJars.entrySet()) {
       File fromFile = entry.getValue();
       final JarInfo jarInfo = entry.getKey();
       DestinationInfo destination = jarInfo.getDestination();
       if (destination instanceof ExplodedDestinationInfo) {
         File toFile = new File(FileUtil.toSystemDependentName(destination.getOutputPath()));
-        FileUtil.rename(fromFile, toFile);
+        try {
+          FileUtil.rename(fromFile, toFile);
+        }
+        catch (IOException e) {
+          myContext.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
+        }
       }
     }
   }
@@ -231,8 +236,7 @@ public final class JarsBuilder {
     }
   }
 
-  @Nullable
-  private Pair<Manifest, File> loadManifest(JarInfo jar, List<? super String> packedFilePaths) throws IOException {
+  private @Nullable Pair<Manifest, File> loadManifest(JarInfo jar, List<? super String> packedFilePaths) throws IOException {
     for (Pair<String, Object> pair : jar.getContent()) {
       if (pair.getSecond() instanceof ArtifactRootDescriptor) {
         final String rootPath = pair.getFirst();
@@ -272,8 +276,7 @@ public final class JarsBuilder {
     return null;
   }
 
-  @Nullable
-  private Manifest createManifest(InputStream manifestStream, File manifestFile) {
+  private @Nullable Manifest createManifest(InputStream manifestStream, File manifestFile) {
     try {
       return new Manifest(manifestStream);
     }
@@ -392,7 +395,7 @@ public final class JarsBuilder {
     return relativePath;
   }
 
-  private void addDirectoryEntry(final ZipOutputStream output, @NonNls final String relativePath, Set<? super String> writtenPaths) throws IOException {
+  private void addDirectoryEntry(final ZipOutputStream output, final @NonNls String relativePath, Set<? super String> writtenPaths) throws IOException {
     if (!writtenPaths.add(relativePath)) return;
 
     ZipEntry e = new ZipEntry(relativePath);
@@ -417,16 +420,14 @@ public final class JarsBuilder {
     writtenPaths.add(JarFile.MANIFEST_NAME);
   }
 
-  private class JarsGraph implements InboundSemiGraph<JarInfo> {
+  private final class JarsGraph implements InboundSemiGraph<JarInfo> {
     @Override
-    @NotNull
-    public Collection<JarInfo> getNodes() {
+    public @NotNull Collection<JarInfo> getNodes() {
       return myJarsToBuild;
     }
 
-    @NotNull
     @Override
-    public Iterator<JarInfo> getIn(final JarInfo n) {
+    public @NotNull Iterator<JarInfo> getIn(final JarInfo n) {
       Set<JarInfo> ins = new HashSet<>();
       final DestinationInfo destination = n.getDestination();
       if (destination instanceof JarDestinationInfo) {

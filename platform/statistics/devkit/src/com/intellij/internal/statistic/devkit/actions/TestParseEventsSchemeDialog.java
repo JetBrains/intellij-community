@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions;
 
 import com.intellij.ide.scratch.RootType;
@@ -113,8 +113,9 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
       document = EditorFactory.getInstance().createDocument(templateText);
     }
 
-    final EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), false);
-    editor.setFile(file.getVirtualFile());
+    VirtualFile virtualFile = file.getVirtualFile();
+    final EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, virtualFile, false);
+    editor.setFile(virtualFile);
     return editor;
   }
 
@@ -221,7 +222,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
       final String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
       final TestDataCollectorDebugLogger logger = new TestDataCollectorDebugLogger();
       final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(
-        log, "FUS", productCode, "test.device.id", filter, true, logger, new MachineId("test.machine.id", 0)
+        log, "FUS", productCode, "test.device.id", filter, true, logger, new MachineId("test.machine.id", 0), true
       );
 
       if (request == null) {

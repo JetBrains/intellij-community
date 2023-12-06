@@ -2,6 +2,7 @@
 package git4idea.performanceTesting
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
@@ -16,7 +17,6 @@ import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.visible.VisiblePack
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
-import io.opentelemetry.context.Context
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 
@@ -47,13 +47,12 @@ class ShowFileHistoryCommand(text: String, line: Int) : AbstractCommand(text, li
           scope.close()
           actionCallback.setDone()
         }
-        else {
-          if (firstPackSpan.isRecording) {
+        else if (firstPackSpan.isRecording) {
             firstPackSpan.end()
           }
-        }
       }
     }
+
     return actionCallback.toPromise()
   }
 

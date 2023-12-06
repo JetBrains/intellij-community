@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -18,12 +19,14 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.ui.LibraryElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.*;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -232,7 +235,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
     LibraryFilesPackagingElementEntity entity;
     if (myLibraryName == null) {
-      entity = ExtensionsKt.addLibraryFilesPackagingElementEntity(diff, null, source);
+      entity = diff.addEntity(LibraryFilesPackagingElementEntity.create(source));
     }
     else {
       LibraryId id;
@@ -245,7 +248,10 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       else {
         id = new LibraryId(myLibraryName, new LibraryTableId.GlobalLibraryTableId(myLevel));
       }
-      entity = ExtensionsKt.addLibraryFilesPackagingElementEntity(diff, id, source);
+      entity = diff.addEntity(LibraryFilesPackagingElementEntity.create(source, o -> {
+        o.setLibrary(id);
+        return Unit.INSTANCE;
+      }));
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;

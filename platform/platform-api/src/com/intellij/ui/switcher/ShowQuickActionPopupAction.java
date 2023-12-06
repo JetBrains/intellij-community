@@ -60,7 +60,7 @@ public class ShowQuickActionPopupAction extends AnAction {
       Component eachParent = component.getParent();
       while (eachParent != null) {
         QuickActionProvider parentProvider = ObjectUtils.tryCast(eachParent, QuickActionProvider.class);
-        if (parentProvider != null) {
+        if (parentProvider != null && provider != parentProvider) {
           List<AnAction> parentActions = parentProvider.getActions(false);
           if (!parentActions.isEmpty()) {
             String name = StringUtil.notNullize(parentProvider.getName());

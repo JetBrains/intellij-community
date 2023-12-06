@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ConstPropertyName")
+
 package com.intellij.ui.icons
 
 import com.intellij.ui.scale.DerivedScaleType
@@ -16,24 +18,24 @@ class ImageDescriptor(
   @JvmField val isStroke: Boolean = false,
 ) {
   companion object {
-    const val HAS_2x = 1
-    const val HAS_DARK = 2
-    const val HAS_DARK_2x = 4
-    const val HAS_STROKE = 8
+    const val HAS_2x: Int = 1
+    const val HAS_DARK: Int = 2
+    const val HAS_DARK_2x: Int = 4
+    const val HAS_STROKE: Int = 8
 
     @JvmField
-    internal val STROKE_RETINA = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
-                                                 scale = 2f,
-                                                 isSvg = false,
-                                                 isDark = false,
-                                                 isStroke = true)
+    internal val STROKE_RETINA: ImageDescriptor = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
+                                                                  scale = 2f,
+                                                                  isSvg = false,
+                                                                  isDark = false,
+                                                                  isStroke = true)
 
     @JvmField
-    internal val STROKE_NON_RETINA = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
-                                                     scale = 1f,
-                                                     isSvg = false,
-                                                     isDark = false,
-                                                     isStroke = true)
+    internal val STROKE_NON_RETINA: ImageDescriptor = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
+                                                                      scale = 1f,
+                                                                      isSvg = false,
+                                                                      isDark = false,
+                                                                      isStroke = true)
   }
 
   internal fun toSvgMapper(): SvgCacheClassifier = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = isStroke)
@@ -41,9 +43,10 @@ class ImageDescriptor(
   override fun toString(): String = "scale: $scale, isSvg: $isSvg"
 }
 
-internal fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: Float): List<ImageDescriptor> {
+@Internal
+fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: Float): List<ImageDescriptor> {
   // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
-  if (!path.startsWith("file:") && path.contains("://")) {
+  if (!path.startsWith(FILE_SCHEME_PREFIX) && path.contains("://")) {
     val qI = path.lastIndexOf('?')
     val isSvg = (if (qI == -1) path else path.substring(0, qI)).endsWith(".svg", ignoreCase = true)
     return listOf(ImageDescriptor(pathTransform = { p, e -> "$p.$e" }, scale = 1f, isSvg = isSvg, isDark = isDark, isStroke = false))
@@ -52,7 +55,7 @@ internal fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: 
   val isSvg = path.endsWith(".svg")
   val isRetina = pixScale != 1f
 
-  val list = ArrayList<ImageDescriptor>()
+  val list = ArrayList<ImageDescriptor>(5)
   if (!isSvg) {
     list.add(if (isRetina) ImageDescriptor.STROKE_RETINA else ImageDescriptor.STROKE_NON_RETINA)
     addFileNameVariant(isRetina = isRetina, isDark = isDark, isSvg = false, scale = pixScale, list = list)

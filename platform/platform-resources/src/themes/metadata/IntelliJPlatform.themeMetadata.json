@@ -105,6 +105,14 @@
       "description": "Used in tool buttons bars and the navigation bar"
     },
     {
+      "key": "Button.Split.default.separatorColor",
+      "description": "Separator color for default split button"
+    },
+    {
+      "key": "Button.Split.default.iconColor",
+      "description": "Chevron arrow color for default split button"
+    },
+    {
       "key": "ComboPopup.border",
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
@@ -192,6 +200,46 @@
       "key": "CompletionPopup.selectionInnerInsets",
       "description": "Inner insets in selection line (experimental UI only)",
       "since": "2022.2"
+    },
+    {
+      "key": "PresentationAssistant.Bright.Popup.foreground",
+      "description": "Presentation Assistant popup bright foreground (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Bright.PopupBackground",
+      "description": "Presentation Assistant popup bright background (experimental UI only). PopupBackground name is used to not apply the '*.background' pattern default color",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Bright.Popup.border",
+      "description": "Presentation Assistant popup bright border (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Bright.keymapLabel",
+      "description": "Presentation Assistant keymap label bright text color (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.Popup.foreground",
+      "description": "Presentation Assistant popup pale foreground (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.PopupBackground",
+      "description": "Presentation Assistant popup pale background (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.Popup.border",
+      "description": "Presentation Assistant popup pale border (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.keymapLabel",
+      "description": "Presentation Assistant keymap label pale text color (experimental UI only)",
+      "since": "2023.3"
     },
     {
       "key": "ContextHelp.fontSizeOffset",
@@ -352,6 +400,21 @@
       "key": "EditorTabs.hoverBackground",
       "since": "2019.2",
       "description": "Transparent overlay on editor tab hover. If value isn't specified the value of DefaultTabs.hoverBackground will be used"
+    },
+    {
+      "key": "EditorTabs.hoverInactiveBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on editor tab hover when editor is not focused. If value isn't specified the value of DefaultTabs.hoverBackground will be used"
+    },
+    {
+      "key": "EditorTabs.hoverSelectedBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on selected editor tab. If value isn't specified the #00000000 will be used"
+    },
+    {
+      "key": "EditorTabs.hoverSelectedInactiveBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on selected editor tab when editor is not focused. If value isn't specified the #00000000 will be used"
     },
     {
       "key": "EditorTabs.inactiveColoredFileBackground",
@@ -537,9 +600,34 @@
       "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
     },
     {
+      "key": "GotItTooltip.codeForeground",
+      "description": "GotIt tooltip inline code element foreground color if different from GotItTooltip.foreground",
+      "since": "2023.1.1"
+    },
+    {
+      "key": "GotItTooltip.codeBackground",
+      "description": "GotIt tooltip inline code element background color if different from GotItTooltip.background",
+      "since": "2023.1.1"
+    },
+    {
+      "key": "GotItTooltip.codeBorderColor",
+      "description": "GotIt tooltip inline code element border color if different from GotItTooltip.shortcutBackground",
+      "since": "2023.1.1"
+    },
+    {
       "key": "GotItTooltip.stepForeground",
       "description": "GotIt tooltip step number foreground color if different from GotItTooltip.foreground",
       "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.imageBorderColor",
+      "description": "GotIt tooltip image rounded border color if different from GotItTooltip.background",
+      "since": "2023.2.1"
+    },
+    {
+      "key": "GotItTooltip.animationBackground",
+      "description": "GotIt tooltip animation background color if different from GotItTooltip.background",
+      "since": "2023.2.1"
     },
     {
       "key": "GotItTooltip.Header.foreground",
@@ -742,6 +830,11 @@
       "description": "Light-colored links. Used in the Variables tab of the Debugger tool window. Can be seen when a tree line is long, does not fit into the tab's width, and its popup on hover goes beyond the right monitor side."
     },
     {
+      "key": "MainMenu.transparentSelectionBackground",
+      "description": "Selection background in colorful header mode",
+      "since": "2023.2"
+    },
+    {
       "key": "MemoryIndicator.usedBackground",
       "description": "Memory indicator color for used memory rectangle",
       "since": "2019.2"
@@ -774,6 +867,11 @@
     {
       "key": "NavBar.borderColor",
       "description": "Border above the navbar, visible when the toolbar is on"
+    },
+    {
+      "key": "NewUiOnboarding.Dialog.background",
+      "description": "Background of the dialog with proposal to start the onboarding to the New UI",
+      "since": "2023.2.1"
     },
     {
       "key": "Notification.background",
@@ -998,6 +1096,14 @@
     },
     {
       "key": "Plugins.ScreenshotPagination.CurrentImage.fillColor"
+    },
+    {
+      "key": "Plugins.suggestedLabelBackground"
+    },
+    {
+      "key": "ProgressIcon.color",
+      "description": "Color of the spinning icon",
+      "since": "2022.1"
     },
     {
       "key": "ComplexPopup.Header.background",
@@ -1332,6 +1438,11 @@
       "key": "Tree.hoverInactiveBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in an unfocused tree if hover is allowed."
+    },
+    {
+      "key": "Tree.forceFocusedSelectionForeground",
+      "since": "2023.2",
+      "description": "Does it need to use Tree.selectionForeground instead of custom element foreground"
     },
     {
       "key": "Tree.Selection.arc",
@@ -1787,8 +1898,16 @@
       "description": "Border color of selected action"
     },
     {
+      "key": "WelcomeScreen.LearnTab.CourseCard.hover",
+      "description": ""
+    },
+    {
       "key": "Window.border",
       "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
+    },
+    {
+      "key": "Window.undecorated.border",
+      "description": "Used as window border in case the window has no border, decoration and shadow. Used on Linux in non-fullscreen mode only. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },
     {
       "key": "RunToolbar.Run.activeBackground",
@@ -1854,6 +1973,11 @@
       "since": "2021.2"
     },
     {
+      "key": "Tooltip.Learning.codeBorderColor",
+      "description": "Inline code elements border color for tooltips used in lessons",
+      "since": "2023.1.1"
+    },
+    {
       "key": "Tooltip.Learning.spanBackground",
       "description": "Background for buttons and shortcuts used in lesson tooltips",
       "since": "2021.2"
@@ -1913,20 +2037,13 @@
     },
     {
       "key": "RunWidget.foreground",
-      "description": "Foreground for run widget components and stroke icons on the contrast background",
+      "description": "Foreground for run widget components",
       "since": "2022.3"
     },
     {
-      "key": "RunWidget.disabledForeground",
-      "description": "Foreground for run widget components and stroke icons in disable state in the contrast run widget",
-      "since": "2022.3",
-      "deprecated": true
-    },
-    {
-      "key": "RunWidget.background",
-      "description": "Background for the contrast run widget in non-running state",
-      "since": "2022.3",
-      "deprecated": true
+      "key": "RunWidget.iconColor",
+      "description": "Color for non-debug/stop icons like More Actions or spinning icon",
+      "since": "2023.2"
     },
     {
       "key": "RunWidget.runningBackground",
@@ -1934,24 +2051,23 @@
       "since": "2022.3"
     },
     {
+      "key": "RunWidget.runningIconColor",
+      "description": "Color for icons like stop/re-run in the running state",
+      "since": "2023.2"
+    },
+    {
       "key": "RunWidget.hoverBackground",
-      "description": "Background for hover state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "description": "Background for hover state in run widget. Will be applied over RunWidget.runningBackground.",
       "since": "2022.3"
     },
     {
       "key": "RunWidget.pressedBackground",
-      "description": "Background for pressed state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "description": "Background for pressed state in run widget. Will be applied over RunWidget.runningBackground.",
       "since": "2022.3"
     },
     {
-      "key": "RunWidget.separatorColor",
-      "description": "The color for separator in the contrast run widget",
-      "since": "2022.3",
-      "deprecated": true
-    },
-    {
-      "key": "RunWidget.runModeIconColor",
-      "description": "The non-running state color for stroke icons in the non-contrast run widget",
+      "key": "RunWidget.runIconColor",
+      "description": "Color for icons like debug/run in the non-running state",
       "since": "2023.1"
     },
     {
@@ -1985,6 +2101,9 @@
     },
     {
       "key": "MainWindow.Tab.borderColor"
+    },
+    {
+      "key": "MainWindow.FullScreeControl.Background"
     }
   ]
 }

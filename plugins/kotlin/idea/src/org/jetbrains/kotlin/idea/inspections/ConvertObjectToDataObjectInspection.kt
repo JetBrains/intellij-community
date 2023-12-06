@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -20,13 +21,15 @@ import org.jetbrains.kotlin.idea.base.psi.singleExpressionBody
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.DeprecationCollectingInspection
 import org.jetbrains.kotlin.idea.core.resolveType
-import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.asKtClass
+import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Util.asKtClass
 import org.jetbrains.kotlin.idea.inspections.VirtualFunction.*
 import org.jetbrains.kotlin.idea.inspections.VirtualFunction.Function
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
+import org.jetbrains.kotlin.idea.statistics.NewAndDeprecatedFeaturesInspectionData
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -45,19 +48,27 @@ private typealias CallChain = List<CallChainElement>
  * Tests:
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ConvertObjectToDataObject]
  */
-class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-        if (holder.file.languageVersionSettings.supportsFeature(LanguageFeature.DataObjects)) ObjectVisitor(holder)
+class ConvertObjectToDataObjectInspection : DeprecationCollectingInspection<NewAndDeprecatedFeaturesInspectionData>(
+    collector = KotlinLanguageFeaturesFUSCollector.dataObjectCollector,
+    defaultDeprecationData = NewAndDeprecatedFeaturesInspectionData()
+) {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
+        if (holder.file.languageVersionSettings.supportsFeature(LanguageFeature.DataObjects)) ObjectVisitor(holder, session)
         else PsiElementVisitor.EMPTY_VISITOR
 
-    private class ObjectVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
+    private inner class ObjectVisitor(private val holder: ProblemsHolder, private val session: LocalInspectionToolSession) : KtVisitorVoid() {
         override fun visitObjectDeclaration(ktObject: KtObjectDeclaration) {
-            if (ktObject.isData() || ktObject.isCompanion() || ktObject.isObjectLiteral()) return
+            if (ktObject.isData()) {
+                session.updateDeprecationData { it.withNewFeature() }
+                return
+            }
+            if (ktObject.isCompanion() || ktObject.isObjectLiteral()) return
             val fqName = lazy { ktObject.descriptor?.fqNameSafe ?: FqName.ROOT }
             val toString = ktObject.findToString()
             val isSealedSubClassCase by lazy { toString == TrivialSuper && ktObject.isSubclassOfSealed() }
             val isToStringCase by lazy { toString is Function && isCompatibleToString(ktObject, fqName, toString.function) }
             if ((isSealedSubClassCase || isToStringCase) && isCompatibleHashCode(ktObject, fqName) && isCompatibleEquals(ktObject, fqName)) {
+                session.updateDeprecationData { it.withDeprecatedFeature() }
                 holder.registerProblem(
                     ktObject.getObjectKeyword() ?: return,
                     KotlinBundle.message(
@@ -133,6 +144,7 @@ private class ConvertToDataObjectQuickFix : LocalQuickFix {
                 ktObject.findHashCode().function,
             )
         })
+        KotlinLanguageFeaturesFUSCollector.dataObjectCollector.logQuickFixApplied(ktObject.containingFile)
         runWriteAction {
             functions.forEach { it.delete() }
             if (ktObject.body?.declarations?.isEmpty() == true) ktObject.body?.delete()

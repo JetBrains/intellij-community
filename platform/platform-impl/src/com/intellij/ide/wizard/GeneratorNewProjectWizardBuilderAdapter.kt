@@ -26,6 +26,6 @@ abstract class GeneratorNewProjectWizardBuilderAdapter(val wizard: GeneratorNewP
      * See https://youtrack.jetbrains.com/issue/IDEA-280712 for details
      */
     @ApiStatus.Internal
-    const val NPW_PREFIX = "NPW."
+    const val NPW_PREFIX: String = "NPW."
   }
 }

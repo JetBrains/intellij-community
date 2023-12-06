@@ -101,7 +101,7 @@ class ScriptClassRootsCache(
             return HeavyScriptInfo(configuration, roots, compose(roots), sdk)
         }
 
-        return if (sdk == null || scriptsAsEntities) {
+        return if (sdk == null) {
             heavyInfoForRoots(vfsRoots)
         } else {
             val sdkClasses = sdk.rootProvider.getFiles(OrderRootType.CLASSES).toList()

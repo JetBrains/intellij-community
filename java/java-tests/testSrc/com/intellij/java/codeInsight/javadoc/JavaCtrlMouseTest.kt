@@ -2,7 +2,7 @@
 package com.intellij.java.codeInsight.javadoc
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
+import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.java.codeInsight.javadoc.JavaDocInfoGeneratorTest.assertEqualsFileText
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
@@ -17,8 +17,7 @@ class JavaCtrlMouseTest : LightJavaCodeInsightFixtureTestCase4(
   private fun doTest() {
     val testName = testName
     fixture.configureByFile("$testName.java")
-    val ctrlMouseInfo = GotoDeclarationAction().getCtrlMouseInfo(fixture.editor, fixture.file, fixture.caretOffset)!!
-    val docInfoString = ctrlMouseInfo.docInfo.text!!
+    val docInfoString = CtrlMouseHandler.getGoToDeclarationOrUsagesText(fixture.editor)!!
     assertEqualsFileText("$testDataPath$testName.html", UIUtil.getHtmlBody(docInfoString))
   }
 

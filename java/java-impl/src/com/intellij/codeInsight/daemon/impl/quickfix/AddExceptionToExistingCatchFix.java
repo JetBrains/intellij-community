@@ -2,22 +2,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -27,55 +19,27 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public final class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionAction {
-  private final PsiElement myErrorElement;
-
-  public AddExceptionToExistingCatchFix(PsiElement errorElement) {myErrorElement = errorElement;}
-
-  @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement copy = PsiTreeUtil.findSameElementInCopy(myErrorElement, file);
-    if (copy == null) return IntentionPreviewInfo.EMPTY;
-    Context context = Context.from(copy);
-    if (context == null) return IntentionPreviewInfo.EMPTY;
-
-    List<? extends PsiCatchSection> catches = context.myCatches;
-    if (!catches.isEmpty()) {
-      addTypeToCatch(context.myExceptions, catches.get(0), project);
-      return IntentionPreviewInfo.DIFF;
-    }
-    return IntentionPreviewInfo.EMPTY;
+public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandAction<PsiElement> {
+  public AddExceptionToExistingCatchFix(PsiElement errorElement) {
+    super(errorElement);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(myErrorElement)) return;
-    Context context = Context.from(myErrorElement);
-    if (context == null) return;
+  protected @NotNull ModCommand perform(@NotNull ActionContext ctx, @NotNull PsiElement element) {
+    Context context = Context.from(element);
+    if (context == null) return ModCommand.nop();
 
     List<? extends PsiClassType> unhandledExceptions = context.myExceptions;
     List<? extends PsiCatchSection> catches = context.myCatches;
 
-    if (catches.size() == 1) {
-      PsiCatchSection selectedSection = catches.get(0);
-      addTypeToCatch(unhandledExceptions, selectedSection);
-    }
-    else {
-      IntroduceTargetChooser.showChooser(
-        editor,
-        catches,
-        new Pass<PsiCatchSection>() {
-          @Override
-          public void pass(PsiCatchSection section) {
-            addTypeToCatch(unhandledExceptions, section);
-          }
-        },
-        section -> Objects.requireNonNull(section.getCatchType()).getPresentableText(),
-        QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"),
-        catchSection -> Objects.requireNonNull(((PsiCatchSection)catchSection).getParameter()).getTextRange()
-      );
-    }
+    List<@NotNull ModCommandAction> actions = ContainerUtil.map(
+      catches, c -> ModCommand.psiUpdateStep(c,
+                                             Objects.requireNonNull(c.getCatchType()).getPresentableText(),
+                                             (section, updater) -> addTypeToCatch(unhandledExceptions, section, ctx.project()),
+                                              section -> Objects.requireNonNull(section.getParameter()).getTextRange()));
+    return ModCommand.chooseAction(QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"), actions);
   }
+
   private static List<PsiCatchSection> findSuitableSections(List<? extends PsiCatchSection> sections, @NotNull List<? extends PsiClassType> exceptionTypes, boolean isJava7OrHigher) {
     List<PsiCatchSection> finalSections = new ArrayList<>();
     for (PsiCatchSection section : ContainerUtil.reverse(sections)) {
@@ -95,13 +59,6 @@ public final class AddExceptionToExistingCatchFix extends PsiElementBaseIntentio
       return Collections.emptyList();
     }
     return finalSections;
-  }
-
-  private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
-    Project project = catchSection.getProject();
-    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.exception.to.existing.catch.family"), null, () -> {
-      addTypeToCatch(exceptionsToAdd, catchSection, project);
-    });
   }
 
   private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, 
@@ -131,13 +88,10 @@ public final class AddExceptionToExistingCatchFix extends PsiElementBaseIntentio
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    Context context = Context.from(myErrorElement);
-    if (context != null) {
-      setText(context.getMessage());
-      return true;
-    }
-    return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext ctx, @NotNull PsiElement element) {
+    Context context = Context.from(element);
+    if (context == null) return null;
+    return Presentation.of(context.getMessage());
   }
 
   @Nls
@@ -223,10 +177,5 @@ public final class AddExceptionToExistingCatchFix extends PsiElementBaseIntentio
       return false;
     }
     return newException.isAssignableFrom(catchType);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }

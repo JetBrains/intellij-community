@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.DataManager;
@@ -31,8 +31,8 @@ import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 
-public class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  public static class ActionsOnSaveConfigurableProvider extends ConfigurableProvider {
+public final class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  public static final class ActionsOnSaveConfigurableProvider extends ConfigurableProvider {
     private final @NotNull Project myProject;
 
     public ActionsOnSaveConfigurableProvider(@NotNull Project project) {

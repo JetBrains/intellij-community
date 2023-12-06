@@ -11,6 +11,7 @@ import com.intellij.util.xmlb.annotations.Transient
 import com.maddyhome.idea.copyright.pattern.EntityUtil
 import org.jdom.Element
 
+@Suppress("SpellCheckingInspection")
 @JvmField
 val DEFAULT_COPYRIGHT_NOTICE: String = EntityUtil.encode(
   "Copyright (c) \$originalComment.match(\"Copyright \\(c\\) (\\d+)\", 1, \"-\", \"\$today.year\")\$today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +

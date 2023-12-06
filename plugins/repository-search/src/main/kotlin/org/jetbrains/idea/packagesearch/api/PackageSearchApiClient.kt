@@ -150,7 +150,7 @@ class PackageSearchApiClient(
 
     return httpClient.getBody {
       url {
-        appendEncodedPathSegments("packages")
+        appendEncodedPathSegments("package")
         parameters {
           append("groupid", groupId ?: "")
           append("artifactid", artifactId ?: "")

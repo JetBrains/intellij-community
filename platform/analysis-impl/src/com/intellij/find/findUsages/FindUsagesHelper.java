@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiCompiledElement;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.stubs.BinaryFileStubBuilders;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.Processor;
@@ -21,14 +23,22 @@ import java.util.Collection;
 public final class FindUsagesHelper {
   private static final Logger LOG = Logger.getInstance(FindUsagesHelper.class);
 
-  public static boolean processUsagesInText(@NotNull final PsiElement element,
+  public static boolean processUsagesInText(final @NotNull PsiElement element,
                                             @NotNull Collection<String> stringToSearch,
                                             boolean equivalentReferencesOnly,
                                             @NotNull GlobalSearchScope searchScope,
                                             @NotNull Processor<? super UsageInfo> processor) {
     final TextRange elementTextRange = ReadAction.compute(
-      () -> !element.isValid() || element instanceof PsiCompiledElement ? null
-                                                                        : element.getTextRange());
+      () -> {
+        if (!element.isValid()) {
+          return null;
+        }
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+        if (virtualFile == null || BinaryFileStubBuilders.INSTANCE.forFileType(virtualFile.getFileType()) != null) {
+          return null;
+        }
+        return element.getTextRange();
+      });
     UsageInfoFactory factory = (usage, startOffset, endOffset) -> {
       if (!element.isValid()) return equivalentReferencesOnly ? null : new UsageInfo(usage, startOffset, endOffset, true);
       if (elementTextRange != null
@@ -59,11 +69,11 @@ public final class FindUsagesHelper {
     return true;
   }
 
-  public static boolean processTextOccurrences(@NotNull final PsiElement element,
-                                                @NotNull String stringToSearch,
-                                                @NotNull GlobalSearchScope searchScope,
-                                                @NotNull final UsageInfoFactory factory,
-                                                @NotNull final Processor<? super UsageInfo> processor) {
+  public static boolean processTextOccurrences(final @NotNull PsiElement element,
+                                               @NotNull String stringToSearch,
+                                               @NotNull GlobalSearchScope searchScope,
+                                               final @NotNull UsageInfoFactory factory,
+                                               final @NotNull Processor<? super UsageInfo> processor) {
     PsiSearchHelper helper = ReadAction.compute(() -> PsiSearchHelper.getInstance(element.getProject()));
 
     return helper.processUsagesInNonJavaFiles(element, stringToSearch, (psiFile, startOffset, endOffset) -> {

@@ -14,11 +14,11 @@ import java.util.Set;
 public final class BuildTargetChunk {
   private final Set<? extends BuildTarget<?>> myTargets;
 
-  public BuildTargetChunk(Set<? extends BuildTarget<?>> targets) {
+  public BuildTargetChunk(@NotNull Set<? extends BuildTarget<?>> targets) {
     myTargets = targets;
   }
 
-  public Set<? extends BuildTarget<?>> getTargets() {
+  public @NotNull Set<? extends BuildTarget<?>> getTargets() {
     return myTargets;
   }
 
@@ -33,11 +33,11 @@ public final class BuildTargetChunk {
     return size > 1 ? name + " and " + (size - 1) + " more" : name;
   }
 
-  public static BuildTargetChunk forSingleTarget(@NotNull BuildTarget<?> target) {
+  public static @NotNull BuildTargetChunk forSingleTarget(@NotNull BuildTarget<?> target) {
     return new BuildTargetChunk(Collections.singleton(target));
   }
 
-  public static BuildTargetChunk forModulesChunk(@NotNull ModuleChunk chunk) {
+  public static @NotNull BuildTargetChunk forModulesChunk(@NotNull ModuleChunk chunk) {
     return new BuildTargetChunk(chunk.getTargets());
   }
 }

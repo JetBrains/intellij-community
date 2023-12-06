@@ -6,3 +6,5 @@ open class Foo {
         <caret>protectedMethod()
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix

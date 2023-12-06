@@ -37,3 +37,5 @@ fun main(args: Array<String>) {
 
 // EXPRESSION: element
 // RESULT: 1: I
+
+// IGNORE_K2

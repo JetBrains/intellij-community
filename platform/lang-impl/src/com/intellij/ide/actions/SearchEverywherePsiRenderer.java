@@ -1,29 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.util.PSIRenderingUtils;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFilePathWrapper;
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
@@ -33,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.LinkedList;
-import java.util.Optional;
 
 /**
 * @author Konstantin Bulenkov
@@ -67,21 +56,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
 
   @Override
   public String getElementText(PsiElement element) {
-    VirtualFile file = element instanceof PsiFile ? PsiUtilCore.getVirtualFile(element) :
-                       element instanceof VirtualFile ? (VirtualFile)element : null;
-    if (file != null) {
-      return VfsPresentationUtil.getPresentableNameForUI(element.getProject(), file);
-    }
-
-    if (element instanceof NavigationItem) {
-      String name = Optional.ofNullable(((NavigationItem)element).getPresentation())
-        .map(presentation -> presentation.getPresentableText())
-        .orElse(null);
-      if (name != null) return name;
-    }
-
-    String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
-    return StringUtil.notNullize(name, "<unnamed>");
+    return PSIRenderingUtils.getPSIElementText(element);
   }
 
   @Nullable
@@ -93,38 +68,10 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   @Nullable
   @Override
   protected String getContainerTextForLeftComponent(PsiElement element, String name, int maxWidth, FontMetrics fm) {
-    String presentablePath = extractPresentablePath(element);
+    String presentablePath = PSIRenderingUtils.extractPresentablePath(element);
     String text = ObjectUtils.chooseNotNull(presentablePath, SymbolPresentationUtil.getSymbolContainerText(element));
-
     if (text == null || text.equals(name)) return null;
-
-    if (text.startsWith("(") && text.endsWith(")")) {
-      text = text.substring(1, text.length() - 1);
-    }
-
-    if (presentablePath == null && (text.contains("/") || text.contains(File.separator)) && element instanceof PsiFileSystemItem) {
-      Project project = element.getProject();
-      String basePath = Optional.ofNullable(project.getBasePath())
-        .map(FileUtil::toSystemDependentName)
-        .orElse(null);
-      VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
-      if (file != null) {
-        text = FileUtil.toSystemDependentName(text);
-        String filePath = FileUtil.toSystemDependentName(file.getPath());
-        if (basePath != null && FileUtil.isAncestor(basePath, filePath, true)) {
-          text = ObjectUtils.notNull(FileUtil.getRelativePath(basePath, text, File.separatorChar), text);
-        }
-        else {
-          String rootPath = Optional.ofNullable(GotoFileCellRenderer.getAnyRoot(file, project))
-            .map(root -> FileUtil.toSystemDependentName(root.getPath()))
-            .filter(root -> basePath != null && FileUtil.isAncestor(basePath, root, true))
-            .orElse(null);
-          text = rootPath != null
-                 ? ObjectUtils.notNull(FileUtil.getRelativePath(rootPath, text, File.separatorChar), text)
-                 : FileUtil.getLocationRelativeToUserHome(text);
-        }
-      }
-    }
+    text = PSIRenderingUtils.normalizePsiElementContainerText(element, text, presentablePath);
 
     boolean in = text.startsWith("in ");
     if (in) text = text.substring(3);
@@ -152,19 +99,6 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     return StringUtil.trimMiddle(adjustedText, adjustedWidth);
   }
 
-  @Nullable
-  private static String extractPresentablePath(@Nullable PsiElement element) {
-    if (element == null) return null;
-
-    PsiFile file = element.getContainingFile();
-    if (file != null) {
-      VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile instanceof VirtualFilePathWrapper) return ((VirtualFilePathWrapper)virtualFile).getPresentablePath();
-    }
-
-    return null;
-  }
-
   @Override
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
                                                        JList list,
@@ -181,7 +115,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     return Iconable.ICON_FLAG_READ_STATUS;
   }
 
-  public static class SELayout extends BorderLayout {
+  public static final class SELayout extends BorderLayout {
     @Override
     public void layoutContainer(Container target) {
       super.layoutContainer(target);

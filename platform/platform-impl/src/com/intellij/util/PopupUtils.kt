@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -22,6 +22,8 @@ import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JTable
 import javax.swing.JTree
+import kotlin.math.max
+import kotlin.math.min
 
 
 fun getBestPopupPosition(context: DataContext): RelativePoint {
@@ -113,7 +115,7 @@ private fun getBestBalloonPositionInsideTree(context: DataContext): RelativePoin
   val distance = { it: Int -> visibleCenter.distance(component.getRowBounds(it).center()) }
   val nearestRow = selectionRows.sortedBy(distance).firstOrNull() ?: return null
   val rowBounds = component.getRowBounds(nearestRow)
-  val dimension = Dimension(Math.min(visibleRect.width, rowBounds.width), rowBounds.height)
+  val dimension = Dimension(min(visibleRect.width, rowBounds.width), rowBounds.height)
   component.scrollRectToVisible(Rectangle(rowBounds.position(), dimension))
   return RelativePoint(component, rowBounds.topCenter())
 }
@@ -122,7 +124,7 @@ private fun getBestBalloonPositionInsideTable(context: DataContext): RelativePoi
   val component = getFocusComponent<JTable>(context) ?: return null
   val visibleRect = component.visibleRect
   val column = component.columnModel.selectionModel.leadSelectionIndex
-  val row = Math.max(component.selectionModel.leadSelectionIndex, component.selectionModel.anchorSelectionIndex)
+  val row = max(component.selectionModel.leadSelectionIndex, component.selectionModel.anchorSelectionIndex)
   val rect = component.getCellRect(row, column, false)
   if (!visibleRect.intersects(rect)) component.scrollRectToVisible(rect)
   return RelativePoint(component, rect.position())

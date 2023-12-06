@@ -1,0 +1,33 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/packages/vscode-pyright/schemas/pyrightconfig.schema.json",
+    "typeshedPath": ".",
+    "include": [
+        "test_cases",
+        "stubs/**/@tests/test_cases"
+    ],
+    "typeCheckingMode": "strict",
+    // Extra strict settings
+    "reportShadowedImports": "error", // Don't accidentally name a file something that shadows stdlib
+    "reportImplicitStringConcatenation": "error",
+    "reportUninitializedInstanceVariable": "error",
+    "reportUnnecessaryTypeIgnoreComment": "error",
+    // Using unspecific `type: ignore` comments in test_cases.
+    // See https://github.com/python/typeshed/pull/8083
+    "enableTypeIgnoreComments": true,
+    // If a test case uses this anti-pattern, there's likely a reason and annoying to `type: ignore`.
+    // Let flake8-bugbear flag it (B006)
+    "reportCallInDefaultInitializer": "none",
+    // Too strict and not needed for type testing
+    "reportMissingSuperCall": "none",
+    // Stubs are allowed to use private variables. We may want to test those.
+    "reportPrivateUsage": "none",
+    // Stubs don't need the actual modules to be installed
+    "reportMissingModuleSource": "none",
+    // Incompatible property type mismatches may be out of typeshed's control
+    // when they are inherited from the implementation.
+    "reportPropertyTypeMismatch": "none",
+    // isinstance checks are still needed when validating inputs outside of typeshed's control
+    "reportUnnecessaryIsInstance": "none",
+    // The name of the self/cls parameter is out of typeshed's control.
+    "reportSelfClsParameterName": "none",
+}

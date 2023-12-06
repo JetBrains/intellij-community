@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,10 +12,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -27,10 +25,15 @@ import com.intellij.util.NullableConsumer;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 
@@ -122,7 +125,7 @@ public final class SdkConfigurationUtil {
                              final boolean silent,
                              @Nullable final SdkAdditionalData additionalData,
                              @Nullable final String customSdkSuggestedName) {
-    ProjectJdkImpl sdk = null;
+    Sdk sdk = null;
     try {
       sdk = createSdk(Arrays.asList(allSdks), homeDir, sdkType, additionalData, customSdkSuggestedName);
 
@@ -153,7 +156,7 @@ public final class SdkConfigurationUtil {
   }
 
   @NotNull
-  public static ProjectJdkImpl createSdk(@NotNull Collection<? extends Sdk> allSdks,
+  public static Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
                                          @NotNull VirtualFile homeDir,
                                          @NotNull SdkType sdkType,
                                          @Nullable SdkAdditionalData additionalData,
@@ -162,7 +165,7 @@ public final class SdkConfigurationUtil {
   }
 
   @NotNull
-  public static ProjectJdkImpl createSdk(@NotNull Collection<? extends Sdk> allSdks,
+  public static Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
                                          @NotNull String homePath,
                                          @NotNull SdkType sdkType,
                                          @Nullable SdkAdditionalData additionalData,
@@ -171,16 +174,26 @@ public final class SdkConfigurationUtil {
                            ? createUniqueSdkName(sdkType, homePath, allSdks)
                            : createUniqueSdkName(customSdkSuggestedName, allSdks);
 
-    final ProjectJdkImpl sdk = new ProjectJdkImpl(sdkName, sdkType);
-
+    Sdk sdk = ProjectJdkTable.getInstance().createSdk(sdkName, sdkType);
+    SdkModificator sdkModificator = sdk.getSdkModificator();
     if (additionalData != null) {
       // additional initialization.
       // E.g. some ruby sdks must be initialized before
       // setupSdkPaths() method invocation
-      sdk.setSdkAdditionalData(additionalData);
+      sdkModificator.setSdkAdditionalData(additionalData);
     }
+    if (sdkModificator.getVersionString() == null && !homePath.isEmpty()) {
+      sdkModificator.setVersionString(sdkType.getVersionString(homePath));
+    }
+    sdkModificator.setHomePath(homePath);
 
-    sdk.setHomePath(homePath);
+    Application application = ApplicationManager.getApplication();
+    Runnable runnable = () -> sdkModificator.commitChanges();
+    if (application.isDispatchThread()) {
+      application.runWriteAction(runnable);
+    } else {
+      application.invokeAndWait(() -> application.runWriteAction(runnable));
+    }
     return sdk;
   }
 
@@ -290,20 +303,20 @@ public final class SdkConfigurationUtil {
     if (selectSdkHomeForTests(sdkType, consumer)) return;
 
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
+
+    Future<VirtualFile> sdkRootFuture = PooledThreadExecutor.INSTANCE.submit(() -> getSuggestedSdkRoot(sdkType));
+    VirtualFile suggestedSdkRoot = null;
+    try {
+      suggestedSdkRoot = sdkRootFuture.get(200, TimeUnit.MILLISECONDS);
+    }
+    catch (InterruptedException | ExecutionException | TimeoutException ignored) {}
+
     // passing project instance here seems to be the right idea, but it would make the dialog
     // selecting the last opened project path, instead of the suggested detected JDK home (one of many).
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
-    FileChooser.chooseFiles(descriptor, null, component, getSuggestedSdkRoot(sdkType), chosen -> {
+    FileChooser.chooseFiles(descriptor, null, component, suggestedSdkRoot, chosen -> {
       final String path = chosen.get(0).getPath();
-      if (sdkType.isValidSdkHome(path)) {
-        consumer.consume(path);
-        return;
-      }
-
-      final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-      if (sdkType.isValidSdkHome(adjustedPath)) {
-        consumer.consume(adjustedPath);
-      }
+      consumer.consume(path);
     });
   }
 

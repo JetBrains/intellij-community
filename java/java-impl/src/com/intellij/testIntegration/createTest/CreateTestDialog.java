@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
@@ -32,12 +33,12 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.JavaTestFramework;
+import com.intellij.testIntegration.JvmTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -112,7 +113,7 @@ public class CreateTestDialog extends DialogWrapper {
       return false;
     }
 
-    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensions()) {
+    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (superClass.equals(framework.getDefaultSuperClass())) {
         return false;
       }
@@ -136,7 +137,7 @@ public class CreateTestDialog extends DialogWrapper {
             String text = JavaBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
             myFixLibraryLabel.setText(text);
             myFixLibraryButton.setVisible(
-              descriptor instanceof JavaTestFramework && ((JavaTestFramework)descriptor).getFrameworkLibraryDescriptor() != null
+              descriptor instanceof JvmTestFramework && ((JvmTestFramework)descriptor).getFrameworkLibraryDescriptor() != null
               || descriptor.getLibraryPath() != null);
           }
         });
@@ -361,11 +362,13 @@ public class CreateTestDialog extends DialogWrapper {
     TestFramework defaultDescriptor = null;
 
     final DefaultComboBoxModel<TestFramework> model = (DefaultComboBoxModel<TestFramework>)myLibrariesCombo.getModel();
-
-    final List<TestFramework> descriptors = new SmartList<>(TestFramework.EXTENSION_NAME.getExtensionList());
+    List<TestFramework> descriptors = new ArrayList<>(TestFramework.EXTENSION_NAME.getExtensionList());
     descriptors.sort((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
-
+    Set<String> frameworkSet = new HashSet<>();
     for (final TestFramework descriptor : descriptors) {
+      if (!TestFrameworks.isSuitableByLanguage(myTargetClass, descriptor)) continue;
+      if (!frameworkSet.add(descriptor.getName())) continue;
+
       model.addElement(descriptor);
       if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {
         attachedLibraries.add(descriptor);
@@ -394,7 +397,7 @@ public class CreateTestDialog extends DialogWrapper {
     else if (!descriptors.isEmpty()) {
       List<TestFramework> applicableFrameworks = attachedLibraries.isEmpty() ? descriptors : attachedLibraries;
       TestFramework preferredFramework =
-        ObjectUtils.notNull(ContainerUtil.find(applicableFrameworks, d -> d.getLanguage().equals(myTargetClass.getLanguage())),
+        ObjectUtils.notNull(ContainerUtil.find(applicableFrameworks, d -> TestFrameworks.isSuitableByLanguage(myTargetClass, d)),
                             applicableFrameworks.get(0));
       myLibrariesCombo.setSelectedItem(preferredFramework);
     }

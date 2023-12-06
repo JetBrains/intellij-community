@@ -1,7 +1,5 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
+// IGNORE_K2
 package kotlin.<caret>
 
 
 // EXIST: collections, sequences, concurrent
-// EXIST_JS_ONLY: browser

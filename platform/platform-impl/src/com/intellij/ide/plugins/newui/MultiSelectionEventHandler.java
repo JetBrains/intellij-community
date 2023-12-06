@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -19,8 +19,7 @@ import java.util.function.Consumer;
 /**
  * @author Alexander Lobas
  */
-public class MultiSelectionEventHandler extends EventHandler {
-
+public final class MultiSelectionEventHandler extends EventHandler {
   private PluginsGroupComponent myContainer;
   private PagePluginLayout myLayout;
   private List<ListPluginComponent> myComponents;
@@ -96,6 +95,8 @@ public class MultiSelectionEventHandler extends EventHandler {
           if (group.getChildrenCount() == 0) {
             return;
           }
+
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelection());
 
           ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
           popupMenu.setTargetComponent(component);
@@ -187,10 +188,12 @@ public class MultiSelectionEventHandler extends EventHandler {
             component.setSelection(SelectionType.SELECTION);
           }
           component.handleKeyAction(event, getSelection());
+
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getSelection());
         }
       }
 
-      private boolean contains(@Nullable ShortcutSet shortcutSet, @NotNull KeyStroke keyStroke) {
+      private static boolean contains(@Nullable ShortcutSet shortcutSet, @NotNull KeyStroke keyStroke) {
         for (Shortcut shortcut : shortcutSet != null ? shortcutSet.getShortcuts() : Shortcut.EMPTY_ARRAY) {
           if (shortcut instanceof KeyboardShortcut &&
               ((KeyboardShortcut)shortcut).getFirstKeyStroke().equals(keyStroke)) {
@@ -283,7 +286,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public final @NotNull List<? extends ListPluginComponent> getSelection() {
+  public @NotNull List<ListPluginComponent> getSelection() {
     return myComponents.stream()
       .filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
   }
@@ -502,7 +505,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
+  public void setSelection(@NotNull List<ListPluginComponent> components) {
     clearSelectionWithout(-1);
     mySelectionIndex = -1;
     mySelectionLength = components.size();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class EmptyDirectoryInspection extends GlobalInspectionTool {
+public final class EmptyDirectoryInspection extends GlobalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportDirectoriesUnderSourceRoots = false;
@@ -55,7 +55,7 @@ public class EmptyDirectoryInspection extends GlobalInspectionTool {
       return;
     }
     index.iterateContent(file -> {
-      if (onlyReportDirectoriesUnderSourceRoots && !index.isInSourceContent(file)) {
+      if (onlyReportDirectoriesUnderSourceRoots && ReadAction.compute(() -> !index.isInSourceContent(file))) {
         return true;
       }
       if (!file.isDirectory() || file.getChildren().length != 0) {
@@ -89,7 +89,7 @@ public class EmptyDirectoryInspection extends GlobalInspectionTool {
     return null;
   }
 
-  private static class EmptyPackageFix implements QuickFix<CommonProblemDescriptor> {
+  private static final class EmptyPackageFix implements QuickFix<CommonProblemDescriptor> {
 
     private final String url;
     private final String name;

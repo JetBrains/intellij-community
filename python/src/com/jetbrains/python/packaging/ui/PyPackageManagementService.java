@@ -22,7 +22,6 @@ import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
-import com.jetbrains.python.packaging.statistics.PythonPackagesDialogStatisticsCollector;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -38,6 +37,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+/**
+ * @deprecated for search in for packages and managing repositories use
+ * {@link com.jetbrains.python.packaging.management.PythonRepositoryManager}
+ * obtained through {@link com.jetbrains.python.packaging.management.PythonPackageManager}
+ */
+@Deprecated(forRemoval = true)
 public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
   @NonNls protected static final String TEXT_PREFIX = buildHtmlStylePrefix();
@@ -242,7 +247,6 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public void uninstallPackages(List<? extends InstalledPackage> installedPackages, @NotNull Listener listener) {
-    PythonPackagesDialogStatisticsCollector.getPackageUninstalledEvent().log(myProject);
     final String packageName = installedPackages.size() == 1 ? installedPackages.get(0).getName() : null;
     final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
       @Override

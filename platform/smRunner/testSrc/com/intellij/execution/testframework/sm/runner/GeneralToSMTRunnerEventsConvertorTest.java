@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +81,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(consoleProperties, false);
     TestConsoleProperties.TRACK_RUNNING_TEST.set(consoleProperties, false);
 
-    myMockResettablePrinter = new MockPrinter(true);
+    myMockResettablePrinter = new MockPrinter();
     myConsole = new MyConsoleView(consoleProperties);
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
@@ -106,6 +107,12 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     }
     finally {
       super.tearDown();
+    }
+  }
+
+  private static void assertContains(@NotNull String expectedString, @NotNull String actualText) {
+    if (!actualText.contains(expectedString)) {
+      failNotEquals("Text doesn't contain string:", expectedString, actualText);
     }
   }
 
@@ -154,6 +161,39 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     onTestStarted("some_test");
 
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
+  }
+
+  public void testCheckMetaUpdateWithValue() {
+    checkMetainfo("suiteMetaUpdate", "testMetaUpdate");
+  }
+
+  public void testCheckMetaUpdateWithNull() {
+    checkMetainfo(null, null);
+  }
+
+  private void checkMetainfo(@Nullable String updatedSuiteMetainfo, @Nullable String updatedTestMetainfo) {
+    final String suiteName = "some_suite";
+    final String testName = "some_test";
+    final String initSuiteMeta = "suiteMeta";
+    final String initTestMeta = "testMeta";
+
+    myEventsProcessor.onSuiteTreeNodeAdded(true, suiteName, suiteName, initSuiteMeta, suiteName, TreeNodeEvent.ROOT_NODE_ID);
+    myEventsProcessor.onSuiteTreeNodeAdded(false, testName, testName, initTestMeta, testName, suiteName);
+    myEventsProcessor.onSuiteTreeEnded(testName);
+    myEventsProcessor.onSuiteTreeEnded(suiteName);
+    myEventsProcessor.onBuildTreeEnded();
+
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent(suiteName, suiteName, updatedSuiteMetainfo));
+    myEventsProcessor.onTestStarted(new TestStartedEvent(testName, testName, updatedTestMetainfo));
+
+    myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
+
+    final SMTestProxy suiteProxy = myEventsProcessor.findChild(null, suiteName, true);
+    assertEquals(updatedSuiteMetainfo == null ? initSuiteMeta : updatedSuiteMetainfo, suiteProxy.getMetainfo());
+
+    final SMTestProxy testProxy = myEventsProcessor.findChild(suiteProxy, testName, false);
+    assertEquals(updatedTestMetainfo == null ? initTestMeta : updatedTestMetainfo, testProxy.getMetainfo());
   }
 
   public void testOnTestStarted_WithLocation() {
@@ -627,7 +667,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
       String message = "line" + i + "\u0000 a < b \n";
       mySimpleTest.addLast(printer -> printer.print(message, ConsoleViewContentType.NORMAL_OUTPUT));
     }
-    mySimpleTest.setTestComparisonFailed("empty", null, "\u0000", "a < b");
+    mySimpleTest.setTestComparisonFailed("message", "stacktrace", "\u0000", "a < b");
     mySimpleTest.setFinished();
     mySuite.setFinished();
 
@@ -652,19 +692,27 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
       assertSize(1, children);
       SMTestProxy testProxy = children.get(0);
       MockPrinter mockPrinter = new MockPrinter();
+      mockPrinter.setShowHyperLink(true);
       testProxy.printOn(mockPrinter);
       String allOut = mockPrinter.getAllOut();
-      assertSize(559, allOut.split("\n"));
-      assertTrue(allOut.contains("a < b"));
+      assertContains(StringsKt.trimMargin("""
+        |line549 a < b\s
+        |
+        |Expected :a < b
+        |Actual   :
+        |<Click to see difference>
+        |
+        |messagestacktrace
+      """, "|"), allOut);
+      assertSize(558, allOut.split("\n"));
     }
-
   }
 
   public void testComparisonFailureImport() throws Exception {
 
     mySuite.addChild(mySimpleTest);
-    mySimpleTest.addLast(printer -> printer.print("message", ConsoleViewContentType.NORMAL_OUTPUT));
-    mySimpleTest.setTestComparisonFailed("localized", "stacktrace", "actual", "expected");
+    mySimpleTest.addLast(printer -> printer.print("execution output", ConsoleViewContentType.NORMAL_OUTPUT));
+    mySimpleTest.setTestComparisonFailed("message", "stacktrace", "actual", "expected");
     mySimpleTest.setFinished();
     mySuite.setFinished();
 
@@ -689,9 +737,9 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
                                    </config>
                                    <test locationUrl="file://test.text" name="test" status="failed">
                                        <diff actual="actual" expected="expected"/>
-                                       <output type="stdout">message
+                                       <output type="stdout">execution output
                                </output>
-                                       <output type="stderr">localizedstacktrace
+                                       <output type="stderr">messagestacktrace
                                </output>
                                    </test>
                                </testrun>
@@ -705,16 +753,17 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
       assertSize(1, children);
       SMTestProxy testProxy = children.get(0);
       MockPrinter mockPrinter = new MockPrinter();
+      mockPrinter.setShowHyperLink(true);
       testProxy.printOn(mockPrinter);
-      assertEquals("""
-                     message
-
-
-                     Expected :expected
-                     Actual   :actual
-
-
-                     localizedstacktrace""", StringUtil.convertLineSeparators(mockPrinter.getAllOut().trim()));
+      assertEquals(StringsKt.trimMargin("""
+        |execution output
+        |
+        |Expected :expected
+        |Actual   :actual
+        |<Click to see difference>
+        |
+        |messagestacktrace
+      """, "|"), StringUtil.convertLineSeparators(mockPrinter.getAllOut().trim()));
     }
   }
 }

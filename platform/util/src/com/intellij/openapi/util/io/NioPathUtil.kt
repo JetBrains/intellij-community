@@ -5,11 +5,13 @@ package com.intellij.openapi.util.io
 
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import java.io.IOException
-import java.nio.file.*
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.*
 
 /**
- * Normalizes and returns path with forward slashes ('/').
+ * Normalizes and returns a path with forward slashes ('/').
  */
 fun Path.toCanonicalPath(): String {
   return normalize().invariantSeparatorsPathString
@@ -17,10 +19,36 @@ fun Path.toCanonicalPath(): String {
 
 /**
  * Resolves and normalizes path under [this] path.
- * I.e. resolve joins [this] and [relativePath] using file system separator
+ * I.e., resolve joins [this] and [relativePath] using file system separator
  */
 fun Path.getResolvedPath(relativePath: String): Path {
-  return resolve(FileUtil.toSystemDependentName(relativePath)).normalize()
+  return resolve(relativePath).normalize()
+}
+
+/**
+ * Returns normalised base and relative paths. Result of this function should satisfy for condition:
+ * `resultBasePath.resolve(resultRelativePath) == basePath.resolve(relativePath).normalize()` where
+ * resultBasePath is path with maximum length of all possible.
+ *
+ * For example:
+ *  * for [this] = `/1/2/3/4/5` and [relativePath] = `../../a/b`,
+ *    returns pair with base path = `/1/2/3` and relative path = `a/b`;
+ *  * for [this] = `/1/2/3/4/5` and [relativePath] = `../..`,
+ *    returns pair with base path = `/1/2/3` and empty relative path;
+ *  * for [this] = `/1/2/3/4/5` and [relativePath] = `a/b`,
+ *    returns pair with base path = `/1/2/3/4/5` and relative path = `a/b`.
+ */
+fun Path.relativizeToClosestAncestor(relativePath: String): Pair<Path, Path> {
+  val normalizedPath = getResolvedPath(relativePath)
+  val normalizedBasePath = checkNotNull(FileUtil.findAncestor(this, normalizedPath)) {
+    """
+      |Cannot resolve normalized base path for: $normalizedPath
+      |  basePath = $this
+      |  relativePath = $relativePath
+    """.trimMargin()
+  }
+  val normalizedRelativePath = normalizedBasePath.relativize(normalizedPath)
+  return normalizedBasePath to normalizedRelativePath
 }
 
 /**
@@ -60,13 +88,14 @@ fun Path.findOrCreateDirectory(relativePath: String): Path {
   return getResolvedPath(relativePath).findOrCreateDirectory()
 }
 
+@Deprecated("Do not use", level = DeprecationLevel.ERROR)
 fun String.toNioPath(): Path {
-  return Paths.get(FileUtil.toSystemDependentName(this))
+  return Paths.get(FileUtilRt.toSystemDependentName(this))
 }
 
 fun String.toNioPathOrNull(): Path? {
   return try {
-    toNioPath()
+    Paths.get(FileUtilRt.toSystemDependentName(this))
   }
   catch (ex: InvalidPathException) {
     null

@@ -1,53 +1,46 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
+import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
-import com.intellij.openapi.project.Project
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.StatusText
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
-import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class GitLabMergeRequestsListController(
-  project: Project,
   scope: CoroutineScope,
+  accountVm: GitLabAccountViewModel,
   private val listVm: GitLabMergeRequestsListViewModel,
   private val emptyText: StatusText,
   private val listPanel: JComponent,
-  private val mainPanel: JPanel,
+  private val mainPanel: Wrapper,
 ) {
-  private val errorPanel: JComponent = createErrorPanel(project, scope, listVm)
+  private val errorPanel: JComponent = createErrorPanel(scope, accountVm)
 
   init {
     scope.launch {
-      listVm.errorState.collect { error ->
-        update(error)
+      listVm.error.collect { error ->
+        mainPanel.setContent(if (error != null) errorPanel else listPanel)
+        mainPanel.repaint()
       }
     }
 
     scope.launch {
-      combine(listVm.loadingState, listVm.filterVm.searchState) { isLoading, searchState ->
-        isLoading to searchState
-      }.collect { (isLoading, searchState) ->
+      combineAndCollect(listVm.loading, listVm.filterVm.searchState) { isLoading, searchState ->
         updateEmptyText(isLoading, searchState, listVm.repository)
       }
     }
-  }
-
-  private fun update(error: Throwable?) {
-    mainPanel.removeAll()
-    val visiblePanel = if (error != null) errorPanel else listPanel
-    mainPanel.add(visiblePanel, BorderLayout.CENTER)
-    mainPanel.revalidate()
-    mainPanel.repaint()
   }
 
   private fun updateEmptyText(isLoading: Boolean, searchState: GitLabMergeRequestsFiltersValue, repository: String) {
@@ -71,9 +64,13 @@ internal class GitLabMergeRequestsListController(
     }
   }
 
-  private fun createErrorPanel(project: Project, scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
-    val errorPresenter = GitLabMergeRequestErrorStatusPresenter(project, scope, listVm.account, listVm.accountManager)
-    val errorPanel = ErrorStatusPanelFactory.create(scope, listVm.errorState, errorPresenter)
+  private fun createErrorPanel(scope: CoroutineScope, accountVm: GitLabAccountViewModel): JComponent {
+    val errorPresenter = GitLabMergeRequestErrorStatusPresenter(
+      accountVm,
+      swingAction(GitLabBundle.message("merge.request.list.reload")) {
+        listVm.refresh()
+      })
+    val errorPanel = ErrorStatusPanelFactory.create(scope, listVm.error, errorPresenter)
 
     return JPanel(SingleComponentCenteringLayout()).apply {
       add(errorPanel)

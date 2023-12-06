@@ -2,11 +2,12 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -24,10 +25,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntentionAction {
+public class AddSingleMemberStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(AddSingleMemberStaticImportAction.class);
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<>("TEMP_REFERENT_USER_DATA");
 
+  public AddSingleMemberStaticImportAction() {
+    super(PsiIdentifier.class);
+  }
+  
   @Override
   @NotNull
   public String getFamilyName() {
@@ -166,25 +171,20 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
     ImportAvailability availability = getStaticImportClass(element);
-    if (availability != null) {
-      if (availability.resolved instanceof PsiClass) {
-        setText(JavaBundle.message("intention.add.single.member.import.text", availability.qName));
-      } else {
-        PsiFile file = element.getContainingFile();
-        if (!(file instanceof PsiJavaFile)) return false;
-        PsiImportStatementBase existingImport =
-          findExistingImport(file, availability.resolved.getContainingClass(), StringUtil.getShortName(availability.qName));
-        if (existingImport != null && !existingImport.isOnDemand()) {
-          setText(JavaBundle.message("intention.use.single.member.static.import.text" , availability.qName));
-        }
-        else {
-          setText(JavaBundle.message("intention.add.single.member.static.import.text", availability.qName));
-        }
-      }
+    if (availability == null) return null;
+    if (availability.resolved instanceof PsiClass) {
+      return Presentation.of(JavaBundle.message("intention.add.single.member.import.text", availability.qName));
     }
-    return availability != null;
+    PsiFile file = element.getContainingFile();
+    if (!(file instanceof PsiJavaFile)) return null;
+    PsiImportStatementBase existingImport =
+      findExistingImport(file, availability.resolved.getContainingClass(), StringUtil.getShortName(availability.qName));
+    if (existingImport != null && !existingImport.isOnDemand()) {
+      return Presentation.of(JavaBundle.message("intention.use.single.member.static.import.text" , availability.qName));
+    }
+    return Presentation.of(JavaBundle.message("intention.add.single.member.static.import.text", availability.qName));
   }
 
   public static void invoke(PsiFile file, final PsiElement element) {
@@ -295,7 +295,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull ModPsiUpdater updater) {
     invoke(element.getContainingFile(), element);
   }
 }

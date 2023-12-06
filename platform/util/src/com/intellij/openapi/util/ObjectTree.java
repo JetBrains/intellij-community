@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -43,13 +43,13 @@ final class ObjectTree {
                                               getDisposalTrace(parent));
       }
 
-      myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
+      myDisposedObjects.remove(child);
       if (child instanceof Disposer.CheckedDisposableImpl) {
+        // if we dispose a child and then register it back, it means it's not disposed anymore
         ((Disposer.CheckedDisposableImpl)child).isDisposed = false;
       }
 
       ObjectNode parentNode = getParentNode(parent).findOrCreateChildNode(parent);
-
       ObjectNode childNode = getParentNode(child).moveChildNodeToOtherParent(child, parentNode);
       myObject2ParentNode.put(child, parentNode);
 
@@ -58,8 +58,7 @@ final class ObjectTree {
     }
   }
 
-  @NotNull
-  private ObjectNode getParentNode(@NotNull Disposable object) {
+  private @NotNull ObjectNode getParentNode(@NotNull Disposable object) {
     return ObjectUtils.chooseNotNull(myObject2ParentNode.get(object), myRootNode);
   }
 
@@ -78,6 +77,7 @@ final class ObjectTree {
       return ObjectUtils.nullizeIfDefaultValue(myDisposedObjects.get(object), UNKNOWN_TRACE);
     }
   }
+
   boolean isDisposed(@NotNull Disposable object) {
     if (object instanceof CheckedDisposable) {
       return ((CheckedDisposable)object).isDisposed();
@@ -227,8 +227,7 @@ final class ObjectTree {
     }
   }
 
-  @NotNull
-  static Logger getLogger() {
+  static @NotNull Logger getLogger() {
     return Logger.getInstance(ObjectTree.class);
   }
 

@@ -13,6 +13,8 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -226,7 +228,9 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         return Runnable {
             element.ambiguousImportUsages?.forEach {
                 val ref = it.reference as? PsiPolyVariantReference ?: return@forEach
-                if (ref.multiResolve(false).isEmpty()) {
+                @OptIn(KtAllowAnalysisFromWriteAction::class)
+                val multiResolve = allowAnalysisFromWriteAction { ref.multiResolve(false) }
+                if (multiResolve.isEmpty()) {
                     if (!renameMangledUsageIfPossible(it, element, newName)) {
                         ref.handleElementRename(newName)
                     }

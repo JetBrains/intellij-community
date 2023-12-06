@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -490,13 +490,22 @@ public final class JDOMUtil {
     try {
       xmlOutputter.output(document, writer);
     }
-    catch (NullPointerException ex) {
-      getLogger().error(ex);
+    catch (NullPointerException e) {
+      getLogger().error(e);
       printDiagnostics(document.getRootElement(), "");
     }
   }
 
+  private static final @NotNull Format DEFAULT_FORMAT = Format.getCompactFormat()
+    .setIndent("  ")
+    .setTextMode(Format.TextMode.TRIM)
+    .setLineSeparator("\n");
+
   public static @NotNull Format createFormat(@Nullable String lineSeparator) {
+    if (lineSeparator == null || lineSeparator.equals("\n")) {
+      return DEFAULT_FORMAT;
+    }
+
     return Format.getCompactFormat()
       .setIndent("  ")
       .setTextMode(Format.TextMode.TRIM)
@@ -505,7 +514,7 @@ public final class JDOMUtil {
 
   @ApiStatus.Internal
   public static @NotNull XMLOutputter createOutputter(String lineSeparator) {
-    return new MyXMLOutputter(createFormat(lineSeparator));
+    return new MyXMLOutputter(lineSeparator);
   }
 
   /**
@@ -549,8 +558,8 @@ public final class JDOMUtil {
   public static @NotNull String escapeText(@NotNull String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
     StringBuilder buffer = null;
     for (int i = 0; i < text.length(); i++) {
-      final char ch = text.charAt(i);
-      final String quotation = escapeChar(ch, escapeApostrophes, escapeSpaces, escapeLineEnds);
+      char ch = text.charAt(i);
+      String quotation = escapeChar(ch, escapeApostrophes, escapeSpaces, escapeLineEnds);
       buffer = XmlStringUtil.appendEscapedSymbol(text, buffer, i, quotation, ch);
     }
     // If there were any entities, return the escaped characters
@@ -560,8 +569,8 @@ public final class JDOMUtil {
   }
 
   private static final class MyXMLOutputter extends XMLOutputter {
-    private MyXMLOutputter(@NotNull Format format) {
-      super(format);
+    private MyXMLOutputter(@NotNull String lineSeparator) {
+      super(createFormat(lineSeparator));
     }
 
     @Override
@@ -724,7 +733,7 @@ public final class JDOMUtil {
     return deepMergeWithAttributes(to, from, Collections.emptyList());
   }
 
-  public static class MergeAttribute {
+  public static final class MergeAttribute {
     public String elementName;
     public String attributeName;
 
@@ -740,7 +749,7 @@ public final class JDOMUtil {
    * With this method you can provide a list of tag+attribute names. If two tags have similar attributes from this lists,
    *   this method will merge them
    */
-  public static @NotNull Element deepMergeWithAttributes(@NotNull Element to, @NotNull Element from, @NotNull List<? extends MergeAttribute> mergeByAttributes) {
+  public static @NotNull Element deepMergeWithAttributes(@NotNull Element to, @NotNull Element from, @NotNull List<MergeAttribute> mergeByAttributes) {
     for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
       Element child = iterator.next();
       iterator.remove();
@@ -773,7 +782,7 @@ public final class JDOMUtil {
   private static boolean areAttributesEqual(@NotNull List<? extends Attribute> l1,
                                             @NotNull List<? extends Attribute> l2,
                                             @NotNull Element base,
-                                            @NotNull List<? extends MergeAttribute> mergeByAttributes) {
+                                            @NotNull List<MergeAttribute> mergeByAttributes) {
     Set<String> attributes = mergeByAttributes.stream()
       .filter(o -> o.elementName.equals(base.getName()))
       .map(o -> o.attributeName)

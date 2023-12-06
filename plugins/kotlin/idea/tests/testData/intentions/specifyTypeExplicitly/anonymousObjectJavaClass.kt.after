@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 // WITH_STDLIB
 // ERROR: 'public' function exposes its 'local' return type argument <no name provided>
 // SKIP_ERRORS_AFTER

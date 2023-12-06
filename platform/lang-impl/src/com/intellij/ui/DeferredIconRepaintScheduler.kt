@@ -1,118 +1,101 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.ui.tabs.impl.TabLabel
-import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Rectangle
 import javax.swing.*
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 class DeferredIconRepaintScheduler {
-  private val repaintScheduler = RepaintScheduler()
+  private var job: Job? = null
+  private val queue = ObjectLinkedOpenHashSet<RepaintSchedulerRequest>()
 
   @RequiresEdt
-  fun createRepaintRequest(c: Component?, x: Int, y: Int): RepaintRequest {
-    val target = getTarget(c)
-    val paintingParent: Component? = SwingUtilities.getAncestorOfClass(PaintingParent::class.java, c)
-    val paintingParentRec: Rectangle? = if (paintingParent == null) null else (paintingParent as PaintingParent).getChildRec(c!!)
-
-    return RepaintRequest(c, x, y, target, paintingParent, paintingParentRec)
+  fun createRepaintRequest(component: Component?, x: Int, y: Int): RepaintRequest {
+    val target = getTarget(component)
+    val paintingParent = SwingUtilities.getAncestorOfClass(PaintingParent::class.java, component)
+    val paintingParentRec = if (paintingParent == null) null else (paintingParent as PaintingParent).getChildRec(component!!)
+    return RepaintRequest(component = component,
+                          x = x,
+                          y = y,
+                          target = target,
+                          paintingParent = paintingParent,
+                          paintingParentRec = paintingParentRec)
   }
 
   @RequiresEdt
   fun scheduleRepaint(request: RepaintRequest, iconWidth: Int, iconHeight: Int, alwaysSchedule: Boolean) {
-    val actualTarget = request.getActualTarget()
-    if (actualTarget == null) {
-      return
-    }
+    val actualTarget = request.getActualTarget() ?: return
     val component = request.component
     if (!alwaysSchedule && component == actualTarget) {
       component.repaint(request.x, request.y, iconWidth, iconHeight)
     }
     else {
-      repaintScheduler.pushDirtyComponent(actualTarget, request.paintingParentRec)
+      job?.cancel()
+      queue.add(RepaintSchedulerRequest(actualTarget, request.paintingParentRec))
+      job = schedule()
+    }
+  }
+
+  private fun schedule(): Job {
+    val modality = ModalityState.current()
+    return service<IconCalculatingService>().coroutineScope.launch {
+      delay(50.milliseconds)
+      withContext(Dispatchers.EDT + modality.asContextElement()) {
+        while (!queue.isEmpty()) {
+          ensureActive()
+          val request = queue.removeFirst()
+          val rectangle = request.rectangle
+          if (rectangle == null) {
+            request.component.repaint()
+          }
+          else {
+            request.component.repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height)
+          }
+        }
+      }
     }
   }
 
   private fun getTarget(c: Component?): Component? {
-    val list = SwingUtilities.getAncestorOfClass(JList::class.java, c)
-    if (list != null) {
-      return list
-    }
-
-    // check table first to process com.intellij.ui.treeStructure.treetable.TreeTable correctly
-    val table = SwingUtilities.getAncestorOfClass(JTable::class.java, c)
-    if (table != null) {
-      return table
-    }
-
-    val tree = SwingUtilities.getAncestorOfClass(JTree::class.java, c)
-    if (tree != null) {
-      return tree
-    }
-
-    val box = SwingUtilities.getAncestorOfClass(JComboBox::class.java, c)
-    if (box != null) {
-      return box
-    }
-
-    val tabLabel = SwingUtilities.getAncestorOfClass(TabLabel::class.java, c)
-    if (tabLabel != null) {
-      return tabLabel
-    }
-
-    return c
+    @Suppress("SpellCheckingInspection")
+    return SwingUtilities.getAncestorOfClass(JList::class.java, c)
+           // check table first to process com.intellij.ui.treeStructure.treetable.TreeTable correctly
+           ?: SwingUtilities.getAncestorOfClass(JTable::class.java, c)
+           ?: SwingUtilities.getAncestorOfClass(JTree::class.java, c)
+           ?: SwingUtilities.getAncestorOfClass(JComboBox::class.java, c)
+           ?: SwingUtilities.getAncestorOfClass(TabLabel::class.java, c)
+           ?: c
   }
+}
 
-  data class RepaintRequest(
-    val component: Component?,
-    val x: Int,
-    val y: Int,
-    val target: Component?,
-    private val paintingParent: Component?,
-    val paintingParentRec: Rectangle?
-  ) {
-    fun getActualTarget(): Component? {
-      if (target == null) {
-        return null
-      }
-      if (SwingUtilities.getWindowAncestor(target) != null) {
-        return target
-      }
+private data class RepaintSchedulerRequest(@JvmField val component: Component, @JvmField val rectangle: Rectangle?)
 
-      if (paintingParent != null && SwingUtilities.getWindowAncestor(paintingParent) != null) {
-        return paintingParent
-      }
+data class RepaintRequest(
+  @JvmField internal val component: Component?,
+  @JvmField internal val x: Int,
+  @JvmField internal val y: Int,
+  @JvmField internal val target: Component?,
+  private val paintingParent: Component?,
+  @JvmField internal val paintingParentRec: Rectangle?
+) {
+  internal fun getActualTarget(): Component? {
+    if (target == null) {
       return null
     }
-  }
-
-  private class RepaintScheduler {
-    private val myAlarm = Alarm()
-    private val myQueue = LinkedHashSet<RepaintSchedulerRequest>()
-
-    fun pushDirtyComponent(c: Component, rec: Rectangle?) {
-      ApplicationManager.getApplication().assertIsDispatchThread() // assert myQueue accessed from EDT only
-      myAlarm.cancelAllRequests()
-      myAlarm.addRequest({
-        for (each in myQueue) {
-          val r = each.rectangle
-          if (r == null) {
-            each.component.repaint()
-          }
-          else {
-            each.component.repaint(r.x, r.y, r.width, r.height)
-          }
-        }
-        myQueue.clear()
-      }, 50)
-      myQueue.add(RepaintSchedulerRequest(c, rec))
+    if (SwingUtilities.getWindowAncestor(target) != null) {
+      return target
     }
+    return paintingParent?.takeIf { SwingUtilities.getWindowAncestor(paintingParent) != null }
   }
-
-  private data class RepaintSchedulerRequest(val component: Component, val rectangle: Rectangle?)
 }

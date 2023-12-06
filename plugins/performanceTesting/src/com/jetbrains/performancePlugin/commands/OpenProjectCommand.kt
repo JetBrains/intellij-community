@@ -9,6 +9,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -37,11 +38,30 @@ import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Command to open a new project.
+ *
+ * To open a project in the current frame closing the current one:
+ * Example: %openProject C:\Users\username\intellij
+ *
+ * To open a project in a new frame and don't close the current one:
+ * Example: %openProject C:\Users\username\intellij false
+ *
+ * If you do the following:
+ * %openProject /tmp/a false
+ * %openProject /tmp/b false
+ * %openProject /tmp/a false
+ *
+ * In the end, the same project a will be active and there will be 2 window frames.
+ *
+ * To perform Project Leak detection, pass the fourth argument as true.
+ * %openProject /tmp/a true true
+ */
 class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "openProject"
 
-    private val LOG = Logger.getInstance(OpenProjectCommand::class.java)
+    private val LOG = logger<OpenProjectCommand>()
 
     fun shouldOpenInSmartMode(project: Project): Boolean {
       return (!SystemProperties.getBooleanProperty("performance.execute.script.right.after.ide.opened", false)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core
 
@@ -14,8 +14,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
 import org.jetbrains.kotlin.idea.debugger.base.util.isInlineFrameLineNumber
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import java.lang.Math.max
 import java.util.regex.Pattern
+import kotlin.math.max
 
 class KotlinExceptionFilterFactory : ExceptionFilterFactory {
     override fun create(searchScope: GlobalSearchScope): Filter {
@@ -35,7 +35,7 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Except
         val newHyperlinkInfo = createHyperlinkInfo(line, result) ?: return result
 
         return Filter.Result(result.resultItems.map {
-            Filter.ResultItem(it.highlightStartOffset, it.highlightEndOffset, newHyperlinkInfo, it.getHighlightAttributes())
+            Filter.ResultItem(it.highlightStartOffset, it.highlightEndOffset, newHyperlinkInfo, it.highlightAttributes)
         })
     }
 

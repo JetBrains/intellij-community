@@ -19,6 +19,7 @@
     <action id="IntegrateFiles" class="com.intellij.openapi.vcs.update.CommonIntegrateFileOrDirectoryAction"/>
     <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction">
       <synonym key="action.Annotate.synonym1"/>
+      <synonym key="action.Annotate.with.Blame.text"/>
       <add-to-group group-id="Diff.EditorPopupMenu"/>
       <add-to-group group-id="Diff.EditorGutterPopupMenu" anchor="first"/>
     </action>
@@ -28,7 +29,10 @@
     <action id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" popup="true"/>
     <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction"
             popup="true"/>
-    <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
+    <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction">
+      <synonym key="action.synonym.Vcs.ShowHistoryForBlock.method.text"/>
+      <synonym key="action.synonym.Vcs.ShowHistoryForBlock.class.text"/>
+    </action>
     <action id="Vcs.GetVersion" class="com.intellij.openapi.vcs.history.actions.GetVersionAction" icon="AllIcons.Actions.Download"/>
     <action id="Vcs.RefreshFileHistory" class="com.intellij.openapi.vcs.history.actions.RefreshFileHistoryAction"
             use-shortcut-of="Refresh"/>
@@ -423,8 +427,9 @@
     </action>
 
     <group id="Vcs.Diff.Commit.KeymapGroup" searchable="false">
+      <action id="Vcs.Diff.IncludeChangedLinesIntoCommit" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="Vcs.Diff.ExcludeChangedLinesFromCommit" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-      <action id="Vcs.Diff.IncludeOnlyChangedLinesIntoCommit" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="Vcs.Diff.IncludeWholeChangedLinesIntoCommit" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Diff.ResolveConflict" anchor="after"/>
     </group>

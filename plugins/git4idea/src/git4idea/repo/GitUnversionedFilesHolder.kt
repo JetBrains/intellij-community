@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.VcsManagedFilesHolderBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
+import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitVcs
 
 class GitUnversionedFilesHolder private constructor(val manager: GitRepositoryManager) : VcsManagedFilesHolderBase() {
@@ -12,9 +13,9 @@ class GitUnversionedFilesHolder private constructor(val manager: GitRepositoryMa
 
   override fun isInUpdatingMode() = allHolders.any(GitUntrackedFilesHolder::isInUpdateMode)
 
-  override fun containsFile(file: FilePath): Boolean {
-    val repository = manager.getRepositoryForFileQuick(file) ?: return false
-    return repository.untrackedFilesHolder.containsFile(file)
+  override fun containsFile(file: FilePath, vcsRoot: VirtualFile): Boolean {
+    val repository = manager.getRepositoryForRootQuick(vcsRoot) ?: return false
+    return repository.untrackedFilesHolder.containsUntrackedFile(file)
   }
 
   override fun values() = allHolders.flatMap { it.untrackedFilePaths }.toList()

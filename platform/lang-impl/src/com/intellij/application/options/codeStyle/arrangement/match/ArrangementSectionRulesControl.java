@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -24,7 +24,7 @@ import java.util.*;
 
 import static com.intellij.application.options.codeStyle.arrangement.match.ArrangementSectionRuleManager.ArrangementSectionRuleData;
 
-public class ArrangementSectionRulesControl extends ArrangementMatchingRulesControl {
+public final class ArrangementSectionRulesControl extends ArrangementMatchingRulesControl {
   @NotNull public static final DataKey<ArrangementSectionRulesControl> KEY = DataKey.create("Arrangement.Rule.Match.Control");
   @NotNull private static final Logger LOG = Logger.getInstance(ArrangementSectionRulesControl.class);
   @NotNull private final ArrangementColorsProvider myColorsProvider;
@@ -189,7 +189,7 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
     return new ArrangementRuleAliasDialog(null, mySettingsManager, myColorsProvider, aliases, tokenIds);
   }
 
-  private class MatchingRulesRenderer extends MatchingRulesRendererBase {
+  private final class MatchingRulesRenderer extends MatchingRulesRendererBase {
     @Override
     public boolean allowModifications(StdArrangementMatchRule rule) {
       return !(mySectionRuleManager != null && mySectionRuleManager.isSectionRule(rule));

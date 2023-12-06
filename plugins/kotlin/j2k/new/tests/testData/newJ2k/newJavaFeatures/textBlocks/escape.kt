@@ -51,12 +51,14 @@ object J {
                 \\f
 
                 """.trimIndent()
+
         val newlines = """
                 foo
                 bar
                 baz
 
                 """.trimIndent()
+
         val suppressNewlines = """
                 This is a single line.
                 """.trimIndent()

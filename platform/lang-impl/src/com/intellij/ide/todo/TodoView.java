@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
@@ -18,18 +18,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.IdeUICustomization;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.*;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
@@ -43,6 +41,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   private final @NotNull Project myProject;
 
+  private ToolWindow myToolWindow;
   private ContentManager myContentManager;
   private TodoPanel myAllTodos;
   @Nullable
@@ -76,7 +75,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
                                                          () -> myChangeListTodosContent);
   }
 
-  static class State {
+  static final class State {
     @Attribute("selected-index")
     public int selectedIndex;
 
@@ -88,6 +87,12 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     @OptionTag(value = "default-changelist", nameAttribute = "id", tag = "todo-panel", valueAttribute = "")
     public TodoPanelSettings changeList = new TodoPanelSettings();
+
+    public @Nls String selectedScope;
+  }
+
+  @NotNull Project getProject() {
+    return myProject;
   }
 
   @Override
@@ -96,7 +101,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   }
 
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     if (myContentManager != null) {
       // all panel were constructed
       Content content = myContentManager.getSelectedContent();
@@ -123,7 +128,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Content allTodosContent =
       contentFactory.createContent(null, IdeUICustomization.getInstance().projectMessage("tab.title.project"), false);
     toolWindow.setHelpId("find.todoList");
-    myAllTodos = new TodoPanel(myProject, state.all, false, allTodosContent) {
+    myAllTodos = new TodoPanel(this, state.all, false, allTodosContent) {
       @Override
       protected TodoTreeBuilder createTreeBuilder(@NotNull JTree tree,
                                                   @NotNull Project project) {
@@ -149,7 +154,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
 
     Content currentFileTodosContent = contentFactory.createContent(null, IdeBundle.message("title.todo.current.file"), false);
-    myCurrentFileTodosPanel = new CurrentFileTodosPanel(myProject, state.current, currentFileTodosContent) {
+    myCurrentFileTodosPanel = new CurrentFileTodosPanel(this, state.current, currentFileTodosContent) {
       @Override
       protected TodoTreeBuilder createTreeBuilder(@NotNull JTree tree,
                                                   @NotNull Project project) {
@@ -164,7 +169,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     String tabName = myChangesSupport.getTabName(myProject);
     myChangeListTodosContent = contentFactory.createContent(null, tabName, false);
-    myChangeListTodosPanel = myChangesSupport.createPanel(myProject, state.current, myChangeListTodosContent);
+    myChangeListTodosPanel = myChangesSupport.createPanel(this, state.current, myChangeListTodosContent);
     if (myChangeListTodosPanel != null) {
       Disposer.register(this, myChangeListTodosPanel);
       myChangeListTodosContent.setComponent(myChangeListTodosPanel);
@@ -172,10 +177,11 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
 
     Content scopeBasedTodoContent = contentFactory.createContent(null, LangBundle.message("tab.title.scope.based"), false);
-    myScopeBasedTodosPanel = new ScopeBasedTodosPanel(myProject, state.current, scopeBasedTodoContent);
+    myScopeBasedTodosPanel = new ScopeBasedTodosPanel(this, state.current, scopeBasedTodoContent);
     Disposer.register(this, myScopeBasedTodosPanel);
     scopeBasedTodoContent.setComponent(myScopeBasedTodosPanel);
 
+    myToolWindow = toolWindow;
     myContentManager = toolWindow.getContentManager();
 
     myContentManager.addContent(allTodosContent);
@@ -203,6 +209,10 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
     myPanels.add(myCurrentFileTodosPanel);
     myPanels.add(myScopeBasedTodosPanel);
+
+    MyVisibilityListener visibilityListener = new MyVisibilityListener();
+    myProject.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, visibilityListener);
+    toolWindow.addContentManagerListener(visibilityListener);
   }
 
   protected @NotNull AllTodosTreeBuilder createAllTodoBuilder(@NotNull JTree tree,
@@ -237,6 +247,25 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
   }
 
+  private final class MyVisibilityListener implements ToolWindowManagerListener, ContentManagerListener {
+    @Override
+    public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+      visibilityChanged();
+    }
+
+    @Override
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
+      visibilityChanged();
+    }
+  }
+
+  private void visibilityChanged() {
+    if (myProject.isOpen()) {
+      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(
+        () -> myPanels.forEach(p -> p.updateVisibility(myToolWindow)));
+    }
+  }
+
   @VisibleForTesting
   public final @NotNull CompletableFuture<Void> refresh() {
     if (myAllTodos == null) {
@@ -257,7 +286,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
                                    @NlsContexts.TabTitle String title,
                                    @NotNull TodoPanelSettings settings) {
     Content content = ContentFactory.getInstance().createContent(null, title, true);
-    final TodoPanel panel = myChangesSupport.createPanel(myProject, settings, content, factory);
+    final TodoPanel panel = myChangesSupport.createPanel(this, settings, content, factory);
     if (panel == null) return null;
 
     content.setComponent(panel);

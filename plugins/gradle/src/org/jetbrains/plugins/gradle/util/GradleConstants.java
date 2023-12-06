@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +31,6 @@ public final class GradleConstants {
 
   @NotNull @NonNls public static final String TOOL_WINDOW_TOOLBAR_PLACE = "GRADLE_SYNC_CHANGES_TOOLBAR";
 
-  @NotNull @NonNls public static final String HELP_TOPIC_TOOL_WINDOW = "reference.toolwindows.gradle";
-
   @NotNull @NonNls public static final String OFFLINE_MODE_CMD_OPTION = "--offline";
   @NotNull @NonNls public static final String INIT_SCRIPT_CMD_OPTION = "--init-script";
   @NotNull @NonNls public static final String INCLUDE_BUILD_CMD_OPTION = "--include-build";
@@ -42,8 +39,6 @@ public final class GradleConstants {
 
   public static final String TESTS_ARG_NAME = "--tests";
 
-  public static final Key<Boolean> RUN_TASK_AS_TEST = Key.create("plugins.gradle.enable.test.reporting");
-  public static final Key<Boolean> FORCE_TEST_EXECUTION = Key.create("plugins.gradle.force.test.execution");
   @NonNls public static final String BUILD_SRC_NAME = "buildSrc";
 
   private GradleConstants() {

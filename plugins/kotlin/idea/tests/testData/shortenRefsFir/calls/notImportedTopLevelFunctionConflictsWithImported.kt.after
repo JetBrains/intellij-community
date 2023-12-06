@@ -1,8 +1,9 @@
-// FIR_COMPARISON
 package test
+
+import dependency.foo
 
 fun foo() {}
 
 fun usage() {
-    dependency.foo()
+    foo()
 }

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -12,7 +11,6 @@ import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -24,14 +22,16 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
-  private final static SynchronizedClearableLazy<ProgressManager> ourInstance =
-    (SynchronizedClearableLazy<ProgressManager>)CachedSingletonsRegistry.lazy(() -> {
-      return ApplicationManager.getApplication().getService(ProgressManager.class);
-    });
+  private static ProgressManager ourInstance;
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static @NotNull ProgressManager getInstance() {
-    return ourInstance.get();
+    ProgressManager instance = ourInstance;
+    if (instance == null) {
+      instance = ApplicationManager.getApplication().getService(ProgressManager.class);
+      ourInstance = instance;
+    }
+    return instance;
   }
 
   /**
@@ -39,7 +39,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @ApiStatus.Internal
   public static @Nullable ProgressManager getInstanceOrNull() {
-    return ourInstance.getValueIfInitialized();
+    return ourInstance;
   }
 
   public abstract boolean hasProgressIndicator();
@@ -51,7 +51,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * This means that it'll be returned by {@link ProgressManager#getProgressIndicator()} inside the {@code process},
    * and {@link ProgressManager#checkCanceled()} will throw a {@link ProcessCanceledException} if the progress indicator is canceled.
    *
-   * @param progress an indicator to use, {@code null} means reuse current progress
+   * @param progress an indicator to use, {@code null} means reuse current progress.
+   *                 The progress is {@link ProgressIndicator#start started} before running {@code process} and {@link ProgressIndicator#stop() stopped} afterward.
    *
    * @see CoroutinesKt#coroutineToIndicator
    */
@@ -63,6 +64,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * and {@link ProgressManager#checkCanceled()} will throw a {@link ProcessCanceledException} if the progress indicator is canceled.
    *
    * @param progress an indicator to use, {@code null} means reuse current progress
+   *                 The progress is {@link ProgressIndicator#start started} before running {@code process} and {@link ProgressIndicator#stop() stopped} afterward.
    *
    * @see CoroutinesKt#coroutineToIndicator
    */
@@ -195,15 +197,17 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    *
    * @param task task to run (either {@link Task.Modal} or {@link Task.Backgroundable}).
    *
-   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
-   * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
-   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgress
+   * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
    */
+  @RequiresBlockingContext
   public abstract void run(@NotNull Task task);
 
   /**
    * Runs a specified computation with a modal progress dialog.
    */
+  @RequiresBlockingContext
   public <T, E extends Exception> T run(@NotNull Task.WithResult<T, E> task) throws E {
     run((Task)task);
     return task.getResult();
@@ -224,7 +228,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @RequiresBlockingContext
   public static void checkCanceled() throws ProcessCanceledException {
-    ProgressManager instance = ourInstance.getValueIfInitialized();
+    ProgressManager instance = getInstanceOrNull();
     if (instance != null) {
       instance.doCheckCanceled();
     }
@@ -232,6 +236,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   /**
    * @param progress an indicator to use, {@code null} means reuse current progress
+   *        The methods {@link ProgressIndicator#start()} or {@link ProgressIndicator#stop()} are not called because it's assumed the {@code progress} is already running.
    */
   public abstract void executeProcessUnderProgress(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
@@ -259,11 +264,13 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated
    * write action</li>
    * </ul>
-   * @param action the code to execute under read action
+   * @param process the code to execute under read action
    * @param indicator progress indicator that should be cancelled if a write action is about to start. Can be null.
+   *                 The progress is {@link ProgressIndicator#start started} before running {@code process} and {@link ProgressIndicator#stop() stopped} afterward.
    */
-  public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
+  public abstract boolean runInReadActionWithWriteActionPriority(final @NotNull Runnable process, @Nullable ProgressIndicator indicator);
 
+  @RequiresBlockingContext
   public abstract boolean isInNonCancelableSection();
 
   /**
@@ -284,4 +291,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   @ApiStatus.Internal
   public abstract @Nullable ModalityState getCurrentProgressModality();
+
+  static {
+    ApplicationManager.registerCleaner(() -> ourInstance = null);
+  }
 }

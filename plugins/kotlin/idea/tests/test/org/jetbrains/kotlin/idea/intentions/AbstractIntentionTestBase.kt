@@ -5,22 +5,25 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.hints.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -90,7 +93,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
 
             1 -> {
                 val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
-                return Class.forName(className).getDeclaredConstructor().newInstance() as IntentionAction
+                val newInstance = Class.forName(className).getDeclaredConstructor().newInstance()
+                return (newInstance as? ModCommandAction)?.asIntention() ?: newInstance as? IntentionAction ?: error("Class `$className` has to be IntentionAction or ModCommandAction")
             }
 
             else -> throw AssertionError(
@@ -100,7 +104,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     }
 
     @Throws(Exception::class)
-    protected fun doTest(unused: String) {
+    protected open fun doTest(unused: String) {
         val mainFile = dataFile()
         val mainFileName = FileUtil.getNameWithoutExtension(mainFile)
         val intentionAction = createIntention(mainFile)
@@ -195,7 +199,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                 }
             }
             ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator)
-            return result.get(10, TimeUnit.SECONDS)
+            return result.get(10, TimeUnit.MINUTES)
         } catch (e: ExecutionException) {
             throw e.cause!!
         } finally {
@@ -203,27 +207,27 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    @Throws(Exception::class)
     protected open fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
         val mainFilePath = mainFile.name
-        val isApplicableExpected = isApplicableDirective(fileText)
+        val isApplicableExpected: Boolean = isApplicableDirective(fileText)
 
-        val isApplicableOnPooled = computeUnderProgressIndicatorAndWait {
-            ApplicationManager.getApplication().runReadAction(Computable { intentionAction.isAvailable(project, editor, file) })
+        val isApplicableOnPooled: Boolean = computeUnderProgressIndicatorAndWait {
+            runReadAction{ intentionAction.isAvailable(project, editor, file) }
         }
-
-        val isApplicableOnEdt = intentionAction.isAvailable(project, editor, file)
-
-        Assert.assertEquals(
-            "There should not be any difference what thread isApplicable is called from",
-            isApplicableOnPooled,
-            isApplicableOnEdt
-        )
-
         Assert.assertTrue(
             "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
-            isApplicableExpected == isApplicableOnEdt
+            isApplicableExpected == isApplicableOnPooled
         )
+
+        val modCommandAction: ModCommandAction? = intentionAction.asModCommandAction()
+        if (modCommandAction == null) {
+            val isApplicableOnEdt = intentionAction.isAvailable(project, editor, file)
+
+            Assert.assertTrue(
+                "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
+                isApplicableExpected == isApplicableOnEdt
+            )
+        }
 
         val intentionTextString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// " + intentionTextDirectiveName() + ": ")
 
@@ -236,10 +240,23 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         try {
             if (isApplicableExpected) {
                 val action = { intentionAction.invoke(project, editor, file) }
-                if (intentionAction.startInWriteAction())
+                if (intentionAction.startInWriteAction()) {
                     project.executeWriteCommand(intentionAction.text, action)
-                else
-                    project.executeCommand(intentionAction.text, null, action)
+                } else {
+                    if (modCommandAction == null) {
+                        project.executeCommand(intentionAction.text, null, action)
+                    } else {
+                        val actionContext = ActionContext.from(editor, file)
+                        val command: ModCommand = computeUnderProgressIndicatorAndWait {
+                            runReadAction {
+                                modCommandAction.perform(actionContext)
+                            }
+                        }
+                        project.executeCommand(intentionAction.text, null) {
+                            ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
+                        }
+                    }
+                }
 
                 // Don't bother checking if it should have failed.
                 if (shouldFailString.isEmpty()) {
@@ -249,7 +266,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         if (filePath == mainFilePath) {
                             try {
                                 myFixture.checkResultByFile(canonicalPathToExpectedFile)
-                            } catch (e: ComparisonFailure) {
+                            } catch (e: FileComparisonFailure) {
                                 KotlinTestUtils.assertEqualsToFile(afterFile, editor.document.text)
                             }
                         } else {

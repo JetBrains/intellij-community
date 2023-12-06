@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.formatting.visualLayer.VisualFormattingLayerService;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -23,6 +24,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.xml.util.XmlStringUtil;
@@ -37,7 +41,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
   private static final Key<FoldingInfo> FOLDING_INFO_KEY = Key.create("FOLDING_INFO");
 
   @NotNull private final Project myProject;
-  private final VirtualFile myFile;
+  private final VirtualFile file;
 
   @NotNull private final List<Info> myInfos = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull private final List<RangeMarker> myRangeMarkers = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -51,11 +55,11 @@ final class DocumentFoldingInfo implements CodeFoldingState {
 
   DocumentFoldingInfo(@NotNull Project project, @NotNull Document document) {
     myProject = project;
-    myFile = FileDocumentManager.getInstance().getFile(document);
+    file = FileDocumentManager.getInstance().getFile(document);
   }
 
   void loadFromEditor(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(!editor.isDisposed());
     clear();
 
@@ -83,12 +87,12 @@ final class DocumentFoldingInfo implements CodeFoldingState {
 
   @Override
   public void setToEditor(@NotNull final Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (psiManager.isDisposed()) return;
 
-    if (!myFile.isValid()) return;
-    final PsiFile psiFile = psiManager.findFile(myFile);
+    if (!file.isValid()) return;
+    final PsiFile psiFile = psiManager.findFile(file);
     if (psiFile == null) return;
 
     Map<PsiElement, FoldingDescriptor> ranges = null;
@@ -194,17 +198,25 @@ final class DocumentFoldingInfo implements CodeFoldingState {
     }
   }
 
-  void readExternal(final Element element) {
+  void readExternal(@NotNull Element element) {
     ApplicationManager.getApplication().runReadAction(() -> {
       clear();
 
-      if (!myFile.isValid()) return;
+      if (!file.isValid()) {
+        return;
+      }
 
-      final Document document = FileDocumentManager.getInstance().getDocument(myFile);
-      if (document == null) return;
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document == null) {
+        return;
+      }
+
+      // IDEA-313274 Remove persisted visual formatting foldings from workspace files
+      WhiteSpaceFormattingStrategy whiteSpaceFormattingStrategy = WhiteSpaceFormattingStrategyFactory.DEFAULT_STRATEGY;
+      boolean removeVFmtZombieFoldings = VisualFormattingLayerService.shouldRemoveZombieFoldings();
 
       String date = null;
-      for (final Element e : element.getChildren()) {
+      for (Element e : element.getChildren()) {
         String signature = e.getAttributeValue(SIGNATURE_ATT);
         if (signature == null) {
           continue;
@@ -218,19 +230,32 @@ final class DocumentFoldingInfo implements CodeFoldingState {
           if (date == null) {
             date = getTimeStamp();
           }
-          if (date.isEmpty()) continue;
+          if (date.isEmpty()) {
+            continue;
+          }
 
-          if (!date.equals(e.getAttributeValue(DATE_ATT)) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
+          if (!date.equals(e.getAttributeValue(DATE_ATT)) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+            continue;
+          }
+
           StringTokenizer tokenizer = new StringTokenizer(signature, ":");
           try {
             int start = Integer.valueOf(tokenizer.nextToken()).intValue();
             int end = Integer.valueOf(tokenizer.nextToken()).intValue();
             if (start < 0 || end >= document.getTextLength() || start > end) continue;
-            RangeMarker marker = document.createRangeMarker(start, end);
-            myRangeMarkers.add(marker);
             String placeholderAttributeValue = e.getAttributeValue(PLACEHOLDER_ATT);
             String placeHolderText = placeholderAttributeValue == null ? DEFAULT_PLACEHOLDER
                                                                        : XmlStringUtil.unescapeIllegalXmlChars(placeholderAttributeValue);
+
+            // IDEA-313274 Remove persisted visual formatting foldings from workspace files
+            if (removeVFmtZombieFoldings &&
+                placeHolderText.isEmpty() &&
+                whiteSpaceFormattingStrategy.check(document.getText(), start, end) >= end) {
+              continue;
+            }
+
+            RangeMarker marker = document.createRangeMarker(start, end);
+            myRangeMarkers.add(marker);
             FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
             marker.putUserData(FOLDING_INFO_KEY, fi);
           }
@@ -246,14 +271,14 @@ final class DocumentFoldingInfo implements CodeFoldingState {
   }
 
   private String getTimeStamp() {
-    if (!myFile.isValid()) return "";
-    return Long.toString(myFile.getTimeStamp());
+    if (!file.isValid()) return "";
+    return Long.toString(file.getTimeStamp());
   }
 
   @Override
   public int hashCode() {
     int result = myProject.hashCode();
-    result = 31 * result + (myFile != null ? myFile.hashCode() : 0);
+    result = 31 * result + (file != null ? file.hashCode() : 0);
     result = 31 * result + myInfos.hashCode();
     result = 31 * result + myRangeMarkers.hashCode();
     return result;
@@ -270,7 +295,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
 
     DocumentFoldingInfo info = (DocumentFoldingInfo)o;
 
-    if (myFile != null ? !myFile.equals(info.myFile) : info.myFile != null) {
+    if (file != null ? !file.equals(info.file) : info.file != null) {
       return false;
     }
     if (!myProject.equals(info.myProject)

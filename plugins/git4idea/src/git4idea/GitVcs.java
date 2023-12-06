@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -13,6 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeBuilder;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -75,10 +75,8 @@ public final class GitVcs extends AbstractVcs {
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
 
-  @NotNull
-  public static GitVcs getInstance(@NotNull Project project) {
+  public static @NotNull GitVcs getInstance(@NotNull Project project) {
     GitVcs gitVcs = (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
-    ProgressManager.checkCanceled();
     return Objects.requireNonNull(gitVcs);
   }
 
@@ -111,27 +109,23 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  @Nullable
-  public CheckinEnvironment getCheckinEnvironment() {
+  public @Nullable CheckinEnvironment getCheckinEnvironment() {
     if (myProject.isDefault()) return null;
     return myProject.getService(GitCheckinEnvironment.class);
   }
 
-  @NotNull
   @Override
-  public MergeProvider getMergeProvider() {
+  public @NotNull MergeProvider getMergeProvider() {
     return GitMergeProvider.detect(myProject);
   }
 
   @Override
-  @NotNull
-  public RollbackEnvironment getRollbackEnvironment() {
+  public @NotNull RollbackEnvironment getRollbackEnvironment() {
     return myProject.getService(GitRollbackEnvironment.class);
   }
 
   @Override
-  @NotNull
-  public GitHistoryProvider getVcsHistoryProvider() {
+  public @NotNull GitHistoryProvider getVcsHistoryProvider() {
     return myProject.getService(GitHistoryProvider.class);
   }
 
@@ -141,39 +135,32 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return DISPLAY_NAME.get();
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getShortNameWithMnemonic() {
+  public @Nls @NotNull String getShortNameWithMnemonic() {
     return GitBundle.message("git4idea.vcs.name.with.mnemonic");
   }
 
   @Override
-  @Nullable
-  public UpdateEnvironment getUpdateEnvironment() {
+  public @Nullable UpdateEnvironment getUpdateEnvironment() {
     return myProject.getService(GitUpdateEnvironment.class);
   }
 
   @Override
-  @NotNull
-  public AnnotationProviderEx getAnnotationProvider() {
+  public @NotNull AnnotationProviderEx getAnnotationProvider() {
     return myProject.getService(GitAnnotationProvider.class);
   }
 
   @Override
-  @NotNull
-  public DiffProvider getDiffProvider() {
+  public @NotNull DiffProvider getDiffProvider() {
     return myProject.getService(GitDiffProvider.class);
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber parseRevisionNumber(@Nullable String revision, @Nullable FilePath path) throws VcsException {
+  public @Nullable VcsRevisionNumber parseRevisionNumber(@Nullable String revision, @Nullable FilePath path) throws VcsException {
     if (revision == null || revision.length() == 0) return null;
     if (revision.length() > 40) {    // date & revision-id encoded string
       String dateString = revision.substring(0, revision.indexOf("["));
@@ -194,8 +181,7 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber parseRevisionNumber(@Nullable String revision) throws VcsException {
+  public @Nullable VcsRevisionNumber parseRevisionNumber(@Nullable String revision) throws VcsException {
     return parseRevisionNumber(revision, null);
   }
 
@@ -233,8 +219,7 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  @Nullable
-  public GitChangeProvider getChangeProvider() {
+  public @Nullable GitChangeProvider getChangeProvider() {
     if (myProject.isDefault()) return null;
     return myProject.getService(GitChangeProvider.class);
   }
@@ -262,8 +247,7 @@ public final class GitVcs extends AbstractVcs {
   /**
    * @return the version number of Git, which is used by IDEA. Or {@link GitVersion#NULL} if version info is unavailable yet.
    */
-  @NotNull
-  public GitVersion getVersion() {
+  public @NotNull GitVersion getVersion() {
     return GitExecutableManager.getInstance().getVersion(myProject);
   }
 
@@ -302,8 +286,7 @@ public final class GitVcs extends AbstractVcs {
    * @deprecated Use {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}.
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public GitExecutableValidator getExecutableValidator() {
+  public @NotNull GitExecutableValidator getExecutableValidator() {
     return new GitExecutableValidator(myProject);
   }
 
@@ -328,9 +311,8 @@ public final class GitVcs extends AbstractVcs {
     return new GitCheckoutProvider();
   }
 
-  @Nullable
   @Override
-  public CommittedChangeList loadRevisions(@NotNull VirtualFile vf, @NotNull VcsRevisionNumber number) {
+  public @Nullable CommittedChangeList loadRevisions(@NotNull VirtualFile vf, @NotNull VcsRevisionNumber number) {
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
     if (repository == null) return null;
 
@@ -352,6 +334,11 @@ public final class GitVcs extends AbstractVcs {
   @Override
   public boolean needsCaseSensitiveDirtyScope() {
     return true;
+  }
+
+  @Override
+  public @NotNull VcsDirtyScopeBuilder createDirtyScope() {
+    return new GitVcsDirtyScope(myProject);
   }
 
   @Override

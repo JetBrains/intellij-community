@@ -4,9 +4,9 @@
 expect class ExpectTypeAlias()
 val value = ExpectTypeAlias()
 
-// MODULE: jvm
+// MODULE: jvm(common)
 // FILE: typealiasFromCommonCode.kt
-// DEPENDS_ON: common
+
 
 class JvmTypeAlias
 actual typealias ExpectTypeAlias = JvmTypeAlias

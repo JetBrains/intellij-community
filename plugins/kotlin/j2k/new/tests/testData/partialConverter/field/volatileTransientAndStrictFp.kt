@@ -1,11 +1,13 @@
 // ERROR: This annotation is not applicable to target 'member property with backing field'
+import kotlin.concurrent.Volatile
+
 internal class A {
     @Deprecated("")
     @Volatile
     var field1: Int = TODO("_root_ide_package_")
 
     @Transient
-    var field2 = 1
+    var field2: Int = 1
 
     // Should work even for bad modifiers
     @Strictfp

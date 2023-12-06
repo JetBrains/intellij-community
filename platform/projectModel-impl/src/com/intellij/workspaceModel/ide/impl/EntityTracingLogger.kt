@@ -1,15 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.FacetId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 class EntityTracingLogger {
   /** specifies ID of an entity which changes should be printed to the log */
@@ -25,9 +29,22 @@ class EntityTracingLogger {
     }
   }
 
-  fun subscribe(project: Project) {
+  fun subscribe(project: Project, cs: CoroutineScope) {
     if (entityToTrace != null) {
-      project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, EntityTracingListener(entityToTrace))
+      cs.launch {
+        WorkspaceModel.getInstance(project).changesEventFlow.collect{ event ->
+          event.getAllChanges().forEach {
+            when (it) {
+              is EntityChange.Added -> printInfo("added", it.entity)
+              is EntityChange.Removed -> printInfo("removed", it.entity)
+              is EntityChange.Replaced -> {
+                printInfo("replaced from", it.oldEntity)
+                printInfo("replaced to", it.newEntity)
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -37,29 +54,14 @@ class EntityTracingLogger {
     }
   }
 
-  private class EntityTracingListener(private val entityId: SymbolicEntityId<*>) : WorkspaceModelChangeListener {
-    override fun changed(event: VersionedStorageChange) {
-      event.getAllChanges().forEach {
-        when (it) {
-          is EntityChange.Added -> printInfo("added", it.entity)
-          is EntityChange.Removed -> printInfo("removed", it.entity)
-          is EntityChange.Replaced -> {
-            printInfo("replaced from", it.oldEntity)
-            printInfo("replaced to", it.newEntity)
-          }
-        }
-      }
-    }
-
-    private fun printInfo(action: String, entity: WorkspaceEntity) {
-      if ((entity as? WorkspaceEntityWithSymbolicId)?.symbolicId == entityId) {
-        LOG.info("$action: ${entity.toDebugString()}", Throwable())
-      }
+  private fun printInfo(action: String, entity: WorkspaceEntity) {
+    if ((entity as? WorkspaceEntityWithSymbolicId)?.symbolicId == entityToTrace) {
+      LOG.info("$action: ${entity.toDebugString()}", Throwable())
     }
   }
 
   companion object {
-    private val LOG = logger<EntityTracingListener>()
+    private val LOG = logger<EntityTracingLogger>()
 
     private fun WorkspaceEntity.toDebugString(): String? = when (this) {
       is FacetEntity -> "Facet: $configurationXmlTag"

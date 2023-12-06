@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Computable;
@@ -16,6 +17,7 @@ import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -116,8 +118,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       return false;
     }
 
-    @Nullable
-    default Predicate<KeyEvent> getKeyEventHandler() {
+    default @Nullable Predicate<KeyEvent> getKeyEventHandler() {
       return null;
     }
 
@@ -193,8 +194,18 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
+  /** @deprecated use {@link #setItemChosenCallback(Runnable)} instead */
+  @Deprecated
   public PopupChooserBuilder<T> setItemChoosenCallback(@NotNull Runnable runnable) {
-    myItemChosenRunnable = runnable;
+    return setItemChosenCallback(runnable);
+  }
+
+  public PopupChooserBuilder<T> setItemChosenCallback(@NotNull Runnable runnable) {
+    myItemChosenRunnable = () -> {
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        runnable.run();
+      }
+    };
     return this;
   }
 

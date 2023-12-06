@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlChunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,19 +39,34 @@ public class ConfigurationException extends Exception {
     myTitle = title;
   }
 
-  public boolean isHtmlMessage() {
-    return myIsHtmlMessage;
-  }
-
+  /**
+   * Sets the flag informing that this exception message is HTML, rather than the plain text 
+   * 
+   * @return this exception
+   */
   public @NotNull ConfigurationException withHtmlMessage() {
     myIsHtmlMessage = true;
     return this;
   }
 
+  /**
+   * @return the exception message. 
+   * 
+   * @deprecated It can be either plain text, or HTML. Use {@link #getMessageHtml()} to get the correct HTML message always.
+   */
   @Override
+  @Deprecated
   public @NlsContexts.DialogMessage String getMessage() {
     //noinspection HardCodedStringLiteral
     return super.getMessage();
+  }
+
+  /**
+   * @return HTML chunk representing the message.
+   */
+  public @NotNull HtmlChunk getMessageHtml() {
+    String message = getMessage();
+    return message == null ? HtmlChunk.empty() : myIsHtmlMessage ? HtmlChunk.raw(message) : HtmlChunk.text(message);
   }
 
   /**
@@ -70,17 +85,6 @@ public class ConfigurationException extends Exception {
 
   public void setQuickFix(@Nullable ConfigurationQuickFix quickFix) {
     myQuickFix = quickFix;
-  }
-
-  /**
-   * @return a runnable task that can fix the problem somehow, or {@code null} if it is not set
-   *
-   * @deprecated use {@link #getConfigurationQuickFix()} instead.
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public Runnable getQuickFix() {
-    return myQuickFix == null ? null : () -> myQuickFix.applyFix(DataContext.EMPTY_CONTEXT);
   }
 
   @Nullable

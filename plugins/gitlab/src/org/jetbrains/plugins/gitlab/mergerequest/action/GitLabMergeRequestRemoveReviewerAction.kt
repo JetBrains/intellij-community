@@ -14,10 +14,10 @@ internal class GitLabMergeRequestRemoveReviewerAction(
   scope: CoroutineScope,
   private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
   private val reviewer: GitLabUserDTO
-) : AbstractAction(CollaborationToolsBundle.message("review.details.action.remove.reviewer", reviewer.username)) {
+) : AbstractAction(CollaborationToolsBundle.message("review.details.action.remove.reviewer", reviewer.name)) {
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.userCanManageReview) { isBusy, userCanManageReview ->
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.userCanManage) { isBusy, userCanManageReview ->
         isEnabled = !isBusy && userCanManageReview
       }
     }

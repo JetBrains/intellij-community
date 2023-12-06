@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -54,26 +54,22 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   private RefManager myRefManager;
 
   private AnalysisScope myCurrentScope;
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final List<JobDescriptor> myJobDescriptors = new ArrayList<>();
 
   private final StdJobDescriptors myStdJobDescriptors = new StdJobDescriptors();
-  @NotNull
-  protected ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
+  protected @NotNull ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
 
   private InspectionProfileImpl myExternalProfile;
-  @NotNull
-  private Runnable myRerunAction = EmptyRunnable.getInstance();
+  private @NotNull Runnable myRerunAction = EmptyRunnable.getInstance();
 
   protected final Map<Key<?>, GlobalInspectionContextExtension<?>> myExtensions = new HashMap<>();
 
   /** null means {@link #initializeTools(List, List, List)} wasn't called yet */
-  @Unmodifiable
-  private Map<String, Tools> myTools;
+  private @Unmodifiable Map<String, Tools> myTools;
 
-  @NonNls public static final String PROBLEMS_TAG_NAME = "problems";
-  @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
+  public static final @NonNls String PROBLEMS_TAG_NAME = "problems";
+  public static final @NonNls String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
 
   public GlobalInspectionContextBase(@NotNull Project project) {
     myProject = project;
@@ -89,8 +85,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -100,8 +95,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return (T)myExtensions.get(key);
   }
 
-  @NotNull
-  public InspectionProfileImpl getCurrentProfile() {
+  public @NotNull InspectionProfileImpl getCurrentProfile() {
     if (myExternalProfile != null) {
       return myExternalProfile;
     }
@@ -185,8 +179,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
 
   @Override
-  @NotNull
-  public RefManager getRefManager() {
+  public @NotNull RefManager getRefManager() {
     RefManager refManager = myRefManager;
     if (refManager == null) {
       myRefManager = refManager = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> new RefManagerImpl(myProject, myCurrentScope, this));
@@ -195,10 +188,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   public boolean isToCheckMember(@NotNull RefElement owner, @NotNull InspectionProfileEntry tool) {
-    return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool) && !((RefElementImpl)owner).isSuppressed(tool.getShortName(), tool.getAlternativeID());
+    return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool) &&
+           !((RefElementImpl)owner).isSuppressed(tool.getShortName(), tool.getAlternativeID());
   }
 
-  public boolean isToCheckFile(PsiFile file, @NotNull InspectionProfileEntry tool) {
+  public boolean isToCheckFile(@Nullable PsiFileSystemItem file, @NotNull InspectionProfileEntry tool) {
     Tools tools = getTools().get(tool.getShortName());
     if (tools != null && file != null) {
       for (ScopeToolState state : tools.getTools()) {
@@ -239,8 +233,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     });
   }
 
-  @NotNull
-  protected PerformInBackgroundOption createOption() {
+  protected @NotNull PerformInBackgroundOption createOption() {
     return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 
@@ -315,8 +308,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
-  @NotNull
-  public List<Tools> getUsedTools() {
+  public @NotNull List<Tools> getUsedTools() {
     InspectionProfileImpl profile = getCurrentProfile();
     List<Tools> tools = profile.getAllEnabledInspectionTools(myProject);
     Set<InspectionToolWrapper<?, ?>> dependentTools = new LinkedHashSet<>();
@@ -357,8 +349,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
-  @NotNull
-  public Map<String, Tools> getTools() {
+  public @NotNull Map<String, Tools> getTools() {
     Map<String, Tools> tools = myTools;
     if (tools == null) {
       throw new IllegalStateException("Tools are not initialized. Please call initializeTools() before use");
@@ -467,13 +458,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   @Override
-  @NotNull
-  public StdJobDescriptors getStdJobDescriptors() {
+  public @NotNull StdJobDescriptors getStdJobDescriptors() {
     return myStdJobDescriptors;
   }
 
-  @NotNull
-  public static DaemonProgressIndicator assertUnderDaemonProgress() {
+  public static @NotNull DaemonProgressIndicator assertUnderDaemonProgress() {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator original = indicator == null ? null : ProgressWrapper.unwrapAll(indicator);
     if (!(original instanceof DaemonProgressIndicator)) {

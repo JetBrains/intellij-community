@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -17,7 +18,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +29,8 @@ import java.util.Objects;
  *
  * todo drop TW and EW, both are only for menu|Window tab/editor sub-menus.
  */
-public class PinActiveTabAction extends DumbAwareAction {
-
-  public static abstract class Handler {
+public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
+  public abstract static class Handler {
     public final boolean isPinned;
     public final boolean isActiveTab;
 
@@ -87,20 +86,17 @@ public class PinActiveTabAction extends DumbAwareAction {
     return null;
   }
 
-  @Nullable
-  protected VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
-    return getFileInWindow(e, window);
+  protected @Nullable VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
+    return getFileInWindow(window);
   }
 
-  @Nullable
-  protected Content getContentFromEvent(@NotNull AnActionEvent e) {
+  protected @Nullable Content getContentFromEvent(@NotNull AnActionEvent e) {
     Content content = getNonToolWindowContent(e);
     if (content == null) content = getToolWindowContent(e);
     return content != null && content.isValid() ? content : null;
   }
 
-  @NotNull
-  private static Handler createHandler(final Content content) {
+  private static @NotNull Handler createHandler(final Content content) {
     return new Handler(content.isPinned(), Objects.requireNonNull(content.getManager()).getSelectedContent() == content) {
       @Override
       void setPinned(boolean value) {
@@ -109,8 +105,7 @@ public class PinActiveTabAction extends DumbAwareAction {
     };
   }
 
-  @NotNull
-  private static Handler createHandler(final EditorWindow window, final VirtualFile selectedFile) {
+  private static @NotNull Handler createHandler(final EditorWindow window, final VirtualFile selectedFile) {
     return new Handler(window.isFilePinned(selectedFile), selectedFile.equals(window.getSelectedFile())) {
       @Override
       void setPinned(boolean value) {
@@ -119,8 +114,7 @@ public class PinActiveTabAction extends DumbAwareAction {
     };
   }
 
-  @Nullable
-  private static Content getNonToolWindowContent(@NotNull AnActionEvent e) {
+  private static @Nullable Content getNonToolWindowContent(@NotNull AnActionEvent e) {
     Content result = null;
     Content[] contents = e.getData(ViewContext.CONTENT_KEY);
     if (contents != null && contents.length == 1) result = contents[0];
@@ -132,25 +126,24 @@ public class PinActiveTabAction extends DumbAwareAction {
     return null;
   }
 
-  @Nullable
-  private static Content getToolWindowContent(@NotNull AnActionEvent e) {
+  private static @Nullable Content getToolWindowContent(@NotNull AnActionEvent e) {
     // note to future readers: TW tab "pinned" icon is shown when content.getUserData(TW.SHOW_CONTENT_ICON) is true
     ToolWindow window = e.getData(PlatformDataKeys.TOOL_WINDOW);
     if (window == null) return null;
 
     Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    Content result = ObjectUtils.doIfNotNull(ComponentUtil.getParentOfType(BaseLabel.class, component), BaseLabel::getContent);
+    BaseLabel obj = ComponentUtil.getParentOfType(BaseLabel.class, component);
+    Content result = obj == null ? null : obj.getContent();
     if (result == null) {
       InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(component);
       if (decorator != null) {
-        result = ObjectUtils.doIfNotNull(decorator.getContentManager(), ContentManager::getSelectedContent);
+        result = decorator.getContentManager().getSelectedContent();
       }
     }
     return result != null && result.isPinnable() ? result : null;
   }
 
-  @Nullable
-  private static VirtualFile getFileInWindow(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
+  private static @Nullable VirtualFile getFileInWindow(@NotNull EditorWindow window) {
     VirtualFile file = window.getSelectedFile();
     if (file != null && window.isFileOpen(file)) return file;
     return null;
@@ -158,9 +151,8 @@ public class PinActiveTabAction extends DumbAwareAction {
 
   @SuppressWarnings("ComponentNotRegistered")
   public static class TW extends PinActiveTabAction {
-    @Nullable
     @Override
-    protected VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
+    protected @Nullable VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
       return null;
     }
 
@@ -170,10 +162,9 @@ public class PinActiveTabAction extends DumbAwareAction {
     }
   }
 
-  public static class EW extends PinActiveTabAction {
-    @Nullable
+  public static final class EW extends PinActiveTabAction {
     @Override
-    protected VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
+    protected @Nullable VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
       return window.getSelectedFile();
     }
 
@@ -183,6 +174,6 @@ public class PinActiveTabAction extends DumbAwareAction {
     }
   }
 
-  public static class Toggle extends PinActiveTabAction implements Toggleable {
+  public static final class Toggle extends PinActiveTabAction implements Toggleable {
   }
 }

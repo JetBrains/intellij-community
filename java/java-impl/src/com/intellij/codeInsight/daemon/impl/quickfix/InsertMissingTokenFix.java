@@ -1,16 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class InsertMissingTokenFix implements IntentionActionWithFixAllOption, LowPriorityAction {
+public class InsertMissingTokenFix implements ModCommandAction {
   private final String myToken;
 
   public InsertMissingTokenFix(String token) {
@@ -18,34 +18,19 @@ public class InsertMissingTokenFix implements IntentionActionWithFixAllOption, L
   }
 
   @Override
-  public @NotNull String getText() {
-    return IdeBundle.message("quickfix.text.insert.0", myToken);
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    return Presentation.of(getFamilyName())
+      .withPriority(PriorityAction.Priority.LOW)
+      .withFixAllOption(this, action -> action instanceof InsertMissingTokenFix tokenFix && tokenFix.myToken.equals(myToken));
   }
 
   @Override
   public @NotNull String getFamilyName() {
-    return getText();
+    return IdeBundle.message("quickfix.text.insert.0", myToken);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             Editor editor,
-                             PsiFile file) {
-    return true;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    editor.getDocument().insertString(editor.getCaretModel().getOffset(), myToken);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
-    return action instanceof InsertMissingTokenFix && ((InsertMissingTokenFix)action).myToken.equals(myToken);
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    return ModCommand.psiUpdate(context.file(), f -> f.getViewProvider().getDocument().insertString(context.offset(), myToken));
   }
 }

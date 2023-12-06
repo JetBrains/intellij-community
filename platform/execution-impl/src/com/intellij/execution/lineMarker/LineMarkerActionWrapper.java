@@ -97,13 +97,11 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     }
   }
 
-  @NotNull
-  private AnActionEvent wrapEvent(@NotNull AnActionEvent e) {
+  private @NotNull AnActionEvent wrapEvent(@NotNull AnActionEvent e) {
     return e.withDataContext(wrapContext(e.getDataContext()));
   }
 
-  @NotNull
-  private DataContext wrapContext(DataContext dataContext) {
+  private @NotNull DataContext wrapContext(DataContext dataContext) {
     Pair<PsiElement, MyDataContext> pair = DataManager.getInstance().loadFromDataContext(dataContext, LOCATION_WRAPPER);
     PsiElement element = myElement.getElement();
     if (pair == null || pair.first != element) {
@@ -118,19 +116,17 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     myOrigin.actionPerformed(wrapEvent(e));
   }
 
-  @NotNull
   @Override
-  public Priority getPriority() {
+  public @NotNull Priority getPriority() {
     return Priority.TOP;
   }
 
-  @NotNull
   @Override
-  public AnAction getDelegate() {
+  public @NotNull AnAction getDelegate() {
     return myOrigin;
   }
 
-  private class MyDataContext extends DataContextWrapper {
+  private final class MyDataContext extends DataContextWrapper {
 
     MyDataContext(DataContext delegate) {
       super(delegate);

@@ -21,14 +21,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.descriptors.ClassDescriptor;
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider;
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator;
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester;
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator;
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings;
-import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilsKt;
+import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilKt;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtClassBody;
@@ -111,12 +111,12 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
     }
 
     private boolean isThisNeeded() {
-        return innerClass instanceof KtClass && MoveUtilsKt.traverseOuterInstanceReferences(innerClass, true);
+        return innerClass instanceof KtClass && MoveUtilKt.traverseOuterInstanceReferences(innerClass, true);
     }
 
     @Nullable
     private FqName getTargetPackageFqName() {
-        return MoveUtilsKt.getTargetPackageFqName(targetContainer);
+        return MoveUtilKt.getTargetPackageFqName(targetContainer);
     }
 
     @NotNull
@@ -269,7 +269,7 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
             modelResult = getModel().computeModelResult();
         }
         catch (ConfigurationException e) {
-            setErrorText(e.getMessage());
+            setErrorHtml(e.getMessageHtml());
             return;
         }
 
@@ -279,7 +279,7 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
 
         saveOpenInEditorOption();
 
-        MoveUtilsKt.logFusForMoveRefactoring(
+        MoveUtilKt.logFusForMoveRefactoring(
                 modelResult.getElementsCount(),
                 modelResult.getEntityToMove(),
                 modelResult.getDestination(),

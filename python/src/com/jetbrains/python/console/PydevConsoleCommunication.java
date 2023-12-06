@@ -3,6 +3,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.*;
@@ -12,11 +13,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.protocol.*;
@@ -31,11 +35,15 @@ import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.PyDevCommandParameters;
+import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
 import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,6 +97,11 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Nullable private XCompositeNode myCurrentRootNode;
+
+  @Nullable
+  public PsiFile getHistoryPsiFile() {
+    return myConsoleView != null ? myConsoleView.getHistoryPsiFile() : null;
+  }
 
   /**
    * Initializes the bidirectional RPC communication.
@@ -276,6 +289,24 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   protected Pair<String, Boolean> exec(final ConsoleCodeFragment command) throws PythonUnhandledException {
     setExecuting(true);
 
+    // add code fragment to myConsoleView.getHistoryPsiFile()
+    PsiFile psi = getHistoryPsiFile();
+    if (myConsoleView != null && psi != null) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> WriteCommandAction.runWriteCommandAction(myProject, null, null,
+                                                       () -> {
+                                                         PsiElement[] newElems =
+                                                           PyElementGenerator.getInstance(myProject)
+                                                             .createDummyFile(LanguageLevel.forElement(myConsoleView.getFile()),
+                                                                              command.getText())
+                                                             .getChildren();
+                                                         for (PsiElement elem : newElems) {
+                                                           psi.add(elem);
+                                                         }
+                                                       },
+                                                       psi));
+    }
+
     boolean more;
     try {
       if (command.isSingleLine()) {
@@ -340,12 +371,18 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Override
-  public String execTableCommand(String command, TableCommandType commandType) throws PyDebuggerException {
+  public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
       return executeBackgroundTask(
         () -> {
+          String startIndex = "";
+          String endIndex = "";
           try {
-            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name());
+            if (tableCommandParameters instanceof PyDevCommandParameters) {
+              startIndex = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getStart());
+              endIndex = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getEnd());
+            }
+            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name(), startIndex, endIndex);
           }
           catch (PythonTableException e) {
             throw new PyDebuggerException(e.message);
@@ -782,20 +819,29 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Override
   public void notifyCommandExecuted(boolean more) {
     super.notifyCommandExecuted(more);
+    PyFrameListener.publisher().frameChanged();
     for (PyFrameListener listener : myFrameListeners) {
       listener.frameChanged();
     }
   }
 
   private void notifyVariablesLoaded(XValueChildrenList values) {
+    PyFrameListener.publisher().valuesUpdated(this, values);
     for (PyFrameListener listener : myFrameListeners) {
-      listener.updateVariables(this, values);
+      listener.valuesUpdated(this, values);
+    }
+  }
+
+  void notifyViewCreated(XStandaloneVariablesView view) {
+    PyFrameListener.publisher().viewCreated(this, view);
+    for (PyFrameListener listener : myFrameListeners) {
+      listener.viewCreated(this, view);
     }
   }
 
   private void notifySessionStopped() {
+    PyFrameListener.publisher().sessionStopped(this);
     for (PyFrameListener listener : myFrameListeners) {
-      listener.sessionStopped();
       listener.sessionStopped(this);
     }
   }
@@ -837,9 +883,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     myDebugCommunication = debugCommunication;
   }
 
-  public PythonDebugConsoleCommunication getDebugCommunication() {
-    return myDebugCommunication;
-  }
 
   public void setConsoleView(@Nullable PythonConsoleView consoleView) {
     myConsoleView = consoleView;

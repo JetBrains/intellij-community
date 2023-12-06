@@ -1,17 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -23,6 +25,7 @@ import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,11 +44,11 @@ import static com.intellij.util.ui.tree.TreeUtil.getLastUserObject;
  * @author Anna
  * @author Konstantin Bulenkov
  */
-abstract class ProjectViewDropTarget implements DnDNativeTarget {
+public abstract class ProjectViewDropTarget implements DnDNativeTarget {
   private final JTree myTree;
   private final Project myProject;
 
-  ProjectViewDropTarget(JTree tree, Project project) {
+  public ProjectViewDropTarget(JTree tree, Project project) {
     myTree = tree;
     myProject = project;
   }
@@ -69,19 +72,9 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
     TreePath[] sources = getSourcePaths(event.getAttachedObject());
     if (sources != null) {
       if (ArrayUtilRt.find(sources, target) != -1) return false;//TODO???? nodes
-      if (!handler.isValidSource(sources, target)) return false;
-      if (Stream.of(sources).allMatch(source -> handler.isDropRedundant(source, target))) return false;
     }
     else if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
       return false;
-    }
-    else {
-      // it seems like it's not possible to obtain dragged items _before_ accepting _drop_ on Macs, so just skip this check
-      if (!SystemInfo.isMac) {
-        PsiFileSystemItem[] psiFiles = getPsiFiles(FileCopyPasteUtil.getFileListFromAttachedObject(event.getAttachedObject()));
-        if (psiFiles == null || psiFiles.length == 0) return false;
-        if (!MoveHandler.isValidTarget(getPsiElement(target), psiFiles)) return false;
-      }
     }
     event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
     event.setDropPossible(true);
@@ -123,12 +116,25 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
     return wrapper == null ? null : wrapper.getTreePaths();
   }
 
-  private static void doValidDrop(TreePath @NotNull [] sources, @NotNull TreePath target, @NotNull DropHandler handler) {
-    target = getValidTarget(sources, target, handler);
-    if (target != null) {
-      sources = removeRedundant(sources, target, handler);
-      if (sources.length != 0) handler.doDrop(sources, target);
-    }
+  private void doValidDrop(TreePath @NotNull [] sources, @NotNull TreePath target, @NotNull DropHandler handler) {
+    record ValidDropContext(TreePath @Nullable [] sources, @Nullable TreePath target) { }
+    ReadAction.nonBlocking(() -> {
+        TreePath validTarget = getValidTarget(sources, target, handler);
+        TreePath[] validSources = null;
+        if (validTarget != null) {
+          validSources = removeRedundant(sources, validTarget, handler);
+        }
+        return new ValidDropContext(validSources, validTarget);
+      })
+      .expireWith(myProject)
+      .finishOnUiThread(
+        ModalityState.defaultModalityState(),
+        context -> {
+          if (context.sources != null && context.sources.length != 0 && context.target != null) {
+            handler.doDrop(context.sources, context.target);
+          }
+        })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable
@@ -150,12 +156,20 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
     DnDAction action = event.getAction();
     if (action == null) return null;
     int id = action.getActionId();
-    if (id == DnDConstants.ACTION_COPY) return new CopyDropHandler();
+    if (id == DnDConstants.ACTION_COPY) return createCopyHandler();
     if (id != DnDConstants.ACTION_COPY_OR_MOVE && id != DnDConstants.ACTION_MOVE) return null;
+    return createMoveHandler();
+  }
+
+  public DropHandler createCopyHandler() {
+    return new CopyDropHandler();
+  }
+
+  public DropHandler createMoveHandler() {
     return new MoveDropHandler();
   }
 
-  private interface DropHandler {
+  public interface DropHandler {
     boolean isValidSource(TreePath @NotNull [] sources, @NotNull TreePath target);
 
     boolean isValidTarget(TreePath @NotNull [] sources, @NotNull TreePath target);
@@ -166,14 +180,16 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     void doDrop(TreePath @NotNull [] sources, @NotNull TreePath target);
 
+    void doDrop(@NotNull DropContext context);
+
     void doDropFiles(List<? extends File> files, @NotNull TreePath target);
   }
 
   @Nullable
-  abstract PsiElement getPsiElement(@NotNull TreePath path);
+  protected abstract PsiElement getPsiElement(@NotNull TreePath path);
 
   @Nullable
-  abstract Module getModule(@NotNull PsiElement element);
+  protected abstract Module getModule(@NotNull PsiElement element);
 
   abstract class MoveCopyDropHandler implements DropHandler {
     @Override
@@ -188,7 +204,20 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     protected abstract boolean canDrop(TreePath @NotNull [] sources, @NotNull TreePath target);
 
+    protected PsiElement @Nullable [] getPsiElements(@NotNull DropContext dropContext) {
+      PsiElement[] elements = dropContext.sourceElements;
+      if (elements == null || elements.length == 0) {
+        elements = getDataContextPsiElements();
+      }
+      return elements;
+    }
+
     protected PsiElement @NotNull [] getPsiElements(TreePath @NotNull [] paths) {
+      PsiElement[] psiElements = getNonDataContextPsiElements(paths);
+      return psiElements != null ? psiElements : getDataContextPsiElements();
+    }
+
+    protected PsiElement @Nullable [] getNonDataContextPsiElements(TreePath @NotNull [] paths) {
       List<PsiElement> psiElements = new ArrayList<>(paths.length);
       for (TreePath path : paths) {
         PsiElement psiElement = getPsiElement(path);
@@ -199,15 +228,34 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
       if (!psiElements.isEmpty()) {
         return PsiUtilCore.toPsiElementArray(psiElements);
       }
+      return null;
+    }
+
+    private PsiElement @NotNull [] getDataContextPsiElements() {
       return BaseRefactoringAction.getPsiElementArray(DataManager.getInstance().getDataContext(myTree));
     }
   }
 
   protected PsiFileSystemItem @Nullable [] getPsiFiles(@Nullable List<? extends File> fileList) {
+    return psiFilesFromVirtualFiles(getVirtualFiles(fileList));
+  }
+
+  private static @Nullable List<VirtualFile> getVirtualFiles(@Nullable List<? extends File> fileList) {
     if (fileList == null) return null;
-    List<PsiFileSystemItem> sourceFiles = new ArrayList<>();
+    List<VirtualFile> virtualFiles = new ArrayList<>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      if (vFile != null) {
+        virtualFiles.add(vFile);
+      }
+    }
+    return virtualFiles;
+  }
+
+  private PsiFileSystemItem @Nullable [] psiFilesFromVirtualFiles(@Nullable List<? extends VirtualFile> fileList) {
+    if (fileList == null) return null;
+    List<PsiFileSystemItem> sourceFiles = new ArrayList<>();
+    for (VirtualFile vFile : fileList) {
       PsiFileSystemItem psiFile = PsiUtilCore.findFileSystemItem(myProject, vFile);
       if (psiFile != null) {
         sourceFiles.add(psiFile);
@@ -216,7 +264,7 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
     return sourceFiles.toArray(new PsiFileSystemItem[0]);
   }
 
-  private class MoveDropHandler extends MoveCopyDropHandler {
+  private final class MoveDropHandler extends MoveCopyDropHandler {
     @Override
     protected boolean canDrop(TreePath @NotNull [] sources, @NotNull TreePath target) {
       DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
@@ -235,12 +283,21 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
         node.drop(sources, DataManager.getInstance().getDataContext(myTree));
       }
       else {
-        doDrop(getPsiElement(target), getPsiElements(sources), false);
+        ReadAction.nonBlocking(() -> getDropContext(getNonDataContextPsiElements(sources), target))
+          .finishOnUiThread(ModalityState.defaultModalityState(), context -> doDrop(context, false))
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     }
 
-    private void doDrop(PsiElement target, PsiElement[] sources, boolean externalDrop) {
-      if (target == null) return;
+    @Override
+    public void doDrop(@NotNull DropContext dropContext) {
+      doDrop(dropContext, false);
+    }
+
+    private void doDrop(@NotNull DropContext dropContext, boolean externalDrop) {
+      @Nullable PsiElement target = dropContext.targetElement();
+      PsiElement @Nullable [] sources = getPsiElements(dropContext);
+      if (target == null || sources == null) return;
 
       if (!myProject.isInitialized()) {
         Messages.showMessageDialog(myProject, LangBundle.message("dialog.message.move.refactoring.available"),
@@ -248,7 +305,7 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
         return;
       }
 
-      Module module = getModule(target);
+      Module module = dropContext.targetModule();
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -257,21 +314,15 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
         if (!element.isValid()) return;
       }
 
-      DataContext context = dataId -> {
-        if (LangDataKeys.TARGET_MODULE.is(dataId)) {
-          if (module != null) return module;
-        }
-        if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
-          return target;
-        }
-        else {
-          return externalDrop ? null : dataContext.getData(dataId);
-        }
-      };
+      DataContext context = CustomizedDataContext.create(externalDrop ? DataContext.EMPTY_CONTEXT : dataContext, dataId -> {
+        if (LangDataKeys.TARGET_MODULE.is(dataId)) return module;
+        if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) return target;
+        else return null;
+      });
       getActionHandler().invoke(myProject, sources, context);
     }
 
-    private RefactoringActionHandler getActionHandler() {
+    private static RefactoringActionHandler getActionHandler() {
       return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     }
 
@@ -288,19 +339,31 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     @Override
     public void doDropFiles(List<? extends File> files, @NotNull TreePath target) {
-      PsiFileSystemItem[] sourceFileArray = getPsiFiles(files);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        var virtualFiles = getVirtualFiles(files);
+        ReadAction.nonBlocking(() -> getDropContext(psiFilesFromVirtualFiles(virtualFiles), target))
+          .finishOnUiThread(ModalityState.defaultModalityState(), dropContext -> {
+            DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
+            if (node != null) {
+              node.dropExternalFiles((PsiFileSystemItem[])getPsiElements(dropContext), DataManager.getInstance().getDataContext(myTree));
+            }
+            else {
+              doDrop(dropContext, true);
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
+      });
+    }
 
-      DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
-      if (node != null) {
-        node.dropExternalFiles(sourceFileArray, DataManager.getInstance().getDataContext(myTree));
-      }
-      else {
-        doDrop(getPsiElement(target), sourceFileArray, true);
-      }
+    @NotNull
+    private DropContext getDropContext(PsiElement @Nullable [] sourceElements, @NotNull TreePath target) {
+      PsiElement targetElement = getPsiElement(target);
+      Module targetModule = targetElement == null || !myProject.isInitialized() ? null : getModule(targetElement);
+      return new DropContext(sourceElements, targetElement, targetModule);
     }
   }
 
-  private class CopyDropHandler extends MoveCopyDropHandler {
+  private final class CopyDropHandler extends MoveCopyDropHandler {
     @Override
     protected boolean canDrop(TreePath @NotNull [] sources, @NotNull TreePath target) {
       PsiElement[] sourceElements = getPsiElements(sources);
@@ -315,19 +378,16 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     @Override
     public void doDrop(TreePath @NotNull [] sources, @NotNull TreePath target) {
-      PsiElement[] sourceElements = getPsiElements(sources);
-      doDrop(target, sourceElements);
+      ReadAction.nonBlocking(() -> new DropContext(getNonDataContextPsiElements(sources), getPsiElement(target), null))
+        .finishOnUiThread(ModalityState.defaultModalityState(), context -> doDrop(context))
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
 
-    private void doDrop(@NotNull TreePath target, PsiElement[] sources) {
-      final PsiElement targetElement = getPsiElement(target);
-      if (targetElement == null) return;
-
-      if (DumbService.isDumb(myProject)) {
-        Messages.showMessageDialog(myProject, LangBundle.message("dialog.message.copy.refactoring.available.while.indexing.in.progress"),
-                                   LangBundle.message("dialog.title.indexing"), null);
-        return;
-      }
+    @Override
+    public void doDrop(@NotNull DropContext context) {
+      final PsiElement targetElement = context.targetElement();
+      final PsiElement @Nullable [] sources = getPsiElements(context);
+      if (targetElement == null || sources == null) return;
 
       final PsiDirectory psiDirectory;
       if (targetElement instanceof PsiDirectoryContainer directoryContainer) {
@@ -358,8 +418,14 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     @Override
     public void doDropFiles(List<? extends File> files, @NotNull TreePath target) {
-      PsiFileSystemItem[] sourceFileArray = getPsiFiles(files);
-      doDrop(target, sourceFileArray);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        var virtualFiles = getVirtualFiles(files);
+        ReadAction.nonBlocking(() -> new DropContext(psiFilesFromVirtualFiles(virtualFiles), getPsiElement(target), null))
+          .finishOnUiThread(ModalityState.defaultModalityState(), context -> doDrop(context))
+          .submit(AppExecutorUtil.getAppExecutorService());
+      });
     }
   }
+
+  public record DropContext(PsiElement @Nullable [] sourceElements, @Nullable PsiElement targetElement, @Nullable Module targetModule) { }
 }

@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackCommandReporter;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
-import com.jetbrains.performancePlugin.*;
+import com.jetbrains.performancePlugin.CommandLogger;
+import com.jetbrains.performancePlugin.PerformanceTestingBundle;
+import com.jetbrains.performancePlugin.PlaybackRunnerExtended;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class ScriptRunner {
+public final class ScriptRunner {
   private PlaybackCommandReporter myScriptRunnerReporter;
 
   public ScriptRunner setScriptRunnerReporter(@Nullable PlaybackCommandReporter scriptRunnerReporter) {
@@ -38,7 +40,9 @@ public class ScriptRunner {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        runner.run().doWhenProcessed(countDownLatch::countDown);
+        runner.run().whenComplete((o, throwable) -> {
+          countDownLatch.countDown();
+        });
 
         final ScheduledExecutorService myExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("Performance plugin script runner");
         myExecutor.scheduleWithFixedDelay(() -> {

@@ -1,6 +1,5 @@
 package org.intellij.plugins.markdown.lang.parser.blocks.frontmatter
 
-import com.intellij.openapi.util.registry.Registry
 import org.intellij.markdown.MarkdownElementType
 import org.intellij.markdown.parser.LookaheadText
 import org.intellij.markdown.parser.MarkerProcessor
@@ -9,6 +8,37 @@ import org.intellij.markdown.parser.constraints.MarkdownConstraints
 import org.intellij.markdown.parser.markerblocks.MarkerBlock
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
 
+/**
+ * Provides support for front matter header blocks with:
+ * * TOML content (delimited with `+++`)
+ * * YAML content (delimited with `---`).
+ *
+ * Alternatively, YAML headers can be closed with triple dots (`...`)
+ * as per [YAML spec](https://yaml.org/spec/1.2.2/#structures).
+ *
+ * Front matter header should *always* precede the document content.
+ *
+ * Example of TOML header:
+ * ```markdown
+ * +++
+ * type: post
+ * title: Some post
+ * +++
+ *
+ * Some paragraph.
+ * ```
+ *
+ * Example of YAML header:
+ * ```markdown
+ * ---
+ * type: post
+ * title: Some post
+ * author: John
+ * ---
+ *
+ * Some paragraph.
+ * ```
+ */
 class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.StateInfo> {
   override fun createMarkerBlocks(
     position: LookaheadText.Position,
@@ -19,7 +49,7 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
       return emptyList()
     }
     val possibleDelimiter = position.currentLine
-    return when (isDelimiterLine(possibleDelimiter)) {
+    return when (isOpeningDelimiterLine(possibleDelimiter)) {
       true -> listOf(FrontMatterHeaderBlock(position, stateInfo.currentConstraints, productionHolder, possibleDelimiter))
       else -> emptyList()
     }
@@ -39,21 +69,32 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
     @JvmField
     val FRONT_MATTER_HEADER_CONTENT = MarkdownElementType("FRONT_MATTER_HEADER_CONTENT", isToken = true)
 
-    fun isDelimiterLine(line: String): Boolean {
-      return isYamlDelimiterLine(line) || isTomlDelimiterLine(line)
+    internal fun isOpeningDelimiterLine(line: String): Boolean {
+      return isYamlDashedDelimiterLine(line) || isTomlDelimiterLine(line)
     }
 
-    fun isYamlDelimiterLine(line: String): Boolean {
+    private fun isYamlDashedDelimiterLine(line: String): Boolean {
       return line.length >= 3 && line.all { it == '-' }
     }
 
-    fun isTomlDelimiterLine(line: String): Boolean {
+    internal fun canBePairedWithClosingDots(opening: String): Boolean {
+      return isYamlDashedDelimiterLine(opening)
+    }
+
+    private fun isYamlDottedDelimiterLine(line: String): Boolean {
+      return line.length >= 3 && line.all { it == '.' }
+    }
+
+    internal fun isYamlDelimiters(opening: String, closing: String): Boolean {
+      return isYamlDashedDelimiterLine(opening) && (isYamlDashedDelimiterLine(closing) || isYamlDottedDelimiterLine(closing))
+    }
+
+    private fun isTomlDelimiterLine(line: String): Boolean {
       return line.length >= 3 && line.all { it == '+' }
     }
 
-    @JvmStatic
-    fun isFrontMatterSupportEnabled(): Boolean {
-      return Registry.`is`("markdown.experimental.frontmatter.support.enable", false)
+    internal fun isTomlDelimiters(opening: String, closing: String): Boolean {
+      return isTomlDelimiterLine(opening) && isTomlDelimiterLine(closing)
     }
   }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -43,15 +44,13 @@ public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
     };
   }
 
-  @Nullable
   @Override
-  public String getConfigurableDisplayName() {
+  public @Nullable String getConfigurableDisplayName() {
     return JsonLanguage.INSTANCE.getDisplayName();
   }
 
-  @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new JsonCodeStyleSettings(settings);
   }
 

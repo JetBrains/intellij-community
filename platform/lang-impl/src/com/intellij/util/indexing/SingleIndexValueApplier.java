@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
+final
 class SingleIndexValueApplier<FileIndexMetaData> {
   private final FileBasedIndexImpl myIndex;
   @NotNull final ID<?, ?> indexId;
@@ -43,10 +44,6 @@ class SingleIndexValueApplier<FileIndexMetaData> {
            ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
   }
 
-  boolean applyImmediately() {
-    return doApply();
-  }
-
   boolean apply() {
     FileBasedIndexImpl.markFileWritingIndexes(inputId);
     try {
@@ -63,7 +60,7 @@ class SingleIndexValueApplier<FileIndexMetaData> {
 
   private boolean doApply() {
     if (myIndex.runUpdateForPersistentData(storageUpdate)) {
-      if (myIndex.doTraceStubUpdates(indexId) || myIndex.doTraceIndexUpdates()) {
+      if (FileBasedIndexEx.doTraceStubUpdates(indexId) || FileBasedIndexEx.doTraceIndexUpdates()) {
         FileBasedIndexImpl.LOG.info("index " + indexId + " update finished for " + fileInfo);
       }
       if (!isMock) {
@@ -71,24 +68,19 @@ class SingleIndexValueApplier<FileIndexMetaData> {
           //noinspection unchecked
           UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index =
             (UpdatableIndex<?, ?, FileContent, FileIndexMetaData>)myIndex.getIndex(indexId);
-          setIndexedState(index, myFileIndexMetaData, inputId, wasIndexProvidedByExtension());
+          index.setIndexedStateForFileOnFileIndexMetaData(inputId, myFileIndexMetaData, wasIndexProvidedByExtension());
         });
       }
     }
     return true;
   }
 
-  private static <FileIndexMetaData> void setIndexedState(@NotNull UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index,
-                                                          @Nullable FileIndexMetaData fileData,
-                                                          int inputId,
-                                                          boolean indexWasProvided) {
-    if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
-      //noinspection unchecked
-      ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, FileIndexMetaData>)index)
-        .setIndexedStateForFileOnFileIndexMetaData(inputId, fileData, indexWasProvided);
-    }
-    else {
-      index.setIndexedStateForFileOnFileIndexMetaData(inputId, fileData);
-    }
+  @Override
+  public String toString() {
+    return "SingleIndexValueApplier{" +
+           "indexId=" + indexId +
+           ", inputId=" + inputId +
+           ", fileInfo='" + fileInfo + '\'' +
+           '}';
   }
 }

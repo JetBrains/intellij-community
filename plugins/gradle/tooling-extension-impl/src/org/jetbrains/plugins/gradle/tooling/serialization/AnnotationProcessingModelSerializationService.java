@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingModel;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingConfigImpl;
@@ -61,17 +60,7 @@ public final class AnnotationProcessingModelSerializationService implements Seri
   private static void writeConfigs(final IonWriter writer,
                                    final WriteContext context,
                                    Map<String, AnnotationProcessingConfig> configs) throws IOException {
-    writeMap(writer, "configs", configs, new ThrowableConsumer<String, IOException>() {
-      @Override
-      public void consume(String s) throws IOException {
-        writer.writeString(s);
-      }
-    }, new ThrowableConsumer<AnnotationProcessingConfig, IOException>() {
-      @Override
-      public void consume(AnnotationProcessingConfig config) throws IOException {
-        writeConfig(writer, context, config);
-      }
-    });
+    writeMap(writer, "configs", configs, s -> writer.writeString(s), config -> writeConfig(writer, context, config));
   }
 
   private static void writeConfig(final IonWriter writer,

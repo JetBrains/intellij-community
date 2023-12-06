@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -103,6 +104,14 @@ fun KotlinFacet.configureFacet(
     ExternalCompilerVersionProvider.set(module, compilerVersion)
 }
 
+fun IKotlinFacetSettings.noVersionAutoAdvance() {
+    compilerArguments?.let {
+        it.autoAdvanceLanguageVersion = false
+        it.autoAdvanceApiVersion = false
+    }
+}
+
+@Deprecated("Use IKotlinFacetSettings.noVersionAutoAdvance() instead")
 fun KotlinFacet.noVersionAutoAdvance() {
     configuration.settings.compilerArguments?.let {
         it.autoAdvanceLanguageVersion = false

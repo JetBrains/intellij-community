@@ -9,14 +9,14 @@ import java.nio.file.Path
 
 /**
  * Specifies how Maven artifacts for IDE modules should be generated.
- * Public artifacts are generated under {@link BuildPaths#artifactDir}/maven-artifacts directory.
- * Proprietary artifacts are generated under {@link BuildPaths#artifactDir}/proprietary-maven-artifacts directory.
- * @see ProductProperties#mavenArtifacts
- * @see org.jetbrains.intellij.build.impl.MavenArtifactsBuilder#generateMavenArtifacts
+ * Public artifacts are generated under [BuildPaths.artifactDir]/maven-artifacts directory.
+ * Proprietary artifacts are generated under [BuildPaths.artifactDir]/proprietary-maven-artifacts directory.
+ * @see ProductProperties.mavenArtifacts
+ * @see org.jetbrains.intellij.build.impl.MavenArtifactsBuilder.generateMavenArtifacts
  */
 class MavenArtifactsProperties {
   /**
-   * If {@code true} Maven artifacts are generated for all modules included into the IDE distribution.
+   * If `true` Maven artifacts are generated for all modules included into the IDE distribution.
    */
   var forIdeModules = false
 
@@ -42,7 +42,7 @@ class MavenArtifactsProperties {
   var proprietaryModules: PersistentList<String> = persistentListOf()
 
   /**
-   * A predicate which returns {@code true} for modules which sources should be published as Maven artifacts.
+   * A predicate which returns `true` for modules which sources should be published as Maven artifacts.
    */
   var publishSourcesFilter: (JpsModule, BuildContext) -> Boolean = { module, context ->
     module.contentRootsList.urls.all { Path.of(JpsPathUtil.urlToPath(it)).startsWith(context.paths.communityHomeDir) }

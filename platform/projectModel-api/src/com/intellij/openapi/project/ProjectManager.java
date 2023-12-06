@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.messages.Topic;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,6 +23,7 @@ public abstract class ProjectManager {
   /**
    * @return {@code ProjectManager} instance
    */
+  @RequiresBlockingContext
   public static ProjectManager getInstance() {
     return ApplicationManager.getApplication().getService(ProjectManager.class);
   }
@@ -114,6 +116,7 @@ public abstract class ProjectManager {
   /**
    * @deprecated Use {@link com.intellij.openapi.project.ex.ProjectManagerEx#newProject(Path, com.intellij.ide.impl.OpenProjectTask)}
    */
+  @Deprecated
   @ApiStatus.Internal
   public abstract @NotNull Project createProject(@Nullable String name, @NotNull String path);
 

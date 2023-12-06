@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
 import com.google.common.collect.Sets;
@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -38,6 +39,7 @@ import java.util.*;
 
 import static java.util.stream.Collectors.groupingBy;
 
+@Service(Service.Level.PROJECT)
 @State(name = "MavenCompilerTasksManager")
 public final class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState>,
                                                                                     Disposable {
@@ -95,25 +97,24 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
 
     @Override
     public boolean execute(@NotNull CompileContext context) {
-      MavenTasksManager mavenTasksManager = context.getProject().getService(MavenTasksManager.class);
+      MavenTasksManager mavenTasksManager = getInstance(context.getProject());
       return mavenTasksManager.doExecute(myBefore, context);
     }
   }
 
   @ApiStatus.Internal
-  static class MavenBeforeCompileTask extends MyCompileTask {
+  static final class MavenBeforeCompileTask extends MyCompileTask {
     MavenBeforeCompileTask() {
       super(true);
     }
   }
 
   @ApiStatus.Internal
-  static class MavenAfterCompileTask extends MyCompileTask {
+  static final class MavenAfterCompileTask extends MyCompileTask {
     MavenAfterCompileTask() {
       super(false);
     }
   }
-
 
   @Override
   public void dispose() {

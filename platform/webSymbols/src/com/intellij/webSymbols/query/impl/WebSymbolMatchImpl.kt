@@ -1,10 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.query.impl
 
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.model.Pointer
-import com.intellij.navigation.NavigationTarget
+import com.intellij.model.Symbol
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Priority
@@ -12,16 +15,20 @@ import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.search.WebSymbolSearchTarget
+import com.intellij.webSymbols.utils.coalesceApiStatus
 import com.intellij.webSymbols.utils.merge
 import javax.swing.Icon
 
-internal open class WebSymbolMatchImpl private constructor(override val matchedName: String,
-                                                           override val nameSegments: List<WebSymbolNameSegment>,
-                                                           override val namespace: SymbolNamespace,
-                                                           override val kind: SymbolKind,
-                                                           override val origin: WebSymbolOrigin,
-                                                           private val explicitPriority: Priority?,
-                                                           private val explicitProximity: Int?) : WebSymbolMatch {
+internal open class WebSymbolMatchImpl private constructor(
+  override val matchedName: String,
+  override val nameSegments: List<WebSymbolNameSegment>,
+  override val namespace: SymbolNamespace,
+  override val kind: SymbolKind,
+  override val origin: WebSymbolOrigin,
+  private val explicitPriority: Priority?,
+  private val explicitProximity: Int?
+) : WebSymbolMatch {
 
   protected fun reversedSegments() = Sequence { ReverseListIterator(nameSegments) }
 
@@ -29,9 +36,9 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
     get() = reversedSegments().flatMap { it.symbols.asSequence() }
       .mapNotNull { it.psiContext }.firstOrNull()
 
-  override val documentation: WebSymbolDocumentation?
-    get() = reversedSegments().flatMap { it.symbols.asSequence() }
-      .mapNotNull { it.documentation }.firstOrNull()
+  override fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+    reversedSegments().flatMap { it.symbols.asSequence() }
+      .firstNotNullOfOrNull { it.createDocumentation(location) }
 
   override val name: String
     get() = matchedName.substring(nameSegments.firstOrNull()?.start ?: 0,
@@ -81,11 +88,8 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
   override val required: Boolean?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.required }.firstOrNull()
 
-  override val experimental: Boolean
-    get() = reversedSegments().flatMap { it.symbols }.map { it.experimental }.firstOrNull() ?: false
-
-  override val deprecated: Boolean
-    get() = reversedSegments().map { it.deprecated }.firstOrNull() ?: false
+  override val apiStatus: WebSymbolApiStatus
+    get() = coalesceApiStatus(reversedSegments().flatMap { it.symbols }) { it.apiStatus }
 
   override val icon: Icon?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.icon }.firstOrNull()
@@ -117,16 +121,34 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
         .toList()
     else emptyList()
 
-  override fun getDocumentationTarget(): DocumentationTarget =
+  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget =
     reversedSegments()
       .flatMap { it.symbols.asSequence() }
       .map {
-        if (it === this) super.getDocumentationTarget()
-        else it.documentationTarget
+        if (it === this) super<WebSymbolMatch>.getDocumentationTarget(location)
+        else it.getDocumentationTarget(location)
       }
-      .filter { it !is WebSymbolDocumentationTarget || it.symbol.documentation?.isNotEmpty() == true }
+      .filter { it !is WebSymbolDocumentationTarget || it.symbol.createDocumentation(location)?.isNotEmpty() == true }
       .firstOrNull()
-    ?: super.getDocumentationTarget()
+    ?: super<WebSymbolMatch>.getDocumentationTarget(location)
+
+  override fun isEquivalentTo(symbol: Symbol): Boolean =
+    super<WebSymbolMatch>.isEquivalentTo(symbol)
+    || nameSegments.filter { it.start != it.end }
+      .let { nonEmptySegments ->
+        nonEmptySegments.size == 1
+        && nonEmptySegments[0].symbols.any { it.isEquivalentTo(symbol) }
+      }
+
+  override val searchTarget: WebSymbolSearchTarget?
+    get() = if (nameSegments.filter { it.start != it.end }
+        .takeIf { it.size == 1 }
+        ?.get(0)
+        ?.symbols
+        ?.all { it is SearchTarget || it is SearchTargetSymbol || it.searchTarget != null } == true)
+      WebSymbolSearchTarget.create(this)
+    else
+      null
 
   override fun equals(other: Any?): Boolean =
     other is WebSymbolMatch
@@ -161,7 +183,7 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
                origin: WebSymbolOrigin,
                explicitPriority: Priority?,
                explicitProximity: Int?): WebSymbolMatch =
-      if (nameSegments.any { it.symbols.any { symbol -> symbol is PsiSourcedWebSymbol } })
+      if (nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.all { symbol -> symbol is PsiSourcedWebSymbol }) })
         PsiSourcedWebSymbolMatch(matchedName, nameSegments, namespace, kind, origin,
                                  explicitPriority, explicitProximity)
       else WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin,
@@ -178,7 +200,7 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
         val segment2 = other[i]
         if (segment1.start - startOffset1 != segment2.start - startOffset2
             || segment1.end - startOffset1 != segment2.end - startOffset2
-            || segment1.deprecated != segment2.deprecated
+            || segment1.apiStatus != segment2.apiStatus
             || segment1.symbols != segment2.symbols
             || segment1.problem != segment2.problem
             || segment1.displayName != segment2.displayName
@@ -202,11 +224,12 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
     : WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity), PsiSourcedWebSymbol {
 
     override val psiContext: PsiElement?
-      get() = super<PsiSourcedWebSymbol>.psiContext
-
-    override val source: PsiElement?
       get() = reversedSegments().flatMap { it.symbols.asSequence() }
         .mapNotNull { it.psiContext }.firstOrNull()
+
+    override val source: PsiElement?
+      get() = reversedSegments().flatMap { it.symbols }
+        .mapNotNull { (it as? PsiSourcedWebSymbol)?.source }.singleOrNull()
 
     override fun createPointer(): Pointer<PsiSourcedWebSymbolMatch> =
       object : WebSymbolMatchPointer<PsiSourcedWebSymbolMatch>(this) {
@@ -222,6 +245,9 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
 
     override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
       super<WebSymbolMatchImpl>.getNavigationTargets(project)
+
+    override fun isEquivalentTo(symbol: Symbol): Boolean =
+      super<WebSymbolMatchImpl>.isEquivalentTo(symbol)
 
   }
 

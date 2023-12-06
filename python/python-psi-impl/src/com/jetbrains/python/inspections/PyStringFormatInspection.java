@@ -451,7 +451,7 @@ public class PyStringFormatInspection extends PyInspection {
     private static class NewStyleInspection {
 
       private static final List<String> CHECKED_TYPES =
-        Arrays.asList(PyNames.TYPE_STR, PyNames.TYPE_INT, PyNames.TYPE_LONG, "float", "complex", "None");
+        Arrays.asList(PyNames.TYPE_STR, PyNames.TYPE_INT, PyNames.TYPE_LONG, "float", "complex", "None", "LiteralString");
 
       private static final List<String> NUMERIC_TYPES = Arrays.asList(PyNames.TYPE_INT, PyNames.TYPE_LONG, "float", "complex");
 

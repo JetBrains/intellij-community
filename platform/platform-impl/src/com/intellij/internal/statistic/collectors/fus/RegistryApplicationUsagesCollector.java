@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -46,14 +46,12 @@ public final class RegistryApplicationUsagesCollector extends ApplicationUsagesC
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics() {
+  public @NotNull Set<MetricEvent> getMetrics() {
     return getChangedValuesUsages();
   }
 
-  @NotNull
-  static Set<MetricEvent> getChangedValuesUsages() {
+  static @NotNull Set<MetricEvent> getChangedValuesUsages() {
     final Set<MetricEvent> registry = Registry.getAll().stream()
       .filter(key -> key.isChangedFromDefault() && !StringUtil.equals(key.getKey(), DISABLE_INTELLIJ_PROJECT_ANALYTICS))
       .map(key -> REGISTRY.metric(REGISTRY_KEY.with(key.getKey())))
@@ -75,16 +73,14 @@ public final class RegistryApplicationUsagesCollector extends ApplicationUsagesC
     return result;
   }
 
-  public static class RegistryUtilValidator extends CustomValidationRule {
-    @NotNull
+  public static final class RegistryUtilValidator extends CustomValidationRule {
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "registry_key";
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       final ExperimentalFeature feature = findFeatureById(data);
       if (feature != null) {
         final PluginInfo info = getPluginInfo(feature.getClass());
@@ -108,8 +104,7 @@ public final class RegistryApplicationUsagesCollector extends ApplicationUsagesC
       return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
 
-    @NotNull
-    private static PluginInfo getPluginInfoByRegistry(@NotNull RegistryValue value) {
+    private static @NotNull PluginInfo getPluginInfoByRegistry(@NotNull RegistryValue value) {
       String pluginId = value.getPluginId();
       return pluginId != null ? getPluginInfoById(PluginId.getId(pluginId)) : getPlatformPlugin();
     }

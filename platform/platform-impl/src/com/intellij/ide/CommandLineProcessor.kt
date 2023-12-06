@@ -12,8 +12,6 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.idea.CommandLineArgs
-import com.intellij.idea.findStarter
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -23,9 +21,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
@@ -35,6 +33,8 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists
+import com.intellij.platform.ide.bootstrap.CommandLineArgs
+import com.intellij.platform.ide.bootstrap.findStarter
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
@@ -58,7 +58,7 @@ object CommandLineProcessor {
   val OK_FUTURE: Deferred<CliResult> = CompletableDeferred(value = CliResult.OK)
 
   @ApiStatus.Internal
-  const val SCHEME_INTERNAL = "!!!internal!!!"
+  const val SCHEME_INTERNAL: String = "!!!internal!!!"
 
   @VisibleForTesting
   @ApiStatus.Internal
@@ -141,10 +141,9 @@ object CommandLineProcessor {
     return CommandLineProcessorResult(project, if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE)
   }
 
-  private suspend fun findBestProject(file: VirtualFile, projects: List<Project>): Project {
+  private fun findBestProject(file: VirtualFile, projects: List<Project>): Project {
     for (project in projects) {
-      val fileIndex = ProjectFileIndex.getInstance(project)
-      if (readAction { fileIndex.isInContent(file) }) {
+      if (BaseProjectDirectories.getInstance(project).contains(file)) {
         return project
       }
     }

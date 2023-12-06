@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class CommentSplitter extends BaseSplitter {
+public final class CommentSplitter extends BaseSplitter {
   private static final Pattern HTML = Pattern.compile("<(\\S+?)[^<>]*?>(.*?)</\\1>");
 
   private static final CommentSplitter INSTANCE = new CommentSplitter();

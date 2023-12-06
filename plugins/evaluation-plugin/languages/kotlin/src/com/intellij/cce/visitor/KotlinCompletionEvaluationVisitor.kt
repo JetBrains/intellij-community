@@ -1,13 +1,13 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
+import com.intellij.cce.core.*
+import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.elementType
-import com.intellij.cce.core.*
-import com.intellij.cce.visitor.exceptions.PsiConverterException
-import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.ClassDescriptorBase
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
@@ -18,9 +18,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
 
-class KotlinCompletionEvaluationVisitor : CompletionEvaluationVisitor, KtTreeVisitorVoid() {
+class KotlinCompletionEvaluationVisitor : EvaluationVisitor, KtTreeVisitorVoid() {
   private var _codeFragment: CodeFragment? = null
 
+  override val feature: String = "token-completion"
   override val language: Language = Language.KOTLIN
 
   override fun getFile(): CodeFragment = _codeFragment

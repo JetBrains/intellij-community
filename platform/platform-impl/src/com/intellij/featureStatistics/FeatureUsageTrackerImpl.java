@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -50,14 +50,14 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   private CumulativeStatistics myFixesStats = new CumulativeStatistics();
   boolean HAVE_BEEN_SHOWN = false;
 
-  @NonNls private static final String FEATURE_TAG = "feature";
-  @NonNls private static final String ATT_SHOW_IN_OTHER = "show-in-other";
-  @NonNls private static final String ATT_SHOW_IN_COMPILATION = "show-in-compilation";
-  @NonNls private static final String ATT_ID = "id";
-  @NonNls private static final String ATT_FIRST_RUN = "first-run";
-  @NonNls private static final String COMPLETION_STATS_TAG = "completionStatsTag";
-  @NonNls private static final String FIXES_STATS_TAG = "fixesStatsTag";
-  @NonNls private static final String ATT_HAVE_BEEN_SHOWN = "have-been-shown";
+  private static final @NonNls String FEATURE_TAG = "feature";
+  private static final @NonNls String ATT_SHOW_IN_OTHER = "show-in-other";
+  private static final @NonNls String ATT_SHOW_IN_COMPILATION = "show-in-compilation";
+  private static final @NonNls String ATT_ID = "id";
+  private static final @NonNls String ATT_FIRST_RUN = "first-run";
+  private static final @NonNls String COMPLETION_STATS_TAG = "completionStatsTag";
+  private static final @NonNls String FIXES_STATS_TAG = "fixesStatsTag";
+  private static final @NonNls String ATT_HAVE_BEEN_SHOWN = "have-been-shown";
 
   @Override
   public boolean isToBeShown(String featureId, Project project) {
@@ -108,8 +108,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     return isToBeShown(featureId, project, HOUR);
   }
 
-  @NotNull
-  public CompletionStatistics getCompletionStatistics() {
+  public @NotNull CompletionStatistics getCompletionStatistics() {
     return myCompletionStats;
   }
 
@@ -259,10 +258,9 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     }
   }
 
-  public static class ProductivityUtilValidator extends CustomValidationRule {
-    @NotNull
+  public static final class ProductivityUtilValidator extends CustomValidationRule {
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "productivity";
     }
 
@@ -271,9 +269,8 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
       return getRuleId().equals(ruleId) || "productivity_group".equals(ruleId);
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
       final String id = getEventDataField(context, "id");

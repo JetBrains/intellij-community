@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElv
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection
 import org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceGetOrSetInspection
 import org.jetbrains.kotlin.idea.intentions.*
+import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention.Holder.shouldSuggestToConvert
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnAsymmetricallyIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isTrivialStatementBody
@@ -41,7 +42,6 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.mapToIndex
-import java.util.*
 
 internal class J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
     private val myProcessings = ArrayList<J2kPostProcessing>()
@@ -256,14 +256,10 @@ internal class J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
         private val intention = ConvertToStringTemplateIntention()
 
         override fun createAction(element: KtElement, diagnostics: Diagnostics): (() -> Unit)? {
-            if (element is KtBinaryExpression && intention.isApplicableTo(element) && ConvertToStringTemplateIntention.shouldSuggestToConvert(
-                    element
-                )
-            ) {
+            if (element is KtBinaryExpression && intention.isApplicableTo(element) && shouldSuggestToConvert(element)) {
                 return { intention.applyTo(element, null) }
-            } else {
-                return null
             }
+            return null
         }
     }
 
@@ -285,12 +281,12 @@ internal class J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
         override fun createAction(element: KtElement, diagnostics: Diagnostics): (() -> Unit)? {
             if (element !is KtCallExpression) return null
 
-            val expressions = RedundantSamConstructorInspection.samConstructorCallsToBeConverted(element)
+            val expressions = RedundantSamConstructorInspection.Util.samConstructorCallsToBeConverted(element)
             if (expressions.isEmpty()) return null
 
             return {
-                RedundantSamConstructorInspection.samConstructorCallsToBeConverted(element)
-                    .forEach { RedundantSamConstructorInspection.replaceSamConstructorCall(it) }
+                RedundantSamConstructorInspection.Util.samConstructorCallsToBeConverted(element)
+                    .forEach { RedundantSamConstructorInspection.Util.replaceSamConstructorCall(it) }
             }
         }
     }

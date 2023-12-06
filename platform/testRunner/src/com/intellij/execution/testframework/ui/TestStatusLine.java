@@ -158,17 +158,6 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressBar.setValue(fraction);
   }
 
-  /**
-   * @deprecated Usages should be deleted as progress is now incorporated into console
-   */
-  @Deprecated(forRemoval = true)
-  public void setPreferredSize(boolean orientation) {
-    final Dimension size = new JBDimension(orientation ? 150 : 450 , -1);
-    myProgressPanel.setMaximumSize(size);
-    myProgressPanel.setMinimumSize(size);
-    myProgressPanel.setPreferredSize(size);
-  }
-
   public void setText(@Nls String progressStatus_text) {
     UIUtil.invokeLaterIfNeeded(() -> {
       myState.clear();
@@ -177,7 +166,7 @@ public class TestStatusLine extends NonOpaquePanel {
     });
   }
 
-  @TestOnly
+  @NlsSafe
   @NotNull
   public String getStateText() {
     return myState.toString();

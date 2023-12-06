@@ -38,9 +38,7 @@ fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
 
             val equalsSignature = getEqualsSignature(left.project, GlobalSearchScope.allScope(left.project))
             val equalsMethod = MethodSignatureUtil.findMethodBySignature(psiClass, equalsSignature, true)
-            if (equalsMethod != null && equalsMethod.containingClass?.qualifiedName != CommonClassNames.JAVA_LANG_OBJECT) return false
-
-            return true
+            return equalsMethod == null || equalsMethod.containingClass?.qualifiedName == CommonClassNames.JAVA_LANG_OBJECT
         }
 
         else -> return false

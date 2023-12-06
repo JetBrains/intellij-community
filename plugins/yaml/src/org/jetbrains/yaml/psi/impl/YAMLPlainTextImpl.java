@@ -63,7 +63,7 @@ public class YAMLPlainTextImpl extends YAMLBlockScalarImpl implements YAMLScalar
         }
       }
 
-      private boolean isNewline(@NotNull CharSequence text, @NotNull TextRange range) {
+      private static boolean isNewline(@NotNull CharSequence text, @NotNull TextRange range) {
         return range.getLength() == 1 && text.charAt(range.getStartOffset()) == '\n';
       }
     };

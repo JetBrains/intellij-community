@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
+import com.intellij.find.usages.api.ReadWriteUsage
+import com.intellij.find.usages.api.UsageAccess
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -97,10 +100,27 @@ internal fun CoroutineScope.previewRenameAsync(
 }
 
 private fun asUsage(renameUsage: RenameUsage, newName: String): Usage? {
-  return when (renameUsage) {
-    is PsiRenameUsage -> PsiRename2UsageInfo2UsageAdapter(PsiRenameUsage2UsageInfo(renameUsage, newName))
-    else -> null
+  if (renameUsage !is PsiRenameUsage) {
+    return null
   }
+
+  val access = when (usageAccess(renameUsage)) {
+    UsageAccess.Read -> ReadWriteAccessDetector.Access.Read
+    UsageAccess.Write -> ReadWriteAccessDetector.Access.Write
+    UsageAccess.ReadWrite -> ReadWriteAccessDetector.Access.ReadWrite
+    null -> null
+  }
+
+  return if (access != null) {
+    PsiRename2ReadWriteAccessUsageInfo2UsageAdapter(PsiRenameUsage2UsageInfo(renameUsage, newName), access)
+  }
+  else {
+    PsiRename2UsageInfo2UsageAdapter(PsiRenameUsage2UsageInfo(renameUsage, newName))
+  }
+}
+
+private fun usageAccess(renameUsage: RenameUsage): UsageAccess? {
+  return if (renameUsage is ReadWriteUsage) renameUsage.computeAccess() else null
 }
 
 private fun usageViewPresentation(): UsageViewPresentation {

@@ -1,6 +1,11 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.diagnostic.telemetry.TraceUtil;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginContentDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
@@ -8,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
 import java.net.URLClassLoader;
+import java.util.List;
 
 public class RunServiceInPlugin extends RunClassInPlugin {
 
@@ -17,6 +23,30 @@ public class RunServiceInPlugin extends RunClassInPlugin {
 
   public RunServiceInPlugin(@NotNull String text, int line) {
     super(text, line);
+  }
+
+  @Override
+  public void computePromise(@NotNull Project project) throws Exception {
+    IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(myPluginId));
+    if (plugin == null) throw new RuntimeException("Failed to find plugin: " + myPluginId);
+
+    ClassLoader loader = null;
+    // requires to avoid "class must not be requested from main classloader of plugin" error
+    List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).content.modules;
+    if (!modules.isEmpty()) {
+      for (PluginContentDescriptor.ModuleItem module : modules) {
+        if (myClazzName.contains(module.name)) {
+          loader = module.requireDescriptor().getClassLoader();
+        }
+      }
+    }
+
+    if (loader == null) {
+      loader = plugin.getClassLoader();
+    }
+
+    URLClassLoader classLoader = new URLClassLoader(convertClasspathToURLs(), loader);
+    runWithClassLoader(project, classLoader);
   }
 
   @Override

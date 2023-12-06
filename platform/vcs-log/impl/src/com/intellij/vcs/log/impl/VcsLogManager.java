@@ -7,14 +7,15 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -40,10 +41,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 
-public final class VcsLogManager implements Disposable {
+public class VcsLogManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
-  private final @NotNull Project myProject;
+  protected final @NotNull Project myProject;
   private final @NotNull VcsLogTabsProperties myUiProperties;
   private final @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
 
@@ -73,15 +74,17 @@ public final class VcsLogManager implements Disposable {
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
     myColorManager = VcsLogColorManagerFactory.create(logProviders.keySet());
-    myStatusBarProgress = new VcsLogStatusBarProgress(myProject, logProviders, myLogData.getProgress());
+    myStatusBarProgress = new VcsLogStatusBarProgress(myProject, logProviders, myLogData.getIndex().getIndexingRoots(),
+                                                      myLogData.getProgress());
 
     if (scheduleRefreshImmediately) {
       scheduleInitialization();
     }
   }
 
+  @ApiStatus.Internal
   @CalledInAny
-  void scheduleInitialization() {
+  public void scheduleInitialization() {
     myLogData.initialize();
   }
 
@@ -155,7 +158,7 @@ public final class VcsLogManager implements Disposable {
   private @NotNull <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory,
                                                         @NotNull VcsLogTabLocation location,
                                                         boolean isClosedOnDispose) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isDisposed()) {
       LOG.error("Trying to create new VcsLogUi on a disposed VcsLogManager instance");
       throw new ProcessCanceledException();
@@ -208,7 +211,7 @@ public final class VcsLogManager implements Disposable {
     if (roots.isEmpty()) return Collections.emptyMap();
 
     Map<VirtualFile, VcsLogProvider> logProviders = new HashMap<>();
-    VcsLogProvider[] allLogProviders = VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project);
+    List<VcsLogProvider> allLogProviders = VcsLogProvider.LOG_PROVIDER_EP.getExtensionList(project);
     for (VcsRoot root : roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();
@@ -230,7 +233,7 @@ public final class VcsLogManager implements Disposable {
   @RequiresEdt
   void disposeUi() {
     myDisposed = true;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myTabsLogRefresher != null) Disposer.dispose(myTabsLogRefresher);
     Disposer.dispose(myStatusBarProgress);
   }
@@ -252,6 +255,7 @@ public final class VcsLogManager implements Disposable {
   }
 
   @Override
+  @RequiresBackgroundThread
   public void dispose() {
     // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
     // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
@@ -293,7 +297,7 @@ public final class VcsLogManager implements Disposable {
 
     @Override
     public void displayMessage(@Nls @NotNull String message) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+      VcsNotifier.getInstance(myProject).notifyError(VcsLogNotificationIdsHolder.FATAL_ERROR, "", message);
     }
   }
 
@@ -320,9 +324,7 @@ public final class VcsLogManager implements Disposable {
     @Override
     public T createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
-      VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData.getLogProviders(), logData.getStorage(),
-                                                                 logData.getTopCommitsCache(),
-                                                                 logData.getCommitDetailsGetter(), logData.getIndex());
+      VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData);
       PermanentGraph.SortType initialSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE);
       VcsLogFilterCollection initialFilters = myFilters == null ? VcsLogFilterObject.collection() : myFilters;
       VisiblePackRefresherImpl refresher = new VisiblePackRefresherImpl(project, logData, initialFilters, initialSortType,

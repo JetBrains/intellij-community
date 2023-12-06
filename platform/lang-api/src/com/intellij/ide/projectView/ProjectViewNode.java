@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -67,8 +67,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    * @return the virtual file instance, or null if the project view node doesn't represent a virtual file.
    */
   @Override
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     return null;
   }
 
@@ -94,11 +93,10 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     }
   }
 
-  @NotNull
-  public static AbstractTreeNode<?> createTreeNode(Class<? extends AbstractTreeNode<?>> nodeClass,
-                                                   Project project,
-                                                   Object value,
-                                                   ViewSettings settings) throws InstantiationException {
+  public static @NotNull AbstractTreeNode<?> createTreeNode(Class<? extends AbstractTreeNode<?>> nodeClass,
+                                                            Project project,
+                                                            Object value,
+                                                            ViewSettings settings) throws InstantiationException {
     Object[] parameters = {project, value, settings};
     for (Constructor<? extends AbstractTreeNode<?>> constructor : (Constructor<? extends AbstractTreeNode<?>>[])nodeClass.getConstructors()) {
       if (constructor.getParameterCount() != 3) continue;
@@ -149,9 +147,8 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return false;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     Value value = getValue();
     if (value instanceof RootsProvider) {
       return ((RootsProvider)value).getRoots();
@@ -195,9 +192,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return true;
   }
 
-  @Nullable
-  @NlsContexts.PopupTitle
-  public String getTitle() {
+  public @Nullable @NlsContexts.PopupTitle String getTitle() {
     return null;
   }
 
@@ -227,8 +222,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    * have not null comparable keys.
    * @return Comparable object.
    */
-  @Nullable
-  public Comparable getTypeSortKey() {
+  public @Nullable Comparable getTypeSortKey() {
     return null;
   }
 
@@ -240,18 +234,19 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    * have not null comparable keys.
    * @return Comparable object.
    */
-  @Nullable
-  public Comparable getSortKey() {
+  public @Nullable Comparable getSortKey() {
     return null;
   }
 
-  @Nullable
-  public Comparable getManualOrderKey() {
+  public @Nullable Comparable getManualOrderKey() {
     return null;
   }
 
-  @Nullable
-  public String getQualifiedNameSortKey() {
+  public @Nullable String getQualifiedNameSortKey() {
+    return null;
+  }
+
+  public @Nullable Comparable<?> getTimeSortKey() {
     return null;
   }
 

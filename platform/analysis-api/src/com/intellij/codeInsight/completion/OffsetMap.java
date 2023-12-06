@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -28,7 +28,7 @@ public final class OffsetMap implements Disposable {
   /**
    * @param key key
    * @return offset An offset registered earlier with this key.
-   * -1 if offset wasn't registered or became invalidated due to document changes
+   * @throws IllegalArgumentException if offset wasn't registered or became invalidated due to document changes
    */
   public int getOffset(OffsetKey key) {
     synchronized (myMap) {
@@ -133,14 +133,12 @@ public final class OffsetMap implements Disposable {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public OffsetMap copyOffsets(@NotNull Document anotherDocument) {
+  public @NotNull OffsetMap copyOffsets(@NotNull Document anotherDocument) {
     if (anotherDocument.getTextLength() != myDocument.getTextLength()) {
       LOG.error("Different document lengths: " + myDocument.getTextLength() +
                 " for " + myDocument +
@@ -151,8 +149,7 @@ public final class OffsetMap implements Disposable {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public OffsetMap mapOffsets(@NotNull Document anotherDocument, @NotNull Function<? super Integer, Integer> mapping) {
+  public @NotNull OffsetMap mapOffsets(@NotNull Document anotherDocument, @NotNull Function<? super Integer, Integer> mapping) {
     OffsetMap result = new OffsetMap(anotherDocument);
     for (OffsetKey key : getAllOffsets()) {
       result.addOffset(key, mapping.apply(getOffset(key)));

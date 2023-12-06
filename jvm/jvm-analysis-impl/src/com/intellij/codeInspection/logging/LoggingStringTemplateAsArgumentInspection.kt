@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiType
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.uast.*
@@ -106,6 +107,16 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
         return true
       }
 
+      //strange behavior for last parameter as exception. let's ignore this case
+      val injected = parts.filter { it !is ULiteralExpression }
+      if ((injected.size == 1 &&
+           InheritanceUtil.isInheritor(injected.first().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE)) ||
+          ((valueArguments.lastIndex - indexStringExpression) == 1 &&
+          InheritanceUtil.isInheritor(valueArguments.last().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE))
+        ) {
+        return true
+      }
+
       if (mySkipPrimitives && allExpressionsInPatternArePrimitivesOrWrappers(parts)) {
         return true
       }
@@ -130,7 +141,7 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
         val notSkip: Boolean = when (loggerLevel) {
           Companion.LevelType.FATAL -> false
           Companion.LevelType.ERROR -> false
-          Companion.LevelType.WARNING -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
+          Companion.LevelType.WARN -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
           Companion.LevelType.INFO -> myLimitLevelType.ordinal <= LimitLevelType.INFO_AND_LOWER.ordinal
           Companion.LevelType.DEBUG -> myLimitLevelType.ordinal <= LimitLevelType.DEBUG_AND_LOWER.ordinal
           Companion.LevelType.TRACE -> myLimitLevelType.ordinal <= LimitLevelType.TRACE.ordinal

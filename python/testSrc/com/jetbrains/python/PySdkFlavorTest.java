@@ -15,10 +15,14 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
@@ -72,7 +76,7 @@ public class PySdkFlavorTest extends PyTestCase {
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
     assertEquals("PyPy 2.3.1 [Python 2.7.6]", mockSdk.getVersionString());
     assertEquals(LanguageLevel.PYTHON27, flavor.getLanguageLevel(mockSdk));
-    assertEquals("__builtin__.py", PythonSdkType.getBuiltinsFileName(mockSdk));
+    assertEquals("__builtin__.py", PySdkUtil.getBuiltinsFileName(mockSdk));
   }
 
   public void testPyPy323VersionString() {
@@ -84,7 +88,7 @@ public class PySdkFlavorTest extends PyTestCase {
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
     assertEquals("PyPy 2.3.1 [Python 3.4.5]", mockSdk.getVersionString());
     assertEquals(LanguageLevel.PYTHON34, flavor.getLanguageLevel(mockSdk));
-    assertEquals("builtins.py", PythonSdkType.getBuiltinsFileName(mockSdk));
+    assertEquals("builtins.py", PySdkUtil.getBuiltinsFileName(mockSdk));
   }
 
   // TODO: Add tests for MayaPy and IronPython SDK flavors
@@ -92,9 +96,18 @@ public class PySdkFlavorTest extends PyTestCase {
   @NotNull
   private Sdk createMockSdk(@NotNull PythonSdkFlavor flavor, @NotNull String versionOutput) {
     final String versionString = flavor.getVersionStringFromOutput(versionOutput);
-    final ProjectJdkImpl sdk = new ProjectJdkImpl("Test", PythonSdkType.getInstance(), "/path/to/sdk", versionString);
-    sdk.setSdkAdditionalData(new PythonSdkAdditionalData(flavor));
-    disposeOnTearDown(sdk);
+    final Sdk sdk = ProjectJdkTable.getInstance().createSdk("Test", PythonSdkType.getInstance());
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setHomePath("/path/to/sdk");
+    sdkModificator.setVersionString(versionString);
+    sdkModificator.setSdkAdditionalData(new PythonSdkAdditionalData(flavor));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
+
+    if (sdk instanceof Disposable disposableSdk) {
+      disposeOnTearDown(disposableSdk);
+    }
     return sdk;
   }
 }

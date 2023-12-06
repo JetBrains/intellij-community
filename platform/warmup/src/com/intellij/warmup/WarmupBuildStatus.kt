@@ -21,7 +21,7 @@ sealed interface WarmupBuildStatus {
 
   object NotInvoked : WarmupBuildStatus
 
-  sealed class InvocationStatus(val message: @Nls String) : WarmupBuildStatus
+  sealed class InvocationStatus(val message: @NonNls String) : WarmupBuildStatus
   class Success(message: @NonNls String) : InvocationStatus(message)
   class Failure(message: @NonNls String) : InvocationStatus(message)
 }

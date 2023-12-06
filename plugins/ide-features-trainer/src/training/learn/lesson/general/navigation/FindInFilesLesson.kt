@@ -106,7 +106,7 @@ class FindInFilesLesson(override val sampleFilePath: String,
     task {
       text(LessonsBundle.message("find.in.files.go.to.file", LessonUtil.rawEnter()))
       stateCheck { virtualFile.name != sampleFilePath.substringAfterLast('/') }
-      restoreState {
+      restoreState(delayMillis = defaultRestoreDelay) {
         !isSelectedNeededItem(neededText)
       }
       test { invokeActionViaShortcut("ENTER") }

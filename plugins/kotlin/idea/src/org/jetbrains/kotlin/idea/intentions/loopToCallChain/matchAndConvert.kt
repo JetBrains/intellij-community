@@ -5,11 +5,13 @@ package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.Pseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.PseudocodeUtil
-import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.*
 import org.jetbrains.kotlin.idea.project.builtIns
@@ -289,9 +291,7 @@ private fun checkSmartCastsPreserved(loop: KtForExpression, matchResult: MatchRe
 
         // not all smart cast expressions has been found in the result or have the same type after conversion, perform more expensive check
         val expression = matchResult.transformationMatch.resultTransformation.generateExpressionToReplaceLoopAndCheckErrors(callChain)
-        if (!tryChangeAndCheckErrors(loop) { it.replace(expression) }) return false
-
-        return true
+        return tryChangeAndCheckErrors(loop) { it.replace(expression) }
     } finally {
         storedUserData.forEach { it.set(null) }
         if (smartCastCount > 0) {

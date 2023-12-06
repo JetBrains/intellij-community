@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame
 
 import com.intellij.openapi.Disposable
@@ -127,14 +127,12 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
   }
 
   companion object {
-
-    internal val EP = ExtensionPointName<VcsCommitExternalStatusProvider<*>>("com.intellij.vcsLogCommitStatusProvider")
+    internal val EP: ExtensionPointName<VcsCommitExternalStatusProvider<*>> = ExtensionPointName("com.intellij.vcsLogCommitStatusProvider")
 
     @JvmStatic
-    fun getExtensionsWithColumns(): List<WithColumn<*>> = EP.extensions.filterIsInstance(WithColumn::class.java)
+    fun getExtensionsWithColumns(): List<WithColumn<*>> = EP.extensionList.filterIsInstance(WithColumn::class.java)
 
     @RequiresEdt
-    @JvmStatic
     fun addProviderListChangeListener(disposable: Disposable, listener: () -> Unit) {
       EP.addChangeListener(listener, disposable)
     }

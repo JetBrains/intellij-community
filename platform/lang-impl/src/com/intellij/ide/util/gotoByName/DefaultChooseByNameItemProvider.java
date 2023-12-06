@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
@@ -222,7 +222,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return new FindSymbolParameters(pattern, getNamePattern(base, pattern), searchScope, idFilter);
   }
 
-  private static boolean processByNames(@NotNull ChooseByNameViewModel base,
+  protected static boolean processByNames(@NotNull ChooseByNameViewModel base,
                                         boolean everywhere,
                                         @NotNull ProgressIndicator indicator,
                                         @Nullable PsiElement context,
@@ -401,6 +401,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     }
     if (base.getModel() instanceof CustomMatcherModel) {
       try {
+        //noinspection CastToIncompatibleInterface
         return ((CustomMatcherModel)base.getModel()).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
       }
       catch (Exception e) {
@@ -418,7 +419,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   @NotNull
-  private static MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
+  protected static MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
     NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(pattern).withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE);
     if (preferStartMatches) {
       builder = builder.preferringStartMatches();

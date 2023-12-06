@@ -28,6 +28,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings;
 import com.intellij.task.ProjectTaskManager;
+import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -117,6 +118,7 @@ public final class BuildArtifactAction extends DumbAwareAction {
   }
 
   private static void doBuild(@NotNull Project project, final @NotNull List<ArtifactPopupItem> items, boolean rebuild) {
+    ProjectTaskManagerImpl.putBuildOriginator(project, BuildArtifactAction.class);
     final Artifact[] artifacts = getArtifacts(items, project);
     if (rebuild) {
       ProjectTaskManager.getInstance(project).rebuild(artifacts);

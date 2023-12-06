@@ -22,10 +22,6 @@
             interface="org.jetbrains.kotlin.idea.gradle.configuration.serialize.KotlinExtrasSerializationService"
             dynamic="true"/>
 
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.mppProjectResolve"
-            interface="org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension"
-            dynamic="true"/>
 
   </extensionPoints>
 
@@ -37,6 +33,8 @@
 
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.gradle.GradleFailedToDownloadSuggestedSolutionsContributor"/>
+
+      <projectStructureInsightsProvider implementation="org.jetbrains.kotlin.idea.gradle.GradleProjectStructureInsightsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -72,19 +70,7 @@
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.diagnostic.KotlinGradleBuildErrorsChecker"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSCollector"/>
-
-    <notificationGroup
-            id="Kotlin/JS compiler Gradle"
-            displayType="STICKY_BALLOON"
-            key="notification.text.kotlin.js.compiler.gradle.notification.group.name"
-            bundle="messages.KotlinIdeaGradleBundle"
-    />
   </extensions>
-
-  <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.gradleJava.notification.KotlinJsCompilerNotificationImportListener"
-              topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
-  </projectListeners>
 
   <actions>
     <action id="Kotlin.Gradle.ShowDslLogs" class="org.jetbrains.kotlin.idea.gradle.actions.ShowKotlinGradleDslLogs">

@@ -10,6 +10,10 @@
       and gathering performance statistics.
       ]]></description>
 
+  <content>
+    <module name="intellij.performanceTesting.remoteDriver"/>
+  </content>
+
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
@@ -24,6 +28,7 @@
     </group>
     <group id="DiagnosticGroup">
       <separator/>
+      <action id="CaptureMemorySnapShot" class="com.jetbrains.performancePlugin.actions.CaptureMemorySnapshotAction" icon="AllIcons.Actions.ProfileMemory"/>
       <action class="com.jetbrains.performancePlugin.actions.ExecuteScriptAction" id="performancePlugin.ExecuteScriptAction"/>
       <separator/>
       <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
@@ -58,7 +63,7 @@
 
     <documentationProvider implementation="com.jetbrains.performancePlugin.lang.doc.IJPerfDocumentationProvider"/>
 
-    <initProjectActivity implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
+    <initProjectActivity implementation="com.jetbrains.performancePlugin.PerformancePluginInitProjectActivity"/>
     <postStartupActivity implementation="com.jetbrains.performancePlugin.PerformanceTestTotalTimeTimer" />
     <applicationInitializedListener implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
 
@@ -76,6 +81,9 @@
   <projectListeners>
     <listener class="com.jetbrains.performancePlugin.ProjectIndexingComponent"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+
+    <listener class="com.jetbrains.performancePlugin.commands.WaitForFinishedCodeAnalysisListener"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.jetbrains.performancePlugin">

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.engine;
 
 import com.intellij.openapi.editor.Document;
@@ -39,14 +25,14 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
-public class ArrangementEntryWrapper<E extends ArrangementEntry> {
+public final class ArrangementEntryWrapper<E extends ArrangementEntry> {
 
-  @NotNull private final List<ArrangementEntryWrapper<E>> myChildren = new ArrayList<>();
-  @NotNull private final E myEntry;
+  private final @NotNull List<ArrangementEntryWrapper<E>> myChildren = new ArrayList<>();
+  private final @NotNull E myEntry;
 
-  @Nullable private ArrangementEntryWrapper<E> myParent;
-  @Nullable private ArrangementEntryWrapper<E> myPrevious;
-  @Nullable private ArrangementEntryWrapper<E> myNext;
+  private @Nullable ArrangementEntryWrapper<E> myParent;
+  private @Nullable ArrangementEntryWrapper<E> myPrevious;
+  private @Nullable ArrangementEntryWrapper<E> myNext;
 
   private int myStartOffset;
   private int myEndOffset;
@@ -70,8 +56,7 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
     }
   }
 
-  @NotNull
-  public E getEntry() {
+  public @NotNull E getEntry() {
     return myEntry;
   }
 
@@ -87,8 +72,7 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
     myEndOffset = endOffset;
   }
 
-  @Nullable
-  public ArrangementEntryWrapper<E> getParent() {
+  public @Nullable ArrangementEntryWrapper<E> getParent() {
     return myParent;
   }
 
@@ -96,8 +80,7 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
     myParent = parent;
   }
 
-  @Nullable
-  public ArrangementEntryWrapper<E> getPrevious() {
+  public @Nullable ArrangementEntryWrapper<E> getPrevious() {
     return myPrevious;
   }
 
@@ -105,8 +88,7 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
     myPrevious = previous;
   }
 
-  @Nullable
-  public ArrangementEntryWrapper<E> getNext() {
+  public @Nullable ArrangementEntryWrapper<E> getNext() {
     return myNext;
   }
 
@@ -131,8 +113,7 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
     myNext = next;
   }
 
-  @NotNull
-  public List<ArrangementEntryWrapper<E>> getChildren() {
+  public @NotNull List<ArrangementEntryWrapper<E>> getChildren() {
     return myChildren;
   }
 

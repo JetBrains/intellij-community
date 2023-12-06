@@ -4,7 +4,7 @@ fun main() {
     Runnable {
         with("abc") {
             //Breakpoint!
-            this
+            this + ""
         }
     }.run()
 }

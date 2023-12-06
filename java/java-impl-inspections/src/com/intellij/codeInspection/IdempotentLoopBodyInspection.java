@@ -59,7 +59,7 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
         checkControlFlow(loop, controlFlow, holder);
       }
 
-      private void checkControlFlow(PsiLoopStatement loop, ControlFlow bodyFlow, @NotNull ProblemsHolder holder) {
+      private static void checkControlFlow(PsiLoopStatement loop, ControlFlow bodyFlow, @NotNull ProblemsHolder holder) {
         Collection<PsiVariable> variables = ControlFlowUtil.getWrittenVariables(bodyFlow, 0, bodyFlow.getSize(), true);
         if (variables.isEmpty()) return;
         List<PsiReferenceExpression> reads = ControlFlowUtil.getReadBeforeWrite(bodyFlow);

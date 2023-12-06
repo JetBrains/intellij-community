@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.facet
 import com.intellij.facet.impl.ui.libraries.LibrariesValidatorContext
 import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.facet.ui.FacetValidatorsManager
+import com.intellij.facet.ui.SlowFacetEditorValidator
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.facet.ui.libraries.FrameworkLibraryValidator
 import com.intellij.ide.IdeBundle
@@ -25,7 +26,7 @@ class FrameworkLibraryValidatorWithDynamicDescription(
     private val validatorsManager: FacetValidatorsManager,
     private val libraryCategoryName: String,
     private val getPlatform: () -> TargetPlatform?
-) : FrameworkLibraryValidator() {
+) : FrameworkLibraryValidator(), SlowFacetEditorValidator {
     private val IdePlatformKind.libraryDescription: CustomLibraryDescription?
         get() = getLibraryDescription(context.module.project, this)
 
@@ -34,7 +35,7 @@ class FrameworkLibraryValidatorWithDynamicDescription(
         if (platform.isCommon) return true
 
         if (KotlinVersionInfoProvider.EP_NAME.extensionList.any {
-                it.getLibraryVersions(context.module, platform, context.rootModel).isNotEmpty()
+                it.getLibraryVersionsSequence(context.module, platform, context.rootModel).any()
             }
         ) return true
 

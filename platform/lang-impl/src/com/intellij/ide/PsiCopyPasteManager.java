@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -14,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +56,7 @@ public final class PsiCopyPasteManager {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        if (myRecentData != null && (!myRecentData.isValid() || myRecentData.project == project)) {
+        if (myRecentData != null && myRecentData.project == project) {
           myRecentData = null;
         }
 
@@ -61,8 +65,10 @@ public final class PsiCopyPasteManager {
           Transferable t = contents[i];
           if (t instanceof MyTransferable) {
             MyData myData = ((MyTransferable)t).myDataProxy;
-            if (!myData.isValid() || myData.project == project) {
-              myCopyPasteManager.removeContent(t);
+            try (AccessToken ignore = SlowOperations.knownIssue("IDEA-322955, EA-642861")) {
+              if (myData.project == project) {
+                myCopyPasteManager.removeContent(t);
+              }
             }
           }
         }
@@ -140,7 +146,7 @@ public final class PsiCopyPasteManager {
   }
 
 
-  static class MyData {
+  static final class MyData {
     final Project project;
     final boolean isCopied;
     final List<SmartPsiElementPointer<?>> pointers = new ArrayList<>();

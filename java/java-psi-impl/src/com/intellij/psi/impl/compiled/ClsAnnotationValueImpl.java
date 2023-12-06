@@ -47,7 +47,7 @@ abstract class ClsAnnotationValueImpl extends ClsElementImpl implements PsiAnnot
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
     PsiAnnotation mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);

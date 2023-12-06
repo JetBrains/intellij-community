@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -29,12 +29,12 @@ import java.awt.event.KeyEvent;
  * This class is programmatically instantiated and registered when opening and closing projects
  * and therefore not registered in plugin.xml
  */
-public class ProjectWindowAction extends ToggleAction implements DumbAware {
+public final class ProjectWindowAction extends ToggleAction implements DumbAware {
 
   private ProjectWindowAction myPrevious;
   private ProjectWindowAction myNext;
-  @NotNull private final String myProjectName;
-  @NotNull private final String myProjectLocation;
+  private final @NotNull String myProjectName;
+  private final @NotNull String myProjectLocation;
 
   public ProjectWindowAction(@NlsSafe @NotNull String projectName, @NotNull String projectLocation, ProjectWindowAction previous) {
     myProjectName = projectName;
@@ -72,18 +72,15 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     return myNext;
   }
 
-  @NotNull
-  public String getProjectLocation() {
+  public @NotNull String getProjectLocation() {
     return myProjectLocation;
   }
 
-  @NotNull
-  public String getProjectName() {
+  public @NotNull String getProjectName() {
     return myProjectName;
   }
 
-  @Nullable
-  private Project findProject() {
+  private @Nullable Project findProject() {
     if (LightEditService.WINDOW_NAME.equals(myProjectName)) {
       return LightEditService.getInstance().getProject();
     }
@@ -142,17 +139,14 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return getTemplatePresentation().getText()
            + " previous: " + myPrevious.getTemplatePresentation().getText()
            + " next: " + myNext.getTemplatePresentation().getText();
   }
 
-  @NlsActions.ActionText
-  @Nullable
   @Override
-  public String getTemplateText() {
+  public @NlsActions.ActionText @Nullable String getTemplateText() {
     return IdeBundle.message("action.switch.project.text");
   }
 }

@@ -13,6 +13,11 @@ import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import java.io.File
 
 abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
+    public override fun setUp() {
+        super.setUp()
+        myDoCompare = false
+    }
+
     override fun getTestRoot(): String = "/refactoring/moveMultiModule/"
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR

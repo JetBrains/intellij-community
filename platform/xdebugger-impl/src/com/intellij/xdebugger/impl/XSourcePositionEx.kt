@@ -7,14 +7,11 @@ import kotlinx.coroutines.flow.emptyFlow
 
 interface XSourcePositionEx : XSourcePosition {
   /**
-   * If this represents a position in a document loading/changing dynamically in an asynchronous way,
-   * returning a non-empty flow will make the platform update the execution point highlighting
-   * and scroll to the updated position on each new update emitted be the returned flow.
+   * If this represents a position in a document the content of which is loaded/changed dynamically in an
+   * asynchronous way, returning a non-empty flow will make the platform update the execution point
+   * highlighting on each update emitted by the returned flow, optionally scrolling to the updated position
+   * if the emitted value is `true`.
    */
-  val positionUpdateFlow: Flow<NavigationMode>
+  val positionUpdateFlow: Flow<Boolean>
     get() = emptyFlow()
-
-  enum class NavigationMode {
-    NONE, SCROLL, OPEN
-  }
 }

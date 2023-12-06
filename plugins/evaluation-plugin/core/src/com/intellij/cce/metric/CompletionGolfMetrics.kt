@@ -1,22 +1,42 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.metric
 
-import com.intellij.cce.actions.selectedWithoutPrefix
+import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-internal fun createCompletionGolfMetrics(): List<Metric> =
+fun createCompletionGolfMetrics(): List<Metric> =
   listOf(
     MatchedRatio(),
+    MatchedRatioAt(showByDefault = false, n = 1),
+    MatchedRatioAt(showByDefault = false, n = 3),
+    PrefixSimilarity(),
+    EditSimilarity(),
+    SelectedAtMetric(false, n = 1),
+    SelectedAtMetric(false, n = 5),
     MovesCount(),
     TypingsCount(),
     NavigationsCount(),
     CompletionInvocationsCount(),
     MovesCountNormalised(),
-    PerfectLine(),
-    Precision(),
-    RecallAt(1),
-    RecallAt(5),
-    Recall()
+    PerfectLine(showByDefault = false)
+  )
+
+fun createBenchmarkMetrics(): List<Metric> =
+  listOf(
+    MatchedRatio(showByDefault = true),
+    MatchedRatioAt(showByDefault = false, n = 1),
+    MatchedRatioAt(showByDefault = false, n = 3),
+    PrefixSimilarity(showByDefault = false),
+    EditSimilarity(showByDefault = false),
+    PerfectLine(showByDefault = true),
+    SelectedAtMetric(false, n = 1),
+    SelectedAtMetric(false, n = 5),
+    CancelledMetric(showByDefault = false),
+    CancelledAtMetric(showByDefault = false, n = 1),
+    CancelledAtMetric(showByDefault = false, n = 5),
+    MatchedLineLength(),
+    FirstPerfectLineSession()
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {
@@ -24,13 +44,14 @@ internal abstract class CompletionGolfMetric<T : Number> : Metric {
 
   private fun T.alsoAddToSample(): T = also { sample.add(it.toDouble()) }
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): T = compute(sessions, comparator).alsoAddToSample()
+  override fun evaluate(sessions: List<Session>): T = compute(sessions).alsoAddToSample()
 
-  abstract fun compute(sessions: List<Session>, comparator: SuggestionsComparator): T
+  abstract fun compute(sessions: List<Session>): T
 }
 
 internal class MovesCount : CompletionGolfMetric<Int>() {
   override val name = NAME
+  override val description: String = "Number of actions to write the file using completion"
   override val valueType = MetricValueType.INT
   override val value: Double
     get() = sample.sum()
@@ -41,13 +62,13 @@ internal class MovesCount : CompletionGolfMetric<Int>() {
     CompletionInvocationsCount()
   )
 
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int {
+  override fun compute(sessions: List<Session>): Int {
     // Add x2 amount of lookups, assuming that before each action we call code completion
     // We summarize 3 types of actions:
     // call code completion (1 point)
     // choice suggestion from completion or symbol (if there is no offer in completion) (1 point)
     // navigation to the suggestion (if it fits) (N points, based on suggestion index, assuming first index is 0)
-    return metrics.sumOf { it.compute(sessions, comparator) }
+    return metrics.sumOf { it.compute(sessions) }
   }
 
   companion object {
@@ -56,50 +77,87 @@ internal class MovesCount : CompletionGolfMetric<Int>() {
 }
 
 internal class TypingsCount : CompletionGolfMetric<Int>() {
-  override val name = NAME
+  override val name = "Typings"
+  override val description: String = "Number of typing new symbols"
   override val valueType = MetricValueType.INT
   override val showByDefault = false
   override val value: Double
     get() = sample.sum()
 
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
-    sessions.sumOf { it.expectedLength() +
-                     it.lookups.count { it.selectedPosition >= 0 } -
-                     it.lookups.sumOf { it.selectedWithoutPrefix()?.length ?: 0 } }
-  companion object {
-    const val NAME = "Typings"
-  }
+  override fun compute(sessions: List<Session>): Int =
+    sessions.sumOf {
+      it.expectedLength() +
+      it.lookups.count { it.selectedPosition >= 0 } -
+      it.lookups.sumOf { it.selectedWithoutPrefix()?.length ?: 0 }
+    }
 }
 
 internal class NavigationsCount : CompletionGolfMetric<Int>() {
-  override val name = NAME
+  override val name = "Navigations"
+  override val description: String = "Number of navigations between proposals in code completion results"
   override val valueType = MetricValueType.INT
   override val showByDefault = false
   override val value: Double
     get() = sample.sum()
 
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator) = sessions.sumOf { computeMoves(it) }
+  override fun compute(sessions: List<Session>): Int = sessions.sumOf { computeMoves(it) }
 
   private fun computeMoves(session: Session) = session.lookups.sumOf { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
-
-  companion object {
-    const val NAME = "Navigations"
-  }
 }
 
 
 internal class CompletionInvocationsCount : CompletionGolfMetric<Int>() {
-  override val name = NAME
+  override val name = "Completion Invocations"
+  override val description: String = "Number of code completion invocations"
   override val valueType = MetricValueType.INT
   override val showByDefault = false
   override val value: Double
     get() = sample.sum()
 
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
+  override fun compute(sessions: List<Session>): Int =
     sessions.sumOf { it.lookups.count { lookup -> lookup.isNew } }
+}
 
-  companion object {
-    const val NAME = "Completion Invocations"
+internal class MatchedLineLength : Metric {
+  private val sample = mutableListOf<Double>()
+  override val name: String = "Matched Line Length"
+  override val description: String = "Maximum length of selected proposal in line (avg by lines)"
+  override val valueType: MetricValueType = MetricValueType.DOUBLE
+  override val showByDefault: Boolean = false
+
+  override val value: Double
+    get() = sample.average()
+
+  override fun evaluate(sessions: List<Session>): Double {
+    val fileSample = Sample()
+    for (session in sessions) {
+      val value = session.lookups.maxOfOrNull { lookup -> lookup.selectedWithoutPrefix()?.length ?: 0 }?.toDouble() ?: 0.0
+      fileSample.add(value)
+      sample.add(value)
+    }
+    return fileSample.mean()
+  }
+}
+
+internal class FirstPerfectLineSession : Metric {
+  private val sample = mutableListOf<Double>()
+  override val name: String = "First Perfect Line Session"
+  override val description: String = "Index of first lookup with proposal matches until the end of line (avg by lines)"
+  override val valueType: MetricValueType = MetricValueType.DOUBLE
+  override val showByDefault: Boolean = false
+
+  override val value: Double
+    get() = sample.average()
+
+  override fun evaluate(sessions: List<Session>): Number {
+    val fileSample = Sample()
+    for (session in sessions) {
+      val value = session.lookups.indexOfFirst { lookup -> (lookup.selectedWithoutPrefix()?.length ?: 0) +
+        lookup.offset == session.expectedText.length }.takeIf { it != -1 } ?: session.lookups.size
+      fileSample.add(value)
+      sample.add(value.toDouble())
+    }
+    return fileSample.mean()
   }
 }
 
@@ -108,13 +166,14 @@ internal class MovesCountNormalised : Metric {
   private var minPossibleMovesTotal: Int = 0
   private var maxPossibleMovesTotal: Int = 0
 
-  override val name = NAME
+  override val name = "Moves Count Normalised"
+  override val description: String = "Number of actions to write the file using completion normalized by minimum possible count"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = (movesCountTotal - minPossibleMovesTotal).toDouble() / (maxPossibleMovesTotal - minPossibleMovesTotal)
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val movesCount = MovesCount().compute(sessions, comparator)
+  override fun evaluate(sessions: List<Session>): Double {
+    val movesCount = MovesCount().compute(sessions)
     val minPossibleMoves = sessions.count() * 2
     val maxPossibleMoves = sessions.sumOf { it.expectedLength() + it.completableLength }
     movesCountTotal += movesCount
@@ -131,107 +190,16 @@ internal class MovesCountNormalised : Metric {
     }
     return ((movesCount - minPossibleMoves).toDouble() / (maxPossibleMoves - minPossibleMoves))
   }
-
-  companion object {
-    const val NAME = "Moves Count Normalised"
-  }
 }
 
-internal class MatchedRatio : Metric {
-  private var totalMatched: Int = 0
-  private var totalExpected: Int = 0
+internal class PerfectLine(showByDefault: Boolean) : SimilarityMetric(showByDefault) {
+  override val name = "Perfect Line"
+  override val description: String = "Ratio of completions with proposal matches until the end of line"
 
-  override val name = "Matched Ratio"
-  override val valueType = MetricValueType.DOUBLE
-  override val showByDefault: Boolean = false
-  override val value: Double
-    get() = totalMatched.toDouble() / totalExpected
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double =
+    if (lookup.selectedWithoutPrefix()?.length == expectedText.length) 1.0 else 0.0
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    var matched = 0
-    var expected = 0
-    for (session in sessions) {
-      for (lookup in session.lookups) {
-        val expectedText = session.expectedText.substring(lookup.offset)
-        expected += expectedText.length
-        lookup.selectedWithoutPrefix()?.let {
-          matched += it.length
-        }
-      }
-    }
-    totalMatched += matched
-    totalExpected += expected
-    return matched.toDouble() / expected
-  }
-}
-
-internal class PerfectLine : CompletionGolfMetric<Int>() {
-  override val name = NAME
-  override val valueType = MetricValueType.INT
-  override val value: Double
-    get() = sample.sum()
-
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int {
-    return sessions.count { it.success }
-  }
-
-  companion object {
-    const val NAME = "Perfect Line"
-  }
-}
-
-internal class Precision : Metric {
-  private val sample = Sample()
-  override val name = "Precision"
-  override val valueType = MetricValueType.DOUBLE
-  override val value: Double
-    get() = sample.mean()
-
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val fileSample = Sample()
-
-    for (lookup in sessions.flatMap { it.lookups }) {
-      for (i in lookup.suggestions.indices) {
-        if (i == lookup.selectedPosition) {
-          fileSample.add(1.0)
-          sample.add(1.0)
-        } else {
-          fileSample.add(0.0)
-          sample.add(0.0)
-        }
-      }
-    }
-    return fileSample.mean()
-  }
-}
-
-internal open class RecallAt(private val n: Int) : Metric {
-  private val sample = Sample()
-  override val name = "RecallAt$n"
-  override val valueType = MetricValueType.DOUBLE
-  override val value: Double
-    get() = sample.mean()
-
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val fileSample = Sample()
-
-    for (lookup in sessions.flatMap { it.lookups }) {
-      if (lookup.selectedPosition in 0 until n) {
-        fileSample.add(1.0)
-        sample.add(1.0)
-      }
-      else {
-        fileSample.add(0.0)
-        sample.add(0.0)
-      }
-    }
-    return fileSample.mean()
-  }
-}
-
-internal class Recall : RecallAt(Int.MAX_VALUE) {
-  override val name = "Recall"
-  override val showByDefault: Boolean = false
+  override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
 }
 
 private fun Session.expectedLength(): Int = expectedText.length - (lookups.firstOrNull()?.offset ?: 0)

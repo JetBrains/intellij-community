@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem
 interface Repository {
     val url: String
     val idForMaven: String
+    val order: Int
+        get() = 100
 }
 
-data class DefaultRepository(val type: Type) : Repository {
+data class DefaultRepository(val type: Type, override val order: Int = 10) : Repository {
     override val url: String
         get() = type.url
 
@@ -25,7 +27,8 @@ data class DefaultRepository(val type: Type) : Repository {
         val JCENTER = DefaultRepository(Type.JCENTER)
         val MAVEN_CENTRAL = DefaultRepository(Type.MAVEN_CENTRAL)
         val GOOGLE = DefaultRepository(Type.GOOGLE)
-        val GRADLE_PLUGIN_PORTAL = DefaultRepository(Type.GRADLE_PLUGIN_PORTAL)
+        //GPP should always appear after the others
+        val GRADLE_PLUGIN_PORTAL = DefaultRepository(Type.GRADLE_PLUGIN_PORTAL, 11)
         val MAVEN_LOCAL = DefaultRepository(Type.MAVEN_LOCAL)
     }
 }
@@ -66,5 +69,9 @@ object Repositories {
     val JETBRAINS_KOTLIN_BOOTSTRAP = CacheRedirector(
         "maven.pkg.jetbrains.space",
         "kotlin/p/kotlin/bootstrap"
+    )
+    val JETBRAINS_KOTLIN_IDE_PLUGIN_DEPENDENCIES = CacheRedirector(
+        "maven.pkg.jetbrains.space",
+        "kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
     )
 }

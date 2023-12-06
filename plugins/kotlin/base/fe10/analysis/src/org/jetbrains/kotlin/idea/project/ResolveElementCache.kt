@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.project
 
@@ -7,10 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.*
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.SLRUCache
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.base.fe10.analysis.DaemonCodeAnalyzerStatusService
 import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.context.SimpleGlobalContext
@@ -19,7 +20,6 @@ import org.jetbrains.kotlin.context.withProject
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.frontend.di.createContainerForBodyResolve
-import org.jetbrains.kotlin.base.fe10.analysis.DaemonCodeAnalyzerStatusService
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
@@ -86,8 +86,8 @@ class ResolveElementCache(
         CachedValuesManager.getManager(project).createCachedValue(
             CachedValueProvider {
                 CachedValueProvider.Result.create(
-                    ContainerUtil.createConcurrentWeakKeySoftValueMap(),
-                    cacheDependencies
+                  CollectionFactory.createConcurrentWeakKeySoftValueMap(),
+                  cacheDependencies
                 )
             },
             false
@@ -116,12 +116,9 @@ class ResolveElementCache(
     private val partialBodyResolveCache: CachedValue<SLRUCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>>> =
         CachedValuesManager.getManager(project).createCachedValue(
             CachedValueProvider {
-                val slruCache: SLRUCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>> =
-                    object : SLRUCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>>(20, 20) {
-                        override fun createValue(file: KtFile): ConcurrentMap<KtExpression, CachedPartialResolve> {
-                            return ContainerUtil.createConcurrentWeakKeySoftValueMap()
-                        }
-                    }
+                val slruCache = SLRUCache.slruCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>>(20, 20) {
+                    CollectionFactory.createConcurrentWeakKeySoftValueMap()
+                }
 
                 CachedValueProvider.Result.create(slruCache, cacheDependencies)
             },
@@ -551,7 +548,7 @@ class ResolveElementCache(
         val descriptor = analyzer.resolveToDescriptor(declaration) as ClassifierDescriptorWithTypeParameters
 
         for (parameterDescriptor in descriptor.declaredTypeParameters) {
-            ForceResolveUtil.forceResolveAllContents<TypeParameterDescriptor>(parameterDescriptor)
+            ForceResolveUtil.forceResolveAllContents(parameterDescriptor)
         }
 
         return resolveSession.trace
@@ -798,11 +795,16 @@ class ResolveElementCache(
         return trace
     }
 
-    private fun forceResolveAnnotationsInside(element: KtElement) {
-        element.forEachDescendantOfType<KtAnnotationEntry>(canGoInside = { it !is KtBlockExpression }) { entry ->
+    private fun forceResolveAnnotationsInside(element: KtAnnotated) {
+        val action: (KtAnnotationEntry) -> Unit = { entry ->
             resolveSession.bindingContext[BindingContext.ANNOTATION, entry]?.let {
                 ForceResolveUtil.forceResolveAllContents(it)
             }
+        }
+        if (element.containingKtFile.isCompiled) {
+            element.annotationEntries.forEach(action)
+        } else {
+            element.forEachDescendantOfType<KtAnnotationEntry>(canGoInside = { it !is KtBlockExpression }, action = action)
         }
     }
 

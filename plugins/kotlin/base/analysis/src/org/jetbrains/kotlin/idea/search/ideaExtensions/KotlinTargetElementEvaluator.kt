@@ -2,24 +2,22 @@
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
-import com.intellij.codeInsight.JavaTargetElementEvaluator
-import com.intellij.codeInsight.TargetElementEvaluatorEx
-import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.TargetElementUtilExtender
+import com.intellij.codeInsight.*
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.util.BitUtil
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.getCalleeByLambdaArgument
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-abstract class KotlinTargetElementEvaluator : TargetElementEvaluatorEx, TargetElementUtilExtender {
+abstract class KotlinTargetElementEvaluator : TargetElementEvaluatorEx2(), TargetElementEvaluatorEx, TargetElementUtilExtender {
     companion object {
-        const val DO_NOT_UNWRAP_LABELED_EXPRESSION = 0x100
         const val BYPASS_IMPORT_ALIAS = 0x200
     }
 
@@ -31,19 +29,40 @@ abstract class KotlinTargetElementEvaluator : TargetElementEvaluatorEx, TargetEl
 
     override fun getAdditionalDefinitionSearchFlags() = 0
 
-    override fun getAdditionalReferenceSearchFlags() = DO_NOT_UNWRAP_LABELED_EXPRESSION or BYPASS_IMPORT_ALIAS
+    override fun getAdditionalReferenceSearchFlags() = BYPASS_IMPORT_ALIAS
 
     override fun getAllAdditionalFlags() = additionalDefinitionSearchFlags + additionalReferenceSearchFlags
 
+    override fun isAcceptableNamedParent(parent: PsiElement): Boolean {
+        if (parent is KtParameter && parent.name == null) {
+            //functional type parameters
+            return false
+        }
+        return super.isAcceptableNamedParent(parent)
+    }
+
     override fun includeSelfInGotoImplementation(element: PsiElement): Boolean = !(element is KtClass && element.isAbstract())
+
+    override fun adjustReferenceOrReferencedElement(
+      file: PsiFile,
+      editor: Editor,
+      offset: Int,
+      flags: Int,
+      refElement: PsiElement?
+    ): PsiElement? {
+        if (!BitUtil.isSet(flags, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)) {
+            if (refElement is KtConstructor<*>) {
+                return refElement.getContainingClassOrObject()
+            }
+        }
+        return refElement
+    }
 
     override fun getElementByReference(ref: PsiReference, flags: Int): PsiElement? {
         if (ref is KtSimpleNameReference && ref.expression is KtLabelReferenceExpression) {
             val refTarget = ref.resolve() as? KtExpression ?: return null
-            if (!BitUtil.isSet(flags, DO_NOT_UNWRAP_LABELED_EXPRESSION)) {
-                return refTarget.getLabeledParent(ref.expression.getReferencedName()) ?: refTarget
-            }
-            return refTarget
+            refTarget.getLabeledParent(ref.expression.getReferencedName())?.let { return it }
+            return (refTarget as? KtFunction)?.getCalleeByLambdaArgument() ?: refTarget
         }
 
         if (!BitUtil.isSet(flags, BYPASS_IMPORT_ALIAS)) {

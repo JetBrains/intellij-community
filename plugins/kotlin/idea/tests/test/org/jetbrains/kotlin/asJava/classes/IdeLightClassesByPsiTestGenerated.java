@@ -83,6 +83,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/properties.kt"));
         }
 
+        @TestMetadata("reifiedInlineReturnsObject.kt")
+        public void testReifiedInlineReturnsObject() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/reifiedInlineReturnsObject.kt"));
+        }
+
         @TestMetadata("simpleFunctions.kt")
         public void testSimpleFunctions() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/simpleFunctions.kt"));
@@ -96,6 +101,16 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
         @TestMetadata("valueClassInSignature.kt")
         public void testValueClassInSignature() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/valueClassInSignature.kt"));
+        }
+
+        @TestMetadata("varargParameterWithIncompletedType.kt")
+        public void testVarargParameterWithIncompletedType() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/varargParameterWithIncompletedType.kt"));
+        }
+
+        @TestMetadata("varargParameterWithoutType.kt")
+        public void testVarargParameterWithoutType() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/varargParameterWithoutType.kt"));
         }
 
         @TestMetadata("wildcardOptimization.kt")
@@ -146,9 +161,24 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             super.setUp();
         }
 
+        @TestMetadata("allowedTargets.kt")
+        public void testAllowedTargets() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/allowedTargets.kt"));
+        }
+
+        @TestMetadata("annotationInAnnotationParameters.kt")
+        public void testAnnotationInAnnotationParameters() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationInAnnotationParameters.kt"));
+        }
+
         @TestMetadata("annotationWithSetParamPropertyModifier.kt")
         public void testAnnotationWithSetParamPropertyModifier() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationWithSetParamPropertyModifier.kt"));
+        }
+
+        @TestMetadata("annotationWithVaragArguments.kt")
+        public void testAnnotationWithVaragArguments() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationWithVaragArguments.kt"));
         }
 
         @TestMetadata("annotations.kt")
@@ -201,6 +231,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/defaultMethodInKotlinWithSettingAllCompatibility.kt"));
         }
 
+        @TestMetadata("defaultParameterValue.kt")
+        public void testDefaultParameterValue() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/defaultParameterValue.kt"));
+        }
+
         @TestMetadata("DelegatedProperty.kt")
         public void testDelegatedProperty() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/DelegatedProperty.kt"));
@@ -219,6 +254,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
         @TestMetadata("dollarsInNameLocal.kt")
         public void testDollarsInNameLocal() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/dollarsInNameLocal.kt"));
+        }
+
+        @TestMetadata("enumMembers.kt")
+        public void testEnumMembers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/enumMembers.kt"));
         }
 
         @TestMetadata("enums.kt")
@@ -341,6 +381,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/properties.kt"));
         }
 
+        @TestMetadata("propertyAnnotations.kt")
+        public void testPropertyAnnotations() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/propertyAnnotations.kt"));
+        }
+
         @TestMetadata("simpleFunctions.kt")
         public void testSimpleFunctions() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/simpleFunctions.kt"));
@@ -391,9 +436,54 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unresolvedWithAliasedImport.kt"));
         }
 
+        @TestMetadata("unsafePropertyInitializers.kt")
+        public void testUnsafePropertyInitializers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unsafePropertyInitializers.kt"));
+        }
+
         @TestMetadata("valueClassInSignature.kt")
         public void testValueClassInSignature() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/valueClassInSignature.kt"));
+        }
+
+        @TestMetadata("varargParameterWithIncompletedTypeInAnnotationPrimaryConstructor.kt")
+        public void testVarargParameterWithIncompletedTypeInAnnotationPrimaryConstructor() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/varargParameterWithIncompletedTypeInAnnotationPrimaryConstructor.kt"));
+        }
+
+        @TestMetadata("varargParameterWithIncompletedTypeInPrimaryConstructor.kt")
+        public void testVarargParameterWithIncompletedTypeInPrimaryConstructor() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/varargParameterWithIncompletedTypeInPrimaryConstructor.kt"));
+        }
+
+        @TestMetadata("varargParameterWithoutTypeInAnnotationPrimaryConstructor.kt")
+        public void testVarargParameterWithoutTypeInAnnotationPrimaryConstructor() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/varargParameterWithoutTypeInAnnotationPrimaryConstructor.kt"));
+        }
+
+        @TestMetadata("varargParameterWithoutTypeInPrimaryConstructor.kt")
+        public void testVarargParameterWithoutTypeInPrimaryConstructor() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/varargParameterWithoutTypeInPrimaryConstructor.kt"));
+        }
+
+        @TestMetadata("varargPropertyWithIncompletedTypeInAnnotationPrimaryConstructor.kt")
+        public void testVarargPropertyWithIncompletedTypeInAnnotationPrimaryConstructor() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/varargPropertyWithIncompletedTypeInAnnotationPrimaryConstructor.kt"));
+        }
+
+        @TestMetadata("varargPropertyWithIncompletedTypeInPrimaryConstructor.kt")
+        public void testVarargPropertyWithIncompletedTypeInPrimaryConstructor() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/varargPropertyWithIncompletedTypeInPrimaryConstructor.kt"));
+        }
+
+        @TestMetadata("varargPropertyWithoutTypeInAnnotationPrimaryConstructor.kt")
+        public void testVarargPropertyWithoutTypeInAnnotationPrimaryConstructor() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/varargPropertyWithoutTypeInAnnotationPrimaryConstructor.kt"));
+        }
+
+        @TestMetadata("varargPropertyWithoutTypeInPrimaryConstructor.kt")
+        public void testVarargPropertyWithoutTypeInPrimaryConstructor() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/varargPropertyWithoutTypeInPrimaryConstructor.kt"));
         }
 
         @TestMetadata("wildcardOptimization.kt")

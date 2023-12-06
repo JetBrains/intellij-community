@@ -1,0 +1,6 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.k1.codeinsight">
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k1.codeinsight.K1OptimizeImportsFacility"
+                        serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility"/>
+  </extensions>
+</idea-plugin>

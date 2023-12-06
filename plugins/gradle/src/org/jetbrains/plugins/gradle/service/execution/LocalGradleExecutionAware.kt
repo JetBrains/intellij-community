@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
-import com.intellij.build.events.impl.*
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.wsl.WSLUtil
@@ -12,21 +11,14 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState.CANCELED
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState.CANCELING
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.notification.callback.OpenExternalSystemSettingsCallback
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.project.Project
@@ -35,7 +27,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
@@ -48,7 +39,6 @@ import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
 import org.jetbrains.plugins.gradle.util.nonblockingResolveGradleJvmInfo
 import java.io.File
-import java.lang.System.currentTimeMillis
 
 @ApiStatus.Internal
 class LocalGradleExecutionAware : GradleExecutionAware {
@@ -107,13 +97,13 @@ class LocalGradleExecutionAware : GradleExecutionAware {
 
     val originalGradleJvm = projectSettings.gradleJvm
     val provider = use(project) { getGradleJvmLookupProvider(it, projectSettings) }
-    var sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, externalProjectPath, originalGradleJvm) }
+    var sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, originalGradleJvm) }
     if (sdkInfo is SdkInfo.Undefined || sdkInfo is SdkInfo.Unresolved || sdkInfo is SdkInfo.Resolving) {
       waitForGradleJvmResolving(provider, task, taskNotificationListener)
       if (projectSettings.gradleJvm == null) {
         projectSettings.gradleJvm = originalGradleJvm ?: ExternalSystemJdkUtil.USE_PROJECT_JDK
       }
-      sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, externalProjectPath, projectSettings.gradleJvm) }
+      sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, projectSettings.gradleJvm) }
     }
 
     val gradleJvm = projectSettings.gradleJvm
@@ -125,14 +115,14 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       LOG.warn("No Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
-    checkForWslJdkOnWindows(homePath, externalProjectPath, task)
+    checkForWslJdkOnWindows(homePath, projectSettings.externalProjectPath, task)
     if (!JdkUtil.checkForJdk(homePath)) {
-      if (JdkUtil.checkForJre(homePath)) {
-        LOG.warn("Gradle JVM ($gradleJvm) is JRE instead JDK: $sdkInfo")
-        throw jdkConfigurationException("gradle.jvm.is.jre")
-      }
       LOG.warn("Invalid Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
+    }
+    if (!JdkUtil.checkForJre(homePath)) {
+      LOG.warn("Gradle JVM ($gradleJvm) is JRE instead JDK: $sdkInfo")
+      throw jdkConfigurationException("gradle.jvm.is.jre")
     }
     return sdkInfo
   }

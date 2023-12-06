@@ -124,8 +124,9 @@ class NewTeamcityServiceMessages(_old_service_messages):
         properties["nodeId"] = str(current)
         properties["parentNodeId"] = str(parent)
 
-        if messageName == "testSuiteStarted":
-            self._test_suites[full_name] = (full_name, current, parent)
+        is_test = messageName == "testStarted"
+        if messageName == "testSuiteStarted" or is_test:
+            self._test_suites[full_name] = (full_name, current, parent, is_test)
         _old_service_messages.message(self, messageName, **properties)
 
     def _test_to_list(self, test_name):
@@ -224,6 +225,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
                 self.message("testSuiteFinished", **args)
             else:
                 self.message("testFinished", **args)
+                del self._test_suites[testName]
 
         commands = _TREE_MANAGER_HOLDER.manager.level_closed(
             self._test_to_list(testName), _write_finished_message)
@@ -253,9 +255,11 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
     def close_suites(self):
         # Go in reverse order and close all suites
-        for (test_suite, node_id, parent_node_id) in \
+        for (test_suite, node_id, parent_node_id, is_test) in \
                 reversed(list(self._test_suites.values())):
-            _old_service_messages.message(self, "testSuiteFinished", **{
+            # suits are explicitly closed, but if test can't been finished, it is skipped
+            message = "testIgnored" if is_test else "testSuiteFinished"
+            _old_service_messages.message(self, message, **{
                 "name": test_suite,
                 "nodeId": str(node_id),
                 "parentNodeId": str(parent_node_id)

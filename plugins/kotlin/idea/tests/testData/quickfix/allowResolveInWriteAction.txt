@@ -6,7 +6,7 @@ org.jetbrains.kotlin.idea.quickfix.ReorderParametersFix
 org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 org.jetbrains.kotlin.idea.inspections.ConflictingExtensionPropertyInspection$DeleteRedundantExtensionAction
 org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection$HighPriorityIntentionBasedQuickFix
-org.jetbrains.kotlin.idea.inspections.KotlinOptimizeImportsQuickFix
+org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinOptimizeImportsQuickFix
 org.jetbrains.kotlin.idea.inspections.migration.ObsoleteCoroutinesDelegateQuickFix
 org.jetbrains.kotlin.idea.inspections.SafeDeleteFix
 org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix
@@ -23,6 +23,7 @@ org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorIntention
 org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention
 org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix
+org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix
 org.jetbrains.kotlin.idea.quickfix.AddFunctionToSupertypeFix
 org.jetbrains.kotlin.idea.quickfix.AddNameToArgumentFix
 org.jetbrains.kotlin.idea.quickfix.AddPropertyToSupertypeFix
@@ -33,7 +34,9 @@ org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFix
 org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled
 org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing
 org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForOverridden
+org.jetbrains.kotlin.idea.quickfix.ChangeFunctionLiteralSignatureFix
 org.jetbrains.kotlin.idea.quickfix.ChangeFunctionLiteralReturnTypeFix
+org.jetbrains.kotlin.idea.quickfix.ChangeFunctionSignatureFix$Companion$RemoveParameterFix
 org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
 org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix
 org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix
@@ -45,7 +48,13 @@ org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix
 org.jetbrains.kotlin.idea.quickfix.ConvertExtensionPropertyInitializerToGetterFix
 org.jetbrains.kotlin.idea.quickfix.ConvertMemberToExtensionFix
 org.jetbrains.kotlin.idea.quickfix.ConvertToAnonymousObjectFix
+org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
+org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix
+org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix
+org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix$LowPriorityCreateClassFromUsageFix
+org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterFromUsageFix
 org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$CreateLocalFromUsageAction
+org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix
 org.jetbrains.kotlin.idea.quickfix.DeprecatedJavaAnnotationFix
 org.jetbrains.kotlin.idea.quickfix.ImportFix
 org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$AddInitializerFix
@@ -58,6 +67,7 @@ org.jetbrains.kotlin.idea.quickfix.LetImplementInterfaceFix
 org.jetbrains.kotlin.idea.quickfix.LowPriorityQuickFixWithDelegateFactory
 org.jetbrains.kotlin.idea.quickfix.migration.MigrateExternalExtensionFix
 org.jetbrains.kotlin.idea.quickfix.MakeOverriddenMemberOpenFix
+org.jetbrains.kotlin.idea.quickfix.MapPlatformClassToKotlinFix
 org.jetbrains.kotlin.idea.quickfix.QuickFixWithDelegateFactory
 org.jetbrains.kotlin.idea.quickfix.RemoveNameFromFunctionExpressionFix
 org.jetbrains.kotlin.idea.quickfix.RemovePartsFromPropertyFix
@@ -77,7 +87,7 @@ org.jetbrains.kotlin.idea.quickfix.SpecifyTypeExplicitlyFix
 org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParenthesisFix
 org.jetbrains.kotlin.idea.quickfix.WrapWithSafeLetCallFix
 com.intellij.spring.model.highlighting.autowire.SpringUastInjectionPointsAutowiringChecker$AddSpringBeanQualifierFix
-org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelMigrateToParcelizeQuickFix
+org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.K1ParcelMigrateToParcelizeQuickFix
 org.jetbrains.kotlin.idea.quickfix.AddConversionCallFix
 org.jetbrains.kotlin.idea.quickfix.OverloadResolutionChangeFix
 org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix

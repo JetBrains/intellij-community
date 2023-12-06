@@ -5,8 +5,8 @@ import com.intellij.openapi.util.Version
 import com.intellij.testFramework.UsefulTestCase
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJavaLibraryPlugin
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedTaskConfigurationAvoidance
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJavaLibraryPluginSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isTaskConfigurationAvoidanceSupported
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
@@ -40,15 +40,11 @@ open class TestGradleBuildScriptBuilder(
     }
 
   fun registerTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = apply {
-    assert(isSupportedTaskConfigurationAvoidance(gradleVersion))
+    assert(isTaskConfigurationAvoidanceSupported(gradleVersion))
     withPostfix {
       call("tasks.register", name, configure = configure)
     }
   }
-
-  // Note: These are Element building functions
-  fun project(name: String) = call("project", name)
-  fun project(name: String, configuration: String) = call("project", "path" to name, "configuration" to configuration)
 
   fun project(name: String, configure: Consumer<TestGradleBuildScriptBuilder>) = project(name) { configure.accept(this) }
   fun project(name: String, configure: TestGradleBuildScriptBuilder.() -> Unit) =
@@ -58,7 +54,10 @@ open class TestGradleBuildScriptBuilder(
       }
     }
 
-  fun configure(expression: Expression, configure: Consumer<TestGradleBuildScriptBuilder>) = configure(expression) { configure.accept(this) }
+  fun configure(expression: Expression, configure: Consumer<TestGradleBuildScriptBuilder>) = configure(expression) {
+    configure.accept(this)
+  }
+
   fun configure(expression: Expression, configure: TestGradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("configure", expression) {
@@ -103,43 +102,29 @@ open class TestGradleBuildScriptBuilder(
 
   fun withLocalGradleIdeaExtPlugin(jarFile: File) = apply {
     withBuildScriptMavenCentral()
-    addBuildScriptClasspath(jarFile)
+    addBuildScriptClasspath(call("file", jarFile.absolutePath))
     addBuildScriptClasspath("com.google.code.gson:gson:2.8.2")
     addBuildScriptClasspath("com.google.guava:guava:25.1-jre")
     applyPlugin("org.jetbrains.gradle.plugin.idea-ext")
   }
 
   override fun withBuildScriptMavenCentral() =
-    withBuildScriptMavenCentral(false)
+    withBuildScriptRepository {
+      mavenCentralRepository()
+    }
 
   override fun withMavenCentral() =
-    withMavenCentral(false)
-
-  fun withBuildScriptMavenCentral(useOldStyleMetadata: Boolean) =
-    withBuildScriptRepository {
-      mavenCentralRepository(useOldStyleMetadata)
-    }
-
-  fun withMavenCentral(useOldStyleMetadata: Boolean) =
     withRepository {
-      mavenCentralRepository(useOldStyleMetadata)
+      mavenCentralRepository()
     }
 
-  private fun ScriptTreeBuilder.mavenCentralRepository(useOldStyleMetadata: Boolean = false) {
-    if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+  private fun ScriptTreeBuilder.mavenCentralRepository() {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      mavenRepository("https://repo.labs.intellij.net/repo1", false)
+    }
+    else {
       // IntelliJ internal maven repo is not available in local environment
       call("mavenCentral")
-      return
-    }
-
-    call("maven") {
-      call("url", "https://repo.labs.intellij.net/repo1")
-      if (useOldStyleMetadata) {
-        call("metadataSources") {
-          call("mavenPom")
-          call("artifact")
-        }
-      }
     }
   }
 
@@ -157,7 +142,7 @@ open class TestGradleBuildScriptBuilder(
       applyPlugin("java")
 
     override fun withJavaLibraryPlugin() =
-      if (isSupportedJavaLibraryPlugin(gradleVersion))
+      if (isJavaLibraryPluginSupported(gradleVersion))
         applyPlugin("java-library")
       else
         applyPlugin("java")
@@ -174,5 +159,17 @@ open class TestGradleBuildScriptBuilder(
     @JvmStatic
     fun extPluginVersionIsAtLeast(version: String) =
       Version.parseVersion(IDEA_EXT_PLUGIN_VERSION)!! >= Version.parseVersion(version)!!
+
+    fun ScriptTreeBuilder.mavenRepository(url: String, useOldStyleMetadata: Boolean) {
+      call("maven") {
+        call("url", url)
+        if (useOldStyleMetadata) {
+          call("metadataSources") {
+            call("mavenPom")
+            call("artifact")
+          }
+        }
+      }
+    }
   }
 }

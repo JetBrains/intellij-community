@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
@@ -12,6 +12,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.components.service
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -27,6 +28,7 @@ import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialNam
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBrancher
+import git4idea.commands.Git
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchResult
 import git4idea.fetch.GitFetchSupport
@@ -260,6 +262,10 @@ internal object BranchesDashboardActions {
   }
 
   class DeleteBranchAction : BranchesActionBase(icon = AllIcons.Actions.GC) {
+    init {
+      shortcutSet = CompositeShortcutSet(KeymapUtil.getActiveKeymapShortcuts("SafeDelete"),
+                                         KeymapUtil.getActiveKeymapShortcuts("EditorDeleteToLineStart"))
+    }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -309,6 +315,10 @@ internal object BranchesDashboardActions {
 
   class ShowBranchDiffAction : BranchesActionBase(text = messagePointer("action.Git.Compare.With.Current.title"),
                                                   icon = AllIcons.Actions.Diff) {
+    init {
+      shortcutSet = KeymapUtil.getActiveKeymapShortcuts("Diff.ShowDiff")
+    }
+
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
       if (branches.none { !it.isCurrent }) {
         e.presentation.isEnabled = false
@@ -373,7 +383,7 @@ internal object BranchesDashboardActions {
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
+      return ActionUpdateThread.BGT
     }
 
     override fun update(e: AnActionEvent) {
@@ -415,16 +425,8 @@ internal object BranchesDashboardActions {
   class FetchAction(private val ui: BranchesDashboardUi) : GitFetch() {
     override fun update(e: AnActionEvent) {
       super.update(e)
-      with(e.presentation) {
-        text = message("action.Git.Fetch.title")
-        icon = AllIcons.Vcs.Fetch
-        description = ""
-        val project = e.project ?: return@with
-        if (GitFetchSupport.fetchSupport(project).isFetchRunning) {
-          isEnabled = false
-          description = message("action.Git.Fetch.description.fetch.in.progress")
-        }
-      }
+      e.presentation.text = message("action.Git.Fetch.title")
+      e.presentation.icon = AllIcons.Vcs.Fetch
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -535,7 +537,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class RemoveRemoteAction : RemoteActionBase() {
+  class RemoveRemoteAction : RemoteActionBase(messagePointer("action.Git.Log.Remove.Remote.text", 0)) {
 
     override fun update(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
       e.presentation.text = message("action.Git.Log.Remove.Remote.text", selectedRemotes.size)
@@ -543,7 +545,7 @@ internal object BranchesDashboardActions {
 
     override fun doAction(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
       for ((repository, remotes) in selectedRemotes) {
-        removeRemotes(service(), repository, remotes)
+        removeRemotes(Git.getInstance(), repository, remotes)
       }
     }
   }
@@ -558,11 +560,11 @@ internal object BranchesDashboardActions {
 
     override fun doAction(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
       val (repository, remotes) = selectedRemotes.entries.first()
-      editRemote(service(), repository, remotes.first())
+      editRemote(Git.getInstance(), repository, remotes.first())
     }
   }
 
-  abstract class RemoteActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
+  abstract class RemoteActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String,
                                   private val description: () -> @Nls(capitalization = Nls.Capitalization.Sentence) String = { "" },
                                   icon: Icon? = null) :
     DumbAwareAction(text, description, icon) {
@@ -648,7 +650,7 @@ internal object BranchesDashboardActions {
   class UpdateBranchFilterInLogAction : DumbAwareAction() {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
+      return ActionUpdateThread.BGT
     }
 
     override fun update(e: AnActionEvent) {

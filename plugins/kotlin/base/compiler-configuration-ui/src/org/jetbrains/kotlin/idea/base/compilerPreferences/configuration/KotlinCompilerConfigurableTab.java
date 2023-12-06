@@ -6,7 +6,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -62,7 +62,8 @@ import java.util.function.Consumer;
 import static com.intellij.openapi.options.Configurable.isCheckboxModified;
 import static com.intellij.openapi.options.Configurable.isFieldModified;
 
-public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Disposable {
+public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
+    private static final Logger LOG = Logger.getInstance(KotlinCompilerConfigurableTab.class);
     private static final Map<String, @NlsSafe String> moduleKindDescriptions = new LinkedHashMap<>();
     private static final Map<String, @NlsSafe String> sourceMapSourceEmbeddingDescriptions = new LinkedHashMap<>();
     private static final int MAX_WARNING_SIZE = 75;
@@ -97,8 +98,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     private RawCommandLineEditor additionalArgsOptionsField;
     private JLabel additionalArgsLabel;
     private ThreeStateCheckBox generateSourceMapsCheckBox;
-    private TextFieldWithBrowseButton outputPrefixFile;
-    private TextFieldWithBrowseButton outputPostfixFile;
     private JLabel labelForOutputDirectory;
     private TextFieldWithBrowseButton outputDirectory;
     private ThreeStateCheckBox copyRuntimeFilesCheckBox;
@@ -118,12 +117,12 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     private JComboBox<VersionView> languageVersionComboBox;
     private JComboBox<VersionView> apiVersionComboBox;
     private JPanel scriptPanel;
-    private JLabel labelForOutputPrefixFile;
-    private JLabel labelForOutputPostfixFile;
     private JLabel warningLabel;
     private JTextField sourceMapPrefix;
     private JComboBox<String> sourceMapEmbedSources;
     private boolean isEnabled = true;
+
+    private @Nullable Disposable validatorsDisposable = null;
 
     public KotlinCompilerConfigurableTab(
             Project project,
@@ -173,7 +172,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                     module -> {
                         KotlinFacet facet = KotlinFacet.Companion.get(module);
                         if (facet == null) return null;
-                        KotlinFacetSettings facetSettings = facet.getConfiguration().getSettings();
+                        IKotlinFacetSettings facetSettings = facet.getConfiguration().getSettings();
                         if (facetSettings.getUseProjectSettings()) return null;
                         return module.getName();
                     }
@@ -199,12 +198,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     }
 
     private void initializeNonCidrSettings(boolean isMultiEditor) {
-        setupFileChooser(labelForOutputPrefixFile, outputPrefixFile,
-                         KotlinBaseCompilerConfigurationUiBundle.message("configuration.title.kotlin.compiler.js.option.output.prefix.browse.title"),
-                         true);
-        setupFileChooser(labelForOutputPostfixFile, outputPostfixFile,
-                         KotlinBaseCompilerConfigurationUiBundle.message("configuration.title.kotlin.compiler.js.option.output.postfix.browse.title"),
-                         true);
         setupFileChooser(labelForOutputDirectory, outputDirectory,
                          KotlinBaseCompilerConfigurationUiBundle.message("configuration.title.choose.output.directory"),
                          false);
@@ -226,11 +219,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         }
 
         updateOutputDirEnabled();
-    }
-
-    @Override
-    public void dispose() {
-
     }
 
     private static int calculateNameCountToShowInWarning(List<String> allNames) {
@@ -545,6 +533,14 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     @Nullable
     @Override
     public JComponent createComponent() {
+        if (validatorsDisposable != null) {
+            LOG.error(new IllegalStateException("validatorsDisposable is not null. Disposing and rewriting it."));
+            Disposer.dispose(validatorsDisposable);
+        }
+        validatorsDisposable = Disposer.newDisposable();
+        createVersionValidator(languageVersionComboBox, "configuration.warning.text.language.version.unsupported", validatorsDisposable);
+        createVersionValidator(apiVersionComboBox, "configuration.warning.text.api.version.unsupported", validatorsDisposable);
+
         return contentPane;
     }
 
@@ -567,8 +563,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                  isCheckboxModified(keepAliveCheckBox, compilerWorkspaceSettings.getEnableDaemon()))) ||
 
                isCheckboxModified(generateSourceMapsCheckBox, k2jsCompilerArguments.getSourceMap()) ||
-               isBrowseFieldModifiedWithNullize(outputPrefixFile, k2jsCompilerArguments.getOutputPrefix()) ||
-               isBrowseFieldModifiedWithNullize(outputPostfixFile, k2jsCompilerArguments.getOutputPostfix()) ||
                !getSelectedModuleKind().equals(getModuleKindOrDefault(k2jsCompilerArguments.getModuleKind())) ||
                isFieldModified(sourceMapPrefix, StringUtil.notNullize(k2jsCompilerArguments.getSourceMapPrefix())) ||
                !getSelectedSourceMapSourceEmbedding().equals(
@@ -664,8 +658,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         }
 
         k2jsCompilerArguments.setSourceMap(generateSourceMapsCheckBox.isSelected());
-        k2jsCompilerArguments.setOutputPrefix(StringUtil.nullize(outputPrefixFile.getText(), true));
-        k2jsCompilerArguments.setOutputPostfix(StringUtil.nullize(outputPostfixFile.getText(), true));
         k2jsCompilerArguments.setModuleKind(getSelectedModuleKind());
 
         k2jsCompilerArguments.setSourceMapPrefix(sourceMapPrefix.getText());
@@ -721,8 +713,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         }
 
         generateSourceMapsCheckBox.setSelected(k2jsCompilerArguments.getSourceMap());
-        outputPrefixFile.setText(k2jsCompilerArguments.getOutputPrefix());
-        outputPostfixFile.setText(k2jsCompilerArguments.getOutputPostfix());
 
         moduleKindComboBox.setSelectedItem(getModuleKindOrDefault(k2jsCompilerArguments.getModuleKind()));
         sourceMapPrefix.setText(k2jsCompilerArguments.getSourceMapPrefix());
@@ -744,7 +734,13 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     @Override
     public void disposeUIResources() {
-        Disposer.dispose(this);
+      if (validatorsDisposable == null) {
+          LOG.error(new IllegalStateException("validatorsDisposable is null"));
+          return;
+      }
+
+      Disposer.dispose(validatorsDisposable);
+      validatorsDisposable = null;
     }
 
     @Nls
@@ -773,14 +769,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     public ThreeStateCheckBox getGenerateSourceMapsCheckBox() {
         return generateSourceMapsCheckBox;
-    }
-
-    public TextFieldWithBrowseButton getOutputPrefixFile() {
-        return outputPrefixFile;
-    }
-
-    public TextFieldWithBrowseButton getOutputPostfixFile() {
-        return outputPostfixFile;
     }
 
     public TextFieldWithBrowseButton getOutputDirectory() {
@@ -875,9 +863,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         kotlinJpsPluginVersionComboBox = new ComboBox<>(jpsPluginComboBoxModel);
         apiVersionComboBox = new ComboBox<>(new MutableCollectionComboBoxModel<>());
 
-        createVersionValidator(languageVersionComboBox, "configuration.warning.text.language.version.unsupported");
-        createVersionValidator(apiVersionComboBox, "configuration.warning.text.api.version.unsupported");
-
         // Workaround: ThreeStateCheckBox doesn't send suitable notification on state change
         // TODO: replace with PropertyChangerListener after fix is available in IDEA
         copyRuntimeFilesCheckBox = new ThreeStateCheckBox() {
@@ -889,8 +874,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         };
     }
 
-    private void createVersionValidator(JComboBox<VersionView> component, String messageKey) {
-        new ComponentValidator(this)
+    private static void createVersionValidator(JComboBox<VersionView> component, String messageKey, Disposable parentDisposable) {
+        new ComponentValidator(parentDisposable)
                 .withValidator(() -> {
                     VersionView selectedItem = (VersionView) component.getSelectedItem();
                     if (selectedItem == null) return null;

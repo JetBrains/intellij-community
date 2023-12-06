@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -17,6 +17,7 @@ class GradleRunner(
   private val options: BuildOptions,
   private val communityRoot: BuildDependenciesCommunityRoot,
   private val additionalParams: List<String> = emptyList(),
+  private val withRetries: Boolean = true
 ) {
   /**
    * Invokes Gradle tasks on [gradleProjectDir] project.
@@ -46,7 +47,7 @@ class GradleRunner(
                                                                            tasks = tasks.asList())
 
   private fun runInner(title: String, buildFile: File?, force: Boolean, parallel: Boolean, tasks: List<String>): Boolean {
-    spanBuilder("gradle $tasks").setAttribute("title", title).useWithScope { span ->
+    spanBuilder("gradle $tasks").setAttribute("title", title).useWithScopeBlocking { span ->
       if (runInner(buildFile = buildFile, parallel = parallel, tasks = tasks)) {
         return true
       }
@@ -88,11 +89,14 @@ class GradleRunner(
     }
     command.addAll(additionalParams)
     command.addAll(tasks)
-    val processBuilder = ProcessBuilder(command).directory(gradleProjectDir.toFile())
-    processBuilder.environment().put("JAVA_HOME", JdkDownloader.getJdkHome(communityRoot, Span.current()::addEvent).toString())
-    processBuilder.inheritIO()
-    synchronized(gradleProjectDir.toString().intern()) {
-      return processBuilder.start().waitFor() == 0
+    val gradleCall = {
+      val processBuilder = ProcessBuilder(command).directory(gradleProjectDir.toFile())
+      processBuilder.environment().put("JAVA_HOME", JdkDownloader.blockingGetJdkHome(communityRoot, Span.current()::addEvent).toString())
+      processBuilder.inheritIO()
+      synchronized(gradleProjectDir.toString().intern()) {
+        processBuilder.start().waitFor() == 0
+      }
     }
+    return if (withRetries) retryWithExponentialBackOff { gradleCall() } else gradleCall()
   }
 }

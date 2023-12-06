@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.AppTopics;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -12,7 +12,6 @@ import java.util.EventListener;
 /**
  * Listener for {@link VirtualFile} to {@link Document} association events:
  * Virtual file loading, Document creation, Document saving back and reloading.
- * @see AppTopics#FILE_DOCUMENT_SYNC
  */
 public interface FileDocumentManagerListener extends EventListener {
   /**
@@ -25,12 +24,23 @@ public interface FileDocumentManagerListener extends EventListener {
    */
   ExtensionPointName<FileDocumentManagerListener> EP_NAME = new ExtensionPointName<>("com.intellij.fileDocumentManagerListener");
 
+  @Topic.AppLevel
+  Topic<FileDocumentManagerListener> TOPIC =
+    new Topic<>(FileDocumentManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
+
   /**
-   * Fired before processing FileDocumentManager.saveAllDocuments(). Can be used by plugins
+   * Fired before processing {@link FileDocumentManager#saveAllDocuments()}. Can be used by plugins
    * which need to perform additional save operations when documents, rather than settings,
    * are saved.
    */
   default void beforeAllDocumentsSaving() {
+  }
+
+  /**
+   * Fired before processing {@link FileDocumentManager#saveDocument(Document)}.
+   * Fired even document is unchanged.
+   */
+  default void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
   }
 
   /**

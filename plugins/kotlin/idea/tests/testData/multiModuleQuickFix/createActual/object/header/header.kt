@@ -1,4 +1,5 @@
-// "Create actual object for module testModule_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
+// IGNORE_K2
 
 expect object <caret>Object {
     fun foo(): String

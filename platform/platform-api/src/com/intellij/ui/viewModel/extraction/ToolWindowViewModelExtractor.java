@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.viewModel.extraction;
 
-import com.intellij.codeWithMe.ClientId;
+import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * This interface is used in Code With Me and unattended mode (Remote Dev) to determine how a given toolwindow is networked for a given client.<br/>
@@ -23,10 +22,10 @@ public interface ToolWindowViewModelExtractor {
   /**
    * Decides whether this extractor is applicable to a given toolwindow for a given client
    * @param toolWindowId the internal ID of toolwindow to potentially be shared
-   * @param clientId the client for which the toolwindow would be shared
+   * @param session the session for which the toolwindow would be shared
    * @return true, if this extractor's {@link #getMode} should be applied. false, otherwise (other extensions will be queried)
    */
-  boolean isApplicable(@NotNull String toolWindowId, @Nullable ClientId clientId);
+  boolean isApplicable(@NotNull String toolWindowId, @NotNull ClientProjectSession session);
 
   /**
    * The extraction mode that this extractor requests for applicable toolwindows/clients.

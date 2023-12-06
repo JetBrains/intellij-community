@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.base.psi.isAnnotationArgument
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
@@ -22,7 +22,7 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
 ) {
 
     override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean {
-        return element.isConcatenation() && !element.parent.isConcatenation() && !element.isAnnotationArgument()
+        return element.isConcatenation() && !element.parent.isConcatenation() && !element.isInsideAnnotationEntryArgumentList()
     }
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {

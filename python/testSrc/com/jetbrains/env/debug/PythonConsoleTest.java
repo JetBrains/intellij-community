@@ -3,9 +3,17 @@ package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.intellij.execution.console.ConsoleHistoryController;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.TestActionEvent;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.python.console.PyConsoleOptions;
+import com.jetbrains.python.console.PyConsoleOptionsConfigurable;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
@@ -296,6 +304,11 @@ public class PythonConsoleTest extends PyEnvTestCase {
         String currentOutput = output();
         assertFalse("Property was called for completion", currentOutput.contains("239"));
       }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return ImmutableSet.of("-python3.8", "-python3.9", "-python3.10", "-python3.11", "-python3.12");
+      }
     });
   }
 
@@ -308,8 +321,112 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("print(\"Hi\")");
         waitForOutput("Hi");
         addTextToEditor("getenv()");
-        ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runReadAction(() -> {
           checkParameters(7, getConsoleFile(), "key, default=None", new String[]{"key, "});
+        });
+      }
+    });
+  }
+
+  @Test
+  public void testCheckForThreadLeaks() {
+    runPythonTest(new PyConsoleTask() {
+      @Override
+      public void testing() throws Exception {
+        exec("x = 42");
+        exec("print(x)");
+        waitForOutput("42");
+      }
+
+      @Override
+      public boolean reportThreadLeaks() {
+        return true;
+      }
+    });
+  }
+
+  @Test
+  public void testStaticCodeInside() {
+    runPythonTest(new PyConsoleTask() {
+      @Override
+      public void before() {
+        PyConsoleOptions.getInstance(getProject()).setCodeCompletionOption(PyConsoleOptionsConfigurable.CodeCompletionOption.STATIC);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        exec("def foo():\n" +
+             "  pass");
+        exec("x = 42");
+        exec("s = 'str'");
+
+        getStaticCompletion("x", "foo", "s");
+      }
+
+      private void getStaticCompletion(String... completionVariants) {
+        myFixture.configureFromExistingVirtualFile(getConsoleView().getVirtualFile());
+        myFixture.completeBasic();
+        List<String> completions = myFixture.getLookupElementStrings();
+        for (String variant : completionVariants) {
+          assertTrue(completions.contains(variant));
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testConsoleHistoryNavigation() {
+    runPythonTest(new PyConsoleTask("/debug") {
+      @Override
+      public void testing() {
+        addToHistory("a = 1");
+        addToHistory("""
+                       def foo():
+                         x = 1
+                         y = 2
+                         return x + y""");
+
+        runHistoryAction(true);
+        checkCaretPosition(true);
+
+        runHistoryAction(true);
+        checkCaretPosition(true);
+
+        runHistoryAction(false);
+        checkCaretPosition(false);
+      }
+
+      private void addToHistory(String command) {
+        WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+          ConsoleHistoryController.getController(getConsoleView()).addToHistory(command);
+        });
+      }
+
+      private void runHistoryAction(boolean isNext) {
+        ConsoleHistoryController controller = ConsoleHistoryController.getController(getConsoleView());
+        EdtTestUtil.runInEdtAndWait(() -> {
+          AnAction action = isNext ? controller.getHistoryNext() : controller.getHistoryPrev();
+          action.actionPerformed(TestActionEvent.createTestEvent());
+        });
+      }
+
+      private void checkCaretPosition(boolean isNext) {
+        EditorEx consoleEditor = getConsoleView().getConsoleEditor();
+
+        ApplicationManager.getApplication().runReadAction(() -> {
+          int offset = consoleEditor.getCaretModel().getOffset();
+          int caretLine = consoleEditor.getDocument().getLineNumber(offset);
+          int linesCount = consoleEditor.getDocument().getLineCount();
+          if (linesCount > 1) {
+            if (isNext) {
+              assertEquals(0, caretLine);
+            }
+            else {
+              assertEquals(linesCount - 1, caretLine);
+            }
+          } else {
+            assertEquals(0, caretLine);
+          }
         });
       }
     });

@@ -49,8 +49,8 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                             """.trimIndent())
     importProject("apply plugin: 'java'\n")
 
-    assertModuleOutput("project.buildSrc.main", projectPath + "/buildSrc/build/foo", "");
-    assertModuleOutput("project.buildSrc.test", "", projectPath + "/buildSrc/build/bar");
+    assertModuleOutput("project.buildSrc.main", "$projectPath/buildSrc/build/foo", "");
+    assertModuleOutput("project.buildSrc.test", "", "$projectPath/buildSrc/build/bar");
   }
 
 
@@ -259,6 +259,24 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "build1", "build1.app",
                   "build2", "build2.app",
                   "build2.buildSrc", "build2.buildSrc.main", "build2.buildSrc.test")
+  }
+
+
+  @Test
+  @TargetVersions("8.0+")
+  fun `test composite members included in build Src are properly imported`() {
+    //createProjectSubFile("gradle.properties", "org.gradle.jvmargs=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005")
+    createSettingsFile("""
+      rootProject.name = "A"
+    """.trimIndent())
+
+    createProjectSubFile("buildSrc/settings.gradle", "includeBuild('../buildSrcIncluded')")
+    createProjectSubFile("buildSrcIncluded/settings.gradle", "rootProject.name='includedFromBuildSrc'")
+
+    importProject("")
+    assertModules("A",
+                  "A.buildSrc", "A.buildSrc.test", "A.buildSrc.main",
+                  "includedFromBuildSrc")
   }
 
   /*

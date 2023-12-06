@@ -12,8 +12,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @see SimpleAsyncChangesBrowser
+ * @deprecated Prefer using {@link SimpleAsyncChangesBrowser} instead.
  */
+@Deprecated
 public class SimpleChangesBrowser extends ChangesBrowserBase {
   private final List<Change> myChanges = new ArrayList<>();
   @Nullable private ChangeNodeDecorator myChangeNodeDecorator;

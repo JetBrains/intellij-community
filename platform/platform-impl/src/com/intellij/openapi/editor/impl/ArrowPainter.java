@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.util.Computable;
@@ -8,10 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 /**
- * Encapsulates logic of drawing arrows at graphics buffer (primary usage is to draw tabulation symbols representation arrows).
+ * Encapsulates the logic of drawing arrows at graphics buffer (primary usage is to draw tabulation symbols representation arrows).
  */
-public class ArrowPainter {
-
+public final class ArrowPainter {
   private final ColorProvider myColorHolder;
   private final Computable<Integer> myWidthProvider;
   private final Computable<Integer> myHeightProvider;

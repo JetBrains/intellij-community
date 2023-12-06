@@ -1,5 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
+
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -10,25 +12,35 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
-@SuppressWarnings({"UseJBColor", "UseDPIAwareBorders", "HardCodedStringLiteral"})
 public class SwingUpdaterUI implements UpdaterUI {
+  public static SwingUpdaterUI createUI() {
+    var font = UIManager.get("OptionPane.messageFont");
+    if (font != null && !Objects.equals(font, UIManager.get("Label.font"))) {
+      Runner.LOG.info("using " + font + " instead of " + UIManager.get("Label.font"));
+      var keys = UIManager.getDefaults().keys();
+      while (keys.hasMoreElements()) {
+        var key = keys.nextElement();
+        if (UIManager.get(key) instanceof Font) {
+          UIManager.put(key, font);
+        }
+      }
+    }
+
+    var result = new AtomicReference<SwingUpdaterUI>();
+    invokeAndWait(() -> result.set(new SwingUpdaterUI()));
+    return result.get();
+  }
+
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
-  private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 5, 0);
+  private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 8, 0);
   private static final EmptyBorder BUTTONS_BORDER = new EmptyBorder(5, 0, 0, 0);
 
   private static final Color VALIDATION_ERROR_COLOR = new Color(255, 175, 175);
   private static final Color VALIDATION_CONFLICT_COLOR = new Color(255, 240, 240);
-
-  private static final String TITLE = "Update";
-  private static final String CANCEL_BUTTON_TITLE = "Cancel";
-  private static final String EXIT_BUTTON_TITLE = "Exit";
-  private static final String RETRY_BUTTON_TITLE = "Retry";
-  private static final String PROCEED_BUTTON_TITLE = "Proceed";
 
   private final JLabel myProcessTitle;
   private final JProgressBar myProcessProgress;
@@ -39,12 +51,12 @@ public class SwingUpdaterUI implements UpdaterUI {
   private volatile boolean myCancelled = false;
   private volatile boolean myPaused = false;
 
-  public SwingUpdaterUI() {
+  private SwingUpdaterUI() {
     myProcessTitle = new JLabel(" ");
     myProcessProgress = new JProgressBar(0, 100);
     myProcessStatus = new JLabel(" ");
 
-    myCancelButton = new JButton(CANCEL_BUTTON_TITLE);
+    myCancelButton = new JButton(UpdaterUI.message("button.cancel"));
     myCancelButton.addActionListener(e -> doCancel());
 
     JPanel processPanel = new JPanel();
@@ -63,7 +75,7 @@ public class SwingUpdaterUI implements UpdaterUI {
     buttonsPanel.add(myCancelButton);
 
     myFrame = new JFrame();
-    myFrame.setTitle(TITLE);
+    myFrame.setTitle(UpdaterUI.message("main.title"));
     myFrame.setLayout(new BorderLayout());
     myFrame.getRootPane().setBorder(FRAME_BORDER);
     myFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -79,26 +91,21 @@ public class SwingUpdaterUI implements UpdaterUI {
     myFrame.pack();
     myFrame.setLocationRelativeTo(null);
     myFrame.setVisible(true);
-
-    invokeAndWait(() -> {});
   }
 
   private void doCancel() {
     if (!myCancelled) {
       myPaused = true;
-      String message = "The patch has not been applied yet.\nAre you sure you want to abort the operation?";
-      int result = JOptionPane.showConfirmDialog(myFrame, message, TITLE, JOptionPane.YES_NO_OPTION);
-      if (result == JOptionPane.YES_OPTION) {
+      var message = UpdaterUI.message("confirm.abort");
+      var title = UpdaterUI.message("main.title");
+      var options = new String[]{UpdaterUI.message("button.abort"), UpdaterUI.message("button.continue")};
+      var result = JOptionPane.showOptionDialog(myFrame, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
+      if (result == 0) {
         myCancelled = true;
         myCancelButton.setEnabled(false);
       }
       myPaused = false;
     }
-  }
-
-  @Override
-  public void setDescription(String oldBuildDesc, String newBuildDesc) {
-    setDescription("Updating " + oldBuildDesc + " to " + newBuildDesc + " ...");
   }
 
   @Override
@@ -136,37 +143,20 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   @Override
   public void showError(String message) {
-    String html = "<html>" + message.replace("\n", "<br>") + "</html>";
-    invokeAndWait(() -> JOptionPane.showMessageDialog(myFrame, html, "Update Error", JOptionPane.ERROR_MESSAGE));
+    var html = convertToHtml(message);
+    invokeAndWait(() -> JOptionPane.showMessageDialog(myFrame, html, UpdaterUI.message("error.title"), JOptionPane.ERROR_MESSAGE));
   }
 
   @Override
-  public void askUser(String message) throws OperationCancelledException {
-    invokeAndWait(() -> {
-      if (myCancelled) return;
-
-      Object[] choices = {RETRY_BUTTON_TITLE, EXIT_BUTTON_TITLE};
-      int choice = JOptionPane.showOptionDialog(
-        myFrame, message, TITLE, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
-
-      if (choice != 0) {
-        myCancelled = true;
-        myCancelButton.setEnabled(false);
-      }
-    });
-
-    checkCancelled();
-  }
-
-  @Override
-  public Map<String, ValidationResult.Option> askUser(List<? extends ValidationResult> validationResults) throws OperationCancelledException {
+  @SuppressWarnings("SSBasedInspection")
+  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
     boolean canProceed = validationResults.stream().noneMatch(r -> r.options.contains(ValidationResult.Option.NONE));
     Map<String, ValidationResult.Option> result = new HashMap<>();
 
     invokeAndWait(() -> {
       if (myCancelled) return;
 
-      JDialog dialog = new JDialog(myFrame, TITLE, true);
+      JDialog dialog = new JDialog(myFrame, UpdaterUI.message("main.title"), true);
       dialog.setLayout(new BorderLayout());
       dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -175,7 +165,7 @@ public class SwingUpdaterUI implements UpdaterUI {
       buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
       buttonsPanel.add(Box.createHorizontalGlue());
 
-      JButton cancelButton = new JButton(CANCEL_BUTTON_TITLE);
+      JButton cancelButton = new JButton(UpdaterUI.message("button.cancel"));
       cancelButton.addActionListener(e -> {
         myCancelled = true;
         myCancelButton.setEnabled(false);
@@ -184,7 +174,7 @@ public class SwingUpdaterUI implements UpdaterUI {
       buttonsPanel.add(cancelButton);
 
       if (canProceed) {
-        JButton proceedButton = new JButton(PROCEED_BUTTON_TITLE);
+        JButton proceedButton = new JButton(UpdaterUI.message("button.proceed"));
         proceedButton.addActionListener(e -> dialog.setVisible(false));
         buttonsPanel.add(proceedButton);
         dialog.getRootPane().setDefaultButton(proceedButton);
@@ -196,32 +186,27 @@ public class SwingUpdaterUI implements UpdaterUI {
       JTable table = new JTable();
       table.setCellSelectionEnabled(true);
       table.setDefaultEditor(ValidationResult.Option.class, new MyCellEditor());
-      table.setDefaultRenderer(Object.class, new MyCellRenderer());
+      table.setDefaultRenderer(Object.class, new MyTableCellRenderer());
 
       MyTableModel model = new MyTableModel(validationResults);
       table.setModel(model);
-      table.setRowHeight(new JLabel("X").getPreferredSize().height);
+      table.setRowHeight(new JLabel("|").getPreferredSize().height);
 
       TableColumnModel columnModel = table.getColumnModel();
       for (int i = 0; i < columnModel.getColumnCount(); i++) {
         columnModel.getColumn(i).setPreferredWidth(MyTableModel.getColumnWidth(i, 1000));
       }
 
-      String message = "<html>Some conflicts were found in the installation area.<br><br>";
-      if (canProceed) {
-        message += "Please select desired solutions from the '" + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] + "' " +
-                   "column and press '" + PROCEED_BUTTON_TITLE + "'.<br>" +
-                   "If you do not want to proceed with the update, please press '" + CANCEL_BUTTON_TITLE + "'.</html>";
-      }
-      else {
-        message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
-                   "Please download this version from the developer Web site and reinstall it from scratch.<br>" +
-                   "Press '" + CANCEL_BUTTON_TITLE + "' to exit.</html>";
-      }
-      JLabel label = new JLabel(message);
-      label.setBorder(LABEL_BORDER);
+      var msgPanel = new JPanel();
+      msgPanel.setLayout(new BoxLayout(msgPanel, BoxLayout.Y_AXIS));
+      msgPanel.setBorder(LABEL_BORDER);
+      var header = new JLabel(UpdaterUI.message("conflicts.header"));
+      header.setBorder(LABEL_BORDER);
+      msgPanel.add(header);
+      var message = canProceed ? UpdaterUI.message("conflicts.text.1") : UpdaterUI.message("conflicts.text.2");
+      msgPanel.add(new JLabel(convertToHtml(message)));
 
-      dialog.add(label, BorderLayout.NORTH);
+      dialog.add(msgPanel, BorderLayout.NORTH);
       dialog.add(new JScrollPane(table), BorderLayout.CENTER);
       dialog.add(buttonsPanel, BorderLayout.SOUTH);
       dialog.getRootPane().setBorder(FRAME_BORDER);
@@ -242,6 +227,10 @@ public class SwingUpdaterUI implements UpdaterUI {
     return "<b>" + text + "</b>";
   }
 
+  private static String convertToHtml(String message) {
+    return "<html>" + message.replace("\n", "<br>") + "</html>";
+  }
+
   private static void invokeLater(Runnable runnable) {
     SwingUtilities.invokeLater(runnable);
   }
@@ -256,13 +245,15 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   private static class MyTableModel extends AbstractTableModel {
-    public static final String[] COLUMNS = {"File", "Action", "Problem", "Solution"};
-    public static final double[] WIDTHS = {0.65, 0.1, 0.15, 0.1};
-    public static final int OPTIONS_COLUMN_INDEX = 3;
+    private static final String[] COLUMNS = {
+      UpdaterUI.message("column.file"), UpdaterUI.message("column.action"), UpdaterUI.message("column.problem"), UpdaterUI.message("column.solution")
+    };
+    private static final double[] WIDTHS = {0.65, 0.1, 0.15, 0.1};
+    private static final int OPTIONS_COLUMN_INDEX = 3;
 
     private final List<Item> myItems = new ArrayList<>();
 
-    MyTableModel(List<? extends ValidationResult> validationResults) {
+    MyTableModel(List<ValidationResult> validationResults) {
       for (ValidationResult each : validationResults) {
         myItems.add(new Item(each, each.options.get(0)));
       }
@@ -361,16 +352,29 @@ public class SwingUpdaterUI implements UpdaterUI {
 
       @SuppressWarnings("unchecked") JComboBox<ValidationResult.Option> comboBox = (JComboBox<ValidationResult.Option>)editorComponent;
       comboBox.setModel(comboModel);
+      comboBox.setRenderer(MyListCellRenderer.INSTANCE);
 
       return super.getTableCellEditorComponent(table, value, isSelected, row, column);
     }
   }
 
-  private static class MyCellRenderer extends DefaultTableCellRenderer {
+  private static class MyListCellRenderer extends DefaultListCellRenderer {
+    private static final MyListCellRenderer INSTANCE = new MyListCellRenderer();
+
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      var result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      if (result instanceof JLabel && value != null) {
+        ((JLabel)result).setText(getOptionName((ValidationResult.Option)value));
+      }
+      return result;
+    }
+  }
+
+  private static class MyTableCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      Component result = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
+      var result = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (!isSelected) {
         ValidationResult.Kind kind = ((MyTableModel)table.getModel()).getKind(row);
         if (kind == ValidationResult.Kind.ERROR) {
@@ -380,8 +384,43 @@ public class SwingUpdaterUI implements UpdaterUI {
           result.setBackground(VALIDATION_CONFLICT_COLOR);
         }
       }
-
+      if (result instanceof JLabel) {
+        if (value instanceof ValidationResult.Action) {
+          ((JLabel)result).setText(getActionName((ValidationResult.Action)value));
+        }
+        else if (value instanceof ValidationResult.Option) {
+          ((JLabel)result).setText(getOptionName((ValidationResult.Option)value));
+        }
+      }
       return result;
+    }
+  }
+
+  private static @Nls String getActionName(ValidationResult.Action action) {
+    switch (action) {
+      case CREATE: return UpdaterUI.message("action.create");
+      case UPDATE: return UpdaterUI.message("action.update");
+      case DELETE: return UpdaterUI.message("action.delete");
+      case VALIDATE: return UpdaterUI.message("action.validate");
+      default: {
+        @SuppressWarnings("HardCodedStringLiteral") var name = action.toString();
+        return name;
+      }
+    }
+  }
+
+  private static @Nls String getOptionName(ValidationResult.Option option) {
+    switch (option) {
+      case NONE: return "-";
+      case IGNORE: return UpdaterUI.message("option.ignore");
+      case KEEP: return UpdaterUI.message("option.keep");
+      case REPLACE: return UpdaterUI.message("option.replace");
+      case DELETE: return UpdaterUI.message("option.delete");
+      case KILL_PROCESS: return UpdaterUI.message("option.kill.process");
+      default: {
+        @SuppressWarnings("HardCodedStringLiteral") var name = option.toString();
+        return name;
+      }
     }
   }
 }

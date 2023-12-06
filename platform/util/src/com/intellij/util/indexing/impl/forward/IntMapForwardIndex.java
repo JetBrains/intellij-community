@@ -1,18 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
-import com.intellij.util.io.*;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.MeasurableIndexStore;
+import com.intellij.util.io.PersistentMap;
+import com.intellij.util.io.PersistentMapBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class IntMapForwardIndex implements IntForwardIndex, MeasurableIndexStore {
-  @NotNull
-  private final Path myStorageFile;
+public final class IntMapForwardIndex implements IntForwardIndex, MeasurableIndexStore {
+  private final @NotNull Path myStorageFile;
   private final boolean myHasChunks;
-  @NotNull
-  private volatile PersistentMap<Integer, Integer> myPersistentMap;
+  private volatile @NotNull PersistentMap<Integer, Integer> myPersistentMap;
 
   public IntMapForwardIndex(@NotNull Path storageFile,
                             boolean hasChunks) throws IOException {
@@ -21,9 +22,8 @@ public class IntMapForwardIndex implements IntForwardIndex, MeasurableIndexStore
     myPersistentMap = createMap(myStorageFile, myHasChunks);
   }
 
-  @NotNull
-  private static PersistentMap<Integer, Integer> createMap(@NotNull Path storageFile,
-                                                           boolean hasChunks) throws IOException {
+  private static @NotNull PersistentMap<Integer, Integer> createMap(@NotNull Path storageFile,
+                                                                    boolean hasChunks) throws IOException {
     return PersistentMapBuilder
       .newBuilder(storageFile, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
       .inlineValues()
@@ -44,6 +44,11 @@ public class IntMapForwardIndex implements IntForwardIndex, MeasurableIndexStore
   @Override
   public void force() {
     myPersistentMap.force();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return myPersistentMap.isDirty();
   }
 
   @Override

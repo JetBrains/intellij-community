@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions
 
-import com.intellij.codeInsight.navigation.NavigationUtil
-import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces.PROJECT_VIEW_POPUP
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -20,27 +20,28 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MessagesEx
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
+import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
 import org.jetbrains.kotlin.j2k.FilesResult
@@ -52,7 +53,7 @@ import kotlin.io.path.notExists
 import kotlin.system.measureTimeMillis
 
 class JavaToKotlinAction : AnAction() {
-    companion object {
+    object Handler {
         private fun uniqueKotlinFileName(javaFile: VirtualFile): String {
             val nioFile = javaFile.fileSystem.getNioPath(javaFile)
 
@@ -90,7 +91,7 @@ class JavaToKotlinAction : AnAction() {
                         mapping.setMapping(virtualFile, KotlinFileType.INSTANCE.language)
                     } else {
                         val fileName = uniqueKotlinFileName(virtualFile)
-                        virtualFile.pathBeforeJavaToKotlinConversion = virtualFile.path
+                        virtualFile.putUserData(pathBeforeJavaToKotlinConversion, virtualFile.path)
                         virtualFile.rename(this, fileName)
                     }
                     result += virtualFile
@@ -226,29 +227,44 @@ class JavaToKotlinAction : AnAction() {
                 newFiles
             }
         }
+
+        internal fun selectedJavaFiles(e: AnActionEvent): Sequence<PsiJavaFile> {
+            val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return sequenceOf()
+            val project = e.project ?: return sequenceOf()
+            return allJavaFiles(virtualFiles, project)
+        }
+
+        private fun allJavaFiles(filesOrDirs: Array<VirtualFile>, project: Project): Sequence<PsiJavaFile> {
+            val manager = PsiManager.getInstance(project)
+            return getAllFilesRecursively(filesOrDirs)
+                .asSequence()
+                .mapNotNull { manager.findFile(it) as? PsiJavaFile }
+                .filter { it.fileType == JavaFileType.INSTANCE } // skip .jsp files
+        }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val javaFiles = selectedJavaFiles(e).filter { it.isWritable }.toList()
+        val javaFiles = Handler.selectedJavaFiles(e).filter { it.isWritable }.toList()
         val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
         val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
 
         if (javaFiles.isEmpty()) {
             val statusBar = WindowManager.getInstance().getStatusBar(project)
             JBPopupFactory.getInstance()
-                .createHtmlTextBalloonBuilder(KotlinBundle.message("action.j2k.errornothing.to.convert"), MessageType.ERROR, null)
+                .createHtmlTextBalloonBuilder(KotlinBundle.message("action.j2k.error.nothing.to.convert"), MessageType.ERROR, null)
                 .createBalloon()
                 .showInCenterOf(statusBar.component)
+            return
         }
 
-        if (!J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled)
-                .doCheckBeforeConversion(project, module)
-        ) return
+        if (!J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled).doCheckBeforeConversion(project, module)) {
+            return
+        }
 
         val firstSyntaxError = javaFiles.asSequence().map { PsiTreeUtil.findChildOfType(it, PsiErrorElement::class.java) }.firstOrNull()
 
         if (firstSyntaxError != null) {
-            val count = javaFiles.filter { PsiTreeUtil.hasErrorElements(it) }.count()
+            val count = javaFiles.count { PsiTreeUtil.hasErrorElements(it) }
             assert(count > 0)
             val firstFileName = firstSyntaxError.containingFile.name
             val question = when (count) {
@@ -260,18 +276,18 @@ class JavaToKotlinAction : AnAction() {
             if (Messages.showOkCancelDialog(
                     project,
                     question,
-                    title,
+                    Handler.title,
                     okText,
                     cancelText,
                     Messages.getWarningIcon()
                 ) == Messages.OK
             ) {
-                NavigationUtil.activateFileWithPsiElement(firstSyntaxError.navigationElement)
+                activateFileWithPsiElement(firstSyntaxError.navigationElement)
                 return
             }
         }
 
-        convertFiles(javaFiles, project, module)
+        Handler.convertFiles(javaFiles, project, module)
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -282,44 +298,29 @@ class JavaToKotlinAction : AnAction() {
 
     private fun isEnabled(e: AnActionEvent): Boolean {
         if (KotlinPlatformUtils.isCidr) return false
-        val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return false
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return false
         val project = e.project ?: return false
-        e.getData(PlatformCoreDataKeys.MODULE) ?: return false
-        return isAnyJavaFileSelected(project, virtualFiles)
-    }
+        if (project.isDisposed) return false
+        if (e.getData(PlatformCoreDataKeys.MODULE) == null) return false
 
-    private fun isAnyJavaFileSelected(project: Project, files: Array<VirtualFile>): Boolean {
-        if (files.any { it.isSuitableDirectory() }) return true // Giving up on directories
-        val manager = PsiManager.getInstance(project)
-        return files.any { it.extension == JavaFileType.DEFAULT_EXTENSION && manager.findFile(it) is PsiJavaFile && it.isWritable }
-    }
-
-    private fun VirtualFile.isSuitableDirectory(): Boolean =
-        isDirectory && fileType !is ArchiveFileType && isWritable
-
-    private fun selectedJavaFiles(e: AnActionEvent): Sequence<PsiJavaFile> {
-        val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return sequenceOf()
-        val project = e.project ?: return sequenceOf()
-        return allJavaFiles(virtualFiles, project)
-    }
-
-    private fun allJavaFiles(filesOrDirs: Array<VirtualFile>, project: Project): Sequence<PsiJavaFile> {
-        val manager = PsiManager.getInstance(project)
-        return allFiles(filesOrDirs)
-            .asSequence()
-            .mapNotNull { manager.findFile(it) as? PsiJavaFile }
-    }
-
-    private fun allFiles(filesOrDirs: Array<VirtualFile>): Collection<VirtualFile> {
-        val result = ArrayList<VirtualFile>()
-        for (file in filesOrDirs) {
-            VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Unit>() {
-                override fun visitFile(file: VirtualFile): Boolean {
-                    result.add(file)
-                    return true
-                }
-            })
+        fun isWritableJavaFile(file: VirtualFile): Boolean {
+            val psiManager = PsiManager.getInstance(project)
+            return file.extension == JavaFileType.DEFAULT_EXTENSION && psiManager.findFile(file) is PsiJavaFile && file.isWritable
         }
-        return result
+
+        fun isWritablePackageDirectory(file: VirtualFile): Boolean {
+            val directory = file.toPsiDirectory(project) ?: return false
+            return PsiDirectoryFactory.getInstance(project).isPackage(directory) && file.isWritable
+        }
+
+        if (e.place != PROJECT_VIEW_POPUP && files.any(::isWritablePackageDirectory)) {
+            // If a package is selected, we consider that it may contain Java files,
+            // but don't actually check, because this check is recursive and potentially expensive: KTIJ-12688.
+            //
+            // This logic is disabled for the project view popup to avoid cluttering it.
+            return true
+        }
+
+        return files.any(::isWritableJavaFile)
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -7,8 +7,8 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
@@ -29,20 +29,10 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
    */
   @Deprecated
-  @NotNull
   @Override
-  public RunResult<T> execute() {
+  public @NotNull RunResult<T> execute() {
     final RunResult<T> result = new RunResult<>(this);
     return compute(() -> result.run());
-  }
-
-  /**
-   * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static AccessToken start() {
-    return ApplicationManager.getApplication().acquireReadActionLock();
   }
 
   /**
@@ -54,7 +44,10 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
 
   /**
    * @see Application#runReadAction(Runnable)
+   * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
+  @RequiresBlockingContext
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
     compute(() -> {
       action.run();
@@ -64,7 +57,10 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
 
   /**
    * @see Application#runReadAction(ThrowableComputable)
+   * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
+  @RequiresBlockingContext
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
     return ApplicationManager.getApplication().runReadAction(action);
   }
@@ -81,10 +77,9 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * which greatly lowers its probability of being idempotent,
    * which in turn may cause delayed bugs in unrelated places and races.
    */
-  @NotNull
   @Contract(pure = true)
   @Deprecated
-  public static NonBlockingReadAction<Void> nonBlocking(@NotNull Runnable task) {
+  public static @NotNull NonBlockingReadAction<Void> nonBlocking(@NotNull Runnable task) {
     return nonBlocking(new RunnableCallable(task));
   }
 
@@ -92,10 +87,10 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * Create an {@link NonBlockingReadAction} builder to run the given Callable in a non-blocking read action on a background thread.
    *
    * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#constrainedReadAction
    */
-  @NotNull
   @Contract(pure = true)
-  public static <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<? extends T> task) {
+  public static @NotNull <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<? extends T> task) {
     return AsyncExecutionService.getService().buildNonBlockingReadAction(task);
   }
 
@@ -116,7 +111,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   public static <T, E extends Throwable> T computeCancellable(
     @RequiresReadLock ThrowableComputable<T, E> computable
   ) throws E, CannotReadException {
-    return ApplicationManager.getApplication().getService(ReadActionSupport.class).computeCancellable(computable);
+    return ApplicationManager.getApplication().getService(ReadWriteActionSupport.class).computeCancellable(computable);
   }
 
   public static final class CannotReadException extends ProcessCanceledException {

@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 interface CodeVisionProviderFactory {
   companion object {
     const val EP_NAME: String = "com.intellij.codeInsight.codeVisionProviderFactory"
-    val extensionPoint: ExtensionPointName<CodeVisionProviderFactory> = ExtensionPointName<CodeVisionProviderFactory>(EP_NAME)
+    val extensionPoint: ExtensionPointName<CodeVisionProviderFactory> = ExtensionPointName(EP_NAME)
 
     fun createAllProviders(project: Project): List<CodeVisionProvider<*>> {
       return extensionPoint.extensionList.flatMap { it.createProviders(project) }

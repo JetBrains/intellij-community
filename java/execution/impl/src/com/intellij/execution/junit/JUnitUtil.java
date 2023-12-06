@@ -126,9 +126,10 @@ public final class JUnitUtil {
     final PsiMethod psiMethod = location.getPsiElement();
     final PsiClass aClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : psiMethod.getContainingClass();
     if (checkClass && (aClass == null || !isTestClass(aClass, checkAbstract, true))) return false;
+    if (psiMethod.isConstructor()) return false;
+    if (psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     if (isTestAnnotated(psiMethod, true)) return !psiMethod.hasModifierProperty(PsiModifier.STATIC);
     if (aClass != null && MetaAnnotationUtil.isMetaAnnotatedInHierarchy(aClass, Collections.singletonList(CUSTOM_TESTABLE_ANNOTATION))) return true;
-    if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, 0)) return false;
@@ -231,7 +232,9 @@ public final class JUnitUtil {
   }
 
   public static boolean isJUnit3TestClass(final PsiClass clazz) {
-    return PsiClassUtil.isRunnableClass(clazz, true, false) && isTestCaseInheritor(clazz);
+    return hasNonPrivateConstructor(clazz) &&
+           PsiClassUtil.isRunnableClass(clazz, true, false) &&
+           isTestCaseInheritor(clazz);
   }
 
   public static boolean isJUnit4TestClass(final PsiClass psiClass) {
@@ -266,6 +269,7 @@ public final class JUnitUtil {
       }
     }
 
+    if (!hasNonPrivateConstructor(psiClass)) return false;
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
@@ -282,6 +286,19 @@ public final class JUnitUtil {
       topLevelClass = topLevelClass.getContainingClass();
     }
     return topLevelClass;
+  }
+
+  private static boolean hasNonPrivateConstructor(PsiClass psiClass) {
+    PsiMethod[] constructors = psiClass.getConstructors();
+    if (constructors.length > 0) {
+      for (PsiMethod constructor : constructors) {
+        if (!constructor.getModifierList().hasModifierProperty(PsiModifier.PRIVATE)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    return true;
   }
 
   public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
@@ -352,7 +369,7 @@ public final class JUnitUtil {
 
   public static boolean isTestAnnotated(final PsiMethod method, boolean includeCustom) {
     if (isJUnit4TestAnnotated(method)) {
-      return true;
+      return method.hasModifierProperty(PsiModifier.PUBLIC);
     }
 
     return MetaAnnotationUtil.isMetaAnnotated(method, includeCustom ? CUSTOM_TESTABLE_ANNOTATION_LIST : TEST5_JUPITER_ANNOTATIONS);

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +31,7 @@ public class WebPreviewVirtualFile extends LightVirtualFile {
 
   @Override
   public @NlsSafe @NotNull String getName() {
-    return "Preview of " + myFile.getName();
+    return IdeBundle.message("browser.preview.file.title", myFile.getName());
   }
 
   public Url getPreviewUrl() {

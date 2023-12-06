@@ -26,18 +26,20 @@ import org.jetbrains.idea.maven.indices.MavenArchetypeManager;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * @deprecated use {@link org.jetbrains.idea.maven.wizards.archetype.MavenArchetypeNewProjectWizard} instead
+ */
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class SelectPropertiesStep extends ModuleWizardStep {
 
   private final Project myProjectOrNull;
@@ -59,10 +61,6 @@ public class SelectPropertiesStep extends ModuleWizardStep {
     initComponents();
   }
 
-  /**
-   * @deprecated use {@link SelectPropertiesStep#SelectPropertiesStep(Project, AbstractMavenModuleBuilder)} instead
-   */
-  @Deprecated(forRemoval = true)
   public SelectPropertiesStep(@Nullable Project project, MavenModuleBuilder builder) {
     this(project, (AbstractMavenModuleBuilder)builder);
   }
@@ -118,20 +116,6 @@ public class SelectPropertiesStep extends ModuleWizardStep {
   @Override
   public boolean isStepVisible() {
     return myBuilder.getArchetype() != null;
-  }
-
-  @Override
-  public boolean validate() throws ConfigurationException {
-    File mavenHome = MavenUtil.resolveMavenHomeDirectory(myEnvironmentForm.getMavenHome());
-    if (mavenHome == null) {
-      throw new ConfigurationException(MavenProjectBundle.message("dialog.message.maven.home.directory.not.specified"));
-    }
-
-    if (!MavenUtil.isValidMavenHome(mavenHome)) {
-      throw new ConfigurationException(MavenProjectBundle.message("dialog.message.maven.home.directory.invalid", mavenHome));
-    }
-
-    return true;
   }
 
   @Override

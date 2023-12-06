@@ -9,3 +9,5 @@ object B : A({})
 object C : A({
     fun foo() = <caret>B.prop.toString()
 })
+
+// IGNORE_K2

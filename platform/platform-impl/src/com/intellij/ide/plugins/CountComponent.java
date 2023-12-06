@@ -26,6 +26,7 @@ public class CountComponent extends JLabel {
                                 : UIUtil.FontSize.NORMAL));
     setHorizontalAlignment(CENTER);
     setHorizontalTextPosition(CENTER);
+    setFocusable(false);
   }
 
   @Override

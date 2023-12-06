@@ -6,17 +6,36 @@ import com.intellij.ui.dsl.checkNonNegative
 /**
  * Defines left and right gaps. Values must be provided unscaled
  */
-data class UnscaledGapsX(val left: Int = 0, val right: Int = 0) {
+interface UnscaledGapsX {
   companion object {
     @JvmField
-    val EMPTY = UnscaledGapsX()
+    val EMPTY: UnscaledGapsX = UnscaledGapsX()
   }
+
+  val left: Int
+  val right: Int
+
+  val width: Int
+    get() = left + right
+}
+
+fun UnscaledGapsX(left: Int = 0, right: Int = 0): UnscaledGapsX {
+  return UnscaledGapsXImpl(left, right)
+}
+
+private class UnscaledGapsXImpl(private val _left: Int, private val _right: Int) : UnscaledGapsX {
+
+  override val left: Int
+    get() = _left
+  override val right: Int
+    get() = _right
 
   init {
     checkNonNegative("left", left)
     checkNonNegative("right", right)
   }
 
-  val width: Int
-    get() = left + right
+  override fun toString(): String {
+    return "left = $left, right = $right"
+  }
 }

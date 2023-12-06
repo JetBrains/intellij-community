@@ -14,14 +14,15 @@ import com.jetbrains.jdi.SocketAttachingConnector
 import com.sun.jdi.ThreadReference
 import com.sun.jdi.VirtualMachine
 import org.jetbrains.kotlin.backend.common.output.OutputFile
-import org.jetbrains.kotlin.codegen.*
-import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.addRoot
+import org.jetbrains.kotlin.incremental.isClassFile
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.BindingContext
 import java.io.File
 import java.io.IOException
 import java.net.Socket
@@ -34,18 +35,26 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
         private const val DEBUG_PORT = 5115
     }
 
-    private lateinit var classFileFactory: ClassFileFactory
-
     private lateinit var testAppDirectory: File
     private lateinit var jvmSourcesOutputDirectory: File
+    private lateinit var commonSourcesOutputDirectory: File
+    private lateinit var scriptSourcesOutputDirectory: File
+    private lateinit var libraryOutputDirectory: File
 
     override fun getTestAppPath(): String = testAppDirectory.absolutePath
 
     override fun initOutputChecker(): OutputChecker = OutputChecker({ "" }, { "" })
 
+    protected open val lambdasGenerationScheme: JvmClosureGenerationScheme get() = JvmClosureGenerationScheme.CLASS
+
+    protected open val compileWithK2: Boolean get() = false
+
     override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
         testAppDirectory = KotlinTestUtils.tmpDir("debuggerTestSources")
         jvmSourcesOutputDirectory = File(testAppDirectory, SOURCES_DIRECTORY_NAME).apply { mkdirs() }
+        commonSourcesOutputDirectory = File(testAppDirectory, COMMON_SOURCES_DIR).apply { mkdirs() }
+        scriptSourcesOutputDirectory = File(testAppDirectory, SCRIPT_SOURCES_DIR).apply { mkdirs() }
+        libraryOutputDirectory = File(testAppDirectory, "lib").apply { mkdirs() }
         super.runBare(testRunnable)
     }
 
@@ -68,10 +77,8 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
         }
 
     protected open fun createDebuggerTestCompilerFacility(
-        testFiles: TestFiles, jvmTarget: JvmTarget, useIrBackend: Boolean,
-        lambdasGenerationScheme: JvmClosureGenerationScheme,
-    ) =
-        DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend, lambdasGenerationScheme)
+        testFiles: TestFiles, jvmTarget: JvmTarget, compileConfiguration: TestCompileConfiguration,
+    ) = DebuggerTestCompilerFacility(project, testFiles, jvmTarget, compileConfiguration)
 
     fun doTest(testFilePath: String) {
         val wholeFile = File(testFilePath)
@@ -82,32 +89,45 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
         val skipLoadingClasses = skipLoadingClasses(options)
 
         val classesDir = File(testAppDirectory, CLASSES_DIRECTORY_NAME)
-        val classBuilderFactory = OriginCollectingClassBuilderFactory(ClassBuilderMode.FULL)
-        val compilerFacility = createDebuggerTestCompilerFacility(testFiles, JvmTarget.JVM_1_8, useIrBackend = true,
-                                                                  JvmClosureGenerationScheme.CLASS)
-        val compilationResult = compilerFacility.compileTestSources(
-            project, jvmSourcesOutputDirectory, classesDir, classBuilderFactory
+        val compilerFacility = createDebuggerTestCompilerFacility(
+            testFiles, JvmTarget.JVM_1_8,
+            TestCompileConfiguration(
+                lambdasGenerationScheme,
+                languageVersion = chooseLanguageVersionForCompilation(compileWithK2),
+                enabledLanguageFeatures = emptyList()
+            )
         )
-        val generationState = compilationResult.generationState
-        classFileFactory = generationState.factory
+        compilerFacility.compileTestSourcesWithCli(
+            module, jvmSourcesOutputDirectory, commonSourcesOutputDirectory,
+            scriptSourcesOutputDirectory, classesDir, libraryOutputDirectory
+        )
+        val sourceFiles =
+            compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory).jvmKtFiles
+        val (_, analysisResult) = compilerFacility.analyzeSources(sourceFiles)
+        val bindingContext = analysisResult.bindingContext
+
+        val outputFiles = classesDir.walk()
+            .filter { it.isClassFile() }
+            .map { CompiledClassFile(it, relativePath = it.toRelativeString(classesDir)) }
+            .toList()
 
         try {
             classesDir.apply {
                 writeMainClass(this)
-                for (classFile in classFileFactory.getClassFiles()) {
+                for (classFile in outputFiles) {
                     File(this, classFile.relativePath).mkdirAndWriteBytes(classFile.asByteArray())
                 }
             }
 
-            val process = startDebuggeeProcess(classesDir, skipLoadingClasses)
+            val process = startDebuggeeProcess(classesDir, skipLoadingClasses, outputFiles)
             waitUntil { isPortOpen() }
 
             val virtualMachine = attachDebugger()
 
             try {
                 val mainThread = virtualMachine.allThreads().single { it.name() == "main" }
-                waitUntil { areCompiledClassesLoaded(mainThread, classFileFactory, skipLoadingClasses) }
-                doTest(options, mainThread, classBuilderFactory, generationState)
+                waitUntil { areCompiledClassesLoaded(mainThread, outputFiles, skipLoadingClasses) }
+                doTest(options, mainThread, sourceFiles, bindingContext, jvmSourcesOutputDirectory, outputFiles)
             } finally {
                 virtualMachine.exit(0)
                 process.destroy()
@@ -120,8 +140,10 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
     protected abstract fun doTest(
         options: Set<String>,
         mainThread: ThreadReference,
-        factory: OriginCollectingClassBuilderFactory,
-        state: GenerationState
+        sourceFiles: List<KtFile>,
+        bindingContext: BindingContext,
+        jvmSrcDir: File,
+        outputFiles: List<CompiledClassFile>,
     )
 
     private fun isPortOpen(): Boolean {
@@ -135,11 +157,11 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
 
     private fun areCompiledClassesLoaded(
         mainThread: ThreadReference,
-        classFileFactory: ClassFileFactory,
+        outputFiles: List<CompiledClassFile>,
         skipLoadingClasses: Set<String>
     ): Boolean {
-        for (outputFile in classFileFactory.getClassFiles()) {
-            val fqName = outputFile.internalName.replace('/', '.')
+        for (outputFile in outputFiles) {
+            val fqName = outputFile.qualifiedName
             if (fqName in skipLoadingClasses) {
                 continue
             }
@@ -153,8 +175,9 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
         return emptySet()
     }
 
-    private fun startDebuggeeProcess(classesDir: File, skipLoadingClasses: Set<String>): Process {
-        val classesToLoad = classFileFactory.getClassFiles()
+    private fun startDebuggeeProcess(classesDir: File, skipLoadingClasses: Set<String>,
+                                     outputFiles: List<CompiledClassFile>): Process {
+        val classesToLoad = outputFiles
             .map { it.qualifiedName }
             .filter { it !in skipLoadingClasses }
             .joinToString(",")
@@ -204,6 +227,15 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
 
     private val OutputFile.qualifiedName
         get() = internalName.replace('/', '.')
+
+    class CompiledClassFile(private val file: File, val relativePath: String) {
+        private val internalName: String
+            get() = relativePath.substringBefore(".class")
+
+        val qualifiedName: String
+            get() = internalName.replace("/", ".")
+        fun asByteArray(): ByteArray = file.readBytes()
+    }
 }
 
 private fun File.mkdirAndWriteBytes(array: ByteArray) {

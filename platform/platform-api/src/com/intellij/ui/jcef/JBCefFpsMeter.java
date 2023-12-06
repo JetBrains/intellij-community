@@ -11,8 +11,10 @@ import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.PrintStream;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,6 +34,12 @@ public abstract class JBCefFpsMeter {
 
   public abstract void paintFrameFinished(@NotNull Graphics g);
 
+  public abstract void onPaintStarted();
+
+  public abstract void onPaintFinished(long pixCount);
+
+  public abstract void writeStats(PrintStream ps);
+
   public abstract int getFps();
 
   public abstract void setActive(boolean active);
@@ -40,7 +48,7 @@ public abstract class JBCefFpsMeter {
 
   public abstract void registerComponent(@NotNull Component component);
 
-  public synchronized static @NotNull JBCefFpsMeter register(@NotNull String id) {
+  public static synchronized @NotNull JBCefFpsMeter register(@NotNull String id) {
     JBCefFpsMeter instance = INSTANCES.get(id);
     if (instance != null) {
       return instance;
@@ -50,7 +58,7 @@ public abstract class JBCefFpsMeter {
     return instance;
   }
 
-  public synchronized static @Nullable JBCefFpsMeter get(@NotNull String id) {
+  public static synchronized @Nullable JBCefFpsMeter get(@NotNull String id) {
     JBCefFpsMeter instance = INSTANCES.get(id);
     if (instance == null) {
       Logger.getInstance(JBCefFpsMeter.class).warn(JBCefFpsMeter.class + " not registered: " + id);
@@ -60,6 +68,7 @@ public abstract class JBCefFpsMeter {
 }
 
 class JBCefFpsMeterImpl extends JBCefFpsMeter {
+  private static final boolean COLLECT_STATS = Boolean.getBoolean("jcef.debug.collect_fps_stats");
   private final @NotNull AtomicInteger myFps = new AtomicInteger();
   private final @NotNull AtomicInteger myFrameCount = new AtomicInteger();
   private final @NotNull AtomicLong myStartMeasureTime = new AtomicLong();
@@ -69,6 +78,7 @@ class JBCefFpsMeterImpl extends JBCefFpsMeter {
   private final @NotNull AtomicReference<Font> myFont = new AtomicReference<>();
   private final @NotNull AtomicReference<WeakReference<Component>> myComp = new AtomicReference<>(null);
   private final @NotNull AtomicReference<Timer> myTimer = new AtomicReference<>();
+  private final @Nullable JBCefFpsHelper myHelper = COLLECT_STATS ? new JBCefFpsHelper() : null;
 
   private static final int TICK_DELAY_MS = 1000;
   private static final int FPS_STR_OFFSET = 10;
@@ -89,14 +99,36 @@ class JBCefFpsMeterImpl extends JBCefFpsMeter {
 
   @Override
   public void paintFrameStarted() {
+    if (myHelper != null && isActive())
+      myHelper.paintFrameStarted();
   }
 
   @Override
   public void paintFrameFinished(@NotNull Graphics g) {
     if (isActive()) {
       myFrameCount.incrementAndGet();
+      if (myHelper != null)
+          myHelper.paintFrameFinished(getFps());
       drawFps(g);
     }
+  }
+
+  @Override
+  public void onPaintStarted() {
+    if (myHelper != null && isActive())
+      myHelper.onPaintStarted();
+  }
+
+  @Override
+  public void onPaintFinished(long pixCount) {
+    if (myHelper != null && isActive())
+      myHelper.onPaintFinished(pixCount);
+  }
+
+  @Override
+  public void writeStats(PrintStream ps) {
+    if (myHelper != null)
+      myHelper.writeCsv(ps);
   }
 
   private void tick() {
@@ -179,11 +211,76 @@ class JBCefFpsMeterImpl extends JBCefFpsMeter {
     myFrameCount.set(0);
     myStartMeasureTime.set(0);
     myMeasureDuration.set(0);
+    if (myHelper != null)
+      myHelper.reset();
 
     Component comp = getComponent();
     myFont.set(JBFont.create(new Font("Sans", Font.BOLD, 16)));
     comp.getFontMetrics(myFont.get());
     Rectangle strBounds = myFont.get().getStringBounds("00 fps", comp.getFontMetrics(myFont.get()).getFontRenderContext()).getBounds();
     myFpsBarBounds.get().setBounds(0, 0, strBounds.width + FPS_STR_OFFSET * 2, strBounds.height + FPS_STR_OFFSET * 2);
+  }
+}
+
+class JBCefFpsHelper {
+  private final LinkedList<Event> onPaint = new LinkedList<>();
+  private final LinkedList<Event> paintFrame = new LinkedList<>();
+
+  void onPaintStarted() {
+    Event e = new Event();
+    e.startNs = System.nanoTime();
+    onPaint.add(e);
+  }
+  void onPaintFinished(long pixCount) {
+    Event e = onPaint.getLast();
+    e.endNs = System.nanoTime();
+    e.data = pixCount;
+  }
+  void paintFrameStarted() {
+    Event e = new Event();
+    e.startNs = System.nanoTime();
+    paintFrame.add(e);
+  }
+  void paintFrameFinished(int fps) {
+    Event e = paintFrame.getLast();
+    e.endNs = System.nanoTime();
+    e.data = fps;
+    System.out.println(fps);
+  }
+  void reset() {
+    onPaint.clear();
+    paintFrame.clear();
+  }
+  void writeCsv(PrintStream ps) {
+    if (ps == null)
+      return;
+    final String sep = ";";
+
+    ps.print("onPaint.duration" + sep);
+    for (Event e: onPaint)
+      ps.printf("%.1f%s", e.durationNs()/(float)1000000, sep);
+    ps.println();
+
+    ps.print("onPaint.pixelsKb" + sep);
+    for (Event e: onPaint)
+      ps.printf("%.1f%s", e.data*4/(float)1024, sep);
+    ps.println();
+
+    ps.print("paintFrame.duration" + sep);
+    for (Event e: paintFrame)
+      ps.printf("%.1f%s", e.durationNs()/(float)1000000, sep);
+    ps.println();
+
+    ps.print("paintFrame.fps" + sep);
+    for (Event e: paintFrame)
+      ps.print(String.valueOf(e.data) + sep);
+    ps.println();
+  }
+  static class Event {
+    long startNs;
+    long endNs;
+    long data;
+
+    long durationNs() { return endNs - startNs; }
   }
 }

@@ -1,3 +1,5 @@
+// RUNTIME_WITH_FULL_JDK
+
 import java.util.*;
 
 enum E {
@@ -41,13 +43,17 @@ class A {
         }
     }
 
-    void numberConversions(byte b, short s, int i, long l, float f, double d, String str) {
+    void primitiveConversions(boolean bool, byte b, short s, int i, long l, float f, double d, String str) {
+        Boolean.valueOf(bool);
         Byte.valueOf(b);
         Short.valueOf(s);
         Integer.valueOf(i);
         Long.valueOf(l);
         Float.valueOf(f);
         Double.valueOf(d);
+
+        Boolean.parseBoolean(str);
+        Boolean.valueOf(str);
 
         Byte.parseByte(str);
         Byte.valueOf(str);
@@ -69,8 +75,6 @@ class A {
         Long.parseLong(str, i);
         Long.valueOf(str, i);
 
-        // These functions were added in JDK 9, hence the error on test JDK 8 (None of the following functions can be called...)
-        // Also, they have no equivalent in Kotlin stdlib
         Integer.parseInt(str, i, i, i);
         Long.parseLong(str, i, i, i);
 

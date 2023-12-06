@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.annotate;
 
 import com.intellij.idea.ActionsBundle;
@@ -62,21 +62,21 @@ import java.util.*;
 
 import static git4idea.annotate.GitAnnotationProviderKt.getAnnotationFromCache;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitAnnotationProvider implements AnnotationProviderEx, CacheableAnnotationProvider {
-  @NonNls private static final String SUBJECT_KEY = "summary";
-  @NonNls private static final String FILENAME_KEY = "filename";
-  @NonNls private static final String PREVIOUS_KEY = "previous";
-  @NonNls private static final String AUTHOR_KEY = "author";
-  @NonNls private static final String AUTHOR_EMAIL_KEY = "author-mail";
-  @NonNls private static final String COMMITTER_TIME_KEY = "committer-time";
-  @NonNls private static final String AUTHOR_TIME_KEY = "author-time";
+  private static final @NonNls String SUBJECT_KEY = "summary";
+  private static final @NonNls String FILENAME_KEY = "filename";
+  private static final @NonNls String PREVIOUS_KEY = "previous";
+  private static final @NonNls String AUTHOR_KEY = "author";
+  private static final @NonNls String AUTHOR_EMAIL_KEY = "author-mail";
+  private static final @NonNls String COMMITTER_TIME_KEY = "committer-time";
+  private static final @NonNls String AUTHOR_TIME_KEY = "author-time";
   private static final Logger LOG = Logger.getInstance(GitAnnotationProvider.class);
   private static final Logger TIME_LOG = Logger.getInstance("#time." + GitAnnotationProvider.class.getName());
 
   private final Project myProject;
-  @NotNull private final VcsHistoryCache myCache;
-  @NotNull private final VcsUserRegistry myUserRegistry;
+  private final @NotNull VcsHistoryCache myCache;
+  private final @NotNull VcsUserRegistry myUserRegistry;
 
   public GitAnnotationProvider(@NotNull Project project) {
     myProject = project;
@@ -85,14 +85,12 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   }
 
   @Override
-  @NotNull
-  public FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
+  public @NotNull FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
     return annotate(file, null);
   }
 
   @Override
-  @NotNull
-  public FileAnnotation annotate(@NotNull final VirtualFile file, @Nullable final VcsFileRevision revision) throws VcsException {
+  public @NotNull FileAnnotation annotate(final @NotNull VirtualFile file, final @Nullable VcsFileRevision revision) throws VcsException {
     return logTime(() -> {
       if (file.isDirectory()) {
         throw new VcsException(GitBundle.message("annotate.cannot.annotate.dir"));
@@ -129,9 +127,8 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
            GitContentRevision.getRepositoryIfSubmodule(myProject, path) == null;
   }
 
-  @NotNull
   @Override
-  public FileAnnotation annotate(@NotNull final FilePath path, @NotNull final VcsRevisionNumber revision) throws VcsException {
+  public @NotNull FileAnnotation annotate(final @NotNull FilePath path, final @NotNull VcsRevisionNumber revision) throws VcsException {
     return logTime(() -> {
       GitFileRevision fileRevision = new GitFileRevision(myProject, path, (GitRevisionNumber)revision);
       VcsVirtualFile file = new VcsVirtualFile(path.getPath(), fileRevision, VcsFileSystem.getInstance());
@@ -140,10 +137,9 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     });
   }
 
-  @NotNull
-  private GitFileAnnotation annotate(@NotNull FilePath filePath,
-                                     @Nullable VcsRevisionNumber revision,
-                                     @NotNull VirtualFile file) throws VcsException {
+  private @NotNull GitFileAnnotation annotate(@NotNull FilePath filePath,
+                                              @Nullable VcsRevisionNumber revision,
+                                              @NotNull VirtualFile file) throws VcsException {
     VirtualFile root = GitUtil.getRootForFile(myProject, filePath);
 
     GitFileAnnotation fileAnnotation;
@@ -167,10 +163,9 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   }
 
   @ApiStatus.Experimental
-  @Nullable
-  public GitFileAnnotation getCached(@NotNull FilePath filePath,
-                                     @Nullable VcsRevisionNumber revision,
-                                     @NotNull VirtualFile file) {
+  public @Nullable GitFileAnnotation getCached(@NotNull FilePath filePath,
+                                               @Nullable VcsRevisionNumber revision,
+                                               @NotNull VirtualFile file) {
     Object annotatedData = myCache.getAnnotation(filePath, GitVcs.getKey(), revision);
     if (annotatedData instanceof CachedData) {
       return restoreFromCache(file, revision, (CachedData)annotatedData);
@@ -192,20 +187,27 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                @Nullable VcsRevisionNumber revision,
                                @NotNull VirtualFile file) throws VcsException;
 
-    default GitFileAnnotation annotate(@NotNull final VirtualFile file, @Nullable final VcsFileRevision revision) {
+    default GitFileAnnotation annotate(final @NotNull VirtualFile file, final @Nullable VcsFileRevision revision) {
       return null;
     }
   }
 
-  @NotNull
-  private GitFileAnnotation doAnnotate(@NotNull VirtualFile root,
-                                       @NotNull FilePath filePath,
-                                       @Nullable VcsRevisionNumber revision,
-                                       @NotNull VirtualFile file) throws VcsException {
+  private @NotNull GitFileAnnotation doAnnotate(@NotNull VirtualFile root,
+                                                @NotNull FilePath filePath,
+                                                @Nullable VcsRevisionNumber revision,
+                                                @NotNull VirtualFile file) throws VcsException {
+    GitAnnotationPerformanceListener.getEP_NAME().getExtensionList().forEach(
+      it -> it.onAnnotationStarted(myProject, filePath, revision)
+    );
+
     GitRawAnnotationProvider another = myProject.getService(GitRawAnnotationProvider.class);
     if (another != null) {
       GitFileAnnotation res = another.annotate(myProject, root, filePath, revision, file);
       if (res != null) {
+        GitAnnotationPerformanceListener.getEP_NAME().getExtensionList().forEach(
+          it -> it.onAnnotationFinished(myProject, filePath, revision, another.getClass().getSimpleName())
+        );
+
         return res;
       }
     }
@@ -242,7 +244,13 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     h.addRelativePaths(filePath);
     String output = new String(h.run(), StandardCharsets.UTF_8);
 
-    return parseAnnotations(revision, file, root, output);
+    GitFileAnnotation annotation = parseAnnotations(revision, file, root, output);
+
+    GitAnnotationPerformanceListener.getEP_NAME().getExtensionList().forEach(
+      it -> it.onAnnotationFinished(myProject, filePath, revision, "default")
+    );
+
+    return annotation;
   }
 
   /**
@@ -318,29 +326,27 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     }
   }
 
-  @NotNull
-  private List<VcsFileRevision> loadFileHistory(@NotNull FilePath filePath) throws VcsException {
+  private @NotNull List<VcsFileRevision> loadFileHistory(@NotNull FilePath filePath) throws VcsException {
     GitVcs vcs = GitVcs.getInstance(myProject);
     GitHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
 
-    VcsAbstractHistorySession cachedSession = myCache.getFull(filePath, vcs.getKeyInstanceMethod(), historyProvider);
+    VcsAbstractHistorySession cachedSession = myCache.getSession(filePath, vcs.getKeyInstanceMethod(), historyProvider, false);
     if (cachedSession != null && !ContainerUtil.isEmpty(cachedSession.getRevisionList())) {
       return cachedSession.getRevisionList();
     }
     else {
       VcsAbstractHistorySession session = historyProvider.createSessionFor(filePath);
 
-      myCache.put(filePath, null, vcs.getKeyInstanceMethod(), session, historyProvider, true);
+      myCache.putSession(filePath, null, vcs.getKeyInstanceMethod(), session, historyProvider, true);
 
       return session.getRevisionList();
     }
   }
 
-  @NotNull
-  private GitFileAnnotation parseAnnotations(@Nullable VcsRevisionNumber revision,
-                                             @NotNull VirtualFile file,
-                                             @NotNull VirtualFile root,
-                                             @NotNull String output) throws VcsException {
+  private @NotNull GitFileAnnotation parseAnnotations(@Nullable VcsRevisionNumber revision,
+                                                      @NotNull VirtualFile file,
+                                                      @NotNull VirtualFile root,
+                                                      @NotNull String output) throws VcsException {
     Interner<FilePath> pathInterner = new HashSetInterner<>();
 
     if (StringUtil.isEmpty(output)) {
@@ -475,15 +481,13 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     return getAnnotationFromCache(myProject, file);
   }
 
-  @NotNull
-  private GitFileAnnotation restoreFromCache(@NotNull VirtualFile file,
-                                             @Nullable VcsRevisionNumber revisionNumber,
-                                             @NotNull CachedData data) {
+  private @NotNull GitFileAnnotation restoreFromCache(@NotNull VirtualFile file,
+                                                      @Nullable VcsRevisionNumber revisionNumber,
+                                                      @NotNull CachedData data) {
     return new GitFileAnnotation(myProject, file, revisionNumber, data.lines);
   }
 
-  @NotNull
-  private Pair<FilePath, VcsRevisionNumber> getPathAndRevision(@NotNull VirtualFile file) {
+  private @NotNull Pair<FilePath, VcsRevisionNumber> getPathAndRevision(@NotNull VirtualFile file) {
     FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file));
     VcsRevisionNumber currentRevision = getCurrentRevision(file);
     VcsRevisionNumber lastRevision = getLastRevision(filePath, currentRevision);
@@ -494,8 +498,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
    * @param currentRevision HEAD revision number
    * @return last revision filePath was modified in
    */
-  @Nullable
-  private VcsRevisionNumber getLastRevision(@NotNull FilePath filePath, @Nullable VcsRevisionNumber currentRevision) {
+  private @Nullable VcsRevisionNumber getLastRevision(@NotNull FilePath filePath, @Nullable VcsRevisionNumber currentRevision) {
     VcsKey gitKey = GitVcs.getKey();
     if (currentRevision != null) {
       VcsRevisionNumber cachedLastRevision = myCache.getLastRevision(filePath, gitKey, currentRevision);
@@ -520,8 +523,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   /**
    * @return HEAD revision number
    */
-  @Nullable
-  private VcsRevisionNumber getCurrentRevision(@NotNull VirtualFile file) {
+  private @Nullable VcsRevisionNumber getCurrentRevision(@NotNull VirtualFile file) {
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
     if (repository == null) return null;
 
@@ -536,8 +538,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     if (progress != null) progress.setText(text);
   }
 
-  @NotNull
-  private static CachedData cacheData(@NotNull GitFileAnnotation annotation) {
+  private static @NotNull CachedData cacheData(@NotNull GitFileAnnotation annotation) {
     return new CachedData(annotation.getLines());
   }
 

@@ -31,7 +31,7 @@ import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenGoalExecutionResult;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -40,6 +40,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.SYNTAX;
+import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
 @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "SynchronizeOnNonFinalField"})
 public class MavenProject {
@@ -103,18 +104,20 @@ public class MavenProject {
   }
 
   @NotNull
-  MavenProjectChanges set(@NotNull MavenProjectReaderResult readerResult,
-                          @NotNull MavenGeneralSettings settings,
-                          boolean updateLastReadStamp,
-                          boolean resetArtifacts,
-                          boolean resetProfiles) {
+  @ApiStatus.Internal
+  public MavenProjectChanges set(@NotNull MavenProjectReaderResult readerResult,
+                                 @NotNull MavenGeneralSettings settings,
+                                 boolean updateLastReadStamp,
+                                 boolean resetArtifacts,
+                                 boolean resetProfiles) {
     State newState = myState.clone();
 
     if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;
 
     newState.myReadingProblems = readerResult.readingProblems;
-    newState.myLocalRepository = settings.getEffectiveLocalRepository();
-
+    newState.myLocalRepository = MavenUtil.resolveLocalRepository(settings.getLocalRepository(),
+                                                                  staticOrBundled(settings.getMavenHomeType()),
+                                                                  settings.getUserSettingsFile());
     newState.myActivatedProfilesIds = readerResult.activatedProfiles;
 
     MavenModel model = readerResult.mavenModel;
@@ -134,7 +137,7 @@ public class MavenProject {
     newState.myOutputDirectory = model.getBuild().getOutputDirectory();
     newState.myTestOutputDirectory = model.getBuild().getTestOutputDirectory();
 
-    doSetFolders(newState, readerResult);
+    doSetFolders(newState, readerResult.mavenModel.getBuild());
 
     newState.myFilters = model.getBuild().getFilters();
     newState.myProperties = model.getProperties();
@@ -226,19 +229,27 @@ public class MavenProject {
     state.myAnnotationProcessors = new ArrayList<>(newAnnotationProcessors);
   }
 
-  private MavenProjectChanges setFolders(MavenProjectReaderResult readerResult) {
+  @ApiStatus.Internal
+  public MavenProjectChanges setFolders(MavenGoalExecutionResult.Folders folders) {
     State newState = myState.clone();
-    doSetFolders(newState, readerResult);
+    doSetFolders(newState, folders.getSources(), folders.getTestSources(), folders.getResources(), folders.getTestResources());
     return setState(newState);
   }
 
-  private static void doSetFolders(State newState, MavenProjectReaderResult readerResult) {
-    MavenModel model = readerResult.mavenModel;
-    newState.mySources = model.getBuild().getSources();
-    newState.myTestSources = model.getBuild().getTestSources();
+  private static void doSetFolders(State newState, MavenBuild build) {
+    doSetFolders(newState, build.getSources(), build.getTestSources(), build.getResources(), build.getTestResources());
+  }
 
-    newState.myResources = model.getBuild().getResources();
-    newState.myTestResources = model.getBuild().getTestResources();
+  private static void doSetFolders(State newState,
+                                   List<String> sources,
+                                   List<String> testSources,
+                                   List<MavenResource> resources,
+                                   List<MavenResource> testResources) {
+    newState.mySources = sources;
+    newState.myTestSources = testSources;
+
+    newState.myResources = resources;
+    newState.myTestResources = testResources;
   }
 
   private Map<String, String> collectModulePathsAndNames(MavenModel mavenModel, String baseDir) {
@@ -376,14 +387,14 @@ public class MavenProject {
       MavenPlugin bscMavenPlugin = findPlugin("org.bsc.maven", "maven-processor-plugin");
       Element cfg = getPluginGoalConfiguration(bscMavenPlugin, testSources ? "process-test" : "process");
       if (bscMavenPlugin != null && cfg == null) {
-        return getBuildDirectory() + (testSources ?  "/generated-sources/apt-test" : "/generated-sources/apt");
+        return getBuildDirectory() + (testSources ? "/generated-sources/apt-test" : "/generated-sources/apt");
       }
       if (cfg != null) {
         String out = MavenJDOMUtil.findChildValueByPath(cfg, "outputDirectory");
         if (out == null) {
           out = MavenJDOMUtil.findChildValueByPath(cfg, "defaultOutputDirectory");
           if (out == null) {
-            return getBuildDirectory() + (testSources ?  "/generated-sources/apt-test" : "/generated-sources/apt");
+            return getBuildDirectory() + (testSources ? "/generated-sources/apt-test" : "/generated-sources/apt");
           }
         }
 
@@ -502,7 +513,8 @@ public class MavenProject {
       int idx = compilerArg.indexOf('=', 3);
       if (idx >= 0) {
         optionsMap.put(compilerArg.substring(2, idx), compilerArg.substring(idx + 1));
-      } else {
+      }
+      else {
         optionsMap.put(compilerArg.substring(2), "");
       }
     }
@@ -652,21 +664,6 @@ public class MavenProject {
                                            @NotNull MavenProjectReader reader,
                                            @NotNull MavenProjectReaderProjectLocator locator) {
     return set(reader.readProject(generalSettings, myFile, profiles, locator), generalSettings, true, false, true);
-  }
-
-  public @NotNull Pair<Boolean, MavenProjectChanges> resolveFolders(@NotNull MavenEmbedderWrapper embedder,
-                                                                    @NotNull MavenImportingSettings importingSettings,
-                                                                    @NotNull MavenConsole console) throws MavenProcessCanceledException {
-    MavenProjectReaderResult result = MavenProjectReader.generateSources(embedder,
-                                                                         importingSettings,
-                                                                         getFile(),
-                                                                         getActivatedProfilesIds(),
-                                                                         console);
-    if (result == null || !MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) {
-      return Pair.create(false, MavenProjectChanges.NONE);
-    }
-    MavenProjectChanges changes = setFolders(result);
-    return Pair.create(true, changes);
   }
 
   public void resetCache() {
@@ -876,10 +873,10 @@ public class MavenProject {
 
   public @NotNull Set<String> getSupportedDependencyScopes() {
     Set<String> result = ContainerUtil.newHashSet(MavenConstants.SCOPE_COMPILE,
-                                           MavenConstants.SCOPE_PROVIDED,
-                                           MavenConstants.SCOPE_RUNTIME,
-                                           MavenConstants.SCOPE_TEST,
-                                           MavenConstants.SCOPE_SYSTEM);
+                                                  MavenConstants.SCOPE_PROVIDED,
+                                                  MavenConstants.SCOPE_RUNTIME,
+                                                  MavenConstants.SCOPE_TEST,
+                                                  MavenConstants.SCOPE_SYSTEM);
     for (MavenImporter each : MavenImporter.getSuitableImporters(this)) {
       each.getSupportedDependencyScopes(result);
     }
@@ -1053,16 +1050,17 @@ public class MavenProject {
   }
 
   private @Nullable Element getCompilerConfig() {
-    Element executionConfiguration = getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile");
-    if(executionConfiguration != null) return executionConfiguration;
+    Element executionConfiguration =
+      getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile");
+    if (executionConfiguration != null) return executionConfiguration;
     return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
   }
 
   private @NotNull List<Element> getCompilerConfigs() {
     List<Element> configurations = getCompileExecutionConfigurations();
-    if(!configurations.isEmpty()) return configurations;
+    if (!configurations.isEmpty()) return configurations;
     Element configuration = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
-    return configuration == null ? Collections.emptyList() : Collections.singletonList(configuration);
+    return ContainerUtil.createMaybeSingletonList(configuration);
   }
 
   public @NotNull Properties getProperties() {
@@ -1114,16 +1112,7 @@ public class MavenProject {
    * @deprecated this API was intended for internal use and will be removed after migration to WorkpsaceModel API
    */
   @ApiStatus.Internal
-  @Deprecated
-  public @NotNull List<MavenImporter> getSuitableImporters() {
-    return MavenImporter.getSuitableImporters(this);
-  }
-
-  /**
-   * @deprecated this API was intended for internal use and will be removed after migration to WorkpsaceModel API
-   */
-  @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull ModuleType<? extends ModuleBuilder> getModuleType() {
     final List<MavenImporter> importers = MavenImporter.getSuitableImporters(this);
     // getSuitableImporters() guarantees that all returned importers require the same module type
@@ -1268,5 +1257,26 @@ public class MavenProject {
       in.defaultReadObject();
       myCache = new ConcurrentHashMap<>();
     }
+  }
+
+  public class Updater {
+    public Updater setDependencies(@NotNull List<MavenArtifact> dependencies) {
+      myState.myDependencies = dependencies;
+      return this;
+    }
+
+    public Updater setProperties(@NotNull Properties properties) {
+      myState.myProperties = properties;
+      return this;
+    }
+
+    public void setPlugins(@NotNull List<MavenPlugin> plugins) {
+      myState.myPlugins.clear();
+      myState.myPlugins.addAll(plugins);
+    }
+  }
+
+  public Updater updater() {
+    return new Updater();
   }
 }

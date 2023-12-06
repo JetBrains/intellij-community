@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * @param <T> implementation that is used while size < threshold
  * @param <F> implementation that is used once threshold is reached
  */
-final public class UpgradableRandomAccessIntContainer<
+public final class UpgradableRandomAccessIntContainer<
   T extends RandomAccessIntContainer,
   F extends RandomAccessIntContainer> implements RandomAccessIntContainer {
   private T myInstanceLow;

@@ -6,6 +6,6 @@ fun main(args: Array<String>) {
     // RESULT: 1: I
     // RESUME: 1
     //Breakpoint!
-    a.map(fun (it): Int { return it * 1 })
+    a.map(fun (it): Int = it * 1)
 }
 

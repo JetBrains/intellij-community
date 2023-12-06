@@ -21,7 +21,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
@@ -51,7 +50,7 @@ public class MavenIndicesTestFixture {
     myExtraRepoDirs = extraRepoDirs;
   }
 
-  public void setUp() throws Exception {
+  public void setUpBeforeImport() throws Exception {
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir.toFile(), ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
 
     for (String each : myExtraRepoDirs) {
@@ -60,8 +59,15 @@ public class MavenIndicesTestFixture {
 
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(
       myRepositoryHelper.getTestDataPath(myLocalRepoDir));
+  }
 
-    MavenIndexerWrapper.setTestIndicesDir(myDir.resolve("MavenIndices"));
+  public void setUp() throws Exception {
+    setUpBeforeImport();
+    setUpAfterImport();
+  }
+
+  public void setUpAfterImport() {
+    MavenSystemIndicesManager.getInstance().setTestIndicesDir(myDir.resolve("MavenIndices"));
     getIndicesManager().scheduleUpdateIndicesList(null);
     getIndicesManager().waitForBackgroundTasksInTests();
     UIUtil.dispatchAllInvocationEvents();

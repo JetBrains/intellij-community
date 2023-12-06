@@ -6,10 +6,9 @@ import com.intellij.execution.wsl.target.wizard.WslTargetCustomToolStep
 import com.intellij.execution.wsl.target.wizard.WslTargetIntrospectionStep
 import com.intellij.execution.wsl.target.wizard.WslTargetLanguageStep
 import com.intellij.execution.wsl.target.wizard.WslTargetWizardModel
-import com.intellij.execution.wsl.ui.WslPathBrowser
+import com.intellij.execution.wsl.ui.browseWslPath
 import com.intellij.icons.AllIcons
 import com.intellij.ide.wizard.AbstractWizardStepEx
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextComponentAccessor
@@ -68,20 +67,19 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
                                              component: T,
                                              configurationSupplier: Supplier<out TargetEnvironmentConfiguration>,
                                              targetBrowserHints: TargetBrowserHints): ActionListener = ActionListener {
-    val configuration = configurationSupplier.get()
-    if (configuration is WslTargetEnvironmentConfiguration) {
-      configuration.distribution?.let {
-        WslPathBrowser(object : TextAccessor {
-          override fun setText(text: String) = textComponentAccessor.setText(component, text)
-          override fun getText() = textComponentAccessor.getText(component)
-        }).browsePath(it,
-                      component,
-                      accessWindowsFs = targetBrowserHints.showLocalFsInBrowser,
-                      customFileDescriptor = targetBrowserHints.customFileChooserDescriptor)
-        return@ActionListener
+    val configuration = configurationSupplier.get() as WslTargetEnvironmentConfiguration
+    configuration.distribution?.let {
+      val textAccessor = object : TextAccessor {
+        override fun setText(text: String) = textComponentAccessor.setText(component, text)
+        override fun getText() = textComponentAccessor.getText(component)
       }
+      browseWslPath(textAccessor,
+                    it,
+                    component,
+                    accessWindowsFs = targetBrowserHints.showLocalFsInBrowser,
+                    customFileDescriptor = targetBrowserHints.customFileChooserDescriptor)
+      return@ActionListener
     }
-    LOG.error(IllegalStateException("Unexpected configuration $configuration"))
   }
 
   companion object {
@@ -89,6 +87,5 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
 
     @NlsSafe
     const val DISPLAY_NAME = "WSL"
-    private val LOG = logger<WslTargetType>()
   }
 }

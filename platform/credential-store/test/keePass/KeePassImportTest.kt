@@ -2,7 +2,7 @@
 package com.intellij.credentialStore.com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.keePass.BaseKeePassFileManagerTest
-import com.intellij.credentialStore.keePass.MASTER_KEY_FILE_NAME
+import com.intellij.credentialStore.keePass.MAIN_KEY_FILE_NAME
 import com.intellij.credentialStore.keePass.TestKeePassFileManager
 import com.intellij.credentialStore.keePass.defaultEncryptionSpec
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -26,17 +26,17 @@ internal class KeePassImportTest : BaseKeePassFileManagerTest() {
   fun `import with custom master key but key file doesn't exist`() {
     val otherStore = createTestStoreWithCustomMasterKey(fsRule.fs.getPath("/other"))
     otherStore.save(defaultEncryptionSpec)
-    fsRule.fs.getPath("/other/$MASTER_KEY_FILE_NAME").move(fsRule.fs.getPath("/other/otherKey"))
+    fsRule.fs.getPath("/other/$MAIN_KEY_FILE_NAME").move(fsRule.fs.getPath("/other/otherKey"))
 
     val store = createStore()
     val keePassFileManager = TestKeePassFileManager(store)
     keePassFileManager.import(otherStore.dbFile, event = null)
     assertThat(keePassFileManager.isUnsatisfiedMasterPasswordRequest).isTrue()
     assertThat(store.dbFile).doesNotExist()
-    assertThat(store.masterKeyFile).doesNotExist()
+    assertThat(store.mainKeyFile).doesNotExist()
 
     // assert that other store not corrupted
-    fsRule.fs.getPath("/other/otherKey").move(fsRule.fs.getPath("/other/$MASTER_KEY_FILE_NAME"))
+    fsRule.fs.getPath("/other/otherKey").move(fsRule.fs.getPath("/other/$MAIN_KEY_FILE_NAME"))
     otherStore.reload()
     assertThat(otherStore.get(testCredentialAttributes)!!.password!!.toString()).isEqualTo("p")
   }
@@ -45,7 +45,7 @@ internal class KeePassImportTest : BaseKeePassFileManagerTest() {
   fun `import with custom master key but key file doesn't exist but user provided new`() {
     val otherStore = createTestStoreWithCustomMasterKey(fsRule.fs.getPath("/other"))
     otherStore.save(defaultEncryptionSpec)
-    fsRule.fs.getPath("/other/$MASTER_KEY_FILE_NAME").delete()
+    fsRule.fs.getPath("/other/$MAIN_KEY_FILE_NAME").delete()
 
     val store = createStore()
     val keePassFileManager = TestKeePassFileManager(store, masterPasswordRequestAnswer = "foo")

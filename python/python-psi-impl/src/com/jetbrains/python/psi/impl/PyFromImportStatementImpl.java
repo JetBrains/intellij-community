@@ -12,10 +12,8 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -24,13 +22,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement{
+public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement, PsiListLikeElement{
   public PyFromImportStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -104,7 +103,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   @Override
   @Nullable
   public PyStarImportElement getStarImportElement() {
-    return getStubOrPsiChild(PyElementTypes.STAR_IMPORT_ELEMENT);
+    return getStubOrPsiChild(PyStubElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   @Override
@@ -244,7 +243,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       final int level = getRelativeLevel();
       if (level > 0) {
         final PsiDirectory upper = ResolveImportUtil.stepBackFrom(getContainingFile().getOriginalFile(), level);
-        return upper == null ? Collections.emptyList() : Collections.singletonList(upper);
+        return ContainerUtil.createMaybeSingletonList(upper);
       }
     }
     return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
@@ -306,5 +305,10 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       }
     }
     return null;
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getImportElements());
   }
 }

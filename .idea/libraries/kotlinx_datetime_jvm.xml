@@ -1,10 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-datetime-jvm" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.4.0" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.5.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.5.0/kotlinx-datetime-jvm-0.5.0.jar">
+          <sha256sum>bff0d35072d4fafb608052c0875597a0c3bc703ee795246250910f9caff85863</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.4.0/kotlinx-datetime-jvm-0.4.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.5.0/kotlinx-datetime-jvm-0.5.0.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.5.0/kotlinx-datetime-jvm-0.5.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

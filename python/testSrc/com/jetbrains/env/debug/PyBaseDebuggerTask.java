@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.debug;
 
 import com.intellij.execution.ExecutionResult;
@@ -31,7 +31,6 @@ import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -272,7 +271,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   protected void outputContains(String substring, int times) {
-    Assert.assertEquals(times, StringUtils.countMatches(output(), substring));
+    Assert.assertEquals(times, StringUtil.getOccurrenceCount(output(), substring));
   }
 
   public void setProcessCanTerminate(boolean processCanTerminate) {
@@ -307,7 +306,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   protected void toggleBreakpointInEgg(final String file, final String innerPath, final int line) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       VirtualFile f = LocalFileSystem.getInstance().findFileByPath(file);
       Assert.assertNotNull(f);
       final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(f);
@@ -479,7 +478,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     long started = System.currentTimeMillis();
     int matches;
 
-    while ((matches = StringUtils.countMatches(output(), string)) != times) {
+    while ((matches = StringUtil.getOccurrenceCount(output(), string)) != times) {
       if (System.currentTimeMillis() - started > myTimeout) {
         Assert.fail("The substring '" + string + "' appeared in the output " + matches + " times, must be " + times + " times.\n" +
                     output());

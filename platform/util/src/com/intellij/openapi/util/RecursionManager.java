@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -61,8 +62,7 @@ public final class RecursionManager {
    * This is same as {@link RecursionGuard#doPreventingRecursion(Object, boolean, Computable)},
    * without a need to bother to create {@link RecursionGuard}.
    */
-  @Nullable
-  public static <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
+  public static @Nullable <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
     return createGuard(computation.getClass().getName()).doPreventingRecursion(key, memoize, computation);
   }
 
@@ -71,8 +71,7 @@ public final class RecursionManager {
    * @return a helper object which allows you to perform reentrancy-safe computations and check whether caching will be safe.
    * Don't use it unless you need to call it from several places in the code, inspect the computation stack and/or prohibit result caching.
    */
-  @NotNull
-  public static <Key> RecursionGuard<Key> createGuard(@NonNls final String id) {
+  public static @NotNull <Key> RecursionGuard<Key> createGuard(final @NonNls String id) {
     return new RecursionGuard<Key>() {
       @Override
       public <T, E extends Throwable> @Nullable T computePreventingRecursion(@NotNull Key key,
@@ -130,9 +129,8 @@ public final class RecursionManager {
         }
       }
 
-      @NotNull
       @Override
-      public List<Key> currentStack() {
+      public @NotNull List<Key> currentStack() {
         List<Key> result = new ArrayList<>();
         for (MyKey pair : ourStack.get().progressMap.keySet()) {
           if (pair.guardId.equals(id)) {
@@ -181,8 +179,7 @@ public final class RecursionManager {
    * }</pre>
    * @return an object representing the current stack state, managed by {@link RecursionManager}
    */
-  @NotNull
-  public static RecursionGuard.StackStamp markStack() {
+  public static @NotNull RecursionGuard.StackStamp markStack() {
     int stamp = ourStack.get().reentrancyCount;
     return new RecursionGuard.StackStamp() {
       @Override
@@ -197,8 +194,24 @@ public final class RecursionManager {
     };
   }
 
+  /**
+   * Runs computation in a new context in the current thread, without any previously set guards.
+   */
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  public static void runInNewContext(@NotNull Runnable runnable) {
+    CalculationStack currentContext = ourStack.get();
+    try {
+      ourStack.set(new CalculationStack());
+      runnable.run();
+    }
+    finally {
+      ourStack.set(currentContext);
+    }
+  }
 
-  private static class MyKey {
+
+  private static final class MyKey {
     final String guardId;
     final Object userObject;
     private final int myHashCode;
@@ -242,7 +255,7 @@ public final class RecursionManager {
     private int firstLoopStart = Integer.MAX_VALUE; // outermost recursion-prevented frame depth; memoized values are dropped on its change.
     private final LinkedHashMap<MyKey, StackFrame> progressMap = new LinkedHashMap<>();
     private final Map<MyKey, Throwable> preventions = new IdentityHashMap<>();
-    private final Map<@NotNull MyKey, MemoizedValue> intermediateCache = ContainerUtil.createSoftKeySoftValueMap();
+    private final Map<@NotNull MyKey, MemoizedValue> intermediateCache = CollectionFactory.createSoftKeySoftValueMap();
     private int enters;
     private int exits;
 
@@ -389,7 +402,7 @@ public final class RecursionManager {
     "com.jetbrains.python.psi.impl.references.PyReferenceImpl.multiResolve(",
   };
 
-  private static class MemoizedValue {
+  private static final class MemoizedValue {
     final Object value;
     final MyKey[] dependencies;
 
@@ -399,7 +412,7 @@ public final class RecursionManager {
     }
   }
 
-  private static class StackFrame {
+  private static final class StackFrame {
     int reentrancyStamp;
     @Nullable Set<MyKey> preventionsInside;
 
@@ -475,7 +488,7 @@ public final class RecursionManager {
    * In this case, you may call {@link #disableMissedCacheAssertions} in the tests
    * which check such exotic situations.
    */
-  static class CachingPreventedException extends RuntimeException {
+  static final class CachingPreventedException extends RuntimeException {
     CachingPreventedException(Map<MyKey, Throwable> preventions) {
       super("Caching disabled due to recursion prevention, please get rid of cyclic dependencies. Preventions: " + new ArrayList<>(preventions.keySet()),
             ContainerUtil.getFirstItem(preventions.values()));

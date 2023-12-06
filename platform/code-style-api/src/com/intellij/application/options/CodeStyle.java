@@ -3,12 +3,13 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -22,7 +23,6 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,6 +38,8 @@ public final class CodeStyle {
 
   private CodeStyle() {
   }
+
+  public static final Logger LOG = Logger.getInstance(CodeStyle.class);
 
   /**
    * @return Default application-wide root code style settings.
@@ -72,10 +74,13 @@ public final class CodeStyle {
   }
 
   /**
-   * Returns root {@link CodeStyleSettings} for the given project and virtual file. In some cases the returned instance may be of
+   * Returns root {@link CodeStyleSettings} for the given project and virtual file.
+   * <p>
+   * In some cases the returned instance may be of
    * {@link TransientCodeStyleSettings} class if the original (project) settings are modified for specific file by
    * {@link CodeStyleSettingsModifier} extensions. In these cases the returned instance may change upon the next call if some of
    * {@link TransientCodeStyleSettings} dependencies become outdated.
+   * Subscribe to {@link CodeStyleSettingsListener#TOPIC} to receive notifications when the associated settings change.
    *
    * @param project The current project.
    * @param file The file to get code style settings for.
@@ -83,24 +88,28 @@ public final class CodeStyle {
    */
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull Project project, @NotNull VirtualFile file) {
-    @SuppressWarnings("TestOnlyProblems")
-    CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
-    if (tempSettings != null) {
-      return tempSettings;
+    CodeStyleSettings localOrTempSettings = getLocalOrTemporarySettings(project);
+    if (localOrTempSettings != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("localOrTemp settings for " + file.getName());
+      }
+      return localOrTempSettings;
     }
-    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
-    return cachedSettings != null ? cachedSettings : getSettings(project);
+    return getCachedOrProjectSettings(project, file);
   }
 
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
     final Project project = file.getProject();
-    @SuppressWarnings("TestOnlyProblems")
-    CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
-    if (tempSettings != null) {
-      return tempSettings;
-    }
 
-    PsiFile settingsFile = getSettingsPsi(file);
+    CodeStyleSettings localOrTempSettings = getLocalOrTemporarySettings(project);
+    if (localOrTempSettings != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("localOrTemp settings for " + file.getName());
+      }
+      return localOrTempSettings;
+    }
+    PsiFile topLevel = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    PsiFile settingsFile = getSettingsPsi(topLevel != null ? topLevel : file);
     if (settingsFile == null) {
       return getSettings(project);
     }
@@ -108,10 +117,36 @@ public final class CodeStyle {
     if (virtualFile == null) {
       return getSettings(project);
     }
-    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(virtualFile);
+    return getCachedOrProjectSettings(project, virtualFile);
+  }
+
+  private static CodeStyleSettings getCachedOrProjectSettings(@NotNull Project project, @NotNull VirtualFile file) {
+    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug((cachedSettings != null ? "cached" : "project") + " settings for " + file.getName());
+    }
     return cachedSettings != null ? cachedSettings : getSettings(project);
   }
 
+  @Nullable
+  private static CodeStyleSettings getLocalOrTemporarySettings(@NotNull Project project) {
+    CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
+    CodeStyleSettings localSettings = settingsManager.getLocalSettings();
+    if (localSettings != null) {
+      return localSettings;
+    }
+
+    @SuppressWarnings("TestOnlyProblems")
+    CodeStyleSettings tempSettings = settingsManager.getTemporarySettings();
+    if (tempSettings != null) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.warn("Temporary settings used in production. Please use CodeStyle#runWithLocalSettings instead.");
+      }
+      return tempSettings;
+    }
+
+    return null;
+  }
 
   /**
    * Finds a PSI file to be used to retrieve code style settings. May use {@link PsiFileFactory#ORIGINAL_FILE} if the
@@ -260,8 +295,8 @@ public final class CodeStyle {
    * <p>
    *   <b>Note</b>
    * The method is supposed to be used in test's {@code setUp()} method. In production code use
-   * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
-   * or {@link #doWithTemporarySettings(Project, CodeStyleSettings, Consumer)}
+   * {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}
+   * or {@link #runWithLocalSettings(Project, CodeStyleSettings, Consumer)}.
    *
    * @param project The project or {@code null} for default settings.
    * @param settings The settings to use temporarily with the project.
@@ -277,7 +312,8 @@ public final class CodeStyle {
    * <p>
    *   <b>Note</b>
    * The method is supposed to be used in test's {@code tearDown()} method. In production code use
-   * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
+   * {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}
+   * or {@link #runWithLocalSettings(Project, CodeStyleSettings, Consumer)}.
    *
    * @param project The project to drop temporary settings for or {@code null} for default settings.
    * @see #setTemporarySettings(Project, CodeStyleSettings)
@@ -298,61 +334,71 @@ public final class CodeStyle {
   }
 
   /**
+   * Invoke a runnable using the specified settings.
+   * <p>
+   * Inside the <code>runnable</code>, <code>localSettings</code> override code style settings for all files associated with
+   * <code>project</code>. This effect is limited to current thread.
+   *
+   * @param project The current project.
+   * @param localSettings The local settings.
+   * @param runnable The runnable.
+   */
+  public static void runWithLocalSettings(@NotNull Project project,
+                                          @NotNull CodeStyleSettings localSettings,
+                                          @NotNull Runnable runnable) {
+    CodeStyleSettingsManager.getInstance(project).runWithLocalSettings(localSettings, runnable);
+  }
+
+  /**
+   * Invoke the specified consumer with a copy of the given <code>baseSettings</code>.
+   * <p>
+   * Inside <code>localSettingsConsumer</code>, this copy will override code style settings for all files associated with <code>project</code>.
+   * This effect is limited to current thread. It is safe to make any changes to the copy of settings passed to the consumer, these changes
+   * will not affect any currently set code style.
+   *
+   * @param project              The current project.
+   * @param baseSettings         The base settings to be cloned and used in consumer.
+   * @param localSettingsConsumer The consumer to execute with the base settings copy.
+   */
+  public static void runWithLocalSettings(@NotNull Project project,
+                                          @NotNull CodeStyleSettings baseSettings,
+                                          @NotNull Consumer<? super @NotNull CodeStyleSettings> localSettingsConsumer) {
+    CodeStyleSettingsManager.getInstance(project).runWithLocalSettings(baseSettings, localSettingsConsumer);
+  }
+
+  /**
    * Execute the specified runnable with the given temporary code style settings and restore the old settings even if the runnable fails
    * with an exception.
+   * <p>
+   * For production code use {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}
    *
    * @param project       The current project.
    * @param tempSettings  The temporary code style settings.
    * @param runnable      The runnable to execute with the temporary settings.
    */
-  @SuppressWarnings("TestOnlyProblems")
+  @TestOnly
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
-    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    CodeStyleSettings tempSettingsBefore = settingsManager.getTemporarySettings();
-    try {
-      settingsManager.setTemporarySettings(tempSettings);
-      runnable.run();
-    }
-    finally {
-      if (tempSettingsBefore != null) {
-        settingsManager.setTemporarySettings(tempSettingsBefore);
-      }
-      else {
-        settingsManager.dropTemporarySettings();
-      }
-    }
+    CodeStyleSettingsManager.getInstance(project).doWithTemporarySettings(tempSettings, runnable);
   }
 
   /**
-   * Invoke the specified consumer with a copy of the given <b>baseSettings</b> and restore the old settings even if the
+   * Invoke the specified consumer with a copy of the given <code>baseSettings</code> and restore the old settings even if the
    * consumer fails with an exception. It is safe to make any changes to the copy of settings passed to consumer, these
    * changes will not affect any currently set code style.
+   * <p>
+   * For production code use {@link #runWithLocalSettings(Project, CodeStyleSettings, Consumer)}
    *
    * @param project              The current project.
    * @param baseSettings         The base settings to be cloned and used in consumer.
    * @param tempSettingsConsumer The consumer to execute with the base settings copy.
    */
-  @SuppressWarnings("TestOnlyProblems")
+  @TestOnly
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings baseSettings,
                                              @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
-    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    CodeStyleSettings tempSettingsBefore = settingsManager.getTemporarySettings();
-    try {
-      CodeStyleSettings tempSettings = settingsManager.createTemporarySettings();
-      tempSettings.copyFrom(baseSettings);
-      tempSettingsConsumer.accept(tempSettings);
-    }
-    finally {
-      if (tempSettingsBefore != null) {
-        settingsManager.setTemporarySettings(tempSettingsBefore);
-      }
-      else {
-        settingsManager.dropTemporarySettings();
-      }
-    }
+    CodeStyleSettingsManager.getInstance(project).doWithTemporarySettings(baseSettings, tempSettingsConsumer);
   }
 
   /**
@@ -362,13 +408,6 @@ public final class CodeStyle {
    */
   public static boolean usesOwnSettings(@NotNull Project project) {
     return CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
-  }
-
-  @ApiStatus.Internal
-  public static void updateDocumentIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull Document document) {
-    CommonCodeStyleSettings.IndentOptions indentOptions = ProjectLocator.computeWithPreferredProject(virtualFile, project, () ->
-      getSettings(project, virtualFile).getIndentOptionsByFile(project, virtualFile, null, true, null));
-    indentOptions.associateWithDocument(document);
   }
 
   /**
@@ -405,7 +444,7 @@ public final class CodeStyle {
     final Project project = contextFile.getProject();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     CodeStyleSettings realFileSettings = getSettings(contextFile);
-    doWithTemporarySettings(project, realFileSettings, () -> codeStyleManager.reformat(fileToReformat));
+    runWithLocalSettings(project, realFileSettings, () -> codeStyleManager.reformat(fileToReformat));
   }
 
 

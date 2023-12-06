@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -322,8 +322,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  @Nullable
-  public Element export(@NotNull RefEntity entity) {
+  public @Nullable Element export(@NotNull RefEntity entity) {
     Element element = export(entity, -1);
     if (element == null) return null;
 
@@ -462,7 +461,8 @@ public class RefManagerImpl extends RefManager {
     if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
       return;
     }
-    final int threadsCount = Math.min(6, Runtime.getRuntime().availableProcessors() - 1);
+    final int setting = Registry.get("batch.inspections.number.of.threads").asInteger();
+    final int threadsCount = (setting > 0) ? setting : Runtime.getRuntime().availableProcessors() - 1;
     if (threadsCount == 0) {
       // need more than 1 core for parallel processing
       return;
@@ -474,7 +474,7 @@ public class RefManagerImpl extends RefManager {
     final Application application = ApplicationManager.getApplication();
     final ProgressManager progressManager = ProgressManager.getInstance();
     final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
-    for (int i = 0; i < (threadsCount > 0 ? threadsCount : 4) ; i++) {
+    for (int i = 0; i < threadsCount; i++) {
       final Future<?> future = application.executeOnPooledThread(() -> {
         while (myFutures != null || !myTasks.isEmpty()) {
           try {
@@ -537,7 +537,7 @@ public class RefManagerImpl extends RefManager {
     List<RefElement> answer = myCachedSortedRefs;
     if (answer != null) return answer;
 
-    answer = new ArrayList<>(myRefTable.values());
+    answer = getElements();
     List<RefElement> list = answer;
     ReadAction.run(() -> ContainerUtil.quickSort(list, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
@@ -552,6 +552,10 @@ public class RefManagerImpl extends RefManager {
     }));
     myCachedSortedRefs = answer = Collections.unmodifiableList(answer);
     return answer;
+  }
+
+  public @NotNull List<RefElement> getElements() {
+    return new ArrayList<>(myRefTable.values());
   }
 
   @Override

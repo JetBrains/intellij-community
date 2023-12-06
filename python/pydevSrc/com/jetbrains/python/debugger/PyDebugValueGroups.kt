@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
@@ -60,15 +61,17 @@ fun addGroupValues(groupName: String,
                    nameSuffix: String?) {
   val group = object : PyXValueGroup(groupName, groupType) {
     override fun computeChildren(node: XCompositeNode) {
-      val list: XValueChildrenList? =
-        if (groupType == ProcessDebugger.GROUP_TYPE.DEFAULT) {
-          getDefaultGroupNodes(groupElements, nameSuffix)
-        }
-        else {
-          myDebugProcess?.let { getSpecialGroupNodes(it, nameSuffix, groupType) }
-        }
-
-      list?.let { node.addChildren(list, true) }
+      if (node.isObsolete) return
+      ApplicationManager.getApplication().executeOnPooledThread {
+        val list: XValueChildrenList? =
+          if (groupType == ProcessDebugger.GROUP_TYPE.DEFAULT) {
+            getDefaultGroupNodes(groupElements, nameSuffix)
+          }
+          else {
+            myDebugProcess?.let { getSpecialGroupNodes(it, nameSuffix, groupType) }
+          }
+        list?.let { node.addChildren(list, true) }
+      }
     }
 
     override fun getIcon(): Icon {

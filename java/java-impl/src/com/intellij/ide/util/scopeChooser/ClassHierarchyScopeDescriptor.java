@@ -2,7 +2,6 @@
 
 package com.intellij.ide.util.scopeChooser;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -34,10 +33,9 @@ final class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
   private final @NotNull Project myProject;
   private final @Nullable PsiClass myRootClass;
 
-  ClassHierarchyScopeDescriptor(@NotNull Project project) {
+  ClassHierarchyScopeDescriptor(@NotNull Project project, @NotNull DataContext dataContext) {
     super(null);
     myProject = project;
-    DataContext dataContext = DataManager.getInstance().getDataContext();
     PsiElement element;
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null) {

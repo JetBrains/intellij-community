@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.envTest.upload
 
-import com.google.gson.Gson
 import com.intellij.internal.statistic.config.EventLogExternalSettings
 import com.intellij.internal.statistic.config.bean.EventLogConfigVersions
 import com.intellij.internal.statistic.config.bean.EventLogMajorVersionBorders
 import com.intellij.internal.statistic.envTest.ApacheContainer
+import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Paths
 
@@ -71,7 +71,7 @@ class EventLogConfigBuilder(private val container: ApacheContainer, private val 
     version.options = options
     externalSettings.versions = listOf(version)
 
-    val config = Gson().toJson(externalSettings)
+    val config = SerializationHelper.serializeToSingleLine(externalSettings)
     val path = String.format(SETTINGS_ROOT, RECORDER_ID, PRODUCT_CODE)
     val file = Paths.get(tmpLocalRoot).resolve(path).toFile()
     FileUtil.writeToFile(file, config)

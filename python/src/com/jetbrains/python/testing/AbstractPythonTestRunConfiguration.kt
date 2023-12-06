@@ -90,7 +90,7 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
     val sdk = sdk
     if (sdk == null) {
       // No SDK -- no tests
-      logger<AbstractPythonRunConfiguration<*>>().warn("SDK is null")
+      logger<AbstractPythonRunConfiguration<*>>().warn("Failed to detect test framework: SDK is null")
       return false
     }
     val requiredPackage = this.requiredPackage ?: return true // Installed by default

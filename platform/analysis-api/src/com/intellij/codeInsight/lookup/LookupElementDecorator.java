@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -37,8 +37,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @Override
-  @NotNull
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myDelegate.getLookupString();
   }
 
@@ -47,9 +46,8 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     return myDelegate.getAllLookupStrings();
   }
 
-  @NotNull
   @Override
-  public Object getObject() {
+  public @NotNull Object getObject() {
     return myDelegate.getObject();
   }
 
@@ -130,21 +128,18 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   /**
    * Wraps the given lookup element into a decorator that overrides its insertion behavior (passes the decorator to the handler).
    */
-  @NotNull
-  public static <T extends LookupElement> LookupElementDecorator<T> withInsertHandler(@NotNull T element, @NotNull final InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
+  public static @NotNull <T extends LookupElement> LookupElementDecorator<T> withInsertHandler(@NotNull T element, final @NotNull InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
     return new InsertingDecorator<>(element, insertHandler);
   }
 
   /**
    * Wraps the given lookup element into a decorator that overrides its insertion behavior (passes the delegate to the handler).
    */
-  @NotNull
-  public static <T extends LookupElement> LookupElementDecorator<T> withDelegateInsertHandler(@NotNull T element, final @NotNull InsertHandler<T> insertHandler) {
+  public static @NotNull <T extends LookupElement> LookupElementDecorator<T> withDelegateInsertHandler(@NotNull T element, final @NotNull InsertHandler<T> insertHandler) {
     return new InsertingDelegateDecorator<>(element, insertHandler);
   }
 
-  @NotNull
-  public static <T extends LookupElement> LookupElementDecorator<T> withRenderer(@NotNull final T element, @NotNull final LookupElementRenderer<? super LookupElementDecorator<T>> visagiste) {
+  public static @NotNull <T extends LookupElement> LookupElementDecorator<T> withRenderer(final @NotNull T element, final @NotNull LookupElementRenderer<? super LookupElementDecorator<T>> visagiste) {
     return new VisagisteDecorator<>(element, visagiste);
   }
 
@@ -170,13 +165,12 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     return myDelegate.isWorthShowingInAutoPopup();
   }
 
-  @Nullable
   @Override
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return myDelegate.getPsiElement();
   }
 
-  private static class InsertingDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
+  private static final class InsertingDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
     private final InsertHandler<? super LookupElementDecorator<T>> myInsertHandler;
 
     InsertingDecorator(T element, InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
@@ -210,7 +204,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     }
   }
 
-  private static class InsertingDelegateDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
+  private static final class InsertingDelegateDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
     private final InsertHandler<T> myInsertHandler;
 
     InsertingDelegateDecorator(T element, InsertHandler<T> insertHandler) {
@@ -244,7 +238,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     }
   }
 
-  private static class VisagisteDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
+  private static final class VisagisteDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
     private final LookupElementRenderer<? super LookupElementDecorator<T>> myVisagiste;
 
     VisagisteDecorator(T element, LookupElementRenderer<? super LookupElementDecorator<T>> visagiste) {

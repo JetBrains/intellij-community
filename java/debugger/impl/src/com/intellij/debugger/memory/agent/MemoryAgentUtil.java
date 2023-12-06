@@ -9,11 +9,12 @@ import com.intellij.debugger.memory.ui.SizedReferenceInfo;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.CpuArch;
+import com.sun.jdi.ReferenceType;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -30,8 +31,6 @@ import java.util.concurrent.TimeoutException;
 public final class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
   private static final String MEMORY_AGENT_EXTRACT_DIRECTORY = "memory.agent.extract.dir";
-
-  private static final int ESTIMATE_OBJECTS_SIZE_LIMIT = 2000;
 
   @Nullable
   static String getAgentFilePathAsString(boolean isInDebugMode, @NotNull AgentExtractor.AgentLibraryType libraryType)
@@ -56,31 +55,34 @@ public final class MemoryAgentUtil {
   }
 
   @NotNull
-  public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull EvaluationContextImpl context,
-                                                          @NotNull List<JavaReferenceInfo> objects) {
+  public static List<JavaReferenceInfo> calculateSizes(@NotNull EvaluationContextImpl context,
+                                                       @NotNull ReferenceType classType,
+                                                       long objectsLimit,
+                                                       @NotNull ProgressIndicator progressIndicator) {
     MemoryAgent agent = MemoryAgent.get(context);
-    if (!agent.getCapabilities().canEstimateObjectsSizes()) return objects;
-    if (objects.size() > ESTIMATE_OBJECTS_SIZE_LIMIT) {
-      LOG.info("Too many objects to estimate their sizes");
-      return objects;
-    }
+    agent.setProgressIndicator(progressIndicator);
     try {
-      long[] sizes = agent.estimateObjectsSizes(
+      MemoryAgent.ObjectsAndSizes objectsAndSizes = agent.getSortedShallowAndRetainedSizesByClass(
         context,
-        ContainerUtil.map(objects, x -> x.getObjectReference()),
+        classType,
+        objectsLimit,
         Registry.get("debugger.memory.agent.action.timeout").asInteger()
       ).getResult();
-      return IntStreamEx.range(0, objects.size())
-        .mapToObj(i -> new SizedReferenceInfo(objects.get(i).getObjectReference(), sizes[i]))
-        .reverseSorted(Comparator.comparing(x -> x.size()))
-        .map(x -> (JavaReferenceInfo)x)
+      return IntStreamEx.range(0, objectsAndSizes.getObjects().length)
+        .mapToObj(i ->
+          (JavaReferenceInfo) new SizedReferenceInfo(
+            objectsAndSizes.getObjects()[i],
+            objectsAndSizes.getShallowSizes()[i],
+            objectsAndSizes.getRetainedSizes()[i]
+          )
+        )
         .toList();
     }
     catch (EvaluateException e) {
       LOG.error("Could not estimate objects sizes", e);
     }
 
-    return objects;
+    return Collections.emptyList();
   }
 
   public static boolean isPlatformSupported() {

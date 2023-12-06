@@ -29,17 +29,27 @@ public interface SweepProcessor<T> {
   boolean process(int offset, @NotNull T interval, boolean atStart, @NotNull Collection<? extends T> overlappingIntervals);
 
   /**
-   * Process all intervals from generator in their "start offset - then end offset" order.
-   * For each interval call sweepProcessor and pass this interval with its current endpoint (start or end) and current overlapping intervals which this endpoint stabs.
-   * E.g. for (0,4), (2,5) intervals call sweepProcessor with (0, empty), (2, 0-4), (4, 2-5), (5, empty)
+   * Process all intervals from the {@code generator} in their "start offset; then end offset" order.
+   * For each interval call {@code sweepProcessor} and pass this interval, its current endpoint (start or end), and current overlapping intervals which this endpoint stabs.
+   * E.g. for (0,4), (2,5) intervals, this method will call {@code sweepProcessor} with:<pre>
+   *   (offset=0, atStart=true,  overlapping=empty),
+   *   (offset=2, atStart=true,  overlapping=(0-4)),
+   *   (offset=4, atStart=false, overlapping=(2-5),
+   *   (offset=5, atStart=false, overlapping=empty)
+   * </pre>
+   * To maintain the correct order the {@code generator} must supply intervals in their {@link Segment#getStartOffset()} order.
    */
-  static <T extends Segment> boolean sweep(@NotNull Generator<? extends T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
+  static <T extends Segment> boolean sweep(@NotNull Generator<? extends T> generator, @NotNull SweepProcessor<T> sweepProcessor) {
     Queue<T> ends = new PriorityQueue<>(5, Comparator.comparingInt(Segment::getEndOffset));
-    if (!generator.generateInStartOffsetOrder(marker -> {
-      // decide whether previous marker ends here or new marker begins
+    if (!generator.processAllInStartOffsetOrder(marker -> {
+      // decide whether the previous marker ends here or the new marker begins
       int start = marker.getStartOffset();
       while (!ends.isEmpty()) {
         T previous = ends.peek();
+        int previousStartOffset = previous.getStartOffset();
+        if (start < previousStartOffset) {
+          throw new IllegalStateException("Generator "+generator+" supplied segments in a wrong order: "+previous+" was received before "+ marker +" ("+start+"<"+previousStartOffset+")");
+        }
         int prevEnd = previous.getEndOffset();
         if (prevEnd <= start) {
           if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
@@ -66,6 +76,6 @@ public interface SweepProcessor<T> {
 
   @FunctionalInterface
   interface Generator<T> {
-    boolean generateInStartOffsetOrder(@NotNull Processor<? super T> processor);
+    boolean processAllInStartOffsetOrder(@NotNull Processor<? super T> processor);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.openapi.extensions.BaseExtensionPointName
@@ -11,7 +11,7 @@ import com.intellij.xml.XmlBundle
 import java.util.function.Function
 
 // @formatter:off
-private val model = WebEditorOptions.getInstance()
+private val model get() = WebEditorOptions.getInstance()
 private val myAutomaticallyInsertClosingTagCheckBox         get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.closing.tag.on.tag.completion"), model::isAutomaticallyInsertClosingTag, model::setAutomaticallyInsertClosingTag)
 private val myAutomaticallyInsertRequiredAttributesCheckBox get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.required.attributes.on.tag.completion"), model::isAutomaticallyInsertRequiredAttributes, model::setAutomaticallyInsertRequiredAttributes)
 private val myAutomaticallyInsertRequiredSubTagsCheckBox    get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.required.subtags.on.tag.completion"), model::isAutomaticallyInsertRequiredSubTags, model::setAutomaticallyInsertRequiredSubTags)
@@ -78,9 +78,7 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
     return ConfigurableWrapper.createConfigurables(EP_NAME)
   }
 
-  companion object {
-    val EP_NAME = ExtensionPointName.create<WebSmartKeysConfigurableEP>("com.intellij.webSmartKeysConfigurable")
-  }
+  private val EP_NAME = ExtensionPointName.create<WebSmartKeysConfigurableEP>("com.intellij.webSmartKeysConfigurable")
 
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> {
     return listOf(EP_NAME)

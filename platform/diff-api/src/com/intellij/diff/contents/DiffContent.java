@@ -29,6 +29,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see com.intellij.diff.requests.ContentDiffRequest
  * @see com.intellij.diff.DiffContentFactory
+ * @see DocumentContent
+ * @see FileContent
+ * @see DirectoryContent
  */
 public interface DiffContent extends UserDataHolder {
   @Nullable

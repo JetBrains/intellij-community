@@ -23,6 +23,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("abstractFunction/abstractFunction.test")
+    public void testAbstractFunction_AbstractFunction() throws Exception {
+        runTest("testData/refactoring/rename/abstractFunction/abstractFunction.test");
+    }
+
     @TestMetadata("ambiguousClassFunImportRenameClass/ambiguousClassFunImportRenameClass.test")
     public void testAmbiguousClassFunImportRenameClass_AmbiguousClassFunImportRenameClass() throws Exception {
         runTest("testData/refactoring/rename/ambiguousClassFunImportRenameClass/ambiguousClassFunImportRenameClass.test");
@@ -113,6 +118,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/automaticVariableRenamerWithQuotation/automaticVariableRenamerWithQuotation.test");
     }
 
+    @TestMetadata("backingField/backingField.test")
+    public void testBackingField_BackingField() throws Exception {
+        runTest("testData/refactoring/rename/backingField/backingField.test");
+    }
+
     @TestMetadata("clashOfNestedWithOuterClass/clashOfNestedWithOuterClass.test")
     public void testClashOfNestedWithOuterClass_ClashOfNestedWithOuterClass() throws Exception {
         runTest("testData/refactoring/rename/clashOfNestedWithOuterClass/clashOfNestedWithOuterClass.test");
@@ -156,6 +166,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("classUsagesInTextFiles/classUsagesInTextFiles.test")
     public void testClassUsagesInTextFiles_ClassUsagesInTextFiles() throws Exception {
         runTest("testData/refactoring/rename/classUsagesInTextFiles/classUsagesInTextFiles.test");
+    }
+
+    @TestMetadata("companionFullRef/companionFullRef.test")
+    public void testCompanionFullRef_CompanionFullRef() throws Exception {
+        runTest("testData/refactoring/rename/companionFullRef/companionFullRef.test");
     }
 
     @TestMetadata("companionObjectWithDefaultName/companionObject.test")
@@ -643,6 +658,16 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameIterator/iterator.test");
     }
 
+    @TestMetadata("renameJavaClassUsedInCallableReference/renameJavaClassUsedInCallableReference.test")
+    public void testRenameJavaClassUsedInCallableReference_RenameJavaClassUsedInCallableReference() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaClassUsedInCallableReference/renameJavaClassUsedInCallableReference.test");
+    }
+
+    @TestMetadata("renameJavaClassUsedInImports/renameJavaClassUsedInImports.test")
+    public void testRenameJavaClassUsedInImports_RenameJavaClassUsedInImports() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaClassUsedInImports/renameJavaClassUsedInImports.test");
+    }
+
     @TestMetadata("renameJavaClassWithKtConstructorDelegation/renameJavaClassWithKtConstructorDelegation.test")
     public void testRenameJavaClassWithKtConstructorDelegation_RenameJavaClassWithKtConstructorDelegation() throws Exception {
         runTest("testData/refactoring/rename/renameJavaClassWithKtConstructorDelegation/renameJavaClassWithKtConstructorDelegation.test");
@@ -651,6 +676,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameJavaClass/renameJavaClass.test")
     public void testRenameJavaClass_RenameJavaClass() throws Exception {
         runTest("testData/refactoring/rename/renameJavaClass/renameJavaClass.test");
+    }
+
+    @TestMetadata("renameJavaFieldWithoutGetter/renameJavaFieldWithoutGetter.test")
+    public void testRenameJavaFieldWithoutGetter_RenameJavaFieldWithoutGetter() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaFieldWithoutGetter/renameJavaFieldWithoutGetter.test");
     }
 
     @TestMetadata("renameJavaInterface/renameJavaInterface.test")
@@ -663,6 +693,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameJavaMethodToKtKeyword/renameJavaMethodToKtKeyword.test");
     }
 
+    @TestMetadata("renameJavaMethodWithDelegation/renameJavaMethodWithDelegation.test")
+    public void testRenameJavaMethodWithDelegation_RenameJavaMethodWithDelegation() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaMethodWithDelegation/renameJavaMethodWithDelegation.test");
+    }
+
     @TestMetadata("renameJavaMethod/javaBaseMethod.test")
     public void testRenameJavaMethod_JavaBaseMethod() throws Exception {
         runTest("testData/refactoring/rename/renameJavaMethod/javaBaseMethod.test");
@@ -671,6 +706,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameJavaMethod/kotlinOverridenMethod.test")
     public void testRenameJavaMethod_KotlinOverridenMethod() throws Exception {
         runTest("testData/refactoring/rename/renameJavaMethod/kotlinOverridenMethod.test");
+    }
+
+    @TestMetadata("renameJavaOverridenGenericSignature/renameJavaOverridenGenericSignature.test")
+    public void testRenameJavaOverridenGenericSignature_RenameJavaOverridenGenericSignature() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaOverridenGenericSignature/renameJavaOverridenGenericSignature.test");
     }
 
     @TestMetadata("renameJavaSyntheticIsPropertyByGetterRef/renameJavaSyntheticIsPropertyByGetterRef.test")
@@ -713,6 +753,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameJavaSyntheticPropertyByRef1/renameJavaSyntheticPropertyByRef1.test");
     }
 
+    @TestMetadata("renameJavaSyntheticPropertyByRefWithSuperMethod/renameJavaSyntheticPropertyByRefWithSuperMethod.test")
+    public void testRenameJavaSyntheticPropertyByRefWithSuperMethod_RenameJavaSyntheticPropertyByRefWithSuperMethod() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaSyntheticPropertyByRefWithSuperMethod/renameJavaSyntheticPropertyByRefWithSuperMethod.test");
+    }
+
     @TestMetadata("renameJavaSyntheticPropertyBySetterRef/renameJavaSyntheticPropertyBySetterRef.test")
     public void testRenameJavaSyntheticPropertyBySetterRef_RenameJavaSyntheticPropertyBySetterRef() throws Exception {
         runTest("testData/refactoring/rename/renameJavaSyntheticPropertyBySetterRef/renameJavaSyntheticPropertyBySetterRef.test");
@@ -741,6 +786,21 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameKotlinClassByConstructorRef/kotlinClass.test")
     public void testRenameKotlinClassByConstructorRef_KotlinClass() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinClassByConstructorRef/kotlinClass.test");
+    }
+
+    @TestMetadata("renameKotlinClassByImplicitConstructorRef/kotlinClass.test")
+    public void testRenameKotlinClassByImplicitConstructorRef_KotlinClass() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinClassByImplicitConstructorRef/kotlinClass.test");
+    }
+
+    @TestMetadata("renameKotlinClassConflictingWithJava1/kotlinClassConflictingWithJava1.test")
+    public void testRenameKotlinClassConflictingWithJava1_KotlinClassConflictingWithJava1() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinClassConflictingWithJava1/kotlinClassConflictingWithJava1.test");
+    }
+
+    @TestMetadata("renameKotlinClassConflictingWithJava/kotlinClassConflictingWithJava.test")
+    public void testRenameKotlinClassConflictingWithJava_KotlinClassConflictingWithJava() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinClassConflictingWithJava/kotlinClassConflictingWithJava.test");
     }
 
     @TestMetadata("renameKotlinClassConstructor/renameKotlinConstructor.test")
@@ -863,6 +923,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameKotlinFunWithJvmName/renameKotlinFunWithJvmName.test");
     }
 
+    @TestMetadata("renameKotlinFunctionCallableReference/renameKotlinFunctionCallableReference.test")
+    public void testRenameKotlinFunctionCallableReference_RenameKotlinFunctionCallableReference() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinFunctionCallableReference/renameKotlinFunctionCallableReference.test");
+    }
+
     @TestMetadata("renameKotlinFunctionInEnum/renameKotlinFunctionInEnum.test")
     public void testRenameKotlinFunctionInEnum_RenameKotlinFunctionInEnum() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinFunctionInEnum/renameKotlinFunctionInEnum.test");
@@ -886,6 +951,16 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameKotlinFunctionParameterWithByNameUsages/renameKotlinFunctionParameterWithByNameUsages.test")
     public void testRenameKotlinFunctionParameterWithByNameUsages_RenameKotlinFunctionParameterWithByNameUsages() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinFunctionParameterWithByNameUsages/renameKotlinFunctionParameterWithByNameUsages.test");
+    }
+
+    @TestMetadata("renameKotlinFunctionSameNameAsFilename/renameKotlinFunctionSameNameAsFilename.test")
+    public void testRenameKotlinFunctionSameNameAsFilename_RenameKotlinFunctionSameNameAsFilename() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinFunctionSameNameAsFilename/renameKotlinFunctionSameNameAsFilename.test");
+    }
+
+    @TestMetadata("renameKotlinFunctionWithJavaBase/renameKotlinFunctionWithJavaBase.test")
+    public void testRenameKotlinFunctionWithJavaBase_RenameKotlinFunctionWithJavaBase() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinFunctionWithJavaBase/renameKotlinFunctionWithJavaBase.test");
     }
 
     @TestMetadata("renameKotlinMethodWithEscapedName/renameKotlinMethodWithEscapedName.test")
@@ -931,6 +1006,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameKotlinPackage/renameKotlinPackage.test")
     public void testRenameKotlinPackage_RenameKotlinPackage() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinPackage/renameKotlinPackage.test");
+    }
+
+    @TestMetadata("renameKotlinParameterConflictingToJavaSetter/renameKotlinParameterConflictingToJavaSetter.test")
+    public void testRenameKotlinParameterConflictingToJavaSetter_RenameKotlinParameterConflictingToJavaSetter() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinParameterConflictingToJavaSetter/renameKotlinParameterConflictingToJavaSetter.test");
     }
 
     @TestMetadata("renameKotlinParameterWithGetterJvmNameByGetterRef/renameKotlinParameterWithGetterJvmNameByGetterRef.test")
@@ -1013,6 +1093,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameKotlinPrimaryConstructorProperty/renameKotlinPrimaryConstructorProperty.test");
     }
 
+    @TestMetadata("renameKotlinPropertySameNameAsFilename/renameKotlinPropertySameNameAsFilename.test")
+    public void testRenameKotlinPropertySameNameAsFilename_RenameKotlinPropertySameNameAsFilename() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinPropertySameNameAsFilename/renameKotlinPropertySameNameAsFilename.test");
+    }
+
     @TestMetadata("renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test")
     public void testRenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef_RenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test");
@@ -1066,6 +1151,16 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameKotlinPropertyWithGetterSetterJvmName/renameKotlinPropertyWithGetterSetterJvmName.test")
     public void testRenameKotlinPropertyWithGetterSetterJvmName_RenameKotlinPropertyWithGetterSetterJvmName() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmName/renameKotlinPropertyWithGetterSetterJvmName.test");
+    }
+
+    @TestMetadata("renameKotlinPropertyWithJavaGetter/renameKotlinPropertyWithJavaGetter.test")
+    public void testRenameKotlinPropertyWithJavaGetter_RenameKotlinPropertyWithJavaGetter() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinPropertyWithJavaGetter/renameKotlinPropertyWithJavaGetter.test");
+    }
+
+    @TestMetadata("renameKotlinPropertyWithJavaSuper/renameKotlinPropertyWithJavaSuper.test")
+    public void testRenameKotlinPropertyWithJavaSuper_RenameKotlinPropertyWithJavaSuper() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinPropertyWithJavaSuper/renameKotlinPropertyWithJavaSuper.test");
     }
 
     @TestMetadata("renameKotlinPropertyWithJvmField/renameKotlinPropertyWithJvmField.test")
@@ -1193,6 +1288,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renamePackageWithQuotation/renamePackageWithQuotation.test");
     }
 
+    @TestMetadata("renamePlus1/plus1.test")
+    public void testRenamePlus1_Plus1() throws Exception {
+        runTest("testData/refactoring/rename/renamePlus1/plus1.test");
+    }
+
     @TestMetadata("renamePlusAssign/plusAssign.test")
     public void testRenamePlusAssign_PlusAssign() throws Exception {
         runTest("testData/refactoring/rename/renamePlusAssign/plusAssign.test");
@@ -1226,6 +1326,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameSynthesizedComponentFunction/synthesizedComponentFunction.test")
     public void testRenameSynthesizedComponentFunction_SynthesizedComponentFunction() throws Exception {
         runTest("testData/refactoring/rename/renameSynthesizedComponentFunction/synthesizedComponentFunction.test");
+    }
+
+    @TestMetadata("renameToGetterName/renameToGetterName.test")
+    public void testRenameToGetterName_RenameToGetterName() throws Exception {
+        runTest("testData/refactoring/rename/renameToGetterName/renameToGetterName.test");
     }
 
     @TestMetadata("renameUnaryMinus/unaryMinus.test")
@@ -1266,6 +1371,16 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("syntheticPropertyUsages3/renameSetMethod.test")
     public void testSyntheticPropertyUsages3_RenameSetMethod() throws Exception {
         runTest("testData/refactoring/rename/syntheticPropertyUsages3/renameSetMethod.test");
+    }
+
+    @TestMetadata("testMethodRenamerJava/renameTestMethod.test")
+    public void testTestMethodRenamerJava_RenameTestMethod() throws Exception {
+        runTest("testData/refactoring/rename/testMethodRenamerJava/renameTestMethod.test");
+    }
+
+    @TestMetadata("testMethodRenamerKotlin/renameTestMethod.test")
+    public void testTestMethodRenamerKotlin_RenameTestMethod() throws Exception {
+        runTest("testData/refactoring/rename/testMethodRenamerKotlin/renameTestMethod.test");
     }
 
     @TestMetadata("topLevelClassRedeclaration/topLevelClassRedeclaration.test")

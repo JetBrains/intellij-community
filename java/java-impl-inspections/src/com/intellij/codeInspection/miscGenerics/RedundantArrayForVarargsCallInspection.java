@@ -1,9 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -41,7 +44,7 @@ public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLoca
     private static final CallMatcher LOGGER_MESSAGE_CALL = exactInstanceCall("org.slf4j.Logger", LOGGER_NAMES)
       .parameterTypes(String.class.getName(), "java.lang.Object...");
 
-    private static final LocalQuickFix myQuickFixAction = new MyQuickFix();
+    private static final LocalQuickFix redundantArrayForVarargsCallFixAction = new RedundantArrayForVarargsCallFix();
 
     private @NotNull final ProblemsHolder myHolder;
 
@@ -68,19 +71,32 @@ public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLoca
           !CommonJavaRefactoringUtil.isSafeToFlattenToVarargsCall(expression, initializers)) {
         return;
       }
-      final String message = JavaBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor");
       PsiExpressionList argumentList = expression.getArgumentList();
       PsiExpression[] args = Objects.requireNonNull(argumentList).getExpressions();
-      myHolder.registerProblem(Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(args[args.length - 1])), message, myQuickFixAction);
+      PsiExpression arrayCreation = Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(args[args.length - 1]));
+      if (!(arrayCreation instanceof PsiNewExpression)) return;
+      final String message = JavaBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor");
+      PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)arrayCreation).getArrayInitializer();
+      if (arrayInitializer == null) {
+        myHolder.registerProblem(
+          arrayCreation,
+          message,
+          redundantArrayForVarargsCallFixAction);
+      } else {
+        myHolder.registerProblem(
+          arrayCreation,
+          new TextRange(0, arrayInitializer.getStartOffsetInParent()),
+          message,
+          redundantArrayForVarargsCallFixAction);
+      }
     }
 
 
-    private static final class MyQuickFix implements LocalQuickFix {
+    private static final class RedundantArrayForVarargsCallFix extends PsiUpdateModCommandQuickFix {
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        PsiNewExpression arrayCreation = (PsiNewExpression)descriptor.getPsiElement();
-        if (arrayCreation == null) return;
-        CommonJavaRefactoringUtil.inlineArrayCreationForVarargs(arrayCreation);
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement arrayCreation, @NotNull ModPsiUpdater updater) {
+        if (!(arrayCreation instanceof PsiNewExpression newExpression)) return;
+        CommonJavaRefactoringUtil.inlineArrayCreationForVarargs(newExpression);
       }
 
       @Override

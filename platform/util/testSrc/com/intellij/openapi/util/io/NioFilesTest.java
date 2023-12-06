@@ -11,10 +11,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class NioFilesTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -131,6 +129,14 @@ public class NioFilesTest {
       fail("`createDirectories()` over a dangling symlink shall not pass");
     }
     catch (FileAlreadyExistsException ignored) { }
+  }
+
+  @Test
+  public void createParentDirectories() throws IOException {
+    Path nonExisting = memoryFs.getFs().getPath("/d1/d2/d3/non-existing");
+    assertThrows(NoSuchFileException.class, () -> Files.writeString(nonExisting, "..."));
+    Files.writeString(NioFiles.createParentDirectories(nonExisting), "...");
+    assertThat(nonExisting).isRegularFile();
   }
 
   @Test

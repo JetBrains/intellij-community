@@ -72,5 +72,5 @@ abstract class AbstractNullabilityInferenceTest : AbstractConstraintCollectorTes
         )
     }
 
-    override fun getProjectDescriptor() = descriptorByFileDirective(File(testDataPath, fileName()))
+    override fun getProjectDescriptor() = descriptorByFileDirective(File(testDataDirectory, fileName()))
 }

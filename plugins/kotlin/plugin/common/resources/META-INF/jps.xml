@@ -8,6 +8,7 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idePlatformKindTooling"
             interface="org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling"/>
+    <!-- IdePlatformKindResolution EP should be moved to K1 once debugger tests no longer use K1 services to compile code -->
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idePlatformKindResolution"
             interface="org.jetbrains.kotlin.caches.resolve.IdePlatformKindResolution"/>
@@ -36,16 +37,23 @@
             displayType="STICKY_BALLOON"
             key="kotlin.jps.plugin.group.name"
     />
+
+    <!-- Workspace Model -->
+    <workspaceModel.customFacetRelatedEntitySerializer implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer" />
+    <workspaceModel.facetContributor implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetContributor" />
+    <registryKey key="workspace.model.kotlin.facet.bridge" defaultValue="false" restartRequired="true"
+                 description="Enable Kotlin facet work via own entities at workspace model"/>
   </extensions>
 
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.jps.KotlinGlobalSettingsChangeListener"
+              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
+  </projectListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JsIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind"/>
-
-    <idePlatformKindResolution implementation="org.jetbrains.kotlin.caches.resolve.JvmPlatformKindResolution"/>
-    <idePlatformKindResolution implementation="org.jetbrains.kotlin.caches.resolve.JsPlatformKindResolution"/>
-    <idePlatformKindResolution implementation="org.jetbrains.kotlin.caches.resolve.CommonPlatformKindResolution"/>
   </extensions>
 </idea-plugin>

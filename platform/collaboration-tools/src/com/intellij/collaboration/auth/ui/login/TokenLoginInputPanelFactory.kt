@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth.ui.login
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.util.URIUtil
@@ -12,12 +13,11 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import javax.swing.event.DocumentEvent
 
@@ -30,7 +30,13 @@ class TokenLoginInputPanelFactory(
   private val model: TokenLoginPanelModel
 ) {
 
-  fun create(serverFieldDisabled: Boolean, tokenNote: @NlsContexts.DetailedDescription String?): DialogPanel {
+  @JvmOverloads
+  fun createIn(
+    cs: CoroutineScope,
+    serverFieldDisabled: Boolean,
+    tokenNote: @NlsContexts.DetailedDescription String?,
+    footer: Panel.() -> Unit = { }
+  ): DialogPanel {
 
     val serverTextField = ExtendableTextField()
     val progressExtension = ExtendableTextComponent.Extension
@@ -43,68 +49,61 @@ class TokenLoginInputPanelFactory(
       }
     }
 
+    cs.launchNow {
+      model.loginState.collectLatest { state ->
+        progressModel.value = state is LoginModel.LoginState.Connecting
+      }
+    }
+
     return panel {
       row(CollaborationToolsBundle.message("login.field.server")) {
         cell(serverTextField)
           .bindText(model::serverUri)
           .align(AlignX.FILL)
           .resizableColumn()
-          .comment(tokenNote)
           .enabledIf(progressModel.toComponentPredicate(!serverFieldDisabled))
           .validationOnApply {
             when {
               it.text.isBlank() -> error(CollaborationToolsBundle.message("login.server.empty"))
-              !isValidServerUri(it.text) -> error(CollaborationToolsBundle.message("login.server.invalid"))
+              !URIUtil.isValidHttpUri(it.text) -> error(CollaborationToolsBundle.message("login.server.invalid"))
               else -> null
             }
           }
       }
       row(CollaborationToolsBundle.message("login.field.token")) {
-        val tokenField = textField()
+        val tokenField = passwordField()
           .bindText(model::token)
           .align(AlignX.FILL)
           .resizableColumn()
+          .comment(tokenNote)
           .enabledIf(progressModel.toComponentPredicate())
           .validationOnApply {
             when {
-              it.text.isBlank() -> error(CollaborationToolsBundle.message("login.token.empty"))
+              it.password.isEmpty() -> error(CollaborationToolsBundle.message("login.token.empty"))
               else -> null
             }
           }
           .focused()
+          .apply {
+            onReset { component.text = "" }
+          }
           .component
 
         if (model is LoginTokenGenerator) {
           button(CollaborationToolsBundle.message("login.token.generate")) {
-            val token = model.generateToken(serverTextField.text)
-            if (token != null) tokenField.text = token
+            model.generateToken(serverTextField.text)
             IdeFocusManager.findInstanceByComponent(tokenField).requestFocus(tokenField, false)
           }.enabledIf(TokenGeneratorPredicate(model, serverTextField))
         }
       }
+      footer()
     }.withPreferredWidth(350).apply {
       // need to force update server field
       reset()
-    }.also { panel ->
-      UiNotifyConnector.installOn(panel, CoroutineActivatable {
-        model.loginState.collectLatest { state ->
-          progressModel.value = state is LoginModel.LoginState.Connecting
-        }
-      }, false)
     }
   }
 
   companion object {
-    private fun isValidServerUri(uri: String): Boolean {
-      return try {
-        URIUtil.normalizeAndValidateHttpUri(uri)
-        true
-      }
-      catch (e: Throwable) {
-        false
-      }
-    }
-
     private fun SingleValueModel<Boolean>.toComponentPredicate(defaultState: Boolean = true) = object : ComponentPredicate() {
       override fun addListener(listener: (Boolean) -> Unit) {
         this@toComponentPredicate.addListener {
@@ -124,22 +123,6 @@ class TokenLoginInputPanelFactory(
         serverTextField.document.addDocumentListener(object : DocumentAdapter() {
           override fun textChanged(e: DocumentEvent) = listener(invoke())
         })
-    }
-
-    private class CoroutineActivatable(private val block: suspend CoroutineScope.() -> Unit) : Activatable {
-
-      private var scope: CoroutineScope? = null
-
-      override fun showNotify() {
-        scope = CoroutineScope(SupervisorJob() + Dispatchers.Main).apply {
-          launch { block() }
-        }
-      }
-
-      override fun hideNotify() {
-        scope?.cancel()
-        scope = null
-      }
     }
   }
 }

@@ -2,12 +2,10 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -37,12 +35,13 @@ import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl;
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
+import org.jetbrains.plugins.terminal.util.ShellIntegration;
+import org.jetbrains.plugins.terminal.util.ShellType;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -50,14 +49,17 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY;
+import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_REGISTRY;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
   private static final String ZDOTDIR = "ZDOTDIR";
+  private static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final String LOGIN_CLI_OPTION = "--login";
@@ -79,11 +81,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Nullable
   private static String findRCFile(@NotNull String shellName) {
     String rcfile = switch (shellName) {
-      case BASH_NAME, SH_NAME -> "jediterm-bash.in";
-      case ZSH_NAME -> "zsh/.zshenv";
-      case FISH_NAME -> "fish/init.fish";
+      case BASH_NAME, SH_NAME -> "shell-integrations/bash/bash-integration.bash";
+      case ZSH_NAME -> "shell-integrations/zsh/.zshenv";
+      case FISH_NAME -> "shell-integrations/fish/fish-integration.fish";
       default -> null;
     };
+    if (rcfile == null && isPowerShell(shellName)) {
+      rcfile = "shell-integrations/powershell/powershell-integration.ps1";
+    }
     if (rcfile != null) {
       try {
         return findAbsolutePath(rcfile);
@@ -93,6 +98,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
     }
     return null;
+  }
+
+  private static boolean isPowerShell(@NotNull String shellName) {
+    return shellName.equalsIgnoreCase("powershell") ||
+           shellName.equalsIgnoreCase("powershell.exe") ||
+           shellName.equalsIgnoreCase("pwsh") ||
+           shellName.equalsIgnoreCase("pwsh.exe");
   }
 
   @NotNull
@@ -161,14 +173,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return envs;
   }
 
-  @Override
-  protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @NotNull ShellStartupOptions startupOptions) {
-    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
-      return new TerminalWidgetImpl(myProject, getSettingsProvider(), parent);
-    }
-    return super.createShellTerminalWidget(parent, startupOptions);
-  }
-
   private static void setupWslEnv(@NotNull Map<String, String> userEnvs, @NotNull Map<String, String> resultEnvs) {
     String wslEnv = userEnvs.keySet().stream().map(name -> name + "/u").collect(Collectors.joining(":"));
     if (wslEnv.isEmpty()) return;
@@ -181,31 +185,56 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  public @NotNull PtyProcess createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
-    String workingDir = getWorkingDirectory(options.getWorkingDirectory());
+  public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
+    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory());
     Map<String, String> envs = getTerminalEnvironment(workingDir);
 
-    List<String> initialCommand = doGetInitialCommand(options, envs);
-    ShellTerminalWidget widget = getShellTerminalWidget(options);
+    List<String> initialCommand = doGetInitialCommand(baseOptions, envs);
+    TerminalWidget widget = baseOptions.getWidget();
     if (widget != null) {
       widget.setShellCommand(initialCommand);
     }
-    if (enableShellIntegration()) {
-      initialCommand = injectShellIntegration(initialCommand, envs, options);
-    }
-    String[] command = ArrayUtil.toStringArray(initialCommand);
 
+    ShellStartupOptions updatedOptions = baseOptions.builder()
+      .shellCommand(initialCommand)
+      .workingDirectory(workingDir)
+      .envVariables(envs)
+      .build();
+    if (enableShellIntegration()) {
+      updatedOptions = injectShellIntegration(updatedOptions);
+    }
+    return applyTerminalCustomizers(updatedOptions);
+  }
+
+  private @NotNull ShellStartupOptions applyTerminalCustomizers(@NotNull ShellStartupOptions options) {
+    String[] command = ArrayUtil.toStringArray(options.getShellCommand());
+    Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       try {
-        command = customizer.customizeCommandAndEnvironment(myProject, workingDir, command, envs);
+        command = customizer.customizeCommandAndEnvironment(myProject, options.getWorkingDirectory(), command, envs);
       }
       catch (Exception e) {
         LOG.error("Exception during customization of the terminal session", e);
       }
     }
 
-    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
+    return options.builder()
+      .shellCommand(Arrays.asList(command))
+      .envVariables(envs)
+      .build();
+  }
+
+  @Override
+  public @NotNull PtyProcess createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
+    String[] command = ArrayUtil.toStringArray(options.getShellCommand());
+    Map<String, String> envs = options.getEnvVariables();
     TermSize initialTermSize = options.getInitialTermSize();
+    String workingDir = options.getWorkingDirectory();
+    if (workingDir == null) {
+      throw new IllegalStateException("Working directory must not be null, startup options: " + options);
+    }
+
+    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     try {
       long startNano = System.nanoTime();
       PtyProcessBuilder builder = new PtyProcessBuilder(command)
@@ -314,11 +343,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected ProcessHandler createProcessHandler(final PtyProcess process) {
-    return new PtyProcessHandler(process, getShellPath());
-  }
-
-  @Override
   public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset) {
 
@@ -364,6 +388,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return shellCommand != null ? shellCommand : convertShellPathToCommand(getShellPath());
   }
 
+  @ApiStatus.Internal
+  protected boolean isBlockTerminalEnabled() {
+    return false;
+  }
+
   private @NotNull String getShellPath() {
     return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
   }
@@ -371,59 +400,93 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   /** @deprecated to be removed */
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
-  public static @NotNull List<String> getCommand(@NotNull String shellPath,
+  public @NotNull List<String> getCommand(@NotNull String shellPath,
                                                  @NotNull Map<String, String> envs,
                                                  boolean shellIntegration) {
     List<String> command = convertShellPathToCommand(shellPath);
-    return shellIntegration ? injectShellIntegration(command, envs, null) : command;
+    if (shellIntegration) {
+      ShellStartupOptions options = injectShellIntegration(command, envs);
+      return Objects.requireNonNull(options.getShellCommand());
+    }
+    return command;
   }
 
-  static @NotNull List<String> injectShellIntegration(@NotNull List<String> shellCommand,
-                                                      @NotNull Map<String, String> envs,
-                                                      @Nullable ShellStartupOptions startupOptions) {
+  @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
+                                                             @NotNull Map<String, String> envs) {
+    ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
+    return injectShellIntegration(options);
+  }
+
+  // todo: it would be great to extract block terminal configuration from here
+  private @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options) {
+    List<String> shellCommand = options.getShellCommand();
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
-    if (shellExe == null) return shellCommand;
-    return injectShellIntegration(shellExe, shellCommand.subList(1, shellCommand.size()), envs, startupOptions);
-  }
+    if (shellCommand == null || shellExe == null) return options;
 
-  private static @NotNull List<String> injectShellIntegration(@NotNull String shellExe,
-                                                              @NotNull List<String> command,
-                                                              @NotNull Map<String, String> envs,
-                                                              @Nullable ShellStartupOptions startupOptions) {
-    List<String> result = new ArrayList<>();
-    result.add(shellExe);
-    command = new ArrayList<>(command);
+    List<String> arguments = new ArrayList<>(shellCommand.subList(1, shellCommand.size()));
+    Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
+    ShellType shellType = null;
+    boolean withCommandBlocks = false;
+
+    List<String> resultCommand = new ArrayList<>();
+    resultCommand.add(shellExe);
 
     String shellName = PathUtil.getFileName(shellExe);
     String rcFilePath = findRCFile(shellName);
     if (rcFilePath != null) {
       if (shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME))) {
-        addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
+        addRcFileArgument(envs, arguments, resultCommand, rcFilePath, "--rcfile");
         // remove --login to enable --rcfile sourcing
-        boolean loginShell = command.removeAll(LOGIN_CLI_OPTIONS);
+        boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
-        setCommandHistoryFile(startupOptions, envs);
+        setCommandHistoryFile(options, envs);
+        shellType = ShellType.BASH;
+        withCommandBlocks = true;
       }
       else if (shellName.equals(ZSH_NAME)) {
         String zdotdir = envs.get(ZDOTDIR);
         if (StringUtil.isNotEmpty(zdotdir)) {
           envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
         }
-        envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
+        String zshDir = PathUtil.getParentPath(rcFilePath);
+        envs.put(ZDOTDIR, zshDir);
+        envs.put(IJ_ZSH_DIR, zshDir);
+        shellType = ShellType.ZSH;
+        withCommandBlocks = true;
       }
       else if (shellName.equals(FISH_NAME)) {
         // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
         // Multiple `--init-command=COMMANDS` are supported.
-        result.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
+        resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
+        shellType = ShellType.FISH;
+        withCommandBlocks = Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
+      }
+      else if (isPowerShell(shellName)) {
+        resultCommand.addAll(arguments);
+        arguments.clear();
+        resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", rcFilePath));
+        shellType = ShellType.POWERSHELL;
+        withCommandBlocks = Registry.is(BLOCK_TERMINAL_POWERSHELL_REGISTRY, false);
       }
     }
 
-    result.addAll(command);
-    return result;
+    if (isBlockTerminalEnabled() && withCommandBlocks) {
+      envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
+      // Pretend to be Fig.io terminal to avoid it breaking IntelliJ shell integration:
+      // at startup it runs a sub-shell without IntelliJ shell integration
+      envs.put("FIG_TERM", "1");
+    }
+
+    resultCommand.addAll(arguments);
+    return options.builder()
+      .shellCommand(resultCommand)
+      .envVariables(envs)
+      .shellIntegration(shellType != null ? new ShellIntegration(shellType, withCommandBlocks) : null)
+      .build();
   }
 
-  private static void setCommandHistoryFile(@Nullable ShellStartupOptions startupOptions, @NotNull Map<String, String> envs) {
-    Function0<Path> commandHistoryFileProvider = startupOptions != null ? startupOptions.getCommandHistoryFileProvider() : null;
+  private static void setCommandHistoryFile(@NotNull ShellStartupOptions startupOptions, @NotNull Map<String, String> envs) {
+    Function0<Path> commandHistoryFileProvider = startupOptions.getCommandHistoryFileProvider();
     Path commandHistoryFile = commandHistoryFileProvider != null ? commandHistoryFileProvider.invoke() : null;
     if (commandHistoryFile != null) {
       envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFile.toString());
@@ -454,17 +517,21 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static void addRcFileArgument(Map<String, String> envs,
-                                        List<String> command,
+                                        List<String> arguments,
                                         List<String> result,
                                         String rcFilePath, String rcfileOption) {
     result.add(rcfileOption);
     result.add(rcFilePath);
-    int idx = command.indexOf(rcfileOption);
+    int idx = arguments.indexOf(rcfileOption);
     if (idx >= 0) {
-      command.remove(idx);
-      if (idx < command.size()) {
-        envs.put(JEDITERM_USER_RCFILE, FileUtil.expandUserHome(command.get(idx)));
-        command.remove(idx);
+      arguments.remove(idx);
+      if (idx < arguments.size()) {
+        String userRcFile = FileUtil.expandUserHome(arguments.get(idx));
+        // do not set the same RC file path to avoid sourcing recursion
+        if (!userRcFile.equals(rcFilePath)) {
+          envs.put(JEDITERM_USER_RCFILE, FileUtil.expandUserHome(arguments.get(idx)));
+        }
+        arguments.remove(idx);
       }
     }
   }
@@ -475,65 +542,5 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private static boolean isLogin(@NotNull List<String> command) {
     return ContainerUtil.exists(command, LOGIN_CLI_OPTIONS::contains);
-  }
-
-  private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {
-
-    private final PtyProcess myProcess;
-    private final ProcessWaitFor myWaitFor;
-
-    PtyProcessHandler(PtyProcess process, @NotNull String presentableName) {
-      myProcess = process;
-      myWaitFor = new ProcessWaitFor(process, this, presentableName);
-    }
-
-    @Override
-    public void startNotify() {
-      addProcessListener(new ProcessAdapter() {
-        @Override
-        public void startNotified(@NotNull ProcessEvent event) {
-          try {
-            myWaitFor.setTerminationCallback(integer -> notifyProcessTerminated(integer));
-          }
-          finally {
-            removeProcessListener(this);
-          }
-        }
-      });
-
-      super.startNotify();
-    }
-
-    @Override
-    protected void destroyProcessImpl() {
-      myProcess.destroy();
-    }
-
-    @Override
-    protected void detachProcessImpl() {
-      destroyProcessImpl();
-    }
-
-    @Override
-    public boolean detachIsDefault() {
-      return false;
-    }
-
-    @Override
-    public boolean isSilentlyDestroyOnClose() {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public OutputStream getProcessInput() {
-      return myProcess.getOutputStream();
-    }
-
-    @NotNull
-    @Override
-    public Future<?> executeTask(@NotNull Runnable task) {
-      return AppExecutorUtil.getAppExecutorService().submit(task);
-    }
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
+import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -25,6 +26,7 @@ open class GitBranchesTreeSingleRepoModel(
 
   internal lateinit var localBranchesTree: LazyBranchesSubtreeHolder
   internal lateinit var remoteBranchesTree: LazyBranchesSubtreeHolder
+  internal lateinit var recentCheckoutBranchesTree: LazyBranchesSubtreeHolder
 
   private val branchesTreeCache = mutableMapOf<Any, List<Any>>()
 
@@ -43,8 +45,16 @@ open class GitBranchesTreeSingleRepoModel(
     branchesTreeCache.keys.clear()
     val localBranches = repository.localBranchesOrCurrent
     val remoteBranches = repository.branches.remoteBranches
-    localBranchesTree = LazyBranchesSubtreeHolder(localBranches, listOf(repository), matcher, ::isPrefixGrouping)
-    remoteBranchesTree = LazyBranchesSubtreeHolder(remoteBranches, listOf(repository), matcher, ::isPrefixGrouping)
+    val recentCheckoutBranches = repository.recentCheckoutBranches
+
+    val localFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.LOCAL)
+    val remoteFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.REMOTE)
+    localBranchesTree = LazyBranchesSubtreeHolder(listOf(repository), localBranches, localFavorites, matcher, ::isPrefixGrouping,
+                                                  recentCheckoutBranches::contains)
+    remoteBranchesTree = LazyBranchesSubtreeHolder(listOf(repository), remoteBranches, remoteFavorites, matcher, ::isPrefixGrouping)
+    recentCheckoutBranchesTree = LazyBranchesSubtreeHolder(listOf(repository), recentCheckoutBranches, localFavorites, matcher,
+                                                           ::isPrefixGrouping,
+                                                           branchComparatorGetter = ::emptyBranchComparator)
     treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
 
@@ -57,6 +67,7 @@ open class GitBranchesTreeSingleRepoModel(
   override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
   override fun isLeaf(node: Any?): Boolean = node is GitBranch || node is BranchUnderRepository
+                                             || (node === RecentNode && recentCheckoutBranchesTree.isEmpty())
                                              || (node === GitBranchType.LOCAL && localBranchesTree.isEmpty())
                                              || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
 
@@ -64,21 +75,25 @@ open class GitBranchesTreeSingleRepoModel(
     if (parent == null || notHaveFilteredBranches()) return emptyList()
     return when (parent) {
       TreeRoot -> getTopLevelNodes()
-      is GitBranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
+      is BranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
       is BranchesPrefixGroup -> {
         branchesTreeCache
-          .getOrPut(parent) { getBranchTreeNodes(parent.type, parent.prefix).sortedWith(getSubTreeComparator(listOf(repository))) }
+          .getOrPut(parent) {
+            getBranchTreeNodes(parent.type, parent.prefix).sortedWith(
+              getSubTreeComparator(project.service<GitBranchManager>().getFavoriteBranches(parent.type), listOf(repository)))
+          }
       }
       else -> emptyList()
     }
   }
 
   protected open fun getTopLevelNodes(): List<Any> {
-    return topLevelActions + getLocalAndRemoteTopLevelNodes(localBranchesTree, remoteBranchesTree)
+    return topLevelActions + getLocalAndRemoteTopLevelNodes(localBranchesTree, remoteBranchesTree, recentCheckoutBranchesTree)
   }
 
-  private fun getBranchTreeNodes(branchType: GitBranchType, path: List<String>): List<Any> {
+  private fun getBranchTreeNodes(branchType: BranchType, path: List<String>): List<Any> {
     val branchesMap: Map<String, Any> = when {
+      RecentNode == branchType -> recentCheckoutBranchesTree.tree
       GitBranchType.LOCAL == branchType -> localBranchesTree.tree
       GitBranchType.REMOTE == branchType -> remoteBranchesTree.tree
       else -> emptyMap()
@@ -90,12 +105,12 @@ open class GitBranchesTreeSingleRepoModel(
   override fun getPreferredSelection(): TreePath? = getPreferredBranch()?.let { createTreePathFor(this, it) }
 
   private fun getPreferredBranch(): GitBranch? =
-    getPreferredBranch(project, listOf(repository), branchNameMatcher, localBranchesTree, remoteBranchesTree)
+    getPreferredBranch(project, listOf(repository), branchNameMatcher, localBranchesTree, remoteBranchesTree, recentCheckoutBranchesTree)
 
   override fun filterBranches(matcher: MinusculeMatcher?) {
     branchNameMatcher = matcher
   }
 
   private fun notHaveFilteredBranches(): Boolean =
-    branchNameMatcher != null && localBranchesTree.isEmpty() && remoteBranchesTree.isEmpty()
+    branchNameMatcher != null && recentCheckoutBranchesTree.isEmpty() && localBranchesTree.isEmpty() && remoteBranchesTree.isEmpty()
 }

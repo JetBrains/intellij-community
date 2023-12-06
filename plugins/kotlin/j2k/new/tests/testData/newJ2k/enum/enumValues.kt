@@ -14,8 +14,6 @@ internal enum class MyEnum {
 }
 
 internal class EnumTest {
-    //TODO: Remove after Enum.entries is marked as non-experimental in Kotlin 1.9
-    @ExperimentalStdlibApi
     fun replaceWithEntries() {
         val x = MyEnum.entries[1]
 
@@ -27,8 +25,6 @@ internal class EnumTest {
         }
     }
 
-    //TODO: Remove after Enum.entries is marked as non-experimental in Kotlin 1.9
-    @ExperimentalStdlibApi
     fun replaceWithEntriesWithConversionToArray() {
         // Simple call
         val x = MyEnum.entries.toTypedArray()
@@ -41,7 +37,7 @@ internal class EnumTest {
 
         // Array methods not suitable for List
         MyEnum.entries.toTypedArray().clone()
-        val y = Arrays.toString(MyEnum.entries.toTypedArray())
+        val y = MyEnum.entries.toTypedArray().contentToString()
         Array.get(MyEnum.entries.toTypedArray(), 1)
 
         // Stream methods

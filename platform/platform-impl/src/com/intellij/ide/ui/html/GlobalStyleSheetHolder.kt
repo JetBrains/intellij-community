@@ -1,20 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.ide.ui.html
 
-import com.intellij.diagnostic.runActivity
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.impl.FontFamilyService
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,85 +30,98 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * Based on a default swing stylesheet at javax/swing/text/html/default.css
  */
+private val globalStyleSheet = StyleSheet()
+
+private var currentLafStyleSheet: StyleSheet? = null
+
+// used by Material Theme - cannot be internal
+@Suppress("unused")
 @Internal
 object GlobalStyleSheetHolder {
-  private val globalStyleSheet = StyleSheet()
-  private var currentLafStyleSheet: StyleSheet? = null
+  fun getGlobalStyleSheet(): StyleSheet = createGlobalStyleSheet()
+}
 
-  /**
-   * Returns a global style sheet that is dynamically updated when LAF changes
-   */
-  fun getGlobalStyleSheet(): StyleSheet {
-    val result = StyleSheet()
-    // return a linked sheet to avoid mutation of a global variable
-    result.addStyleSheet(globalStyleSheet)
-    return result
-  }
+/**
+ * Returns a global style sheet dynamically updated when LAF changes
+ */
+internal fun createGlobalStyleSheet(): StyleSheet {
+  // return a linked sheet to avoid mutation of a global variable
+  val result = StyleSheet()
+  result.addStyleSheet(globalStyleSheet)
+  return result
+}
 
-  internal fun updateGlobalSwingStyleSheet() {
-    // get the default JRE CSS and ...
-    val kit = HTMLEditorKit()
-    val defaultSheet = kit.styleSheet
-    globalStyleSheet.addStyleSheet(defaultSheet)
+/**
+ * Populate global stylesheet with LAF-based overrides
+ */
+internal suspend fun updateGlobalStyleSheet() {
+  val newStyle = StyleSheet()
+  newStyle.addRule(getCssForCurrentLaf())
+  newStyle.addRule(getCssForCurrentEditorScheme())
 
-    // ... set a new default sheet
-    kit.styleSheet = getGlobalStyleSheet()
-  }
-
-  /**
-   * Populate global stylesheet with LAF-based overrides
-   */
-  internal fun updateGlobalStyleSheet() {
-    runActivity("global styleSheet updating") {
-      val currentSheet = currentLafStyleSheet
-      if (currentSheet != null) {
-        globalStyleSheet.removeStyleSheet(currentSheet)
-      }
-
-      val newStyle = StyleSheet()
-      newStyle.addRule(LafCssProvider.getCssForCurrentLaf())
-      newStyle.addRule(LafCssProvider.getCssForCurrentEditorScheme())
-      currentLafStyleSheet = newStyle
-      globalStyleSheet.addStyleSheet(newStyle)
+  withContext(RawSwingDispatcher) {
+    currentLafStyleSheet?.let {
+      globalStyleSheet.removeStyleSheet(it)
     }
+
+    currentLafStyleSheet = newStyle
+    globalStyleSheet.addStyleSheet(newStyle)
   }
+}
 
-  @Service(Service.Level.APP)
-  @OptIn(FlowPreview::class)
-  private class UpdateService(cs: CoroutineScope) {
+internal suspend fun initGlobalStyleSheet() {
+  coroutineScope {
+    launch(CoroutineName("EditorColorsManager preloading")) {
+      serviceAsync<EditorColorsManager>()
+    }
 
-    private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    withContext(RawSwingDispatcher) {
+      span("global styleSheet updating") {
+        val kit = HTMLEditorKit()
+        val defaultSheet = kit.styleSheet
+        globalStyleSheet.addStyleSheet(defaultSheet)
 
-    init {
-      cs.launch {
-        updateRequests
-          .debounce(5.milliseconds)
-          .collectLatest {
-            val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
-            listOf(
-              componentManager.getServiceAsync(EditorColorsManager::class.java),
-              componentManager.getServiceAsync(FontFamilyService::class.java),
-            ).awaitAll()
-            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-              updateGlobalStyleSheet()
-            }
-          }
+        // ... set a new default sheet
+        kit.styleSheet = createGlobalStyleSheet()
       }
     }
 
-    fun requestUpdate() {
-      check(updateRequests.tryEmit(Unit))
+    service<GlobalStyleSheetUpdateService>().init()
+  }
+}
+
+@Service(Service.Level.APP)
+@OptIn(FlowPreview::class)
+private class GlobalStyleSheetUpdateService(private val coroutineScope: CoroutineScope) {
+  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  suspend fun init() {
+    doUpdateGlobalStyleSheet()
+
+    coroutineScope.launch {
+      updateRequests.debounce(50.milliseconds).collectLatest {
+        doUpdateGlobalStyleSheet()
+      }
     }
   }
 
-  internal class UpdateListener : EditorColorsListener, LafManagerListener {
-
-    override fun lookAndFeelChanged(source: LafManager) {
-      ApplicationManager.getApplication().service<UpdateService>().requestUpdate()
+  private suspend fun doUpdateGlobalStyleSheet() {
+    span("global styleSheet updating") {
+      updateGlobalStyleSheet()
     }
+  }
 
-    override fun globalSchemeChange(scheme: EditorColorsScheme?) {
-      ApplicationManager.getApplication().service<UpdateService>().requestUpdate()
-    }
+  fun requestUpdate() {
+    updateRequests.tryEmit(Unit)
+  }
+}
+
+private class GlobalStyleSheetUpdateListener : EditorColorsListener, LafManagerListener {
+  override fun lookAndFeelChanged(source: LafManager) {
+    serviceIfCreated<GlobalStyleSheetUpdateService>()?.requestUpdate()
+  }
+
+  override fun globalSchemeChange(scheme: EditorColorsScheme?) {
+    serviceIfCreated<GlobalStyleSheetUpdateService>()?.requestUpdate()
   }
 }

@@ -846,7 +846,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
     }
 
-    private boolean isStaticFinal(PsiField field) {
+    private static boolean isStaticFinal(PsiField field) {
       final PsiModifierList modifierList = field.getModifierList();
       LOG.assertTrue(modifierList != null);
       return modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL);
@@ -908,7 +908,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
     protected abstract boolean isProhibitedReference(PsiField field);
 
-    private PsiField getReferencedField(PsiExpression expression) {
+    private static PsiField getReferencedField(PsiExpression expression) {
       if (expression instanceof PsiParenthesizedExpression) {
         final PsiExpression contents = ((PsiParenthesizedExpression)expression).getExpression();
         return getReferencedField(contents);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.formatting.FormattingMode;
@@ -56,7 +56,7 @@ public abstract class CodeStyleManager  {
    *
    * @return the project instance.
    */
-  @NotNull public abstract Project getProject();
+  public abstract @NotNull Project getProject();
 
   /**
    * Reformats the contents of the specified PSI element, enforces braces and splits import
@@ -68,7 +68,7 @@ public abstract class CodeStyleManager  {
    * @throws IncorrectOperationException if the file to reformat is read-only.
    * @see #reformatText(PsiFile, int, int)
    */
-  @NotNull public abstract PsiElement reformat(@NotNull PsiElement element) throws IncorrectOperationException;
+  public abstract @NotNull PsiElement reformat(@NotNull PsiElement element) throws IncorrectOperationException;
 
   /**
    * Reformats the contents of the specified PSI element, and optionally enforces braces
@@ -82,8 +82,7 @@ public abstract class CodeStyleManager  {
    * @throws IncorrectOperationException if the file to reformat is read-only.
    * @see #reformatText(PsiFile, int, int)
    */
-  @NotNull
-  public abstract PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
+  public abstract @NotNull PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
 
   /**
    * Reformats part of the contents of the specified PSI element, enforces braces
@@ -139,11 +138,27 @@ public abstract class CodeStyleManager  {
    */
   public abstract void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) throws IncorrectOperationException;
 
-  public abstract void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException;
+  /**
+   * @deprecated Use {@link #reformatChanges(PsiFile, ChangedRangesInfo)}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed") // from reformatChanges() for backwards compatibility with plugins.
+  @Deprecated
+  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException {
+    throw new IncorrectOperationException("Deprecated method");
+  }
 
+  public void reformatChanges(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException {
+    reformatTextWithContext(file, info);
+  }
+
+  /**
+   * @deprecated Use {@code FormattingService.formatRanges(file,rangesInfo,canChangeWhiteSpaceOnly,quickFormat} with
+   * {@code rangesInfo.isExpandToContext() == true}
+   */
+  @Deprecated
   public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) throws IncorrectOperationException {
     List<TextRange> rangesList = new ArrayList<>(ranges);
-    reformatTextWithContext(file, new ChangedRangesInfo(rangesList, null));
+    reformatChanges(file, new ChangedRangesInfo(rangesList, null));
   }
 
   /**
@@ -210,8 +225,7 @@ public abstract class CodeStyleManager  {
    * @return the indent string (containing of tabs and/or whitespaces), or {@code null} if it
    *         was not possible to calculate the indent.
    */
-  @Nullable
-  public abstract String getLineIndent(@NotNull PsiFile file, int offset);
+  public abstract @Nullable String getLineIndent(@NotNull PsiFile file, int offset);
 
   /**
    * Calculates the indent that should be used for all the lines in the specified file.
@@ -222,8 +236,7 @@ public abstract class CodeStyleManager  {
    * @return the list of indent string (containing of tabs and/or whitespaces), or
    *         {@code null} if method is not implemented.
    */
-  @Nullable
-  public List<String> getLineIndents(@NotNull PsiFile file) {
+  public @Nullable List<String> getLineIndents(@NotNull PsiFile file) {
     return null;
   }
 
@@ -238,8 +251,7 @@ public abstract class CodeStyleManager  {
    * @return the indent string (containing of tabs and/or whitespaces), or {@code null} if it
    *         was not possible to calculate the indent.
    */
-  @Nullable
-  public String getLineIndent(@NotNull PsiFile file, int offset, FormattingMode mode) {
+  public @Nullable String getLineIndent(@NotNull PsiFile file, int offset, FormattingMode mode) {
     return getLineIndent(file, offset);
   }
 
@@ -251,8 +263,7 @@ public abstract class CodeStyleManager  {
    * @return the indent string (containing of tabs and/or whitespaces), or {@code null} if it
    *         was not possible to calculate the indent.
    */
-  @Nullable
-  public abstract String getLineIndent(@NotNull Document document, int offset);
+  public abstract @Nullable String getLineIndent(@NotNull Document document, int offset);
 
   /**
    * @deprecated obsolete
@@ -279,7 +290,7 @@ public abstract class CodeStyleManager  {
    * @throws IncorrectOperationException if the operation fails for some reason (for example,
    *                                     the file is read-only).
    */
-  public abstract void reformatNewlyAddedElement(@NotNull final ASTNode block, @NotNull final ASTNode addedElement) throws IncorrectOperationException;
+  public abstract void reformatNewlyAddedElement(final @NotNull ASTNode block, final @NotNull ASTNode addedElement) throws IncorrectOperationException;
 
   /**
    * Formatting may be executed sequentially, i.e. the whole (re)formatting task is split into a number of smaller sub-tasks
@@ -357,8 +368,7 @@ public abstract class CodeStyleManager  {
     runnable.run();
   }
 
-  @NotNull
-  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+  public @NotNull DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
     return DocCommentSettings.DEFAULTS;
   }
 
@@ -367,7 +377,9 @@ public abstract class CodeStyleManager  {
   }
 
   public interface Listener {
+    @Topic.ProjectLevel
     Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.NONE, true);
+
     void beforeReformatText(@NotNull PsiFile file);
     void afterReformatText(@NotNull PsiFile file);
   }

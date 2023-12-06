@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -33,9 +33,8 @@ public final class Disposer {
   /**
    * @return new {@link Disposable} unnamed instance
    */
-  @NotNull
   @Contract(pure = true, value = "->new")
-  public static Disposable newDisposable() {
+  public static @NotNull Disposable newDisposable() {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return new Disposable() {
       @Override
@@ -52,9 +51,8 @@ public final class Disposer {
    * @return new {@link Disposable} instance with the given name which is visible in its {@link Object#toString()}.
    * Please be aware of increased memory consumption due to storing this name inside the object instance.
    */
-  @NotNull
   @Contract(pure = true, value = "_->new")
-  public static Disposable newDisposable(@NotNull @NonNls String debugName) {
+  public static @NotNull Disposable newDisposable(@NotNull @NonNls String debugName) {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return new Disposable() {
       @Override
@@ -69,11 +67,10 @@ public final class Disposer {
 
   /**
    * @return new {@link Disposable} instance which tracks its own invalidation.
-   * Please be aware of increased memory consumption due to storing extra flag for tracking invalidation.
+   * Please be aware of increased memory consumption due to storing an extra flag for tracking invalidation.
    */
-  @NotNull
   @Contract(pure = true, value = "->new")
-  public static CheckedDisposable newCheckedDisposable() {
+  public static @NotNull CheckedDisposable newCheckedDisposable() {
     return new CheckedDisposableImpl();
   }
 
@@ -165,7 +162,7 @@ public final class Disposer {
   }
 
   /**
-   * Registers child disposable under parent unless the parent has already been disposed
+   * Registers child disposable under a parent unless the parent has already been disposed
    * @return whether the registration succeeded
    */
   public static boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
@@ -177,7 +174,7 @@ public final class Disposer {
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @NotNull final String key) {
+  public static void register(@NotNull Disposable parent, @NotNull Disposable child, final @NonNls @NotNull String key) {
     register(parent, child);
     Disposable v = get(key);
     if (v != null) throw new IllegalArgumentException("Key " + key + " already registered: " + v);
@@ -186,8 +183,7 @@ public final class Disposer {
   }
 
   private static final class KeyDisposable implements Disposable {
-    @NotNull
-    private final String myKey;
+    private final @NotNull String myKey;
 
     KeyDisposable(@NotNull String key) {myKey = key;}
 
@@ -205,7 +201,7 @@ public final class Disposer {
   /**
    * @return true if {@code disposable} is disposed or being disposed (i.e., its {@link Disposable#dispose()} method is executing).
    * @deprecated This method relies on relatively short-living diagnostic information which is cleared (to free up memory) on certain events,
-   * for example on dynamic plugin unload or major GC run.<br/>
+   * for example, on dynamic plugin unload or major GC run.<br/>
    * Thus, it's not wise to rely on this method in your production-grade code.<br/>
    * Instead, please
    * <li>Avoid using this method by registering your disposable in the parent disposable hierarchy with {@link #register(Disposable, Disposable)}</li> or, failing that,
@@ -225,16 +221,6 @@ public final class Disposer {
   @Deprecated
   public static boolean isDisposed(@NotNull Disposable disposable) {
     return ourTree.isDisposed(disposable);
-  }
-
-  /**
-   * @deprecated use {@link #isDisposed(Disposable)} instead
-   */
-  @Deprecated
-  public static boolean isDisposing(@NotNull Disposable disposable) {
-    String message = "this method is deprecated and going to be removed soon. Please use isDisposed() instead";
-    Logger.getInstance(Disposer.class).error(message);
-    return isDisposed(disposable);
   }
 
   /**
@@ -264,9 +250,10 @@ public final class Disposer {
     ourTree.executeAll(disposable, processUnregistered);
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public static ObjectTree getTree() {
+  @VisibleForTesting
+  @SuppressWarnings("ClassEscapesDefinedScope")
+  public static @NotNull ObjectTree getTree() {
     return ourTree;
   }
 

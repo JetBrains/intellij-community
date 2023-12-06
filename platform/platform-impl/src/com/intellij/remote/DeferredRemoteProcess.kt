@@ -64,6 +64,12 @@ class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : Remot
   override fun getLocalTunnel(remotePort: Int): HostAndPort? =
     get().getLocalTunnel(remotePort)
 
+  override fun setWindowSize(columns: Int, rows: Int) {
+    runNowOrSchedule {
+      get().setWindowSize(columns, rows)
+    }
+  }
+
   override fun destroyForcibly(): Process =
     runNowOrSchedule {
       it.destroyForcibly()

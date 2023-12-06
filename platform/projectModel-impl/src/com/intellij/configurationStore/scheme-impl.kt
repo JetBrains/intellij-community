@@ -1,22 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.dynatrace.hash4j.hashing.HashStream64
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.project.isDirectoryBased
-import com.intellij.util.SmartList
-import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jdom.CDATA
 import org.jdom.Element
+import org.jdom.Text
+import org.jdom.Verifier
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.io.OutputStream
-import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
@@ -32,9 +32,11 @@ interface SchemeDataHolder<in T> {
    */
   fun read(): Element
 
-  fun updateDigest(scheme: T) = Unit
+  fun updateDigest(scheme: T) {
+  }
 
-  fun updateDigest(data: Element?) = Unit
+  fun updateDigest(data: Element?) {
+  }
 }
 
 /**
@@ -60,49 +62,16 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(pri
 
   abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>,
                             name: String,
-                            attributeProvider: Function<in String, String?>,
+                            attributeProvider: (String) -> String?,
                             isBundled: Boolean = false): MUTABLE_SCHEME
+
   override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 
   open fun isSchemeFile(name: CharSequence) = true
 
-  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray) = false
+  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: Long) = false
 
   open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
-}
-
-private class DigestOutputStream(private val digest: MessageDigest) : OutputStream() {
-  override fun write(b: Int) {
-    digest.update(b.toByte())
-  }
-
-  override fun write(b: ByteArray, off: Int, len: Int) {
-    digest.update(b, off, len)
-  }
-
-  override fun write(b: ByteArray) {
-    digest.update(b)
-  }
-
-  override fun toString() = "[Digest Output Stream] $digest"
-
-  fun digest(): ByteArray = digest.digest()
-}
-
-private val sha1MessageDigestThreadLocal = ThreadLocal.withInitial { DigestUtil.sha1() }
-
-// sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
-fun createDataDigest(): MessageDigest {
-  val digest = sha1MessageDigestThreadLocal.get()
-  digest.reset()
-  return digest
-}
-
-@JvmOverloads
-fun Element.digest(messageDigest: MessageDigest = createDataDigest()): ByteArray {
-  val digestOut = DigestOutputStream(messageDigest)
-  serializeElementToBinary(this, digestOut)
-  return digestOut.digest()
 }
 
 abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {
@@ -118,7 +87,9 @@ abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(
   }
 }
 
-abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
+abstract class LazySchemeWrapper<T>(name: String,
+                                    dataHolder: SchemeDataHolder<SchemeWrapper<T>>,
+                                    protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
   protected val dataHolder: AtomicReference<SchemeDataHolder<SchemeWrapper<T>>> = AtomicReference(dataHolder)
 
   final override fun writeScheme(): Element {
@@ -159,12 +130,59 @@ class BundledSchemeEP {
   var path: String? = null
 }
 
-fun SchemeManager<*>.save() {
-  val errors = SmartList<Throwable>()
-  save(errors)
-  throwIfNotEmpty(errors)
+@ApiStatus.Internal
+@TestOnly
+val LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE: Key<Boolean> = Key.create("LISTEN_VFS_CHANGES_IN_TEST_MODE")
+
+@ApiStatus.Internal
+fun hashElement(element: Element): Long {
+  val hashStream = Hashing.komihash5_0().hashStream()
+  hashElement(element, hashStream)
+  return hashStream.asLong
 }
 
 @ApiStatus.Internal
-@TestOnly
-val LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE = Key.create<Boolean>("LISTEN_VFS_CHANGES_IN_TEST_MODE")
+fun hashElement(element: Element, hashStream: HashStream64) {
+  hashStream.putByte(TypeMarker.ELEMENT.ordinal.toByte())
+  // don't include length - node marker does the job
+  hashStream.putChars(element.name)
+
+  hashAttributes(if (element.hasAttributes()) element.attributes else null, hashStream)
+
+  val content = element.content
+  hashStream.putInt(content.size)
+  for (item in content) {
+    when (item) {
+      is Element -> hashElement(item, hashStream)
+      is CDATA -> {
+        hashStream.putByte(TypeMarker.CDATA.ordinal.toByte())
+        if (item.text == null) {
+          hashStream.putInt(-1)
+        }
+        else {
+          hashStream.putChars(item.text)
+        }
+      }
+      is Text -> {
+        val text = item.text
+        if (text != null && !Verifier.isAllXMLWhitespace(text)) {
+          hashStream.putByte(TypeMarker.TEXT.ordinal.toByte())
+          hashStream.putChars(text)
+        }
+      }
+    }
+  }
+}
+
+private fun hashAttributes(attributes: List<org.jdom.Attribute>?, hashStream: HashStream64) {
+  val size = attributes?.size ?: 0
+  hashStream.putInt(size)
+  if (size == 0) {
+    return
+  }
+
+  for (attribute in attributes!!) {
+    hashStream.putString(attribute.name)
+    hashStream.putString(attribute.value)
+  }
+}

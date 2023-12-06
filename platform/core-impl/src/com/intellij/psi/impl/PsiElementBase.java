@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationRequest;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.platform.backend.navigation.NavigationRequest;
+import com.intellij.platform.backend.navigation.NavigationRequests;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -156,8 +157,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return this;
   }
 
@@ -167,17 +167,16 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
   }
 
+  @SuppressWarnings("deprecation")
   @RequiresReadLock
   @RequiresBackgroundThread
   @Override
@@ -185,8 +184,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     if (ReflectionUtil.getMethodDeclaringClass(getClass(), "navigate", boolean.class) != PsiElementBase.class) {
       return NavigatablePsiElement.super.navigationRequest(); // raw
     }
-    Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
-    return descriptor != null ? descriptor.navigationRequest() : null;
+    return NavigationRequests.getInstance().psiNavigationRequest(this);
   }
 
   @Override
@@ -208,8 +206,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     PsiManager manager = getManager();
     if (manager == null) {
       throw new PsiInvalidElementAccessException(this);
@@ -278,8 +275,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     return null;
   }
 
-  @NotNull
-  protected <T> T notNullChild(T child) {
+  protected @NotNull <T> T notNullChild(T child) {
     if (child == null) {
       LOG.error(getText() + "\n parent=" + getParent().getText());
     }
@@ -294,16 +290,14 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     return result.toArray(ArrayUtil.newArray(aClass, result.size()));
   }
 
-  @Nullable
-  protected <T> T findChildByClass(Class<T> aClass) {
+  protected @Nullable <T> T findChildByClass(Class<T> aClass) {
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (aClass.isInstance(cur)) return (T)cur;
     }
     return null;
   }
 
-  @NotNull
-  protected <T> T findNotNullChildByClass(Class<T> aClass) {
+  protected @NotNull <T> T findNotNullChildByClass(Class<T> aClass) {
     return notNullChild(findChildByClass(aClass));
   }
 

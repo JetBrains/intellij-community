@@ -5,13 +5,13 @@ import org.jetbrains.uast.UCallExpression
 
 @Suppress("MemberVisibilityCanBePrivate")
 object KotlinExtensionConstants {
-  const val STANDARD_CLASS = "kotlin.StandardKt__StandardKt"
-  const val LET_METHOD = "let"
-  const val ALSO_METHOD = "also"
-  const val RUN_METHOD = "run"
-  const val APPLY_METHOD = "apply"
+  const val STANDARD_CLASS: String = "kotlin.StandardKt__StandardKt"
+  const val LET_METHOD: String = "let"
+  const val ALSO_METHOD: String = "also"
+  const val RUN_METHOD: String = "run"
+  const val APPLY_METHOD: String = "apply"
 
-  const val LAMBDA_THIS_PARAMETER_NAME = "<this>"
+  const val LAMBDA_THIS_PARAMETER_NAME: String = "<this>"
 
   fun isExtensionWithSideEffect(call: UCallExpression): Boolean =
     call.methodName == ALSO_METHOD || call.methodName == APPLY_METHOD

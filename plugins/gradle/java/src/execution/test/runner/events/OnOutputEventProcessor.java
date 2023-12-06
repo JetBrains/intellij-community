@@ -23,7 +23,7 @@ public class OnOutputEventProcessor extends AbstractTestEventProcessor {
   @Override
   public void process(@NotNull TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
     var testId = eventXml.getTestId();
-    var output = decode(eventXml.getTestEventTest());
+    var output = GradleXmlTestEventConverter.decode(eventXml.getTestEventTest());
     var isStdOut = "StdOut".equals(eventXml.getTestEventTestDescription());
 
     doProcess(testId, output, isStdOut);
@@ -31,13 +31,12 @@ public class OnOutputEventProcessor extends AbstractTestEventProcessor {
 
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
-    if (testEvent instanceof ExternalSystemMessageEvent<?> messageEvent) {
-      var parentTestId = testEvent.getParentEventId();
-      var isStdOut = messageEvent.isStdOut();
-      var message = StringUtil.notNullize(messageEvent.getMessage());
+    var messageEvent = (ExternalSystemMessageEvent<? extends TestOperationDescriptor>)testEvent;
+    var parentTestId = messageEvent.getParentEventId();
+    var isStdOut = messageEvent.isStdOut();
+    var message = StringUtil.notNullize(messageEvent.getMessage());
 
-      doProcess(parentTestId, message, isStdOut);
-    }
+    doProcess(parentTestId, message, isStdOut);
   }
 
   private void doProcess(@Nullable String parentTestId, @NotNull String message, boolean isStdOut) {

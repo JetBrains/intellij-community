@@ -15,7 +15,10 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.KotlinIdeaBundle
 import org.jetbrains.kotlin.idea.projectView.KtDeclarationTreeNode.Companion.tryGetRepresentableText
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.renderer.DescriptorRenderer.Companion.ONLY_NAMES_WITH_SHORT_TYPES
 import org.jetbrains.kotlin.resolve.DescriptorUtils.getAllOverriddenDeclarations
 import org.jetbrains.kotlin.resolve.OverridingUtil.filterOutOverridden
@@ -101,6 +104,6 @@ internal class KotlinStructureElementPresentation(
 
     private fun withRightArrow(str: String): String {
         val rightArrow = '\u2192'
-        return if (StartupUiUtil.getLabelFont().canDisplay(rightArrow)) rightArrow + str else "->" + str
+        return if (StartupUiUtil.labelFont.canDisplay(rightArrow)) rightArrow + str else "->$str"
     }
 }

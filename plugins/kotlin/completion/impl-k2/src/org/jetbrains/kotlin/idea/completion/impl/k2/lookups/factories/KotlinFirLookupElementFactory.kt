@@ -6,9 +6,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
@@ -29,63 +31,67 @@ class KotlinFirLookupElementFactory {
     private val namedArgumentLookupElementFactory = NamedArgumentLookupElementFactory()
     private val typeLookupElementFactory = TypeLookupElementFactory()
 
-    fun KtAnalysisSession.createLookupElement(
+    context(KtAnalysisSession)
+    fun createLookupElement(
         symbol: KtNamedSymbol,
         importStrategyDetector: ImportStrategyDetector,
         importingStrategy: ImportStrategy? = null,
-        substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
         expectedType: KtType? = null,
     ): LookupElement {
         return when (symbol) {
             is KtCallableSymbol -> createCallableLookupElement(
                 symbol.name,
-                symbol,
+                symbol.asSignature(),
                 detectCallableOptions(symbol, importStrategyDetector),
-                substitutor,
                 expectedType,
             )
 
-            is KtClassLikeSymbol -> with(classLookupElementFactory) { createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategy(symbol)) }
-            is KtTypeParameterSymbol -> with(typeParameterLookupElementFactory) { createLookup(symbol) }
+            is KtClassLikeSymbol -> classLookupElementFactory
+                .createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol))
+
+            is KtTypeParameterSymbol -> typeParameterLookupElementFactory.createLookup(symbol)
             else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
         }
     }
 
-    fun KtAnalysisSession.createCallableLookupElement(
+    context(KtAnalysisSession)
+    fun createCallableLookupElement(
         name: Name,
-        symbol: KtCallableSymbol,
+        signature: KtCallableSignature<*>,
         options: CallableInsertionOptions,
-        substitutor: KtSubstitutor,
         expectedType: KtType? = null,
     ): LookupElementBuilder {
-        return when (symbol) {
-            is KtFunctionLikeSymbol -> with(functionLookupElementFactory) { createLookup(name, symbol, options, substitutor, expectedType) }
-            is KtVariableLikeSymbol -> with(variableLookupElementFactory) { createLookup(symbol, options, substitutor) }
-            else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
+        return when (signature) {
+            is KtFunctionLikeSignature<*> -> functionLookupElementFactory.createLookup(name, signature, options, expectedType)
+            is KtVariableLikeSignature<*> -> variableLookupElementFactory.createLookup(signature, options)
         }
     }
 
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =
         packagePartLookupElementFactory.createPackagePartLookupElement(packagePartFqName)
 
-    fun KtAnalysisSession.createNamedArgumentLookupElement(name: Name, types: List<KtType>): LookupElement =
-        with(namedArgumentLookupElementFactory) { createNamedArgumentLookup(name, types) }
+    context(KtAnalysisSession)
+    fun createNamedArgumentLookupElement(name: Name, types: List<KtType>): LookupElement =
+        namedArgumentLookupElementFactory.createNamedArgumentLookup(name, types)
 
     fun createNamedArgumentWithValueLookupElement(name: Name, value: String): LookupElement =
         namedArgumentLookupElementFactory.createNamedArgumentWithValueLookup(name, value)
 
-    fun KtAnalysisSession.createTypeLookupElement(type: KtType): LookupElement? =
-        with(typeLookupElementFactory) { createLookup(type) }
+    context(KtAnalysisSession)
+    fun createTypeLookupElement(type: KtType): LookupElement? =
+        typeLookupElementFactory.createLookup(type)
 
-    fun KtAnalysisSession.createTypeLookupElement(classSymbol: KtClassifierSymbol): LookupElement? =
-        with(typeLookupElementFactory) { createLookup(classSymbol) }
+    context(KtAnalysisSession)
+    fun createTypeLookupElement(classSymbol: KtClassifierSymbol): LookupElement? =
+        typeLookupElementFactory.createLookup(classSymbol)
 
-    fun KtAnalysisSession.createLookupElementForClassLikeSymbol(
+    context(KtAnalysisSession)
+    fun createLookupElementForClassLikeSymbol(
         symbol: KtClassLikeSymbol,
         importingStrategy: ImportStrategy,
     ): LookupElement? {
         if (symbol !is KtNamedSymbol) return null
-        return with(classLookupElementFactory) { createLookup(symbol, importingStrategy) }
+        return classLookupElementFactory.createLookup(symbol, importingStrategy)
     }
 }
 

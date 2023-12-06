@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.google.common.collect.HashMultiset
@@ -12,31 +12,30 @@ import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.isFile
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogUiImpl
+import git4idea.branch.GitBranchUtil
 import git4idea.config.*
 import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
-class GitStatisticsCollector : ProjectUsagesCollector() {
+internal class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -63,11 +62,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
 
     addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isStagingAreaEnabled }, STAGING_AREA)
 
-    val version = GitVcs.getInstance(project).version
-    set.add(EXECUTABLE.metric(
-      EventFields.Version with version.presentation,
-      TYPE with version.type
-    ))
+    reportVersion(project, set)
 
     for (repository in repositories) {
       val branches = repository.branches
@@ -75,19 +70,23 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       val repositoryMetric = REPOSITORY.metric(
         LOCAL_BRANCHES with branches.localBranches.size,
         REMOTE_BRANCHES with branches.remoteBranches.size,
+        RECENT_CHECKOUT_BRANCHES with branches.recentCheckoutBranches.size,
         REMOTES with repository.remotes.size,
-        WORKING_COPY_SIZE with repository.workingCopySize(),
         IS_WORKTREE_USED with repository.isWorkTreeUsed(),
         FS_MONITOR with repository.detectFsMonitor(),
       )
 
-      val remoteTypes = HashMultiset.create(repository.remotes.mapNotNull { getRemoteServerType(it) })
+      val remoteTypes = HashMultiset.create(repository.remotes.map { getRemoteServerType(it) })
       for (remoteType in remoteTypes) {
         repositoryMetric.data.addData("remote_$remoteType", remoteTypes.count(remoteType))
       }
 
       set.add(repositoryMetric)
     }
+
+    addRecentBranchesOptionMetric(set, settings, defaultSettings, repositories)
+
+    addCommonBranchesMetrics(repositories, set)
 
     addCommitTemplateMetrics(project, repositories, set)
 
@@ -96,10 +95,41 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     return set
   }
 
-  private fun addCommitTemplateMetrics(project: Project, repositories: List<GitRepository>, set: java.util.HashSet<MetricEvent>) {
+  private fun reportVersion(project: Project, set: MutableSet<MetricEvent>) {
+    val executableManager = GitExecutableManager.getInstance()
+    val version = executableManager.getVersionOrIdentifyIfNeeded(project)
+
+    set.add(EXECUTABLE.metric(
+      EventFields.Version with version.presentation,
+      TYPE with version.type
+    ))
+  }
+
+  private fun addRecentBranchesOptionMetric(set: MutableSet<MetricEvent>,
+                                            settings: GitVcsSettings,
+                                            defaultSettings: GitVcsSettings,
+                                            repositories: List<GitRepository>) {
+    if (defaultSettings.showRecentBranches() == settings.showRecentBranches()) return
+
+    val maxLocalBranches = repositories.maxOf { repo -> repo.branches.localBranches.size }
+    set.add(SHOW_RECENT_BRANCHES.metric(EventFields.Enabled with settings.showRecentBranches(), MAX_LOCAL_BRANCHES with maxLocalBranches))
+  }
+
+  private fun addCommonBranchesMetrics(repositories: List<GitRepository>, set: MutableSet<MetricEvent>) {
+    val commonLocalBranches = GitBranchUtil.getCommonLocalBranches(repositories)
+    val commonRemoteBranches = GitBranchUtil.getCommonRemoteBranches(repositories)
+    if (commonLocalBranches.isEmpty() && commonRemoteBranches.isEmpty()) return
+
+    set.add(COMMON_BRANCHES_COUNT_EVENT.metric(
+      COMMON_LOCAL_BRANCHES with commonLocalBranches.size,
+      COMMON_REMOTE_BRANCHES with commonRemoteBranches.size
+    ))
+  }
+
+  private fun addCommitTemplateMetrics(project: Project, repositories: List<GitRepository>, set: MutableSet<MetricEvent>) {
     if (repositories.isEmpty()) return
 
-    val templatesCount = project.service<GitCommitTemplateTracker>().templatesCount()
+    val templatesCount = GitCommitTemplateTracker.getInstance(project).templatesCount()
     if (templatesCount == 0) return
 
     set.add(COMMIT_TEMPLATE.metric(
@@ -130,109 +160,79 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     }
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("git.configuration", 10)
+  private val GROUP = EventLogGroup("git.configuration", 15)
 
-    private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
-    private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
+  private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
+  private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
 
-    private val UPDATE_TYPE_VALUE = EventFields.Enum("value", UpdateMethod::class.java) { it.name.lowercase() }
-    private val UPDATE_TYPE = GROUP.registerVarargEvent("update.type", UPDATE_TYPE_VALUE)
+  private val UPDATE_TYPE_VALUE = EventFields.Enum("value", UpdateMethod::class.java) { it.name.lowercase() }
+  private val UPDATE_TYPE = GROUP.registerVarargEvent("update.type", UPDATE_TYPE_VALUE)
 
-    private val SAVE_POLICY_VALUE = EventFields.Enum("value", GitSaveChangesPolicy::class.java) { it.name.lowercase() }
-    private val SAVE_POLICY = GROUP.registerVarargEvent("save.policy", SAVE_POLICY_VALUE)
+  private val SAVE_POLICY_VALUE = EventFields.Enum("value", GitSaveChangesPolicy::class.java) { it.name.lowercase() }
+  private val SAVE_POLICY = GROUP.registerVarargEvent("save.policy", SAVE_POLICY_VALUE)
 
-    private val PUSH_AUTO_UPDATE = GROUP.registerVarargEvent("push.autoupdate", EventFields.Enabled)
-    private val WARN_CRLF = GROUP.registerVarargEvent("warn.about.crlf", EventFields.Enabled)
-    private val WARN_DETACHED = GROUP.registerVarargEvent("warn.about.detached", EventFields.Enabled)
-    private val STAGING_AREA = GROUP.registerVarargEvent("staging.area.enabled", EventFields.Enabled)
+  private val PUSH_AUTO_UPDATE = GROUP.registerVarargEvent("push.autoupdate", EventFields.Enabled)
+  private val WARN_CRLF = GROUP.registerVarargEvent("warn.about.crlf", EventFields.Enabled)
+  private val WARN_DETACHED = GROUP.registerVarargEvent("warn.about.detached", EventFields.Enabled)
+  private val STAGING_AREA = GROUP.registerVarargEvent("staging.area.enabled", EventFields.Enabled)
 
-    private val TYPE = EventFields.Enum("type", GitVersion.Type::class.java) { it.name }
-    private val EXECUTABLE = GROUP.registerVarargEvent("executable", EventFields.Version, TYPE)
+  private val TYPE = EventFields.Enum("type", GitVersion.Type::class.java) { it.name }
+  private val EXECUTABLE = GROUP.registerVarargEvent("executable", EventFields.Version, TYPE)
 
-    private val LOCAL_BRANCHES = EventFields.RoundedInt("local_branches")
-    private val REMOTE_BRANCHES = EventFields.RoundedInt("remote_branches")
-    private val REMOTES = EventFields.RoundedInt("remotes")
-    private val WORKING_COPY_SIZE = EventFields.RoundedLong("working_copy_size")
-    private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
-    private val FS_MONITOR = EventFields.Enum<FsMonitor>("fs_monitor")
-    private val remoteTypes = setOf("github", "gitlab", "bitbucket",
-                                    "github_custom", "gitlab_custom", "bitbucket_custom")
+  private val COMMON_LOCAL_BRANCHES = EventFields.RoundedInt("common_local_branches")
+  private val COMMON_REMOTE_BRANCHES = EventFields.RoundedInt("common_remote_branches")
+  private val COMMON_BRANCHES_COUNT_EVENT = GROUP.registerVarargEvent("common_branches_count",
+                                                                      COMMON_LOCAL_BRANCHES, COMMON_REMOTE_BRANCHES)
 
-    private val remoteTypesEventIds = remoteTypes.map {
-      EventFields.Int("remote_$it")
-    }
+  private val LOCAL_BRANCHES = EventFields.RoundedInt("local_branches")
+  private val REMOTE_BRANCHES = EventFields.RoundedInt("remote_branches")
+  private val RECENT_CHECKOUT_BRANCHES = EventFields.RoundedInt("recent_checkout_branches")
+  private val REMOTES = EventFields.RoundedInt("remotes")
+  private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
+  private val FS_MONITOR = EventFields.Enum<FsMonitor>("fs_monitor")
+  private val remoteTypes = setOf("github", "gitlab", "bitbucket", "gitee",
+                                  "github_custom", "gitlab_custom", "bitbucket_custom", "gitee_custom",
+                                  "other")
 
-    private val REPOSITORY = GROUP.registerVarargEvent("repository",
-                                                       LOCAL_BRANCHES,
-                                                       REMOTE_BRANCHES,
-                                                       REMOTES,
-                                                       WORKING_COPY_SIZE,
-                                                       IS_WORKTREE_USED,
-                                                       FS_MONITOR,
-                                                       *remoteTypesEventIds.toTypedArray()
-    )
-
-    private val TEMPLATES_COUNT = EventFields.Int("count")
-    private val TEMPLATES_MULTIPLE_ROOTS = EventFields.Boolean("multiple_root")
-    private val COMMIT_TEMPLATE = GROUP.registerVarargEvent("commit_template", TEMPLATES_COUNT, TEMPLATES_MULTIPLE_ROOTS)
-
-    private val SHOW_GIT_BRANCHES_IN_LOG = GROUP.registerVarargEvent("showGitBranchesInLog", EventFields.Enabled)
-    private val UPDATE_BRANCH_FILTERS_ON_SELECTION = GROUP.registerVarargEvent("updateBranchesFilterInLogOnSelection", EventFields.Enabled)
-
-    private fun getRemoteServerType(remote: GitRemote): String? {
-      val hosts = remote.urls.map(URLUtil::parseHostFromSshUrl).distinct()
-
-      if (hosts.contains("github.com")) return "github"
-      if (hosts.contains("gitlab.com")) return "gitlab"
-      if (hosts.contains("bitbucket.org")) return "bitbucket"
-
-      if (remote.urls.any { it.contains("github") }) return "github_custom"
-      if (remote.urls.any { it.contains("gitlab") }) return "gitlab_custom"
-      if (remote.urls.any { it.contains("bitbucket") }) return "bitbucket_custom"
-
-      return null
-    }
+  private val remoteTypesEventIds = remoteTypes.map {
+    EventFields.Int("remote_$it")
   }
-}
 
-private const val MAX_SIZE: Long = 4L * 1024 * 1024 * 1024 // 4 GB
-private const val MAX_TIME: Long = 5 * 1000 * 60 // 5 min
+  private val REPOSITORY = GROUP.registerVarargEvent("repository",
+                                                     LOCAL_BRANCHES,
+                                                     REMOTE_BRANCHES,
+                                                     RECENT_CHECKOUT_BRANCHES,
+                                                     REMOTES,
+                                                     IS_WORKTREE_USED,
+                                                     FS_MONITOR,
+                                                     *remoteTypesEventIds.toTypedArray()
+  )
 
-private fun Sequence<Long>.sumWithLimits(): Long {
-  var sum = 0L
-  val startTime = System.currentTimeMillis()
-  for (element in this) {
-    if (System.currentTimeMillis() - startTime > MAX_TIME)
-      return -1
-    sum += element
-    if (sum >= MAX_SIZE) return MAX_SIZE
+  private val TEMPLATES_COUNT = EventFields.Int("count")
+  private val TEMPLATES_MULTIPLE_ROOTS = EventFields.Boolean("multiple_root")
+  private val COMMIT_TEMPLATE = GROUP.registerVarargEvent("commit_template", TEMPLATES_COUNT, TEMPLATES_MULTIPLE_ROOTS)
+
+  private val SHOW_GIT_BRANCHES_IN_LOG = GROUP.registerVarargEvent("showGitBranchesInLog", EventFields.Enabled)
+  private val UPDATE_BRANCH_FILTERS_ON_SELECTION = GROUP.registerVarargEvent("updateBranchesFilterInLogOnSelection", EventFields.Enabled)
+
+  private val MAX_LOCAL_BRANCHES = EventFields.RoundedInt("max_local_branches")
+  private val SHOW_RECENT_BRANCHES = GROUP.registerVarargEvent("showRecentBranches", EventFields.Enabled, MAX_LOCAL_BRANCHES)
+
+  private fun getRemoteServerType(remote: GitRemote): String {
+    val hosts = remote.urls.map(URLUtil::parseHostFromSshUrl).distinct()
+
+    if (hosts.contains("github.com")) return "github"
+    if (hosts.contains("gitlab.com")) return "gitlab"
+    if (hosts.contains("bitbucket.org")) return "bitbucket"
+    if (hosts.contains("gitee.com")) return "gitee"
+
+    if (remote.urls.any { it.contains("github") }) return "github_custom"
+    if (remote.urls.any { it.contains("gitlab") }) return "gitlab_custom"
+    if (remote.urls.any { it.contains("bitbucket") }) return "bitbucket_custom"
+    if (remote.urls.any { it.contains("gitee") }) return "gitee_custom"
+
+    return "other"
   }
-  return sum
-}
-
-/**
- * Calculates size of work tree in given [GitRepository]
- *
- * @return size in bytes or -1 if some IO error occurs
- */
-private fun GitRepository.workingCopySize(): Long = try {
-  val root = this.root.toNioPath().toFile()
-  root.walk()
-    .onEnter { it.name != GitUtil.DOT_GIT && !isInnerRepo(root, it) }
-    .filter { it.isFile }
-    .map { it.length() }
-    .sumWithLimits() // don't calculate working copy size over 4 gb to reduce CPU usage
-}
-catch (e: Exception) {
-  // if something goes wrong with file system operations
-  -1
-}
-
-private fun isInnerRepo(root: File, dir: File): Boolean {
-  if (root == dir) return false
-
-  return Path.of(dir.toString(), GitUtil.DOT_GIT).exists()
 }
 
 /**
@@ -247,7 +247,7 @@ private fun GitRepository.isWorkTreeUsed(): Boolean {
     val rootPath = this.root.toNioPath()
 
     val dotGit = Path.of(rootPath.toString(), GitUtil.DOT_GIT)
-    if (dotGit.isFile()) return true
+    if (dotGit.isRegularFile()) return true
 
     val worktreesPath = repositoryFiles.worktreesDirFile.toPath()
     if (!worktreesPath.exists()) return false

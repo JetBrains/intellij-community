@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.*
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -77,37 +77,17 @@ class SuspendingWriteActionTest {
 
   @RepeatedTest(repetitions)
   fun rethrow(): Unit = timeoutRunBlocking {
-    testRethrow(object : Throwable() {})
-    testRethrow(CancellationException())
-    testRethrow(ProcessCanceledException())
-    testRethrow(ReadAction.CannotReadException())
+    testRwRethrow {
+      writeAction(it)
+    }
   }
 
-  private suspend inline fun <reified T : Throwable> testRethrow(t: T) {
-    lateinit var writeJob: Job
-    val thrown = assertThrows<T> {
-      writeAction {
-        writeJob = requireNotNull(Cancellation.currentJob())
-        throw t
-      }
-    }
-    val cause = thrown.cause
-    if (cause != null) {
-      Assertions.assertSame(t, cause) // kotlin trace recovery via 'cause'
-    }
-    else {
-      Assertions.assertSame(t, thrown)
-    }
-    Assertions.assertTrue(writeJob.isCompleted)
-    Assertions.assertTrue(writeJob.isCancelled)
-  }
-
+  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
   fun `current job`(): Unit = timeoutRunBlocking {
     val coroutineJob = coroutineContext.job
     writeAction {
-      val writeJob = coroutineJob.children.single()
-      Assertions.assertSame(writeJob, Cancellation.currentJob())
+      Assertions.assertSame(coroutineJob, Cancellation.currentJob()?.parent?.parent)
     }
   }
 }

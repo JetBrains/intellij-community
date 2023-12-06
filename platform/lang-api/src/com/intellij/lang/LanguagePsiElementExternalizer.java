@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.project.Project;
@@ -19,9 +19,8 @@ public final class LanguagePsiElementExternalizer extends LanguageExtension<PsiE
         return null;
       }
 
-      @Nullable
       @Override
-      public PsiElement findByQualifiedName(Project project, @NotNull String qualifiedName) {
+      public @Nullable PsiElement findByQualifiedName(Project project, @NotNull String qualifiedName) {
         return null;
       }
     });

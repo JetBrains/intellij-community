@@ -14,6 +14,8 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -50,7 +52,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private boolean isOptionalProblem(@NotNull PsiExpression context, @NotNull JavaDfaAnchor anchor) {
+      private static boolean isOptionalProblem(@NotNull PsiExpression context, @NotNull JavaDfaAnchor anchor) {
         CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(context);
         if (result == null || !result.anchorWasAnalyzed(anchor)) return false;
         DfType dfType = SpecialField.OPTIONAL_VALUE.getFromQualifier(result.getDfType(anchor));
@@ -118,7 +120,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
     return null;
   }
 
-  private static class UseFlatMapFix implements LocalQuickFix {
+  private static class UseFlatMapFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -127,8 +129,8 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;

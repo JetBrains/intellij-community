@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
@@ -6,7 +6,6 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,20 +14,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import kotlin.text.Regex;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxFiles;
-import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxProduct;
+import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxFiles;
+import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxProduct;
 
 /**
  * This class knows how to find python in Windows Registry according to
@@ -50,11 +48,11 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
                     "IronPython", "ipy.exe");
 
   @NotNull
-  private final ClearableLazyValue<Set<String>> myRegistryCache =
-    ClearableLazyValue.createAtomic(() -> findInRegistry(getWinRegistryService()));
+  private final SynchronizedClearableLazy<Set<String>> myRegistryCache =
+    new SynchronizedClearableLazy<>(() -> findInRegistry(getWinRegistryService()));
   @NotNull
-  private final ClearableLazyValue<Set<String>> myAppxCache =
-    ClearableLazyValue.createAtomic(() -> getPythonsFromStore());
+  private final SynchronizedClearableLazy<Set<String>> myAppxCache = new SynchronizedClearableLazy<>(
+    WinPythonSdkFlavor::getPythonsFromStore);
 
   public static WinPythonSdkFlavor getInstance() {
     return PythonSdkFlavor.EP_NAME.findExtension(WinPythonSdkFlavor.class);
@@ -101,7 +99,6 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     }
     var path = sdk.getHomePath();
     return path != null && isLocalPathValidPython(Path.of(path));
-
   }
 
   @Override
@@ -118,8 +115,8 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
       return true;
     }
 
-    final File file = path.toFile();
-    return StringUtils.contains(getAppxProduct(file), APPX_PRODUCT) && isValidSdkPath(file);
+    String product = getAppxProduct(path);
+    return product != null && product.contains(APPX_PRODUCT) && isValidSdkPath(path.toFile());
   }
 
   @Override
@@ -161,7 +158,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
 
   @NotNull
   private static Set<String> getPythonsFromStore() {
-    return ContainerUtil.map2Set(getAppxFiles(APPX_PRODUCT, PYTHON_EXE), file -> file.getAbsolutePath());
+    return ContainerUtil.map2Set(getAppxFiles(APPX_PRODUCT, PYTHON_EXE), file -> file.toAbsolutePath().toString());
   }
 
   @NotNull

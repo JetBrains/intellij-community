@@ -74,7 +74,7 @@ public interface OrderRootsEnumerator {
   /**
    * @deprecated use {@link #usingCustomSdkRootProvider(NotNullFunction)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider);
 

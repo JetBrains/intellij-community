@@ -1,49 +1,105 @@
 [tool.black]
 line_length = 130
 target_version = ["py310"]
-force-exclude = ".*_pb2.pyi"
 skip_magic_trailing_comma = true
+# Exclude protobuf files because they have long line lengths
+# Ideally, we could configure Black to allow longer line lengths
+# for just these files, but doesn't seem possible yet.
+force-exclude = ".*_pb2.pyi"
 
 [tool.isort]
 profile = "black"
 combine_as_imports = true
 line_length = 130
-skip_glob = "*_pb2.pyi"
+skip = [".git", ".github", ".venv"]
 extra_standard_library = [
-    "typing_extensions",
     "_typeshed",
+    "typing_extensions",
     # Extra modules not recognized by isort
     "_ast",
+    "_bisect",
+    "_bootlocale",
+    "_codecs",
     "_collections_abc",
+    "_compat_pickle",
     "_compression",
     "_csv",
+    "_ctypes",
     "_curses",
+    "_decimal",
+    "_dummy_thread",
+    "_dummy_threading",
     "_heapq",
+    "_imp",
+    "_json",
+    "_locale",
     "_markupbase",
+    "_msi",
+    "_operator",
+    "_osx_support",
+    "_posixsubprocess",
+    "_py_abc",
+    "_pydecimal",
     "_random",
+    "_sitebuiltins",
+    "_socket",
+    "_stat",
+    "_thread",
+    "_threading_local",
     "_tkinter",
     "_tracemalloc",
     "_warnings",
+    "_weakref",
     "_weakrefset",
+    "_winapi",
     "genericpath",
     "opcode",
     "pyexpat",
-    # Python 2 modules
-    "__builtin__",
-    "cookielib",
-    "cStringIO",
-    "httplib",
-    "mimetools",
-    "rfc822",
-    "thread",
-    "urllib2",
-    "urlparse",
-    "BaseHTTPServer",
-    "Queue",
-    "SimpleHTTPServer",
-    "SocketServer",
-    "StringIO",
-    "UserDict",
-    "UserList",
-    "UserString",
 ]
+known_first_party = ["parse_metadata", "utils"]
+
+[tool.ruff]
+line-length = 130
+# Oldest supported Python version
+target-version = "py37"
+fix = true
+exclude = [
+    # Ignore generated protobuf stubs
+    "*_pb2.pyi",
+    # virtual environment
+    ".env",
+    ".venv",
+    "env",
+    # cache directories, etc.:
+    ".git",
+    ".mypy_cache",
+    ".pytype",
+    ".venv",
+    "env",
+]
+
+# Only enable rules that have safe autofixes;
+# only enable rules that are relevant to stubs
+select = [
+    "F401", # Remove unused imports
+    "FA", # flake8-future-annotations
+    "PYI009", # use `...`, not `pass`, in empty class bodies
+    "PYI010", # function bodies must be empty
+    "PYI012", # class bodies must not contain `pass`
+    "PYI013", # non-empty class bodies must not contain `...`
+    "PYI020", # quoted annotations are always unnecessary in stubs
+    "PYI025", # always alias `collections.abc.Set` as `AbstractSet` when importing it
+    "PYI032", # use `object`, not `Any`, as the second parameter to `__eq__`
+    "UP004", # Remove explicit `object` inheritance
+    "UP006", # PEP-585 autofixes
+    "UP007", # PEP-604 autofixes
+    "UP013", # Class-based syntax for TypedDicts
+    "UP014", # Class-based syntax for NamedTuples
+    "UP019", # Use str over typing.Text
+    "UP035", # import from typing, not typing_extensions, wherever possible
+    "UP039", # don't use parens after a class definition with no bases
+]
+
+[tool.typeshed]
+pyright_version = "1.1.332"
+oldest_supported_python = "3.7"

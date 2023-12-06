@@ -29,7 +29,7 @@ public abstract class SourcePosition implements Navigatable {
   @NotNull
   public abstract PsiFile getFile();
 
-  public abstract PsiElement getElementAt();
+  public abstract @Nullable PsiElement getElementAt();
 
   /**
    * @return a zero-based line number
@@ -137,7 +137,7 @@ public abstract class SourcePosition implements Navigatable {
     }
 
     @Override
-    public PsiElement getElementAt() {
+    public @Nullable PsiElement getElementAt() {
       updateData();
       PsiElement element = SoftReference.dereference(myPsiElementRef);
       if (element == null) {
@@ -179,7 +179,7 @@ public abstract class SourcePosition implements Navigatable {
       if (project.isDisposed()) {
         return null;
       }
-      return PsiDocumentManager.getInstance(project).getDocument(file);
+      return file.getViewProvider().getDocument();
     }
 
     protected int calcOffset() {

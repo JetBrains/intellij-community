@@ -59,7 +59,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
    */
   public static void removeImports(PsiJavaFile javaFile, Set<String> imports) {
     PsiImportList importList = new ImportHelper(JavaCodeStyleSettings.getInstance(javaFile))
-      .prepareOptimizeImportsResult(javaFile, pair -> !imports.contains(pair.first));
+      .prepareOptimizeImportsResult(javaFile, anImport -> !imports.contains(anImport.name()));
     if (importList != null) {
       Objects.requireNonNull(javaFile.getImportList()).replace(importList);
     }

@@ -4,21 +4,20 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
+import com.intellij.util.io.blobstorage.ByteBufferReader;
+import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.DataInputOutputUtil;
-import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-final class PersistentFSAttributeAccessor {
+@ApiStatus.Internal
+public final class PersistentFSAttributeAccessor {
 
-  @NotNull
-  private final PersistentFSConnection connection;
-  @NotNull
-  private final AbstractAttributesStorage attributesStorage;
+  private final @NotNull PersistentFSConnection connection;
+  private final @NotNull VFSAttributesStorage attributesStorage;
 
   PersistentFSAttributeAccessor(final @NotNull PersistentFSConnection connection) {
     this.connection = connection;
@@ -27,13 +26,19 @@ final class PersistentFSAttributeAccessor {
 
   public boolean hasAttributePage(final int fileId,
                                   final @NotNull FileAttribute attribute) throws IOException {
+    connection.ensureFileIdIsValid(fileId);
     return attributesStorage.hasAttributePage(connection, fileId, attribute);
   }
 
-  @Nullable
-  public AttributeInputStream readAttribute(final int fileId,
-                                            final @NotNull FileAttribute attribute) throws IOException {
+  public @Nullable AttributeInputStream readAttribute(final int fileId,
+                                                      final @NotNull FileAttribute attribute) throws IOException {
     final AttributeInputStream attributeStream = attributesStorage.readAttribute(connection, fileId, attribute);
+    return validateAttributeVersion(attribute, attributeStream);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable AttributeInputStream validateAttributeVersion(final @NotNull FileAttribute attribute,
+                                                                        final AttributeInputStream attributeStream) {
     if (attributeStream != null && attribute.isVersioned()) {
       try {
         final int actualVersion = DataInputOutputUtil.readINT(attributeStream);
@@ -64,48 +69,47 @@ final class PersistentFSAttributeAccessor {
   <R> @Nullable R readAttributeRaw(final int fileId,
                                    final @NotNull FileAttribute attribute,
                                    final ByteBufferReader<R> reader) throws IOException {
-    if (attributesStorage instanceof AttributesStorageOverBlobStorage storage) {
-      return storage.readAttributeRaw(connection, fileId, attribute, buffer -> {
-        if (attribute.isVersioned()) {
-          final int actualVersion = DataInputOutputUtil.readINT(buffer);
-          if (actualVersion != attribute.getVersion()) {
-            return null;
-          }
-        }
-        return reader.read(buffer);
-      });
-    }
-    else {
+    if (!(attributesStorage instanceof AttributesStorageOverBlobStorage newAttributesStorage)) {
       throw new UnsupportedOperationException("Raw attribute access is not implemented for " + attributesStorage.getClass().getName());
     }
+
+    connection.ensureFileIdIsValid(fileId);
+
+    return newAttributesStorage.readAttributeRaw(connection, fileId, attribute, buffer -> {
+      if (attribute.isVersioned()) {
+        final int actualVersion = DataInputOutputUtil.readINT(buffer);
+        if (actualVersion != attribute.getVersion()) {
+          return null;
+        }
+      }
+      return reader.read(buffer);
+    });
   }
 
   public void writeAttributeRaw(final int fileId,
                                 final @NotNull FileAttribute attribute,
                                 final ByteBufferWriter writer) {
-    if (attributesStorage instanceof AttributesStorageOverBlobStorage storage) {
-      throw new UnsupportedOperationException("Method not implemented yet");
-      //TODO RC: drill hole for storage.writeAttributeRaw(connection, fileId, attribute, writer)
-      //return storage.writeAttribute(connection, fileId, attribute, buffer -> {
-      //  if (attribute.isVersioned()) {
-      //    final int actualVersion = DataInputOutputUtil.writeINT(buffer);
-      //  }
-      //  return writer.write(buffer);
-      //});
-    }
-    else {
+    if (!(attributesStorage instanceof AttributesStorageOverBlobStorage newAttributesStorage)) {
       throw new UnsupportedOperationException("Raw attribute access is not implemented for " + attributesStorage.getClass().getName());
     }
-  }
 
-  //======================================================================================
+    connection.ensureFileIdIsValid(fileId);
+    throw new UnsupportedOperationException("Method not implemented yet");
+    //TODO RC: drill hole for storage.writeAttributeRaw(connection, fileId, attribute, writer)
+    //return storage.writeAttribute(connection, fileId, attribute, buffer -> {
+    //  if (attribute.isVersioned()) {
+    //    DataInputOutputUtil.writeINT(buffer);
+    //  }
+    //  return writer.write(buffer);
+    //});
+  }
 
   /**
    * Opens given attribute of given file for writing
    */
-  @NotNull
-  public AttributeOutputStream writeAttribute(final int fileId,
-                                              final @NotNull FileAttribute attribute) {
+  public @NotNull AttributeOutputStream writeAttribute(final int fileId,
+                                                       final @NotNull FileAttribute attribute) {
+    connection.ensureFileIdIsValid(fileId);
     final AttributeOutputStream attributeStream = attributesStorage.writeAttribute(connection, fileId, attribute);
     if (attribute.isVersioned()) {
       try {
@@ -120,16 +124,7 @@ final class PersistentFSAttributeAccessor {
   }
 
   public void deleteAttributes(final int fileId) throws IOException {
+    connection.ensureFileIdIsValid(fileId);
     attributesStorage.deleteAttributes(connection, fileId);
-  }
-
-  public int getLocalModificationCount() {
-    return attributesStorage.getLocalModificationCount();
-  }
-
-  public void checkAttributesStorageSanity(final int fileId,
-                                           final @NotNull IntList usedAttributeRecordIds,
-                                           final @NotNull IntList validAttributeIds) throws IOException {
-    attributesStorage.checkAttributesStorageSanity(connection, fileId, usedAttributeRecordIds, validAttributeIds);
   }
 }

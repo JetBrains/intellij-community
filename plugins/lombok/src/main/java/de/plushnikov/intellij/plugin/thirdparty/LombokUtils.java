@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.thirdparty;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,7 @@ public final class LombokUtils {
     "io.micrometer.core.lang.NonNull",
     "io.reactivex.annotations.NonNull",
     "io.reactivex.rxjava3.annotations.NonNull",
+    "jakarta.annotation.Nonnull",
     "javax.annotation.Nonnull",
     // "javax.validation.constraints.NotNull", // The field might contain a null value until it is persisted.
     "libcore.util.NonNull",
@@ -47,7 +49,8 @@ public final class LombokUtils {
     "org.jmlspecs.annotation.NonNull",
     "org.netbeans.api.annotations.common.NonNull",
     "org.springframework.lang.NonNull",
-    "reactor.util.annotation.NonNull"};
+    "reactor.util.annotation.NonNull",
+  };
 
   static final String[] BASE_COPYABLE_ANNOTATIONS = {
     "android.annotation.NonNull",
@@ -62,7 +65,7 @@ public final class LombokUtils {
     "androidx.annotation.RecentlyNullable",
     "com.android.annotations.NonNull",
     "com.android.annotations.Nullable",
-    // "com.google.api.server.spi.config.Nullable", - let's think about this one a litte, as it is targeted solely at parameters, so you can't even put it on fields. If we choose to support it, we should REMOVE it from the field, then - that's not something we currently support.
+    // "com.google.api.server.spi.config.Nullable", - let's think about this one a little, as it is targeted solely at parameters, so you can't even put it on fields. If we choose to support it, we should REMOVE it from the field, then - that's not something we currently support.
     "com.google.firebase.database.annotations.NotNull",
     "com.google.firebase.database.annotations.Nullable",
     "com.mongodb.lang.NonNull",
@@ -82,8 +85,9 @@ public final class LombokUtils {
     "io.reactivex.annotations.Nullable",
     "io.reactivex.rxjava3.annotations.NonNull",
     "io.reactivex.rxjava3.annotations.Nullable",
+    "jakarta.annotation.Nonnull",
+    "jakarta.annotation.Nullable",
     "javax.annotation.CheckForNull",
-    "javax.annotation.Nonnull",
     "javax.annotation.Nonnull",
     "javax.annotation.Nullable",
     //			"javax.validation.constraints.NotNull", // - this should definitely not be included; validation is not about language-level nullity, therefore should not be in this core list.
@@ -119,7 +123,7 @@ public final class LombokUtils {
     // Checker Framework annotations.
     // To update Checker Framework annotations, run:
     // grep --recursive --files-with-matches -e '^@Target\b.*TYPE_USE' $CHECKERFRAMEWORK/checker/src/main/java $CHECKERFRAMEWORK/checker-qual/src/main/java $CHECKERFRAMEWORK/checker-util/src/main/java $CHECKERFRAMEWORK/framework/src/main/java | grep '\.java$' | sed 's/.*\/java\//\t\t\t"/' | sed 's/\.java$/",/' | sed 's/\//./g' | sort
-    // Only add new annotations, do not remove annotations that have been removed from the lastest version of the Checker Framework.
+    // Only add new annotations, do not remove annotations that have been removed from the latest version of the Checker Framework.
     "org.checkerframework.checker.builder.qual.CalledMethods",
     "org.checkerframework.checker.builder.qual.NotCalledMethods",
     "org.checkerframework.checker.calledmethods.qual.CalledMethods",
@@ -341,7 +345,8 @@ public final class LombokUtils {
     "org.checkerframework.common.value.qual.PolyValue",
     "org.checkerframework.common.value.qual.StringVal",
     "org.checkerframework.common.value.qual.UnknownVal",
-    "org.checkerframework.framework.qual.PurityUnqualified"};
+    "org.checkerframework.framework.qual.PurityUnqualified",
+  };
 
   static final String[] COPY_TO_SETTER_ANNOTATIONS = {
     "com.fasterxml.jackson.annotation.JacksonInject",
@@ -358,7 +363,8 @@ public final class LombokUtils {
     "com.fasterxml.jackson.databind.annotation.JsonDeserialize",
     "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper",
     "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty",
-    "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText",};
+    "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText",
+  };
 
   static final String[] COPY_TO_BUILDER_SINGULAR_SETTER_ANNOTATIONS = {
     "com.fasterxml.jackson.annotation.JsonAnySetter"};
@@ -374,7 +380,8 @@ public final class LombokUtils {
     "com.fasterxml.jackson.annotation.JsonTypeInfo",
     "com.fasterxml.jackson.annotation.JsonTypeName",
     "com.fasterxml.jackson.annotation.JsonView",
-    "com.fasterxml.jackson.databind.annotation.JsonNaming"};
+    "com.fasterxml.jackson.databind.annotation.JsonNaming",
+  };
 
   public static String getGetterName(final @NotNull PsiField psiField) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
@@ -397,8 +404,8 @@ public final class LombokUtils {
     return toSetterName(accessorsInfo, psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
   }
 
-  public static String getWitherName(@NotNull PsiField psiField, @NotNull AccessorsInfo accessorsInfo) {
-    return toWitherName(accessorsInfo.withFluent(false), psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
+  public static String getWitherName(@NotNull PsiVariable psiVariable, @NotNull AccessorsInfo accessorsInfo) {
+    return toWitherName(accessorsInfo.withFluent(false), psiVariable.getName(), PsiTypes.booleanType().equals(psiVariable.getType()));
   }
 
   /**

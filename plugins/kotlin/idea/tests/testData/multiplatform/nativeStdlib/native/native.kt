@@ -6,5 +6,5 @@ import kotlin.native.concurrent.Worker
 
 fun mingwX64Main() {
     val string: String = ""
-    val ref: kotlin.native.concurrent.Worker
+    val ref: kotlin.native.concurrent.<!OPT_IN_USAGE!>Worker<!>
 }

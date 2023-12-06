@@ -6,3 +6,4 @@ fun foo(s: String?) {
         ss = s
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix

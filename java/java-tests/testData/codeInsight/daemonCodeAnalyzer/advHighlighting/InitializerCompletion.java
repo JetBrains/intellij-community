@@ -1,4 +1,4 @@
-/// initalizers completion
+// initializers completion
 import java.io.*;
 
 public class a  {
@@ -19,8 +19,8 @@ public class a  {
 
 }
 class a2 {
-  { 
-    if (1==2) <error descr="Unhandled exception: java.io.IOException">throw new IOException();</error> 
+  {
+    if (1==2) <error descr="Unhandled exception: java.io.IOException">throw new IOException();</error>
   }
 
   <error descr="Unhandled exception: java.io.IOException">a2()</error> {}
@@ -31,7 +31,7 @@ class ConnectException extends SocketException {
 }
 
 class a3 {
-  { 
+  {
     if (1==2) <error descr="Unhandled exception: SocketException">throw new SocketException();</error>
   }
 
@@ -131,7 +131,7 @@ class H {
     }
 
     static {
-        if(true) {      
+        if(true) {
             <error descr="Unhandled exception: java.io.FileNotFoundException">throw new FileNotFoundException();</error>
         }
     }

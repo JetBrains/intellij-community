@@ -9,8 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import org.jetbrains.annotations.NonNls;
 
@@ -62,7 +62,7 @@ public class MultipleRootEditorWithSplitter extends JPanel {
 
     myList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myList.setCellRenderer(SimpleListCellRenderer.create("", o -> {
+    myList.setCellRenderer(BuilderKt.textListCellRenderer(o -> {
       VcsPathPresenter presenter = VcsPathPresenter.getInstance(project);
       VirtualFile file = o.getVirtualFile();
       return file != null

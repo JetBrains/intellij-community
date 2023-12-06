@@ -1,61 +1,66 @@
 package com.intellij.smartUpdate
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.actions.VcsContext
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeList
+import com.intellij.openapi.vcs.update.ActionInfo
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
-import com.intellij.openapi.vfs.VirtualFile
-import java.io.File
+import com.intellij.openapi.vcs.update.ScopeInfo
+import com.intellij.ui.components.Label
+import com.intellij.ui.components.Link
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.ComponentPredicate
+import javax.swing.JComponent
 
-class VcsUpdateStep: SmartUpdateStep {
+const val VCS_UPDATE = "vcs.update"
+
+class VcsUpdateStep : SmartUpdateStep {
+  private lateinit var showOptionsListener: (Boolean) -> Unit
+  override val id: String = VCS_UPDATE
+  override val stepName = SmartUpdateBundle.message("checkbox.update.project")
+
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
-    val action = object: CommonUpdateProjectAction() {
-      override fun onSuccess() {
-        onSuccess.invoke()
-      }
+    val start = System.currentTimeMillis()
+    val action = object : CommonUpdateProjectAction() {
+      override fun isShowOptions(project: Project?) = false
 
-      public override fun actionPerformed(context: VcsContext) {
-        super.actionPerformed(context)
+      override fun onSuccess() {
+        SmartUpdateUsagesCollector.logUpdate(System.currentTimeMillis() - start)
+        onSuccess.invoke()
       }
     }
     action.templatePresentation.text = SmartUpdateBundle.message("action.update.project.text")
-    action.actionPerformed(UpdateProjectContext(project))
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .build()
+    val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataContext)
+    action.actionPerformed(actionEvent)
   }
 
-  override fun isRequested(options: SmartUpdate.Options) = options.updateProject
-}
-
-class UpdateProjectContext(private val _project: Project): VcsContext {
-  override fun getPlace(): String {
-    TODO("Not yet implemented")
+  override fun getDetailsComponent(project: Project): JComponent? {
+    if (!ActionInfo.UPDATE.showOptions(project)) return super.getDetailsComponent(project)
+    return panel {
+      row { cell(Label(SmartUpdateBundle.message("warning.default.update.options.will.be.applied"))) }
+      row { cell(Link(SmartUpdateBundle.message("label.change.options")) { showOptionsDialog(project) }) }
+    }
   }
 
-  override fun getProject(): Project  = _project
+  private fun showOptionsDialog(project: Project) {
+    val map = CommonUpdateProjectAction().getConfigurableToEnvMap(project)
+    ActionInfo.UPDATE.createOptionsDialog(project, map, ScopeInfo.PROJECT.getScopeName(DataContext.EMPTY_CONTEXT, ActionInfo.UPDATE)).show()
+    showOptionsListener.invoke(ActionInfo.UPDATE.showOptions(project))
+  }
 
-  override fun getSelectedFile(): VirtualFile?  = null
+  override fun detailsVisible(project: Project): ComponentPredicate {
+    return object : ComponentPredicate() {
+      override fun addListener(listener: (Boolean) -> Unit) {
+        showOptionsListener = listener
+      }
 
-  override fun getSelectedFiles(): Array<VirtualFile>  = VirtualFile.EMPTY_ARRAY
-
-  override fun getEditor(): Editor?  = null
-
-  override fun getSelectedFilesCollection(): MutableCollection<VirtualFile> = ArrayList()
-
-  override fun getSelectedIOFiles(): Array<File> ? = null
-
-  override fun getModifiers(): Int  = 0
-
-  override fun getSelectedIOFile(): File?  = null
-
-  override fun getSelectedFilePaths(): Array<FilePath> = emptyArray()
-
-  override fun getSelectedFilePath(): FilePath? = null
-
-  override fun getSelectedChangeLists(): Array<ChangeList>?  = null
-  override fun getSelectedChanges(): Array<Change>?  = null
-
-  override fun getActionName(): String  = ""
+      override fun invoke() = ActionInfo.UPDATE.showOptions(project)
+    }
+  }
 }

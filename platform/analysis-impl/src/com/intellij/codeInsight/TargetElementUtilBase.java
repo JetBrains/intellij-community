@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
@@ -83,14 +83,12 @@ public final class TargetElementUtilBase {
   static final LanguageExtension<TargetElementEvaluator> TARGET_ELEMENT_EVALUATOR =
     new LanguageExtension<>("com.intellij.targetElementEvaluator");
 
-  @Nullable
-  private static TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {
+  private static @Nullable TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {
     TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     return result instanceof TargetElementEvaluatorEx ? (TargetElementEvaluatorEx)result : null;
   }
 
-  @Nullable
-  static TargetElementEvaluatorEx2 getElementEvaluatorsEx2(@NotNull Language language) {
+  public static @Nullable TargetElementEvaluatorEx2 getElementEvaluatorsEx2(@NotNull Language language) {
     TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     return result instanceof TargetElementEvaluatorEx2 ? (TargetElementEvaluatorEx2)result : null;
   }
@@ -154,8 +152,7 @@ public final class TargetElementUtilBase {
     return getNamedElement(element);
   }
 
-  @Nullable
-  private static PsiElement doGetReferenceOrReferencedElement(@NotNull Editor editor, int flags, int offset) {
+  private static @Nullable PsiElement doGetReferenceOrReferencedElement(@NotNull Editor editor, int flags, int offset) {
     PsiReference ref = findReference(editor, offset);
     if (ref == null) return null;
 
@@ -176,14 +173,12 @@ public final class TargetElementUtilBase {
     return ref.resolve();
   }
 
-  @Nullable
-  public static PsiReference findReferenceWithoutExpectedCaret(@NotNull Editor editor) {
+  public static @Nullable PsiReference findReferenceWithoutExpectedCaret(@NotNull Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     return findReference(editor, offset);
   }
 
-  @Nullable
-  public static PsiReference findReference(@NotNull Editor editor, int offset) {
+  public static @Nullable PsiReference findReference(@NotNull Editor editor, int offset) {
     Project project = editor.getProject();
     if (project == null) return null;
 
@@ -204,8 +199,7 @@ public final class TargetElementUtilBase {
     return null;
   }
 
-  @Nullable
-  private static PsiElement getReferenceOrReferencedElement(@NotNull PsiFile file, @NotNull Editor editor, int flags, int offset) {
+  private static @Nullable PsiElement getReferenceOrReferencedElement(@NotNull PsiFile file, @NotNull Editor editor, int flags, int offset) {
     PsiElement result = doGetReferenceOrReferencedElement(editor, flags, offset);
     PsiElement languageElement = file.findElementAt(offset);
     Language language = languageElement != null ? languageElement.getLanguage() : file.getLanguage();
@@ -216,8 +210,7 @@ public final class TargetElementUtilBase {
     return result;
   }
 
-  @Nullable
-  private static PsiElement doFindTargetElement(@NotNull Editor editor, int flags, int offset) {
+  private static @Nullable PsiElement doFindTargetElement(@NotNull Editor editor, int flags, int offset) {
     Project project = editor.getProject();
     if (project == null) return null;
 
@@ -244,12 +237,11 @@ public final class TargetElementUtilBase {
     return null;
   }
 
-  @Nullable
-  private static PsiElement getReferencedElement(@NotNull PsiFile file,
-                                                 int offset,
-                                                 int flags,
-                                                 @NotNull Editor editor,
-                                                 @Nullable PsiElement leafElement) {
+  private static @Nullable PsiElement getReferencedElement(@NotNull PsiFile file,
+                                                           int offset,
+                                                           int flags,
+                                                           @NotNull Editor editor,
+                                                           @Nullable PsiElement leafElement) {
     final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
     if (isAcceptableReferencedElement(leafElement, referenceOrReferencedElement)) {
       return referenceOrReferencedElement;
@@ -278,8 +270,7 @@ public final class TargetElementUtilBase {
    * @return a PSI element declared or referenced at the specified offset in the editor, depending on the flags passed.
    * @see #findTargetElement(Editor, int, int)
    */
-  @Nullable
-  public static PsiElement findTargetElement(@NotNull Editor editor, int flags) {
+  public static @Nullable PsiElement findTargetElement(@NotNull Editor editor, int flags) {
     int offset = editor.getCaretModel().getOffset();
     return findTargetElement(editor, flags, offset);
   }
@@ -292,8 +283,7 @@ public final class TargetElementUtilBase {
    * @return a PSI element declared or referenced at the specified offset in the editor, depending on the flags passed.
    * @see #findTargetElement(Editor, int)
    */
-  @Nullable
-  public static PsiElement findTargetElement(@NotNull Editor editor, int flags, int offset) {
+  public static @Nullable PsiElement findTargetElement(@NotNull Editor editor, int flags, int offset) {
     PsiElement result = doFindTargetElement(editor, flags, offset);
     TargetElementEvaluatorEx2 evaluator = result != null ? getElementEvaluatorsEx2(result.getLanguage()) : null;
     if (evaluator != null) {

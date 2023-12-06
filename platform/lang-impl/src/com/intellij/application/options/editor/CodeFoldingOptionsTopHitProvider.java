@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.ide.ui.OptionsSearchTopHitProvider;
@@ -42,7 +42,7 @@ final class CodeFoldingOptionsTopHitProvider implements OptionsSearchTopHitProvi
         @Override
         public void setOptionState(boolean enabled) {
           instance.setFoldingOutlineShown(enabled);
-          ApplicationManager.getApplication().invokeLater(() -> CodeFoldingConfigurable.applyCodeFoldingSettingsChanges(), ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(() -> CodeFoldingConfigurable.Util.applyCodeFoldingSettingsChanges(), ModalityState.nonModal());
         }
       }
     );

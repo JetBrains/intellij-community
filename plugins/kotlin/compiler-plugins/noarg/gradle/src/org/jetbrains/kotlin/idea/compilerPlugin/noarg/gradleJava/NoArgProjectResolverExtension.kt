@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg.gradleJava
 
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.externalSystem.model.Key
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AnnotationBasedPluginProjectResolverExtension
 import org.jetbrains.kotlin.idea.gradleTooling.model.noarg.NoArgModel
 
 class NoArgProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<NoArgModel>() {
     companion object {
-        val KEY = Key<NoArgModel>("NoArgModel")
+        val KEY = Key.create(NoArgModel::class.java, 1)
     }
 
     override val modelClass get() = NoArgModel::class.java

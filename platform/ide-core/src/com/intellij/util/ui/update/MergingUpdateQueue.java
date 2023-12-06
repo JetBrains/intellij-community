@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -24,9 +24,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Use this class to postpone task execution and optionally merge identical tasks. This is needed e.g., to reflect in UI status of some
+ * Use this class to postpone task execution and optionally merge identical tasks. This is needed, e.g., to reflect in UI status of some
  * background activity: it doesn't make sense and would be inefficient to update UI 1000 times per second, so it's better to postpone 'update UI'
- * task execution for e.g., 500ms and if new updates are added during this period they can be simply ignored.
+ * task execution for e.g., 500ms and if new updates are added during this period, they can be simply ignored.
  * <p>
  * Create instance of this class and use {@link #queue(Update)} method to add new tasks.
  */
@@ -39,7 +39,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private final ConcurrentIntObjectMap<Map<Update, Update>> myScheduledUpdates = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final Set<MergingUpdateQueue> ourQueues =
     SystemProperties.getBooleanProperty("intellij.MergingUpdateQueue.enable.global.flusher", false)
-    ? ContainerUtil.newConcurrentSet()
+    ? ConcurrentCollectionFactory.createConcurrentSet()
     : null;
 
   private final Alarm myWaiterForMerge;
@@ -51,7 +51,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private JComponent myModalityStateComponent;
   private final boolean myExecuteInDispatchThread;
   private boolean myPassThrough;
-  private boolean myDisposed;
+  private volatile boolean myDisposed;
   private boolean myRestartOnAdd;
 
   private boolean myTrackUiActivity;
@@ -169,12 +169,13 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   /**
-   * Switches on the PassThrough mode if this method is called during testing.
+   * Switches on the PassThrough mode if this method is called in unit test (i.e., when {@link Application#isUnitTestMode()} is true).
    * It is needed to support some old tests, which expect such behaviour.
-   *
+   * @deprecated use {@link #waitForAllExecuted(long, TimeUnit)} instead in tests
    * @return this instance for the sequential creation (the Builder pattern)
    */
   @ApiStatus.Internal
+  @Deprecated
   public final MergingUpdateQueue usePassThroughInUnitTestMode() {
     Application app = ApplicationManager.getApplication();
     if (app == null || app.isUnitTestMode()) myPassThrough = true;
@@ -255,15 +256,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   /**
-   * executes all scheduled requests in the current thread.
+   * Executes all scheduled requests in the current thread.
    * Please note that requests that started execution before this method call are not waited for completion.
    */
   public void flush() {
-    synchronized (myScheduledUpdates) {
-      if (myScheduledUpdates.isEmpty()) {
-        //finishActivity();
-        return;
-      }
+    if (isEmpty()) {
+      return;
     }
     if (myFlushing) {
       return;
@@ -272,16 +270,16 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       return;
     }
 
-    myFlushing = true;
     if (myExecuteInDispatchThread) {
-      EdtInvocationManager.invokeAndWaitIfNeeded(() -> doExecute());
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> doFlush());
     }
     else {
-      doExecute();
+      doFlush();
     }
   }
 
-  private void doExecute() {
+  private void doFlush() {
+    myFlushing = true;
     try {
       List<Update> all;
       synchronized (myScheduledUpdates) {
@@ -313,7 +311,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       return true;
     }
 
-    ModalityState current = ApplicationManager.getApplication().getCurrentModalityState();
+    ModalityState current = ModalityState.current();
     ModalityState modalityState = getModalityState();
     return !current.dominates(modalityState);
   }
@@ -347,7 +345,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       each.setRejected();
     }
     else {
-      each.run();
+      each.runUpdate();
     }
   }
 
@@ -362,7 +360,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     if (myPassThrough) {
-      update.run();
+      update.runUpdate();
       finishActivity();
       return;
     }
@@ -398,10 +396,11 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     for (Update eachInQueue : getAllScheduledUpdates()) {
-      if (eachInQueue.canEat(update)) {
+      if (eachInQueue.actuallyCanEat(update)) {
+        update.setRejected();
         return true;
       }
-      if (update.canEat(eachInQueue)) {
+      if (update.actuallyCanEat(eachInQueue)) {
         myScheduledUpdates.get(eachInQueue.getPriority()).remove(eachInQueue);
         eachInQueue.setRejected();
       }
@@ -434,6 +433,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       myActive = false;
       finishActivity();
       clearWaiter();
+      cancelAllUpdates();
     }
     finally {
       if (ourQueues != null) {
@@ -448,9 +448,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @Override
   public String toString() {
-    synchronized (myScheduledUpdates) {
-      return myName + " active=" + myActive + " scheduled=" + getAllScheduledUpdates().size();
-    }
+    return myName + " active=" + myActive + " scheduled=" + getAllScheduledUpdates().size();
   }
 
   @Nullable
@@ -461,7 +459,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   @NotNull
   public ModalityState getModalityState() {
     if (myModalityStateComponent == null) {
-      return ModalityState.NON_MODAL;
+      return ModalityState.nonModal();
     }
     return ModalityState.stateForComponent(myModalityStateComponent);
   }
@@ -472,9 +470,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public boolean isEmpty() {
-    synchronized (myScheduledUpdates) {
-      return myScheduledUpdates.isEmpty();
-    }
+    return myScheduledUpdates.isEmpty();
   }
 
   public void sendFlush() {
@@ -485,7 +481,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return myFlushing;
   }
 
-  public void setTrackUiActivity(boolean trackUiActivity) {
+  protected void setTrackUiActivity(boolean trackUiActivity) {
     if (myTrackUiActivity && !trackUiActivity) {
       finishActivity();
     }
@@ -517,12 +513,16 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   @TestOnly
   public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
     long deadline = System.nanoTime() + unit.toNanos(timeout);
+    if (!myWaiterForMerge.isEmpty()) {
+      restart(0); // to not wait for myMergingTimeSpan ms in tests
+    }
     myWaiterForMerge.waitForAllExecuted(timeout, unit);
     while (!isEmpty()) {
       long toWait = deadline - System.nanoTime();
       if (toWait < 0) {
         throw new TimeoutException();
       }
+      restart(0); // to not wait for myMergingTimeSpan ms in tests
       myWaiterForMerge.waitForAllExecuted(toWait, TimeUnit.NANOSECONDS);
     }
   }

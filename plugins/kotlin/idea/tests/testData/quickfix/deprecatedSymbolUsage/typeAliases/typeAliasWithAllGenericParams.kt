@@ -8,3 +8,4 @@ class X<T>
 typealias IntX = X<Int>
 
 fun foo(ix: <caret>IntX) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

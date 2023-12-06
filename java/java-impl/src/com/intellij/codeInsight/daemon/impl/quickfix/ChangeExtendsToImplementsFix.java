@@ -17,33 +17,72 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiKeyword;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * changes 'class a extends b' to 'class a implements b' or vice versa
  */
-public class ChangeExtendsToImplementsFix extends ExtendsListFix implements HighPriorityAction {
-  private final @IntentionName String myName;
+public class ChangeExtendsToImplementsFix extends PsiUpdateModCommandAction<PsiClass> {
+  @Nullable
+  protected final SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
+  private final boolean myToAdd;
+  private final PsiClassType myTypeToExtendFrom;
 
-  public ChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {
-    super(aClass, classToExtendFrom, true);
-    PsiClass classToExtendFromPointer = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
-
-    myName = classToExtendFromPointer == null ? getFamilyName() :
-             QuickFixBundle.message("exchange.extends.implements.keyword",
-                                    aClass.isInterface() == classToExtendFromPointer.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
-                                    aClass.isInterface() == classToExtendFromPointer.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
-                                    classToExtendFromPointer.getName());
+  public ChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classTypeToExtendFrom) {
+    super(aClass);
+    PsiClass classToExtendFrom = classTypeToExtendFrom.resolve();
+    myClassToExtendFromPointer = classToExtendFrom == null ? null : SmartPointerManager.createPointer(classToExtendFrom);
+    myToAdd = true;
+    myTypeToExtendFrom = aClass instanceof PsiTypeParameter ? classTypeToExtendFrom
+                                                            : (PsiClassType)GenericsUtil.eliminateWildcards(classTypeToExtendFrom);
   }
 
   @Override
   @NotNull
-  public String getText() {
-    return myName;
+  public String getFamilyName() {
+    return QuickFixBundle.message("change.extends.list.family");
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass myClass) {
+    if (!myTypeToExtendFrom.isValid()) return null;
+    PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+    boolean available = classToExtendFrom != null && classToExtendFrom.isValid()
+                        && !classToExtendFrom.hasModifierProperty(PsiModifier.FINAL)
+                        && (classToExtendFrom.isInterface() ||
+                            !myClass.isInterface() && myClass.getExtendsList() != null
+                            && (myClass.getExtendsList().getReferencedTypes().length == 0) == myToAdd);
+    if (!available) return null;
+    String name = QuickFixBundle.message(
+      "exchange.extends.implements.keyword",
+      myClass.isInterface() == classToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
+      myClass.isInterface() == classToExtendFrom.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
+      classToExtendFrom.getName());
+    return Presentation.of(name).withPriority(PriorityAction.Priority.HIGH);
+
+  }
+
+  @Override
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass myClass, @NotNull ModPsiUpdater updater) {
+    PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+
+    PsiReferenceList extendsList = !(myClass instanceof PsiTypeParameter) && classToExtendFrom != null &&
+                                   myClass.isInterface() != classToExtendFrom.isInterface() ?
+                                   myClass.getImplementsList() : myClass.getExtendsList();
+    PsiReferenceList otherList = extendsList == myClass.getImplementsList() ?
+                                 myClass.getExtendsList() : myClass.getImplementsList();
+    if (extendsList != null) {
+      ExtendsListFix.modifyList(extendsList, myToAdd, -1, myTypeToExtendFrom);
+    }
+    if (otherList != null) {
+      ExtendsListFix.modifyList(otherList, false, -1, myTypeToExtendFrom);
+    }
   }
 }

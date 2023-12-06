@@ -98,6 +98,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/Formatting.kt");
     }
 
+    @TestMetadata("FunctionTypeParameter.kt")
+    public void testFunctionTypeParameter() throws Exception {
+        runTest("testData/editor/quickDoc/FunctionTypeParameter.kt");
+    }
+
     @TestMetadata("IndentedCodeBlock.kt")
     public void testIndentedCodeBlock() throws Exception {
         runTest("testData/editor/quickDoc/IndentedCodeBlock.kt");
@@ -156,6 +161,21 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("MethodFromStdLib.kt")
     public void testMethodFromStdLib() throws Exception {
         runTest("testData/editor/quickDoc/MethodFromStdLib.kt");
+    }
+
+    @TestMetadata("OnActualDeclaration.kt")
+    public void testOnActualDeclaration() throws Exception {
+        runTest("testData/editor/quickDoc/OnActualDeclaration.kt");
+    }
+
+    @TestMetadata("OnActualDeclarationWithInheritedDoc.kt")
+    public void testOnActualDeclarationWithInheritedDoc() throws Exception {
+        runTest("testData/editor/quickDoc/OnActualDeclarationWithInheritedDoc.kt");
+    }
+
+    @TestMetadata("OnActualValueParameterDeclaration.kt")
+    public void testOnActualValueParameterDeclaration() throws Exception {
+        runTest("testData/editor/quickDoc/OnActualValueParameterDeclaration.kt");
     }
 
     @TestMetadata("OnClassDeclarationWithComplexKDoc.kt")

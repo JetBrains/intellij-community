@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.ProjectType;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   private final @NotNull PluginDescriptor myPlugin;
   private final @Nullable String myIconPath;
   private final @Nullable ProjectType myProjectType;
-  private final @NotNull Supplier<? extends Presentation> myTemplatePresentation;
+  private final @NotNull Supplier<Presentation> myTemplatePresentation;
   private List<Supplier<String>> mySynonyms = Collections.emptyList();
 
   public ActionStub(@NotNull String actionClass,
@@ -35,7 +35,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
                     @NotNull PluginDescriptor plugin,
                     @Nullable String iconPath,
                     @Nullable ProjectType projectType,
-                    @NotNull Supplier<? extends Presentation> templatePresentation) {
+                    @NotNull Supplier<Presentation> templatePresentation) {
     myClassName = actionClass;
     LOG.assertTrue(!id.isEmpty());
     myId = id;
@@ -93,7 +93,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
    */
   @ApiStatus.Internal
   public void initAction(@NotNull AnAction targetAction) {
-    copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
+    copyTemplatePresentation(getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
     copyActionTextOverrides(targetAction);
     for (Supplier<String> synonym : mySynonyms) {
@@ -106,10 +106,8 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   }
 
   public static void copyTemplatePresentation(Presentation sourcePresentation, Presentation targetPresentation) {
-    if (targetPresentation.getIcon() == null && sourcePresentation.getIcon() != null) {
-      targetPresentation.setIcon(sourcePresentation.getIcon());
-    }
-    if (StringUtil.isEmpty(targetPresentation.getText()) && sourcePresentation.getText() != null) {
+    targetPresentation.copyIconIfUnset(sourcePresentation);
+    if (Strings.isEmpty(targetPresentation.getText()) && sourcePresentation.getText() != null) {
       targetPresentation.setTextWithMnemonic(sourcePresentation.getTextWithPossibleMnemonic());
     }
     if (targetPresentation.getDescription() == null && sourcePresentation.getDescription() != null) {

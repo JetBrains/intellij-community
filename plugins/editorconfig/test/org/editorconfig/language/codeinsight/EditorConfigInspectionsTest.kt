@@ -2,11 +2,14 @@
 package org.editorconfig.language.codeinsight
 
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import org.editorconfig.language.codeinsight.inspections.*
+import org.editorconfig.language.messages.EditorConfigBundle
 import kotlin.reflect.KClass
 
 class EditorConfigInspectionsTest : BasePlatformTestCase() {
@@ -16,7 +19,7 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   // Inspections
 
   fun testCharClassLetterRedundancy() = doTest(EditorConfigCharClassLetterRedundancyInspection::class)
-  fun testCharClassRedundancy() = doTest(EditorConfigCharClassRedundancyInspection::class)
+  fun testCharClassRedundancy() = doTest(EditorConfigCharClassPatternRedundancyInspection::class)
   fun testDeprecatedDescriptor() = doTest(EditorConfigDeprecatedDescriptorInspection::class)
   fun testEmptyHeader() = doTest(EditorConfigEmptyHeaderInspection::class)
   fun testEmptySection() = doTest(EditorConfigEmptySectionInspection::class)
@@ -42,7 +45,13 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   fun testReferenceCorrectness_complex() = doTest(EditorConfigReferenceCorrectnessInspection::class)
   fun testReferenceCorrectness_simple() = doTest(EditorConfigReferenceCorrectnessInspection::class)
   fun testRootDeclarationCorrectness() = doTest(EditorConfigRootDeclarationCorrectnessInspection::class)
-  fun testRootDeclarationUniqueness() = doTest(EditorConfigRootDeclarationUniquenessInspection::class)
+  fun testRootDeclarationUniqueness() {
+    myFixture.enableInspections(EditorConfigRootDeclarationUniquenessInspection::class.java)
+    myFixture.configureByFile("${getTestName(true)}/.editorconfig")
+    val info = UsefulTestCase.assertOneElement(myFixture.doHighlighting(HighlightSeverity.ERROR))
+    assertEquals(EditorConfigBundle.get("inspection.root-declaration.uniqueness.message"), info.description)
+  }
+
   fun testShadowedOption() = doTest(EditorConfigShadowedOptionInspection::class)
   fun testShadowingOption() = doTest(EditorConfigShadowingOptionInspection::class)
   fun testSpaceInHeader() = doTest(EditorConfigSpaceInHeaderInspection::class, checkWeakWarnings = true)
@@ -51,7 +60,9 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
    * See [EDITORCONFIG-T-3](https://jetbrains.team/p/editorconfig/issues/3)
    */
   fun testSpaceInHeader2() = doTest(EditorConfigSpaceInHeaderInspection::class, checkWeakWarnings = true)
-
+  fun testSpaceInKey() = doTest(EditorConfigVerifyByCoreInspection::class)
+  fun testUnclosedGlob() = doTest(EditorConfigVerifyByCoreInspection::class)
+  fun testUnexpectedChar() = doTest(EditorConfigVerifyByCoreInspection::class)
   fun testUnexpectedComma() = doTest(EditorConfigUnexpectedCommaInspection::class)
   fun testUnusedDeclaration() = doTest(EditorConfigUnusedDeclarationInspection::class)
   fun testValueCorrectness() = doTest(EditorConfigValueCorrectnessInspection::class)
@@ -89,8 +100,16 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
     EditorConfigValueUniquenessInspection::class
   )
 
-  fun _testHeaderProcessingPerformance() {
+  fun testHeaderProcessingPerformance() {
     doTestPerf(5000, EditorConfigNoMatchingFilesInspection::class)
+  }
+
+  fun testHeaderProcessingPerformance2() {
+    doTestPerf(7000, EditorConfigPatternRedundancyInspection::class)
+  }
+
+  fun testHeaderProcessingPerformance3() {
+    doTestPerf(5000, EditorConfigHeaderUniquenessInspection::class)
   }
 
   private fun doTestPerf(expectedMs: Int, inspection: KClass<out LocalInspectionTool>) {

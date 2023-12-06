@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -8,23 +8,25 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerEx.class);
+
   public static DaemonCodeAnalyzerEx getInstanceEx(Project project) {
-    return (DaemonCodeAnalyzerEx)project.getService(DaemonCodeAnalyzer.class);
+    return (DaemonCodeAnalyzerEx)DaemonCodeAnalyzer.getInstance(project);
   }
 
   public static boolean processHighlights(@NotNull Document document,
@@ -47,8 +49,8 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
       ProgressManager.checkCanceled();
-      Object tt = marker.getErrorStripeTooltip();
-      if (!(tt instanceof HighlightInfo info)) return true;
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
+      if (info == null) return true;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
              || info.getHighlighter() == null
              || processor.process(info);
@@ -68,31 +70,30 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     });
   }
 
-  static boolean hasErrors(@NotNull Project project, @NotNull Document document) {
-    return !processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(),
-                              CommonProcessors.alwaysFalse());
-  }
   public abstract boolean hasVisibleLightBulbOrPopup();
 
-  @NotNull
-  public abstract List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
-                                                    @NotNull Document document,
-                                                    @NotNull ProgressIndicator progress);
+  public abstract @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
+                                                             @NotNull Document document,
+                                                             @NotNull ProgressIndicator progress);
 
   public abstract boolean isErrorAnalyzingFinished(@NotNull PsiFile file);
 
-  @NotNull
-  public abstract FileStatusMap getFileStatusMap();
-
-  @NotNull
-  @TestOnly
-  public abstract List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file);
+  public abstract @NotNull FileStatusMap getFileStatusMap();
 
   public abstract void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile);
-
-  public abstract void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile);
+  public abstract boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile);
+  public abstract void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile, @Nullable RangeHighlighter toReuse);
+  abstract void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info);
 
   public void markDocumentDirty(@NotNull Document document, @NotNull Object reason) {
     getFileStatusMap().markFileScopeDirty(document, new TextRange(0, document.getTextLength()), document.getTextLength(), reason);
   }
+
+  public static boolean isHighlightingCompleted(@NotNull FileEditor fileEditor, @NotNull Project project) {
+    return fileEditor instanceof TextEditor textEditor
+           && getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(textEditor.getEditor().getDocument());
+  }
+  abstract boolean cutOperationJustHappened();
+  abstract boolean isEscapeJustPressed();
+
 }

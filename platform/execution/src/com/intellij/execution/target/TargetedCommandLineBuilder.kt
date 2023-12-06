@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
 import com.intellij.execution.target.value.TargetValue
@@ -11,10 +11,10 @@ import java.nio.charset.Charset
 
 class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDataHolderBase() {
   var exePath: TargetValue<String> = TargetValue.empty()
-  private var workingDirectory = TargetValue.empty<String>()
+  private var workingDirectory = TargetValue.empty<FullPathOnTarget>()
   private var inputFilePath = TargetValue.empty<String>()
   var charset: Charset = CharsetToolkit.getDefaultSystemCharset()
-  private val parameters: MutableList<TargetValue<String>> = ArrayList()
+  private val parameters: MutableList<TargetValue<out String?>> = ArrayList()
   private val environment: MutableMap<String, TargetValue<String>> = HashMap()
   private val _filesToDeleteOnTermination: MutableSet<File> = HashSet()
   var redirectErrorStream: Boolean = false
@@ -29,17 +29,23 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
     this.exePath = TargetValue.fixed(exePath)
   }
 
-  fun setWorkingDirectory(workingDirectory: TargetValue<String>) {
+  /**
+   * [workingDirectory] is a path on target
+   */
+  fun setWorkingDirectory(workingDirectory: TargetValue<FullPathOnTarget>) {
     this.workingDirectory = workingDirectory
   }
 
-  fun setWorkingDirectory(workingDirectory: String) {
+  /**
+   * @see setWorkingDirectory
+   */
+  fun setWorkingDirectory(workingDirectory: FullPathOnTarget) {
     this.workingDirectory = TargetValue.fixed(workingDirectory)
   }
 
-  fun getParameters(): List<TargetValue<String>> = parameters
+  fun getParameters(): List<TargetValue<out String?>> = parameters
 
-  fun addParameter(parameter: TargetValue<String>) {
+  fun addParameter(parameter: TargetValue<out String?>) {
     parameters.add(parameter)
   }
 
@@ -63,7 +69,7 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
     addParameterAt(index, TargetValue.fixed(parameter))
   }
 
-  private fun addParameterAt(index: Int, parameter: TargetValue<String>) {
+  private fun addParameterAt(index: Int, parameter: TargetValue<String?>) {
     parameters.add(index, parameter)
   }
 
@@ -71,7 +77,7 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
     addParametersAt(index, ContainerUtil.map(parameters) { p: String -> TargetValue.fixed(p) })
   }
 
-  fun addParametersAt(index: Int, parameters: List<TargetValue<String>>) {
+  fun addParametersAt(index: Int, parameters: List<TargetValue<out String?>>) {
     this.parameters.addAll(index, parameters)
   }
 

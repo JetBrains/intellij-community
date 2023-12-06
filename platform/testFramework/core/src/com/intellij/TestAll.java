@@ -2,8 +2,8 @@
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.idea.Bombed;
-import com.intellij.idea.RecordExecution;
+import com.intellij.idea.IJIgnore;
+import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -82,27 +82,21 @@ public class TestAll implements Test {
     }
   };
 
-  public static final Filter NOT_BOMBED = new Filter() {
+  private static final Filter NOT_IGNORED = new Filter() {
     @Override
     public boolean shouldRun(Description description) {
-      return !isBombed(description);
+      return description.getAnnotation(IgnoreJUnit3.class) == null && description.getAnnotation(IJIgnore.class) == null;
     }
 
     @Override
     public String describe() {
-      return "Not @Bombed";
-    }
-
-    private boolean isBombed(Description description) {
-      Bombed bombed = description.getAnnotation(Bombed.class);
-      return bombed != null && !TestFrameworkUtil.bombExplodes(bombed);
+      return "Not @IgnoreJUnit3";
     }
   };
 
   private final TestCaseLoader myTestCaseLoader;
   private int myRunTests = -1;
   private int myIgnoredTests;
-  private TestRecorder myTestRecorder;
 
   private static final List<Throwable> ourClassLoadingProblems = new ArrayList<>();
   private static JUnit4TestAdapterCache ourUnit4TestAdapterCache;
@@ -112,8 +106,7 @@ public class TestAll implements Test {
   }
 
   public TestAll(String rootPackage, List<? extends Path> classesRoots) throws ClassNotFoundException {
-    String classFilterName = "tests/testGroups.properties";
-    myTestCaseLoader = new TestCaseLoader(classFilterName);
+    myTestCaseLoader = new TestCaseLoader(COMMON_TEST_GROUPS_RESOURCE_NAME);
     if (shouldAddFirstAndLastTests()) {
       myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
       myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
@@ -243,11 +236,13 @@ public class TestAll implements Test {
 
   @Override
   public void run(TestResult testResult) {
-    loadTestRecorder();
-
     final TestListener testListener = loadDiscoveryListener();
     if (testListener != null) {
       testResult.addListener(testListener);
+    }
+    final OutOfProcessRetries.OutOfProcessRetryListener outOfProcessRetryListener = OutOfProcessRetries.getListenerForOutOfProcessRetry();
+    if (outOfProcessRetryListener != null) {
+      testResult.addListener(outOfProcessRetryListener);
     }
 
     testResult = RetriesImpl.maybeEnable(testResult);
@@ -264,25 +259,21 @@ public class TestAll implements Test {
 
     int totalTests = classes.size();
     for (Class<?> aClass : classes) {
-      boolean recording = false;
-      if (myTestRecorder != null && shouldRecord(aClass)) {
-        myTestRecorder.beginRecording(aClass, aClass.getAnnotation(RecordExecution.class));
-        recording = true;
-      }
-      try {
-        runNextTest(testResult, totalTests, aClass);
-      }
-      finally {
-        if (recording) {
-          myTestRecorder.endRecording();
-        }
-      }
+      runNextTest(testResult, totalTests, aClass);
       if (testResult.shouldStop()) break;
     }
 
     if (testListener instanceof Closeable) {
       try {
         ((Closeable)testListener).close();
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    if (outOfProcessRetryListener != null) {
+      try {
+        outOfProcessRetryListener.save();
       }
       catch (IOException e) {
         e.printStackTrace();
@@ -306,25 +297,8 @@ public class TestAll implements Test {
     return null;
   }
 
-  private static boolean shouldRecord(@NotNull Class<?> aClass) {
-    return aClass.getAnnotation(RecordExecution.class) != null;
-  }
-
   private static boolean shouldAddFirstAndLastTests() {
     return !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests"));
-  }
-
-  private void loadTestRecorder() {
-    String recorderClassName = System.getProperty("test.recorder.class");
-    if (recorderClassName != null) {
-      try {
-        Class<?> recorderClass = Class.forName(recorderClassName);
-        myTestRecorder = (TestRecorder)recorderClass.newInstance();
-      }
-      catch (Exception e) {
-        System.out.println("Error loading test recorder class '" + recorderClassName + "': " + e);
-      }
-    }
   }
 
   private void runNextTest(final TestResult testResult, int totalTests, Class<?> testCaseClass) {
@@ -365,12 +339,8 @@ public class TestAll implements Test {
   @Nullable
   private Test getTest(@NotNull final Class<?> testCaseClass) {
     try {
-      if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) {
+      if (!Modifier.isPublic(testCaseClass.getModifiers())) {
         return null;
-      }
-      Bombed classBomb = testCaseClass.getAnnotation(Bombed.class);
-      if (classBomb != null && TestFrameworkUtil.bombExplodes(classBomb)) {
-        return new ExplodedBomb(testCaseClass.getName(), classBomb);
       }
 
       Method suiteMethod = safeFindMethod(testCaseClass, "suite");
@@ -396,7 +366,7 @@ public class TestAll implements Test {
 
         JUnit4TestAdapter adapter = createJUnit4Adapter(testCaseClass);
         try {
-          adapter.filter(NOT_BOMBED.intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
+          adapter.filter(NOT_IGNORED.intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
         }
         catch (NoTestsRemainException ignored) {
         }
@@ -418,13 +388,11 @@ public class TestAll implements Test {
             }
 
             Method method = findTestMethod((TestCase)test);
-            Bombed methodBomb = method == null ? null : method.getAnnotation(Bombed.class);
-            if (methodBomb == null) {
-              doAddTest(test);
+
+            if (method != null && (method.getAnnotation(IgnoreJUnit3.class) != null || method.getAnnotation(IJIgnore.class) != null)) {
+              return;
             }
-            else if (TestFrameworkUtil.bombExplodes(methodBomb)) {
-              doAddTest(new ExplodedBomb(method.getDeclaringClass().getName() + "." + method.getName(), methodBomb));
-            }
+            doAddTest(test);
           }
         }
 
@@ -492,23 +460,6 @@ public class TestAll implements Test {
 
   private static void log(String message) {
     TeamCityLogger.info(message);
-  }
-
-  @SuppressWarnings({"JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention", "JUnitTestCaseWithNonTrivialConstructors",
-    "UnconstructableJUnitTestCase"})
-  private static class ExplodedBomb extends TestCase {
-    private final Bombed myBombed;
-
-    ExplodedBomb(@NotNull String testName, @NotNull Bombed bombed) {
-      super(testName);
-      myBombed = bombed;
-    }
-
-    @Override
-    protected void runTest() throws Throwable {
-      String description = myBombed.description().isEmpty() ? "" : " (" + myBombed.description() + ")";
-      fail("Bomb created by " + myBombed.user() + description + " now explodes!");
-    }
   }
 
   @Override

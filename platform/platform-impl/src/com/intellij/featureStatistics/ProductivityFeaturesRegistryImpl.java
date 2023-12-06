@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics;
 
 import com.intellij.diagnostic.PluginException;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.Function;
 import com.intellij.util.ResourceUtil;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -41,8 +42,8 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
 
   private boolean myAdditionalFeaturesLoaded;
 
-  @NonNls private static final String TAG_GROUP = "group";
-  @NonNls private static final String TAG_FEATURE = "feature";
+  private static final @NonNls String TAG_GROUP = "group";
+  private static final @NonNls String TAG_FEATURE = "feature";
 
   public ProductivityFeaturesRegistryImpl() {
     reloadFromXml();
@@ -122,6 +123,8 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
       if (applicabilityFilters != null) {
         myApplicabilityFilters.add(new ApplicabilityFiltersData(provider, applicabilityFilters));
       }
+
+      return Unit.INSTANCE;
     });
   }
 
@@ -146,10 +149,9 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   }
 
   private void addFeature(@NotNull FeatureDescriptor descriptor) {
-    // Allow to override features for now, but maybe it should be restricted
     final FeatureDescriptor existingDescriptor = myFeatures.get(descriptor.getId());
     if (existingDescriptor != null) {
-      LOG.warn("Feature with id '" + descriptor.getId() + "' is overridden by: " + descriptor);
+      LOG.info("Feature with id '" + descriptor.getId() + "' is overridden by: " + descriptor);
       descriptor.copyStatistics(existingDescriptor);
     }
     myFeatures.put(descriptor.getId(), descriptor);
@@ -182,8 +184,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   }
 
   @Override
-  @NotNull
-  public Set<String> getFeatureIds() {
+  public @NotNull Set<String> getFeatureIds() {
     lazyLoadFromPluginsFeaturesProviders();
     return myFeatures.keySet();
   }
@@ -226,8 +227,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return super.toString() + "; myAdditionalFeaturesLoaded=" + myAdditionalFeaturesLoaded;
   }
 

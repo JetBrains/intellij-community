@@ -10,7 +10,7 @@ import java.util.function.Supplier
 
 class GHPRReloadListAction
   : RefreshAction(GithubBundle.messagePointer("pull.request.refresh.list.action"),
-                  Supplier<String?> { null },
+                  Supplier { null },
                   AllIcons.Actions.Refresh) {
 
   override fun update(e: AnActionEvent) {

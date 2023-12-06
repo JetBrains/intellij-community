@@ -2,8 +2,14 @@
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineRange;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -20,6 +26,14 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
   protected void scrollToChange(@NotNull T change) {
     DiffUtil.scrollEditor(getEditor(), getStartLine(change), true);
+  }
+
+  protected void scrollToChangeUnderCommand(@NotNull T change) {
+    EditorEx editor = getEditor();
+    DocumentEx document = editor.getDocument();
+    CommandProcessor.getInstance().executeCommand(editor.getProject(), () -> {
+      scrollToChange(change);
+    }, "", DocCommandGroupId.noneGroupId(document), UndoConfirmationPolicy.DEFAULT, document);
   }
 
   @Override
@@ -51,7 +65,7 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
     }
 
     assert next != null;
-    scrollToChange(next);
+    scrollToChangeUnderCommand(next);
   }
 
   @Override
@@ -86,6 +100,25 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
     }
 
     assert prev != null;
-    scrollToChange(prev);
+    scrollToChangeUnderCommand(prev);
+  }
+
+  @Nullable
+  public LineRange getCurrentLineRangeByLine(int line) {
+    for (T change : getChanges()) {
+      int start = getStartLine(change);
+      int end = getEndLine(change);
+      if (start <= line && end > line) {
+        return new LineRange(start, end);
+      }
+      if (start > line) return null;
+    }
+    return null;
+  }
+
+  @Nullable
+  public LineRange getCurrentLineRange() {
+    int line = getEditor().getCaretModel().getLogicalPosition().line;
+    return getCurrentLineRangeByLine(line);
   }
 }

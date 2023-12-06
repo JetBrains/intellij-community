@@ -17,12 +17,11 @@ import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
-import org.jetbrains.idea.maven.server.MavenDistribution;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,9 +51,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
 
 
       if (model != null) {
-        MavenDistribution distribution =
-          MavenServerManager.getInstance().getConnector(file.getProject(), file.getVirtualFile().getPath()).getMavenDistribution();
-        boolean maven35 = StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
+        boolean maven35 = isMaven35OrMore(file);
         List<ProblemDescriptor> problems = new ArrayList<>(3);
 
         MavenDomParent mavenParent = model.getRootElement().getMavenParent();
@@ -68,6 +65,11 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
     }
 
     return null;
+  }
+
+  private static boolean isMaven35OrMore(@NotNull PsiFile file) {
+    return StringUtil.compareVersionNumbers(MavenDomUtil.getMavenVersion(file.getVirtualFile(), file.getProject()), "3.5") >= 0;
+
   }
 
   private static void validate(@NotNull InspectionManager manager, boolean isOnTheFly, boolean maven35,

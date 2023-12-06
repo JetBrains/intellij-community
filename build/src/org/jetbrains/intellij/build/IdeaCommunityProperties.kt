@@ -1,33 +1,37 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 
 import java.nio.file.Path
 
-internal fun createCommunityBuildContext(
+internal suspend fun createCommunityBuildContext(
   communityHome: BuildDependenciesCommunityRoot,
   options: BuildOptions = BuildOptions(),
   projectHome: Path = communityHome.communityRoot,
 ): BuildContext {
-  return BuildContextImpl.createContextBlocking(communityHome = communityHome,
-                                                projectHome = projectHome,
-                                                productProperties = IdeaCommunityProperties(communityHome.communityRoot),
-                                                options = options)
+  return BuildContextImpl.createContext(communityHome = communityHome,
+                                        projectHome = projectHome,
+                                        productProperties = IdeaCommunityProperties(communityHome.communityRoot),
+                                        setupTracer = true,
+                                        options = options)
 }
 
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIdeaProperties() {
   companion object {
     val MAVEN_ARTIFACTS_ADDITIONAL_MODULES = persistentListOf(
       "intellij.tools.jps.build.standalone",
+      "intellij.devkit.runtimeModuleRepository.jps",
       "intellij.idea.community.build.tasks",
       "intellij.platform.debugger.testFramework",
       "intellij.platform.vcs.testFramework",
       "intellij.platform.externalSystem.testFramework",
-      "intellij.maven.testFramework"
+      "intellij.maven.testFramework",
+      "intellij.platform.reproducibleBuilds.diffTool",
     )
   }
 
@@ -36,14 +40,22 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
 
   init {
     platformPrefix = "Idea"
-    applicationInfoModule = "intellij.idea.community.resources"
+    applicationInfoModule = "intellij.idea.community.customization"
     additionalIDEPropertiesFilePaths = persistentListOf(communityHomeDir.resolve("build/conf/ideaCE.properties"))
     toolsJarRequired = true
     scrambleMainJar = false
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productImplementationModules = listOf("intellij.platform.main", "intellij.idea.community.resources")
+    /* main module for JetBrains Client isn't available in the intellij-community project, 
+       so this property is set only when IDEA CE is built from the intellij-ultimate project. */
+    embeddedJetBrainsClientMainModule = null
+
+    productLayout.productImplementationModules = listOf(
+      "intellij.platform.main",
+      "intellij.idea.customization.base",
+      "intellij.idea.community.customization",
+    )
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS
       .add("intellij.javaFX.community")
       .toMutableList()
@@ -52,7 +64,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     productLayout.buildAllCompatiblePlugins = false
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
-      CommunityRepositoryModules.androidPlugin(emptyMap()),
+      CommunityRepositoryModules.androidPlugin(allPlatforms = true),
       CommunityRepositoryModules.groovyPlugin()
     ))
 
@@ -69,6 +81,10 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     ))
 
     versionCheckerConfig = CE_CLASS_VERSIONS
+    baseDownloadUrl = "https://download.jetbrains.com/idea/"
+    buildDocAuthoringAssets = true
+
+    additionalVmOptions += "-Dide.show.tips.on.startup.default.value=false"
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
@@ -96,7 +112,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
 
   protected open inner class CommunityWindowsDistributionCustomizer : WindowsDistributionCustomizer() {
     init {
-      icoPath = "${communityHomeDir}/platform/icons/src/idea_CE.ico"
+      icoPath = "${communityHomeDir}/build/conf/ideaCE/win/images/idea_CE.ico"
       icoPathForEAP = "${communityHomeDir}/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
       installerImagesPath = "${communityHomeDir}/build/conf/ideaCE/win/images"
       fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
@@ -133,12 +149,12 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
   protected open inner class CommunityMacDistributionCustomizer : MacDistributionCustomizer() {
     init {
       icnsPath = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea.icns"
+      icnsPathForEAP = "${communityHomeDir}/build/conf/ideaCE/mac/images/communityEAP.icns"
       urlSchemes = listOf("idea")
       associateIpr = true
       fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
       bundleIdentifier = "com.jetbrains.intellij.ce"
       dmgImagePath = "${communityHomeDir}/build/conf/ideaCE/mac/images/dmg_background.tiff"
-      icnsPathForEAP = "${communityHomeDir}/build/conf/ideaCE/mac/images/communityEAP.icns"
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {

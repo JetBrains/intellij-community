@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
+import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
@@ -23,7 +24,7 @@ abstract class AddAccessorsIntention(
 ) : SelfTargetingRangeIntention<KtProperty>(KtProperty::class.java, AddAccessorUtils.familyAndActionName(addGetter, addSetter)) {
 
     override fun applyTo(element: KtProperty, editor: Editor?) {
-        AddAccessorUtils.addAccessors(element, addGetter, addSetter, editor)
+        AddAccessorUtils.addAccessors(element, addGetter, addSetter) { editor?.moveCaret(it) }
     }
 
     override fun applicabilityRange(element: KtProperty): TextRange? {

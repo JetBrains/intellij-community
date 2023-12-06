@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes.actions;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -16,12 +16,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class EditThemeEditorColorSchemeAction extends DumbAwareAction {
+final class EditThemeEditorColorSchemeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (ApplyThemeAction.applyTempTheme(e)) {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      if (EditorColorsManagerImpl.isTempScheme(scheme)) {
+      if (EditorColorsManagerImpl.Companion.isTempScheme(scheme)) {
         Configurable[] configurables = new ColorAndFontOptions().getConfigurables();
         ApplicationManager.getApplication().invokeLater(() ->
           ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), configurables[0].getClass())
@@ -34,5 +34,4 @@ public class EditThemeEditorColorSchemeAction extends DumbAwareAction {
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
-
 }

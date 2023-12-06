@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.IdeBundle;
@@ -25,7 +25,7 @@ import java.awt.event.*;
 import java.util.*;
 
 public class SliderSelectorAction extends DumbAwareAction {
-  @NotNull private final Configuration myConfiguration;
+  private final @NotNull Configuration myConfiguration;
 
   public SliderSelectorAction(@Nullable @NlsActions.ActionText String text, @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon,
                               @NotNull Configuration configuration) {
@@ -136,15 +136,12 @@ public class SliderSelectorAction extends DumbAwareAction {
   }
 
   public static class Configuration {
-    @NotNull
-    private final @Nls String mySelectText;
-    @NotNull
-    private final Map<Integer, JLabel> myDictionary;
+    private final @NotNull @Nls String mySelectText;
+    private final @NotNull Map<Integer, JLabel> myDictionary;
     private final int mySelected;
     private final int myMin;
     private final int myMax;
-    @NotNull
-    private final Consumer<? super Integer> myResultConsumer;
+    private final @NotNull Consumer<? super Integer> myResultConsumer;
     private boolean showOk = false;
 
     public Configuration(int selected, @NotNull Dictionary<Integer, @Nls String> dictionary, 
@@ -174,18 +171,15 @@ public class SliderSelectorAction extends DumbAwareAction {
       return label;
     }
 
-    @NotNull
-    public @Nls String getSelectText() {
+    public @NotNull @Nls String getSelectText() {
       return mySelectText;
     }
 
-    @NotNull
-    public Map<Integer, JLabel> getDictionary() {
+    public @NotNull Map<Integer, JLabel> getDictionary() {
       return myDictionary;
     }
 
-    @NotNull
-    public Consumer<? super Integer> getResultConsumer() {
+    public @NotNull Consumer<? super Integer> getResultConsumer() {
       return myResultConsumer;
     }
 

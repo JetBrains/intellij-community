@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.util.NlsSafe
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.merge.MergeMessageFormatter
@@ -26,7 +26,7 @@ class IdeaCommitMessageFormatter : CommitMessageFormatter {
 
   override fun mergeMessage(refsToMerge: List<Ref>, target: Ref) = appendCommitOwnerInfo().append(super.mergeMessage(refsToMerge, target)).toString()
 
-  fun appendCommitOwnerInfo(avoidAppInfoInstantiation: Boolean = false, builder: StringBuilder = StringBuilder()): StringBuilder {
+  private fun appendCommitOwnerInfo(avoidAppInfoInstantiation: Boolean = false, builder: StringBuilder = StringBuilder()): StringBuilder {
     if (avoidAppInfoInstantiation) {
       builder.append(ApplicationNamesInfo.getInstance().productName)
     }
@@ -43,7 +43,7 @@ class IdeaCommitMessageFormatter : CommitMessageFormatter {
   }
 
   private fun StringBuilder.appendAppName() {
-    val appInfo = ApplicationInfoEx.getInstanceEx()
+    val appInfo = ApplicationInfo.getInstance()
     if (appInfo != null) {
       val build = appInfo.build
       append(build.productCode).append('-')

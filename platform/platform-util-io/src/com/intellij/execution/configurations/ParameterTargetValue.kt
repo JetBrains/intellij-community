@@ -12,16 +12,16 @@ sealed class ParameterTargetValuePart(override val localValue: String) : Paramet
   open val pathToUpload: String? = null
 
   class Const(localValue: String) : ParameterTargetValuePart(localValue) {
-    override fun toString() = localValue
+    override fun toString(): String = localValue
   }
 
   class Path(localPath: String) : ParameterTargetValuePart(localPath) {
     constructor(file: File) : this(file.absolutePath)
 
-    override val pathToUpload
+    override val pathToUpload: String
       get() = localValue
 
-    override fun toString() = "ParameterTargetValuePart.Path $localValue"
+    override fun toString(): String = "ParameterTargetValuePart.Path $localValue"
   }
 
   object PathSeparator : ParameterTargetValuePart(File.pathSeparator)

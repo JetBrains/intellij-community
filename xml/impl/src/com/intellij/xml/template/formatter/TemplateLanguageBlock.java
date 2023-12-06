@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.*;
@@ -23,8 +23,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   private final CodeStyleSettings mySettings;
   private final AbstractXmlTemplateFormattingModelBuilder myBuilder;
   private final XmlFormattingPolicy myXmlFormattingPolicy;
-  @Nullable
-  private Indent myIndent;
+  private @Nullable Indent myIndent;
   private BlockWithParent myParent;
   private boolean myContainsErrorElements = false;
 
@@ -129,8 +128,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     }
   }
 
-  @NotNull
-  private List<PsiElement> getXmlDocumentChildren(@NotNull PsiElement xmlDocument) {
+  private @NotNull List<PsiElement> getXmlDocumentChildren(@NotNull PsiElement xmlDocument) {
     List<PsiElement> children = new ArrayList<>();
     PsiElement child = xmlDocument.getFirstChild();
     while (child != null) {
@@ -171,8 +169,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     );
   }
 
-  @NotNull
-  protected AbstractXmlTemplateFormattingModelBuilder getBuilder() {
+  protected @NotNull AbstractXmlTemplateFormattingModelBuilder getBuilder() {
     return myBuilder;
   }
 
@@ -183,8 +180,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return false;
   }
 
-  @Nullable
-  protected Alignment getChildAlignment(ASTNode child) {
+  protected @Nullable Alignment getChildAlignment(ASTNode child) {
     return null;
   }
 
@@ -198,8 +194,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return Indent.getNoneIndent();
   }
 
-  @NotNull
-  protected abstract Indent getChildIndent(@NotNull ASTNode node);
+  protected abstract @NotNull Indent getChildIndent(@NotNull ASTNode node);
 
   @Override
   public boolean isLeaf() {
@@ -211,9 +206,8 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     myIndent = indent;
   }
 
-  @NotNull
   @Override
-  public ChildAttributes getChildAttributes(int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
     return new ChildAttributes(Indent.getNormalIndent(), null);
   }
 
@@ -235,8 +229,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     myParent = newParent;
   }
 
-  @Nullable
-  protected Wrap getChildWrap(ASTNode child) {
+  protected @Nullable Wrap getChildWrap(ASTNode child) {
     return Wrap.createWrap(WrapType.NONE, false);
   }
 
@@ -250,9 +243,8 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return myContainsErrorElements;
   }
 
-  @Nullable
   @Override
-  public Language getLanguage() {
+  public @Nullable Language getLanguage() {
     return myNode.getPsi().getLanguage();
   }
 }

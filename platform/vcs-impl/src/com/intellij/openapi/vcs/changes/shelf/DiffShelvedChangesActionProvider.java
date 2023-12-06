@@ -21,7 +21,6 @@ import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
-import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -40,7 +39,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
@@ -176,7 +174,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
                                                                @NotNull String base,
                                                                @NotNull ShelvedBinaryFile shelvedChange) {
     final File file = new File(base, shelvedChange.AFTER_PATH == null ? shelvedChange.BEFORE_PATH : shelvedChange.AFTER_PATH);
-    final FilePath filePath = VcsUtil.getFilePath(file);
+    final FilePath filePath = VcsUtil.getFilePath(file, false);
     return new BinaryShelveDiffRequestProducer(project, shelvedChange, filePath);
   }
 
@@ -187,7 +185,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
                                                              boolean withLocal) {
     final String beforePath = shelvedChange.getBeforePath();
     final String afterPath = shelvedChange.getAfterPath();
-    final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath));
+    final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath), false);
 
     try {
       if (FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {
@@ -204,16 +202,6 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     catch (IOException e) {
       return new PatchShelveDiffRequestProducer(project, shelvedChange, filePath);
     }
-  }
-
-  /**
-   * Simple way to reuse patch parser from GPA ->  apply onto empty text
-   */
-  @NotNull
-  static AppliedTextPatch createAppliedTextPatch(@NotNull TextFilePatch patch) {
-    final GenericPatchApplier applier = new GenericPatchApplier("", patch.getHunks());
-    applier.execute();
-    return AppliedTextPatch.create(applier.getAppliedInfo());
   }
 
   final static class PatchesPreloader {
@@ -394,9 +382,10 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
       try {
         PatchesPreloader preloader = PatchesPreloader.getPatchesPreloader(myProject, context);
         TextFilePatch patch = preloader.getPatch(myChange);
-        AppliedTextPatch appliedTextPatch = createAppliedTextPatch(patch);
-        PatchDiffRequest request = new PatchDiffRequest(appliedTextPatch, getRequestTitle(),
-                                                        VcsBundle.message("patch.apply.conflict.patch"));
+
+        String leftTitle = DiffBundle.message("merge.version.title.base");
+        String rightTitle = VcsBundle.message("shelve.shelved.version");
+        PatchDiffRequest request = new PatchDiffRequest(patch, getRequestTitle(), leftTitle, rightTitle);
         DiffUtil.addNotification(createNotificationProvider(DiffBundle.message("cannot.find.file.error", getFilePath())), request);
         return request;
       }

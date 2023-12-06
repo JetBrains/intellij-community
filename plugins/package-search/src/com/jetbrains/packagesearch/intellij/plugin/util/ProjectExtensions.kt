@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.packagesearch.intellij.plugin.util
 
-import com.intellij.ProjectTopics
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.facet.FacetManager
 import com.intellij.ide.impl.isTrusted
@@ -86,7 +86,7 @@ internal val Project.trustedProjectFlow: Flow<Boolean>
     }
 
 internal val Project.nativeModulesFlow: Flow<List<Module>>
-    get() = messageBusFlow(ProjectTopics.MODULES, { getNativeModules() }) {
+    get() = messageBusFlow(ModuleListener.TOPIC, { getNativeModules() }) {
         object : ModuleListener {
             override fun modulesAdded(project: Project, modules: List<Module>) {
                 trySend(getNativeModules())
@@ -140,7 +140,7 @@ val Project.dumbService: DumbService
 
 suspend fun DumbService.awaitSmart() {
     suspendCoroutine {
-        runWhenSmart { it.resume(Unit) }
+        runWhenSmart(ContextAwareRunnable { it.resume(Unit) })
     }
 }
 

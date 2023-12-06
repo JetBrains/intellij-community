@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Describes a service which is loaded on demand.
  *
- * <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html">Plugin Services</a>
+ * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html">Plugin Services</a>
  */
 public final class ServiceDescriptor {
   public ServiceDescriptor(String serviceInterface,
@@ -41,28 +41,42 @@ public final class ServiceDescriptor {
     TRUE, FALSE, AWAIT, NOT_HEADLESS, NOT_LIGHT_EDIT
   }
 
+  /**
+   * Service interface for all registered implementations (optional).
+   */
   @Attribute
   public final String serviceInterface;
 
+  /**
+   * The service implementation.
+   * If {@link #serviceInterface} is declared, must be inheritor of given interface.
+   */
   @Attribute
   @RequiredElement
   public final String serviceImplementation;
 
+  /**
+   * Dedicated service implementation for test environment.
+   */
   @Attribute
   public final String testServiceImplementation;
 
+  /**
+   * Dedicated service implementation for headless environment.
+   */
   @Attribute
   public final String headlessImplementation;
 
+  /**
+   * Allows overriding existing registered implementation for given {@link #serviceInterface}.
+   */
   @Attribute
   public final boolean overrides;
 
   /**
    * Cannot be specified as part of {@link State} because to get annotation, class must be loaded, but it cannot be done for performance reasons.
    */
-  @Attribute
-  @Nullable
-  public final String configurationSchemaKey;
+  @Attribute @ApiStatus.Internal public final @Nullable String configurationSchemaKey;
 
   /**
    * Preload service (before component creation). Not applicable for module level.
@@ -73,21 +87,18 @@ public final class ServiceDescriptor {
   @ApiStatus.Internal
   public final PreloadMode preload;
 
+  /**
+   * Allows restricting to specified OS only.
+   */
   @Attribute
   public final ExtensionDescriptor.Os os;
 
   /**
    * States that a separate service should be created for each client matching the specified kind.
    * Applicable only for application/project level services.
-   * If the client is not specified the service is considered an ordinary one that is created once per application/project.
+   * If the client is not specified, the service is considered an ordinary one that is created once per application/project.
    */
-  @Attribute
-  @Nullable
-  public final ClientKind client;
-
-  public String getInterface() {
-    return serviceInterface == null ? getImplementation() : serviceInterface;
-  }
+  @Attribute public final @Nullable ClientKind client;
 
   public @Nullable String getImplementation() {
     if (testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode()) {

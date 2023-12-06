@@ -32,16 +32,16 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
   var actionListener: ActionListener? by observable(null) { _, old, new ->
     firePropertyChange(ACTION_LISTENER_PROPERTY, old, new)
   }
-  var icon by observable(icon) { _, old, new ->
+  var icon: Icon by observable(icon) { _, old, new ->
     firePropertyChange(ICON_PROPERTY, old, new)
   }
-  var hoveredIcon by observable(hoveredIcon) { _, old, new ->
+  var hoveredIcon: Icon? by observable(hoveredIcon) { _, old, new ->
     firePropertyChange(HOVERED_ICON_PROPERTY, old, new)
   }
-  var disabledIcon by observable(disabledIcon) { _, old, new ->
+  var disabledIcon: Icon? by observable(disabledIcon) { _, old, new ->
     firePropertyChange(DISABLED_ICON_PROPERTY, old, new)
   }
-  var tooltip by observable(tooltip) { _, old, new ->
+  var tooltip: @NlsContexts.Tooltip String? by observable(tooltip) { _, old, new ->
     firePropertyChange(TOOL_TIP_TEXT_KEY, old, new)
   }
   var withBackgroundHover: Boolean by observable(false) { _, old, new ->
@@ -73,7 +73,7 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
                                                           behaviour.isFocused,
                                                           behaviour.isPressedByMouse,
                                                           behaviour.isPressedByKeyboard)
-        if (c.isEnabled || !StartupUiUtil.isUnderDarcula() || ExperimentalUI.isNewUI()) {
+        if (c.isEnabled || !StartupUiUtil.isUnderDarcula || ExperimentalUI.isNewUI()) {
           look.paintBackground(g2, c, buttonState)
         }
         if (behaviour.isFocused) {
@@ -155,10 +155,7 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
       tooltipConnector = UiNotifyConnector.installOn(c, tooltipActivatable)
 
       propertyListener = PropertyChangeListener {
-        tooltipConnector?.let {
-          Disposer.dispose(it)
-        }
-        tooltipConnector = UiNotifyConnector.installOn(c, tooltipActivatable)
+        HelpTooltip.getTooltipFor(c)?.setTitle(c.tooltip)
         c.revalidate()
         c.repaint()
       }

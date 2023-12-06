@@ -13,7 +13,6 @@ import com.intellij.testFramework.HeavyTestHelper;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,10 +42,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
         VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempDir.toString());
         assertNotNull(tempDir);
         if (!targetDir.isEmpty()) {
-          Assert.assertFalse("nested directories not implemented", targetDir.contains("/"));
-          VirtualFile child = tempDir.findChild(targetDir);
-          if (child == null) child = tempDir.createChildDirectory(this, targetDir);
-          tempDir = child;
+          tempDir = VfsUtil.createDirectoryIfMissing(tempDir, targetDir.replace('\\', '/'));
         }
         VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
         assertNotNull(dataDir + " not found", from);

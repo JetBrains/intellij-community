@@ -16,8 +16,13 @@ open class JavaUMethod(
   uastParent: UElement?
 ) : JavaAbstractUElement(uastParent), UMethod, JavaUElementWithComments, UAnchorOwner, PsiMethod by javaPsi {
 
+  private val uastBodyPart = UastLazyPart<UExpression?>()
+  private val returnTypeReferencePart = UastLazyPart<UTypeReferenceExpression?>()
+  private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
+  private val uastParametersPart = UastLazyPart<List<UParameter>>()
+
   @Suppress("OverridingDeprecatedMember")
-  override val psi
+  override val psi: PsiMethod
     get() = javaPsi
 
   override val sourcePsi: PsiElement?
@@ -25,16 +30,19 @@ open class JavaUMethod(
       // hah, there is a Lombok and Enums and also Records, so we have fake PsiElements even in Java (IDEA-216248)
       javaPsi.takeIf { it !is LightElement }
 
-  override val uastBody: UExpression? by lazyPub {
-    val body = sourcePsi.asSafely<PsiMethod>()?.body ?: return@lazyPub null
-    UastFacade.findPlugin(body)?.convertElement(body, this) as? UExpression
-  }
+  override val uastBody: UExpression?
+    get() = uastBodyPart.getOrBuild {
+      val body = sourcePsi.asSafely<PsiMethod>()?.body ?: return@getOrBuild null
+      UastFacade.findPlugin(body)?.convertElement(body, this) as? UExpression
+    }
 
-  override val uAnnotations: List<UAnnotation> by lazyPub { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
+  override val uAnnotations: List<UAnnotation>
+    get() = uAnnotationsPart.getOrBuild { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
 
-  override val uastParameters: List<UParameter> by lazyPub {
-    javaPsi.parameterList.parameters.mapNotNull { convertOrReport(it, this) }
-  }
+  override val uastParameters: List<UParameter>
+    get() = uastParametersPart.getOrBuild {
+      javaPsi.parameterList.parameters.mapNotNull { convertOrReport(it, this) }
+    }
 
   override fun getPsiParentForLazyConversion(): PsiElement? = super.getPsiParentForLazyConversion() ?: javaPsi.containingClass
 
@@ -69,9 +77,10 @@ open class JavaUMethod(
     }
   }
 
-  override val returnTypeReference: UTypeReferenceExpression? by lazyPub {
-    javaPsi.returnTypeElement?.let { JavaUTypeReferenceExpression(it, this) }
-  }
+  override val returnTypeReference: UTypeReferenceExpression?
+    get() = returnTypeReferencePart.getOrBuild {
+      javaPsi.returnTypeElement?.let { JavaUTypeReferenceExpression(it, this) }
+    }
 
   override fun getOriginalElement(): PsiElement? = javaPsi.originalElement
 }
@@ -92,16 +101,19 @@ private class JavaRecordConstructorUMethod(
 @ApiStatus.Internal
 class JavaUAnnotationMethod(
   override val javaPsi: PsiAnnotationMethod,
-  languagePlugin: UastLanguagePlugin,
+  private val languagePlugin: UastLanguagePlugin,
   containingElement: UElement?
 ) : JavaUMethod(javaPsi, containingElement), UAnnotationMethod, UDeclarationEx {
 
+  private val uastDefaultValuePart = UastLazyPart<UExpression?>()
+
   @Suppress("OverridingDeprecatedMember")
-  override val psi
+  override val psi: PsiAnnotationMethod
     get() = javaPsi
 
-  override val uastDefaultValue: UExpression? by lazyPub {
-    val defaultValue = javaPsi.defaultValue ?: return@lazyPub null
-    languagePlugin.convertElement(defaultValue, this, null) as? UExpression
-  }
+  override val uastDefaultValue: UExpression?
+    get() = uastDefaultValuePart.getOrBuild {
+      val defaultValue = javaPsi.defaultValue ?: return@getOrBuild null
+      languagePlugin.convertElement(defaultValue, this, null) as? UExpression
+    }
 }

@@ -1,11 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.actions.QualifiedNameProviderUtil;
-import com.intellij.ide.actions.SearchEverywhereClassifier;
-import com.intellij.ide.actions.SearchEverywherePsiRenderer;
+import com.intellij.ide.actions.*;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.EditSourceUtil;
@@ -13,6 +10,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.ide.util.scopeChooser.ScopeModel;
+import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.*;
@@ -47,17 +45,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting {
+public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
+                                                           SearchEverywhereExtendedInfoProvider {
+  protected static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
   private static final Key<Map<String, String>> SE_SELECTED_SCOPES = Key.create("SE_SELECTED_SCOPES");
 
   private static final Pattern ourPatternToDetectLinesAndColumns = Pattern.compile(
     "(.+?)" + // name, non-greedy matching
-    "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
+    "(?::|@|,| |#|#L|\\?l=| on line | at line |:line |:?\\(|:?\\[)" + // separator
     "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
     "[)\\]]?" // possible closing paren/brace
   );
@@ -183,6 +184,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
                myScopeDescriptor.scopeEquals(myProjectScope);
       }
     });
+    result.add(new PreviewAction());
     result.add(new SearchEverywhereFiltersAction<>(filter, onChanged, statisticsCollector));
     return result;
   }
@@ -265,7 +267,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator);
     }
   }
-
   protected boolean processElement(@NotNull ProgressIndicator progressIndicator,
                                    @NotNull Processor<? super FoundItemDescriptor<Object>> consumer,
                                    FilteringGotoByModel<?> model, Object element, int degree) {
@@ -339,26 +340,29 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       ReadAction.nonBlocking(() -> {
           PsiElement psiElement = preparePsi((PsiElement)selected, modifiers, searchText);
           Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
-          return new Pair<>(psiElement, extNavigatable);
+          VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+          Runnable command = (modifiers & InputEvent.SHIFT_MASK) != 0 && file != null
+                             ? () -> OpenInRightSplitAction.Companion.openInRightSplit(myProject, file, extNavigatable, true)
+                             : () -> doNavigate(psiElement, extNavigatable);
+          return command;
         })
-        .finishOnUiThread(ModalityState.NON_MODAL,
-                          pair -> {
-                            Navigatable extNavigatable = pair.second;
-                            PsiElement psiElement = pair.first;
-                            if (extNavigatable != null && extNavigatable.canNavigate()) {
-                              extNavigatable.navigate(true);
-                            }
-                            else {
-                              NavigationUtil.activateFileWithPsiElement(psiElement, true);
-                            }
-                          }
-        ).submit(AppExecutorUtil.getAppExecutorService());
+        .finishOnUiThread(ModalityState.nonModal(), Runnable::run)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
     else {
       EditSourceUtil.navigate(((NavigationItem)selected), true, false);
     }
 
     return true;
+  }
+
+  private static void doNavigate(PsiElement psiElement, Navigatable extNavigatable) {
+    if (extNavigatable != null && extNavigatable.canNavigate()) {
+      extNavigatable.navigate(true);
+    }
+    else {
+      NavigationUtil.activateFileWithPsiElement(psiElement, true);
+    }
   }
 
   @Override
@@ -419,6 +423,10 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
+    String path = pathToAnonymousClass(searchText);
+    if (path != null) {
+      psiElement = getElement(psiElement, path);
+    }
     return psiElement.getNavigationElement();
   }
 
@@ -447,6 +455,46 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     }
 
     return -1;
+  }
+
+  private static String pathToAnonymousClass(String searchedText) {
+    return ClassSearchEverywhereContributor.pathToAnonymousClass(ourPatternToDetectAnonymousClasses.matcher(searchedText));
+  }
+
+  @NotNull
+  public static PsiElement getElement(@NotNull PsiElement element, @NotNull String path) {
+    final String[] classes = path.split("\\$");
+    List<Integer> indexes = new ArrayList<>();
+    for (String cls : classes) {
+      if (cls.isEmpty()) continue;
+      try {
+        indexes.add(Integer.parseInt(cls) - 1);
+      }
+      catch (Exception e) {
+        return element;
+      }
+    }
+    PsiElement current = element;
+    for (int index : indexes) {
+      final PsiElement[] anonymousClasses = getAnonymousClasses(current);
+      if (index >= 0 && index < anonymousClasses.length) {
+        current = anonymousClasses[index];
+      }
+      else {
+        return current;
+      }
+    }
+    return current;
+  }
+
+  private static PsiElement @NotNull [] getAnonymousClasses(@NotNull PsiElement element) {
+    for (AnonymousElementProvider provider : AnonymousElementProvider.EP_NAME.getExtensionList()) {
+      final PsiElement[] elements = provider.getAnonymousElements(element);
+      if (elements.length > 0) {
+        return elements;
+      }
+    }
+    return PsiElement.EMPTY_ARRAY;
   }
 
   private static final class MyViewModel implements ChooseByNameViewModel {

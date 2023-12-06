@@ -7,14 +7,12 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.*
-
 
 open class LocalPopupComponentFactory: PopupComponentFactory {
   override fun createPopupComponent(type: PopupComponentFactory.PopupType,
@@ -65,9 +63,7 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
       myDialog.setLocation(x, y)
     }
 
-    override fun getWindow(): Window? {
-      return myDialog
-    }
+    override fun getWindow(): Window = myDialog
 
     override fun hide(dispose: Boolean) {
       myDialog.isVisible = false
@@ -97,7 +93,7 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
   }
 
   class AwtPopupWrapper(
-    private val myPopup: Popup,
+    private val popup: Popup,
     private val myJBPopup: JBPopup
     //TODO[tav]: should we call A11YFix.invokeFocusGained(getWindow()) on window closing?
   ) : PopupComponent {
@@ -108,7 +104,7 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
         return
       }
       val rootPane = (window as? RootPaneContainer)?.rootPane
-      myPopup.hide()
+      popup.hide()
       DialogWrapper.cleanupRootPane(rootPane)
       DialogWrapper.cleanupWindowListeners(window)
     }
@@ -118,7 +114,7 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
       if (window != null) {
         fixFlickering(window, false)
       }
-      myPopup.show()
+      popup.show()
       if (window != null) {
         fixFlickering(window, true)
         if (window is JWindow) {
@@ -127,16 +123,16 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
       }
     }
 
-    override fun getWindow(): Window? = (myPopup as? HeavyWeightPopup)?.let {
-      ObjectUtils.tryCast(myPopup.window, JWindow::class.java)
+    override fun getWindow(): Window? {
+      return (popup as? HeavyWeightPopup)?.window as? JWindow
     }
 
     override fun setRequestFocus(requestFocus: Boolean) {}
 
     companion object {
-      fun fixFlickering(window: Window, opaque: Boolean) {
+      internal fun fixFlickering(window: Window, opaque: Boolean) {
         try {
-          if (StartupUiUtil.isUnderDarcula() &&
+          if (StartupUiUtil.isUnderDarcula &&
               SystemInfoRt.isMac &&
               Registry.`is`("darcula.fix.native.flickering", false)) {
             window.opacity = if (opaque) 1.0f else 0.0f
@@ -146,5 +142,4 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
       }
     }
   }
-
 }

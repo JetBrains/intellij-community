@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -42,18 +42,15 @@ public final class IdeBorderFactory {
     return new SideBorder(color, borders);
   }
 
-  @NotNull
-  public static RoundedLineBorder createRoundedBorder() {
+  public static @NotNull RoundedLineBorder createRoundedBorder() {
     return createRoundedBorder(BORDER_ROUNDNESS);
   }
 
-  @NotNull
-  public static RoundedLineBorder createRoundedBorder(int arcSize) {
+  public static @NotNull RoundedLineBorder createRoundedBorder(int arcSize) {
     return new RoundedLineBorder(getBorderColor(), arcSize);
   }
 
-  @NotNull
-  public static RoundedLineBorder createRoundedBorder(int arcSize, final int thickness) {
+  public static @NotNull RoundedLineBorder createRoundedBorder(int arcSize, final int thickness) {
     return new RoundedLineBorder(getBorderColor(), arcSize, thickness);
   }
 

@@ -19,12 +19,25 @@ public class UnsyncByteArrayInputStream extends InputStream {
   public UnsyncByteArrayInputStream(@NotNull byte[] buf, int offset, int length) {
     myBuffer = buf;
     myPosition = offset;
-    myCount = length;
+    myCount = Math.min(offset + length, buf.length);
+    myMarkedPosition = offset;
   }
 
   @Override
   public int read() {
     return myPosition < myCount ? myBuffer[myPosition++] & 0xff : -1;
+  }
+
+  // read next two bytes and convert them to short (little endian)
+  public int readShortLittleEndian() {
+    int position = myPosition;
+    if (position >= myCount - 1) {
+      return -1;
+    }
+    byte ch1 = myBuffer[position];
+    byte ch2 = myBuffer[position+1];
+    myPosition += 2;
+    return (ch1 & 0xff) | ((ch2 << 8) & 0xff00);
   }
 
   @Override

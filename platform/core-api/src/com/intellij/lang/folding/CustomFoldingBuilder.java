@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Builds custom folding regions. If custom folding is supported for a language, its FoldingBuilder must be inherited from this class.
+ * Builds custom folding regions provided by {@link CustomFoldingProvider}.
+ * If custom folding is supported for a language, its {@link FoldingBuilder} must be inherited from this class.
  */
 public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
   private CustomFoldingProvider myDefaultProvider;
@@ -32,7 +33,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     ourCustomRegionElements.set(new HashSet<>());
     List<FoldingDescriptor> descriptors = new ArrayList<>();
     try {
-      if (CustomFoldingProvider.getAllProviders().size() > 0) {
+      if (!CustomFoldingProvider.getAllProviders().isEmpty()) {
         myDefaultProvider = null;
         ASTNode rootNode = root.getNode();
         if (rootNode != null) {
@@ -189,8 +190,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     return set != null && element != null && set.contains(element.getNode());
   }
 
-  @Nullable
-  private CustomFoldingProvider getDefaultProvider(String elementText) {
+  private @Nullable CustomFoldingProvider getDefaultProvider(String elementText) {
     if (myDefaultProvider == null) {
       for (CustomFoldingProvider provider : CustomFoldingProvider.getAllProviders()) {
         if (provider.isCustomRegionStart(elementText) || provider.isCustomRegionEnd(elementText)) {

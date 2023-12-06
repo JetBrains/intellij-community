@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
 import com.intellij.codeInspection.reference.*;
@@ -81,8 +81,8 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     if (refElement instanceof RefClass) {
       processClassHierarchy(null, (RefClass)refElement, modules);
     }
-    else if (refElement instanceof RefMethod) {
-      UMethod uMethod = ObjectUtils.tryCast(((RefMethod)refElement).getUastElement(), UMethod.class);
+    else if (refElement instanceof RefMethod refMethod) {
+      UMethod uMethod = refMethod.getUastElement();
       if (uMethod != null) {
         Set<PsiClass> classes = new HashSet<>();
         processTypeHierarchy(classes, uMethod.getReturnType(), modules);

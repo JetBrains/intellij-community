@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.application.Topics;
@@ -92,6 +92,9 @@ public final class SvnVcs extends AbstractVcs {
   private static final @NlsSafe @NotNull String VCS_SHORT_DISPLAY_NAME = "SVN";
 
   private static final VcsKey ourKey = createKey(VCS_NAME);
+
+  @Topic.ProjectLevel
+  @Topic.AppLevel
   public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
 
   private CheckinEnvironment myCheckinEnvironment;
@@ -134,7 +137,7 @@ public final class SvnVcs extends AbstractVcs {
       ApplicationManager.getApplication().invokeLater(() -> {
         cleanup17copies();
         getSvnConfiguration().setCleanupRun(true);
-      }, ModalityState.NON_MODAL, myProject.getDisposed());
+      }, ModalityState.nonModal(), myProject.getDisposed());
     }
     else {
       invokeRefreshSvnRoots();
@@ -239,11 +242,18 @@ public final class SvnVcs extends AbstractVcs {
       BackgroundTaskUtil.executeOnPooledThread(disposable, () -> checkCommandLineVersion());
     }
 
-    RootsToWorkingCopies.getInstance(myProject);
+    RootsToWorkingCopies rootsToWorkingCopies = RootsToWorkingCopies.getInstance(myProject);
+    SvnAuthenticationNotifier svnAuthenticationNotifier = SvnAuthenticationNotifier.getInstance(myProject);
+    SvnLoadedBranchesStorage svnLoadedBranchesStorage = SvnLoadedBranchesStorage.getInstance(myProject);
+    svnLoadedBranchesStorage.activate();
+    Disposer.register(disposable, () -> {
+      rootsToWorkingCopies.clear();
+      svnAuthenticationNotifier.clear();
+      svnLoadedBranchesStorage.deactivate();
+    });
+
     ProjectLevelVcsManager.getInstance(myProject).runAfterInitialization(() -> setupChangeLists());
     StartupManager.getInstance(myProject).runAfterOpened(() -> postStartup());
-
-    SvnLoadedBranchesStorage.getInstance(myProject).activate();
   }
 
   @Override
@@ -257,12 +267,9 @@ public final class SvnVcs extends AbstractVcs {
       myCommittedChangesProvider.deactivate();
       myCommittedChangesProvider = null;
     }
-    RootsToWorkingCopies.getInstance(myProject).clear();
-    SvnAuthenticationNotifier.getInstance(myProject).clear();
 
     mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
-    SvnLoadedBranchesStorage.getInstance(myProject).deactivate();
   }
 
   @Override
@@ -639,27 +646,28 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   @NotNull
-  private <S> List<S> filterUniqueByWorkingCopy(@NotNull List<? extends S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+  private <S> List<S> filterUniqueByWorkingCopy(@NotNull List<? extends S> in,
+                                                @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     Map<VirtualFile, S> filesMap = StreamEx.of(in).<VirtualFile, S>mapToEntry(convertor, identity()).distinctKeys().toMap();
     Map<VirtualFile, List<VirtualFile>> byWorkingCopy =
       StreamEx.of(filesMap.keySet())
-              .mapToEntry(
-                file -> {
-                  RootUrlInfo wcRoot = getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
-                  return wcRoot != null ? wcRoot.getVirtualFile() : SvnUtil.getWorkingCopyRoot(file);
-                },
-                identity())
-              .nonNullKeys()
-              .grouping();
+        .mapToEntry(
+          file -> {
+            RootUrlInfo wcRoot = getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
+            return wcRoot != null ? wcRoot.getVirtualFile() : SvnUtil.getWorkingCopyRoot(file);
+          },
+          identity())
+        .nonNullKeys()
+        .grouping();
 
     return EntryStream.of(byWorkingCopy)
-                      .flatMapToValue((workingCopy, files) -> {
-                        FilterDescendantVirtualFiles.filter(files);
-                        return files.stream();
-                      })
-                      .values()
-                      .map(filesMap::get)
-                      .toList();
+      .flatMapToValue((workingCopy, files) -> {
+        FilterDescendantVirtualFiles.filter(files);
+        return files.stream();
+      })
+      .values()
+      .map(filesMap::get)
+      .toList();
   }
 
   private static final class MyPair<T> implements RootUrlPair {
@@ -746,7 +754,6 @@ public final class SvnVcs extends AbstractVcs {
    * <p>
    * For instance, when working copies of several formats are presented in project
    * (though it seems to be rather unlikely case).
-   *
    */
   @NotNull
   public ClientFactory getFactory() {

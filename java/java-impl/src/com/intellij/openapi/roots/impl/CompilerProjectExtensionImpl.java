@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -19,6 +19,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 final class CompilerProjectExtensionImpl extends CompilerProjectExtension implements Disposable {
@@ -28,12 +29,22 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
   private VirtualFilePointer myCompilerOutput;
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
 
-  private void readExternal(@NotNull Element element) {
+  /**
+   * Returns true if the compiler output was changed after read
+   */
+  private boolean readExternal(@NotNull Element element) {
     Element pathElement = element.getChild(OUTPUT_TAG);
     if (pathElement != null) {
       String outputPath = pathElement.getAttributeValue(URL);
+      VirtualFilePointer oldValue = myCompilerOutput;
       myCompilerOutput = outputPath != null ? VirtualFilePointerManager.getInstance().create(outputPath, this, null) : null;
+
+      return !Objects.equals(
+        oldValue != null ? oldValue.getUrl() : null,
+        myCompilerOutput != null ? myCompilerOutput.getUrl() : null
+      );
     }
+    return false;
   }
 
   private void writeExternal(@NotNull Element element) {
@@ -85,21 +96,21 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
       if (extension != null && !extension.isCompilerOutputPathInherited()) {
         String outputUrl = extension.getCompilerOutputUrl();
         if (outputUrl != null && outputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
-          rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(outputUrl));
+          rootsToWatch.add(ProjectRootManagerImpl.Companion.extractLocalPath(outputUrl));
         }
         String testOutputUrl = extension.getCompilerOutputUrlForTests();
         if (testOutputUrl!= null && testOutputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
-          rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(testOutputUrl));
+          rootsToWatch.add(ProjectRootManagerImpl.Companion.extractLocalPath(testOutputUrl));
         }
       }
-      // otherwise the module output path is beneath the CompilerProjectExtension.getCompilerOutputUrl() which is added below
+      // otherwise, the module output path is beneath the CompilerProjectExtension.getCompilerOutputUrl() which is added below
     }
 
     CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
     if (extension != null) {
       String compilerOutputUrl = extension.getCompilerOutputUrl();
       if (compilerOutputUrl != null && compilerOutputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
-        rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(compilerOutputUrl));
+        rootsToWatch.add(ProjectRootManagerImpl.Companion.extractLocalPath(compilerOutputUrl));
       }
     }
 
@@ -118,8 +129,8 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     }
 
     @Override
-    public void readExternal(@NotNull Element element) {
-      getImpl(myProject).readExternal(element);
+    public boolean readExternalElement(@NotNull Element element) {
+      return getImpl(myProject).readExternal(element);
     }
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.diagnostic.LoadingState;
@@ -52,7 +52,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   public static @NotNull ModalityState getDefaultModality() {
     Application app = ApplicationManager.getApplication();
-    return app == null ? ModalityState.NON_MODAL : app.getDefaultModalityState();
+    return app == null ? ModalityState.nonModal() : app.getDefaultModalityState();
   }
 
   /**
@@ -179,7 +179,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   @Override
   protected void onOSProcessTerminated(int exitCode) {
-    if (myModality != ModalityState.NON_MODAL) {
+    if (myModality != ModalityState.nonModal()) {
       ProgressManager.getInstance().runProcess(() -> super.onOSProcessTerminated(exitCode), new EmptyProgressIndicator(myModality));
     }
     else {
@@ -220,21 +220,9 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   /**
-   * Kills the whole process tree asynchronously.
-   * As a potentially time-consuming operation, it's executed asynchronously on a pooled thread.
-   *
-   * @param process Process
+   * Kills the whole process tree synchronously.
    */
   protected void killProcessTree(final @NotNull Process process) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      killProcessTreeSync(process);
-    }
-    else {
-      executeTask(() -> killProcessTreeSync(process));
-    }
-  }
-
-  private void killProcessTreeSync(@NotNull Process process) {
     LOG.debug("killing process tree");
     final boolean destroyed = OSProcessUtil.killProcessTree(process);
     if (!destroyed) {
@@ -271,7 +259,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    */
   @Override
   protected @NotNull BaseOutputReader.Options readerOptions() {
-    return hasPty() ? BaseOutputReader.Options.BLOCKING : super.readerOptions();  // blocking read in case of PTY-based process
+    return hasPty() ? BaseOutputReader.Options.forTerminalPtyProcess() : super.readerOptions();  // blocking read in case of PTY-based process
   }
 
   /**

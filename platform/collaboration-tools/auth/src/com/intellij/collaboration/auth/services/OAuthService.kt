@@ -27,5 +27,18 @@ interface OAuthService<T : Credentials> {
   /**
    * Exchanging code for credentials
    */
-  fun handleServerCallback(path: String, parameters: Map<String, List<String>>): Boolean
+  @Deprecated("Use handleOAuthServerCallback instead", ReplaceWith("handleOAuthServerCallback"))
+  fun handleServerCallback(path: String, parameters: Map<String, List<String>>): Boolean {
+    throw UnsupportedOperationException()
+  }
+
+  fun handleOAuthServerCallback(path: String, parameters: Map<String, List<String>>): OAuthResult<T>? {
+    val isAccepted = handleServerCallback(path, parameters)
+    return OAuthResult(null, isAccepted)
+  }
+
+  class OAuthResult<T : Credentials>(
+    val request: OAuthRequest<T>?,
+    val isAccepted: Boolean
+  )
 }

@@ -1,19 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.closure;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -33,12 +28,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
  */
-public class EachToForIntention extends Intention {
+public class EachToForIntention extends GrPsiUpdateIntention {
 
   @NonNls public static final String OUTER = "Outer";
   @NonNls public static final String HINT = "Replace with for-in";
@@ -50,7 +46,7 @@ public class EachToForIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final GrMethodCallExpression expression = (GrMethodCallExpression)element;
     final GrClosableBlock block = expression.getClosureArguments()[0];
     final GrParameterList parameterList = block.getParameterList();
@@ -93,23 +89,14 @@ public class EachToForIntention extends Intention {
     final GrForClause clause = forStatement.getClause();
     if (!(clause instanceof GrForInClause)) return;
     final GrVariable variable = ((GrForInClause)clause).getDeclaredVariable();
+    if (variable != null) {
+      updater.rename(variable, List.of(variable.getName()));
+    }
 
     updateReturnStatements(forStatement);
-
-    if (variable == null) return;
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    final Document doc = documentManager.getDocument(element.getContainingFile());
-    if (doc == null) return;
-
-    documentManager.doPostponedOperationsAndUnblockDocument(doc);
-    editor.getCaretModel().moveToOffset(variable.getTextOffset());
-    new VariableInplaceRenamer(variable, editor).performInplaceRename();
   }
 
-  private static GrForStatement updateReturnStatements(GrForStatement forStatement) {
+  private static void updateReturnStatements(GrForStatement forStatement) {
     GrStatement body = forStatement.getBody();
     assert body != null;
 
@@ -205,8 +192,6 @@ public class EachToForIntention extends Intention {
         //don't go into anonymous
       }
     });
-
-    return forStatement;
   }
 
   private static class EachToForPredicate implements PsiElementPredicate {

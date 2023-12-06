@@ -9,3 +9,5 @@ fun newFun(vararg c: Char){}
 fun foo() {
     <caret>oldFun(*listOf(java.io.File.separatorChar).toCharArray())
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

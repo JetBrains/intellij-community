@@ -3,12 +3,13 @@ buildscript {
         gradlePluginPortal()
         google()
         maven("KOTLIN_BOOTSTRAP_REPO")
+        maven("KOTLIN_IDE_PLUGIN_DEPENDENCIES_REPO")
         maven("KOTLIN_REPO")
         mavenLocal()
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:KOTLIN_VERSION")
-        classpath("com.android.tools.build:gradle:7.3.1")
+        classpath("com.android.tools.build:gradle:8.1.0")
     }
 }
 
@@ -21,6 +22,7 @@ allprojects {
         google()
         mavenCentral()
         maven("KOTLIN_BOOTSTRAP_REPO")
+        maven("KOTLIN_IDE_PLUGIN_DEPENDENCIES_REPO")
         maven("KOTLIN_REPO")
     }
 }

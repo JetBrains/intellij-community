@@ -34,7 +34,7 @@ import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.uast.UastPatterns.*;
 import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvider;
 
-public class ExtensionPointDeclarationReferencesContributor extends PsiReferenceContributor {
+final class ExtensionPointDeclarationReferencesContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -75,12 +75,7 @@ public class ExtensionPointDeclarationReferencesContributor extends PsiReference
   private static class ExtensionPointDeclarationReference extends PsiReferenceBase<PsiElement> implements PluginConfigReference {
 
     private ExtensionPointDeclarationReference(PsiElement psiElement) {
-      super(psiElement, PsiUtil.isIdeaProject(psiElement.getProject()) /* todo remove once all declarations are fixed */);
-    }
-
-    @Override
-    public boolean isHighlightedWhenSoft() {
-      return true;
+      super(psiElement);
     }
 
     @Override

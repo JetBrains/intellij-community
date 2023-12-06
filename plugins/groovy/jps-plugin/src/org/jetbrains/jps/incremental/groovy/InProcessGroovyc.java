@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
@@ -22,6 +21,7 @@ import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -32,6 +32,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 final class InProcessGroovyc implements GroovycFlavor {
   private static final Logger LOG = Logger.getInstance(InProcessGroovyc.class);
@@ -106,7 +108,7 @@ final class InProcessGroovyc implements GroovycFlavor {
         //noinspection unchecked
         Queue<String> toGroovyc = (Queue<String>)msg;
         loader.resetCache();
-        return createContinuation(future, toGroovyc, parser);
+        return createContinuation(future, toGroovyc, parser, loader);
       }
       else if (msg != null) {
         throw new AssertionError("Unknown message: " + msg);
@@ -117,11 +119,13 @@ final class InProcessGroovyc implements GroovycFlavor {
   @NotNull
   private static GroovycContinuation createContinuation(Future<Void> future,
                                                         @NotNull Queue<String> mailbox,
-                                                        GroovycOutputParser parser) {
+                                                        GroovycOutputParser parser, 
+                                                        @NotNull JointCompilationClassLoader loader) {
     return new GroovycContinuation() {
       @NotNull
       @Override
       public GroovyCompilerResult continueCompilation() throws Exception {
+        loader.resetCache();
         parser.onContinuation();
         mailbox.offer(GroovyRtConstants.JAVAC_COMPLETED);
         future.get();
@@ -204,6 +208,10 @@ final class InProcessGroovyc implements GroovycFlavor {
     return UrlClassLoader.build().
       files(toPaths(compilationClassPath))
       .parent(parent)
+      /* obsolete classpath.index files are deleted only after compilation of the module chunk finishes, so they may not include *.class 
+         files produced by javac during compilation of this chunk;
+         therefore, persistent index should be disabled for Groovy class loader */
+      .usePersistentClasspathIndexForLocalClassDirectories(false)
       .useCache(ourLoaderCachePool, file -> {
         String filePath = FileUtil.toCanonicalPath(file.toString());
         for (String output : myOutputs) {
@@ -269,7 +277,7 @@ final class InProcessGroovyc implements GroovycFlavor {
     String groovyJar = evaluatePathToGroovyJarForParentClassloader(compilationClassPath);
     if (groovyJar == null) return null;
 
-    Pair<String, ClassLoader> pair = SoftReference.dereference(ourParentLoaderCache);
+    Pair<String, ClassLoader> pair = dereference(ourParentLoaderCache);
     if (pair != null && pair.first.equals(groovyJar)) {
       return pair.second;
     }

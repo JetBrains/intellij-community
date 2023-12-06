@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.Comparing
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.testFramework.FileBasedArgumentProvider
 import com.intellij.testFramework.FileBasedTestCaseHelperEx
 import com.intellij.testFramework.LightProjectDescriptor
@@ -43,7 +46,8 @@ abstract class LightQuickFixParameterizedTestCase5(projectDescriptor: LightProje
   fun parameterized(fileName: String) {
     val filePath = "/" + LightQuickFixTestCase.BEFORE_PREFIX + fileName
     val file = fixture.configureByFile(filePath)
-    val action = ActionHint.parse(file, file.text).findAndCheck(fixture.availableIntentions) {
+    val (hint, context) = runReadAction { ActionHint.parse(file, file.text) to fixture.actionContext }
+    val action = hint.findAndCheck(fixture.availableIntentions, context) {
       """
              Test: ${getRelativePath() + filePath}
              Language level: ${PsiUtil.getLanguageLevel(fixture.project)}
@@ -53,14 +57,14 @@ abstract class LightQuickFixParameterizedTestCase5(projectDescriptor: LightProje
     }
     if (action != null) {
       val text = action.text
-
+      val element = runReadAction { PsiUtilBase.getElementAtCaret(fixture.editor) }
       fixture.launchAction(action)
 
       runInEdtAndWait { UIUtil.dispatchAllInvocationEvents() }
 
       val intentions = fixture.availableIntentions
       val afterAction = CodeInsightTestUtil.findIntentionByText(intentions, text)
-      if (afterAction != null) {
+      if (afterAction != null && Comparing.equal(element, runReadAction { PsiUtilBase.getElementAtCaret(fixture.editor) })) {
         fail("Action '$text' is still available after its invocation in test $filePath")
       }
       fixture.checkResultByFile("/" + LightQuickFixTestCase.AFTER_PREFIX + fileName)

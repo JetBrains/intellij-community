@@ -44,6 +44,11 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     super(project);
   }
 
+  @Override
+  public void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
+    support.setMultiSelectionEnabled(false);
+  }
+
   @NotNull
   @Override
   public String getTitle() {
@@ -150,7 +155,7 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
 
   protected class ProjectViewPaneTreeStructure extends ProjectTreeStructure implements ProjectViewSettings {
     protected ProjectViewPaneTreeStructure() {
-      super(ProjectViewPane.this.myProject, ID);
+      super(ProjectViewPane.this.myProject, ProjectViewPane.this.getId());
     }
 
     @Override
@@ -160,7 +165,7 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
 
     @Override
     public boolean isShowExcludedFiles() {
-      return ProjectView.getInstance(myProject).isShowExcludedFiles(ID);
+      return ProjectView.getInstance(myProject).isShowExcludedFiles(getId());
     }
 
     @Override
@@ -170,7 +175,7 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
 
     @Override
     public boolean isUseFileNestingRules() {
-      return ProjectView.getInstance(myProject).isUseFileNestingRules(ID);
+      return ProjectView.getInstance(myProject).isUseFileNestingRules(getId());
     }
 
     @Override

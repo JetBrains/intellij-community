@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.ide.util.BrowseFilesListener
@@ -22,7 +22,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingUndoUtil
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
-import java.io.File
+import java.nio.file.Path
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -33,7 +33,7 @@ import javax.swing.JTextArea
  */
 internal class ShowUpdateInfoDialogAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null
@@ -48,7 +48,7 @@ internal class ShowUpdateInfoDialogAction : DumbAwareAction() {
         UpdateChecker.testPlatformUpdate(
           project,
           dialog.updateXmlText(),
-          dialog.patchFilePath()?.let { File(FileUtil.toSystemDependentName(it)) },
+          dialog.patchFilePath()?.let { Path.of(FileUtil.toSystemDependentName(it)) },
           dialog.forceUpdate(),
         )
       }

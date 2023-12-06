@@ -20,6 +20,7 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
@@ -35,7 +36,10 @@ public class SelectInMavenNavigatorTarget implements SelectInTarget {
   public void selectIn(final SelectInContext context, boolean requestFocus) {
     Runnable r = () -> MavenProjectsNavigator.getInstance(context.getProject()).selectInTree(getMavenProject(context));
     if (requestFocus) {
-      ToolWindowManager.getInstance(context.getProject()).getToolWindow(getToolWindowId()).activate(r);
+      ToolWindow window = ToolWindowManager.getInstance(context.getProject()).getToolWindow(getToolWindowId());
+      if (window != null) {
+        window.activate(r);
+      }
     }
     else {
       r.run();

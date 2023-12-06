@@ -2,11 +2,15 @@
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.ForEachCollectionTraversal;
 import com.intellij.codeInspection.util.IterableTraversal;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -122,7 +126,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
     };
   }
 
-  private static class ReplaceWithRemoveIfQuickFix implements LocalQuickFix {
+  private static class ReplaceWithRemoveIfQuickFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -131,9 +135,8 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement().getParent();
-      if(!(element instanceof PsiLoopStatement loop)) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if(!(element.getParent() instanceof PsiLoopStatement loop)) return;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(loop.getBody());
       PsiIfStatement ifStatement = tryCast(ArrayUtil.getLastElement(statements), PsiIfStatement.class);
       if (ifStatement == null) return;

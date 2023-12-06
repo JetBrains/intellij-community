@@ -5,7 +5,6 @@ import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -188,14 +187,6 @@ public class ProjectViewDirectoryHelper {
                                                               ViewSettings settings,
                                                               boolean withSubDirectories,
                                                               @Nullable PsiFileSystemItemFilter filter) {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> doGetDirectoryChildren(psiDirectory, settings, withSubDirectories, filter));
-  }
-
-  @NotNull
-  private Collection<AbstractTreeNode<?>> doGetDirectoryChildren(PsiDirectory psiDirectory,
-                                                                 ViewSettings settings,
-                                                                 boolean withSubDirectories,
-                                                                 @Nullable PsiFileSystemItemFilter filter) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     if (!psiDirectory.isValid()) return children;
     Project project = psiDirectory.getProject();

@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,6 +14,8 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,13 +25,17 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> implements TreeLinkMouseListener.HaveTooltip {
 
-  @Nullable private final Project myProject;
-  @Nullable private final ChangeNodeDecorator myDecorator;
+  private final @Nullable Project myProject;
+  private final @Nullable ChangeNodeDecorator myDecorator;
+  private final @Nullable @Nls String myAdditionalText;
 
   protected ChangesBrowserChangeNode(@Nullable Project project, @NotNull Change userObject, @Nullable ChangeNodeDecorator decorator) {
     super(userObject);
     myProject = project;
     myDecorator = decorator;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-318216, EA-831659")) {
+      myAdditionalText = getUserObject().getOriginText(project);
+    }
   }
 
   @Override
@@ -39,12 +46,6 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
   @Override
   protected boolean isDirectory() {
     return ChangesUtil.getFilePath(getUserObject()).isDirectory();
-  }
-
-  @Override
-  protected void preparePresentationDataCaches(@NotNull Project project) {
-    getUserObject().getOriginText(project);
-    super.preparePresentationDataCaches(project);
   }
 
   @Override
@@ -60,9 +61,8 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
 
       renderer.appendFileName(file, filePath.getName(), change.getFileStatus().getColor());
 
-      String originText = change.getOriginText(myProject);
-      if (originText != null) {
-        renderer.append(spaceAndThinSpace() + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      if (myAdditionalText != null) {
+        renderer.append(spaceAndThinSpace() + myAdditionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
 
       if (renderer.isShowFlatten()) {

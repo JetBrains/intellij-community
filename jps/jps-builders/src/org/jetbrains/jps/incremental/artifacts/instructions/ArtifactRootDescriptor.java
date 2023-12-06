@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import org.jetbrains.annotations.NotNull;
@@ -47,24 +47,22 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public ArtifactBuildTarget getTarget() {
+  public @NotNull ArtifactBuildTarget getTarget() {
     return myTarget;
   }
 
-  @NotNull
   @Override
-  public FileFilter createFileFilter() {
+  public @NotNull FileFilter createFileFilter() {
     return file -> myFilter.accept(file.getAbsolutePath());
   }
 
   @Override
-  @NotNull
-  public final File getRootFile() {
+  public final @NotNull File getRootFile() {
     return myRoot;
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return String.valueOf(myRootIndex);
   }
 

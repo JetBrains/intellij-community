@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.plugins
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginEnableStateChangedListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
@@ -11,12 +12,16 @@ interface PluginManagerProxy {
   }
 
   fun getPlugins(): Array<IdeaPluginDescriptor>
-  fun enablePlugins(plugins: Set<PluginId>)
-  fun disablePlugins(plugins: Set<PluginId>)
+  fun enablePlugins(plugins: Set<PluginId>): Boolean
+  fun disablePlugins(plugins: Set<PluginId>): Boolean
   fun findPlugin(pluginId: PluginId): IdeaPluginDescriptor?
 
   fun createInstaller(notifyErrors: Boolean = false): SettingsSyncPluginInstaller
 
-  fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable)
+  fun addPluginStateChangedListener(listener: PluginEnableStateChangedListener, parentDisposable: Disposable)
   fun getDisabledPluginIds(): Set<PluginId>
+
+  fun isEssential(pluginId: PluginId): Boolean
+
+  fun isIncompatible(plugin: IdeaPluginDescriptor): Boolean
 }

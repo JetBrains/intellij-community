@@ -27,6 +27,7 @@ import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.isBitwiseOrUnionAvailable
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.quickfix.PyUnpackTypeVarTupleQuickFix
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
@@ -61,8 +62,11 @@ class PyTypeHintsInspection : PyInspection() {
       }
 
       if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPING_PARAM_SPEC) in calleeQName) {
-        val target = getTargetFromAssignment(node)
-        checkParamSpecArguments(node, target)
+        checkParamSpecArguments(node, getTargetFromAssignment(node))
+      }
+
+      if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR_TUPLE) in calleeQName) {
+        checkTypeVarTupleArguments(node, getTargetFromAssignment(node))
       }
 
       checkInstanceAndClassChecks(node)
@@ -107,11 +111,26 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    private fun checkTypeVarTupleUnpacked(node: PyReferenceExpression) {
+      if (PsiTreeUtil.getParentOfType(node, PyStarExpression::class.java) != null) return
+      val subscriptionExpr = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression::class.java)
+      if (subscriptionExpr != null && subscriptionExpr.operand is PyQualifiedExpression &&
+          (subscriptionExpr.operand as PyQualifiedExpression).asQualifiedName()?.endsWith("Unpack") == true) {
+        return
+      }
+      holder?.registerProblem(node, PyPsiBundle.message("INSP.type.hints.type.var.tuple.must.always.be.unpacked"),
+                              PyUnpackTypeVarTupleQuickFix())
+    }
+
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
       super.visitPyReferenceExpression(node)
 
       if (!PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext)) {
         return
+      }
+
+      if (myTypeEvalContext.getType(node) is PyVariadicType) {
+        checkTypeVarTupleUnpacked(node)
       }
 
       if (node.referencedName == PyNames.CANONICAL_SELF) {
@@ -277,6 +296,16 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    private fun checkTypeVarTupleArguments(call: PyCallExpression, target: PyExpression?) {
+      processMatchedArgument(call) { name, argument ->
+        if (name == "name") {
+          checkNameIsTheSameAsTarget(argument, target,
+                                     PyPsiBundle.message("INSP.type.hints.typevar.tuple.expects.string.literal.as.first.argument"),
+                                     PyPsiBundle.message("INSP.type.hints.argument.to.typevar.tuple.must.be.string.equal.to.variable.name"))
+        }
+      }
+    }
+
     private fun checkTypeVarArguments(call: PyCallExpression, target: PyExpression?) {
       var covariant = false
       var contravariant = false
@@ -399,7 +428,6 @@ class PyTypeHintsInspection : PyInspection() {
             when (it) {
               PyTypingTypeProvider.ANY,
               PyTypingTypeProvider.UNION,
-              PyTypingTypeProvider.GENERIC,
               PyTypingTypeProvider.OPTIONAL,
               PyTypingTypeProvider.CLASS_VAR,
               PyTypingTypeProvider.NO_RETURN,
@@ -485,12 +513,13 @@ class PyTypeHintsInspection : PyInspection() {
             if (it is PyTypedElement) {
               val type = myTypeEvalContext.getType(it)
 
-              if (type is PyWithAncestors && PyTypingTypeProvider.isGeneric(type, myTypeEvalContext)) {
+              if (type is PyClassType && type.isDefinition) {
                 registerProblem(base,
                                 PyPsiBundle.message("INSP.type.hints.parameterized.generics.cannot.be.used.with.instance.class.checks"),
                                 ProblemHighlightType.GENERIC_ERROR,
                                 null,
-                                *(if (base is PySubscriptionExpression) arrayOf(RemoveGenericParametersQuickFix()) else LocalQuickFix.EMPTY_ARRAY))
+                                *(if (base is PySubscriptionExpression) arrayOf(RemoveGenericParametersQuickFix())
+                                else LocalQuickFix.EMPTY_ARRAY))
               }
             }
           }
@@ -708,7 +737,7 @@ class PyTypeHintsInspection : PyInspection() {
       val genericParameters = mutableSetOf<PsiElement>()
 
       parameters.forEach {
-        if (it !is PyReferenceExpression) {
+        if (it !is PyReferenceExpression && it !is PyStarExpression && it !is PySubscriptionExpression) {
           registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
                           ProblemHighlightType.GENERIC_ERROR)
         }
@@ -717,7 +746,7 @@ class PyTypeHintsInspection : PyInspection() {
 
           if (type != null) {
             if (type is PyGenericType || isParamSpecOrConcatenate(it, myTypeEvalContext)) {
-              if (!genericParameters.addAll(multiFollowAssignmentsChain(it))) {
+              if (it is PyReferenceExpression && !genericParameters.addAll(multiFollowAssignmentsChain(it))) {
                 registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.unique"),
                                 ProblemHighlightType.GENERIC_ERROR)
               }
@@ -775,6 +804,7 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkTypingMemberParameters(index: PyExpression, isCallable: Boolean) {
       val parameters = if (index is PyTupleExpression) index.elements else arrayOf(index)
 
+      var alreadyHaveUnpacking = false
       parameters
         .asSequence()
         .drop(if (isCallable) 1 else 0)
@@ -789,6 +819,15 @@ class PyTypeHintsInspection : PyInspection() {
           else if (it is PyReferenceExpression && multiFollowAssignmentsChain(it).any { resolved -> resolved is PyListLiteralExpression }) {
             registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.types.must.be.types"),
                             ProblemHighlightType.GENERIC_ERROR)
+          }
+          else if (it is PyStarExpression) {
+            if (alreadyHaveUnpacking) {
+              registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.types.cannot.contain.more.than.one.unpacking"),
+                              ProblemHighlightType.GENERIC_ERROR)
+            }
+            else {
+              alreadyHaveUnpacking = true
+            }
           }
         }
     }
@@ -1034,7 +1073,8 @@ class PyTypeHintsInspection : PyInspection() {
         else {
           val newIndexText = newIndexElements.joinToString(prefix = "(", postfix = ")") { it.text }
 
-          val expression = PyElementGenerator.getInstance(project).createExpressionFromText(LanguageLevel.forElement(element), newIndexText)
+          val expression = PyElementGenerator.getInstance(project)
+            .createExpressionFromText(LanguageLevel.forElement(element), newIndexText)
           val newIndex = (expression as? PyParenthesizedExpression)?.containedExpression as? PyTupleExpression ?: return
 
           index.replace(newIndex)

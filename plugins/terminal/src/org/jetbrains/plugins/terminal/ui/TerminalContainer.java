@@ -27,10 +27,12 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
-public class TerminalContainer {
+public final class TerminalContainer {
 
   private static final Logger LOG = Logger.getInstance(TerminalContainer.class);
 
@@ -219,7 +221,7 @@ public class TerminalContainer {
     return (TerminalWrapperPanel)splitter.getParent();
   }
 
-  private static class TerminalWrapperPanel extends JPanel {
+  private static final class TerminalWrapperPanel extends JPanel {
     private TerminalContainer myTerminal;
 
     private TerminalWrapperPanel(@NotNull TerminalContainer terminal) {

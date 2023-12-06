@@ -11,7 +11,9 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.ProcessingContext
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.FrameworkId
+import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer.Companion.customizeItems
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
@@ -55,21 +57,36 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
     @JvmStatic
     fun processCompletionQueryResults(queryExecutor: WebSymbolsQueryExecutor,
                                       result: CompletionResultSet,
-                                      namespace: SymbolNamespace,
-                                      kind: SymbolKind,
+                                      qualifiedKind: WebSymbolQualifiedKind,
                                       name: String,
                                       position: Int,
+                                      location: PsiElement,
                                       queryContext: List<WebSymbolsScope> = emptyList(),
                                       providedNames: MutableSet<String>? = null,
                                       filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
                                       consumer: (WebSymbolCodeCompletionItem) -> Unit) {
+      processWebSymbolCodeCompletionItems(
+        queryExecutor.runCodeCompletionQuery(qualifiedKind, name, position, scope = queryContext),
+        result, qualifiedKind, name, queryExecutor.framework, location, providedNames, filter, consumer
+      )
+    }
+
+    @JvmStatic
+    fun processWebSymbolCodeCompletionItems(symbols: List<WebSymbolCodeCompletionItem>,
+                                            result: CompletionResultSet,
+                                            qualifiedKind: WebSymbolQualifiedKind,
+                                            name: String,
+                                            framework: FrameworkId?,
+                                            location: PsiElement,
+                                            providedNames: MutableSet<String>? = null,
+                                            filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
+                                            consumer: (WebSymbolCodeCompletionItem) -> Unit) {
       val prefixLength = name.length
       val prefixes = mutableSetOf<String>()
-      queryExecutor
-        .runCodeCompletionQuery(namespace, kind, name, position, scope = queryContext)
+      symbols
         .asSequence()
         .distinctBy { Triple(it.offset, it.name, it.completeAfterInsert) }
-        .customizeItems(queryExecutor.framework, namespace, kind)
+        .customizeItems(framework, qualifiedKind, location)
         .filter { item ->
           (filter == null || filter(item))
           && item.offset <= prefixLength

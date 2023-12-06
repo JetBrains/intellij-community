@@ -5,7 +5,10 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -106,7 +109,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
     return new RedundantRequiresStatementAnnotator();
   }
 
-  private static class DeleteRedundantRequiresStatementFix implements LocalQuickFix {
+  private static class DeleteRedundantRequiresStatementFix extends PsiUpdateModCommandQuickFix {
     private final String myRequiredModuleName;
     @SafeFieldForPreview
     private final Set<String> myImportedPackages;
@@ -140,8 +143,8 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!(descriptor.getPsiElement() instanceof PsiRequiresStatement statementToDelete)) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (!(element instanceof PsiRequiresStatement statementToDelete)) return;
 
       addTransitiveDependencies(statementToDelete);
       statementToDelete.delete();
@@ -240,7 +243,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
           if (javaModule == null) {
             javaModule = JavaModuleGraphUtil.findDescriptorByModule(refModule.getModule(), true);
           }
-          importedPackages = javaModule != null ? ContainerUtil.newConcurrentSet() : DONT_COLLECT_PACKAGES;
+          importedPackages = javaModule != null ? ConcurrentCollectionFactory.createConcurrentSet() : DONT_COLLECT_PACKAGES;
           refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
         }
         return importedPackages;

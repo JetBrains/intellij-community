@@ -7,6 +7,7 @@ fun foo(): EE {
     return E<caret>
 }
 
+// IGNORE_K2
 // ORDER: A
 // ORDER: B
 // ORDER: valueOf

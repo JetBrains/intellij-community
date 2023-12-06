@@ -64,20 +64,32 @@ private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : Asyn
   init {
     val pool = Foundation.NSAutoreleasePool()
     try {
-        val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSColorChangesObserver")
-        if (ID.NIL != delegateClass) {
-          if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleAppleThemeChanged:"), themeChangedCallback, "v@")) {
+      val selector = if (useAppearanceApi()) Foundation.createSelector("observeValueForKeyPath:ofObject:change:context:")
+      else Foundation.createSelector("handleAppleThemeChanged:")
+
+      val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSColorChangesObserver")
+
+      if (ID.NIL != delegateClass) {
+          if (!Foundation.addMethod(delegateClass, selector, themeChangedCallback, "v@")) {
             throw RuntimeException("Cannot add observer method")
           }
           Foundation.registerObjcClassPair(delegateClass)
         }
 
-        val delegate = Foundation.invoke("NSColorChangesObserver", "new")
+      val delegate = Foundation.invoke("NSColorChangesObserver", "new")
+
+      if (useAppearanceApi()) {
+        val app = Foundation.invoke("NSApplication", "sharedApplication")
+        Foundation.invoke(app, "addObserver:forKeyPath:options:context:", delegate, Foundation.nsString("effectiveAppearance"),
+                          0x01 /*NSKeyValueObservingOptionNew*/, ID.NIL)
+      }
+      else {
         Foundation.invoke(Foundation.invoke("NSDistributedNotificationCenter", "defaultCenter"), "addObserver:selector:name:object:",
                           delegate,
-                          Foundation.createSelector("handleAppleThemeChanged:"),
+                          selector,
                           Foundation.nsString("AppleInterfaceThemeChangedNotification"),
                           ID.NIL)
+      }
     }
     finally {
       pool.drain()
@@ -86,12 +98,16 @@ private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : Asyn
 
   override fun isDark(): Boolean {
     val pool = Foundation.NSAutoreleasePool()
-    try { // https://developer.apple.com/forums/thread/118974
+    try {
+      if (useAppearanceApi()) {
+        val app = Foundation.invoke("NSApplication", "sharedApplication")
+        val name = Foundation.toStringViaUTF8(Foundation.invoke(Foundation.invoke(app, "effectiveAppearance"), "name"))
+        return name?.equals("NSAppearanceNameDarkAqua") ?: false
+      }
+
+      // https://developer.apple.com/forums/thread/118974
       val userDefaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults")
       val appleInterfaceStyle = Foundation.toStringViaUTF8(Foundation.invoke(userDefaults, "objectForKey:", Foundation.nsString("AppleInterfaceStyle")))
-
-      //val autoMode = SystemInfo.isMacOSCatalina &&
-      //               Foundation.invoke(userDefaults, "boolForKey:", Foundation.nsString("AppleInterfaceStyleSwitchesAutomatically")).booleanValue()
 
       return appleInterfaceStyle?.toLowerCase()?.contains("dark") ?: false
     }
@@ -99,6 +115,8 @@ private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : Asyn
       pool.drain()
     }
   }
+
+  private fun useAppearanceApi() = SystemInfo.isMacOSCatalina && "system".equals(System.getProperty("apple.awt.application.appearance"), true)
 }
 
 private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {

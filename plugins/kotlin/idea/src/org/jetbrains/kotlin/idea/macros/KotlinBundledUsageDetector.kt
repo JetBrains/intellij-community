@@ -1,15 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.macros
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.messages.Topic
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
@@ -17,16 +21,18 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service(Service.Level.PROJECT)
-class KotlinBundledUsageDetector(private val project: Project) {
+class KotlinBundledUsageDetector(private val project: Project, private val cs: CoroutineScope) {
     private val isKotlinBundledFound = AtomicBoolean(false)
 
     private fun detected() {
         if (isKotlinBundledFound.compareAndSet(/* expectedValue = */ false, /* newValue = */ true)) {
-            project.messageBus.syncPublisher(TOPIC).kotlinBundledDetected()
+            cs.launch {
+                project.messageBus.syncPublisher(TOPIC).kotlinBundledDetected()
+            }
         }
     }
 
-    internal class ModelChangeListener(private val project: Project) : WorkspaceModelChangeListener {
+    internal class ModelChangeListener(private val project: Project, private val cs: CoroutineScope) : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
             val detectorService = project.detectorInstance
             if (detectorService.isKotlinBundledFound.get()) {
@@ -34,27 +40,34 @@ class KotlinBundledUsageDetector(private val project: Project) {
             }
 
             val changes = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
-            val isDistUsedInLibraries = changes.asSequence()
-                .mapNotNull { it.newEntity }
-                .flatMap { it.roots }
-                .any { it.url.url.isStartsWithDistPrefix }
 
-            if (isDistUsedInLibraries) {
-                detectorService.detected()
+            cs.launch {
+                val isDistUsedInLibraries = changes.asSequence()
+                    .mapNotNull { it.newEntity }
+                    .flatMap { it.roots }
+                    .any { it.url.url.isStartsWithDistPrefix }
+
+                if (isDistUsedInLibraries) {
+                    detectorService.detected()
+                }
             }
         }
     }
 
     internal class MyStartupActivity : ProjectActivity {
         override suspend fun execute(project: Project) {
-            var isUsed = false
-            project.forEachAllUsedLibraries { library ->
-                if (library.getUrls(OrderRootType.CLASSES).any(String::isStartsWithDistPrefix)) {
-                    isUsed = true
-                    return@forEachAllUsedLibraries false
-                }
+            val isUsed = readAction {
+                var used = false
+                project.forEachAllUsedLibraries { library ->
+                    ProgressManager.checkCanceled()
+                    if (library.getUrls(OrderRootType.CLASSES).any(String::isStartsWithDistPrefix)) {
+                        used = true
+                        return@forEachAllUsedLibraries false
+                    }
 
-                true
+                    true
+                }
+                used
             }
 
             if (isUsed) {
@@ -82,5 +95,11 @@ class KotlinBundledUsageDetector(private val project: Project) {
 
 private val Project.detectorInstance: KotlinBundledUsageDetector get() = service()
 
+private val kotlinDistLocationPrefixFileName by lazy {
+    KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.name
+}
+
 private val String.isStartsWithDistPrefix: Boolean
-    get() = File(JpsPathUtil.urlToPath(this)).startsWith(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX)
+    // greatly speed-up this lookup by checking whether it *COULD* be kotlin dist folder
+    get() = contains(kotlinDistLocationPrefixFileName) &&
+            File(JpsPathUtil.urlToPath(this)).startsWith(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX)

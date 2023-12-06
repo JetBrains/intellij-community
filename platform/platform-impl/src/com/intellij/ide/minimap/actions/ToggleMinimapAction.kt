@@ -7,12 +7,13 @@ import com.intellij.ide.minimap.utils.MiniMessagesBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareToggleAction
 
 class ToggleMinimapAction : DumbAwareToggleAction(MiniMessagesBundle.message("action.toggle"), null,
-                                                  AllIcons.Actions.Minimap), RightAlignedToolbarAction {
-  override fun isSelected(e: AnActionEvent) = MinimapSettings.getInstance().state.enabled
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+                                                  AllIcons.Actions.Minimap), RightAlignedToolbarAction, ActionRemoteBehaviorSpecification.Frontend {
+  override fun isSelected(e: AnActionEvent): Boolean = MinimapSettings.getInstance().state.enabled
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val settings = MinimapSettings.getInstance()
     settings.state.enabled = state

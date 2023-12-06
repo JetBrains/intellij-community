@@ -7,4 +7,5 @@ fun foo() {
     A() <caret>+ A()
 }
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.AddModifierFixFactory$createAction$1

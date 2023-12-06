@@ -27,6 +27,10 @@ public interface WindowWrapper extends Disposable {
   @NotNull
   Window getWindow();
 
+  default boolean isDisposed() {
+    return false;
+  }
+
   void setTitle(@Nullable String title);
 
   void setImages(@Nullable List<? extends Image> images);

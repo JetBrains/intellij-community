@@ -39,7 +39,6 @@ import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -55,7 +54,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
-import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
@@ -71,7 +69,7 @@ import java.util.function.BiConsumer;
 
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
   private static final Logger LOG = Logger.getInstance(MethodBreakpoint.class);
-  @Nullable protected JVMName mySignature;
+  protected @Nullable JVMName mySignature;
   protected boolean myIsStatic;
 
   public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
@@ -85,8 +83,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   @Override
-  @NotNull
-  public Key<MethodBreakpoint> getCategory() {
+  public @NotNull Key<MethodBreakpoint> getCategory() {
     return CATEGORY;
   }
 
@@ -190,7 +187,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                                                     @NotNull ReferenceType classType,
                                                     @NotNull ClassesByNameProvider classesByName,
                                                     boolean base) {
-    if (!MethodBreakpointBase.canBeEmulated(debugProcess)) {
+    if (breakpoint.isWatchExit() && !MethodBreakpointBase.canBeWatchExitEmulated(debugProcess)) {
       breakpoint.disableEmulation();
       return;
     }
@@ -215,41 +212,45 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         breakpoint.disableEmulation();
         return;
       }
+      else if (method.isAbstract()) {
+        continue;
+      }
+
       Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, classesByName);
-      if (target != null && !ContainerUtil.isEmpty(DebuggerUtilsEx.allLineLocations(target))) {
+      if (target != null) {
         method = target;
       }
 
-      List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
-      if (allLineLocations == null && !method.isBridge()) { // no line numbers
-        LOG.info("Breakpoint emulation was disabled because " + method + " contains no line info");
-        breakpoint.disableEmulation();
-        return;
+      if (breakpoint.isWatchEntry()) {
+        // We assume that all VMs start code indexes from zero.
+        Location location = new LocationCodeIndexOnly(method, 0);
+        createLocationBreakpointRequest(breakpoint, location, debugProcess, true);
       }
-      if (!ContainerUtil.isEmpty(allLineLocations)) {
-        if (breakpoint.isWatchEntry()) {
-          createLocationBreakpointRequest(breakpoint, ContainerUtil.getFirstItem(allLineLocations), debugProcess, true);
-        }
-        if (breakpoint.isWatchExit()) {
-          MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
-            int myLastLine = 0;
 
-            @Override
-            public void visitLineNumber(int line, Label start) {
-              myLastLine = line;
-            }
+      if (breakpoint.isWatchExit()) {
+        final Method finalMethod = method;
+        class BytecodeVisitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
+          private int bytecodeOffset = -1;
 
-            @Override
-            public void visitInsn(int opcode) {
-              switch (opcode) {
-                case Opcodes.RETURN, Opcodes.IRETURN, Opcodes.FRETURN, Opcodes.ARETURN, Opcodes.LRETURN, Opcodes.DRETURN ->
-                  allLineLocations.stream()
-                    .filter(l -> l.lineNumber() == myLastLine)
-                    .findFirst().ifPresent(location -> createLocationBreakpointRequest(breakpoint, location, debugProcess, false));
-              }
+          BytecodeVisitor() {
+            super(Opcodes.API_VERSION);
+          }
+
+          @Override
+          public void readBytecodeInstructionOffset(int offset) {
+            bytecodeOffset = offset;
+          }
+
+          @Override
+          public void visitInsn(int opcode) {
+            if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
+              assert bytecodeOffset >= 0;
+              Location location = new LocationCodeIndexOnly(finalMethod, bytecodeOffset);
+              createLocationBreakpointRequest(breakpoint, location, debugProcess, false);
             }
-          }, true);
+          }
         }
+        MethodBytecodeUtil.visit(method, new BytecodeVisitor(), false);
       }
     }
     if (base && found) {
@@ -278,55 +279,63 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
   }
 
-  private void createRequestForPreparedClassOriginal(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
+  /**
+   * Return `true` if the method has the same name and signature as the breakpoint.
+   */
+  protected boolean isMethodMatch(@NotNull Method method, @NotNull DebugProcessImpl debugProcess) {
     try {
-      boolean hasMethod = false;
-      for (Method method : classType.allMethods()) {
-        String signature = method.signature();
-        String name = method.name();
+      String name = getMethodName();
+      return
+        name != null && name.equals(method.name()) &&
+        mySignature != null && mySignature.getName(debugProcess).equals(method.signature());
+    }
+    catch (EvaluateException e) {
+      LOG.debug("Should not happen. mySignature is a JVMRawText and it doesn't throw", e);
+      return false;
+    }
+  }
 
-        if (getMethodName().equals(name) && mySignature.getName(debugProcess).equals(signature)) {
-          hasMethod = true;
-          break;
-        }
-      }
-
-      if (!hasMethod) {
-        debugProcess.getRequestsManager().setInvalid(
-          this, JavaDebuggerBundle.message("error.invalid.breakpoint.method.not.found", classType.name())
-        );
-        return;
-      }
-
-      RequestManagerImpl requestManager = debugProcess.getRequestsManager();
-      if (isWatchEntry()) {
-        MethodEntryRequest entryRequest = findRequest(debugProcess, MethodEntryRequest.class, this);
-        if (entryRequest == null) {
-          entryRequest = requestManager.createMethodEntryRequest(this);
-        }
-        else {
-          entryRequest.disable();
-        }
-        //entryRequest.addClassFilter(myClassQualifiedName);
-        // use addClassFilter(ReferenceType) in order to stop on subclasses also!
-        entryRequest.addClassFilter(classType);
-        debugProcess.getRequestsManager().enableRequest(entryRequest);
-      }
-      if (isWatchExit()) {
-        MethodExitRequest exitRequest = findRequest(debugProcess, MethodExitRequest.class, this);
-        if (exitRequest == null) {
-          exitRequest = requestManager.createMethodExitRequest(this);
-        }
-        else {
-          exitRequest.disable();
-        }
-        //exitRequest.addClassFilter(myClassQualifiedName);
-        exitRequest.addClassFilter(classType);
-        debugProcess.getRequestsManager().enableRequest(exitRequest);
+  private void createRequestForPreparedClassOriginal(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
+    boolean hasMethod = false;
+    for (Method method : classType.allMethods()) {
+      if (isMethodMatch(method, debugProcess)) {
+        hasMethod = true;
+        break;
       }
     }
-    catch (Exception e) {
-      LOG.debug(e);
+
+    if (!hasMethod) {
+      debugProcess.getRequestsManager().setInvalid(
+        this, JavaDebuggerBundle.message("error.invalid.breakpoint.method.not.found", classType.name())
+      );
+      return;
+    }
+
+    RequestManagerImpl requestManager = debugProcess.getRequestsManager();
+    if (isWatchEntry()) {
+      MethodEntryRequest entryRequest = findRequest(debugProcess, MethodEntryRequest.class, this);
+      if (entryRequest == null) {
+        entryRequest = requestManager.createMethodEntryRequest(this);
+      }
+      else {
+        entryRequest.disable();
+      }
+      //entryRequest.addClassFilter(myClassQualifiedName);
+      // use addClassFilter(ReferenceType) in order to stop on subclasses also!
+      entryRequest.addClassFilter(classType);
+      debugProcess.getRequestsManager().enableRequest(entryRequest);
+    }
+    if (isWatchExit()) {
+      MethodExitRequest exitRequest = findRequest(debugProcess, MethodExitRequest.class, this);
+      if (exitRequest == null) {
+        exitRequest = requestManager.createMethodExitRequest(this);
+      }
+      else {
+        exitRequest.disable();
+      }
+      //exitRequest.addClassFilter(myClassQualifiedName);
+      exitRequest.addClassFilter(classType);
+      debugProcess.getRequestsManager().enableRequest(exitRequest);
     }
   }
 
@@ -381,10 +390,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   @Override
-  @NotNull
-  protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint,
-                           AllIcons.General.WarningDecorator);
+  protected @NotNull Icon getVerifiedWarningsIcon(boolean isMuted) {
+    return LayeredIcon.layeredIcon(new Icon[]{isMuted ? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint,
+                               AllIcons.General.WarningDecorator});
   }
 
   @Override
@@ -392,7 +400,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     final @Nls StringBuilder buffer = new StringBuilder();
     if (isValid()) {
       final String className = getClassName();
-      final boolean classNameExists = className != null && className.length() > 0;
+      final boolean classNameExists = className != null && !className.isEmpty();
       if (classNameExists) {
         buffer.append(className);
       }
@@ -417,7 +425,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return super.evaluateCondition(context, event);
   }
 
-  public boolean matchesEvent(@NotNull final LocatableEvent event, final DebugProcessImpl process) throws EvaluateException {
+  public boolean matchesEvent(final @NotNull LocatableEvent event, final DebugProcessImpl process) {
     if (isEmulated()) {
       return true;
     }
@@ -425,11 +433,10 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       return false;
     }
     final Method method = event.location().method();
-    return method != null && method.name().equals(getMethodName()) && method.signature().equals(mySignature.getName(process));
+    return isMethodMatch(method, process);
   }
 
-  @Nullable
-  public static MethodBreakpoint create(@NotNull Project project, XBreakpoint xBreakpoint) {
+  public static @Nullable MethodBreakpoint create(@NotNull Project project, XBreakpoint xBreakpoint) {
     final MethodBreakpoint breakpoint = new MethodBreakpoint(project, xBreakpoint);
     return (MethodBreakpoint)breakpoint.init();
   }
@@ -442,9 +449,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   /**
    * finds FQ method's class name and method's signature
    */
-  @Nullable
-  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project, @NotNull final SourcePosition sourcePosition) {
-    Document document = PsiDocumentManager.getInstance(project).getDocument(sourcePosition.getFile());
+  private static @Nullable MethodDescriptor getMethodDescriptor(final @NotNull Project project, final @NotNull SourcePosition sourcePosition) {
+    Document document = sourcePosition.getFile().getViewProvider().getDocument();
     if (document == null) {
       return null;
     }
@@ -483,8 +489,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return descriptor;
   }
 
-  @Nullable
-  static <T extends EventRequest> T findRequest(@NotNull DebugProcessImpl debugProcess, Class<T> requestClass, Requestor requestor) {
+  static @Nullable <T extends EventRequest> T findRequest(@NotNull DebugProcessImpl debugProcess, Class<T> requestClass, Requestor requestor) {
     return StreamEx.of(debugProcess.getRequestsManager().findRequests(requestor)).select(requestClass).findFirst().orElse(null);
   }
 
@@ -530,8 +535,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return StreamEx.empty();
   }
 
-  @Nullable
-  private String getMethodName() {
+  protected @Nullable String getMethodName() {
     return getProperties().myMethodName;
   }
 
@@ -613,5 +617,101 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   private static void updateProgress(ProgressIndicator progressIndicator, int current, int total) {
     progressIndicator.setText2(current + "/" + total);
     progressIndicator.setFraction((double)current / total);
+  }
+
+  /**
+   * Optimized {@link Location} which should be used only to create breakpoint
+   * at known valid code index.
+   * <p/>
+   * The key difference with {@link com.jetbrains.jdi.ConcreteMethodImpl#locationOfCodeIndex(long)}
+   * is an absence of index validity checks, which normally would require to load line number information.
+   */
+  private static class LocationCodeIndexOnly implements Location {
+    private final Method method;
+    private final long codeIndex;
+
+    public LocationCodeIndexOnly(Method method, long codeIndex) {
+      assert !method.isNative() && !method.isAbstract();
+      assert codeIndex >= 0;
+
+      this.method = method;
+      this.codeIndex = codeIndex;
+    }
+
+    @Override
+    public VirtualMachine virtualMachine() {
+      return method.virtualMachine();
+    }
+
+    @Override
+    public ReferenceType declaringType() {
+      return method.declaringType();
+    }
+
+    @Override
+    public Method method() {
+      return method;
+    }
+
+    @Override
+    public long codeIndex() {
+      return codeIndex;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (this == other) return true;
+      if (other == null || getClass() != other.getClass()) return false;
+      LocationCodeIndexOnly that = (LocationCodeIndexOnly)other;
+      return this.codeIndex == that.codeIndex &&
+             this.method.equals(that.method);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(method, codeIndex);
+    }
+
+    @Override
+    public int compareTo(@NotNull Location that) {
+      // Same as in LocationImpl
+      int res = this.method().compareTo(that.method());
+      if (res != 0) {
+        return res;
+      }
+      return Long.compare(codeIndex(), that.codeIndex());
+    }
+
+    // region Absent information about source code
+    @Override
+    public int lineNumber() {
+      return -1;
+    }
+
+    @Override
+    public int lineNumber(String stratum) {
+      return -1;
+    }
+
+    @Override
+    public String sourceName() throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+
+    @Override
+    public String sourceName(String stratum) throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+
+    @Override
+    public String sourcePath() throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+
+    @Override
+    public String sourcePath(String stratum) throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+    // endregion
   }
 }

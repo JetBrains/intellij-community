@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.actions
 
@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThreeState
-import java.util.*
 
 class RemoveChangeListAction : AbstractChangeListAction() {
   private val LOG = logger<RemoveChangeListAction>()
@@ -59,7 +58,7 @@ class RemoveChangeListAction : AbstractChangeListAction() {
     val selectedLists = e.getRequiredData(VcsDataKeys.CHANGE_LISTS)
 
     @Suppress("UNCHECKED_CAST")
-    deleteLists(project, Arrays.asList(*selectedLists) as Collection<LocalChangeList>)
+    deleteLists(project, listOf(*selectedLists) as Collection<LocalChangeList>)
   }
 
   private fun deleteLists(project: Project, lists: Collection<LocalChangeList>) {

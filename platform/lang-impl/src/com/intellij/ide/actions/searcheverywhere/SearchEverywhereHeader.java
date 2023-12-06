@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -15,9 +15,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -38,8 +36,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.ContributorFilterCollector;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
 
-public class SearchEverywhereHeader {
-
+public final class SearchEverywhereHeader {
   private final @NotNull Runnable myScopeChangedCallback;
   private final Function<? super String, String> myShortcutSupplier;
 
@@ -67,10 +64,7 @@ public class SearchEverywhereHeader {
     myToolbar = createToolbar(showInFindToolWindowAction);
     header = ExperimentalUI.isNewUI() ? createNewUITabs() : createHeader();
 
-    MessageBusConnection busConnection = myProject != null
-                                         ? myProject.getMessageBus().connect(ui)
-                                         : ApplicationManager.getApplication().getMessageBus().connect(ui);
-    busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(ui).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
         if (action == mySelectedTab.everywhereAction && event.getInputEvent() != null) {
@@ -160,6 +154,10 @@ public class SearchEverywhereHeader {
         switchToTab(selectedTab);
         SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(
           myProject, SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(selectedTab.getReportableID()));
+        if (SearchEverywhereUI.isExtendedInfoEnabled()) {
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(SETabSwitcherListener.Companion.getSE_TAB_TOPIC())
+            .tabSwitched(new SETabSwitcherListener.SETabSwitchedEvent(selectedTab));
+        }
       }
     });
     myToolbar.setTargetComponent(newUIHeaderView.panel);
@@ -194,8 +192,9 @@ public class SearchEverywhereHeader {
   }
 
   private static PersistentSearchEverywhereContributorFilter<String> createContributorsFilter(List<? extends SearchEverywhereContributor<?>> contributors) {
-    Map<String, @Nls String> namesMap = ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(),
-                                                                                               c.getFullGroupName()));
+    Map<String, @Nls String> namesMap =
+      ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(), c.getFullGroupName()));
+
     return new PersistentSearchEverywhereContributorFilter<>(
       ContainerUtil.map(contributors, c -> c.getSearchProviderId()),
       SearchEverywhereConfiguration.getInstance(),
@@ -262,7 +261,7 @@ public class SearchEverywhereHeader {
   }
 
   public boolean canResetScope() {
-    return Boolean.TRUE.equals(ObjectUtils.doIfNotNull(mySelectedTab.everywhereAction, action -> !action.isEverywhere()));
+    return Boolean.TRUE.equals(mySelectedTab.everywhereAction == null ? null : !mySelectedTab.everywhereAction.isEverywhere());
   }
 
   public void resetScope() {
@@ -292,6 +291,7 @@ public class SearchEverywhereHeader {
     PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(contributors);
     List<AnAction> actions = Arrays.asList(new CheckBoxSearchEverywhereToggleAction(actionText) {
       final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
+
       @Override
       public boolean isEverywhere() {
         return seManager.isEverywhere();
@@ -307,13 +307,13 @@ public class SearchEverywhereHeader {
         });
         onChanged.run();
       }
-    }, new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
+    }, new PreviewAction(), new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
     return new SETab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
                      IdeBundle.message("searcheverywhere.allelements.tab.name"),
                      contributors, actions, filter);
   }
 
-  public static class SETab {
+  public static final class SETab {
     private final @NotNull @NonNls String id;
     private final @NlsContexts.Label @NotNull String name;
     private final @NotNull List<SearchEverywhereContributor<?>> contributors;
@@ -340,7 +340,7 @@ public class SearchEverywhereHeader {
       everywhereAction = (SearchEverywhereToggleAction)ContainerUtil.find(actions, o -> o instanceof SearchEverywhereToggleAction);
       myFilterToReset = actions.stream()
         .filter(a -> a instanceof SearchEverywhereFiltersAction)
-        .findAny().map(a -> ((SearchEverywhereFiltersAction) a).getFilter())
+        .findAny().map(a -> ((SearchEverywhereFiltersAction)a).getFilter())
         .orElse(null);
     }
 
@@ -390,7 +390,7 @@ public class SearchEverywhereHeader {
     }
   }
 
-  private static class SETabLabel extends JLabel {
+  private static final class SETabLabel extends JLabel {
 
     /**
      * Can be null while initialization

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -104,7 +104,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         }
       } else if (XsltSupport.isParam(attribute) && isInsideUnnamedTemplate(tag)) {
         final XsltParameter myParam = myXsltElementFactory.wrapElement(tag, XsltParameter.class);
-        psiReferences = new PsiReference[]{ new MySelfReference(attribute, myParam) };
+        psiReferences = new PsiReference[]{new MySelfReference(attribute, myParam)};
       } else if (XsltSupport.isVariableOrParamName(attribute) || XsltSupport.isTemplateName(attribute)) {
         final XsltElement myElement = myXsltElementFactory.wrapElement(tag, XsltElement.class);
         psiReferences = createReferencesWithPrefix(attribute, SelfReference.create(attribute, myElement));
@@ -150,7 +150,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       return psiReferences;
     }
 
-    private PsiReference[] createReferencesWithPrefix(XmlAttribute attribute, PsiReference reference) {
+    private static PsiReference[] createReferencesWithPrefix(XmlAttribute attribute, PsiReference reference) {
       if (attribute.getValue().contains(":")) {
         return new PsiReference[]{ new PrefixReference(attribute), reference };
       } else {
@@ -158,7 +158,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       }
     }
 
-    private class MySelfReference extends SelfReference {
+    private static class MySelfReference extends SelfReference {
       private final XsltParameter myParam;
       private final XmlTag myTag;
 

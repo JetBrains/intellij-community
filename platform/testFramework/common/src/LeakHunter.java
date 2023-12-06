@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.IdeEventQueue;
@@ -172,6 +172,8 @@ public final class LeakHunter {
       result+="\n  You can find a memory snapshot `"
         +TestApplicationKt.LEAKED_PROJECTS
         +".hproof.zip` in the \"Artifacts\" tab of the build run.";
+      result+="\n  If you suspect a particular test, you can reproduce the problem locally " +
+              "calling TestApplicationManager.testProjectLeak() after the test.";
     }
     else if (knownHeapDumpPath != null) {
       result += "\n  Please see ``" + knownHeapDumpPath + "` for a memory dump";

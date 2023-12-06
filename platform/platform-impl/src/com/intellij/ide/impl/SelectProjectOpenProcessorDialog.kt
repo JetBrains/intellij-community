@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
-import com.intellij.ide.environment.EnvironmentParametersService
+import com.intellij.ide.environment.EnvironmentService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -61,8 +61,8 @@ class SelectProjectOpenProcessorDialog(
       return when {
         app != null && app.isUnitTestMode -> testShowAndGetChoice(processors, file)
         else -> {
-          val environmentService = service<EnvironmentParametersService>()
-          val id = environmentService.requestEnvironmentValue(ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR)
+          val environmentService = service<EnvironmentService>()
+          val id = environmentService.getEnvironmentValue(ProjectOpenKeyProvider.Keys.PROJECT_OPEN_PROCESSOR)
           val processor = processors.find { it.name == id }
           if (processor != null) {
             return processor

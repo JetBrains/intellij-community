@@ -4,6 +4,7 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PyAnnotatingVisitor implements Annotator {
+public class PyAnnotatingVisitor implements Annotator, DumbAware {
   private static final Logger LOGGER = Logger.getInstance(PyAnnotatingVisitor.class.getName());
   private static final Class[] ANNOTATOR_CLASSES = new Class[] {
     AssignTargetAnnotator.class,
@@ -26,7 +27,8 @@ public class PyAnnotatingVisitor implements Annotator {
     GlobalAnnotator.class,
     ImportAnnotator.class,
     PyBuiltinAnnotator.class,
-    UnsupportedFeatures.class
+    UnsupportedFeatures.class,
+    PyAsyncAwaitAnnotator.class
   };
 
   private final PyAnnotator[] myAnnotators;

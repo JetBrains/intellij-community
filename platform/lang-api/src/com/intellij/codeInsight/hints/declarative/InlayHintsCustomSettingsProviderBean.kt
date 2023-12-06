@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 
 class InlayHintsCustomSettingsProviderBean : CustomLoadingExtensionPointBean<InlayHintsCustomSettingsProvider<*>>() {
   companion object {
-    val EP: ExtensionPointName<InlayHintsCustomSettingsProviderBean> = ExtensionPointName<InlayHintsCustomSettingsProviderBean>(
+    val EP: ExtensionPointName<InlayHintsCustomSettingsProviderBean> = ExtensionPointName(
       "com.intellij.codeInsight.declarativeInlayProviderCustomSettingsProvider")
   }
 

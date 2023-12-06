@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -27,7 +27,7 @@ import java.util.*;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsProvider.EXTENSION_POINT_NAME;
 
-public class CodeStyleSettingsCodeFragmentFilter {
+public final class CodeStyleSettingsCodeFragmentFilter {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsCodeFragmentFilter.class);
 
   private final Project myProject;
@@ -48,17 +48,15 @@ public class CodeStyleSettingsCodeFragmentFilter {
     myTextRangeMarker = myDocument.createRangeMarker(range.getStartOffset(), range.getEndOffset());
   }
 
-  @NotNull
-  public CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
+  public @NotNull CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
     Ref<CodeStyleSettingsToShow> settingsToShow = new Ref<>();
-    CodeStyle.doWithTemporarySettings(myProject,
-                                      CodeStyle.getSettings(myFile),
-                                      tempSettings -> settingsToShow.set(computeFieldsWithTempSettings(tempSettings, types)));
+    CodeStyle.runWithLocalSettings(myProject,
+                                   CodeStyle.getSettings(myFile),
+                                   tempSettings -> settingsToShow.set(computeFieldsWithTempSettings(tempSettings, types)));
     return settingsToShow.get();
   }
 
-  @NotNull
-  private CodeStyleSettingsToShow computeFieldsWithTempSettings(@NotNull CodeStyleSettings tempSettings, LanguageCodeStyleSettingsProvider.SettingsType @NotNull [] types) {
+  private @NotNull CodeStyleSettingsToShow computeFieldsWithTempSettings(@NotNull CodeStyleSettings tempSettings, LanguageCodeStyleSettingsProvider.SettingsType @NotNull [] types) {
     CommonCodeStyleSettings commonSettings = tempSettings.getCommonSettings(myProvider.getLanguage());
     CustomCodeStyleSettings customSettings = getCustomSettings(myProvider, tempSettings);
 
@@ -100,9 +98,8 @@ public class CodeStyleSettingsCodeFragmentFilter {
     };
   }
 
-  @Nullable
-  private static CustomCodeStyleSettings getCustomSettings(@NotNull LanguageCodeStyleSettingsProvider languageProvider,
-                                                           @NotNull CodeStyleSettings tempSettings) {
+  private static @Nullable CustomCodeStyleSettings getCustomSettings(@NotNull LanguageCodeStyleSettingsProvider languageProvider,
+                                                                     @NotNull CodeStyleSettings tempSettings) {
     CustomCodeStyleSettings fromLanguageProvider = getCustomSettingsFromProvider(languageProvider, tempSettings);
     if (fromLanguageProvider != null) {
       return fromLanguageProvider;
@@ -118,9 +115,8 @@ public class CodeStyleSettingsCodeFragmentFilter {
     return null;
   }
 
-  @Nullable
-  private static CustomCodeStyleSettings getCustomSettingsFromProvider(@NotNull CodeStyleSettingsProvider languageProvider,
-                                                                       @NotNull CodeStyleSettings tempSettings) {
+  private static @Nullable CustomCodeStyleSettings getCustomSettingsFromProvider(@NotNull CodeStyleSettingsProvider languageProvider,
+                                                                                 @NotNull CodeStyleSettings tempSettings) {
     CustomCodeStyleSettings modelSettings = languageProvider.createCustomSettings(tempSettings);
     return modelSettings != null ? tempSettings.getCustomSettings(modelSettings.getClass()) : null;
   }
@@ -142,14 +138,14 @@ public class CodeStyleSettingsCodeFragmentFilter {
     }
   }
 
-  private class FilterFieldsTask implements SequentialTaskWithFixedIterationsNumber {
+  private final class FilterFieldsTask implements SequentialTaskWithFixedIterationsNumber {
     private final Iterator<String> myIterator;
     private final int myTotalFieldsNumber;
     private final Collection<String> myAllFields;
 
     private List<String> myAffectingFields = new ArrayList<>();
     private final Object myCommonSettings;
-    @Nullable private final CustomCodeStyleSettings myCustomSettings;
+    private final @Nullable CustomCodeStyleSettings myCustomSettings;
 
     FilterFieldsTask(@NotNull CommonCodeStyleSettings commonSettings,
                      @Nullable CustomCodeStyleSettings customSettings,
@@ -220,7 +216,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
       }
     }
 
-    private int getNewIntValue(Field classField, int oldValue) {
+    private static int getNewIntValue(Field classField, int oldValue) {
       String fieldName = classField.getName();
       if (fieldName.contains("WRAP")) {
         return oldValue == CommonCodeStyleSettings.WRAP_ALWAYS
@@ -253,7 +249,7 @@ interface SequentialTaskWithFixedIterationsNumber extends SequentialTask {
   int getTotalIterationsNumber();
 }
 
-class CompositeSequentialTask implements SequentialTask {
+final class CompositeSequentialTask implements SequentialTask {
   private final List<SequentialTaskWithFixedIterationsNumber> myUnfinishedTasks = new ArrayList<>();
   private SequentialTask myCurrentTask = null;
 

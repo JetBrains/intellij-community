@@ -47,7 +47,7 @@
           "$ref": "#/definitions/css"
         },
         "js": {
-          "$ref": "#/definitions/js"
+          "$ref": "#/definitions/js-global"
         }
       },
       "additionalProperties": false
@@ -326,8 +326,20 @@
         "source": {
           "$ref": "#/definitions/source"
         },
+        "since": {
+          "$ref": "#/definitions/since"
+        },
         "deprecated": {
           "$ref": "#/definitions/deprecated"
+        },
+        "deprecated-since": {
+          "$ref": "#/definitions/deprecated-since"
+        },
+        "obsolete": {
+          "$ref": "#/definitions/obsolete"
+        },
+        "obsolete-since": {
+          "$ref": "#/definitions/obsolete-since"
         },
         "experimental": {
           "$ref": "#/definitions/experimental"
@@ -448,7 +460,7 @@
       "oneOf": [
         {
           "type": "string",
-          "description": "Provide one of special attribute value types:  \"enum\", \"of-match\", or a simple JavaScript type according to the specified type format."
+          "description": "Provide one of special attribute value types:  \"enum\", \"symbol\", \"of-match\", or a simple JavaScript type according to the specified type format."
         },
         {
           "$ref": "#/definitions/type-reference"
@@ -735,12 +747,40 @@
     "required": {
       "type": "boolean"
     },
+    "since": {
+      "description": "Version since this symbol is available.",
+      "type": "string"
+    },
     "deprecated": {
-      "type": "boolean",
+      "description": "Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.",
+      "type": [
+        "boolean",
+        "string"
+      ],
       "default": false
     },
+    "deprecated-since": {
+      "description": "Version in which this symbol was first deprecated.",
+      "type": "string"
+    },
+    "obsolete": {
+      "description": "Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.",
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "default": false
+    },
+    "obsolete-since": {
+      "description": "Version in which this symbol was first made obsolete.",
+      "type": "string"
+    },
     "experimental": {
-      "type": "boolean",
+      "description": "Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.",
+      "type": [
+        "boolean",
+        "string"
+      ],
       "default": false
     },
     "pattern": {
@@ -976,6 +1016,13 @@
           "items": {
             "$ref": "#/definitions/css-generic-item"
           }
+        },
+        "parts": {
+          "description": "CSS parts",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/css-generic-item"
+          }
         }
       },
       "patternProperties": {
@@ -1030,7 +1077,7 @@
     },
     "css": {
       "type": "object",
-      "description": "Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.",
+      "description": "Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.",
       "allOf": [
         {
           "$ref": "#/definitions/css-contributions-host"
@@ -1118,9 +1165,16 @@
         "properties": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/generic-js-contribution"
+            "$ref": "#/definitions/js-property"
           },
           "description": "JavaScript properties of an object, HTML tag, framework component, etc."
+        },
+        "symbols": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/js-symbol"
+          },
+          "description": "Symbols available for JavaScript resolve. TypeScript resolve is not supported."
         }
       },
       "patternProperties": {
@@ -1173,6 +1227,31 @@
         }
       ]
     },
+    "js-global": {
+      "type": "object",
+      "description": "Contains contributions to JS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - properties and events, but only events can be contributed globally.",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/generic-js-contribution"
+          },
+          "description": "DOM events"
+        },
+        "symbols": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/js-symbol"
+          },
+          "description": "Globally available symbols for JavaScript resolve. TypeScript resolve is not supported. Please note that these symbols will override any normally available global JavaScript symbols."
+        }
+      },
+      "patternProperties": {
+        "^(?!pattern$).*$": {
+          "$ref": "#/definitions/generic-js-contributions"
+        }
+      }
+    },
     "js": {
       "type": "object",
       "description": "Contains contributions to JS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - properties and events.",
@@ -1181,6 +1260,50 @@
           "$ref": "#/definitions/js-contributions-host"
         }
       ]
+    },
+    "js-property": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/definitions/base-contribution"
+        },
+        {
+          "$ref": "#/definitions/js-contributions-host"
+        }
+      ],
+      "properties": {
+        "read-only": {
+          "description": "Specifies whether the property is read only.",
+          "type": "boolean"
+        }
+      }
+    },
+    "js-symbol": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/definitions/base-contribution"
+        },
+        {
+          "$ref": "#/definitions/js-contributions-host"
+        }
+      ],
+      "properties": {
+        "kind": {
+          "description": "Kind of the symbol. Default is variable.",
+          "type": "string",
+          "enum": [
+            "Variable",
+            "Function",
+            "Namespace",
+            "Class",
+            "Interface",
+            "Enum",
+            "Alias",
+            "Module"
+          ]
+        }
+      }
     },
     "deprecated-types-syntax": {
       "oneOf": [

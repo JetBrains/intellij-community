@@ -7,6 +7,8 @@ import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -252,7 +254,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     return ExpressionUtils.isSafelyRecomputableExpression(expression) || LambdaGenerationUtil.canBeUncheckedLambda(expression);
   }
 
-  static class OptionalIsPresentFix implements LocalQuickFix {
+  static class OptionalIsPresentFix extends PsiUpdateModCommandQuickFix {
     private final OptionalIsPresentCase myScenario;
 
     OptionalIsPresentFix(OptionalIsPresentCase scenario) {
@@ -267,8 +269,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiExpression condition)) return;
       PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
       if (optionalRef == null) return;
@@ -276,13 +277,13 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       PsiElement thenElement;
       PsiElement elseElement;
       boolean invert = isEmptyCheck(condition);
-      if (cond instanceof PsiIfStatement) {
-        thenElement = extractThenStatement((PsiIfStatement)cond, invert);
-        elseElement = extractElseStatement((PsiIfStatement)cond, invert);
+      if (cond instanceof PsiIfStatement ifStatement) {
+        thenElement = extractThenStatement(ifStatement, invert);
+        elseElement = extractElseStatement(ifStatement, invert);
       }
-      else if (cond instanceof PsiConditionalExpression) {
-        thenElement = invert ? ((PsiConditionalExpression)cond).getElseExpression() : ((PsiConditionalExpression)cond).getThenExpression();
-        elseElement = invert ? ((PsiConditionalExpression)cond).getThenExpression() : ((PsiConditionalExpression)cond).getElseExpression();
+      else if (cond instanceof PsiConditionalExpression ternary) {
+        thenElement = invert ? ternary.getElseExpression() : ternary.getThenExpression();
+        elseElement = invert ? ternary.getThenExpression() : ternary.getElseExpression();
       }
       else {
         return;
@@ -310,9 +311,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalRef,
                                         @Nullable PsiElement trueElement,
                                         @Nullable PsiElement falseElement) {
-        if (!(trueElement instanceof PsiReturnStatement) || !(falseElement instanceof PsiReturnStatement)) return ProblemType.NONE;
-        PsiExpression falseValue = ((PsiReturnStatement)falseElement).getReturnValue();
-        PsiExpression trueValue = ((PsiReturnStatement)trueElement).getReturnValue();
+        if (!(trueElement instanceof PsiReturnStatement trueReturn) || !(falseElement instanceof PsiReturnStatement falseReturn)) return ProblemType.NONE;
+        PsiExpression falseValue = falseReturn.getReturnValue();
+        PsiExpression trueValue = trueReturn.getReturnValue();
         if (!isSimpleOrUnchecked(falseValue)) return ProblemType.NONE;
         return getTypeByLambdaCandidate(optionalRef, trueValue, falseValue);
       }

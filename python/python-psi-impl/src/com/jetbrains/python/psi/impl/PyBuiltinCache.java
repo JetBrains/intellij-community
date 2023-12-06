@@ -176,7 +176,11 @@ public class PyBuiltinCache {
         }
       }
       final List<PyType> literalCollectionType = PyCollectionTypeUtil.INSTANCE.getTypeByModifications(sequence, context);
-      return new PyCollectionTypeImpl(cls, false, literalCollectionType);
+      return new PyCollectionTypeImpl(cls, false,
+                                      ContainerUtil.map(literalCollectionType,
+                                                        type -> type instanceof PyLiteralStringType
+                                                                ? new PyClassTypeImpl(((PyLiteralStringType)type).getCls(), false)
+                                                                : type));
     }
     return null;
   }

@@ -18,8 +18,7 @@ class RegisteredFindersTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testKnownNonClasspathFinder() {
         val expectedFindersNames = setOf(
-            "GantClassFinder",
-            "KotlinScriptDependenciesClassFinder"
+            "GantClassFinder"
         ).toMutableSet()
 
         val optionalFindersNames = setOf(

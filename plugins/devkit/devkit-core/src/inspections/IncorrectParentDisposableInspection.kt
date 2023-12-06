@@ -17,7 +17,7 @@ import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-class IncorrectParentDisposableInspection : DevKitUastInspectionBase() {
+internal class IncorrectParentDisposableInspection : DevKitUastInspectionBase() {
 
   override fun isAllowed(holder: ProblemsHolder): Boolean = DevKitInspectionUtil.isAllowedInPluginsOnly(holder.file)
 
@@ -44,13 +44,15 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase() {
 
       val project = argumentType.project
       val facade = JavaPsiFacade.getInstance(project)
+      val callSiteResolveScope = holder.file.resolveScope
+
       @NlsSafe val typeName: String? =
         when {
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Project::class.java.name, psiMethod.resolveScope),
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Project::class.java.name, callSiteResolveScope),
                                             true) -> "Project"
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Application::class.java.name, psiMethod.resolveScope),
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Application::class.java.name, callSiteResolveScope),
                                             true) -> "Application"
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Module::class.java.name, psiMethod.resolveScope),
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Module::class.java.name, callSiteResolveScope),
                                             true) -> "Module"
           else -> null
         }

@@ -42,7 +42,7 @@ public class VcsLogImpl implements VcsLog {
 
   @Override
   public void requestSelectedDetails(@NotNull Consumer<? super List<? extends VcsFullCommitDetails>> consumer) {
-    getTable().getSelection().requestFullDetails(consumer);
+    getTable().getSelection().requestFullDetails(consumer::consume);
   }
 
   @Override

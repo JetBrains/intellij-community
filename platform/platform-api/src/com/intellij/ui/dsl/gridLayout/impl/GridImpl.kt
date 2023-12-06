@@ -17,11 +17,11 @@ import kotlin.math.min
 @ApiStatus.Internal
 internal class GridImpl : Grid {
 
-  override val resizableColumns = mutableSetOf<Int>()
-  override val resizableRows = mutableSetOf<Int>()
+  override val resizableColumns: MutableSet<Int> = mutableSetOf()
+  override val resizableRows: MutableSet<Int> = mutableSetOf()
 
-  override val columnsGaps = mutableListOf<UnscaledGapsX>()
-  override val rowsGaps = mutableListOf<UnscaledGapsY>()
+  override val columnsGaps: MutableList<UnscaledGapsX> = mutableListOf()
+  override val rowsGaps: MutableList<UnscaledGapsY> = mutableListOf()
 
   val visible: Boolean
     get() = cells.any { it.visible }
@@ -366,20 +366,31 @@ internal class GridImpl : Grid {
   }
 
   fun getConstraints(component: JComponent): Constraints? {
-    for (cell in cells) {
-      when(cell) {
-        is ComponentCell -> {
-          if (cell.component == component) {
-            return cell.constraints
-          }
-        }
+    return recurseFind(onGrid = { null },
+                       onCell = { componentCell -> if (componentCell.component === component) componentCell.constraints else null })
+  }
 
+  fun getConstraints(grid: Grid): Constraints? {
+    return recurseFind(onGrid = { gridCell -> if (gridCell.content === grid) gridCell.constraints else null },
+                       onCell = { null })
+  }
+
+  private fun <T> recurseFind(onGrid: (GridCell) -> T?, onCell: (ComponentCell) -> T?): T? {
+    for (cell in cells) {
+      var result: T?
+      when (cell) {
+        is ComponentCell -> {
+          result = onCell(cell)
+        }
         is GridCell -> {
-          val constraints = cell.content.getConstraints(component)
-          if (constraints != null) {
-            return constraints
+          result = onGrid(cell)
+          if (result == null) {
+            result = cell.content.recurseFind(onGrid, onCell)
           }
         }
+      }
+      if (result != null) {
+        return result
       }
     }
     return null
@@ -641,7 +652,7 @@ internal class PreCalculationData(val minimumSize: Dimension, val preferredSize:
   /**
    * Preferred size based on minimum/preferred sizes and size groups
    */
-  var calculatedPreferredSize = Dimension(max(minimumSize.width, preferredSize.width), max(minimumSize.height, preferredSize.height))
+  var calculatedPreferredSize: Dimension = Dimension(max(minimumSize.width, preferredSize.width), max(minimumSize.height, preferredSize.height))
 }
 
 @ApiStatus.Internal

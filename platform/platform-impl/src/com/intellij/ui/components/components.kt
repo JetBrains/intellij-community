@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.asBrowseFolderDescriptor
 import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType
 import com.intellij.openapi.ui.ex.MultiLineLabel
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
-import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.asBrowseFolderDescriptor
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
@@ -33,11 +33,11 @@ import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
 
-fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false) =
+fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false): JLabel =
   Label(text, style, fontColor, bold, null)
 
 fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false, font: Font? = null): JLabel {
-  val finalText = BundleBase.replaceMnemonicAmpersand(text)
+  val finalText = BundleBase.replaceMnemonicAmpersand(text)!!
   val label: JLabel
   if (fontColor == null) {
     label = if (finalText.contains('\n')) MultiLineLabel(finalText) else JLabel(finalText)
@@ -167,7 +167,7 @@ fun dialog(@DialogTitle title: String,
   return object : MyDialogWrapper(project, parent, modality) {
     init {
       setTitle(title)
-      setResizable(resizable)
+      isResizable = resizable
 
       if (!okActionEnabled) {
         this.okAction.isEnabled = false

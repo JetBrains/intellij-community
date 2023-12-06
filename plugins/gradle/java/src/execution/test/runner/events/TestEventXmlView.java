@@ -75,6 +75,9 @@ public interface TestEventXmlView {
   String getEventTestResultFailureType() throws XmlParserException;
 
   @NotNull
+  String getEventTestResultExceptionName() throws XmlParserException;
+
+  @NotNull
   String getEventTestResultStackTrace() throws XmlParserException;
 
   @NotNull

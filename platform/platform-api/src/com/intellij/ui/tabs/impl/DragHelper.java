@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -31,7 +31,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   private TabInfo myDragSource;
   private Rectangle myDragOriginalRec;
 
-  Rectangle myDragRec;
+  Rectangle dragRec;
   private Dimension myHoldDelta;
 
   private TabInfo myDragOutSource;
@@ -49,7 +49,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
       return false;
     }
 
-    TabLabel label = myTabs.myInfo2Label.get(myDragSource);
+    TabLabel label = myTabs.getInfoToLabel().get(myDragSource);
     if (label == null) {
       return false;
     }
@@ -62,6 +62,12 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   @Override
   protected void processDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint, boolean justStarted) {
+    if (!MouseDragHelper.checkModifiers(event)) {
+      if (myDragOutSource != null) {
+        processDragOutCancel();
+      }
+      return;
+    }
     TabInfo.DragOutDelegate delegate = myDragOutSource.getDragOutDelegate();
     if (justStarted) {
       delegate.dragOutStarted(event, myDragOutSource);
@@ -72,12 +78,20 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   @Override
   protected void processDragOutFinish(@NotNull MouseEvent event) {
+    if (!MouseDragHelper.checkModifiers(event)) {
+      if (myDragOutSource != null) {
+        processDragOutCancel();
+      }
+      return;
+    }
     super.processDragOutFinish(event);
     boolean wasSorted = prepareDisableSorting();
     try {
       myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragOutSource);
-    } finally {
+    }
+    finally {
       disableSortingIfNeed(event, wasSorted);
+      myDragOutSource = null;
     }
   }
 
@@ -121,6 +135,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   @Override
   protected void processDragOutCancel() {
     myDragOutSource.getDragOutDelegate().dragOutCancelled(myDragOutSource);
+    myDragOutSource = null;
   }
 
   @Override
@@ -145,8 +160,8 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
       myHoldDelta = new Dimension(startPointScreen.x - labelBounds.x, startPointScreen.y - labelBounds.y);
       myDragSource = pressedTabLabel.getInfo();
-      myDragRec = new Rectangle(startPointScreen, labelBounds.getSize());
-      myDragOriginalRec = (Rectangle)myDragRec.clone();
+      dragRec = new Rectangle(startPointScreen, labelBounds.getSize());
+      myDragOriginalRec = (Rectangle)dragRec.clone();
 
       myDragOriginalRec.x -= myHoldDelta.width;
       myDragOriginalRec.y -= myHoldDelta.height;
@@ -157,27 +172,27 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
       }
     }
     else {
-      if (myDragRec == null) return;
+      if (dragRec == null) return;
 
       final Point toPoint = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), myTabs);
 
-      myDragRec.x = toPoint.x;
-      myDragRec.y = toPoint.y;
+      dragRec.x = toPoint.x;
+      dragRec.y = toPoint.y;
     }
 
-    myDragRec.x -= myHoldDelta.width;
-    myDragRec.y -= myHoldDelta.height;
+    dragRec.x -= myHoldDelta.width;
+    dragRec.y -= myHoldDelta.height;
 
     final Rectangle headerRec = myTabs.getLastLayoutPass().getHeaderRectangle();
-    ScreenUtil.moveToFit(myDragRec, headerRec, null);
+    ScreenUtil.moveToFit(dragRec, headerRec, null);
 
     int deadZoneX = 0;
     int deadZoneY = 0;
 
-    final TabLabel top = findLabel(new Point(myDragRec.x + myDragRec.width / 2, myDragRec.y + deadZoneY));
-    final TabLabel bottom = findLabel(new Point(myDragRec.x + myDragRec.width / 2, myDragRec.y + myDragRec.height - deadZoneY));
-    final TabLabel left = findLabel(new Point(myDragRec.x + deadZoneX, myDragRec.y + myDragRec.height / 2));
-    final TabLabel right = findLabel(new Point(myDragRec.x + myDragRec.width - deadZoneX, myDragRec.y + myDragRec.height / 2));
+    final TabLabel top = findLabel(new Point(dragRec.x + dragRec.width / 2, dragRec.y + deadZoneY));
+    final TabLabel bottom = findLabel(new Point(dragRec.x + dragRec.width / 2, dragRec.y + dragRec.height - deadZoneY));
+    final TabLabel left = findLabel(new Point(dragRec.x + deadZoneX, dragRec.y + dragRec.height / 2));
+    final TabLabel right = findLabel(new Point(dragRec.x + dragRec.width - deadZoneX, dragRec.y + dragRec.height / 2));
 
 
     TabLabel targetLabel;
@@ -194,11 +209,11 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
     }
 
     if (targetLabel != null) {
-      Rectangle saved = myDragRec;
-      myDragRec = null;
+      Rectangle saved = dragRec;
+      dragRec = null;
       myTabs.reallocate(myDragSource, targetLabel.getInfo());
-      myDragOriginalRec = myTabs.myInfo2Label.get(myDragSource).getBounds();
-      myDragRec = saved;
+      myDragOriginalRec = myTabs.getInfoToLabel().get(myDragSource).getBounds();
+      dragRec = saved;
       myTabs.moveDraggedTabLabel();
     } else {
       myTabs.moveDraggedTabLabel();
@@ -223,11 +238,11 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   private TabLabel findMostOverlapping(Axis measurer, TabLabel... labels) {
     double freeSpace;
 
-    if (measurer.getMinValue(myDragRec) < measurer.getMinValue(myDragOriginalRec)) {
-      freeSpace = measurer.getMaxValue(myDragOriginalRec) - measurer.getMaxValue(myDragRec);
+    if (measurer.getMinValue(dragRec) < measurer.getMinValue(myDragOriginalRec)) {
+      freeSpace = measurer.getMaxValue(myDragOriginalRec) - measurer.getMaxValue(dragRec);
     }
     else {
-      freeSpace = measurer.getMinValue(myDragRec) - measurer.getMinValue(myDragOriginalRec);
+      freeSpace = measurer.getMinValue(dragRec) - measurer.getMinValue(myDragOriginalRec);
     }
 
 
@@ -239,7 +254,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
       final Rectangle eachBounds = each.getBounds();
       if (measurer.getSize(eachBounds) > freeSpace + freeSpace *0.3) continue;
 
-      Rectangle intersection = myDragRec.intersection(eachBounds);
+      Rectangle intersection = dragRec.intersection(eachBounds);
       int size = intersection.width * intersection.height;
       if (size > max) {
         max = size;
@@ -251,8 +266,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   }
 
 
-  @Nullable
-  private TabLabel findLabel(Point dragPoint) {
+  private @Nullable TabLabel findLabel(Point dragPoint) {
     final Component at = myTabs.findComponentAt(dragPoint);
     if (at instanceof InplaceButton) return null;
     final TabLabel label = findLabel(at);
@@ -261,8 +275,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   }
 
-  @Nullable
-  private TabLabel findLabel(Component c) {
+  private @Nullable TabLabel findLabel(Component c) {
     Component eachParent = c;
     while (eachParent != null && eachParent != myTabs) {
       if (eachParent instanceof TabLabel) return (TabLabel)eachParent;
@@ -291,10 +304,14 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   @Override
   protected void processDragFinish(@NotNull MouseEvent event, boolean willDragOutStart) {
+    boolean checkModifiers = MouseDragHelper.checkModifiers(event);
+    if (!checkModifiers && myDragSource == null) {
+      return;
+    }
     super.processDragFinish(event, willDragOutStart);
     boolean wasSorted = !willDragOutStart && prepareDisableSorting();
     try {
-      endDrag(willDragOutStart);
+      endDrag(willDragOutStart && checkModifiers);
     } finally {
       disableSortingIfNeed(event, wasSorted);
     }
@@ -313,13 +330,15 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
     myTabs.revalidate();
 
-    TabInfo.DragDelegate delegate = myDragSource.getDragDelegate();
-    if (delegate != null) {
-      delegate.dragFinishedOrCanceled();
+    if (myDragSource != null) {
+      TabInfo.DragDelegate delegate = myDragSource.getDragDelegate();
+      if (delegate != null) {
+        delegate.dragFinishedOrCanceled();
+      }
     }
 
     myDragSource = null;
-    myDragRec = null;
+    dragRec = null;
   }
 
   @Override

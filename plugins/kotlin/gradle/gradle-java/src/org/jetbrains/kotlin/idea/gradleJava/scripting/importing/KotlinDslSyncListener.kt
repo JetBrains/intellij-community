@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
@@ -50,8 +49,7 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
         val project = id.findProject() ?: return
 
         if (sync.gradleHome == null) {
-            sync.gradleHome = ServiceManager
-                .getService(GradleInstallationManager::class.java)
+            sync.gradleHome = GradleInstallationManager.getInstance()
                 .getGradleHome(project, sync.workingDir)
                 ?.path
         }

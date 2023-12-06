@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
-import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.LanguageLevelModuleExtension
@@ -19,22 +18,10 @@ import kotlin.test.assertNotNull as assertNotNullK
 import kotlin.test.assertNull as assertNullK
 
 @RunWith(JUnit4::class)
-class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR_WITH_KOTLIN
-
+class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectionTestCase() {
   @Before
   fun initInspection() {
-    @Suppress("UNCHECKED_CAST")
-    myFixture.enableInspections(
-      Class.forName("org.jetbrains.idea.devkit.kotlin.inspections.ForbiddenInSuspectContextMethodInspection") as Class<LocalInspectionTool>
-    )
-
-    myFixture.addClass("""
-      package com.intellij.util.concurrency.annotations;
-      
-      
-      public @interface RequiresBlockingContext {}
-    """.trimIndent())
+    myFixture.enableInspections(ForbiddenInSuspectContextMethodInspection::class.java)
   }
 
   private val progressManagerDescr = "Do not call 'ProgressManager.checkCanceled' in suspend context. Use top-level 'checkCancelled' function"
@@ -736,7 +723,44 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
     """.trimIndent())
   }
 
-  private fun addApplicationAndEtc() {
+  @Test
+  fun `call as parameter should be checked`() {
+    myFixture.configureByText("file.kt", """
+      import com.intellij.util.concurrency.annotations.*
+      
+      @RequiresBlockingContext
+      fun a(): Int {
+        return 10
+      }
+      
+      fun b(a: Int) {
+        println(a)
+      }
+      
+      suspend fun c() {
+        b(<warning descr="Method 'a' annotated with @RequiresBlockingContext. It is not designed to be called in suspend functions">a</warning>())
+      }
+    """.trimIndent())
+
+    myFixture.testHighlighting()
+  }
+}
+
+@RunWith(JUnit4::class)
+abstract class KtBlockingContextInspectionTestCase : LightJavaCodeInsightFixtureTestCase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR_WITH_KOTLIN
+
+  @Before
+  fun addAnnotation() {
+    myFixture.addClass("""
+      package com.intellij.util.concurrency.annotations;
+      
+      
+      public @interface RequiresBlockingContext {}
+    """.trimIndent())
+  }
+
+  protected fun addApplicationAndEtc() {
     myFixture.addClass("""
         package com.intellij.openapi.progress;
         
@@ -804,7 +828,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
     """.trimIndent())
   }
 
-  private fun addCheckCanceledFunctions() {
+  protected fun addCheckCanceledFunctions() {
     myFixture.addClass("""
       package com.intellij.openapi.progress;
       

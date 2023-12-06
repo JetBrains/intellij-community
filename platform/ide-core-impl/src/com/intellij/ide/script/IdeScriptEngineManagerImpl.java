@@ -10,10 +10,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClassLoaderUtil;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EDT;
@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentMap;
 final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static final Logger LOG = Logger.getInstance(IdeScriptEngineManagerImpl.class);
 
-  private final ClearableLazyValue<Map<EngineInfo, ScriptEngineFactory>> myFactories = ClearableLazyValue.createAtomic(() -> {
+  private final SynchronizedClearableLazy<Map<EngineInfo, ScriptEngineFactory>> myFactories = new SynchronizedClearableLazy(() -> {
     long start = System.nanoTime();
     Map<EngineInfo, ScriptEngineFactory> map = calcFactories();
     LOG.info(TimeoutUtil.getDurationMillis(start) + " ms to enumerate javax.scripting engines on " +
@@ -252,7 +252,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     }
   }
 
-  static class AllPluginsLoader extends ClassLoader {
+  static final class AllPluginsLoader extends ClassLoader {
     static final AllPluginsLoader INSTANCE = new AllPluginsLoader();
 
     final ConcurrentMap<Long, ClassLoader> myLuckyGuess = new ConcurrentHashMap<>();

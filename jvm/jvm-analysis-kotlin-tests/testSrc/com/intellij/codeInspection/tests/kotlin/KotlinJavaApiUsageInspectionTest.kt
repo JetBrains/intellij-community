@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase
-import com.intellij.codeInspection.tests.JvmLanguage
+import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 
 class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
@@ -42,6 +42,19 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
         <error descr="Usage of API documented as @since 1.7+">StandardCharsets</error>.UTF_8
       }
     """.trimIndent())
+  }
+
+  fun `test reference in callable reference`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
+    val withErrorMessage = "\"default charset \${<error descr=\"Usage of API documented as @since 1.7+\">StandardCharsets</error>.UTF_8}\"::toString"
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import java.nio.charset.StandardCharsets
+
+      fun main() {
+        ${withErrorMessage}
+      }
+    """.trimIndent())
+    ""::toString
   }
 
   fun `test annotation`() {
@@ -158,6 +171,20 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       import javax.swing.AbstractListModel
       
       abstract class AbstractCCM<T> : <error descr="Usage of generified after 1.6 API which would cause compilation problems with JDK 6">AbstractListModel</error><T>() { }
+    """.trimIndent())
+  }
+
+  fun `test no highlighting in kdoc`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class Javadoc {
+        /**
+         * [java.util.function.Predicate]
+         */
+        fun test() {
+          return
+        }
+      }
     """.trimIndent())
   }
 }

@@ -33,10 +33,7 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.core.compatibility.Point;
 import com.jediterm.core.util.TermSize;
-import com.jediterm.terminal.ProcessTtyConnector;
-import com.jediterm.terminal.SubstringFinder;
-import com.jediterm.terminal.TerminalColor;
-import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.*;
 import com.jediterm.terminal.model.SelectionUtil;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalSelection;
@@ -55,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.List;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
@@ -92,11 +90,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         return getTerminalPanel();
       }
     });
+    TerminalTitleKt.bindApplicationTitle(myTerminalTitle, getTerminal(), this);
   }
 
-  @Nullable
-  private LinkResult runFilters(@NotNull Project project, @NotNull String line) {
-    Filter.Result r = ReadAction.compute(() -> {
+  private @Nullable LinkResult runFilters(@NotNull Project project, @NotNull String line) {
+    Filter.Result r = ReadAction.nonBlocking(() -> {
       if (project.isDisposed()) {
         return null;
       }
@@ -109,7 +107,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         }
         return null;
       }
-    });
+    }).executeSynchronously();
     if (r != null) {
       return new LinkResult(ContainerUtil.mapNotNull(r.getResultItems(), item -> convertResultItem(project, item)));
     }
@@ -165,6 +163,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   public @NotNull Project getProject() {
     return myProject;
+  }
+
+  @Override
+  protected @NotNull TerminalExecutorServiceManager createExecutorServiceManager() {
+    return new TerminalExecutorServiceManagerImpl();
   }
 
   @Override
@@ -289,9 +292,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
       return getSelectedText();
     }
@@ -307,7 +309,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
     buffer.lock();
     try {
-      Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
+      Pair<Point, Point> points = selection.pointsForRun(buffer.getWidth());
       return SelectionUtil.getSelectionText(points.first, points.second, buffer);
     }
     finally {
@@ -329,8 +331,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     try {
       TerminalSelection selection = new TerminalSelection(
         new Point(0, -buffer.getHistoryLinesCount()),
-        new Point(terminalPanel.getColumnCount(), buffer.getScreenLinesCount() - 1));
-      Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
+        new Point(buffer.getWidth(), buffer.getScreenLinesCount() - 1));
+      Pair<Point, Point> points = selection.pointsForRun(buffer.getWidth());
       return SelectionUtil.getSelectionText(points.first, points.second, buffer);
     }
     finally {
@@ -356,6 +358,18 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return myTerminalTitle;
   }
 
+  protected void executeCommand(@NotNull String shellCommand) throws IOException {
+    throw new RuntimeException("Should be called for ShellTerminalWidget only");
+  }
+
+  protected @Nullable List<String> getShellCommand() {
+    throw new RuntimeException("Should be called for ShellTerminalWidget only");
+  }
+
+  protected void setShellCommand(@Nullable List<String> command) {
+    throw new RuntimeException("Should be called for ShellTerminalWidget only");
+  }
+
   private final TerminalWidgetBridge myBridge = new TerminalWidgetBridge();
 
   public @NotNull TerminalWidget asNewWidget() {
@@ -366,7 +380,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return widget instanceof TerminalWidgetBridge bridge ? bridge.widget() : null;
   }
 
-  private class TerminalWidgetBridge implements TerminalWidget {
+  private final class TerminalWidgetBridge implements TerminalWidget {
 
     private final TtyConnectorAccessor myTtyConnectorAccessor = new TtyConnectorAccessor();
 
@@ -384,14 +398,14 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       return widget().getPreferredFocusableComponent();
     }
 
-    @NotNull
     @Override
-    public TerminalTitle getTerminalTitle() {
+    public @NotNull TerminalTitle getTerminalTitle() {
       return widget().myTerminalTitle;
     }
 
     @Override
-    public void connectToTty(@NotNull TtyConnector ttyConnector) {
+    public void connectToTty(@NotNull TtyConnector ttyConnector, @NotNull TermSize initialTermSize) {
+      widget().getTerminal().resize(initialTermSize, RequestOrigin.User);
       widget().createTerminalSession(ttyConnector);
       widget().start();
       widget().getComponent().revalidate();
@@ -457,6 +471,27 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         widget().remove(notificationComponent);
         widget().revalidate();
       });
+    }
+
+    @Override
+    public void sendCommandToExecute(@NotNull String shellCommand) {
+      try {
+        widget().executeCommand(shellCommand);
+      }
+      catch (IOException e) {
+        LOG.info("Cannot execute shell command: " + shellCommand);
+      }
+    }
+
+    @Nullable
+    @Override
+    public List<String> getShellCommand() {
+      return widget().getShellCommand();
+    }
+
+    @Override
+    public void setShellCommand(@Nullable List<String> command) {
+      widget().setShellCommand(command);
     }
   }
 }

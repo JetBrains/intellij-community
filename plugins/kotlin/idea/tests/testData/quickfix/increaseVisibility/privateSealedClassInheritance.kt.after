@@ -7,3 +7,4 @@
 sealed class SealedClass
 
 class Test : SealedClass()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix

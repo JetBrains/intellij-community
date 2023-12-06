@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -27,16 +27,12 @@ public final class Utils {
 
   private static File myTempDir;
 
-  public static boolean isZipFile(String fileName) {
-    return fileName.endsWith(".zip") || fileName.endsWith(".jar");
-  }
-
   public synchronized static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
       String path = System.getProperty("java.io.tmpdir");
       if (path == null) throw new IllegalArgumentException("System property `java.io.tmpdir` is not defined");
 
-      Path dir = Paths.get(path);
+      Path dir = Path.of(path);
       if (!Files.isDirectory(dir)) throw new IOException("Not a directory: " + dir);
 
       if (REQUIRED_FREE_SPACE > 0) {
@@ -69,7 +65,7 @@ public final class Utils {
   public static void delete(File file) throws IOException {
     Path start = file.toPath();
     if (Files.exists(start, LinkOption.NOFOLLOW_LINKS)) {
-      Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
+      Files.walkFileTree(start, new SimpleFileVisitor<>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
           tryDelete(file);
@@ -145,7 +141,7 @@ public final class Utils {
   public static void createLink(String target, File link) throws IOException {
     Path path = link.toPath();
     Files.deleteIfExists(path);
-    Files.createSymbolicLink(path, Paths.get(target));
+    Files.createSymbolicLink(path, Path.of(target));
   }
 
   public static void copy(File from, File to, boolean overwrite) throws IOException {
@@ -171,7 +167,7 @@ public final class Utils {
   public static void copyDirectory(Path from, Path to) throws IOException {
     LOG.info(from + " into " + to);
 
-    Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(from, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         if (dir != from || !Files.exists(to)) {
@@ -298,60 +294,8 @@ public final class Utils {
     return result;
   }
 
-  public static InputStream newFileInputStream(File file, boolean normalize) throws IOException {
-    return normalize && isZipFile(file.getName()) ? new NormalizedZipInputStream(file) : new FileInputStream(file);
-  }
-
-  private static final class NormalizedZipInputStream extends InputStream {
-    private final ZipFile myZip;
-    private final List<? extends ZipEntry> myEntries;
-    private InputStream myStream = null;
-    private int myNextEntry = 0;
-    private final byte[] myByte = new byte[1];
-
-    private NormalizedZipInputStream(File file) throws IOException {
-      myZip = new ZipFile(file);
-      myEntries = Collections.list(myZip.entries());
-      myEntries.sort(Comparator.comparing(ZipEntry::getName));
-      loadNextEntry();
-    }
-
-    private void loadNextEntry() throws IOException {
-      if (myStream != null) {
-        myStream.close();
-        myStream = null;
-      }
-      while (myNextEntry < myEntries.size() && myStream == null) {
-        myStream = findEntryInputStreamForEntry(myZip, myEntries.get(myNextEntry++));
-      }
-    }
-
-    @Override
-    public int read(byte[] bytes, int off, int len) throws IOException {
-      if (myStream == null) {
-        return -1;
-      }
-      int b = myStream.read(bytes, off, len);
-      if (b == -1) {
-        loadNextEntry();
-        return read(bytes, off, len);
-      }
-      return b;
-    }
-
-    @Override
-    public int read() throws IOException {
-      int b = read(myByte, 0, 1);
-      return b == -1 ? -1 : myByte[0];
-    }
-
-    @Override
-    public void close() throws IOException {
-      if (myStream != null) {
-        myStream.close();
-      }
-      myZip.close();
-    }
+  public static InputStream newFileInputStream(File file) throws IOException {
+    return new FileInputStream(file);
   }
 
   public static class OpenByteArrayOutputStream extends ByteArrayOutputStream {

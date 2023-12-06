@@ -36,8 +36,8 @@ import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
  */
 @Deprecated
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
-  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.16.7.pyz";
-  private static final String PY2_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz";
+  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.24.5.pyz";
+  private static final String LEGACY_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz"; // virtualenv used to create virtual environments for python 2.7 & 3.6
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
@@ -189,7 +189,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
 
     try {
       getPythonProcessResult(
-        Objects.requireNonNull(getHelperPath(languageLevel.isPython2() ? PY2_VIRTUALENV_ZIPAPP_NAME : VIRTUALENV_ZIPAPP_NAME)),
+        Objects.requireNonNull(getHelperPath(isLegacyPython(languageLevel) ? LEGACY_VIRTUALENV_ZIPAPP_NAME : VIRTUALENV_ZIPAPP_NAME)),
         args, false, true, null, List.of("-S"));
     }
     catch (ExecutionException e) {
@@ -200,6 +200,13 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
     final String binaryFallback = destinationDir + mySeparator + "bin" + mySeparator + "python";
 
     return (binary != null) ? binary : binaryFallback;
+  }
+
+  /**
+   * Is it a legacy python version that we still support
+   */
+  private static boolean isLegacyPython(@NotNull LanguageLevel languageLevel) {
+    return languageLevel.isPython2() || languageLevel.isOlderThan(LanguageLevel.PYTHON37);
   }
 
   //   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException

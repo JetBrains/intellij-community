@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @FunctionalInterface
 @ApiStatus.Obsolete
-public interface NotNullProducer<T> extends Producer<T> {
+public interface NotNullProducer<T> extends Producer<@NotNull T> {
   @Override
   @NotNull
   T produce();

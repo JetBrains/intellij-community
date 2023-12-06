@@ -65,7 +65,7 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
     }
   }
 
-  fun removeConfig(config: C) = resolvedInstances.remove(config)
+  fun removeConfig(config: C): Boolean = resolvedInstances.remove(config)
 
   fun unresolvedNames(): List<String> = unresolvedInstances.mapNotNull { it.name }.toList()
 
@@ -100,7 +100,7 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
   }
 
   companion object {
-    fun ContributedConfigurationBase.getSerializer() = getTypeImpl().createSerializer(this)
+    fun ContributedConfigurationBase.getSerializer(): PersistentStateComponent<*> = getTypeImpl().createSerializer(this)
   }
 
   /**
@@ -108,7 +108,7 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
    */
   open class ListState : BaseState() {
     @get: XCollection(style = XCollection.Style.v2)
-    var configs by list<ContributedStateBase>()
+    var configs: MutableList<ContributedStateBase> by list()
   }
 
   /**
@@ -117,13 +117,13 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
    */
   open class ContributedStateBase : BaseState() {
     @get:Attribute("type")
-    var typeId by string()
+    var typeId: String? by string()
 
     @get:Attribute("name")
-    var name by string()
+    var name: String? by string()
 
     @get:Tag("config")
-    var innerState: Element? by property<Element?>(null) { it === null }
+    var innerState: Element? by property(null) { it === null }
 
     open fun loadFromConfiguration(config: ContributedConfigurationBase) {
       typeId = config.typeId

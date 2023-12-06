@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,10 +38,14 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   }
 
   @Override
-  public boolean dispatch(@NotNull final AWTEvent e) {
+  public boolean dispatch(final @NotNull AWTEvent e) {
     LOG.assertTrue(isPopupActive());
 
     if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
+      if (IdeEventQueueKt.getSkipWindowDeactivationEvents()) {
+        LOG.warn("Skipped " + e);
+        return false;
+      }
       if (!isPopupActive()) return false;
 
       Window sourceWindow = ((WindowEvent)e).getWindow();
@@ -113,9 +117,8 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   }
 
   public void push(IdePopupEventDispatcher dispatcher) {
-    if (!myDispatchStack.contains(dispatcher)) {
-      myDispatchStack.add(dispatcher);
-    }
+    myDispatchStack.remove(dispatcher);
+    myDispatchStack.add(dispatcher);
   }
 
   public void remove(IdePopupEventDispatcher dispatcher) {

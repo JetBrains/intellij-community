@@ -21,9 +21,9 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
-import javax.swing.DefaultComboBoxModel
 
 private val editorSettings: EditorSettingsExternalizable
   get() = EditorSettingsExternalizable.getInstance()
@@ -70,7 +70,7 @@ private val cbCloseBlockCommentOnEnter
 private val cbInsertJavadocStubOnEnter
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.javadoc.stub.after.slash.star.star"),
                              codeInsightSettings::JAVADOC_STUB_ON_ENTER)
-internal val cbHonorCamelHumpsWhenSelectingByClicking
+internal val cbHonorCamelHumpsWhenSelectingByClicking: CheckboxDescriptor
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.honor.camelhumps.words.settings.on.double.click"),
                              editorSettings::isMouseClickSelectionHonorsCamelWords, editorSettings::setMouseClickSelectionHonorsCamelWords)
 
@@ -93,7 +93,7 @@ internal val editorSmartKeysOptionDescriptors: List<BooleanOptionDescription>
   ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
 @NonNls
-internal const val ID = "editor.preferences.smartKeys"
+internal const val ID: String = "editor.preferences.smartKeys"
 
 private val EP_NAME = ExtensionPointName<EditorSmartKeysConfigurableEP>("com.intellij.editorSmartKeysConfigurable")
 
@@ -163,22 +163,22 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
       row(ApplicationBundle.message("combobox.smart.backspace")) {
         comboBox(
           EnumComboBoxModel(SmartBackspaceMode::class.java),
-          renderer = listCellRenderer {
-            text = when (it) {
+          renderer = textListCellRenderer {
+            when (it) {
               SmartBackspaceMode.OFF -> ApplicationBundle.message("combobox.smart.backspace.off")
               SmartBackspaceMode.INDENT -> ApplicationBundle.message("combobox.smart.backspace.simple")
               SmartBackspaceMode.AUTOINDENT -> ApplicationBundle.message("combobox.smart.backspace.smart")
+              null -> ""
             }
           })
           .bindItem(MutableProperty(codeInsightSettings::getBackspaceMode, codeInsightSettings::setBackspaceMode).toNullableProperty())
       }
       row(ApplicationBundle.message("combobox.paste.reformat")) {
         comboBox(
-          DefaultComboBoxModel(
-            arrayOf(CodeInsightSettings.NO_REFORMAT, CodeInsightSettings.INDENT_BLOCK, CodeInsightSettings.INDENT_EACH_LINE,
-                    CodeInsightSettings.REFORMAT_BLOCK)),
-          renderer = listCellRenderer {
-            text = when (it) {
+          listOf(CodeInsightSettings.NO_REFORMAT, CodeInsightSettings.INDENT_BLOCK, CodeInsightSettings.INDENT_EACH_LINE,
+                 CodeInsightSettings.REFORMAT_BLOCK),
+          renderer = textListCellRenderer {
+            when (it) {
               CodeInsightSettings.NO_REFORMAT -> ApplicationBundle.message("combobox.paste.reformat.none")
               CodeInsightSettings.INDENT_BLOCK -> ApplicationBundle.message("combobox.paste.reformat.indent.block")
               CodeInsightSettings.INDENT_EACH_LINE -> ApplicationBundle.message("combobox.paste.reformat.indent.each.line")
@@ -187,6 +187,10 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
             }
           }
         ).bindItem(codeInsightSettings::REFORMAT_ON_PASTE.toNullableProperty())
+      }
+      row {
+        checkBox(ApplicationBundle.message("reformat.again.to.remove.custom.line.breaks")).
+          bindSelected(codeInsightSettings::ENABLE_SECOND_REFORMAT)
       }
       for (configurable in configurables) {
         appendDslConfigurable(configurable)
@@ -216,7 +220,7 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
     return allConfigurables.filterIsInstance<Configurable>().toTypedArray()
   }
 
-  override fun hasOwnContent() = true
+  override fun hasOwnContent(): Boolean = true
 
-  override fun getDependencies() = listOf(EP_NAME)
+  override fun getDependencies(): List<ExtensionPointName<EditorSmartKeysConfigurableEP>> = listOf(EP_NAME)
 }

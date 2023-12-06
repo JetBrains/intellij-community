@@ -12,6 +12,9 @@ data class GradleCommandLine(val tasks: GradleCommandLineTasks, val options: Gra
 
   override val text: String = tokens.joinToString(" ")
 
+  constructor(tasks: List<GradleCommandLineTask>, options: List<GradleCommandLineOption>)
+    : this(GradleCommandLineTasks(tasks), GradleCommandLineOptions(options))
+
   companion object {
     @JvmStatic
     fun parse(commandLine: String): GradleCommandLine {

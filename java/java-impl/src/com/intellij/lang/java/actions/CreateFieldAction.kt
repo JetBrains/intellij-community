@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.CodeInsightUtil.positionCursor
@@ -31,7 +31,7 @@ internal class CreateFieldAction(target: PsiClass, request: CreateFieldRequest) 
                                            request.fieldName, getNameForClass(target, false))
 }
 
-internal val constantModifiers = setOf(
+internal val constantModifiers: Set<JvmModifier> = setOf(
   JvmModifier.STATIC,
   JvmModifier.FINAL
 )
@@ -50,14 +50,8 @@ internal class JavaFieldRenderer(
   private val modifiersToRender: Collection<JvmModifier>
     get() {
       return if (constantField) {
-        if (targetClass.isInterface) {
-          // interface fields are public static final implicitly, so modifiers don't have to be rendered
-          request.modifiers - constantModifiers - visibilityModifiers
-        }
-        else {
-          // render static final explicitly
-          request.modifiers + constantModifiers
-        }
+        // render static final explicitly
+        request.modifiers + constantModifiers
       }
       else {
         // render as is

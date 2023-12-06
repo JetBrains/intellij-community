@@ -7,3 +7,4 @@ class Bar : Foo {
     override suspend fun foo(x: String) {
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix

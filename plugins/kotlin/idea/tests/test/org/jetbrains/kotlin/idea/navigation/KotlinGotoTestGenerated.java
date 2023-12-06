@@ -123,6 +123,11 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
             runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFileMultiAnnotations.kt");
         }
 
+        @TestMetadata("jvmNameAnnotatedFileMultiAnnotationsInDumbMode.kt")
+        public void testJvmNameAnnotatedFileMultiAnnotationsInDumbMode() throws Exception {
+            runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFileMultiAnnotationsInDumbMode.kt");
+        }
+
         @TestMetadata("jvmNameAnnotatedFilesKt.kt")
         public void testJvmNameAnnotatedFilesKt() throws Exception {
             runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFilesKt.kt");

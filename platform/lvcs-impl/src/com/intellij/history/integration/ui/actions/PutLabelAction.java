@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
 
-public class PutLabelAction extends LocalHistoryAction {
+public final class PutLabelAction extends LocalHistoryAction {
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
     String labelName =

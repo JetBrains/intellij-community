@@ -1,13 +1,10 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
-import com.intellij.cce.actions.CompletionGolfEmulation
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.metric.MetricValueType
-import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
-import com.intellij.cce.workspace.storages.FeaturesStorage
-import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import java.io.BufferedInputStream
@@ -22,14 +19,9 @@ import java.util.*
 import kotlin.io.path.writeText
 
 class HtmlReportGenerator(
-  outputDir: String,
-  private val filterName: String,
-  private val comparisonFilterName: String,
+  private val dirs: GeneratorDirectories,
   private val defaultMetrics: List<String>?,
-  suggestionsComparators: List<SuggestionsComparator>,
-  featuresStorages: List<FeaturesStorage>,
-  fullLineStorages: List<FullLineLogsStorage>,
-  completionGolfSettings: CompletionGolfEmulation.Settings?
+  private val fileGenerator: FileReportGenerator
 ) : FullReportGenerator {
   companion object {
     private const val globalReportName = "index.html"
@@ -53,14 +45,14 @@ class HtmlReportGenerator(
 
   private val errorReferences: MutableMap<String, Path> = mutableMapOf()
 
-  private val dirs = GeneratorDirectories.create(outputDir, type, filterName, comparisonFilterName)
+  //private val dirs = GeneratorDirectories.create(outputDir, type, filterName, comparisonFilterName)
 
-  private var fileGenerator: FileReportGenerator = if (completionGolfSettings != null) {
-    CompletionGolfFileReportGenerator(completionGolfSettings, filterName, comparisonFilterName, featuresStorages, fullLineStorages, dirs)
-  }
-  else {
-    BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
-  }
+  //private var fileGenerator: FileReportGenerator = if (completionGolfSettings != null) {
+  //  CompletionGolfFileReportGenerator(completionGolfSettings, filterName, comparisonFilterName, featuresStorages, fullLineStorages, dirs)
+  //}
+  //else {
+  //  BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
+  //}
 
   private fun copyResources(resource: String) {
     val resultFile = Paths.get(dirs.resourcesDir.toString(), resource).toFile()
@@ -70,9 +62,9 @@ class HtmlReportGenerator(
 
   init {
     resources.forEach { copyResources(it) }
-    if (completionGolfSettings != null) {
-      downloadV2WebFiles()
-    }
+    //if (completionGolfSettings != null) {
+    //  downloadV2WebFiles()
+    //}
   }
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) = fileGenerator.generateFileReport(sessions)
@@ -81,7 +73,7 @@ class HtmlReportGenerator(
     for (fileError in errors) {
       val filePath = Paths.get(fileError.path)
       val reportPath = dirs.getPaths(filePath.fileName.toString()).reportPath
-      val reportTitle = "Error on actions generation for file ${filePath.fileName} ($filterName and $comparisonFilterName filters)"
+      val reportTitle = "Error on actions generation for file ${filePath.fileName}"
       createHTML().html {
         head {
           title(reportTitle)
@@ -113,7 +105,7 @@ class HtmlReportGenerator(
   override fun generateGlobalReport(globalMetrics: List<MetricInfo>): Path {
     val reportPath = Paths.get(dirs.filterDir.toString(), globalReportName)
 
-    val reportTitle = "Code Completion Report for filters \"$filterName\" and \"$comparisonFilterName\""
+    val reportTitle = "Evaluation report"
     createHTML().html {
       head {
         title(reportTitle)
@@ -149,13 +141,17 @@ class HtmlReportGenerator(
     if (withDiff) evaluationTypes.add(diffColumnTitle)
     var rowId = 1
 
-    val errorMetrics = globalMetrics.map { MetricInfo(it.name, Double.NaN, it.evaluationType, it.valueType, it.showByDefault) }
+    val errorMetrics = globalMetrics.map {
+      MetricInfo(it.name, it.description, Double.NaN, null, it.evaluationType, it.valueType, it.showByDefault)
+    }
 
     fun getReportMetrics(repRef: ReferenceInfo) = globalMetrics.map { metric ->
+      val refMetric = repRef.metrics.find { it.name == metric.name && it.evaluationType == metric.evaluationType }
       MetricInfo(
         metric.name,
-        repRef.metrics.find { it.name == metric.name && it.evaluationType == metric.evaluationType }?.value
-        ?: Double.NaN,
+        metric.description,
+        refMetric?.value ?: Double.NaN,
+        refMetric?.confidenceInterval,
         metric.evaluationType,
         metric.valueType,
         metric.showByDefault
@@ -166,11 +162,11 @@ class HtmlReportGenerator(
       if (withDiff) listOf(metrics, metrics
         .groupBy({ it.name }, { Triple(it.value, it.valueType, it.showByDefault) })
         .mapValues { with(it.value) { Triple(first().first - last().first, first().second, first().third) } }
-        .map { MetricInfo(it.key, it.value.first, diffColumnTitle, it.value.second, it.value.third) }).flatten()
+        .map { MetricInfo(it.key, "", it.value.first, null, diffColumnTitle, it.value.second, it.value.third) }).flatten()
       else metrics
                                                            ).joinToString(",") {
         "${it.name}${it.evaluationType}:'${
-          formatMetricValue(it.value, it.valueType)
+          formatMetricValue(it.value, it.confidenceInterval, it.valueType)
         }'"
       }
 
@@ -188,7 +184,7 @@ class HtmlReportGenerator(
         |columns:[{title:'File Report',field:'file',formatter:'html'${if (manyTypes) ",width:'120'" else ""}},
         |${
       uniqueMetricsInfo.joinToString(",\n") { metric ->
-        "{title:'${metric.name}',visible:${metric.visible()},columns:[${
+        "{title:'${metric.name}',headerTooltip:'${metric.description}',visible:${metric.visible()},columns:[${
           evaluationTypes.joinToString(",") { type ->
             "{title:'$type',field:'${metric.name.filter { it.isLetterOrDigit() }}$type',sorter:'number',align:'right',headerVertical:${manyTypes},visible:${metric.visible()}}"
           }
@@ -202,12 +198,18 @@ class HtmlReportGenerator(
 
   private fun MetricInfo.visible(): Boolean = if (defaultMetrics != null) name in defaultMetrics else showByDefault
 
-  private fun formatMetricValue(value: Double, type: MetricValueType): String = when {
+  private fun formatMetricValue(value: Double, confidenceInterval: Pair<Double, Double>?, type: MetricValueType): String = when {
     value.isNaN() -> "—"
-    type == MetricValueType.INT -> "${value.toInt()}"
-    type == MetricValueType.DOUBLE -> "%.3f".format(Locale.US, value)
+    type == MetricValueType.INT -> "${value.toInt()}" + (confidenceInterval?.let {
+      " (${confidenceInterval.first.toInt()}; ${confidenceInterval.second.toInt()})"
+    } ?: "")
+    type == MetricValueType.DOUBLE -> value.format() + (confidenceInterval?.let {
+      " (${confidenceInterval.first.format()}; ${confidenceInterval.second.format()})"
+    } ?: "")
     else -> throw IllegalArgumentException("Unknown metric value type")
   }
+
+  private fun Double.format() = "%.3f".format(Locale.US, this)
 
   private fun getErrorLink(errRef: Map.Entry<String, Path>): String =
     "\"<a href='${getHtmlRelativePath(dirs.filterDir, errRef.value)}' class='errRef' target='_blank'>${
@@ -215,7 +217,7 @@ class HtmlReportGenerator(
     }</a>\""
 
   private fun getReportLink(repRef: Map.Entry<String, ReferenceInfo>): String =
-    "\"<a href='${getHtmlRelativePath(dirs.filterDir, repRef.value.pathToReport)}' target='_blank'>${File(repRef.key).name}</a>\""
+    "\"<a href='${getHtmlRelativePath(dirs.filterDir, repRef.value.pathToReport)}' target='_blank'>${repRef.key}</a>\""
 
   private fun getHtmlRelativePath(base: Path, path: Path): String {
     return base.relativize(path).toString().replace(File.separatorChar, '/')

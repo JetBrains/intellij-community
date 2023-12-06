@@ -4,3 +4,5 @@ inline fun <reified T> inlineReified(f: (T) -> T) = {}
 inline fun <reified X> callInlineReified() = inlineReified<X> { x: X ->
     x
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeTypeFix
+/* IGNORE_K2 */

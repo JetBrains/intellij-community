@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,6 +20,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,7 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
     LivePreview.ourTestOutput = new PrintStream(myOutputStream);
     EditorHintListener listener = new EditorHintListener() {
       @Override
-      public void hintShown(@NotNull Project project, @NotNull LightweightHint hint, int flags) {
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
         LivePreview.processNotFound();
       }
     };
@@ -161,6 +161,28 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
     finally {
       value.resetToDefault();
     }
+  }
+
+  public void testReplaceShouldNotSkip() throws FindManager.MalformedReplacementStringException {
+    configureFromText("""
+                        <selection>meteor
+                        meteor
+                        meteor
+                        meteor
+                        meteor</selection>
+                        """);
+    initFind();
+
+    myFindModel.setGlobal(false); // search in selection
+    myFindModel.setStringToFind("meteor");
+    myFindModel.setStringToReplace(".");
+    myFindModel.setReplaceState(true);
+
+
+    myLivePreviewController.performReplace();
+    myLivePreviewController.performReplace();
+    myLivePreviewController.performReplace();
+    checkResults();
   }
 
   public void testNoPreviewReplacementWithEmptyString() throws FindManager.MalformedReplacementStringException {

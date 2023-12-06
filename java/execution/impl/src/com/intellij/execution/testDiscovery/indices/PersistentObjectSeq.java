@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.indices;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.InvertedIndex;
 import com.intellij.util.io.PersistentEnumerator;
 
@@ -18,7 +18,7 @@ class PersistentObjectSeq {
     void close() throws IOException;
   }
 
-  private final Collection<PersistentObject> myObjects = ContainerUtil.newConcurrentSet();
+  private final Collection<PersistentObject> myObjects = ConcurrentCollectionFactory.createConcurrentSet();
 
   public void add(InvertedIndex<?, ?, ?> index) {
     myObjects.add(new PersistentObject() {

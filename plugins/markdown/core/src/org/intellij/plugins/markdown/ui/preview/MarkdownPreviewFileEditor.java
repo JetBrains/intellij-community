@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -25,7 +27,6 @@ import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
-import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,9 +76,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     myHtmlPanelWrapper = new JPanel(new BorderLayout());
     myHtmlPanelWrapper.addComponentListener(new AttachPanelOnVisibilityChangeListener());
 
-    if (isPreviewShown(project, file)) {
-      attachHtmlPanel();
-    }
+    attachHtmlPanel();
 
     final var messageBusConnection = myProject.getMessageBus().connect(this);
     final var settingsChangedListener = new MyUpdatePanelOnSettingsChangedListener();
@@ -239,9 +238,10 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
       return;
     }
 
-    final var html = ReadAction.compute(() -> {
-      return MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
-    });
+    var html = ReadAction.nonBlocking(() -> {
+        return MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
+      })
+      .executeSynchronously();
 
     // EA-75860: The lines to the top may be processed slowly; Since we're in pooled thread, we can be disposed already.
     if (!myFile.isValid() || isDisposed()) {
@@ -306,21 +306,6 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     }
   }
 
-  private static boolean isPreviewShown(@NotNull Project project, @NotNull VirtualFile file) {
-    MarkdownSplitEditorProvider provider = FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findExtension(MarkdownSplitEditorProvider.class);
-    if (provider == null) {
-      return true;
-    }
-
-    FileEditorState state = EditorHistoryManager.getInstance(project).getState(file, provider);
-    if (!(state instanceof SplitFileEditor.MyFileEditorState)) {
-      return true;
-    }
-
-    String layout = ((SplitFileEditor.MyFileEditorState)state).getSplitLayout();
-    return layout == null || !layout.equals("FIRST"); //todo[kb] remove after migration to the new state model
-  }
-
   private class ReparseContentDocumentListener implements DocumentListener {
     @Override
     public void beforeDocumentChange(@NotNull DocumentEvent event) {
@@ -357,7 +342,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
 
   private class MyUpdatePanelOnSettingsChangedListener implements MarkdownSettings.ChangeListener {
     @Override
-    public void beforeSettingsChanged(@NotNull MarkdownSettings settings) {}
+    public void beforeSettingsChanged(@NotNull MarkdownSettings settings) { }
 
     @Override
     public void settingsChanged(@NotNull MarkdownSettings settings) {

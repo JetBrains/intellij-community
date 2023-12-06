@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import com.intellij.util.ConcurrencyUtil;
 import com.sun.management.OperatingSystemMXBean;
 import io.opentelemetry.api.trace.Span;
@@ -15,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAccumulator;
 
-public class Timer {
+public final class Timer {
   public static final Timer instance = new Timer();
 
   private String myActivityName = "default";
@@ -25,7 +24,7 @@ public class Timer {
   private volatile double myHighestCPULoad;
   private volatile long myHighestRAMUsage;
   private final AtomicLong myTotalDelay = new AtomicLong();
-  private final AtomicDouble myTotalCPULoad = new AtomicDouble();
+  private final AtomicLong myTotalCPULoad = new AtomicLong();
   private final AtomicLong myTotalRAMUsage = new AtomicLong();
   private final AtomicLong myCounter = new AtomicLong();
   private final AtomicLong myHWCounter = new AtomicLong();
@@ -73,7 +72,7 @@ public class Timer {
       myHWCounter.incrementAndGet();
       double cpuLoad = bean.getProcessCpuLoad();
       if (cpuLoad > 0 && cpuLoad <= 1) {
-        myTotalCPULoad.addAndGet(cpuLoad);
+        myTotalCPULoad.addAndGet(Math.round(cpuLoad * 100));
         if (myHighestCPULoad < cpuLoad) myHighestCPULoad = cpuLoad;
       }
 
@@ -106,7 +105,7 @@ public class Timer {
     logValue(myActivityName + " | Total Time Execution", totalTime);
     logValue(myActivityName + " | Responsiveness", getLongestDelay());
     logValue(myActivityName + " | Average Responsiveness", getAverageDelay());
-    logValue(myActivityName + " | Average RAM Usage", getAverageRAMUsage());
+    logValue(myActivityName + " | Average RAM Usage (%)", getAverageRAMUsage());
     logValue(myActivityName + " | Average CPU Usage", getAverageCPULoad());
     logValue(myActivityName + " | Max RAM Usage", myHighestRAMUsage);
     logValue(myActivityName + " | Max CPU Usage", myHighestCPULoad);
@@ -126,7 +125,7 @@ public class Timer {
 
   public double getAverageCPULoad() {
     long counterValue = myHWCounter.get();
-    return counterValue != 0 ? myTotalCPULoad.get() / counterValue : 0.0;
+    return counterValue != 0 ? (double) myTotalCPULoad.get() / counterValue : 0.0;
   }
 
   public int getAverageRAMUsage() {

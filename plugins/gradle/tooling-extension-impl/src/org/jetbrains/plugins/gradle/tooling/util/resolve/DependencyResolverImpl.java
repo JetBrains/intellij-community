@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util.resolve;
 
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCachedFinder;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -33,10 +34,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
 import org.jetbrains.plugins.gradle.tooling.util.ModuleComponentIdentifierImpl;
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
 import org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.DeprecatedDependencyResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,25 +53,25 @@ import static java.util.Collections.*;
 public final class DependencyResolverImpl implements DependencyResolver {
   private static final Logger LOG = LoggerFactory.getLogger(DependencyResolverImpl.class);
 
-  private static final boolean IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE =
-    GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.5")) >= 0;
+  private static final GradleVersion GRADLE_BASE_VERSION = GradleVersion.current().getBaseVersion();
+  private static final boolean IS_83_OR_BETTER = GRADLE_BASE_VERSION.compareTo(GradleVersion.version("8.3")) >= 0;
+  private static final boolean IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE = GRADLE_BASE_VERSION.compareTo(GradleVersion.version("4.5")) >= 0;
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull ModelBuilderContext myContext;
+  private final @NotNull Project myProject;
   private final boolean myDownloadJavadoc;
   private final boolean myDownloadSources;
-  @NotNull
-  private final SourceSetCachedFinder mySourceSetFinder;
 
-  public DependencyResolverImpl(@NotNull Project project,
-                                boolean downloadJavadoc,
-                                boolean downloadSources,
-                                @NotNull
-                                  SourceSetCachedFinder sourceSetFinder) {
+  public DependencyResolverImpl(
+    @NotNull ModelBuilderContext context,
+    @NotNull Project project,
+    boolean downloadJavadoc,
+    boolean downloadSources
+  ) {
+    myContext = context;
     myProject = project;
     myDownloadJavadoc = downloadJavadoc;
     myDownloadSources = downloadSources;
-    mySourceSetFinder = sourceSetFinder;
   }
 
   @ApiStatus.Internal
@@ -82,7 +83,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
   public Collection<ExternalDependency> resolveDependencies(@Nullable String configurationName) {
     if (!IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE) {
       //noinspection deprecation
-      return new DeprecatedDependencyResolver(myProject, false, myDownloadJavadoc, myDownloadSources, mySourceSetFinder)
+      return new DeprecatedDependencyResolver(myContext, myProject, false, myDownloadJavadoc, myDownloadSources)
         .resolveDependencies(configurationName);
     }
     if (configurationName == null) return emptyList();
@@ -98,7 +99,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
   public Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration) {
     if (!IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE) {
       //noinspection deprecation
-      return new DeprecatedDependencyResolver(myProject, false, myDownloadJavadoc, myDownloadSources, mySourceSetFinder)
+      return new DeprecatedDependencyResolver(myContext, myProject, false, myDownloadJavadoc, myDownloadSources)
         .resolveDependencies(configuration);
     }
 
@@ -114,7 +115,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
   public Collection<ExternalDependency> resolveDependencies(@NotNull final SourceSet sourceSet) {
     if (!IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE) {
       //noinspection deprecation
-      return new DeprecatedDependencyResolver(myProject, false, myDownloadJavadoc, myDownloadSources, mySourceSetFinder)
+      return new DeprecatedDependencyResolver(myContext, myProject, false, myDownloadJavadoc, myDownloadSources)
         .resolveDependencies(sourceSet);
     }
 
@@ -219,7 +220,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
             }
           }
         }
-        resolvedArtifacts.put(dependency, Collections.<ResolvedArtifact>emptySet());
+        resolvedArtifacts.put(dependency, Collections.emptySet());
       }
       catch (Exception ignore) {
         // ignore other artifact resolution exceptions
@@ -230,6 +231,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
     Collection<ExternalDependency> artifactDependencies = new LinkedHashSet<>();
     Set<String> resolvedFiles = new HashSet<>();
     Map<String, DefaultExternalProjectDependency> resolvedProjectDependencies = new HashMap<>();
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     for (Map.Entry<ResolvedDependency, Set<ResolvedArtifact>> resolvedDependencySetEntry : resolvedArtifacts.entrySet()) {
       ResolvedDependency resolvedDependency = resolvedDependencySetEntry.getKey();
       Set<ResolvedArtifact> artifacts = resolvedDependencySetEntry.getValue();
@@ -239,7 +241,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
           continue;
         }
         resolvedFiles.add(artifactFile.getPath());
-        String artifactPath = mySourceSetFinder.findArtifactBySourceSetOutputDir(artifactFile.getPath());
+        String artifactPath = sourceSetFinder.findArtifactBySourceSetOutputDir(artifactFile.getPath());
         if (artifactPath != null) {
           artifactFile = new File(artifactPath);
           if (resolvedFiles.contains(artifactFile.getPath())) {
@@ -252,7 +254,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
         ModuleVersionIdentifier moduleVersionIdentifier = artifact.getModuleVersion().getId();
         if (artifact.getId().getComponentIdentifier() instanceof ProjectComponentIdentifier) {
           if (RUNTIME_SCOPE.equals(scope)) {
-            SourceSet sourceSet = mySourceSetFinder.findByArtifact(artifactFile.getPath());
+            SourceSet sourceSet = sourceSetFinder.findByArtifact(artifactFile.getPath());
             if (sourceSet != null) {
               FileCollectionDependency outputDirsRuntimeFileDependency =
                 resolveSourceSetOutputDirsRuntimeFileDependency(sourceSet.getOutput());
@@ -263,7 +265,14 @@ public final class DependencyResolverImpl implements DependencyResolver {
           }
 
           ProjectComponentIdentifier projectComponentIdentifier = (ProjectComponentIdentifier)artifact.getId().getComponentIdentifier();
-          String buildName = projectComponentIdentifier.getBuild().getName();
+          BuildIdentifier buildIdentifier = projectComponentIdentifier.getBuild();
+          String buildName;
+          if (IS_83_OR_BETTER) {
+            buildName = buildIdentifier.getBuildPath();
+          }
+          else {
+            buildName = buildIdentifier.getName();
+          }
           String projectPath = projectComponentIdentifier.getProjectPath();
           String key = buildName + "_" + projectPath + "_" + resolvedDependency.getConfiguration();
           DefaultExternalProjectDependency projectDependency = resolvedProjectDependencies.get(key);
@@ -272,7 +281,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
             projectDependencyArtifacts.add(artifactFile);
             projectDependency.setProjectDependencyArtifacts(projectDependencyArtifacts);
             Set<File> artifactSources = new LinkedHashSet<>(projectDependency.getProjectDependencyArtifactsSources());
-            artifactSources.addAll(findArtifactSources(singleton(artifactFile), mySourceSetFinder));
+            artifactSources.addAll(sourceSetFinder.findArtifactSources(singleton(artifactFile)));
             projectDependency.setProjectDependencyArtifactsSources(artifactSources);
             continue;
           }
@@ -290,7 +299,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
           projectDependency.setConfigurationName(resolvedDependency.getConfiguration());
           Set<File> projectArtifacts = singleton(artifactFile);
           projectDependency.setProjectDependencyArtifacts(projectArtifacts);
-          projectDependency.setProjectDependencyArtifactsSources(findArtifactSources(projectArtifacts, mySourceSetFinder));
+          projectDependency.setProjectDependencyArtifactsSources(sourceSetFinder.findArtifactSources(projectArtifacts));
         }
         else {
           DefaultExternalLibraryDependency libraryDependency = new DefaultExternalLibraryDependency();
@@ -374,7 +383,8 @@ public final class DependencyResolverImpl implements DependencyResolver {
 
     Set<File> projectArtifacts = configuration1.getArtifacts().getFiles().getFiles();
     projectDependency.setProjectDependencyArtifacts(projectArtifacts);
-    projectDependency.setProjectDependencyArtifactsSources(findArtifactSources(projectArtifacts, mySourceSetFinder));
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
+    projectDependency.setProjectDependencyArtifactsSources(sourceSetFinder.findArtifactSources(projectArtifacts));
     return projectDependency;
   }
 
@@ -518,7 +528,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
       final Collection<File> resolvedFiles = getFiles(compileDependency);
 
       Collection<ExternalDependency> dependencies = filesToRuntimeDependenciesMap.get(resolvedFiles);
-      final boolean hasRuntimeDependencies = dependencies != null && !dependencies.isEmpty();
+      final boolean hasRuntimeDependencies = !dependencies.isEmpty();
 
       if (hasRuntimeDependencies) {
         runtimeDependencies.removeAll(dependencies);
@@ -622,18 +632,6 @@ public final class DependencyResolverImpl implements DependencyResolver {
       return ((ExternalProjectDependency)dependency).getProjectDependencyArtifacts();
     }
     return emptySet();
-  }
-
-  @NotNull
-  public static List<File> findArtifactSources(Collection<? extends File> artifactFiles, SourceSetCachedFinder sourceSetFinder) {
-    List<File> artifactSources = new ArrayList<>();
-    for (File artifactFile : artifactFiles) {
-      Set<File> sources = sourceSetFinder.findSourcesByArtifact(artifactFile.getPath());
-      if (sources != null) {
-        artifactSources.addAll(sources);
-      }
-    }
-    return artifactSources;
   }
 
   public static ModuleComponentIdentifier toComponentIdentifier(ModuleVersionIdentifier id) {

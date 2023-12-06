@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -11,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
-public class HighlightDisplayKey {
+public final class HighlightDisplayKey {
   private static final Logger LOG = Logger.getInstance(HighlightDisplayKey.class);
 
   private static final Map<String,HighlightDisplayKey> ourNameToKeyMap = new ConcurrentHashMap<>();
@@ -22,12 +25,11 @@ public class HighlightDisplayKey {
   private final String myName;
   private final String myID;
 
-  public static HighlightDisplayKey find(@NonNls @NotNull final String name) {
+  public static @Nullable HighlightDisplayKey find(final @NonNls @NotNull String name) {
     return ourNameToKeyMap.get(name);
   }
 
-  @Nullable
-  public static HighlightDisplayKey findById(@NonNls @NotNull final String id) {
+  public static @Nullable HighlightDisplayKey findById(final @NonNls @NotNull String id) {
     HighlightDisplayKey key = ourIdToKeyMap.get(id);
     if (key != null) return key;
     key = find(id);
@@ -38,17 +40,15 @@ public class HighlightDisplayKey {
   /**
    * @see #register(String, Computable, String)
    */
-  @Nullable
-  public static HighlightDisplayKey register(@NonNls @NotNull final String name,
-                                             @NotNull final String displayName,
-                                             @NotNull @NonNls final String id) {
+  public static @Nullable HighlightDisplayKey register(final @NonNls @NotNull String name,
+                                             final @NotNull String displayName,
+                                             final @NotNull @NonNls String id) {
     return register(name, new Computable.PredefinedValueComputable<>(displayName), id);
   }
 
-  @Nullable
-  public static HighlightDisplayKey register(@NonNls @NotNull final String name,
-                                             @NotNull final Computable<@Nls(capitalization = Sentence) String> displayName,
-                                             @NotNull @NonNls final String id) {
+  public static @Nullable HighlightDisplayKey register(final @NonNls @NotNull String name,
+                                                       final @NotNull Computable<@Nls(capitalization = Sentence) String> displayName,
+                                                       final @NotNull @NonNls String id) {
     final HighlightDisplayKey key = find(name);
     if (key != null) {
       LOG.error("Key with name '" + name + "' already registered with display name: " + getDisplayNameByKey(key));
@@ -59,11 +59,10 @@ public class HighlightDisplayKey {
     return highlightDisplayKey;
   }
 
-  @Nullable
-  public static HighlightDisplayKey register(@NonNls @NotNull final String name,
-                                             @NotNull final Computable<@Nls(capitalization = Sentence) String> displayName,
-                                             @NonNls @NotNull final String id,
-                                             @NonNls @Nullable final String alternativeID) {
+  public static @Nullable HighlightDisplayKey register(final @NonNls @NotNull String name,
+                                                       final @NotNull Computable<@Nls(capitalization = Sentence) String> displayName,
+                                                       final @NonNls @NotNull String id,
+                                                       final @NonNls @Nullable String alternativeID) {
     final HighlightDisplayKey key = register(name, displayName, id);
     if (alternativeID != null) {
       ourKeyToAlternativeIDMap.put(key, alternativeID);
@@ -80,15 +79,13 @@ public class HighlightDisplayKey {
     }
   }
 
-  @NotNull
-  public static HighlightDisplayKey findOrRegister(@NonNls @NotNull String name, @Nls(capitalization = Sentence) @NotNull final String displayName) {
+  public static @NotNull HighlightDisplayKey findOrRegister(@NonNls @NotNull String name, final @Nls(capitalization = Sentence) @NotNull String displayName) {
     return findOrRegister(name, displayName, null);
   }
 
-  @NotNull
-  public static HighlightDisplayKey findOrRegister(@NonNls @NotNull final String name,
-                                                   @Nls(capitalization = Sentence) @NotNull final String displayName,
-                                                   @NonNls @Nullable final String id) {
+  public static @NotNull HighlightDisplayKey findOrRegister(final @NonNls @NotNull String name,
+                                                            final @Nls(capitalization = Sentence) @NotNull String displayName,
+                                                            final @NonNls @Nullable String id) {
     HighlightDisplayKey key = find(name);
     if (key == null) {
       final String registrationId = id != null ? id : name;
@@ -115,7 +112,7 @@ public class HighlightDisplayKey {
   }
 
 
-  public HighlightDisplayKey(@NonNls @NotNull final String name, @NonNls @NotNull final String ID) {
+  public HighlightDisplayKey(final @NonNls @NotNull String name, final @NonNls @NotNull String ID) {
     myName = name;
     myID = ID;
     ourNameToKeyMap.put(myName, this);
@@ -128,8 +125,7 @@ public class HighlightDisplayKey {
     return myName;
   }
 
-  @NotNull
-  public String getID(){
+  public @NotNull String getID(){
     return myID;
   }
 }

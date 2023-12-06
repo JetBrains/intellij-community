@@ -19,13 +19,11 @@ import java.util.function.Supplier;
  */
 public interface ProjectInitializationDiagnosticService {
 
-  @NotNull
-  static ProjectInitializationDiagnosticService getInstance(@NotNull Project project) {
+  static @NotNull ProjectInitializationDiagnosticService getInstance(@NotNull Project project) {
     return project.getService(ProjectInitializationDiagnosticService.class);
   }
 
-  @NotNull
-  static ActivityTracker registerTracker(@NotNull Project project, @NotNull @NlsSafe String debugActivityName) {
+  static @NotNull ActivityTracker registerTracker(@NotNull Project project, @NotNull @NlsSafe String debugActivityName) {
     return getInstance(project).registerBeginningOfInitializationActivity(() -> debugActivityName);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView
 
 import com.intellij.icons.AllIcons
@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ide.CopyPasteManager
@@ -20,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.IdeBorderFactory
@@ -31,7 +33,6 @@ import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
-import com.intellij.util.childScope
 import com.intellij.util.ui.ErrorTreeView
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.MutableErrorTreeView
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.GridLayout
@@ -73,7 +75,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
 
     @JvmField
     @Volatile
-    var fraction = 0f
+    var fraction: Float = 0f
 
     fun clearProgress() {
       progressText = null
@@ -187,7 +189,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
 
   companion object {
     @JvmField
-    protected val LOG = logger<NewErrorTreeViewPanel>()
+    protected val LOG: Logger = logger<NewErrorTreeViewPanel>()
 
     @Suppress("SpellCheckingInspection")
     @JvmStatic
@@ -229,11 +231,11 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun isCopyEnabled(dataContext: DataContext) = !selectedNodeDescriptors.isEmpty()
+  override fun isCopyEnabled(dataContext: DataContext): Boolean = !selectedNodeDescriptors.isEmpty()
 
-  override fun isCopyVisible(dataContext: DataContext) = true
+  override fun isCopyVisible(dataContext: DataContext): Boolean = true
 
   val emptyText: StatusText
     get() = myTree.emptyText
@@ -579,13 +581,13 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
 
   override fun goPreviousOccurence(): OccurenceNavigator.OccurenceInfo = occurrenceNavigatorSupport.goPreviousOccurence()
 
-  override fun hasNextOccurence() = occurrenceNavigatorSupport.hasNextOccurence()
+  override fun hasNextOccurence(): Boolean = occurrenceNavigatorSupport.hasNextOccurence()
 
-  override fun hasPreviousOccurence() = occurrenceNavigatorSupport.hasPreviousOccurence()
+  override fun hasPreviousOccurence(): Boolean = occurrenceNavigatorSupport.hasPreviousOccurence()
 
-  override fun getNextOccurenceActionName() = occurrenceNavigatorSupport.nextOccurenceActionName
+  override fun getNextOccurenceActionName(): @Nls String = occurrenceNavigatorSupport.nextOccurenceActionName
 
-  override fun getPreviousOccurenceActionName() = occurrenceNavigatorSupport.previousOccurenceActionName
+  override fun getPreviousOccurenceActionName(): @Nls String = occurrenceNavigatorSupport.previousOccurenceActionName
 
   private inner class RerunAction(private val rerunAction: Runnable, private val closeAction: AnAction)
     : DumbAwareAction(IdeBundle.message("action.refresh"), null, AllIcons.Actions.Rerun) {

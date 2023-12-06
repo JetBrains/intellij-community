@@ -5,9 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.LogicalPosition;
 import org.jetbrains.annotations.NotNull;
 
-public class TextEditorLocation implements FileEditorLocation {
-  private static final Logger LOG = Logger.getInstance(TextEditorLocation.class);
-
+public final class TextEditorLocation implements FileEditorLocation {
   private final TextEditor myEditor;
   private final LogicalPosition myPosition;
 
@@ -21,14 +19,12 @@ public class TextEditorLocation implements FileEditorLocation {
   }
 
 
-  @NotNull
   @Override
-  public FileEditor getEditor() {
+  public @NotNull FileEditor getEditor() {
     return myEditor;
   }
 
-  @NotNull
-  public LogicalPosition getPosition() {
+  public @NotNull LogicalPosition getPosition() {
     return myPosition;
   }
 
@@ -36,7 +32,7 @@ public class TextEditorLocation implements FileEditorLocation {
   public int compareTo(@NotNull FileEditorLocation fileEditorLocation) {
     TextEditorLocation otherLocation = (TextEditorLocation)fileEditorLocation;
     if (myEditor != otherLocation.myEditor) {
-      LOG.error("Different editors: " + myEditor + "; and " + otherLocation.myEditor);
+      Logger.getInstance(TextEditorLocation.class).error("Different editors: " + myEditor + "; and " + otherLocation.myEditor);
     }
 
     return myPosition.compareTo(otherLocation.myPosition);

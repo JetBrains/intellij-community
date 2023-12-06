@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.CommandLineUtil;
@@ -37,8 +37,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     myWaitFor = new ProcessWaitFor(process, this, myPresentableName);
   }
 
-  @NotNull
-  public final T getProcess() {
+  public final @NotNull T getProcess() {
     return myProcess;
   }
 
@@ -47,8 +46,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     return myCommandLine;
   }
 
-  @Nullable
-  public Charset getCharset() {
+  public @Nullable Charset getCharset() {
     return myCharset;
   }
 

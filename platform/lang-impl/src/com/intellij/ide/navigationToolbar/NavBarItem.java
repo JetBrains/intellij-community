@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.icons.AllIcons;
@@ -297,7 +297,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
     return accessibleContext;
   }
 
-  protected class AccessibleNavBarItem extends AccessibleSimpleColoredComponent implements AccessibleAction {
+  protected final class AccessibleNavBarItem extends AccessibleSimpleColoredComponent implements AccessibleAction {
     @Override
     public AccessibleRole getAccessibleRole() {
       if (!isPopupElement()) {
@@ -333,7 +333,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
     }
   }
 
-  private class KeyHandler extends KeyAdapter {
+  private final class KeyHandler extends KeyAdapter {
     // This listener checks if the key event is a KeyEvent.VK_TAB
     // or shift + KeyEvent.VK_TAB event, consume the event
     // if so and move the focus to next/previous component after/before
@@ -372,7 +372,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
     }
   }
 
-  private class FocusHandler implements FocusListener {
+  private final class FocusHandler implements FocusListener {
     @Override
     public void focusGained(FocusEvent e) {
       myPanel.fireNavBarItemFocusGained(e);

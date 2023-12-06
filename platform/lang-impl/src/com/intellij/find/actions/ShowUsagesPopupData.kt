@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.usages.UsageView
-import com.intellij.usages.impl.UsageViewStatisticsCollector.Companion.logOpenInFindToolWindow
+import com.intellij.usages.impl.UsageViewStatisticsCollector.logOpenInFindToolWindow
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JTable
@@ -18,14 +18,14 @@ internal class ShowUsagesPopupData(@JvmField val parameters: ShowUsagesParameter
                                    @JvmField val actionHandler: ShowUsagesActionHandler, @JvmField val usageView: UsageView) {
 
   @JvmField
-  val popupRef = AtomicReference<AbstractPopup>()
+  val popupRef: AtomicReference<AbstractPopup> = AtomicReference<AbstractPopup>()
 
   @JvmField
-  val pinGroup = DefaultActionGroup()
+  val pinGroup: DefaultActionGroup = DefaultActionGroup()
 
   @JvmField
-  val header = ShowUsagesHeader(createPinButton(parameters.project, popupRef, pinGroup, table, actionHandler::findUsages),
-                                actionHandler.presentation.searchTargetString)
+  val header: ShowUsagesHeader = ShowUsagesHeader(createPinButton(parameters.project, popupRef, pinGroup, table, actionHandler::findUsages),
+                                                  actionHandler.presentation.searchTargetString)
 
   private fun createPinButton(project: Project,
                               popupRef: AtomicReference<AbstractPopup>,

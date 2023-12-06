@@ -33,7 +33,7 @@ sealed interface YamlBaseConfig {
 
 interface YamlInspectionConfig : YamlBaseConfig {
   val inspection: String
-  val options: Map<String, *>
+  val options: Map<String, String>
 }
 
 interface YamlGroupConfig : YamlBaseConfig {

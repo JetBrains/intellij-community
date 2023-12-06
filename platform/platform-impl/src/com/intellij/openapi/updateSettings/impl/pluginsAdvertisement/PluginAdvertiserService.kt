@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -7,27 +7,32 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.org.PluginManagerFilters
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.DEPENDENCY_SUPPORT_TYPE
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.EXECUTABLE_DEPENDENCY_KIND
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
@@ -36,6 +41,11 @@ sealed interface PluginAdvertiserService {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
+
+    fun isCommunityIde(): Boolean {
+      val thisProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+      return getSuggestedCommercialIdeCode(thisProductCode) != null
+    }
 
     fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {
@@ -48,10 +58,14 @@ sealed interface PluginAdvertiserService {
     fun getIde(ideCode: String?): SuggestedIde? = ides[ideCode]
 
     @Suppress("HardCodedStringLiteral")
-    val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
+    val ideaUltimate: SuggestedIde = SuggestedIde("IntelliJ IDEA Ultimate",
+                                                  "https://www.jetbrains.com/idea/download/",
+                                                  "https://www.jetbrains.com/idea/download/download-thanks.html?platform={type}")
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-    private val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
+    val pyCharmProfessional = SuggestedIde("PyCharm Professional",
+                                           "https://www.jetbrains.com/pycharm/download/",
+                                           "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}")
 
     @Suppress("HardCodedStringLiteral")
     internal val ides: Map<String, SuggestedIde> = linkedMapOf(
@@ -79,6 +93,9 @@ sealed interface PluginAdvertiserService {
       "RM" to "ruby",
       "AS" to "androidstudio"
     )
+
+    internal const val EXECUTABLE_DEPENDENCY_KIND: String = "executable"
+    internal const val DEPENDENCY_SUPPORT_TYPE: String = "dependencySupport"
   }
 
   suspend fun run(
@@ -86,6 +103,12 @@ sealed interface PluginAdvertiserService {
     unknownFeatures: Collection<UnknownFeature>,
     includeIgnored: Boolean = false,
   )
+
+  suspend fun fetch(
+    customPlugins: List<PluginNode>,
+    unknownFeatures: Collection<UnknownFeature>,
+    includeIgnored: Boolean = false,
+  ): List<IdeaPluginDescriptor>
 
   @ApiStatus.Internal
   fun collectDependencyUnknownFeatures(includeIgnored: Boolean = false)
@@ -108,13 +131,81 @@ open class PluginAdvertiserServiceImpl(
     unknownFeatures: Collection<UnknownFeature>,
     includeIgnored: Boolean,
   ) {
+    cs.launch(Dispatchers.IO) {
+      val (plugins, featuresMap) = fetchFeatures(unknownFeatures, includeIgnored)
+
+      removeNonProjectSuggestions(plugins, featuresMap)
+
+      val descriptorsById = PluginManagerCore.buildPluginIdMap()
+      val disabledDescriptors = plugins.asSequence()
+        .map { it.pluginId }
+        .mapNotNull { descriptorsById[it] }
+        .filterNot { it.isEnabled }
+        .filter { PluginManagementPolicy.getInstance().canInstallPlugin(it) }
+        .filter { isPluginCompatible(it) }
+        .toList()
+
+      val suggestToInstall = if (plugins.isEmpty())
+        emptyList()
+      else
+        fetchPluginSuggestions(
+          pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
+          customPlugins = customPlugins
+        )
+
+      launch(Dispatchers.EDT) {
+        notifyUser(
+          bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
+          suggestionPlugins = suggestToInstall,
+          disabledDescriptors = disabledDescriptors,
+          featuresMap = featuresMap,
+          allUnknownFeatures = unknownFeatures,
+          dependencies = PluginFeatureCacheService.getInstance().dependencies,
+          includeIgnored = includeIgnored,
+        )
+      }
+    }
+  }
+
+  private fun removeNonProjectSuggestions(plugins: MutableSet<PluginData>, featuresMap: MultiMap<PluginId, UnknownFeature>) {
+    // here we filter out suggestions that do not depend on Project contents, such as suggestions based on installed executable
+    // we do not show notifications for them
+
+    val nonProjectSuggestions = mutableListOf<Pair<PluginId, UnknownFeature>>()
+    for (plugin in featuresMap.entrySet()) {
+      for (feature in plugin.value) {
+        if (feature.featureType == DEPENDENCY_SUPPORT_TYPE) {
+          val kind = feature.implementationName.substringBefore(":")
+          if (kind == EXECUTABLE_DEPENDENCY_KIND) {
+            nonProjectSuggestions.add(plugin.key to feature)
+          }
+        }
+      }
+    }
+
+    for (suggestion in nonProjectSuggestions) {
+      featuresMap.remove(suggestion.first, suggestion.second)
+    }
+
+    plugins.removeIf { !featuresMap.containsKey(it.pluginId) }
+  }
+
+  /**
+   * Checks if the plugin is compatible with the current build of the IDE.
+   */
+  private fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean {
+    val incompatibilityReason = PluginManagerCore.checkBuildNumberCompatibility(descriptor, PluginManagerCore.buildNumber)
+    return incompatibilityReason == null
+  }
+
+  private suspend fun fetchFeatures(features: Collection<UnknownFeature>,
+                                    includeIgnored: Boolean): Pair<MutableSet<PluginData>, MultiMap<PluginId, UnknownFeature>> {
     val featuresMap = MultiMap.createSet<PluginId, UnknownFeature>()
-
     val plugins = mutableSetOf<PluginData>()
-    val dependencies = PluginFeatureCacheService.getInstance().dependencies
 
+    val dependencies = PluginFeatureCacheService.getInstance().dependencies
     val ignoredPluginSuggestionState = GlobalIgnoredPluginSuggestionState.getInstance()
-    for (feature in unknownFeatures) {
+    for (feature in features) {
       coroutineContext.ensureActive()
       val featureType = feature.featureType
       val implementationName = feature.implementationName
@@ -148,43 +239,97 @@ open class PluginAdvertiserServiceImpl(
       }
     }
 
-    val descriptorsById = PluginManagerCore.buildPluginIdMap()
-    val pluginManagerFilters = PluginManagerFilters.getInstance()
-    val disabledDescriptors = plugins.asSequence()
-      .map { it.pluginId }
-      .mapNotNull { descriptorsById[it] }
-      .filterNot { it.isEnabled }
-      .filter { pluginManagerFilters.allowInstallingPlugin(it) }
-      .filterNot { it.isOnDemand }
-      .toList()
+    return plugins to featuresMap
+  }
 
-    val suggestToInstall = if (plugins.isEmpty())
-      emptyList()
-    else
-      fetchPluginSuggestions(
-        pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
-        customPlugins = customPlugins,
-        org = pluginManagerFilters,
-      )
+  override suspend fun fetch(customPlugins: List<PluginNode>,
+                             unknownFeatures: Collection<UnknownFeature>,
+                             includeIgnored: Boolean): List<IdeaPluginDescriptor> {
+    val (plugins, featuresMap) = fetchFeatures(unknownFeatures, includeIgnored)
 
-    cs.launch(Dispatchers.EDT) {
-      notifyUser(
-        bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
-        suggestionPlugins = suggestToInstall,
-        disabledDescriptors = disabledDescriptors,
-        customPlugins = customPlugins,
-        featuresMap = featuresMap,
-        allUnknownFeatures = unknownFeatures,
-        dependencies = dependencies,
-        includeIgnored = includeIgnored,
-      )
+    if (plugins.isEmpty()) {
+      return emptyList()
     }
+
+    val pluginIds = plugins.asSequence().map { it.pluginId }.toSet()
+
+    val result = ArrayList<IdeaPluginDescriptor>(RepositoryHelper.mergePluginsFromRepositories(
+      MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
+      customPlugins,
+      true,
+    ).asSequence()
+      .filter { pluginIds.contains(it.pluginId) }
+      .filterNot { isBrokenPlugin(it) }
+                                                   .filter { PluginManagementPolicy.getInstance().canInstallPlugin(it) }
+      .toList())
+
+    for (compatibleUpdate in MarketplaceRequests.getLastCompatiblePluginUpdate(result.map { it.pluginId }.toSet())) {
+      val node = result.find { it.pluginId.idString == compatibleUpdate.pluginId }
+      if (node is PluginNode) {
+        node.externalPluginId = compatibleUpdate.externalPluginId
+        node.externalUpdateId = compatibleUpdate.externalUpdateId
+        node.description = null
+      }
+    }
+
+    val localPluginIdMap = PluginManagerCore.buildPluginIdMap()
+
+    if (result.size < plugins.size) {
+      pluginIds.filterNot { pluginId -> result.find { pluginId == it.pluginId } != null }.mapNotNullTo(result) {
+        convertToNode(localPluginIdMap[it])
+      }
+    }
+
+    result.removeAll { localPluginIdMap[it.pluginId]?.isEnabled == true }
+
+    for (descriptor in result) {
+      val features = featuresMap[descriptor.pluginId]
+      if (features.isNotEmpty()) {
+        val suggestedFeatures = features
+          .filter { it.featureType == DEPENDENCY_SUPPORT_TYPE }
+          .map { getSuggestionReason(it) }
+
+        if (suggestedFeatures.isNotEmpty()) {
+          (descriptor as PluginNode).suggestedFeatures = suggestedFeatures
+        }
+      }
+    }
+
+    return result
+  }
+
+  private fun getSuggestionReason(it: UnknownFeature): @Nls String {
+    val kind = it.implementationName.substringBefore(":")
+    if (kind == EXECUTABLE_DEPENDENCY_KIND) {
+      val executableName = it.implementationName.substringAfter(":")
+      if (executableName.isNotBlank()) {
+        return IdeBundle.message("plugins.configurable.suggested.features.executable", executableName)
+      }
+    }
+
+    return IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
+  }
+
+  private fun convertToNode(descriptor: IdeaPluginDescriptor?): PluginNode? {
+    if (descriptor == null) {
+      return null
+    }
+
+    val node = PluginNode(descriptor.pluginId, descriptor.name, "0")
+    node.description = descriptor.description
+    node.changeNotes = descriptor.changeNotes
+    node.version = descriptor.version
+    node.vendor = descriptor.vendor
+    node.organization = descriptor.organization
+    node.dependencies = descriptor.dependencies
+    node.isConverted = true
+
+    return node
   }
 
   private fun fetchPluginSuggestions(
     pluginIds: Set<PluginId>,
-    customPlugins: List<PluginNode>,
-    org: PluginManagerFilters,
+    customPlugins: List<PluginNode>
   ): List<PluginDownloader> {
     return RepositoryHelper.mergePluginsFromRepositories(
       MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
@@ -193,14 +338,14 @@ open class PluginAdvertiserServiceImpl(
     ).asSequence()
       .filter { pluginIds.contains(it.pluginId) }
       .filterNot { PluginManagerCore.isDisabled(it.pluginId) }
-      .filterNot { PluginManagerCore.isBrokenPlugin(it) }
+      .filterNot { isBrokenPlugin(it) }
       .filter { loadedPlugin ->
         when (val installedPlugin = PluginManagerCore.getPluginSet().findInstalledPlugin(loadedPlugin.pluginId)) {
           null -> true
           else -> (!installedPlugin.isBundled || installedPlugin.allowBundledUpdate())
                   && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, installedPlugin) > 0
         }
-      }.filter { org.allowInstallingPlugin(it) }
+      }.filter { PluginManagementPolicy.getInstance().canInstallPlugin(it) }
       .map { PluginDownloader.createDownloader(it) }
       .toList()
   }
@@ -209,17 +354,21 @@ open class PluginAdvertiserServiceImpl(
     bundledPlugins: List<String>,
     suggestionPlugins: List<PluginDownloader>,
     disabledDescriptors: List<IdeaPluginDescriptorImpl>,
-    customPlugins: List<PluginNode>,
     featuresMap: MultiMap<PluginId, UnknownFeature>,
     allUnknownFeatures: Collection<UnknownFeature>,
     dependencies: PluginFeatureMap?,
     includeIgnored: Boolean,
   ) {
+    for (plugin in suggestionPlugins) {
+      FUSEventSource.NOTIFICATION.logPluginSuggested(project, plugin.id)
+    }
+
     val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || disabledDescriptors.isNotEmpty()) {
       val action = if (disabledDescriptors.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
           FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
-          PluginsAdvertiserDialog(project, suggestionPlugins, customPlugins).show()
+
+          PluginManagerConfigurable.showSuggestedPlugins(project, FUSEventSource.NOTIFICATION)
         }
       }
       else {
@@ -316,6 +465,7 @@ open class PluginAdvertiserServiceImpl(
 
     val pluginNames = (plugins.map { it.pluginName } + disabledPlugins.map { it.name })
       .sorted()
+      .distinct()
       .joinToString(", ")
 
     val addressedFeatures = collectFeaturesByName(ids, features)
@@ -342,7 +492,6 @@ open class PluginAdvertiserServiceImpl(
           IdeBundle.message(
             "plugins.advertiser.missing.feature.dependency",
             pluginsNumber,
-            feature.value.joinToString(),
             pluginNames
           )
         }
@@ -350,7 +499,6 @@ open class PluginAdvertiserServiceImpl(
           IdeBundle.message(
             "plugins.advertiser.missing.features.dependency",
             pluginsNumber,
-            feature.value.joinToString(),
             pluginNames
           )
         }
@@ -361,7 +509,6 @@ open class PluginAdvertiserServiceImpl(
         IdeBundle.message(
           "plugins.advertiser.missing.features.dependency",
           pluginsNumber,
-          entries.joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") },
           pluginNames
         )
       }
@@ -383,7 +530,7 @@ open class PluginAdvertiserServiceImpl(
     featuresCollector.getUnknownFeaturesOfType(DEPENDENCY_SUPPORT_FEATURE)
       .forEach { featuresCollector.unregisterUnknownFeature(it) }
 
-    DependencyCollectorBean.EP_NAME.extensions
+    DependencyCollectorBean.EP_NAME.extensionList
       .asSequence()
       .flatMap { dependencyCollectorBean ->
         dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->
@@ -424,7 +571,7 @@ open class PluginAdvertiserServiceImpl(
     val dependencyUnknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
     if (dependencyUnknownFeatures.isNotEmpty()) {
       run(
-        customPlugins = loadPluginsFromCustomRepositories(),
+        customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(null),
         unknownFeatures = dependencyUnknownFeatures,
       )
     }
@@ -440,9 +587,52 @@ open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
   ) {
   }
 
+  override suspend fun fetch(customPlugins: List<PluginNode>,
+                             unknownFeatures: Collection<UnknownFeature>,
+                             includeIgnored: Boolean): List<IdeaPluginDescriptor> {
+    return emptyList()
+  }
+
   final override fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {}
 
   final override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {}
 }
 
-data class SuggestedIde(@NlsContexts.DialogMessage val name: String, val downloadUrl: String)
+data class SuggestedIde(
+  @NlsContexts.DialogMessage
+  val name: String,
+  val defaultDownloadUrl: String,
+  val platformSpecificDownloadUrlTemplate: String? = null
+) {
+  val downloadUrl: String
+    get() {
+      return platformSpecificDownloadUrlTemplate?.let { OsArchMapper.getDownloadUrl(it) }
+             ?: defaultDownloadUrl
+    }
+}
+
+private object OsArchMapper {
+  const val OS_ARCH_PARAMETER: String = "{type}"
+
+  val DOWNLOAD_OS_ARCH_MAPPING: Map<Pair<OS, CpuArch>, String> = mapOf(
+    (OS.Windows to CpuArch.X86_64) to "windows",
+    (OS.Windows to CpuArch.ARM64) to "windowsARM64",
+    (OS.macOS to CpuArch.ARM64) to "macM1",
+    (OS.macOS to CpuArch.X86_64) to "mac",
+    (OS.Linux to CpuArch.X86_64) to "linux",
+    (OS.Linux to CpuArch.ARM64) to "linuxARM64",
+  )
+
+  fun getDownloadUrl(downloadUrlTemplate: String): String? {
+    val os = OS.CURRENT
+    val arch = CpuArch.CURRENT
+
+    val osArchType = DOWNLOAD_OS_ARCH_MAPPING[(os to arch)] ?: return null
+    if (downloadUrlTemplate.contains(OS_ARCH_PARAMETER)) {
+      return downloadUrlTemplate.replace(OS_ARCH_PARAMETER, osArchType)
+    }
+    else {
+      return downloadUrlTemplate + osArchType
+    }
+  }
+}

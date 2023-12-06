@@ -128,7 +128,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("script.kts", runConfiguration.name)
-        runConfiguration.workingDirectory = runConfiguration.workingDirectory + "/customWorkingDirectory"
+        runConfiguration.workingDirectory += "/customWorkingDirectory"
         val scriptVirtualFileBefore = script.containingFile.virtualFile
         val originalPath = scriptVirtualFileBefore.canonicalPath
         val originalWorkingDirectory = scriptVirtualFileBefore.parent.canonicalPath + "/customWorkingDirectory"

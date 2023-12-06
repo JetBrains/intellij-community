@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.kotlin
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -19,19 +19,27 @@ sealed class KotlinUAnnotationBase<T : KtCallElement>(
     givenParent: UElement?
 ) : KotlinAbstractUElement(givenParent), UAnnotationEx, UAnchorOwner, UMultiResolvable {
 
+    private val attributeValuesPart = UastLazyPart<List<UNamedExpression>>()
+    private var qualifiedNameValue: Any? = UNINITIALIZED_UAST_PART
+
     abstract override val javaPsi: PsiAnnotation?
 
     final override val psi: PsiElement = sourcePsi
 
     protected abstract fun annotationUseSiteTarget(): AnnotationUseSiteTarget?
 
-    override val qualifiedName: String? by lz {
-        baseResolveProviderService.qualifiedAnnotationName(sourcePsi)
-    }
+    override val qualifiedName: String?
+        get() {
+            if (qualifiedNameValue == UNINITIALIZED_UAST_PART) {
+                qualifiedNameValue = baseResolveProviderService.qualifiedAnnotationName(sourcePsi)
+            }
+            return qualifiedNameValue as String?
+        }
 
-    override val attributeValues: List<UNamedExpression> by lz {
-        baseResolveProviderService.convertValueArguments(sourcePsi, this) ?: emptyList()
-    }
+    override val attributeValues: List<UNamedExpression>
+        get() = attributeValuesPart.getOrBuild {
+            baseResolveProviderService.convertValueArguments(sourcePsi, this) ?: emptyList()
+        }
 
     override fun findAttributeValue(name: String?): UExpression? =
         findDeclaredAttributeValue(name) ?: findAttributeDefaultValue(name ?: "value")
@@ -45,9 +53,7 @@ sealed class KotlinUAnnotationBase<T : KtCallElement>(
     }
 
     private fun findAttributeDefaultValue(name: String): UExpression? {
-        return baseResolveProviderService.findDefaultValueForAnnotationAttribute(sourcePsi, name)?.let {
-            languagePlugin?.convertWithParent(it)
-        }
+        return baseResolveProviderService.findDefaultValueForAnnotationAttribute(sourcePsi, name)
     }
 
     override fun convertParent(): UElement? {
@@ -71,13 +77,17 @@ sealed class KotlinUAnnotationBase<T : KtCallElement>(
 
 @ApiStatus.Internal
 class KotlinUAnnotation(
-    annotationEntry: KtAnnotationEntry,
+    private val annotationEntry: KtAnnotationEntry,
     givenParent: UElement?
 ) : KotlinUAnnotationBase<KtAnnotationEntry>(annotationEntry, givenParent), UAnnotation {
 
-    override val javaPsi by lz {
-        baseResolveProviderService.convertToPsiAnnotation(annotationEntry)
-    }
+    private val javaPsiPart = UastLazyPart<PsiAnnotation?>()
+    private val uastAnchorPart = UastLazyPart<UIdentifier>()
+
+    override val javaPsi: PsiAnnotation?
+        get() = javaPsiPart.getOrBuild {
+            baseResolveProviderService.convertToPsiAnnotation(annotationEntry)
+        }
 
     override fun annotationUseSiteTarget() = sourcePsi.useSiteTarget?.getAnnotationUseSiteTarget()
 
@@ -85,25 +95,29 @@ class KotlinUAnnotation(
         return baseResolveProviderService.resolveToClass(sourcePsi, this)
     }
 
-    override val uastAnchor: UIdentifier by lz {
-        KotlinUIdentifier(
-            javaPsi?.nameReferenceElement,
-            annotationEntry.typeReference?.nameElement,
-            this
-        )
-    }
-
+    override val uastAnchor: UIdentifier
+        get() = uastAnchorPart.getOrBuild {
+            KotlinUIdentifier(
+                javaPsi?.nameReferenceElement,
+                annotationEntry.typeReference?.nameElement,
+                this
+            )
+        }
 }
 
 @ApiStatus.Internal
 class KotlinUNestedAnnotation private constructor(
-    original: KtCallExpression,
+    private val original: KtCallExpression,
     givenParent: UElement?
 ) : KotlinUAnnotationBase<KtCallExpression>(original, givenParent) {
 
-    override val javaPsi: PsiAnnotation? by lz {
-        baseResolveProviderService.convertToPsiAnnotation(original)
-    }
+    private val javaPsiPart = UastLazyPart<PsiAnnotation?>()
+    private val uastAnchorPart = UastLazyPart<UIdentifier>()
+
+    override val javaPsi: PsiAnnotation?
+        get() = javaPsiPart.getOrBuild {
+            baseResolveProviderService.convertToPsiAnnotation(original)
+        }
 
     override fun annotationUseSiteTarget(): AnnotationUseSiteTarget? = null
 
@@ -111,17 +125,18 @@ class KotlinUNestedAnnotation private constructor(
         return baseResolveProviderService.resolveToClassIfConstructorCall(sourcePsi, this)
     }
 
-    override val uastAnchor: UIdentifier by lz {
-        KotlinUIdentifier(
-            javaPsi?.nameReferenceElement?.referenceNameElement,
-            (original.calleeExpression as? KtNameReferenceExpression)?.getReferencedNameElement(),
-            this
-        )
-    }
+    override val uastAnchor: UIdentifier
+        get() = uastAnchorPart.getOrBuild {
+            KotlinUIdentifier(
+                javaPsi?.nameReferenceElement?.referenceNameElement,
+                (original.calleeExpression as? KtNameReferenceExpression)?.getReferencedNameElement(),
+                this
+            )
+        }
 
     companion object {
         fun create(ktCallExpression: KtCallExpression, givenParent: UElement?): KotlinUNestedAnnotation? {
-            val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+            val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
             return if (service.isAnnotationConstructorCall(ktCallExpression))
                 KotlinUNestedAnnotation(ktCallExpression, givenParent)
             else

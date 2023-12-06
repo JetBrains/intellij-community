@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.RequiredElement;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -22,6 +24,7 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean<T
    * @see Language#getID()
    */
   @Attribute("language")
+  @RequiredElement(allowEmpty = true)
   public String language;
 
   @Attribute("implementationClass")
@@ -51,14 +54,14 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean<T
     implementationClass = instance.getClass().getName();
   }
 
-  @Nullable
   @Override
-  protected final String getImplementationClassName() {
+  protected final @Nullable String getImplementationClassName() {
     return implementationClass;
   }
 
   @Override
-  public String getKey() {
-    return language;
+  public @NotNull String getKey() {
+    // empty string means any language
+    return StringUtilRt.notNullize(language);
   }
 }

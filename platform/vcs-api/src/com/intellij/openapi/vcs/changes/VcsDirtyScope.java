@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -71,13 +71,15 @@ public abstract class VcsDirtyScope {
   public abstract Set<FilePath> getRecursivelyDirtyDirectories();
 
   /**
-   * Invoke the {@code iterator} for all files in the dirty scope.
-   * For recursively dirty directories all children are processed.
-   *
-   * @param iterator an iterator to invoke
+   * @deprecated Prefer not walking the VFS, or using {@link com.intellij.openapi.vcs.impl.VcsRootIterator} directly if necessary.
    */
+  @Deprecated
   public abstract void iterate(Processor<? super FilePath> iterator);
-  
+
+  /**
+   * @deprecated Prefer not walking the VFS, or using {@link com.intellij.openapi.vcs.impl.VcsRootIterator} directly if necessary.
+   */
+  @Deprecated
   public abstract void iterateExistingInsideScope(Processor<? super VirtualFile> vf);
 
   public abstract boolean isEmpty();
@@ -89,7 +91,5 @@ public abstract class VcsDirtyScope {
    */
   public abstract boolean belongsTo(final FilePath path);
 
-  public boolean wasEveryThingDirty() {
-    return false;
-  }
+  public abstract boolean wasEveryThingDirty();
 }

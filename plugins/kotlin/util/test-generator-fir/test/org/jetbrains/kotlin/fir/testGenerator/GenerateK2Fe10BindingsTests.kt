@@ -50,7 +50,6 @@ internal fun MutableTWorkspace.generateK2Fe10BindingsTests() {
         testClass<AbstractFe10BindingQuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("testData/quickfix/addVarianceModifier", pattern = pattern)
-            model("testData/quickfix/canBePrimaryConstructorProperty", pattern = pattern)
             model("testData/quickfix/kdocMissingDocumentation", pattern = pattern)
             model("testData/quickfix/memberVisibilityCanBePrivate", pattern = pattern)
         }

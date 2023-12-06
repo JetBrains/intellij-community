@@ -2,6 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.impl.RemoveRedundantParameterTypesFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -504,7 +506,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     }
   }
 
-  static class ReplaceWithComparatorFix implements LocalQuickFix {
+  static class ReplaceWithComparatorFix extends PsiUpdateModCommandQuickFix {
     private final @Nls String myMessage;
 
     ReplaceWithComparatorFix(@Nls String message) {
@@ -526,8 +528,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiLambdaExpression lambda)) return;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 2) return;

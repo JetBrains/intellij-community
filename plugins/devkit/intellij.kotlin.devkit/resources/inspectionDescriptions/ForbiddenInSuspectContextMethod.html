@@ -5,10 +5,11 @@ Many of these methods have corresponding coroutine-friendly analogues, that can 
 
 <!-- tooltip end -->
 
-Some examples:
+Examples:
 <ul>
   <li><code>com.intellij.openapi.progress.ProgressManager.checkCanceled()</code> should be replaced with <code>com.intellij.openapi.progress.checkCancelled()</code></li>
-  <li><code>com.intellij.openapi.application.Application.invokeAndWait</code> and e.t.c should be replaced with <code>withContext(Dispatchers.EDT)</code></li>
+  <li><code>com.intellij.openapi.application.Application.invokeAndWait()</code> should be replaced with <code>withContext(Dispatchers.EDT)</code></li>
+  <li>etc.</li>
 </ul>
 </body>
 </html>

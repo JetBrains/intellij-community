@@ -20,13 +20,15 @@ import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.psi.*
 
-class ParcelizeAddSupertypeQuickFix(clazz: KtClassOrObject) : AbstractParcelizeQuickFix<KtClassOrObject>(clazz) {
-    object Factory : AbstractFactory({ findElement<KtClassOrObject>()?.let(::ParcelizeAddSupertypeQuickFix) })
-
+class ParcelizeAddSupertypeQuickFix(clazz: KtClassOrObject) : AbstractParcelizePsiOnlyQuickFix<KtClassOrObject>(clazz) {
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.add.parcelable.supertype")
 
     override fun invoke(ktPsiFactory: KtPsiFactory, element: KtClassOrObject) {
         val supertypeName = ParcelizeNames.PARCELABLE_ID.asFqNameString()
         element.addSuperTypeListEntry(ktPsiFactory.createSuperTypeEntry(supertypeName)).shortenReferences()
+    }
+
+    companion object {
+        val FACTORY = factory(::ParcelizeAddSupertypeQuickFix)
     }
 }

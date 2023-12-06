@@ -1,12 +1,13 @@
-interface <info textAttributesKey="KOTLIN_TRAIT">TheInterface</info> {
+// EXPECTED_DUPLICATED_HIGHLIGHTING
+interface <symbolName textAttributesKey="KOTLIN_TRAIT">TheInterface</symbolName> {
 }
 
-class <info textAttributesKey="KOTLIN_CLASS">TheClass</info> : <info textAttributesKey="KOTLIN_TRAIT">TheInterface</info> {
+class <symbolName textAttributesKey="KOTLIN_CLASS">TheClass</symbolName> : <symbolName textAttributesKey="KOTLIN_TRAIT">TheInterface</symbolName> {
 }
 
-<info textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">annotation</info> class <info textAttributesKey="KOTLIN_ANNOTATION">magnificent</info>
-<info textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">annotation</info> class <info textAttributesKey="KOTLIN_ANNOTATION">Deprecated</info>
+<symbolName textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">annotation</symbolName> class <symbolName textAttributesKey="KOTLIN_ANNOTATION">magnificent</symbolName>
+<symbolName textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">annotation</symbolName> class <symbolName textAttributesKey="KOTLIN_ANNOTATION">Deprecated</symbolName>
 
-<info textAttributesKey="KOTLIN_ANNOTATION">@Deprecated</info>
-<info textAttributesKey="KOTLIN_ANNOTATION">@magnificent</info> <info textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">abstract</info> class <info textAttributesKey="KOTLIN_ABSTRACT_CLASS">AbstractClass</info><<info textAttributesKey="KOTLIN_TYPE_PARAMETER">T</info>> {
+<symbolName textAttributesKey="KOTLIN_ANNOTATION">@Deprecated</symbolName>
+<symbolName textAttributesKey="KOTLIN_ANNOTATION">@magnificent</symbolName> <symbolName textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">abstract</symbolName> class <symbolName textAttributesKey="KOTLIN_ABSTRACT_CLASS">AbstractClass</symbolName><<symbolName textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName>> {
 }

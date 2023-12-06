@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
@@ -17,7 +17,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
@@ -72,11 +71,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.reference.SoftReference.dereference;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
 
@@ -465,7 +466,7 @@ public final class PsiImplUtil {
     if (block == null) return null;
 
     final SoftReference<PsiCodeBlock> ref = block.getUserData(PSI_CODE_BLOCK);
-    final PsiCodeBlock body = SoftReference.dereference(ref);
+    final PsiCodeBlock body = dereference(ref);
     if (body != null) return body;
     final GrSyntheticCodeBlock newBody = new GrSyntheticCodeBlock(block);
     block.putUserData(PSI_CODE_BLOCK, new SoftReference<>(newBody));
@@ -476,7 +477,7 @@ public final class PsiImplUtil {
     if (typeElement == null) return null;
 
     final SoftReference<PsiTypeElement> ref = typeElement.getUserData(PSI_TYPE_ELEMENT);
-    final PsiTypeElement element = SoftReference.dereference(ref);
+    final PsiTypeElement element = dereference(ref);
     if (element != null) return element;
     final GrSyntheticTypeElement newTypeElement = new GrSyntheticTypeElement(typeElement);
     typeElement.putUserData(PSI_TYPE_ELEMENT, new SoftReference<>(newTypeElement));
@@ -487,7 +488,7 @@ public final class PsiImplUtil {
     if (expr == null) return null;
 
     final SoftReference<PsiExpression> ref = expr.getUserData(PSI_EXPRESSION);
-    final PsiExpression element = SoftReference.dereference(ref);
+    final PsiExpression element = dereference(ref);
     if (element != null) return element;
     final PsiExpression newExpr = expr instanceof GrLiteral ? new GrSyntheticLiteralExpression((GrLiteral)expr) : new GrSyntheticExpression(expr);
     expr.putUserData(PSI_EXPRESSION, new SoftReference<>(newExpr));

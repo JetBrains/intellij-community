@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -31,7 +31,7 @@ import java.awt.event.ComponentEvent;
 /**
  * @author Alexander Lobas
  */
-public class TabbedPaneHeaderComponent extends JPanel {
+public final class TabbedPaneHeaderComponent extends JPanel {
   private final JBValue myHeight = new JBValue.Float(30);
   private final JBValue myGap = new JBValue.Float(10);
 
@@ -159,7 +159,14 @@ public class TabbedPaneHeaderComponent extends JPanel {
     myTabbedPane.addChangeListener(e -> myListener.selectionChanged(myTabbedPane.getSelectedIndex()));
   }
 
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) update();
+  }
+
   public void update() {
+    setPreferredSize(null);
     doLayout();
     revalidate();
     myTabbedPane.doLayout();

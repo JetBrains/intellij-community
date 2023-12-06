@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
@@ -29,8 +29,7 @@ public class LimitedPool<T> {
     myFactory = factory;
   }
 
-  @NotNull
-  public T alloc() {
+  public @NotNull T alloc() {
     if (myIndex == 0) {
       return myFactory.create();
     }
@@ -63,9 +62,8 @@ public class LimitedPool<T> {
       super(maxCapacity, factory);
     }
 
-    @NotNull
     @Override
-    public synchronized T alloc() {
+    public synchronized @NotNull T alloc() {
       return super.alloc();
     }
 

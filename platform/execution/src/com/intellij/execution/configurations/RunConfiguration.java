@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
@@ -25,12 +25,14 @@ import java.util.List;
  * A run configuration which can be managed by a user and displayed in the UI.
  * <p>
  * If debugger is provided by plugin, it should also implement {@link RunConfigurationWithSuppressedDefaultDebugAction}.
- * Otherwise (in case of disabled plugin) debug action may be enabled in UI but with no reaction.
+ * Otherwise, in case of disabled plugin, debug action may be enabled in the UI but with no reaction.
  *
  * @see com.intellij.execution.RunManager
  * @see RunConfigurationBase
  * @see RefactoringListenerProvider
  * @see RunConfigurationExtensionBase
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configurations.html">Execution / Run Configurations (IntelliJ Platform Docs)</a>
  */
 public interface RunConfiguration extends RunProfile, Cloneable {
   DataKey<RunConfiguration> DATA_KEY = DataKey.create("runtimeConfiguration");
@@ -55,10 +57,13 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   void setName(@NlsSafe String name);
 
   /**
-   * Returns the UI control for editing the run configuration settings. If additional control over validation is required, the object
-   * returned from this method may also implement {@link com.intellij.execution.impl.CheckableRunConfigurationEditor}. The returned object
-   * can also implement {@link com.intellij.openapi.options.SettingsEditorGroup} if the settings it provides need to be displayed in
-   * multiple tabs.
+   * Returns the UI control for editing the run configuration settings.
+   * <p>
+   * If additional control over validation is required, the object
+   * returned from this method may also implement {@link com.intellij.execution.impl.CheckableRunConfigurationEditor}.
+   * <p>
+   * If the settings it provides need to be displayed in multiple tabs,
+   * returned editor should extend {@link com.intellij.openapi.options.SettingsEditorGroup}.
    *
    * @return the settings editor component.
    */
@@ -109,7 +114,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
 
   /**
    * Returns the unique identifier of the run configuration. Return null if not applicable.
-   * Used only for non-managed RC type.
+   * Used only for a non-managed run configuration type.
    */
   default @Nullable @NonNls String getId() {
     return null;
@@ -124,7 +129,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   }
 
   /**
-   * If this method returns true, disabled executor buttons (e.g. Run) will be hidden when this configuration is selected.
+   * If this method returns true, disabled executor buttons (e.g., Run) will be hidden when this configuration is selected.
    * Note that this will lead to UI flickering when switching between this configuration and others for which this property
    * is false, so you should avoid overriding this method unless you're really sure of what you're doing.
    */
@@ -134,11 +139,12 @@ public interface RunConfiguration extends RunProfile, Cloneable {
 
   /**
    * Checks whether the run configuration settings are valid.
-   * Note that this check may be invoked on every change (i.e. after each character typed in an input field).
+   * Note that this check may be invoked on every change (i.e., after each character is typed in an input field).
    *
-   * @throws RuntimeConfigurationException if the configuration settings contain a non-fatal problem which the user should be warned about
+   * @throws RuntimeConfigurationWarning   if the configuration settings contain a problem which the user should be warned about.
+   * @throws RuntimeConfigurationException if the configuration settings contain a non-fatal error which the user should be warned about
    *                                       but the execution should still be allowed.
-   * @throws RuntimeConfigurationError     if the configuration settings contain a fatal problem which makes it impossible
+   * @throws RuntimeConfigurationError     if the configuration settings contain a fatal error which makes it impossible
    *                                       to execute the run configuration.
    */
   default void checkConfiguration() throws RuntimeConfigurationException {
@@ -165,7 +171,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   }
 
   /**
-   * Allows to customize handling when restart the run configuration not allowing running in parallel.
+   * Allows customizing handling when restart the run configuration not allowing running in parallel.
    *
    * @return the further actions.
    */
@@ -184,7 +190,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
      */
     ASK_AND_RESTART,
     /**
-     * Stop and restart the run configuration without additional interaction with user.
+     * Stop and restart the run configuration without additional interaction with a user.
      */
     RESTART,
     /**

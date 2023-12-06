@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.icons.AllIcons;
@@ -34,11 +34,12 @@ import java.util.Objects;
 
 public class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
-  private final static Key<AnAction> FIRST_ACTION = Key.create("firstAction");
+  private static final Key<AnAction> FIRST_ACTION = Key.create("firstAction");
 
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
     myActionGroup = actionGroup;
     setPopup(true);
+    getTemplatePresentation().copyFrom(actionGroup.getTemplatePresentation());
   }
 
   public @NotNull ActionGroup getActionGroup() {
@@ -55,8 +56,9 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     Presentation presentation = e.getPresentation();
     SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), SplitButton.class);
 
-    myActionGroup.update(e);
- 
+    Presentation groupPresentation = e.getUpdateSession().presentation(myActionGroup);
+    e.getPresentation().copyFrom(groupPresentation, splitButton);
+
     if (presentation.isVisible()) {
       AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
       if (action != null) {
@@ -74,8 +76,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     }
   }
 
-  @Nullable
-  private AnAction getFirstEnabledAction(@NotNull AnActionEvent e) {
+  private @Nullable AnAction getFirstEnabledAction(@NotNull AnActionEvent e) {
     UpdateSession session = e.getUpdateSession();
     var children = session.children(myActionGroup);
     var firstEnabled = ContainerUtil.find(children, a -> session.presentation(a).isEnabled());
@@ -93,8 +94,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
   }
 
   @Override
-  @NotNull
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return new SplitButton(this, presentation, place, myActionGroup);
   }
 
@@ -167,7 +167,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
       int x = baseRect.x + baseRect.width - JBUIScale.scale(3) - ARROW_DOWN.getIconWidth();
       int y = baseRect.y + (baseRect.height - ARROW_DOWN.getIconHeight()) / 2 + JBUIScale.scale(1);
-      look.paintIcon(g, this, ARROW_DOWN, x, y);
+      ARROW_DOWN.paintIcon(this, g, x, y);
 
       x -= JBUIScale.scale(4);
       int popState = getPopState();
@@ -185,7 +185,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
         }
       }
 
-      x = baseRect.x + (x -  actionIcon.getIconWidth()) / 2;
+      x = baseRect.x + (x - baseRect.x -  actionIcon.getIconWidth()) / 2;
       y = baseRect.y + (baseRect.height - actionIcon.getIconHeight()) / 2;
       look.paintIcon(g, this, actionIcon, x, y);
     }

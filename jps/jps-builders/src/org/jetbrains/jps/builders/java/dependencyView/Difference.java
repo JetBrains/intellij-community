@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
@@ -48,9 +49,11 @@ public abstract class Difference {
     boolean unchanged();
   }
 
-  public static <T, D extends Difference> Specifier<T, D> make(final Set<T> past, final Set<T> now) {
-    if ((past == null || past.isEmpty()) && (now == null || now.isEmpty())) {
-      return new Specifier<T, D>() {
+  public static <T, D extends Difference> Specifier<T, D> make(final @Nullable Set<T> past, final @Nullable Set<T> now) {
+    boolean pastEmpty = past == null || past.isEmpty();
+    boolean nowEmpty = now == null || now.isEmpty();
+    if (pastEmpty && nowEmpty) {
+      return new Specifier<>() {
         @Override
         public Collection<T> added() {
           return Collections.emptySet();
@@ -73,9 +76,9 @@ public abstract class Difference {
       };
     }
 
-    if (past == null) {
-      final Collection<T> _now = Collections.unmodifiableCollection(now);
-      return new Specifier<T, D>() {
+    if (pastEmpty) {
+      final Collection<T> _now = Collections.unmodifiableSet(now);
+      return new Specifier<>() {
         @Override
         public Collection<T> added() {
           return _now;
@@ -83,12 +86,37 @@ public abstract class Difference {
 
         @Override
         public Collection<T> removed() {
-          return Collections.emptyList();
+          return Collections.emptySet();
         }
 
         @Override
         public Collection<Pair<T, D>> changed() {
-          return Collections.emptyList();
+          return Collections.emptySet();
+        }
+
+        @Override
+        public boolean unchanged() {
+          return false;
+        }
+      };
+    }
+
+    if (nowEmpty) {
+      final Collection<T> _past = Collections.unmodifiableSet(past);
+      return new Specifier<>() {
+        @Override
+        public Collection<T> added() {
+          return Collections.emptySet();
+        }
+
+        @Override
+        public Collection<T> removed() {
+          return _past;
+        }
+
+        @Override
+        public Collection<Pair<T, D>> changed() {
+          return Collections.emptySet();
         }
 
         @Override
@@ -133,7 +161,7 @@ public abstract class Difference {
       changed = Collections.emptySet();
     }
 
-    return new Specifier<T, D>() {
+    return new Specifier<>() {
       @Override
       public Collection<T> added() {
         return added;

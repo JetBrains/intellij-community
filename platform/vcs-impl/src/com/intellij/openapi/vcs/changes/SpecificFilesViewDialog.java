@@ -4,41 +4,36 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.AppUIExecutor;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
-import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected final JPanel myPanel;
-  protected final ChangesListView myView;
+  protected final AsyncChangesTree myView;
   protected final Project myProject;
-
-  private final BackgroundRefresher<Runnable> myBackgroundRefresher;
 
   protected SpecificFilesViewDialog(@NotNull Project project,
                                     @NotNull @NlsContexts.DialogTitle String title,
@@ -47,24 +42,8 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     setTitle(title);
     myProject = project;
 
-    myBackgroundRefresher = new BackgroundRefresher<>(getClass().getSimpleName() + " refresh", getDisposable());
-    myView = new ChangesListView(project, false) {
-
-      @Nullable
-      @Override
-      public Object getData(@NotNull String dataId) {
-        if (shownDataKey.is(dataId)) {
-          return VcsTreeModelData.selected(this)
-            .iterateUserObjects(FilePath.class);
-        }
-        return super.getData(dataId);
-      }
-
-      @Override
-      public void onGroupingChanged() {
-        refreshView();
-      }
-    };
+    myView = new MyChangesTree(project, shownDataKey);
+    myView.setTreeStateStrategy(ChangesTree.KEEP_NON_EMPTY);
 
     final Runnable closer = () -> close(0);
     EditSourceOnEnterKeyHandler.install(myView, closer);
@@ -72,19 +51,19 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
     myView.setMinimumSize(new JBDimension(100, 100));
     myPanel = createPanel();
-    setOKButtonText(CommonBundle.getCancelButtonText());
+    setOKButtonText(CommonBundle.getCloseButtonText());
 
     init();
 
     ChangeListAdapter changeListListener = new ChangeListAdapter() {
       @Override
       public void changeListUpdateDone() {
-        refreshView();
+        myView.rebuildTree();
       }
     };
     ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener, myDisposable);
 
-    refreshView();
+    myView.rebuildTree();
   }
 
   @Override
@@ -158,33 +137,94 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     }
   }
 
-  private void updateTreeModel(@NotNull DefaultTreeModel treeModel) {
-    final TreeState state = TreeState.createOn(myView);
-
-    myView.setModel(treeModel);
-    myView.expandPath(new TreePath(myView.getRoot().getPath()));
-
-    state.applyTo(myView);
-  }
-
-  private @NotNull DefaultTreeModel buildTreeModel() {
-    List<FilePath> files = getFiles();
-    return TreeModelBuilder.buildFromFilePaths(myProject, myView.getGrouping(), files);
-  }
-
-  protected void refreshView() {
-    myView.setPaintBusy(true);
-    ModalityState modalityState = ModalityState.stateForComponent(myView);
-    myBackgroundRefresher.requestRefresh(0, () -> {
-        DefaultTreeModel treeModel = buildTreeModel();
-        return () -> updateTreeModel(treeModel);
-      })
-      .thenAsync(callback -> callback != null
-                             ? AppUIExecutor.onUiThread(modalityState).submit(callback)
-                             : rejectedPromise("no callback"))
-      .onProcessed(__ -> myView.setPaintBusy(false));
-  }
-
   @NotNull
+  @RequiresBackgroundThread
   protected abstract List<FilePath> getFiles();
+
+  private class MyChangesTree extends AsyncChangesTree {
+    private final @NotNull DataKey<Iterable<FilePath>> myShownDataKey;
+
+    MyChangesTree(@NotNull Project project, @NotNull DataKey<Iterable<FilePath>> shownDataKey) {
+      super(project, false, true);
+      myShownDataKey = shownDataKey;
+    }
+
+    @Override
+    public int getToggleClickCount() {
+      return 2;
+    }
+
+    @Override
+    public void installPopupHandler(@NotNull ActionGroup group) {
+      PopupHandler.installPopupMenu(this, group, ActionPlaces.CHANGES_VIEW_POPUP);
+    }
+
+    @NotNull
+    @Override
+    protected AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        List<FilePath> files = SpecificFilesViewDialog.this.getFiles();
+        return TreeModelBuilder.buildFromFilePaths(myProject, grouping, files);
+      });
+    }
+
+    @Override
+    public void resetTreeState() {
+      ChangesBrowserNode<?> root = getRoot();
+      if (root.getChildCount() == 1) {
+        TreeNode child = root.getChildAt(0);
+        expandPath(TreeUtil.getPathFromRoot(child));
+      }
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NotNull String dataId) {
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
+        VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
+        DataProvider ourDataProvider = slowId -> getSlowData(myProject, treeSelection, exactSelection, slowId);
+        DataProvider treeDataProvider = (DataProvider)VcsTreeModelData.getData(myProject, this, dataId);
+        DataProvider superDataProvider = (DataProvider)super.getData(dataId);
+        return CompositeDataProvider.compose(Arrays.asList(ourDataProvider, treeDataProvider, superDataProvider));
+      }
+
+      Object ourData = getFastData(dataId);
+      if (ourData != null) return ourData;
+
+      Object treeData = VcsTreeModelData.getData(myProject, this, dataId);
+      if (treeData != null) return null;
+
+      return super.getData(dataId);
+    }
+
+    private @Nullable Object getFastData(@NotNull String dataId) {
+      if (myShownDataKey.is(dataId)) {
+        return VcsTreeModelData.selected(this)
+          .iterateUserObjects(FilePath.class);
+      }
+      if (VcsDataKeys.FILE_PATHS.is(dataId)) {
+        return VcsTreeModelData.selected(this)
+          .iterateUserObjects(FilePath.class);
+      }
+      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+        return new VirtualFileDeleteProvider();
+      }
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+        return ChangesListView.HELP_ID;
+      }
+      return super.getData(dataId);
+    }
+
+    @Nullable
+    private static Object getSlowData(@NotNull Project project,
+                                      @NotNull VcsTreeModelData treeSelection,
+                                      @NotNull VcsTreeModelData exactSelection,
+                                      @NotNull String slowId) {
+      if (ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY.is(slowId)) {
+        return VcsTreeModelData.mapToExactVirtualFile(exactSelection);
+      }
+      return null;
+    }
+  }
 }

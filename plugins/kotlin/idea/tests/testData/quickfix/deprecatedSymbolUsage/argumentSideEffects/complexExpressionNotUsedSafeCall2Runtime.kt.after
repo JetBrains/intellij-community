@@ -15,3 +15,5 @@ fun foo(): Int? {
 }
 
 fun getC(): C? = null
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

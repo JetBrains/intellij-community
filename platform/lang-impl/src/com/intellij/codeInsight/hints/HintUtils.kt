@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
@@ -15,12 +15,14 @@ internal object HintUtils {
     return languages
   }
 
-  fun getHintProvidersForLanguage(language: Language): List<ProviderWithSettings<out Any>> {
+  fun getHintProvidersForLanguage(language: Language): List<ProviderWithSettings<*>> {
     val config = InlayHintsSettings.instance()
     return InlayHintsProviderFactory.EP.extensionList
+      .asSequence()
       .flatMap { it.getProvidersInfoForLanguage(language) }
       .filter { it.isLanguageSupported(language) }
-      .map { it.withSettings(language, config) }
+      .map { it.withSettings(it.getSettingsLanguage(language), config) }
+      .toList()
   }
 }
 

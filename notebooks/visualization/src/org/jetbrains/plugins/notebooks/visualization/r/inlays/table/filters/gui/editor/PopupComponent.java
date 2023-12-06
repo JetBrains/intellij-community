@@ -441,7 +441,7 @@ abstract class PopupComponent implements PopupMenuListener {
     }
 
     /** Configures the passed pane to have the given preferred width. */
-    private void configurePaneSize(JComponent pane, int width) {
+    private static void configurePaneSize(JComponent pane, int width) {
         Dimension size = pane.getPreferredSize();
         size.width = width;
         pane.setPreferredSize(size);
@@ -550,7 +550,7 @@ abstract class PopupComponent implements PopupMenuListener {
         separator.setVisible(showHistory && showChoices);
     }
 
-    private JScrollPane createScrollPane(JList list) {
+    private static JScrollPane createScrollPane(JList list) {
         JScrollPane ret = new JScrollPane(list,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

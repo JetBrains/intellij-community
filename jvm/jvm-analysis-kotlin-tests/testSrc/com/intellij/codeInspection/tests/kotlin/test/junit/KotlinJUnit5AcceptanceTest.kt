@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class KotlinJUnit5AcceptanceTest : LightJavaCodeInsightFixtureTestCase5() {
   @BeforeEach
   internal fun setUp() {

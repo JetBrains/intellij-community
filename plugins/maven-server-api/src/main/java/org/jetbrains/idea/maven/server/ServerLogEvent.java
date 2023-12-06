@@ -13,7 +13,8 @@ public class ServerLogEvent implements Serializable {
     INFO,
     WARN,
     ERROR,
-    PRINT
+    PRINT,
+    DEBUG
   }
 
   private final Type myType;

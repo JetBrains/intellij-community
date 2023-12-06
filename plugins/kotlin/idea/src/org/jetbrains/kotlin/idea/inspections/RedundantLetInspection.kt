@@ -3,9 +3,12 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemHighlightType.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
@@ -31,27 +34,22 @@ import org.jetbrains.kotlin.types.isNullable
 
 private val KOTLIN_LET_FQ_NAME = FqName("kotlin.let")
 
-abstract class RedundantLetInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(
-    KtCallExpression::class.java
-) {
-    override fun inspectionText(element: KtCallExpression) = KotlinBundle.message("redundant.let.call.could.be.removed")
+abstract class RedundantLetInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(KtCallExpression::class.java) {
+    override fun inspectionText(element: KtCallExpression): String =
+        KotlinBundle.message("redundant.let.call.could.be.removed")
 
-    final override fun inspectionHighlightRangeInElement(element: KtCallExpression) = element.calleeExpression?.textRangeIn(element)
+    final override fun inspectionHighlightRangeInElement(element: KtCallExpression): TextRange? =
+        element.calleeExpression?.textRangeIn(element)
 
-    final override val defaultFixText get() = KotlinBundle.message("remove.let.call")
+    final override val defaultFixText: String
+        get() = KotlinBundle.message("remove.let.call")
 
     final override fun isApplicable(element: KtCallExpression): Boolean {
         if (!element.isCalling(KOTLIN_LET_FQ_NAME)) return false
-
         val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return false
         val parameterName = lambdaExpression.getParameterName() ?: return false
-
-        return isApplicable(
-            element,
-            lambdaExpression.bodyExpression?.children?.singleOrNull() ?: return false,
-            lambdaExpression,
-            parameterName
-        )
+        val bodyExpression = lambdaExpression.bodyExpression?.children?.singleOrNull() ?: return false
+        return isApplicable(element, bodyExpression, lambdaExpression, parameterName)
     }
 
     protected abstract fun isApplicable(
@@ -63,7 +61,8 @@ abstract class RedundantLetInspection : AbstractApplicabilityBasedInspection<KtC
 
     final override fun applyTo(element: KtCallExpression, project: Project, editor: Editor?) {
         val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return
-        when (val bodyExpression = lambdaExpression.bodyExpression?.children?.singleOrNull() ?: return) {
+        val bodyExpression = lambdaExpression.bodyExpression?.children?.singleOrNull() ?: return
+        when (bodyExpression) {
             is KtDotQualifiedExpression -> bodyExpression.applyTo(element)
             is KtBinaryExpression -> bodyExpression.applyTo(element)
             is KtCallExpression -> bodyExpression.applyTo(element, lambdaExpression.functionLiteral, editor)
@@ -91,27 +90,32 @@ class ComplexRedundantLetInspection : RedundantLetInspection() {
         bodyExpression: PsiElement,
         lambdaExpression: KtLambdaExpression,
         parameterName: String
-    ): Boolean = when (bodyExpression) {
-        is KtBinaryExpression ->
-            element.parent !is KtSafeQualifiedExpression && bodyExpression.isApplicable(parameterName)
-        is KtCallExpression ->
-            if (element.parent is KtSafeQualifiedExpression) {
-                false
-            } else {
-                val references = lambdaExpression.functionLiteral.valueParameterReferences(bodyExpression)
-                val destructuringDeclaration = lambdaExpression.functionLiteral.valueParameters.firstOrNull()?.destructuringDeclaration
-                references.isEmpty() || (references.singleOrNull()?.takeIf { expression ->
-                    expression.parents.takeWhile { it != lambdaExpression.functionLiteral }.find { it is KtFunction } == null
-                } != null && destructuringDeclaration == null)
-            }
-        else ->
-            false
+    ): Boolean {
+        if (bodyExpression is KtBinaryExpression) {
+            return element.parent !is KtSafeQualifiedExpression && bodyExpression.isApplicable(parameterName)
+        }
+
+        if (bodyExpression !is KtCallExpression) return false
+        if (element.parent is KtSafeQualifiedExpression) return false
+
+        val parameterReferences = lambdaExpression.functionLiteral.valueParameterReferences(bodyExpression)
+        if (parameterReferences.isEmpty()) {
+            val receiver = element.getQualifiedExpressionForSelector()?.receiverExpression
+            val receiverIsWithoutSideEffects = receiver?.anyDescendantOfType<KtCallElement>() != true
+            return receiverIsWithoutSideEffects
+        }
+
+        val destructuringDeclaration = lambdaExpression.functionLiteral.valueParameters.firstOrNull()?.destructuringDeclaration
+        if (destructuringDeclaration != null) return false
+
+        val singleReferenceNotInsideInnerLambda = parameterReferences.singleOrNull()?.takeIf { reference ->
+            reference.parents.takeWhile { it != lambdaExpression.functionLiteral }.find { it is KtFunction } == null
+        }
+        return singleReferenceNotInsideInnerLambda != null
     }
 
-    override fun inspectionHighlightType(element: KtCallExpression): ProblemHighlightType = if (isSingleLine(element))
-        ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-    else
-        ProblemHighlightType.INFORMATION
+    override fun inspectionHighlightType(element: KtCallExpression): ProblemHighlightType =
+        if (isSingleLine(element)) GENERIC_ERROR_OR_WARNING else INFORMATION
 }
 
 private fun KtBinaryExpression.applyTo(element: KtCallExpression) {
@@ -127,6 +131,7 @@ private fun KtBinaryExpression.applyTo(element: KtCallExpression) {
             val newExpression = factory.createExpressionByPattern("$0 $1 $2", newLeft, operationReference, right!!)
             parent.replace(newExpression)
         }
+
         else -> {
             val newLeft = when (left) {
                 is KtDotQualifiedExpression -> left.deleteFirstReceiver()
@@ -145,6 +150,7 @@ private fun KtDotQualifiedExpression.applyTo(element: KtCallExpression) {
             val receiver = parent.receiverExpression
             parent.replace(replaceFirstReceiver(factory, receiver, parent is KtSafeQualifiedExpression))
         }
+
         else -> {
             element.replace(deleteFirstReceiver())
         }
@@ -222,12 +228,13 @@ private fun KtDotQualifiedExpression.hasNullableReceiverExtensionCall(context: B
     return (KtPsiUtil.deparenthesize(receiverExpression) as? KtDotQualifiedExpression)?.hasNullableReceiverExtensionCall(context) == true
 }
 
-private fun KtDotQualifiedExpression.hasLambdaExpression() = selectorExpression?.anyDescendantOfType<KtLambdaExpression>() ?: false
+private fun KtDotQualifiedExpression.hasLambdaExpression(): Boolean =
+    selectorExpression?.anyDescendantOfType<KtLambdaExpression>() ?: false
 
 private fun KtLambdaExpression.getParameterName(): String? {
     val parameters = valueParameters
     if (parameters.size > 1) return null
-    return if (parameters.size == 1) parameters[0].text else "it"
+    return if (parameters.size == 1) parameters[0].text else StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
 }
 
 private fun KtExpression.nameUsed(name: String, except: KtNameReferenceExpression? = null): Boolean =

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
@@ -8,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +24,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class);
 
   private final Map<String, Node> myNodeByIdMap = new ConcurrentHashMap<>();
-  private final Set<Node> myRunningTestNodes = ContainerUtil.newConcurrentSet();
-  private final Set<Node> myRunningSuiteNodes = ContainerUtil.newConcurrentSet();
+  private final Set<Node> myRunningTestNodes = ConcurrentCollectionFactory.createConcurrentSet();
+  private final Set<Node> myRunningSuiteNodes = ConcurrentCollectionFactory.createConcurrentSet();
   private final Node myTestsRootNode;
 
   private boolean myIsTestingFinished = false;
@@ -120,8 +120,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     if (LOG.isDebugEnabled()) {
       LOG.debug("doStartNode " + startedNodeEvent.getId());
     }
-    Node node = findNode(startedNodeEvent);
+    Node node = findNode(startedNodeEvent, false);
     if (node != null) {
+      SMTestProxy testProxy = node.getProxy();
+      final String metainfo = startedNodeEvent.getMetainfo();
+      if (metainfo != null) {
+        // we change the meta-information if its value is different from the default value `null`
+        testProxy.setMetainfo(metainfo);
+      }
       if (node.getState() == State.NOT_RUNNING && startedNodeEvent.isRunning()) {
         setNodeAndAncestorsRunning(node);
       }
@@ -138,13 +144,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     }
   }
 
-  private Node createNode(@NotNull BaseStartedNodeEvent startedNodeEvent, boolean suite) {
+  private @Nullable Node createNode(@NotNull BaseStartedNodeEvent startedNodeEvent, boolean suite) {
     Node parentNode = findValidParentNode(startedNodeEvent);
     if (parentNode == null) {
       return null;
     }
 
-    String nodeId = validateAndGetNodeId(startedNodeEvent);
+    String nodeId = validateAndGetNodeId(startedNodeEvent, false);
     if (nodeId == null) {
       return null;
     }
@@ -254,7 +260,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   }
 
   private @Nullable Node findNodeToTerminate(@NotNull TreeNodeEvent treeNodeEvent) {
-    Node node = findNode(treeNodeEvent);
+    Node node = findNode(treeNodeEvent, false);
     if (node == null) {
       logProblem("Trying to finish nonexistent node: " + treeNodeEvent);
       return null;
@@ -362,7 +368,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   @Override
   public void onTestOutput(final @NotNull TestOutputEvent testOutputEvent) {
     LOG.debug("onTestOutput");
-    Node node = findNode(testOutputEvent);
+    Node node = findNode(testOutputEvent, true);
     if (node == null) {
       logProblem("Test wasn't started! But " + testOutputEvent + "!");
       return;
@@ -381,7 +387,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   @Override
   public void onSetNodeProperty(final @NotNull TestSetNodePropertyEvent event) {
     LOG.debug("onSetNodeProperty", " ", event);
-    final Node node = findNode(event);
+    final Node node = findNode(event, false);
     if (node == null) {
       logProblem("Node not found: " + event);
       return;
@@ -396,16 +402,16 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     myEventPublisher.onSetNodeProperty(nodeProxy, event);
   }
 
-  private @Nullable String validateAndGetNodeId(@NotNull TreeNodeEvent treeNodeEvent) {
+  private @Nullable String validateAndGetNodeId(@NotNull TreeNodeEvent treeNodeEvent, boolean allowRootNode) {
     String nodeId = treeNodeEvent.getId();
-    if (nodeId == null || nodeId.equals(TreeNodeEvent.ROOT_NODE_ID)) {
+    if (nodeId == null || (!allowRootNode && nodeId.equals(TreeNodeEvent.ROOT_NODE_ID))) {
       logProblem((nodeId == null ? "Missing" : "Illegal") + " nodeId: " + treeNodeEvent, true);
     }
     return nodeId;
   }
 
-  private @Nullable Node findNode(@NotNull TreeNodeEvent treeNodeEvent) {
-    String nodeId = validateAndGetNodeId(treeNodeEvent);
+  private @Nullable Node findNode(@NotNull TreeNodeEvent treeNodeEvent, boolean allowRootNode) {
+    String nodeId = validateAndGetNodeId(treeNodeEvent, allowRootNode);
     return nodeId != null ? myNodeByIdMap.get(nodeId) : null;
   }
 

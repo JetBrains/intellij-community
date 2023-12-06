@@ -6,3 +6,5 @@ open class A {
 class B : A() {
     <caret>override fun <E : Enum<E>> f(a: E) {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
-import com.intellij.concurrency.currentThreadContext
+import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
@@ -10,36 +10,43 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.JobProvider
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
-import com.intellij.openapi.application.impl.onEdtInNonAnyModality
+import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.ide.progress.*
+import com.intellij.platform.util.coroutines.flow.throttle
+import com.intellij.platform.util.progress.asContextElement
+import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.AWTEvent
-import java.awt.Component
-import java.awt.Container
-import java.awt.EventQueue
+import java.awt.*
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
 @Internal
-class PlatformTaskSupport : TaskSupport {
+class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   data class ProgressStartedEvent(
     val title: @ProgressTitle String,
@@ -66,23 +73,16 @@ class PlatformTaskSupport : TaskSupport {
     return finiteFlow
   }
 
-  override fun taskCancellationNonCancellableInternal(): TaskCancellation.NonCancellable = NonCancellableTaskCancellation
-
-  override fun taskCancellationCancellableInternal(): TaskCancellation.Cancellable = defaultCancellable
-
-  override fun modalTaskOwner(component: Component): ModalTaskOwner = ComponentModalTaskOwner(component)
-
-  override fun modalTaskOwner(project: Project): ModalTaskOwner = ProjectModalTaskOwner(project)
-
   override suspend fun <T> withBackgroundProgressInternal(
     project: Project,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T
   ): T = coroutineScope {
-    TextDetailsProgressReporter(parentScope = this).use { reporter ->
+    val taskJob = coroutineContext.job
+    TextDetailsProgressReporter(cs).use { reporter ->
       progressStarted(title, cancellation, reporter.progressState)
-      val showIndicatorJob = showIndicator(project, taskInfo(title, cancellation), reporter.progressState)
+      val showIndicatorJob = cs.showIndicator(project, taskJob, taskInfo(title, cancellation), reporter.progressState)
       try {
         withContext(reporter.asContextElement(), action)
       }
@@ -97,51 +97,69 @@ class PlatformTaskSupport : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = onEdtInNonAnyModality {
-    val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    runBlockingModalInternal(cs = this, descriptor, action)
+  ): T {
+    check(isModalAwareContext()) {
+      "Trying to enter modality from modal-unaware modality state (ModalityState.any). " +
+      "This may lead to deadlocks, and indicates a problem with scoping."
+    }
+    @OptIn(ExperimentalStdlibApi::class)
+    val dispatcher = currentCoroutineContext()[CoroutineDispatcher.Key]
+    return withContext(Dispatchers.EDT) {
+      val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
+      runWithModalProgressBlockingInternal(dispatcher, descriptor, action)
+    }
   }
 
-  override fun <T> runBlockingModalInternal(
+  override fun <T> runWithModalProgressBlockingInternal(
     owner: ModalTaskOwner,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = ensureCurrentJobAllowingOrphan {
+  ): T = prepareThreadContext { ctx ->
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    val scope = CoroutineScope(currentThreadContext())
-    runBlockingModalInternal(cs = scope, descriptor, action)
+    val scope = CoroutineScope(ctx + ClientId.coroutineContext())
+    try {
+      scope.runWithModalProgressBlockingInternal(dispatcher = null, descriptor, action)
+    }
+    catch (ce: CancellationException) {
+      throw CeProcessCanceledException(ce)
+    }
   }
 
-  private fun <T> runBlockingModalInternal(
-    cs: CoroutineScope,
+  private fun <T> CoroutineScope.runWithModalProgressBlockingInternal(
+    dispatcher: CoroutineDispatcher?,
     descriptor: ModalIndicatorDescriptor,
     action: suspend CoroutineScope.() -> T,
-  ): T = resetThreadContext().use {
-    inModalContext(JobProviderWithOwnerContext(cs.coroutineContext.job, descriptor.owner)) { newModalityState ->
+  ): T {
+    return inModalContext(JobProviderWithOwnerContext(coroutineContext.job, descriptor.owner)) { newModalityState ->
       val deferredDialog = CompletableDeferred<DialogWrapper>()
-      val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
-        TextDetailsProgressReporter(this@async).use { reporter ->
+      val dispatcherCtx = dispatcher ?: EmptyCoroutineContext
+      val modalityContext = newModalityState.asContextElement()
+      TextDetailsProgressReporter(cs).use { reporter ->
+        val taskJob = async(dispatcherCtx + modalityContext + reporter.asContextElement()) {
           progressStarted(descriptor.title, descriptor.cancellation, reporter.progressState)
-          val showIndicatorJob = showModalIndicator(descriptor, reporter.progressState, deferredDialog)
+          action()
+        }
+        val modalJob = cs.launch(modalityContext) {
+          val showIndicatorJob = showModalIndicator(taskJob, descriptor, reporter.progressState, deferredDialog)
           try {
-            withContext(reporter.asContextElement(), action)
+            taskJob.join()
           }
           finally {
             showIndicatorJob.cancel()
           }
         }
+        modalJob.invokeOnCompletion {
+          // Unblock `getNextEvent()` in case it's blocked.
+          SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
+        }
+        IdeEventQueue.getInstance().pumpEventsForHierarchy(
+          exitCondition = modalJob::isCompleted,
+          modalComponent = deferredDialog::modalComponent,
+        )
+        @OptIn(ExperimentalCoroutinesApi::class)
+        taskJob.getCompleted()
       }
-      mainJob.invokeOnCompletion {
-        // Unblock `getNextEvent()` in case it's blocked.
-        SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
-      }
-      IdeEventQueue.getInstance().pumpEventsForHierarchy(
-        exitCondition = mainJob::isCompleted,
-        modalComponent = deferredDialog::modalComponent,
-      )
-      @OptIn(ExperimentalCoroutinesApi::class)
-      mainJob.getCompleted()
     }
   }
 }
@@ -151,33 +169,44 @@ private class JobProviderWithOwnerContext(val modalJob: Job, val owner: ModalTas
     return when (owner) {
       is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null) === frame
       is ProjectModalTaskOwner -> owner.project === project
-      else -> ProgressWindow.calcParentWindow(null, null) === frame
+      is GuessModalTaskOwner -> ProgressWindow.calcParentWindow(null, null) === frame
     }
   }
 
   override fun getJob(): Job = modalJob
 }
 
+val tracer = getInstance().getTracer(ProgressManagerScope)
+
 private fun CoroutineScope.showIndicator(
   project: Project,
+  taskJob: Job,
   taskInfo: TaskInfo,
   stateFlow: Flow<ProgressState>,
 ): Job {
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
-    val indicator = coroutineCancellingIndicator(this@showIndicator.coroutineContext.job) // cancel the parent job from UI
-    indicator.start()
-    try {
-      val indicatorAdded = withContext(Dispatchers.EDT) {
-        showIndicatorInUI(project, taskInfo, indicator)
+    tracer.spanBuilder("Progress: ${taskInfo.title}").startSpan().use {
+      val indicator = coroutineCancellingIndicator(taskJob) // cancel taskJob from UI
+      withContext(Dispatchers.EDT) {
+        val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
+        try {
+          indicator.start() // must be after showIndicatorInUI
+          try {
+            if (indicatorAdded) {
+              withContext(Dispatchers.Default) {
+                indicator.updateFromFlow(stateFlow)
+              }
+            }
+          }
+          finally {
+            indicator.stop()
+          }
+        }
+        finally {
+          indicator.finish(taskInfo) // removes indicator from UI if added
+        }
       }
-      if (indicatorAdded) {
-        indicator.updateFromFlow(stateFlow)
-      }
-    }
-    finally {
-      indicator.stop()
-      indicator.finish(taskInfo)
     }
   }
 }
@@ -200,9 +229,9 @@ private fun coroutineCancellingIndicator(job: Job): ProgressIndicatorEx {
  * Asynchronously updates the indicator [text][ProgressIndicator.setText],
  * [text2][ProgressIndicator.setText2], and [fraction][ProgressIndicator.setFraction] from the [updates].
  */
-private suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
-  @OptIn(FlowPreview::class)
-  updates.debounce(50).flowOn(Dispatchers.Default).collect { state: ProgressState ->
+@Internal
+suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
+  updates.throttle(50).flowOn(Dispatchers.Default).collect { state: ProgressState ->
     text = state.text
     text2 = state.details
     if (state.fraction >= 0.0) {
@@ -234,17 +263,35 @@ private class ModalIndicatorDescriptor(
   val cancellation: TaskCancellation,
 )
 
-@OptIn(IntellijInternalApi::class)
 private fun CoroutineScope.showModalIndicator(
+  taskJob: Job,
   descriptor: ModalIndicatorDescriptor,
   stateFlow: Flow<ProgressState>,
   deferredDialog: CompletableDeferred<DialogWrapper>?,
 ): Job = launch(Dispatchers.Default) {
-  if (isHeadlessEnv()) {
-    return@launch
+  try {
+    supervisorScope {
+      if (isHeadlessEnv()) {
+        return@supervisorScope
+      }
+      delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
+      doShowModalIndicator(taskJob, descriptor, stateFlow, deferredDialog)
+    }
   }
-  delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
-  val mainJob = this@showModalIndicator.coroutineContext.job
+  catch (ce: CancellationException) {
+    throw ce
+  }
+  catch (t: Throwable) {
+    logger<PlatformTaskSupport>().error(t)
+  }
+}
+
+private suspend fun doShowModalIndicator(
+  mainJob: Job,
+  descriptor: ModalIndicatorDescriptor,
+  stateFlow: Flow<ProgressState>,
+  deferredDialog: CompletableDeferred<DialogWrapper>?,
+) {
   // Use Dispatchers.EDT to avoid showing the dialog on top of another unrelated modal dialog (e.g. MessageDialogBuilder.YesNoCancel)
   withContext(Dispatchers.EDT) {
     val window = ownerWindow(descriptor.owner)
@@ -297,6 +344,8 @@ private fun CoroutineScope.showModalIndicator(
       focusComponent.requestFocusInWindow()
       if (previousFocusOwner != null) {
         awaitCancellationAndInvoke {
+          // TODO: don't move focus back if the focus owner was changed
+          //if (focusComponent.isFocusOwner)
           previousFocusOwner.requestFocusInWindow()
         }
       }
@@ -306,10 +355,17 @@ private fun CoroutineScope.showModalIndicator(
   }
 }
 
+private fun ownerWindow(owner: ModalTaskOwner): Window? {
+  return when (owner) {
+    is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null)
+    is ProjectModalTaskOwner -> ProgressWindow.calcParentWindow(null, owner.project)
+    is GuessModalTaskOwner -> ProgressWindow.calcParentWindow(null, null) // guess
+  }
+}
+
 private suspend fun ProgressDialogUI.updateFromFlow(updates: Flow<ProgressState>): Nothing {
-  @OptIn(FlowPreview::class)
   updates
-    .debounce(50)
+    .throttle(50)
     .flowOn(Dispatchers.Default)
     .collect {
       updateProgress(it)
@@ -344,13 +400,11 @@ private fun IdeEventQueue.pumpEventsForHierarchy(
 }
 
 @Internal
-fun IdeEventQueue.pumpEventsUntilJobIsCompleted(job: Job) {
-  job.invokeOnCompletion {
-    // Unblock `getNextEvent()` in case it's blocked.
-    SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
+fun IdeEventQueue.pumpEventsForHierarchy(exitCondition: () -> Boolean) {
+  resetThreadContext().use {
+    pumpEventsForHierarchy(
+      exitCondition = exitCondition,
+      modalComponent = { null },
+    )
   }
-  pumpEventsForHierarchy(
-    exitCondition = job::isCompleted,
-    modalComponent = { null },
-  )
 }

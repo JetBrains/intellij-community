@@ -7,10 +7,11 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinModCommandApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.modCommandApplicator
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -23,8 +24,8 @@ object ChangeVisibilityFixFactories {
 
     class Input(val elementName: String) : KotlinApplicatorInput
 
-    private fun getApplicator(visibilityModifier: KtModifierKeywordToken, forceUsingExplicitModifier: Boolean) =
-        applicator<KtModifierListOwner, Input> {
+    private fun getApplicator(visibilityModifier: KtModifierKeywordToken, forceUsingExplicitModifier: Boolean): KotlinModCommandApplicator<KtModifierListOwner, Input> =
+        modCommandApplicator {
             if (forceUsingExplicitModifier) {
                 familyName { KotlinBundle.message("make.0.explicitly", visibilityModifier) }
                 actionName { psi, input -> KotlinBundle.message("make.0.1.explicitly", input.elementName, visibilityModifier) }
@@ -32,7 +33,7 @@ object ChangeVisibilityFixFactories {
                 familyName { KotlinBundle.message("make.0", visibilityModifier) }
                 actionName { psi, input -> KotlinBundle.message("make.0.1", input.elementName, visibilityModifier) }
             }
-            applyTo { psi, input ->
+            applyTo { psi ->
                 // TODO: also add logic to change visibility of expect/actual declarations.
                 if (visibilityModifier == KtTokens.PUBLIC_KEYWORD && !forceUsingExplicitModifier) {
                     psi.visibilityModifierType()?.let { psi.removeModifier(it) }
@@ -50,11 +51,11 @@ object ChangeVisibilityFixFactories {
     private val makePublicExplicitApplicator = getApplicator(KtTokens.PUBLIC_KEYWORD, true)
 
     val noExplicitVisibilityInApiMode =
-        diagnosticFixFactory(KtFirDiagnostic.NoExplicitVisibilityInApiMode::class, makePublicExplicitApplicator) { diagnostic ->
+        diagnosticModCommandFixFactory(KtFirDiagnostic.NoExplicitVisibilityInApiMode::class, makePublicExplicitApplicator) { diagnostic ->
             createFixForNoExplicitVisibilityInApiMode(diagnostic.psi)
         }
     val noExplicitVisibilityInApiModeWarning =
-        diagnosticFixFactory(KtFirDiagnostic.NoExplicitVisibilityInApiModeWarning::class, makePublicExplicitApplicator) { diagnostic ->
+        diagnosticModCommandFixFactory(KtFirDiagnostic.NoExplicitVisibilityInApiModeWarning::class, makePublicExplicitApplicator) { diagnostic ->
             createFixForNoExplicitVisibilityInApiMode(diagnostic.psi)
         }
 

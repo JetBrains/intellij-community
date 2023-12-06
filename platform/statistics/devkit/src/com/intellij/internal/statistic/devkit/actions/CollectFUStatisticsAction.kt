@@ -1,36 +1,39 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions
 
 import com.google.common.collect.HashMultiset
-import com.google.gson.GsonBuilder
 import com.intellij.BundleBase
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.util.gotoByName.ChooseByNameItem
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent
 import com.intellij.ide.util.gotoByName.ListChooseByNameModel
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
 import com.intellij.internal.statistic.eventLog.newLogEvent
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
-import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.*
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.progressReporter
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.concurrency.resolvedPromise
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.*
 
 internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
   override fun update(e: AnActionEvent) {
@@ -43,15 +46,14 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
   override fun gotoActionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val projectCollectors = ExtensionPointName.create<Any>("com.intellij.statistics.projectUsagesCollector").extensionList
-    val applicationCollectors = ExtensionPointName.create<Any>("com.intellij.statistics.applicationUsagesCollector").extensionList
+    val collectors = (UsageCollectors.PROJECT_EP_NAME.lazySequence() + UsageCollectors.APPLICATION_EP_NAME.lazySequence())
+      .map(UsageCollectorBean::getCollector)
+      .toList()
 
-    val collectors = (projectCollectors + applicationCollectors).filterIsInstance(FeatureUsagesCollector::class.java)
-
-    val ids = collectors.mapTo(HashMultiset.create()) { it.groupId }
+    val ids = collectors.mapTo(HashMultiset.create()) { it.group.id }
     val items = collectors
       .map { collector ->
-        val groupId = collector.groupId
+        val groupId = collector.group.id
         val className = StringUtil.nullize(collector.javaClass.simpleName, true)
         Item(collector, groupId, className, ids.count(groupId) > 1)
       }
@@ -68,68 +70,10 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
       }
 
       override fun elementChosen(element: Any) {
-        runBackgroundableTask("Collecting statistics", project, true) { indicator ->
-          indicator.isIndeterminate = true
-          indicator.text2 = (element as Item).usagesCollector.javaClass.simpleName
-          showCollectorUsages(project, element, model.useExtendedPresentation, indicator)
-        }
+        project.service<StatisticsCollectorRunner>()
+          .collectUsages(element as Item, model.useExtendedPresentation)
       }
     }, ModalityState.current(), false)
-  }
-
-  private fun showCollectorUsages(project: Project, item: Item, useExtendedPresentation: Boolean, indicator: ProgressIndicator) {
-    if (project.isDisposed) {
-      return
-    }
-    val collector = item.usagesCollector
-    val metricsPromise = when (collector) {
-      is ApplicationUsagesCollector -> resolvedPromise(collector.getMetrics())
-      is ProjectUsagesCollector -> collector.getMetrics(project, indicator)
-      else -> throw IllegalArgumentException("Unsupported collector: $collector")
-    }
-    val gson = GsonBuilder().setPrettyPrinting().create()
-    val result = StringBuilder()
-
-    metricsPromise.onSuccess { metrics ->
-      if (useExtendedPresentation) {
-        result.append("[\n")
-        for (metric in metrics) {
-          val metricData = FUStateUsagesLogger.mergeWithEventData(null, metric.data)!!.build()
-          val event = newLogEvent("test.session", "build", "bucket", System.currentTimeMillis(), collector.groupId,
-                                  collector.version.toString(), "recorder.version", "event.id", true, metricData)
-          val presentation = LogEventSerializer.toString(event)
-          result.append(presentation)
-          result.append(",\n")
-        }
-        result.append("]")
-      }
-      else {
-        result.append("{")
-        for (metric in metrics) {
-          result.append("\"")
-          result.append(metric.eventId)
-          result.append("\" : ")
-          val presentation = gson.toJsonTree(metric.data.build())
-          result.append(presentation)
-          result.append(",\n")
-        }
-        result.append("}")
-      }
-
-      val fileType = FileTypeManager.getInstance().getStdFileType("JSON")
-      val file = LightVirtualFile(item.groupId, fileType, result.toString())
-      ApplicationManager.getApplication().invokeLater {
-        FileEditorManager.getInstance(project).openFile(file, true)
-      }
-    }
-  }
-
-  private class Item(val usagesCollector: FeatureUsagesCollector,
-                     val groupId: String,
-                     val className: String?,
-                     val nonUniqueId: Boolean) : ChooseByNameItem {
-    override fun getName(): String = groupId + if (nonUniqueId) " ($className)" else ""
-    override fun getDescription(): String? = className
   }
 
   private class MyChooseByNameModel(project: Project, items: List<Item>)
@@ -144,5 +88,75 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
     }
 
     override fun useMiddleMatching(): Boolean = true
+  }
+}
+
+private class Item(val usagesCollector: FeatureUsagesCollector,
+                   val groupId: String,
+                   val className: String?,
+                   val nonUniqueId: Boolean) : ChooseByNameItem {
+  override fun getName(): String = groupId + if (nonUniqueId) " ($className)" else ""
+  override fun getDescription(): String? = className
+}
+
+@Service(Service.Level.PROJECT)
+private class StatisticsCollectorRunner(
+  val project: Project,
+  val coroutineScope: CoroutineScope
+) {
+  fun collectUsages(item: Item, useExtendedPresentation: Boolean) {
+    coroutineScope.launch {
+      withBackgroundProgress(project, "Collecting statistics") {
+        progressReporter?.rawReporter()?.text(item.usagesCollector.javaClass.simpleName)
+
+        showCollectorUsages(item, useExtendedPresentation)
+      }
+    }
+  }
+
+  private suspend fun showCollectorUsages(item: Item, useExtendedPresentation: Boolean) {
+    if (project.isDisposed) return
+
+    val collector = item.usagesCollector
+    val metrics = when (collector) {
+      is ApplicationUsagesCollector -> collector.getMetrics()
+      is ProjectUsagesCollector -> collector.collect(project)
+      else -> throw IllegalArgumentException("Unsupported collector: $collector")
+    }
+
+    val result: String = if (useExtendedPresentation) {
+      makeExtendedPresentation(metrics, collector)
+    }
+    else {
+      makeSimplePresentation(metrics)
+    }
+
+    val fileType = FileTypeManager.getInstance().getStdFileType("JSON")
+    val file = LightVirtualFile(item.groupId, fileType, result)
+
+    withContext(Dispatchers.EDT) {
+      FileEditorManager.getInstance(project).openFile(file, true)
+    }
+  }
+
+  private fun makeExtendedPresentation(metrics: Set<MetricEvent>, collector: FeatureUsagesCollector): String {
+    val stringJoiner = StringJoiner(",\n", "[\n", "\n]")
+    for (metric in metrics) {
+      val metricData = FUStateUsagesLogger.mergeWithEventData(null, metric.data)!!.build()
+      val event = newLogEvent("test.session", "build", "bucket", System.currentTimeMillis(), collector.group.id,
+                              collector.group.version.toString(), "recorder.version", "event.id", true, metricData)
+      val presentation = LogEventSerializer.toString(event)
+      stringJoiner.add(presentation)
+    }
+    return stringJoiner.toString()
+  }
+
+  private fun makeSimplePresentation(metrics: Set<MetricEvent>): String {
+    val stringJoiner = StringJoiner(",\n", "{\n", "\n}")
+    for (metric in metrics) {
+      val presentation = SerializationHelper.serializeToSingleLine(metric.data.build())
+      stringJoiner.add("\"${metric.eventId}\" : $presentation")
+    }
+    return stringJoiner.toString()
   }
 }

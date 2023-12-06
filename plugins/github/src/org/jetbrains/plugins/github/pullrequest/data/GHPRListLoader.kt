@@ -25,7 +25,7 @@ internal class GHPRListLoader(
 
   private val loader = SimpleGHGQLPagesLoader(requestExecutor, { p ->
     GHGQLRequests.PullRequest.search(repository.serverPath, buildQuery(repository.repositoryPath, searchQuery), p)
-  })
+  }, pageSize = 50)
 
   override fun canLoadMore() = !loading && loader.hasNext && error == null
 
@@ -39,9 +39,13 @@ internal class GHPRListLoader(
   companion object {
     private fun buildQuery(repoPath: GHRepositoryPath, searchQuery: GHPRSearchQuery?): String {
       return GithubApiSearchQueryBuilder.searchQuery {
-        qualifier("type", GithubIssueSearchType.pr.name)
-        qualifier("repo", repoPath.toString())
-        searchQuery?.buildApiSearchQuery(this)
+        term(GHPRSearchQuery.QualifierName.type.createTerm(GithubIssueSearchType.pr.name))
+        term(GHPRSearchQuery.QualifierName.repo.createTerm(repoPath.toString()))
+        if (searchQuery != null) {
+          for (term in searchQuery.terms) {
+            this.term(term)
+          }
+        }
       }
     }
   }

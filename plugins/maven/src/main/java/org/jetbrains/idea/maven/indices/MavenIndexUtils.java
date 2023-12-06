@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
@@ -6,15 +6,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.idea.maven.model.IndexKind;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,10 +36,14 @@ public final class MavenIndexUtils {
 
   private MavenIndexUtils() { }
 
+  @Nullable
   public static IndexPropertyHolder readIndexProperty(File dir) throws MavenIndexException {
     Properties props = new Properties();
     try (FileInputStream s = new FileInputStream(new File(dir, INDEX_INFO_FILE))) {
       props.load(s);
+    }
+    catch (FileNotFoundException e) {
+      return null;
     }
     catch (IOException e) {
       throw new MavenIndexException("Cannot read " + INDEX_INFO_FILE + " file", e);
@@ -50,7 +53,7 @@ public final class MavenIndexUtils {
       throw new MavenIndexException("Incompatible index version, needs to be updated: " + dir);
     }
 
-    MavenSearchIndex.Kind kind = MavenSearchIndex.Kind.valueOf(props.getProperty(KIND_KEY));
+    IndexKind kind = IndexKind.valueOf(props.getProperty(KIND_KEY));
 
     Set<String> repositoryIds = Collections.emptySet();
     String myRepositoryIdsStr = props.getProperty(ID_KEY);
@@ -58,7 +61,7 @@ public final class MavenIndexUtils {
       repositoryIds = Set.copyOf(split(myRepositoryIdsStr, ","));
     }
     String repositoryPathOrUrl = normalizePathOrUrl(props.getProperty(PATH_OR_URL_KEY));
-    if (kind != MavenSearchIndex.Kind.LOCAL) {
+    if (kind != IndexKind.LOCAL) {
       repositoryPathOrUrl = repositoryPathOrUrl.toLowerCase(Locale.ROOT);
     }
     long updateTimestamp = -1L;
@@ -74,7 +77,7 @@ public final class MavenIndexUtils {
     return new IndexPropertyHolder(dir, kind, repositoryIds, repositoryPathOrUrl, updateTimestamp, dataDirName, failureMessage);
   }
 
-  public static void saveIndexProperty(MavenIndex index) {
+  public static void saveIndexProperty(MavenIndexImpl index) {
     Properties props = new Properties();
 
     props.setProperty(KIND_KEY, index.getKind().toString());
@@ -100,16 +103,21 @@ public final class MavenIndexUtils {
   }
 
   @Nullable
-  public static RepositoryInfo getLocalRepository(Project project) {
+  public static MavenRepositoryInfo getLocalRepository(Project project) {
     if (project.isDisposed()) return null;
     File repository = MavenProjectsManager.getInstance(project).getLocalRepository();
-    return repository == null ? null : new RepositoryInfo(LOCAL_REPOSITORY_ID, repository.getPath());
+    return repository == null
+           ? null
+           : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.getPath(), IndexKind.LOCAL);
   }
 
   private static Map<String, Set<String>> getRemoteRepositoriesMap(Project project) {
-    if (project.isDisposed()) return Collections.emptyMap();
+    if (project.isDisposed()) {
+      return Collections.emptyMap();
+    }
+
     Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(MavenUtil.getRemoteResolvedRepositories(project));
-    for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
+    for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensionList()) {
       remoteRepositories.addAll(repositoryProvider.getRemoteRepositories(project));
     }
 
@@ -120,8 +128,8 @@ public final class MavenIndexUtils {
   @VisibleForTesting
   static Map<String, Set<String>> groupRemoteRepositoriesByUrl(Collection<MavenRemoteRepository> remoteRepositories) {
     return remoteRepositories.stream()
-      .map(r -> new RepositoryInfo(r.getId(), r.getUrl().toLowerCase(Locale.ROOT)))
-      .collect(groupingBy(r -> r.url, mapping(r -> r.id, Collectors.toSet())));
+      .map(r -> new MavenRepositoryInfo(r.getId(), normalizePathOrUrl(r.getUrl().toLowerCase(Locale.ROOT)), IndexKind.REMOTE))
+      .collect(groupingBy(r -> r.getUrl(), mapping(r -> r.getId(), Collectors.toSet())));
   }
 
   @NotNull
@@ -136,7 +144,7 @@ public final class MavenIndexUtils {
 
   static class IndexPropertyHolder {
     final File dir;
-    final MavenSearchIndex.Kind kind;
+    final IndexKind kind;
     final Set<String> repositoryIds;
     final String repositoryPathOrUrl;
     final long updateTimestamp;
@@ -144,7 +152,7 @@ public final class MavenIndexUtils {
     final String failureMessage;
 
     IndexPropertyHolder(File dir,
-                        MavenSearchIndex.Kind kind,
+                        IndexKind kind,
                         Set<String> repositoryIds,
                         String url,
                         long timestamp,
@@ -160,20 +168,10 @@ public final class MavenIndexUtils {
     }
 
     IndexPropertyHolder(File dir,
-                        MavenSearchIndex.Kind kind,
+                        IndexKind kind,
                         Set<String> repositoryIds,
                         String url) {
       this(dir, kind, repositoryIds, url, -1, null, null);
-    }
-  }
-
-  static class RepositoryInfo {
-    @NotNull final String id;
-    @NotNull final String url;
-
-    RepositoryInfo(@NotNull String id, @NotNull String url) {
-      this.id = id;
-      this.url = normalizePathOrUrl(url);
     }
   }
 }

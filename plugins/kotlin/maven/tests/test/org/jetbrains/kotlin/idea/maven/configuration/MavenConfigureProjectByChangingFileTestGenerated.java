@@ -33,6 +33,21 @@ public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMa
         runTest("testData/configurator/jvm/jreLib/");
     }
 
+    @TestMetadata("jvmVersion11InheritanceFromJava")
+    public void testJvmVersion11InheritanceFromJava() throws Exception {
+        runTest("testData/configurator/jvm/jvmVersion11InheritanceFromJava/");
+    }
+
+    @TestMetadata("jvmVersion1_8InheritanceFromJava")
+    public void testJvmVersion1_8InheritanceFromJava() throws Exception {
+        runTest("testData/configurator/jvm/jvmVersion1_8InheritanceFromJava/");
+    }
+
+    @TestMetadata("jvmVersion8InheritanceFromJava")
+    public void testJvmVersion8InheritanceFromJava() throws Exception {
+        runTest("testData/configurator/jvm/jvmVersion8InheritanceFromJava/");
+    }
+
     @TestMetadata("libraryMissing")
     public void testLibraryMissing() throws Exception {
         runTest("testData/configurator/jvm/libraryMissing/");
@@ -71,6 +86,16 @@ public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMa
     @TestMetadata("simpleProjectSnapshot")
     public void testSimpleProjectSnapshot() throws Exception {
         runTest("testData/configurator/jvm/simpleProjectSnapshot/");
+    }
+
+    @TestMetadata("withExistingDefaultCompile")
+    public void testWithExistingDefaultCompile() throws Exception {
+        runTest("testData/configurator/jvm/withExistingDefaultCompile/");
+    }
+
+    @TestMetadata("withExistingTestCompile")
+    public void testWithExistingTestCompile() throws Exception {
+        runTest("testData/configurator/jvm/withExistingTestCompile/");
     }
 
     @TestMetadata("withJava9ModuleInfo")

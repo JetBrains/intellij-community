@@ -28,7 +28,7 @@ public final class TableCellNavigator {
     return row >= 0 && row < table.size() && column >= 0 && column < table.get(row).size();
   }
 
-  public static void moveCaret(@NotNull final Project project,@NotNull final Editor editor, final PsiFile file, int[] direction) {
+  public static void moveCaret(final @NotNull Project project, final @NotNull Editor editor, final PsiFile file, int[] direction) {
     PsiElement element = getCurrentPsiElement(editor, file);
     element = getParentWithName(element, new String[]{TD, TH});
     assert element != null;

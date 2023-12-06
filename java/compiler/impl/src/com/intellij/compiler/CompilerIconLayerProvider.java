@@ -44,7 +44,7 @@ public class CompilerIconLayerProvider implements IconLayerProvider {
 
   public static boolean isExcluded(final VirtualFile vFile, final Project project) {
     return vFile != null
-           && project.getService(FileIndexFacade.class).isInSource(vFile)
+           && FileIndexFacade.getInstance(project).isInSource(vFile)
            && CompilerConfiguration.getInstance(project).isExcludedFromCompilation(vFile);
   }
 }

@@ -3,15 +3,33 @@ package com.intellij.settingsSync
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.settingsSync.plugins.SettingsSyncPluginInstaller
+import com.intellij.settingsSync.plugins.SettingsSyncPluginInstallerImpl
 import java.nio.file.Path
 import java.util.*
 
-class TestPluginInstaller : SettingsSyncPluginInstaller {
-  val installedPluginIds = HashSet<String>()
+internal class TestPluginInstaller(private val afterInstallPluginCallback: (PluginId) -> Unit) : SettingsSyncPluginInstallerImpl(true) {
+  val installedPluginIds = HashSet<PluginId>()
+  var installPluginExceptionThrower: ((PluginId) -> Unit)? = null
 
-  override fun installPlugins(pluginsToInstall: List<PluginId>) {
-    installedPluginIds += pluginsToInstall.map { it.idString }
+  // there's no marketplace to find plugin descriptors, so we'll just populate that in advance
+
+  override fun install(installer: PluginDownloader): Boolean {
+    val pluginId = installer.id
+    val descriptor = TestPluginDescriptor.ALL[pluginId] as TestPluginDescriptor
+    if (!descriptor.isDynamic)
+      return false
+    installPluginExceptionThrower?.invoke(pluginId)
+    installedPluginIds += pluginId
+    afterInstallPluginCallback.invoke(pluginId)
+    return true
+  }
+
+  override fun createDownloader(pluginId: PluginId, indicator: ProgressIndicator): PluginDownloader? {
+    val descriptor = TestPluginDescriptor.ALL[pluginId] ?: return null
+    return PluginDownloader.createDownloader(descriptor)
   }
 }
 
@@ -24,10 +42,26 @@ class TestPluginDependency(private val idString: String, override val isOptional
 data class TestPluginDescriptor(
   val idString: String,
   var pluginDependencies: List<TestPluginDependency> = emptyList(),
-  val bundled: Boolean = false) : IdeaPluginDescriptor
-{
+  val bundled: Boolean = false,
+  val essential: Boolean = false,
+  val compatible: Boolean = true,
+  val isDependencyOnly: Boolean = false, // it's only a dependency, should be listed as a plugin
+  val isDynamic: Boolean = true // whether can be enabled/disabled/installed without restart
+) : IdeaPluginDescriptor {
+  companion object {
+    val ALL = hashMapOf<PluginId, TestPluginDescriptor>()
+
+    fun allDependenciesOnly() : List<TestPluginDescriptor> =
+      ALL.values.filter { it.isDependencyOnly }
+  }
+
   private var _enabled = true
-  private val _pluginId = PluginId.getId(idString)
+  private val _pluginId: PluginId
+
+  init {
+    _pluginId = PluginId.getId(idString)
+    ALL[_pluginId] = this
+  }
 
   override fun getPluginId(): PluginId = _pluginId
 
@@ -49,6 +83,7 @@ data class TestPluginDescriptor(
   override fun getReleaseDate(): Date? = null
   override fun getReleaseVersion(): Int = 1
   override fun isLicenseOptional(): Boolean = true
+
   @Deprecated("Deprecated in Java")
   override fun getOptionalDependentPluginIds(): Array<PluginId> = PluginId.EMPTY_ARRAY
   override fun getVendor(): String? = null
@@ -65,7 +100,12 @@ data class TestPluginDescriptor(
   override fun isEnabled(): Boolean = _enabled
 
   override fun setEnabled(enabled: Boolean) {
-    _enabled = enabled
+    this._enabled = enabled
+  }
+
+  fun withEnabled(enabled: Boolean): TestPluginDescriptor {
+    isEnabled = enabled
+    return this
   }
 
   override fun getDependencies(): MutableList<IdeaPluginDependency> = pluginDependencies.toMutableList()

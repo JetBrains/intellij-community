@@ -5,10 +5,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.PositionTracker
 import training.dsl.*
 import training.learn.ActionsRecorder
 import training.ui.LearningUiHighlightingManager
@@ -70,14 +72,33 @@ internal object LessonExecutorUtil {
                                  actionsRecorder: ActionsRecorder,
                                  lessonExecutor: LessonExecutor,
                                  useAnimationCycle: Boolean) {
+    val scheduleShowBalloonLater = {
+      Alarm().addRequest(Runnable {
+        lessonExecutor.taskInvokeLater {
+          if (!actionsRecorder.disposed)
+            showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, false)
+        }
+      }, 500) // it is a hacky a little bit
+    }
+
+    if (getPointForBalloon(ui, balloonConfig.side) == null) {
+      // component is hidden or required component part is hidden
+      scheduleShowBalloonLater()
+      return
+    }
+
     val textBuilder = MessageFactory.convertToGotItFormat(text)
     val balloonBuilder = GotItComponentBuilder(textBuilder)
     if (balloonConfig.width > 0) {
       balloonBuilder.withMaxWidth(JBUI.scale(balloonConfig.width))
     }
+    // the visual index can be zero, for example, if the balloon is showing with the warning before lesson start,
+    // use '1' number in this case
+    val stepNumber = lessonExecutor.visualIndexNumber.coerceAtLeast(1)
     val balloon: Balloon = balloonBuilder
-      .withStepNumber(lessonExecutor.visualIndexNumber)
+      .withStepNumber(stepNumber)
       .showButton(balloonConfig.gotItCallBack != null)
+      .withButtonLabel(balloonConfig.buttonText)
       .onButtonClick { balloonConfig.gotItCallBack?.invoke() }
       .requestFocus(balloonConfig.gotItCallBack != null)
       .withContrastColors(true)
@@ -90,37 +111,46 @@ internal object LessonExecutorUtil {
 
     balloon.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
-        val checkStopLesson = {
-          lessonExecutor.taskInvokeLater {
-            if (!actionsRecorder.disposed)
-              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, false)
-          }
-        }
-        Alarm().addRequest(checkStopLesson, 500) // it is a hacky a little bit
+        scheduleShowBalloonLater()
       }
     })
 
-    balloon.show(getPosition(ui, balloonConfig.side), balloonConfig.side)
+    val tracker = object : PositionTracker<Balloon>(ui) {
+      override fun recalculateLocation(balloon: Balloon): RelativePoint? {
+        return getPointForBalloon(ui, balloonConfig.side).also {
+          if (it == null) balloon.hide()
+        }
+      }
+    }
+    Disposer.register(actionsRecorder, tracker)
+
+    balloon.show(tracker, balloonConfig.side)
   }
 
-  private fun getPosition(component: JComponent, side: Balloon.Position): RelativePoint {
-    val visibleRect = LearningUiHighlightingManager.getRectangle(component) ?: component.visibleRect
+  private fun getPointForBalloon(component: JComponent, side: Balloon.Position): RelativePoint? {
+    val highlighted = LearningUiHighlightingManager.highlightingComponents.contains(component)
+    val highlightedRect = LearningUiHighlightingManager.getRectangle(component)
+    return if (!component.isShowing || highlighted && highlightedRect == null) {
+      null  // component is hidden or required component part is hidden
+    }
+    else {
+      val point = getPosition(highlightedRect ?: component.visibleRect, side)
+      RelativePoint(component, point)
+    }
+  }
 
+  private fun getPosition(visibleRect: Rectangle, side: Balloon.Position): Point {
     val xShift = when (side) {
       Balloon.Position.atLeft -> 0
       Balloon.Position.atRight -> visibleRect.width
       Balloon.Position.above, Balloon.Position.below -> visibleRect.width / 2
-      else -> error("Unexpected balloon position")
     }
-
     val yShift = when (side) {
       Balloon.Position.above -> 0
       Balloon.Position.below -> visibleRect.height
       Balloon.Position.atLeft, Balloon.Position.atRight -> visibleRect.height / 2
-      else -> error("Unexpected balloon position")
     }
-    val point = Point(visibleRect.x + xShift, visibleRect.y + yShift)
-    return RelativePoint(component, point)
+    return Point(visibleRect.x + xShift, visibleRect.y + yShift)
   }
 }
 

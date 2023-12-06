@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ReflectionUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -37,20 +38,22 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   private final Project myProject;
+  private final CoroutineScope myCoroutineScope;
   private StructureViewWrapperImpl myStructureViewWrapperImpl;
   private State myState = new State();
   private Runnable myRunWhenInitialized = null;
 
   private final Map<Class<? extends PsiElement>, Collection<StructureViewExtension>> myImplExtensions = new ConcurrentHashMap<>();
 
-  public StructureViewFactoryImpl(@NotNull Project project) {
+  public StructureViewFactoryImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
+    myCoroutineScope = coroutineScope;
     project.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         myImplExtensions.clear();
         if (myStructureViewWrapperImpl != null) {
-          myStructureViewWrapperImpl.rebuild();
+          myStructureViewWrapperImpl.rebuildNow("dynamic plugins changed");
         }
       }
     });
@@ -72,7 +75,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   public void initToolWindow(@NotNull ToolWindow toolWindow) {
-    myStructureViewWrapperImpl = new StructureViewWrapperImpl(myProject, toolWindow);
+    myStructureViewWrapperImpl = new StructureViewWrapperImpl(myProject, toolWindow, myCoroutineScope);
     if (myRunWhenInitialized != null) {
       myRunWhenInitialized.run();
       myRunWhenInitialized = null;

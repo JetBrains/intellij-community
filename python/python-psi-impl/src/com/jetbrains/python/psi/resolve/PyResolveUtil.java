@@ -59,8 +59,8 @@ public final class PyResolveUtil {
    */
   public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull PsiElement element, @Nullable String name,
                                   @Nullable PsiElement roof) {
-    final ScopeOwner originalOwner = ScopeUtil.getScopeOwner(element);
-    final PsiElement parent = element.getParent();
+    ScopeOwner originalOwner = ScopeUtil.getScopeOwner(element);
+    PsiElement parent = element.getParent();
     ScopeOwner owner = originalOwner;
     if (parent instanceof PyNonlocalStatement) {
       /* wee need to search in one step out scope for nonlocal statements */
@@ -76,6 +76,24 @@ public final class PyResolveUtil {
         owner = (PyFile)globalScope;
       }
     }
+    if (owner instanceof PyFunction function && function.getTypeParameterList() != null) {
+      // Type parameters of generic functions and methods need to be visible in their parameter and return type annotations,
+      // so we resolve names in these annotations starting from the containing function's scope, "lowering" their scope in
+      // ScopeUtil.getScopeOwner().
+      // At the same time, these annotations still need to see names from the class scope, such as nested classes defined there,
+      // as if these names were evaluated on a class-level scope.
+      PyAnnotation annotation = PsiTreeUtil.getParentOfType(element, PyAnnotation.class);
+      if (PsiTreeUtil.getParentOfType(annotation, PyFunction.class, true, PyStatement.class) == function) {
+        originalOwner = ScopeUtil.getScopeOwner(function);
+      }
+    }
+    if (owner instanceof PyClass pyClass && pyClass.getTypeParameterList() != null) {
+      // The same logic applies to the list of base classes of a generic class
+      PyArgumentList superclassList = PsiTreeUtil.getParentOfType(element, PyArgumentList.class);
+      if (superclassList != null && superclassList.getParent() == pyClass) {
+        originalOwner = ScopeUtil.getScopeOwner(pyClass);
+      }
+    }
     scopeCrawlUp(processor, owner, originalOwner, name, roof);
   }
 
@@ -87,27 +105,28 @@ public final class PyResolveUtil {
   public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @Nullable ScopeOwner scopeOwner,
                                   @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof) {
     while (scopeOwner != null) {
-      if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {
-        final Scope scope = ControlFlowCache.getScope(scopeOwner);
-        if (name != null) {
-          final boolean includeNestedGlobals = scopeOwner instanceof PyFile;
-          for (PsiNamedElement resolved : scope.getNamedElements(name, includeNestedGlobals)) {
-            if (!processor.execute(resolved, ResolveState.initial())) {
-              return;
-            }
-          }
-        }
-        else {
-          for (PsiNamedElement element : scope.getNamedElements()) {
-            if (!processor.execute(element, ResolveState.initial())) {
-              return;
-            }
-          }
-        }
-        for (PyImportedNameDefiner definer : scope.getImportedNameDefiners()) {
-          if (!processor.execute(definer, ResolveState.initial())) {
+      final Scope scope = ControlFlowCache.getScope(scopeOwner);
+      if (name != null) {
+        final boolean includeNestedGlobals = scopeOwner instanceof PyFile;
+        for (PsiNamedElement resolved : scope.getNamedElements(name, includeNestedGlobals)) {
+          if (isClassLevelDefinitionInvisibleToReference(resolved, scopeOwner, originalScopeOwner)) continue;
+          if (!processor.execute(resolved, ResolveState.initial())) {
             return;
           }
+        }
+      }
+      else {
+        for (PsiNamedElement element : scope.getNamedElements()) {
+          if (isClassLevelDefinitionInvisibleToReference(element, scopeOwner, originalScopeOwner)) continue;
+          if (!processor.execute(element, ResolveState.initial())) {
+            return;
+          }
+        }
+      }
+      for (PyImportedNameDefiner definer : scope.getImportedNameDefiners()) {
+        if (isClassLevelDefinitionInvisibleToReference(definer, scopeOwner, originalScopeOwner)) continue;
+        if (!processor.execute(definer, ResolveState.initial())) {
+          return;
         }
       }
       if (scopeOwner == roof) {
@@ -120,6 +139,12 @@ public final class PyResolveUtil {
         scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
       }
     }
+  }
+
+  private static boolean isClassLevelDefinitionInvisibleToReference(@NotNull PsiElement definition,
+                                                                    @NotNull ScopeOwner definitionScope,
+                                                                    @Nullable ScopeOwner referenceScope) {
+    return definitionScope instanceof PyClass pyClass && pyClass != referenceScope && !(definition instanceof PyTypeParameter);
   }
 
   /**
@@ -242,20 +267,20 @@ public final class PyResolveUtil {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
     final List<? extends RatedResolveResult> unqualifiedResults;
-    if (scopeOwner instanceof PyiFile) {
+    if (scopeOwner instanceof PyiFile fileScope) {
       // pyi-stubs are special cased because
       // `resolveMember` delegates to `multiResolveName(..., true)` and
       // it skips elements that are imported without `as`
-      unqualifiedResults = ((PyiFile)scopeOwner).multiResolveName(firstName, false);
+      unqualifiedResults = fileScope.multiResolveName(firstName, false);
     }
-    else if (scopeOwner instanceof PyFunction) {
+    else if (scopeOwner instanceof PyFunction functionScope) {
       final Stream<PsiNamedElement> targets = StreamEx
         .of(PsiTreeUtil.getStubChildrenOfTypeAsList(scopeOwner, PyTargetExpression.class))
         .filter(it -> !it.isQualified())
         .select(PsiNamedElement.class);
 
       final Stream<PsiNamedElement> parameters = StreamEx
-        .of(((PyFunction)scopeOwner).getParameterList().getParameters())
+        .of(functionScope.getParameterList().getParameters())
         .select(PsiNamedElement.class);
 
       unqualifiedResults = StreamEx
@@ -263,13 +288,22 @@ public final class PyResolveUtil {
         .append(parameters)
         .filter(it -> firstName.equals(it.getName()))
         .map(it -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, it))
+        .append(resolveTypeParameters(functionScope, firstName))
         .toList();
+    }
+    else if (scopeOwner instanceof PyTypeAliasStatement) {
+      unqualifiedResults = resolveTypeParameters((PyTypeParameterListOwner)scopeOwner, firstName);
     }
     else {
       final PyType scopeType = context.getType((PyTypedElement)scopeOwner);
       if (scopeType == null) return Collections.emptyList();
-
-      unqualifiedResults = scopeType.resolveMember(firstName, null, AccessDirection.READ, resolveContext);
+      List<? extends RatedResolveResult> typeMembers = scopeType.resolveMember(firstName, null, AccessDirection.READ, resolveContext);
+      if (scopeOwner instanceof PyClass pyClass) {
+        unqualifiedResults = ContainerUtil.concat(ContainerUtil.notNullize(typeMembers), resolveTypeParameters(pyClass, firstName));
+      }
+      else {
+        unqualifiedResults = typeMembers;
+      }
     }
 
     final StreamEx<RatedResolveResult> initialResults;
@@ -494,5 +528,19 @@ public final class PyResolveUtil {
     }
 
     return reference.resolve();
+  }
+
+  @NotNull
+  private static List<RatedResolveResult> resolveTypeParameters(@NotNull PyTypeParameterListOwner typeParameterListOwner,
+                                                                @NotNull String name) {
+    if (typeParameterListOwner.getTypeParameterList() != null) {
+      return StreamEx.of(typeParameterListOwner.getTypeParameterList().getTypeParameters())
+        .filter(it -> name.equals(it.getName()))
+        .map(it -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, it))
+        .toList();
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -19,6 +19,7 @@ import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import it.unimi.dsi.fastutil.ints.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 
 class MiniDetailsGetter internal constructor(project: Project,
@@ -32,7 +33,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   private val factory = project.getService(VcsLogObjectsFactory::class.java)
   private val cache = Caffeine.newBuilder().maximumSize(10000).build<Int, VcsCommitMetadata>()
   private val loader = SequentialLimitedLifoExecutor(this, MAX_LOADING_TASKS) { task: TaskDescriptor ->
-    doLoadCommitsData(task.commits, this::saveInCache)
+    doLoadCommitsData(task.commits) { commitId, data -> saveInCache(commitId, data) }
     notifyLoaded()
   }
 
@@ -42,12 +43,13 @@ class MiniDetailsGetter internal constructor(project: Project,
   private var currentTaskIndex: Long = 0
   private val loadingFinishedListeners = ArrayList<Runnable>()
 
-  override fun getCommitData(commit: Int): VcsCommitMetadata {
+  override fun getCachedDataOrPlaceholder(commit: Int): VcsCommitMetadata {
     return getCommitData(commit, emptySet())
   }
 
+  @ApiStatus.Internal
   fun getCommitData(commit: Int, commitsToLoad: Iterable<Int>): VcsCommitMetadata {
-    val details = getCommitDataIfAvailable(commit)
+    val details = getFromCacheAndCleanOldPlaceholder(commit)
     if (details != null) return details
 
     if (!EventQueue.isDispatchThread()) {
@@ -56,13 +58,17 @@ class MiniDetailsGetter internal constructor(project: Project,
     }
 
     val toLoad = IntOpenHashSet(commitsToLoad.iterator())
+    if (toLoad.isEmpty()) {
+      return cache.getIfPresent(commit) ?: createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
+    }
+
     val taskNumber = currentTaskIndex++
     toLoad.forEach(IntConsumer { cacheCommit(it, taskNumber) })
     loader.queue(TaskDescriptor(toLoad))
     return cache.getIfPresent(commit) ?: createPlaceholderCommit(commit, taskNumber)
   }
 
-  override fun getCommitDataIfAvailable(commit: Int): VcsCommitMetadata? {
+  private fun getFromCacheAndCleanOldPlaceholder(commit: Int): VcsCommitMetadata? {
     if (!EventQueue.isDispatchThread()) {
       return cache.getIfPresent(commit) ?: topCommitsDetailsCache[commit]
     }
@@ -80,15 +86,12 @@ class MiniDetailsGetter internal constructor(project: Project,
     return topCommitsDetailsCache[commit]
   }
 
-  override fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
-    val detailsFromCache = commits.associateNotNull {
-      val details = getCommitDataIfAvailable(it)
-      if (details is LoadingDetails) {
-        return@associateNotNull null
-      }
-      details
-    }
-    return detailsFromCache
+  override fun getCachedData(commit: Int): VcsCommitMetadata? {
+    return cache.getIfPresent(commit).takeIf { it !is LoadingDetails } ?: topCommitsDetailsCache[commit]
+  }
+
+  override fun getCachedData(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
+    return commits.associateNotNull { getCachedData(it) }
   }
 
   override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)
@@ -111,23 +114,24 @@ class MiniDetailsGetter internal constructor(project: Project,
   @RequiresBackgroundThread
   @Throws(VcsException::class)
   override fun doLoadCommitsData(commits: IntSet, consumer: Consumer<in VcsCommitMetadata>) {
+    doLoadCommitsData(commits) { _, metadata -> consumer.consume(metadata) }
+  }
+
+  @RequiresBackgroundThread
+  @Throws(VcsException::class)
+  fun doLoadCommitsData(commits: IntSet, consumer: (Int, VcsCommitMetadata) -> Unit) {
     val dataGetter = index.dataGetter
     if (dataGetter == null) {
-      super.doLoadCommitsData(commits, consumer)
+      super.doLoadCommitsData(commits) { data -> consumer(storage.getCommitIndex(data.id, data.root), data) }
       return
     }
-    val notIndexed = IntOpenHashSet()
-    commits.forEach(IntConsumer { commit: Int ->
-      val metadata = IndexedDetails.createMetadata(commit, dataGetter, storage, factory)
-      if (metadata == null) {
-        notIndexed.add(commit)
-      }
-      else {
-        consumer.consume(metadata)
-      }
-    })
+
+    val metadata = IndexedDetails.createMetadata(commits, dataGetter, storage, factory)
+    metadata.forEach { (commit, metadata) -> consumer(commit, metadata) }
+    val notIndexed = commits - metadata.keys
+
     if (!notIndexed.isEmpty()) {
-      super.doLoadCommitsData(notIndexed, consumer)
+      super.doLoadCommitsData(notIndexed) { data -> consumer(storage.getCommitIndex(data.id, data.root), data) }
     }
   }
 
@@ -188,6 +192,11 @@ class MiniDetailsGetter internal constructor(project: Project,
         result[element] = value
       }
       return result
+    }
+
+    private operator fun IntSet.minus(other: IntSet): IntSet {
+      if (other.isEmpty()) return this
+      return filterNotTo(IntOpenHashSet()) { it in other }
     }
   }
 }

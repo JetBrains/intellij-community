@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -23,6 +23,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -233,7 +234,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         }
       }, myIndicator, null);
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     while (!future.isDone()) {
       if (System.currentTimeMillis() < warmupEnd) {
@@ -572,12 +573,12 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testDefaultModalityWithNestedProgress() {
-    assertEquals(ModalityState.NON_MODAL, ModalityState.defaultModalityState());
+    assertEquals(ModalityState.nonModal(), ModalityState.defaultModalityState());
     ProgressManager.getInstance().run(new Task.Modal(getProject(), "", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          assertFalse(ModalityState.NON_MODAL.equals(ModalityState.defaultModalityState()));
+          assertFalse(ModalityState.nonModal().equals(ModalityState.defaultModalityState()));
           assertEquals(ProgressManager.getInstance().getProgressIndicator().getModalityState(), ModalityState.defaultModalityState());
           ProgressManager.getInstance().runProcess(() -> {
             assertSame(indicator.getModalityState(), ModalityState.defaultModalityState());
@@ -685,7 +686,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
             ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
           }
         }));
-      assertSame(ModalityState.NON_MODAL, ModalityState.current());
+      assertSame(ModalityState.nonModal(), ModalityState.current());
     }
     finally {
       LaterInvocator.leaveAllModals();
@@ -1038,7 +1039,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     ProgressIndicator indicator = new ProgressIndicatorBase(false);
     indicator.start();
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     AtomicReference<Future<?>> future = new AtomicReference<>();
     doReadAction();

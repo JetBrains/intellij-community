@@ -5,13 +5,12 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-class IdeScriptEngineUsageCollector: CounterUsagesCollector() {
+object IdeScriptEngineUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("ide.script.engine", 3)
-    private val USED = GROUP.registerEvent("used", EventFields.Class("factory"))
+  private val GROUP = EventLogGroup("ide.script.engine", 3)
+  private val USED = GROUP.registerEvent("used", EventFields.Class("factory"))
 
-    @JvmStatic fun logUsageEvent(clazz: Class<*>) = USED.log(clazz)
-  }
+  @JvmStatic
+  fun logUsageEvent(clazz: Class<*>): Unit = USED.log(clazz)
 }

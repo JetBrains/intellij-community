@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventId3
-import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.PathManager
@@ -30,7 +29,7 @@ import java.util.*
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
+class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val COLLECTORS = listOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other")
   private val ARCHITECTURES = listOf("x86", "x86_64", "arm64", "other", "unknown")
   private val VENDORS = listOf("JetBrains", "Apple", "Oracle", "Sun", "IBM", "Azul", "Other")
@@ -38,9 +37,11 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
   private val SYSTEM_PROPERTIES = listOf("splash", "nosplash")
   private val RENDERING_PIPELINES = listOf("Metal", "OpenGL")
 
-  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 16)
-  private val CORES: EventId1<Int> = GROUP.registerEvent("cores", Int("value"))
-  private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", Int("gigabytes"))
+  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 17)
+  private val CORES: EventId1<Int> = GROUP.registerEvent(
+    "cores", EventFields.BoundedInt("value", intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)))
+  private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent(
+    "memory.size", EventFields.BoundedInt("gigabytes", intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256)))
   private val SWAP_SIZE: EventId1<Int> = GROUP.registerEvent("swap.size", Int("gigabytes"))
   private val DISK_SIZE: EventId2<Int, Int> = GROUP.registerEvent("disk.size", Int("index_partition_size"), Int("index_partition_free"))
   private val GC: EventId1<String?> = GROUP.registerEvent("garbage.collector", String("name", COLLECTORS))
@@ -57,7 +58,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
   override fun getMetrics(): Set<MetricEvent> {
     val result = mutableSetOf<MetricEvent>()
 
-    result += CORES.metric(getCpuCoreCount())
+    result += CORES.metric(Runtime.getRuntime().availableProcessors())
 
     val physicalMemoryData = getPhysicalMemoryAndSwapSize()
     if (physicalMemoryData != null) {
@@ -95,15 +96,12 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
     return result
   }
 
-  private fun getCpuCoreCount(): Int =
-    StatisticsUtil.roundToUpperBound(Runtime.getRuntime().availableProcessors(), intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64))
-
   private fun getPhysicalMemoryAndSwapSize(): Pair<Int, Int>? {
     try {
       @Suppress("FunctionName") fun GiB(bytes: Long) = (bytes.toDouble() / (1 shl 30)).roundToInt()
       val bean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
-      val physicalMemory = StatisticsUtil.roundToUpperBound(GiB(bean.totalMemorySize), intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
-      val swapSize = StatisticsUtil.roundToPowerOfTwo(min(GiB(bean.totalSwapSpaceSize), physicalMemory))
+      val physicalMemory = GiB(bean.totalMemorySize)
+      val swapSize = StatisticsUtil.roundToPowerOfTwo(min(GiB(bean.totalSwapSpaceSize), 256))
       return physicalMemory to swapSize
     }
     catch (_: Exception) { }  // ignoring internal errors in JRE code
@@ -133,7 +131,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
       if (gc.name == "PS MarkSweep" || gc.name == "PS Scavenge") return "Parallel"  // -XX:+UseParallelGC
       if (gc.name == "ConcurrentMarkSweep" || gc.name == "ParNew") return "CMS"     // -XX:+UseConcMarkSweepGC
       if (gc.name.startsWith("G1 ")) return "G1"                                    // -XX:+UseG1GC
-      if (gc.name == "ZGC") return "Z"                                              // -XX:+UseZGC
+      if (gc.name.startsWith("ZGC ")) return "Z"                                    // -XX:+UseZGC
       if (gc.name.startsWith("Shenandoah ")) return "Shenandoah"                    // -XX:+UseShenandoahGC
       if (gc.name.startsWith("Epsilon ")) return "Epsilon"                          // -XX:+UseEpsilonGC
     }

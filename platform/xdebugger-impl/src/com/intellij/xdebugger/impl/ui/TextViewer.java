@@ -77,7 +77,7 @@ public final class TextViewer extends EditorTextField {
     editor.getSettings().setUseSoftWraps(true);
     editor.setContextMenuGroupId(CONTEXT_MENU_GROUP_ID);
 
-    editor.setColorsScheme(DebuggerUIUtil.getColorScheme());
+    editor.setColorsScheme(editor.createBoundColorSchemeDelegate(DebuggerUIUtil.getColorScheme()));
     return editor;
   }
 }

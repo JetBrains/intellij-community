@@ -387,7 +387,7 @@ public final class NSDefaults {
   }
 
   // for debug only
-  private List<String> _listAllKeys() {
+  private static List<String> _listAllKeys() {
     List<String> res = new ArrayList<>(100);
     final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {

@@ -39,7 +39,16 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
   }
 
   companion object {
-    const val PROPERTY_TEXT = "TextPanel.text"
+    const val PROPERTY_TEXT: String = "TextPanel.text"
+    const val PROPERTY_ICON: String = "TextPanel.icon"
+
+    fun getFont(): Font = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBUI.CurrentTheme.StatusBar.font()
+
+    fun computeTextHeight(): Int {
+      val label = JLabel("XXX") //NON-NLS
+      label.font = getFont()
+      return label.preferredSize.height
+    }
   }
 
   override fun getToolTipText(): String? = toolTipTextSupplier?.invoke() ?: super.getToolTipText()
@@ -48,14 +57,13 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS,
                       UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS) ?: RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
+    recomputeSize()
   }
 
-  override fun getFont(): Font = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBUI.CurrentTheme.StatusBar.font()
+  override fun getFont(): Font = Companion.getFont()
 
   fun recomputeSize() {
-    val label = JLabel("XXX") //NON-NLS
-    label.font = font
-    preferredHeight = label.preferredSize.height
+    preferredHeight = computeTextHeight()
   }
 
   override fun paintComponent(g: Graphics) {
@@ -166,6 +174,18 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
     }
 
     open var icon: Icon? = null
+      set(value) {
+        if (value == field) {
+          return
+        }
+
+        val oldValue = field
+        field = value
+        firePropertyChange(PROPERTY_ICON, oldValue, value)
+
+        revalidate()
+        repaint()
+      }
 
     constructor() : super(null)
     constructor(toolTipTextSupplier: (() -> String?)?) : super(toolTipTextSupplier)

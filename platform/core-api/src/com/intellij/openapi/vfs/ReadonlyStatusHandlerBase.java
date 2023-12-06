@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +31,9 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
   }
 
   private static void checkThreading() {
+    ThreadingAssertions.assertEventDispatchThread(); // we might show a dialog
+
     Application app = ApplicationManager.getApplication();
-    app.assertWriteIntentLockAcquired();
     if (!app.isWriteAccessAllowed()) return;
 
     if (app.isUnitTestMode() && Registry.is("tests.assert.clear.read.only.status.outside.write.action")) {
@@ -57,9 +59,8 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
   }
 
-  @NotNull
   @Override
-  public OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles) {
+  public @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles) {
     if (originalFiles.isEmpty()) {
       return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
     }
@@ -108,17 +109,16 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     return ensureFilesWritable(originalFiles, files);
   }
 
-  @NotNull
-  protected OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles,
-                                                Collection<? extends VirtualFile> files) {
+  protected @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles,
+                                                         Collection<? extends VirtualFile> files) {
     return createResultStatus(originalFiles, files);
   }
 
 
   public static final class OperationStatusImpl extends OperationStatus {
     private final VirtualFile[] myReadonlyFiles;
-    @NotNull private final @NlsContexts.DialogMessage String myReadOnlyReason;
-    @Nullable private final HyperlinkListener myHyperlinkListener;
+    private final @NotNull @NlsContexts.DialogMessage String myReadOnlyReason;
+    private final @Nullable HyperlinkListener myHyperlinkListener;
 
     public OperationStatusImpl(VirtualFile @NotNull [] readonlyFiles) {
       this(readonlyFiles, "");
@@ -147,8 +147,7 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     }
 
     @Override
-    @NotNull
-    public String getReadonlyFilesMessage() {
+    public @NotNull String getReadonlyFilesMessage() {
       if (hasReadonlyFiles()) {
         if (!Strings.isEmpty(myReadOnlyReason)) {
           return myReadOnlyReason;
@@ -170,8 +169,7 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     }
 
     @Override
-    @Nullable
-    public HyperlinkListener getHyperlinkListener() {
+    public @Nullable HyperlinkListener getHyperlinkListener() {
       return myHyperlinkListener;
     }
   }

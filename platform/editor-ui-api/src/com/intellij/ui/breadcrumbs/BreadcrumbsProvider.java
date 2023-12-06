@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.breadcrumbs;
 
 import com.intellij.lang.Language;
@@ -43,8 +43,7 @@ public interface BreadcrumbsProvider {
    * @param element that represents a single crumb
    * @return icon for the crumb
    */
-  @Nullable
-  default Icon getElementIcon(@NotNull PsiElement element) {
+  default @Nullable Icon getElementIcon(@NotNull PsiElement element) {
     return null;
   }
 
@@ -52,8 +51,7 @@ public interface BreadcrumbsProvider {
    * @param element that represents a single crumb
    * @return description for the crumb
    */
-  @Nullable
-  default @NlsSafe String getElementTooltip(@NotNull PsiElement element) {
+  default @Nullable @NlsSafe String getElementTooltip(@NotNull PsiElement element) {
     return null;
   }
 
@@ -61,8 +59,7 @@ public interface BreadcrumbsProvider {
    * @param element that represents a single crumb
    * @return element that represents a parent crumb, or {@code null}
    */
-  @Nullable
-  default PsiElement getParent(@NotNull PsiElement element) {
+  default @Nullable PsiElement getParent(@NotNull PsiElement element) {
     return element.getParent();
   }
 
@@ -72,8 +69,7 @@ public interface BreadcrumbsProvider {
    * @param element that represents a single crumb
    * @return list of elements to navigate
    */
-  @NotNull
-  default List<PsiElement> getChildren(@NotNull PsiElement element) {
+  default @NotNull List<PsiElement> getChildren(@NotNull PsiElement element) {
     return emptyList();
   }
 
@@ -81,8 +77,7 @@ public interface BreadcrumbsProvider {
    * @param element that represents a single crumb
    * @return list of actions for the context menu
    */
-  @NotNull
-  default List<? extends Action> getContextActions(@NotNull PsiElement element) {
+  default @NotNull List<? extends Action> getContextActions(@NotNull PsiElement element) {
     return emptyList();
   }
 

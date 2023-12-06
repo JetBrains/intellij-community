@@ -4,18 +4,18 @@ package org.intellij.plugins.markdown.fileActions.export
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.ui.layout.selectedValueIs
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionsBaseDialog
-import java.awt.BorderLayout
 import java.io.File
-import javax.swing.DefaultComboBoxModel
-import javax.swing.JComponent
 import javax.swing.JList
 
 internal class MarkdownExportDialog(
@@ -47,42 +47,38 @@ internal class MarkdownExportDialog(
     return if (FileUtil.exists(FileUtil.join(dir, fullName))) fullName else null
   }
 
-  override fun LayoutBuilder.createFileTypeField() = row {
-    val model = DefaultComboBoxModel(supportedExportProviders.toTypedArray())
-    val fileTypeProperty = PropertyGraph().lazyProperty { selectedFileType }
-    fileTypeProperty.afterChange {
-      selectedFileType = it
-      okAction.isEnabled = it.validate(project, file).isNullOrEmpty()
-    }
+  override fun Panel.createFileTypeField() {
+    row {
+      val fileTypeProperty = PropertyGraph().lazyProperty { selectedFileType }
+      fileTypeProperty.afterChange {
+        selectedFileType = it
+        okAction.isEnabled = it.validate(project, file).isNullOrEmpty()
+      }
 
-    selectedFileType = findFirstValidProvider() ?: supportedExportProviders.first()
-    label(MarkdownBundle.message("markdown.export.dialog.filetype.label"))
-    fileTypeSelector = comboBox(model, fileTypeProperty, FileTypeRenderer())
-      .withValidationOnApply { validateFileType(it) }
-      .focused()
-      .component
+      selectedFileType = findFirstValidProvider() ?: supportedExportProviders.first()
+      label(MarkdownBundle.message("markdown.export.dialog.filetype.label"))
+      fileTypeSelector = comboBox(supportedExportProviders, FileTypeRenderer())
+        .bindItem(fileTypeProperty)
+        .validationOnApply { validateFileType(it) }
+        .focused()
+        .component
+    }
   }
 
-  override fun getSettingsComponents(): DialogPanel {
-    val panel = DialogPanel(BorderLayout())
+  override fun Panel.createSettingsComponents() {
     supportedExportProviders
       .mapNotNull {
-        it.createSettingsComponent(project, File(suggestedFilePath))?.apply {
-          visible(fileTypeSelector.selectedValueIs(it))
+        with(it) {
+          val file = VfsUtil.findFileByIoFile(File(suggestedFilePath), false)
+          if (file != null) {
+            createSettingsComponent(project, file)?.visibleIf(fileTypeSelector.selectedValueIs(it))
+          }
         }
       }
-      .forEach { panel.add(it) }
-
-    return panel
   }
 
   private fun findFirstValidProvider(): MarkdownExportProvider? =
     supportedExportProviders.find { it.validate(project, file) == null }
-
-  private fun JComponent.visible(predicate: ComponentPredicate) {
-    isVisible = predicate()
-    predicate.addListener { isVisible = it }
-  }
 
   private fun ValidationInfoBuilder.validateFileType(combobox: ComboBox<MarkdownExportProvider>): ValidationInfo? {
     val provider = combobox.item

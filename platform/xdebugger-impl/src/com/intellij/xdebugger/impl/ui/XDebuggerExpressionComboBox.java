@@ -1,25 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.EditorComboBoxEditor;
-import com.intellij.ui.EditorComboBoxRenderer;
-import com.intellij.ui.EditorTextField;
+import com.intellij.ui.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
@@ -120,7 +123,17 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   @Override
   protected void doSetText(XExpression text) {
     myExpression = text;
-    myEditor.getEditorTextField().setNewDocumentAndFileType(getFileType(text), createDocument(text));
+    // set a dummy document immediately
+    myEditor.getEditorTextField().setNewDocumentAndFileType(getFileType(text), new DocumentImpl(text.getExpression()));
+    // schedule the real document creation
+    ReadAction.nonBlocking(() -> createDocument(text))
+      .inSmartMode(getProject())
+      .finishOnUiThread(ModalityState.any(), document -> {
+        myEditor.getEditorTextField().setNewDocumentAndFileType(getFileType(text), document);
+        getEditorsProvider().afterEditorCreated(getEditor());
+      })
+      .coalesceBy(this)
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Override
@@ -192,24 +205,28 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
           }
           foldNewLines(editor);
           editor.getFilteredDocumentMarkupModel().addMarkupModelListener(((EditorImpl)editor).getDisposable(), new MarkupModelListener() {
-            int errors = 0;
+            private final AtomicInteger errors = new AtomicInteger();
             @Override
             public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
               processHighlighter(highlighter, true);
             }
 
             @Override
-            public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+            public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
               processHighlighter(highlighter, false);
             }
 
             void processHighlighter(@NotNull RangeHighlighterEx highlighter, boolean add) {
               HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
               if (info != null && HighlightSeverity.ERROR.equals(info.getSeverity())) {
-                errors += add ? 1 : -1;
-                if (errors == 0 || errors == 1) {
-                  myComboBox.putClientProperty("JComponent.outline", errors > 0 ? "error" : null);
-                  myComboBox.repaint();
+                int value = errors.addAndGet(add ? 1 : -1);
+                if (value == 0 || value == 1) {
+                  EdtInvocationManager.invokeLaterIfNeeded(() -> {
+                    if (UIUtil.isShowing(myComboBox)) {
+                      myComboBox.putClientProperty("JComponent.outline", value > 0 ? "error" : null);
+                      myComboBox.repaint();
+                    }
+                  });
                 }
               }
             }

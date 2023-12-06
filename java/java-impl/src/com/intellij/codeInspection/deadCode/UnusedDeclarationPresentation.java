@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,8 +38,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jdom.Element;
@@ -58,6 +57,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -71,14 +72,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   private final WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
-  private final NotNullLazyValue<InspectionToolWrapper> myDummyWrapper = NotNullLazyValue.atomicLazy(() -> {
-    InspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
+  private final Supplier<InspectionToolWrapper<?, ?>> myDummyWrapper = new SynchronizedClearableLazy<>(() -> {
+    InspectionToolWrapper<?, ?> toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
     toolWrapper.initialize(myContext);
     return toolWrapper;
   });
 
-  @NonNls private static final String DELETE = "delete";
-  @NonNls private static final String COMMENT = "comment";
+  private static final @NonNls String DELETE = "delete";
+  private static final @NonNls String COMMENT = "comment";
 
   private enum UnusedDeclarationHint {
     COMMENT("inspection.dead.code.commented.hint"),
@@ -102,8 +103,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     ((EntryPointsManagerBase)getEntryPointsManager()).setAddNonJavaEntries(getTool().ADD_NONJAVA_TO_ENTRIES);
   }
 
-  @NotNull
-  public RefFilter getFilter() {
+  public @NotNull RefFilter getFilter() {
     return myFilter;
   }
   private static final class WeakUnreferencedFilter extends UnreferencedFilter {
@@ -112,7 +112,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    public int getElementProblemCount(@NotNull final RefJavaElement refElement) {
+    public int getElementProblemCount(final @NotNull RefJavaElement refElement) {
       final int problemCount = super.getElementProblemCount(refElement);
       if (problemCount > - 1) return problemCount;
       if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefJavaElementImpl)refElement).isSuspiciousRecursive()) return 1;
@@ -126,15 +126,13 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
-  @NotNull
-  private UnusedDeclarationInspectionBase getTool() {
+  private @NotNull UnusedDeclarationInspectionBase getTool() {
     return (UnusedDeclarationInspectionBase)getToolWrapper().getTool();
   }
 
 
   @Override
-  @NotNull
-  public DeadHTMLComposer getComposer() {
+  public @NotNull DeadHTMLComposer getComposer() {
     if (myComposer == null) {
       myComposer = new DeadHTMLComposer(this);
     }
@@ -205,9 +203,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public QuickFixAction @NotNull [] getQuickFixes(RefEntity @NotNull ... refElements) {
-    return Arrays.stream(refElements).anyMatch(element -> element instanceof RefJavaElement && getFilter().accepts((RefJavaElement)element) && !myFixedElements.containsKey(element) && element.isValid())
-           ? myQuickFixActions
-           : QuickFixAction.EMPTY;
+    for (RefEntity element : refElements) {
+      if (element instanceof RefJavaElement &&
+          getFilter().accepts((RefJavaElement)element) &&
+          !myFixedElements.containsKey(element) &&
+          element.isValid()) {
+        return myQuickFixActions;
+      }
+    }
+    return QuickFixAction.EMPTY;
   }
 
   private final QuickFixAction[] myQuickFixActions;
@@ -227,9 +231,13 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!super.applyFix(refElements)) return false;
 
       //filter only elements applicable to be deleted (exclude entry points)
-      RefElement[] filteredRefElements = Arrays.stream(refElements)
-        .filter(entry -> entry instanceof RefJavaElement && getFilter().accepts((RefJavaElement)entry))
-        .toArray(RefElement[]::new);
+      List<RefElement> list = new ArrayList<>();
+      for (RefEntity entry : refElements) {
+        if (entry instanceof RefJavaElement && getFilter().accepts((RefJavaElement)entry)) {
+          list.add((RefElement)entry);
+        }
+      }
+      RefElement[] filteredRefElements = list.toArray(new RefElement[0]);
 
       ApplicationManager.getApplication().invokeLater(() -> {
         final Project project = getContext().getProject();
@@ -294,7 +302,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
-  class CommentOutBin extends QuickFixAction {
+  final class CommentOutBin extends QuickFixAction {
     CommentOutBin(@NotNull InspectionToolWrapper toolWrapper) {
       super(AnalysisBundle.message("inspection.dead.code.comment.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
             toolWrapper);
@@ -338,8 +346,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return AnalysisBundle.message("inspection.dead.code.comment.quickfix");
     }
 
@@ -360,7 +367,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       Document doc = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiFile);
       if (doc != null) {
         TextRange textRange = psiElement.getTextRange();
-        String date = DateFormatUtil.formatDateTime(new Date());
+        String date = DateTimeFormatter.ISO_DATE_TIME.format(LocalTime.now());
 
         int startOffset = textRange.getStartOffset();
         CharSequence chars = doc.getCharsSequence();
@@ -399,15 +406,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
                             boolean showStructure,
                             boolean groupByStructure) {
     InspectionTreeModel model = myContext.getView().getTree().getInspectionTreeModel();
-    EntryPointsNode epNode = model.createCustomNode(myDummyWrapper.getValue(), () -> new EntryPointsNode(myDummyWrapper.getValue(), myContext, node), node);
-    InspectionToolPresentation presentation = myContext.getPresentation(myDummyWrapper.getValue());
+    EntryPointsNode epNode = model.createCustomNode(myDummyWrapper.get(), () -> new EntryPointsNode(myDummyWrapper.get(), myContext, node), node);
+    InspectionToolPresentation presentation = myContext.getPresentation(myDummyWrapper.get());
     presentation.updateContent();
-    provider.appendToolNodeContent(myContext, myDummyWrapper.getValue(), epNode, showStructure, groupByStructure);
+    provider.appendToolNodeContent(myContext, myDummyWrapper.get(), epNode, showStructure, groupByStructure);
   }
 
-  @NotNull
   @Override
-  public RefElementNode createRefNode(@Nullable RefEntity entity, @NotNull InspectionTreeModel model, @NotNull InspectionTreeNode parent) {
+  public @NotNull RefElementNode createRefNode(@Nullable RefEntity entity, @NotNull InspectionTreeModel model, @NotNull InspectionTreeNode parent) {
     return new UnusedDeclarationRefElementNode(entity, this, parent);
   }
 
@@ -531,10 +537,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  @Nullable
-  public QuickFix<?> findQuickFixes(@NotNull final CommonProblemDescriptor descriptor,
-                                 RefEntity entity,
-                                 String hint) {
+  public @Nullable QuickFix<?> findQuickFixes(final @NotNull CommonProblemDescriptor descriptor,
+                                              RefEntity entity,
+                                              String hint) {
     if (entity instanceof RefElement) {
       if (DELETE.equals(hint)) {
         return new PermanentDeleteFix((RefElement)entity);
@@ -557,8 +562,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return AnalysisBundle.message("inspection.dead.code.safe.delete.quickfix");
     }
 
@@ -576,9 +580,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
-  @NotNull
   @Override
-  public JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
+  public @NotNull JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
     final Project project = entity.getRefManager().getProject();
     DescriptionEditorPane htmlView = new DescriptionEditorPane() {
       @Override
@@ -627,8 +630,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     css.addRule("div.problem-description {margin-left: " + JBUIScale.scale(9) + "px;}");
     css.addRule("ul {margin-left:" + JBUIScale.scale(10) + "px;text-indent: 0}");
     css.addRule("code {font-family:" + StartupUiUtil.getLabelFont().getFamily() + "}");
-    @Nls
-    final StringBuilder buf = new StringBuilder();
+    final @Nls StringBuilder buf = new StringBuilder();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();
     DescriptionEditorPaneKt.readHTML(htmlView, text);
@@ -648,9 +650,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       super(entity, presentation, parent);
     }
 
-    @Nullable
     @Override
-    public String getTailText() {
+    public @Nullable String getTailText() {
       RefEntity element = getElement();
       final UnusedDeclarationHint hint = element == null ? null : ((UnusedDeclarationPresentation)getPresentation()).myFixedElements.get(element);
       if (hint != null) {

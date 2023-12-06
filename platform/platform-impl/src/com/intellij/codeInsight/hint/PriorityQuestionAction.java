@@ -17,4 +17,6 @@ package com.intellij.codeInsight.hint;
 
 public interface PriorityQuestionAction extends QuestionAction {
   int getPriority(); // hint with higher priority overlaps hint with lower priority
+
+  int INTENTION_BULB_PRIORITY = -10;
 }

@@ -2,10 +2,8 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,11 +29,13 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.Command;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
  * created at Sep 11, 2001
@@ -49,7 +49,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private final MoveCallback myMoveCallback;
   private final boolean myOpenInEditor;
   private String myNewVisibility; // "null" means "as is"
-  private @NlsContexts.Label String myCommandName = MoveMembersImpl.getRefactoringName();
+  private @Command String myCommandName = MoveMembersImpl.getRefactoringName();
   private MoveMembersOptions myOptions;
 
   public MoveMembersProcessor(Project project, MoveMembersOptions options) {
@@ -69,7 +69,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  @NlsContexts.Label
+  @Command
   protected String getCommandName() {
     return myCommandName;
   }
@@ -164,11 +164,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean canPerformRefactoringInBranch() {
-    return true;
-  }
-
-  @Override
   protected void performRefactoring(final UsageInfo @NotNull [] usages) {
     PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(myOptions.getTargetClassName(),
                                                                           GlobalSearchScope.projectScope(myProject));
@@ -177,29 +172,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     Map<PsiMember, SmartPsiElementPointer<PsiMember>> movedMembers =
       performMove(targetClass, myMembersToMove, ContainerUtil.map(usages, MoveMembersUsageInfo.class::cast));
     afterAllMovements(movedMembers);
-  }
-
-  @Override
-  protected void performRefactoringInBranch(UsageInfo @NotNull [] originalUsages, ModelBranch branch) {
-    PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(myOptions.getTargetClassName(),
-                                                                          GlobalSearchScope.projectScope(myProject));
-    if (targetClass == null) return;
-
-    PsiClass targetCopy = branch.obtainPsiCopy(targetClass);
-    Set<PsiMember> membersToMove = new LinkedHashSet<>(ContainerUtil.map(myMembersToMove, branch::obtainPsiCopy));
-    List<MoveMembersUsageInfo> usages = ContainerUtil.map(originalUsages, u -> (MoveMembersUsageInfo)((MoveMembersUsageInfo)u).obtainBranchCopy(branch));
-
-    Map<PsiMember, SmartPsiElementPointer<PsiMember>> movedMembers = performMove(targetCopy, membersToMove, usages);
-
-    branch.runAfterMerge(() -> {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-      afterAllMovements(EntryStream.of(movedMembers).mapValues(p -> {
-        PsiMember member = p.getElement();
-        PsiMember original = member == null ? null : branch.findOriginalPsi(member);
-        return original == null ? null : SmartPointerManager.createPointer(original);
-      }).toMap());
-    });
   }
 
   private Map<PsiMember, SmartPsiElementPointer<PsiMember>> performMove(PsiClass targetClass,
@@ -368,7 +340,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                                @NotNull PsiClass targetClass,
                                                Map<PsiMember, PsiModifierList> modifierListCopies,
                                                MoveMembersOptions options,
-                                               MultiMap<PsiElement, String> conflicts) {
+                                               MultiMap<PsiElement, @DialogMessage String> conflicts) {
     for (UsageInfo usage : usages) {
       if (!(usage instanceof MoveMembersUsageInfo usageInfo)) continue;
       final PsiMember member = usageInfo.member;
@@ -383,7 +355,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                                 String newVisibility,
                                                 PsiClass targetClass,
                                                 Map<PsiMember, PsiModifierList> modifierListCopies,
-                                                MultiMap<PsiElement, String> conflicts) {
+                                                MultiMap<PsiElement, @DialogMessage String> conflicts) {
     for (final PsiMember member : membersToMove) {
       final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(member.getLanguage());
       if (handler != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.*
@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CancellationException
@@ -22,7 +21,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
   @Volatile var writeAndDeleteProhibited = false
     private set
 
-  private suspend fun runSyncTask(onAppExit: Boolean, project: Project?, task: suspend () -> Unit) {
+  private suspend fun runSyncTask(onAppExit: Boolean, task: suspend () -> Unit) {
     icsManager.runInAutoCommitDisabledMode {
       if (!onAppExit) {
         runInAutoSaveDisabledMode {
@@ -40,12 +39,12 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
     }
   }
 
-  suspend fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null, onAppExit: Boolean = false): Boolean {
+  suspend fun sync(syncType: SyncType, localRepositoryInitializer: (() -> Unit)? = null, onAppExit: Boolean = false): Boolean {
     var exception: Throwable? = null
     var restartApplication = false
     var updateResult: UpdateResult? = null
     var isReadOnlySourcesChanged = false
-    runSyncTask(onAppExit, project) {
+    runSyncTask(onAppExit) {
       if (!onAppExit) {
         autoSyncManager.waitAutoSync()
       }
@@ -172,8 +171,9 @@ internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager,
                                                       store: ComponentStoreImpl,
                                                       updateResult: UpdateResult,
                                                       reloadAllSchemes: Boolean = false): Boolean {
-  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed,
-                                                                                                   updateResult.deleted, ::toIdeaPath)
+  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(changed = updateResult.changed,
+                                                                                                   deleted = updateResult.deleted,
+                                                                                                   pathNormalizer = ::toIdeaPath)
 
   val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
   icsManager.schemeManagerFactory.value.process {

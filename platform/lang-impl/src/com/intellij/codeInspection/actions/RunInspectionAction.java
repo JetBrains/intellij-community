@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.CommonBundle;
@@ -7,14 +7,13 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
+import com.intellij.codeInspection.ui.OptionPaneRenderer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
@@ -58,7 +57,7 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-public class RunInspectionAction extends GotoActionBase implements DataProvider {
+public final class RunInspectionAction extends GotoActionBase implements DataProvider {
   private static final Logger LOGGER = Logger.getInstance(RunInspectionAction.class);
   private final String myPredefinedText;
 
@@ -162,7 +161,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
       @Override
       protected @NotNull JComponent getAdditionalActionSettings(@NotNull Project project) {
         final JPanel panel = new JPanel(new GridBagLayout());
-        final boolean hasOptionsPanel = InspectionOptionPaneRenderer.hasSettings(toolWrapper.getTool());
+        final boolean hasOptionsPanel = OptionPaneRenderer.hasSettings(toolWrapper.getTool());
         final GridBag constraints = new GridBag()
           .setDefaultWeightX(1)
           .setDefaultWeightY(hasOptionsPanel ? 0 : 1)
@@ -172,7 +171,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
 
         if (hasOptionsPanel) {
           myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);
-          final JComponent optionsPanel = InspectionOptionPaneRenderer.createOptionsPanel(myUpdatedSettingsToolWrapper.getTool(), myDisposable, project);
+          final JComponent optionsPanel = OptionPaneRenderer.createOptionsPanel(myUpdatedSettingsToolWrapper.getTool(), myDisposable, project);
           LOGGER.assertTrue(optionsPanel != null);
 
           final var separator = new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from"));
@@ -212,7 +211,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
       @Override
       protected Action @NotNull [] createActions() {
         final List<Action> actions = new ArrayList<>();
-        final boolean hasFixAll = toolWrapper.getTool() instanceof CleanupLocalInspectionTool;
+        final boolean hasFixAll = toolWrapper.isCleanupTool();
         actions.add(new AbstractAction(hasFixAll ? CodeInsightBundle.message("action.analyze.verb")
                                                  : CommonBundle.getOkButtonText()) {
           {

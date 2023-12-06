@@ -40,62 +40,61 @@ internal class GitCommitSignatureStatusProvider : VcsCommitExternalStatusProvide
   override fun getStubStatus() = GitCommitSignature.NoSignature
 
   companion object {
-
     private const val ID = "Git.CommitSignature"
+  }
 
-    private class GitCommitSignatureStatusPresentation(private val signature: GitCommitSignature)
-      : VcsCommitExternalStatusPresentation.Signature {
+  private class GitCommitSignatureStatusPresentation(private val signature: GitCommitSignature)
+    : VcsCommitExternalStatusPresentation.Signature {
 
-      override val icon: Icon
-        get() = when (signature) {
-          is GitCommitSignature.Verified -> GitIcons.Verified
-          is GitCommitSignature.NotVerified -> GitIcons.Signed
-          GitCommitSignature.Bad -> GitIcons.Signed
-          GitCommitSignature.NoSignature -> EmptyIcon.ICON_16
-        }
+    override val icon: Icon
+      get() = when (signature) {
+        is GitCommitSignature.Verified -> GitIcons.Verified
+        is GitCommitSignature.NotVerified -> GitIcons.Signed
+        GitCommitSignature.Bad -> GitIcons.Signed
+        GitCommitSignature.NoSignature -> EmptyIcon.ICON_16
+      }
 
-      override val text: String
-        get() = when (signature) {
-          is GitCommitSignature.Verified -> GitBundle.message("commit.signature.verified")
-          is GitCommitSignature.NotVerified -> GitBundle.message("commit.signature.unverified")
-          GitCommitSignature.Bad -> GitBundle.message("commit.signature.bad")
-          GitCommitSignature.NoSignature -> GitBundle.message("commit.signature.none")
-        }
+    override val text: String
+      get() = when (signature) {
+        is GitCommitSignature.Verified -> GitBundle.message("commit.signature.verified")
+        is GitCommitSignature.NotVerified -> GitBundle.message("commit.signature.unverified")
+        GitCommitSignature.Bad -> GitBundle.message("commit.signature.bad")
+        GitCommitSignature.NoSignature -> GitBundle.message("commit.signature.none")
+      }
 
-      override val description: HtmlChunk?
-        get() = when (signature) {
-          is GitCommitSignature.Verified -> HtmlBuilder()
-            .append(GitBundle.message("commit.signature.verified")).br()
-            .br()
-            .append(HtmlBuilder()
-                      .append(GitBundle.message("commit.signature.fingerprint")).br()
-                      .append(signature.fingerprint).br()
-                      .br()
-                      .append(GitBundle.message("commit.signature.signed.by")).br()
-                      .append(signature.user)
-                      .wrapWith(HtmlChunk.span("color: ${ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())}")))
-            .toFragment()
-          is GitCommitSignature.NotVerified -> HtmlBuilder()
-            .append(GitBundle.message("commit.signature.unverified.with.reason", getUnverifiedReason(signature.reason)))
-            .toFragment()
-          GitCommitSignature.Bad -> HtmlChunk.text(GitBundle.message("commit.signature.bad"))
-          GitCommitSignature.NoSignature -> null
-        }
+    override val description: HtmlChunk?
+      get() = when (signature) {
+        is GitCommitSignature.Verified -> HtmlBuilder()
+          .append(GitBundle.message("commit.signature.verified")).br()
+          .br()
+          .append(HtmlBuilder()
+                    .append(GitBundle.message("commit.signature.fingerprint")).br()
+                    .append(signature.fingerprint).br()
+                    .br()
+                    .append(GitBundle.message("commit.signature.signed.by")).br()
+                    .append(signature.user)
+                    .wrapWith(HtmlChunk.span("color: ${ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())}")))
+          .toFragment()
+        is GitCommitSignature.NotVerified -> HtmlBuilder()
+          .append(GitBundle.message("commit.signature.unverified.with.reason", getUnverifiedReason(signature.reason)))
+          .toFragment()
+        GitCommitSignature.Bad -> HtmlChunk.text(GitBundle.message("commit.signature.bad"))
+        GitCommitSignature.NoSignature -> null
+      }
 
-      private fun getUnverifiedReason(reason: GitCommitSignature.VerificationFailureReason): @Nls String {
-        return when (reason) {
-          GitCommitSignature.VerificationFailureReason.UNKNOWN -> GitBundle.message("commit.signature.unverified.reason.unknown")
-          GitCommitSignature.VerificationFailureReason.EXPIRED -> GitBundle.message("commit.signature.unverified.reason.expired")
-          GitCommitSignature.VerificationFailureReason.EXPIRED_KEY -> GitBundle.message("commit.signature.unverified.reason.expired.key")
-          GitCommitSignature.VerificationFailureReason.REVOKED_KEY -> GitBundle.message("commit.signature.unverified.reason.revoked.key")
-          GitCommitSignature.VerificationFailureReason.CANNOT_VERIFY -> GitBundle.message("commit.signature.unverified.reason.cannot.verify")
-        }
+    private fun getUnverifiedReason(reason: GitCommitSignature.VerificationFailureReason): @Nls String {
+      return when (reason) {
+        GitCommitSignature.VerificationFailureReason.UNKNOWN -> GitBundle.message("commit.signature.unverified.reason.unknown")
+        GitCommitSignature.VerificationFailureReason.EXPIRED -> GitBundle.message("commit.signature.unverified.reason.expired")
+        GitCommitSignature.VerificationFailureReason.EXPIRED_KEY -> GitBundle.message("commit.signature.unverified.reason.expired.key")
+        GitCommitSignature.VerificationFailureReason.REVOKED_KEY -> GitBundle.message("commit.signature.unverified.reason.revoked.key")
+        GitCommitSignature.VerificationFailureReason.CANNOT_VERIFY -> GitBundle.message("commit.signature.unverified.reason.cannot.verify")
       }
     }
   }
 }
 
-@Service
+@Service(Service.Level.APP)
 internal class GitCommitSignatureColumnService : VcsLogExternalStatusColumnService<GitCommitSignature>() {
   override fun getDataLoader(project: Project) = GitCommitSignatureStatusProvider().createLoader(project)
 }

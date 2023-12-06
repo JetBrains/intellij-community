@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -62,6 +62,10 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     return myStatusLine;
   }
 
+  protected void hideToolbar() {
+    myLeftPane.setBorder(JBUI.Borders.empty());
+  }
+
   public void initUI() {
     myLeftPane = ScrollPaneFactory.createScrollPane();
     myLeftPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
@@ -103,7 +107,9 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     outputTab.add(myToolbarComponent, BorderLayout.EAST);
     rightPanel.add(outputTab, BorderLayout.CENTER);
     mySplitter.setSecondComponent(rightPanel);
-    testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
+    if (!ExperimentalUI.isNewUI()) {
+      testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
+    }
     setLeftComponent(testTreeView);
   }
 

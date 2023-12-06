@@ -15,24 +15,23 @@
  */
 package org.jetbrains.plugins.groovy.intentions.comments;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChangeToCStyleCommentIntention extends Intention {
+public class ChangeToCStyleCommentIntention extends GrPsiUpdateIntention {
 
 
   @Override
@@ -42,8 +41,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
-      throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final PsiComment selectedComment = (PsiComment) element;
     PsiComment firstComment = selectedComment;
 
@@ -78,7 +76,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
   }
 
   @Nullable
-  private PsiElement getNextNonWhiteSpace(PsiElement nextComment) {
+  private static PsiElement getNextNonWhiteSpace(PsiElement nextComment) {
     PsiElement elementToCheck = nextComment;
     while (true) {
       final PsiElement sibling = elementToCheck.getNextSibling();
@@ -94,7 +92,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
   }
 
   @Nullable
-  private PsiElement getPrevNonWhiteSpace(PsiElement nextComment) {
+  private static PsiElement getPrevNonWhiteSpace(PsiElement nextComment) {
     PsiElement elementToCheck = nextComment;
     while (true) {
       final PsiElement sibling = elementToCheck.getPrevSibling();
@@ -109,7 +107,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     }
   }
 
-  private boolean isEndOfLineComment(PsiElement element) {
+  private static boolean isEndOfLineComment(PsiElement element) {
     if (!(element instanceof PsiComment comment)) {
       return false;
     }

@@ -3,13 +3,14 @@ package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.hashToHexString
 import java.io.File
 import java.security.MessageDigest
 
 internal class LazyZipUnpacker(private val destination: File) : AbstractLazyFileOutputProducer<File, Unit>(
     // Use hash to get some unique string originated from destination.path which can be used in filename
     // (unfortunately, destination.path itself cannot be used as a filename because of slashes)
-    "${LazyZipUnpacker::class.java.name}-${DigestUtil.md5Hex(destination.canonicalPath.toByteArray())}"
+    "${LazyZipUnpacker::class.java.name}-${hashToHexString(destination.canonicalPath, DigestUtil.md5())}"
 ) {
 
     override fun produceOutput(input: File, computationContext: Unit): List<File> { // input is a zip file

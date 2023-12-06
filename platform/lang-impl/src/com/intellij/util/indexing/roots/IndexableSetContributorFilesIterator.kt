@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.navigation.ItemPresentation
@@ -11,7 +11,7 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.origin.IndexableSetContributorOriginImpl
 
-internal class IndexableSetContributorFilesIterator(private val name: String?,
+class IndexableSetContributorFilesIterator(private val name: String?,
                                                     private val debugName: String,
                                                     private val projectAware: Boolean,
                                                     private val roots: Set<VirtualFile>,
@@ -24,6 +24,9 @@ internal class IndexableSetContributorFilesIterator(private val name: String?,
   constructor(indexableSetContributor: IndexableSetContributor, project: Project) :
     this(getName(indexableSetContributor), getDebugName(indexableSetContributor), true,
          indexableSetContributor.getAdditionalProjectRootsToIndex(project), indexableSetContributor)
+
+  constructor(indexableSetContributor: IndexableSetContributor, roots: Collection<VirtualFile>, projectAware: Boolean) :
+    this(getName(indexableSetContributor), getDebugName(indexableSetContributor), projectAware, roots.toSet(), indexableSetContributor)
 
   override fun getDebugName(): String {
     return "Indexable set contributor '$debugName' ${if (projectAware) "(project)" else "(non-project)"}"
@@ -58,6 +61,13 @@ internal class IndexableSetContributorFilesIterator(private val name: String?,
   }
 
   companion object {
+    @JvmStatic
+    fun createProjectUnAwareIndexableSetContributors(): List<IndexableSetContributorFilesIterator> {
+      return IndexableSetContributor.EP_NAME.extensionList.map {
+        IndexableSetContributorFilesIterator(it)
+       }
+    }
+
     private fun getName(indexableSetContributor: IndexableSetContributor) = (indexableSetContributor as? ItemPresentation)?.presentableText
     private fun getDebugName(indexableSetContributor: IndexableSetContributor): String =
       getName(indexableSetContributor)?.takeUnless { it.isEmpty() } ?: indexableSetContributor.debugName

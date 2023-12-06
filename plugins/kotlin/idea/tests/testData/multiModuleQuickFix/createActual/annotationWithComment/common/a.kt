@@ -1,4 +1,5 @@
-// "Create actual annotation class for module testModule_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
+// IGNORE_K2
 
 @RegAnn // some comment
 expect annotation class SomeAnn<caret>

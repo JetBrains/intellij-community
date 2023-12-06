@@ -4,8 +4,6 @@ package com.intellij.refactoring.convertToInstanceMethod;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.model.BranchableUsageInfo;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -33,9 +31,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG =
-    Logger.getInstance(ConvertToInstanceMethodProcessor.class);
+  private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodProcessor.class);
   private PsiMethod myMethod;
   private @Nullable PsiParameter myTargetParameter;
   private PsiClass myTargetClass;
@@ -152,7 +151,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     final Set<PsiMember> methods = Collections.singleton(myMethod);
     //check that method to call would be still accessible from the call places
     RefactoringConflictsUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(myTargetClass, myNewVisibility, methods, conflicts);
@@ -200,28 +199,6 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     return showConflicts(conflicts, usagesIn);
   }
 
-
-  @Override
-  protected boolean canPerformRefactoringInBranch() {
-    return true;
-  }
-
-  @Override
-  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, ModelBranch branch) {
-    UsageInfo[] convertedUsages = BranchableUsageInfo.convertUsages(usages, branch);
-    ConvertToInstanceMethodProcessor processor = new ConvertToInstanceMethodProcessor(
-      myProject, branch.obtainPsiCopy(myMethod),
-      myTargetParameter == null ? null : branch.obtainPsiCopy(myTargetParameter),
-      myNewVisibility);
-    PsiMethod result = processor.doRefactoring(convertedUsages);
-    branch.runAfterMerge(() -> {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      PsiMethod toOpen = branch.findOriginalPsi(result);
-      if (toOpen != null) {
-        EditorHelper.openInEditor(toOpen);
-      }
-    });
-  }
 
   @Override
   protected void performRefactoring(UsageInfo @NotNull [] usages) {

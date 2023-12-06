@@ -34,7 +34,7 @@ sealed class InlayPresentationEntry(
 
   abstract fun handleClick(editor: Editor, list: InlayPresentationList, controlDown: Boolean)
 
-  var isHovered: Boolean = false
+  var isHoveredWithCtrl: Boolean = false
 }
 
 class TextInlayPresentationEntry(
@@ -49,8 +49,12 @@ class TextInlayPresentationEntry(
     if (clickArea != null && project != null) {
       val actionData = clickArea.actionData
       if (controlDown) {
-        InlayActionHandler.getActionHandler(actionData.handlerId)
-          ?.handleClick(editor, actionData.payload)
+        val handlerId = actionData.handlerId
+        val handler = InlayActionHandler.getActionHandler(handlerId)
+        if (handler != null) {
+          InlayActionHandlerUsagesCollector.clickHandled(handlerId, handler.javaClass)
+          handler.handleClick(editor, actionData.payload)
+        }
       }
     }
     if (parentIndexToSwitch != (-1).toByte()) {
@@ -105,9 +109,7 @@ class TextInlayPresentationEntry(
 
     other as TextInlayPresentationEntry
 
-    if (text != other.text) return false
-
-    return true
+    return text == other.text
   }
 
   override fun hashCode(): Int {

@@ -7,24 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.jps.api.JpsDynamicBundle;
 
-import java.util.function.Supplier;
-
-public class JavaFXJpsBundle extends JpsDynamicBundle {
-
+public final class JavaFXJpsBundle {
   private static final @NonNls String BUNDLE = "messages.JavaFXJpsBundle";
-  private static final JavaFXJpsBundle INSTANCE = new JavaFXJpsBundle();
+  private static final JpsDynamicBundle INSTANCE = new JpsDynamicBundle(JavaFXJpsBundle.class, BUNDLE);
 
   private JavaFXJpsBundle() {
-    super(BUNDLE);
   }
 
   public static @Nls @NotNull String message(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
-  }
-
-  public
-  static @NotNull Supplier<@Nls @NotNull String> messagePointer(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key,
-                                                                Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
   }
 }

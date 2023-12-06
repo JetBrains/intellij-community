@@ -25,16 +25,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
-public class WordSplitter extends BaseSplitter {
+public final class WordSplitter extends BaseSplitter {
   private static final WordSplitter INSTANCE = new WordSplitter();
 
   public static WordSplitter getInstance() {
     return INSTANCE;
   }
 
-  @NonNls
-  private static final Pattern SPECIAL = Pattern.compile("&\\p{Alnum}{2};?|#\\p{Alnum}{3,6}|0x\\p{Alnum}?");
+  private static final @NonNls Pattern SPECIAL = Pattern.compile("&\\p{Alnum}{2};?|#\\p{Alnum}{3,6}|0x\\p{Alnum}?");
 
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {

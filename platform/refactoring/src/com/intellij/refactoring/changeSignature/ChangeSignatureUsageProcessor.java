@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -21,7 +23,7 @@ public interface ChangeSignatureUsageProcessor {
 
   UsageInfo[] findUsages(ChangeInfo info);
 
-  MultiMap<PsiElement, String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages);
+  MultiMap<PsiElement, @DialogMessage String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages);
 
   boolean processUsage(ChangeInfo changeInfo, UsageInfo usageInfo, boolean beforeMethodChange, UsageInfo[] usages);
 

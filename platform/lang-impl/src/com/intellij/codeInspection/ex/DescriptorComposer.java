@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DescriptorComposer extends HTMLComposerImpl {
+public final class DescriptorComposer extends HTMLComposerImpl {
   private static final Logger LOG = Logger.getInstance(DescriptorComposer.class);
   private final InspectionToolPresentation myTool;
 
@@ -79,7 +79,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     return XmlStringUtil.isWrappedInHtml(text) ? XmlStringUtil.stripHtml(text) : StringUtil.escapeXmlEntities(text);
   }
 
-  protected void composeAdditionalDescription(@NotNull StringBuilder buf, @NotNull RefEntity refEntity) {}
+  private void composeAdditionalDescription(@NotNull StringBuilder buf, @NotNull RefEntity refEntity) {}
 
   @Override
   public void compose(@NotNull StringBuilder buf, RefEntity refElement, CommonProblemDescriptor descriptor) {
@@ -119,7 +119,10 @@ public class DescriptorComposer extends HTMLComposerImpl {
     }
   }
 
-  protected void composeDescription(@NotNull CommonProblemDescriptor description, int i, @NotNull StringBuilder buf, @NotNull RefEntity refElement) {
+  private void composeDescription(@NotNull CommonProblemDescriptor description,
+                                  int i,
+                                  @NotNull StringBuilder buf,
+                                  @NotNull RefEntity refElement) {
     PsiElement expression = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
     StringBuilder anchor = new StringBuilder();
     VirtualFile vFile = null;

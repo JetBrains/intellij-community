@@ -16,7 +16,6 @@ import com.intellij.util.PathUtil;
 import java.io.File;
 import java.nio.file.Paths;
 
-@SuppressWarnings("InspectionDescriptionNotFoundInspection")
 @TestDataPath("$CONTENT_ROOT/testData/inspections/pluginXmlI18n")
 public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase {
 
@@ -41,7 +40,6 @@ public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase 
     myFixture.enableInspections(new PluginXmlI18nInspection());
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   public void testHighlighting() {
     setupPlatformLibraries202();
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }");

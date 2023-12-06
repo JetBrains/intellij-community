@@ -8,8 +8,8 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
@@ -20,8 +20,8 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
   }
 
   private class ReassignedVariableVisitor extends JavaElementVisitor {
-    private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myLocalVariableProblems = new HashMap<>();
-    private final Map<PsiParameter, Boolean> myParameterIsReassigned = new HashMap<>();
+    private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myLocalVariableProblems = new ConcurrentHashMap<>();
+    private final Map<PsiParameter, Boolean> myParameterIsReassigned = new ConcurrentHashMap<>();
     private final @NotNull ProblemsHolder myHolder;
 
     private ReassignedVariableVisitor(@NotNull ProblemsHolder holder) {
@@ -76,7 +76,7 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @NotNull
-    private String getReassignedMessage(PsiVariable variable) {
+    private static String getReassignedMessage(PsiVariable variable) {
       return JavaBundle.message(
         variable instanceof PsiLocalVariable ? "tooltip.reassigned.local.variable" : "tooltip.reassigned.parameter");
     }

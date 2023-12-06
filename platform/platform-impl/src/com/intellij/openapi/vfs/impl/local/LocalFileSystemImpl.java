@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -44,17 +46,19 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private volatile boolean myDisposed;
 
   private final ThreadLocal<Pair<VirtualFile, Map<String, FileAttributes>>> myFileAttributesCache = new ThreadLocal<>();
-  private final DiskQueryRelay<VirtualFile, Map<String, FileAttributes>> myChildrenAttrGetter = new DiskQueryRelay<>(dir -> listWithAttributes(dir));
+  private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
+    new DiskQueryRelay<>(pair -> listWithAttributes(pair.first, pair.second));
 
-  public LocalFileSystemImpl() {
+  protected LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS, () -> {
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-          if (!ApplicationManager.getApplication().isDisposed()) {
-            storeRefreshStatusToFiles();
-          }
-        },
-        STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+        Application application = ApplicationManager.getApplication();
+        if (application != null && !application.isDisposed()) {
+          storeRefreshStatusToFiles();
+        }
+      },
+      STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     });
 
     for (PluggableLocalFileSystemContentLoader contentLoader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
@@ -70,6 +74,11 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
     new SymbolicLinkRefresher(this).refresh();
+  }
+
+  public void onDisconnecting() {
+    //on VFS reconnect we must clear roots manager
+    myWatchRootsManager.clear();
   }
 
   public @NotNull FileWatcher getFileWatcher() {
@@ -263,12 +272,17 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   @ApiStatus.Internal
   public String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
+    return listWithCaching(dir, null);
+  }
+
+  @ApiStatus.Internal
+  public String @NotNull [] listWithCaching(@NotNull VirtualFile dir, @Nullable Set<String> filter) {
     if ((SystemInfo.isWindows || SystemInfo.isMac && CpuArch.isArm64()) && getClass() == LocalFileSystemImpl.class) {
       Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
       if (cache != null) {
         LOG.error("unordered access to " + dir + " without cleaning after " + cache.first);
       }
-      Map<String, FileAttributes> result = myChildrenAttrGetter.accessDiskWithCheckCanceled(dir);
+      Map<String, FileAttributes> result = myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, filter));
       myFileAttributesCache.set(new Pair<>(dir, result));
       return ArrayUtil.toStringArray(result.keySet());
     }
@@ -297,29 +311,27 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return super.getAttributes(file);
   }
 
-  private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir) {
+  private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir, @Nullable Set<String> filter) {
     try {
       var list = CollectionFactory.<FileAttributes>createFilePathMap(10, dir.isCaseSensitive());
 
-      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), (file, result) -> {
+      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), filter, (file, result) -> {
         try {
           var attrs = copyWithCustomTimestamp(file, FileAttributes.fromNio(file, result.get()));
           list.put(file.getFileName().toString(), attrs);
         }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
+        catch (Exception e) { LOG.debug(e); }
         return true;
       });
 
       return list;
     }
-    catch (AccessDeniedException e) { LOG.debug(e); }
+    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
     return Map.of();
   }
 
-  private static @Nullable FileAttributes copyWithCustomTimestamp(Path file, FileAttributes attributes) {
+  private static FileAttributes copyWithCustomTimestamp(Path file, FileAttributes attributes) {
     for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
       Long custom = provider.getTimestamp(file);
       if (custom != null) {

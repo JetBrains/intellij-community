@@ -1,22 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,7 +172,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
           PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(nextCall.getMethodExpression()));
         if (nextQualifier == null || !PsiEquivalenceUtil.areElementsEquivalent(qualifier, nextQualifier)) break;
         if (qualifierVar != null && VariableAccessUtils.variableIsUsed(qualifierVar, nextCall.getArgumentList())) break;
-        PsiExpression nextArg = nextCall.getArgumentList().getExpressions()[0];
+        PsiExpression nextArg = ArrayUtil.getFirstElement(nextCall.getArgumentList().getExpressions());
         Object nextKey = getKey(nextArg);
         if (nextKey != null) {
           map.computeIfAbsent(nextKey, k -> new ArrayList<>()).add(nextArg);
@@ -203,7 +205,9 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       }
     }
 
+    @Contract("null -> null")
     private static Object getKey(PsiExpression key) {
+      if (key == null) return null;
       key = PsiUtil.skipParenthesizedExprDown(key);
       Object constant = ExpressionUtils.computeConstantExpression(key);
       if (constant != null) {
@@ -229,7 +233,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
   }
 
-  private static class NavigateToDuplicateFix implements LocalQuickFix {
+  private static class NavigateToDuplicateFix extends ModCommandQuickFix {
     private final SmartPsiElementPointer<PsiExpression> myPointer;
 
     NavigateToDuplicateFix(PsiExpression arg) {
@@ -244,30 +248,10 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public boolean availableInBatchMode() {
-      return false;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression element = myPointer.getElement();
-      if (element == null) return;
-      PsiFile file = element.getContainingFile();
-      if (file == null) return;
-      int offset = element.getTextRange().getStartOffset();
-      PsiNavigationSupport.getInstance().createNavigatable(project, file.getVirtualFile(), offset).navigate(true);
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      NavigatablePsiElement element = tryCast(myPointer.getElement(), NavigatablePsiElement.class);
-      if (element == null) return IntentionPreviewInfo.EMPTY;
-      return IntentionPreviewInfo.navigate(element);
+      if (element == null) return ModCommand.nop();
+      return ModCommand.select(element);
     }
   }
 }

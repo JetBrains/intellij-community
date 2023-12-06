@@ -27,7 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testIntegration.JavaTestFramework;
+import com.intellij.testIntegration.JvmTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -37,41 +37,35 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestConfigurationBase> extends JavaRunConfigurationProducerBase<T> {
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated(forRemoval = true)
-  protected AbstractJavaTestConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
-  }
-
   protected AbstractJavaTestConfigurationProducer() {
   }
 
   @Contract("null->false")
   protected boolean isTestClass(PsiClass psiClass) {
     if (psiClass != null) {
-      JavaTestFramework framework = getCurrentFramework(psiClass);
+      TestFramework framework = getCurrentFramework(psiClass);
       return framework != null && framework.isTestClass(psiClass);
     }
     return false;
   }
 
   protected boolean isTestMethod(boolean checkAbstract, PsiMethod method) {
-    JavaTestFramework framework = getCurrentFramework(method.getContainingClass());
+    TestFramework framework = getCurrentFramework(method.getContainingClass());
     return framework != null && framework.isTestMethod(method, checkAbstract);
   }
 
-  protected JavaTestFramework getCurrentFramework(PsiClass psiClass) {
+  protected TestFramework getCurrentFramework(PsiClass psiClass) {
     if (psiClass != null) {
       ConfigurationType configurationType = getConfigurationType();
       Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(psiClass);
-      return frameworks.stream().filter(framework -> framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isMyConfigurationType(configurationType))
-        .map(framework -> (JavaTestFramework)framework)
-        .findFirst()
-        .orElse(null);
+      TestFramework testFramework = ContainerUtil.find(frameworks, framework -> isConfigurationType(framework, configurationType));
+      return testFramework;
     }
     return null;
+  }
+
+  protected boolean isConfigurationType(TestFramework framework, ConfigurationType configurationType) {
+    return framework instanceof JvmTestFramework && ((JvmTestFramework)framework).isMyConfigurationType(configurationType);
   }
   
   protected boolean hasDetectedTestFramework(PsiClass psiClass) {

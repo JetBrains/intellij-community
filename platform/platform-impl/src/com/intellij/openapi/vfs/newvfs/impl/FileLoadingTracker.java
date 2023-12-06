@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -28,14 +29,14 @@ final class FileLoadingTracker {
       ourPaths = CollectionFactory.createFilePathSet(pathsToTrack, SystemInfoRt.isFileSystemCaseSensitive);
       ourLeafNameIds = new IntOpenHashSet(ourPaths.size());
       for (String path : ourPaths) {
-        ourLeafNameIds.add(FileNameCache.storeName(StringUtilRt.getShortName(path, '/')));
+        ourLeafNameIds.add(FSRecords.getInstance().getNameId(StringUtilRt.getShortName(path, '/')));
       }
     }
   }
 
   static void fileLoaded(@NotNull VirtualDirectoryImpl parent, int nameId) {
     if (ourLeafNameIds.contains(nameId)) {
-      String path = parent.getPath() + '/' + FileNameCache.getVFileName(nameId);
+      String path = parent.getPath() + '/' + FSRecords.getInstance().getNameByNameId(nameId);
       if (ourPaths.contains(path)) {
         LOG.info("Loading " + path, new Throwable());
       }

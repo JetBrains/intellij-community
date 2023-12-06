@@ -32,8 +32,8 @@ public final class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> imp
   private final JpsLibraryCollection myLibraryCollection;
   private String myName = "";
 
-  public JpsProjectImpl(@NotNull JpsModel model, JpsEventDispatcher eventDispatcher) {
-    super(model, eventDispatcher);
+  public JpsProjectImpl(@NotNull JpsModel model) {
+    super(model);
     myContainer.setChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
     myContainer.setChild(EXTERNAL_REFERENCES_COLLECTION_ROLE);
     myContainer.setChild(JpsSdkReferencesTableImpl.ROLE);
@@ -41,8 +41,8 @@ public final class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> imp
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 
-  public JpsProjectImpl(JpsProjectImpl original, JpsModel model, JpsEventDispatcher eventDispatcher) {
-    super(original, model, eventDispatcher);
+  public JpsProjectImpl(JpsProjectImpl original, JpsModel model) {
+    super(original, model);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 

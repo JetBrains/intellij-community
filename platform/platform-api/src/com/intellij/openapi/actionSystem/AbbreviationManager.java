@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,14 +18,11 @@ public abstract class AbbreviationManager {
     return ApplicationManager.getApplication().getService(AbbreviationManager.class);
   }
 
-  @NotNull
-  public abstract Set<String> getAbbreviations();
+  public abstract @NotNull Set<String> getAbbreviations();
 
-  @NotNull
-  public abstract Set<String> getAbbreviations(@NotNull String actionId);
+  public abstract @NotNull Set<String> getAbbreviations(@NotNull String actionId);
 
-  @NotNull
-  public abstract List<String> findActions(@NotNull String abbreviation);
+  public abstract @NotNull List<String> findActions(@NotNull String abbreviation);
 
   public abstract void register(@NotNull String abbreviation, @NotNull String actionId);
 

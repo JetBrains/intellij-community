@@ -133,7 +133,9 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
-      addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
+      if (context.isCreatingNewProject) {
+        addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
+      }
     }
   }
 }

@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -35,6 +36,7 @@ import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch.SearchParameters;
+import com.intellij.psi.stubs.StubInconsistencyReporter;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.tree.IElementType;
@@ -276,7 +278,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
         ex = e;
       }
       if (psi == null) {
-        StubTextInconsistencyException.checkStubTextConsistency(file);
+        StubTextInconsistencyException.checkStubTextConsistency(file, StubInconsistencyReporter.SourceOfCheck.NoPsiMatchingASTinJava);
         throw new RuntimeExceptionWithAttachments(
           "No functional expression at " + entry + ", file will be reindexed",
           ex, new Attachment(viewProvider.getVirtualFile().getPath(), viewProvider.getContents().toString()));
@@ -297,7 +299,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     PsiFile file = member.getContainingFile();
     CharSequence contents = file.getViewProvider().getContents();
     if (memberRange.getEndOffset() > contents.length()) {
-      StubTextInconsistencyException.checkStubTextConsistency(file);
+      StubTextInconsistencyException.checkStubTextConsistency(file, StubInconsistencyReporter.SourceOfCheck.OffsetOutsideFileInJava);
       throw new RuntimeExceptionWithAttachments(
         "Range from the index " + memberRange + " exceeds the actual file length " + contents.length() + ", file will be reindexed",
         new Attachment(file.getVirtualFile().getPath(), contents.toString()));
@@ -474,7 +476,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     private final AtomicInteger contextsConsidered = new AtomicInteger();
     private final AtomicInteger sureExprsAfterLightCheck = new AtomicInteger();
     private final AtomicInteger exprsToHeavyCheck = new AtomicInteger();
-    private final Set<VirtualFile> filesLookedInside = ContainerUtil.newConcurrentSet();
+    private final Set<VirtualFile> filesLookedInside = ConcurrentCollectionFactory.createConcurrentSet();
     private final @Nullable PsiMethod method;
 
     public Session(@NotNull SearchParameters parameters, @NotNull Processor<? super PsiFunctionalExpression> consumer) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -126,6 +127,7 @@ public interface NonBlockingReadAction<T> {
    *                                 {@link AppExecutorUtil#getAppExecutorService()} or
    *                                 {@link com.intellij.util.concurrency.BoundedTaskExecutor} on top of that.
    */
+  @RequiresBlockingContext
   @NotNull
   CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor);
 
@@ -149,5 +151,6 @@ public interface NonBlockingReadAction<T> {
    * @throws IllegalStateException if current thread already has read access and the constraints (e.g. {@link #inSmartMode} are not satisfied)
    * @throws RuntimeException when the computation throws an exception. If it's a checked one, it's wrapped into a {@link RuntimeException}.
    */
+  @RequiresBlockingContext
   T executeSynchronously() throws ProcessCanceledException;
 }

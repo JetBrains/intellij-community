@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 final class ReloadProjectAction extends AnAction implements DumbAware {
-
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -26,6 +25,6 @@ final class ReloadProjectAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = Objects.requireNonNull(e.getProject());
-    StoreReloadManager.getInstance().reloadProject(project);
+    StoreReloadManager.Companion.getInstance(project).reloadProject();
   }
 }

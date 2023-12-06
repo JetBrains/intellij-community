@@ -11,7 +11,9 @@ import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter
+import org.intellij.plugins.markdown.extensions.common.highlighter.buildHighlightedFenceContent
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 internal class DefaultCodeFenceGeneratingProvider(
   private val cacheProviders: Array<CodeFenceGeneratingProvider>,
@@ -20,21 +22,37 @@ internal class DefaultCodeFenceGeneratingProvider(
 ): GeneratingProvider {
   private fun pluginGeneratedHtml(language: String?, codeFenceContent: String, codeFenceRawContent: String, node: ASTNode): String {
     if (language == null) {
-      return insertCodeOffsets(codeFenceContent, node)
+      return buildHighlightedFenceContent(
+        codeFenceContent,
+        highlightedRanges = emptyList(),
+        node,
+        useAbsoluteOffsets = true,
+        additionalLineProcessor = ::processCodeLine
+      )
     }
-    val html = cacheProviders
-      .filter { it.isApplicable(language) }.stream()
-      .findFirst()
-      .map {
-        if (it is MarkdownCodeFencePreviewHighlighter && file != null) {
-          it.generateHtmlForFile(language, codeFenceRawContent, node, file)
-        } else {
-          it.generateHtml(language, codeFenceRawContent, node)
-        }
-      }
-      .orElse(insertCodeOffsets(codeFenceContent, node))
-
+    val html = when (val provider = cacheProviders.firstOrNull { it.isApplicable(language) }) {
+      null -> buildHighlightedFenceContent(
+        codeFenceContent,
+        highlightedRanges = emptyList(),
+        node,
+        useAbsoluteOffsets = true,
+        additionalLineProcessor = ::processCodeLine
+      )
+      else -> provider.generateHtmlWithFile(language, codeFenceRawContent, node, file)
+    }
     return processCodeBlock(codeFenceRawContent, language) + html
+  }
+
+  private fun CodeFenceGeneratingProvider.generateHtmlWithFile(
+    language: String,
+    raw: String,
+    node: ASTNode,
+    file: VirtualFile?
+  ): String {
+    return when {
+      this is MarkdownCodeFencePreviewHighlighter && file != null -> generateHtmlForFile(language, raw, node, file)
+      else -> generateHtml(language, raw, node)
+    }
   }
 
   private fun processCodeBlock(codeFenceRawContent: String, language: String): String {
@@ -117,6 +135,7 @@ internal class DefaultCodeFenceGeneratingProvider(
     val html = """
     <div class="code-fence-highlighter-copy-button" data-fence-content="$encodedContent">
       <img class="code-fence-highlighter-copy-button-icon">
+      <span class="tooltiptext">Copy to clipboard</span>
     </div>
     """.trimIndent()
     visitor.consumeHtml(html)
@@ -132,29 +151,21 @@ internal class DefaultCodeFenceGeneratingProvider(
   private fun codeFenceText(text: String, node: ASTNode): CharSequence =
     if (node.type != MarkdownTokenTypes.BLOCK_QUOTE) HtmlGenerator.leafText(text, node, false) else ""
 
-  private fun insertCodeOffsets(content: String, node: ASTNode): String {
-    val lines = ArrayList<String>()
-    val baseOffset = calcCodeFenceContentBaseOffset(node)
-    var left = baseOffset
-    for (line in content.lines()) {
-      val right = left + line.length
-      lines.add("<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='$left..${left + line.length}'>${processCodeLine(line) + escape(line)}</span>")
-      left = right + 1
-    }
-    return lines.joinToString(
-      separator = "\n",
-      prefix = "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='${node.startOffset}..$baseOffset'/>",
-      postfix = node.children.find { it.type == MarkdownTokenTypes.CODE_FENCE_END }?.let {
-        "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='${it.startOffset}..${it.endOffset}'/>"
-      } ?: ""
-    )
-  }
-
   companion object {
-    internal fun calcCodeFenceContentBaseOffset(node: ASTNode): Int {
-      val baseNode = node.children.find { it.type == MarkdownTokenTypes.FENCE_LANG }
-                     ?: node.children.find { it.type == MarkdownTokenTypes.CODE_FENCE_START }
-      return baseNode?.let { it.endOffset + 1 } ?: node.startOffset
+    private fun findFenceContentStart(fence: ASTNode): ASTNode? {
+      val children = fence.children
+      val language = children.find { it.hasType(MarkdownTokenTypes.FENCE_LANG) }
+      if (language != null) {
+        return language
+      }
+      return children.find { it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }
+    }
+
+    internal fun calculateCodeFenceContentBaseOffset(fence: ASTNode): Int {
+      return when (val start = findFenceContentStart(fence)) {
+        null -> fence.startOffset
+        else -> start.endOffset + 1
+      }
     }
 
     internal fun escape(html: String) = EntityConverter.replaceEntities(

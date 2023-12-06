@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperPeer
@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer.GlasspanePeerUnav
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.ui.PopupBorder
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
@@ -31,7 +32,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
                      cancelText: @Nls String?,
                      private val myParentWindow: Window?) : Disposable {
   companion object {
-    const val UPDATE_INTERVAL = 50 //msec. 20 frames per second.
+    const val UPDATE_INTERVAL: Int = 50 //msec. 20 frames per second.
   }
 
   private var myLastTimeDrawn: Long = -1
@@ -165,7 +166,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
   }
 
   fun hide() {
-    ApplicationManager.getApplication().invokeLater(this::hideImmediately, ModalityState.any())
+    ApplicationManager.getApplication().invokeLater(ContextAwareRunnable(this::hideImmediately), ModalityState.any())
   }
 
   fun hideImmediately() {
@@ -274,7 +275,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     }
 
     override fun createPeer(parent: Component, canBeParent: Boolean): DialogWrapperPeer {
-      return if (useLightPopup()) {
+      return if (useLightPopup() && areLightPopupsEnabled()) {
         try {
           GlassPaneDialogWrapperPeer(this, parent)
         }
@@ -288,7 +289,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     }
 
     override fun createPeer(owner: Window, canBeParent: Boolean, applicationModalIfPossible: Boolean): DialogWrapperPeer {
-      return if (useLightPopup()) {
+      return if (useLightPopup() && areLightPopupsEnabled()) {
         try {
           GlassPaneDialogWrapperPeer(this)
         }

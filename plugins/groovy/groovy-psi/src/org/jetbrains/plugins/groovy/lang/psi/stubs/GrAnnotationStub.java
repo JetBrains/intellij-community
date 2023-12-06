@@ -1,14 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class GrAnnotationStub extends StubBase<GrAnnotation> {
   private static final Logger LOG = Logger.getInstance(GrAnnotationStub.class);
@@ -27,7 +30,7 @@ public class GrAnnotationStub extends StubBase<GrAnnotation> {
   }
 
   public GrAnnotation getPsiElement() {
-    GrAnnotation annotation = SoftReference.dereference(myPsiRef);
+    GrAnnotation annotation = dereference(myPsiRef);
     if (annotation != null) {
       return annotation;
     }

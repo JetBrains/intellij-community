@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
+import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
+import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.openapi.ui.addKeyboardAction
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.FilterComponent
 import com.intellij.util.ui.UIUtil
@@ -26,9 +26,7 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
   fun create(vmScope: CoroutineScope,
              filterName: @Nls String,
              valuePresenter: (T) -> @Nls String = Any::toString,
-             chooseValue: suspend (RelativePoint, PopupState<JBPopup>) -> T?): JComponent {
-    val popupState: PopupState<JBPopup> = PopupState.forPopup()
-
+             chooseValue: suspend (RelativePoint) -> T?): JComponent {
     return object : FilterComponent(Supplier<@NlsContexts.Label String> { filterName }) {
 
       override fun getCurrentText(): String {
@@ -54,9 +52,8 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
     }.apply {
       setShowPopupAction {
         val point = RelativePoint(this, Point(0, this.height + JBUIScale.scale(4)))
-        if (popupState.isRecentlyHidden) return@setShowPopupAction
         vmScope.launch {
-          val newValue = chooseValue(point, popupState)
+          val newValue = chooseValue(point)
           state.update { newValue }
         }
       }
@@ -74,10 +71,10 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
              items: List<T>,
              onSelect: () -> Unit,
              valuePresenter: (T) -> @Nls String = Any::toString): JComponent =
-    create(vmScope, filterName, valuePresenter) { point, popupState ->
-      val selectedItem = ChooserPopupUtil.showChooserPopup(point, popupState, items) { popupItem ->
-        ChooserPopupUtil.PopupItemPresentation.Simple(valuePresenter(popupItem))
-      }
+    create(vmScope, filterName, valuePresenter) { point ->
+      val selectedItem = ChooserPopupUtil.showChooserPopup(point, items, presenter = { popupItem ->
+        PopupItemPresentation.Simple(valuePresenter(popupItem))
+      })
       if (selectedItem != null) {
         onSelect()
       }
@@ -89,9 +86,9 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
              items: List<T>,
              onSelect: () -> Unit,
              valuePresenter: (T) -> @Nls String = Any::toString,
-             popupItemPresenter: (T) -> ChooserPopupUtil.PopupItemPresentation): JComponent =
-    create(vmScope, filterName, valuePresenter) { point, popupState ->
-      val selectedItem = ChooserPopupUtil.showChooserPopup(point, popupState, items, popupItemPresenter)
+             popupItemPresenter: (T) -> PopupItemPresentation): JComponent =
+    create(vmScope, filterName, valuePresenter) { point ->
+      val selectedItem = ChooserPopupUtil.showChooserPopup(point, items, popupItemPresenter)
       if (selectedItem != null) {
         onSelect()
       }

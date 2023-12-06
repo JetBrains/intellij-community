@@ -6,8 +6,8 @@ compile the latter, and pack both together. **Note**: please make sure all archi
 ##### [Building](https://documentation.help/NSIS/SectionG.3.html) NSIS compiler on Linux
 
 1. Install [SCons](https://scons.org) (standalone package is enough).
-1. Unpack NSIS source archive and `cd` into that directory.
-1. Build:
+2. Unpack NSIS source archive and `cd` into that directory.
+3. Build:
    ```
    scons \
      SKIPSTUBS=all SKIPPLUGINS=all SKIPUTILS=all SKIPMISC=all NSIS_CONFIG_CONST_DATA_PATH=no NSIS_MAX_STRLEN=8192 PREFIX=. \
@@ -18,16 +18,16 @@ compile the latter, and pack both together. **Note**: please make sure all archi
 ##### Preparing the combined archive
 
 1. [Download](https://sourceforge.net/projects/nsis/files/) and unpack zipped NSIS installation.
-1. Rename NSIS top-level directory into 'NSIS' and drop unneeded stuff ('Docs', 'Examples', 'makensisw.exe', 'NSIS.*', 'Plugins/x86-ansi').
-1. Download "strlen_8192" archive and unpack it into the 'NSIS' directory (overwrite existing files).
-1. Copy compiled Linux binary into 'NSIS/Bin' directory.
-1. From the old NSIS.zip archive, copy the following files into corresponding subdirectories of the 'NSIS' directory:
+2. Rename NSIS top-level directory into 'NSIS' and drop unneeded stuff ('Docs', 'Examples', 'makensisw.exe', 'NSIS.*', 'Plugins/x86-ansi').
+3. Download "strlen_8192" archive and unpack it into the 'NSIS' directory (overwrite existing files).
+4. Copy compiled Linux binary into 'NSIS/Bin' directory.
+5. From the old NSIS.zip archive, copy the following files into corresponding subdirectories of the 'NSIS' directory:
    - 'Include/UAC.nsh'
    - 'Plugins/x86-unicode/AccessControl.dll'
    - 'Plugins/x86-unicode/ExecDos.dll'
    - 'Plugins/x86-unicode/INetC.dll'
    - 'Plugins/x86-unicode/ShellLink.dll'
    - 'Plugins/x86-unicode/UAC.dll'
-1. Zip the 'NSIS' directory.
-1. Upload to https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/.
-1. Update the version of 'nsisBuild' in community/build/dependencies/dependencies.properties.
+6. Zip the 'NSIS' directory.
+7. Upload to https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/.
+8. Update the version of 'nsisBuild' in community/build/dependencies/dependencies.properties.

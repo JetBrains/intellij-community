@@ -33,7 +33,6 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -51,7 +50,7 @@ public class CustomizableActionsPanel {
   public CustomizableActionsPanel() {
     //noinspection HardCodedStringLiteral
     @SuppressWarnings("DialogTitleCapitalization")
-    Group rootGroup = new Group("root", null, null);
+    Group rootGroup = new Group("root");
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     MyActionsTreeModel model = new MyActionsTreeModel(root);
     myActionsTree = new Tree(model);
@@ -84,8 +83,7 @@ public class CustomizableActionsPanel {
     return toolbar;
   }
 
-  @NotNull
-  protected ActionGroup getRestoreGroup() {
+  protected @NotNull ActionGroup getRestoreGroup() {
     ActionGroup restoreGroup = new DefaultActionGroup(new RestoreSelectionAction(), new RestoreAllAction());
     restoreGroup.setPopup(true);
     restoreGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
@@ -222,8 +220,8 @@ public class CustomizableActionsPanel {
     TreeUtil.treeNodeTraverser(root).traverse()
       .filter(node -> node instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode)node).getUserObject() instanceof Pair)
       .forEach(node -> doSetIcon(mySelectedSchema, (DefaultMutableTreeNode)node, null));
-    CustomActionsSchema source = restoreLastState ? CustomActionsSchema.getInstance() : new CustomActionsSchema();
-    if (mySelectedSchema == null) mySelectedSchema = new CustomActionsSchema();
+    CustomActionsSchema source = restoreLastState ? CustomActionsSchema.getInstance() : new CustomActionsSchema(null);
+    if (mySelectedSchema == null) mySelectedSchema = new CustomActionsSchema(null);
     mySelectedSchema.copyFrom(source);
     updateLocalSchema(mySelectedSchema);
     mySelectedSchema.initActionIcons();
@@ -267,7 +265,7 @@ public class CustomizableActionsPanel {
     ((DefaultTreeModel)myActionsTree.getModel()).reload();
   }
 
-  private static class TreePathStringFunction implements Function<TreePath, String> {
+  private static final class TreePathStringFunction implements Function<TreePath, String> {
     @Override
     public String apply(TreePath o) {
       Object node = o.getLastPathComponent();
@@ -301,7 +299,7 @@ public class CustomizableActionsPanel {
     return new MyTreeCellRenderer();
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -328,8 +326,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  @Nullable
-  static String getActionId(DefaultMutableTreeNode node) {
+  static @Nullable String getActionId(DefaultMutableTreeNode node) {
     Object obj = node.getUserObject();
     if (obj instanceof String actionId) return actionId;
     if (obj instanceof Group group) return group.getId();
@@ -340,22 +337,21 @@ public class CustomizableActionsPanel {
     return null;
   }
 
-  @NotNull
-  static Pair<@Nullable String, @Nullable Icon> getActionIdAndIcon(@NotNull DefaultMutableTreeNode node) {
+  static @NotNull Pair<@Nullable String, @Nullable Icon> getActionIdAndIcon(@NotNull DefaultMutableTreeNode node) {
     Object userObj = node.getUserObject();
     if (userObj instanceof String actionId) {
       AnAction action = ActionManager.getInstance().getAction(actionId);
       if (action != null) {
-        return Pair.create(actionId, action.getTemplatePresentation().getIcon());
+        return new Pair<>(actionId, action.getTemplatePresentation().getIcon());
       }
     }
     else if (userObj instanceof Group group) {
-      return Pair.create(group.getId(), group.getIcon());
+      return new Pair<>(group.getId(), group.getIcon());
     }
     else if (userObj instanceof Pair<?, ?> pair) {
       Object first = pair.first;
       String actionId = first instanceof Group group ? group.getId() : (String)first;
-      return Pair.create(actionId, (Icon)pair.second);
+      return new Pair<>(actionId, (Icon)pair.second);
     }
     return Pair.empty();
   }
@@ -396,35 +392,33 @@ public class CustomizableActionsPanel {
 
     AnAction reuseFrom = actionManager.getAction(path);
     if (reuseFrom != null) {
-      Icon toSet = CustomizationUtil.getOriginalIconFrom(reuseFrom);
-      Icon defaultIcon = CustomizationUtil.getOriginalIconFrom(action);
+      Icon toSet = CustomActionsSchemaKt.getOriginalIconFrom(reuseFrom);
+      Icon defaultIcon = CustomActionsSchemaKt.getOriginalIconFrom(action);
       node.setUserObject(Pair.create(value, toSet));
       schema.addIconCustomization(actionId, toSet != defaultIcon ? path : null);
     }
     else {
       Icon icon;
       try {
-        icon = CustomActionsSchema.loadCustomIcon(path);
+        icon = CustomActionsSchemaKt.loadCustomIcon(path);
       }
-      catch (IOException e) {
+      catch (Throwable t) {
         Logger.getInstance(CustomizableActionsPanel.class)
-          .warn(String.format("Failed to load icon with path '%s' and set it to action '%s'", path, actionId));
+          .warn(String.format("Failed to load icon with path '%s' and set it to action '%s'", path, actionId), t);
         return false;
       }
-      if (icon != null) {
-        node.setUserObject(Pair.create(value, icon));
-        schema.addIconCustomization(actionId, path);
-      }
+      node.setUserObject(Pair.create(value, icon));
+      schema.addIconCustomization(actionId, path);
     }
     return true;
   }
 
-  private class EditIconDialog extends DialogWrapper {
+  private final class EditIconDialog extends DialogWrapper {
     private final DefaultMutableTreeNode myNode;
     private final boolean isNodeInsideMenu;
     private BrowseIconsComboBox myComboBox;
 
-    protected EditIconDialog(TreePath path) {
+    private EditIconDialog(TreePath path) {
       super(false);
       setTitle(IdeBundle.message("title.choose.action.icon"));
       isNodeInsideMenu = isInsideMenu(path);
@@ -531,9 +525,13 @@ public class CustomizableActionsPanel {
               ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), action, ADDED, newActionPosition);
               addCustomizedAction(url);
               DefaultMutableTreeNode newNode = addPathToActionsTree(myActionsTree, url);
-              if (newNode != null && action instanceof String) {
-                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(),mySelectedSchema.getIconPath((String)action));
-                newNode.setUserObject(Pair.create(action, icon));
+              if (newNode != null && action instanceof String actionId) {
+                String path = mySelectedSchema.getIconPath(actionId);
+                if (path.isEmpty()) {
+                  path = actionId;
+                }
+                Icon icon = CustomActionsSchemaKt.getIconForPath(ActionManager.getInstance(), path);
+                newNode.setUserObject(new Pair<>(actionId, icon));
               }
             }
 
@@ -602,7 +600,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class MyActionsTreeModel extends DefaultTreeModel implements EditableModel, RowsDnDSupport.RefinedDropSupport {
+  private final class MyActionsTreeModel extends DefaultTreeModel implements EditableModel, RowsDnDSupport.RefinedDropSupport {
     private MyActionsTreeModel(TreeNode root) {
       super(root);
     }
@@ -861,7 +859,7 @@ public class CustomizableActionsPanel {
     public void actionPerformed(@NotNull AnActionEvent e) {
       final List<ActionUrl> otherActions = new ArrayList<>(mySelectedSchema.getActions());
       otherActions.removeAll(findActionsUnderSelection().second);
-      mySelectedSchema.copyFrom(new CustomActionsSchema());
+      mySelectedSchema.copyFrom(new CustomActionsSchema(null));
       for (ActionUrl otherAction : otherActions) {
         mySelectedSchema.addAction(otherAction);
       }
@@ -895,13 +893,13 @@ public class CustomizableActionsPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      mySelectedSchema.copyFrom(new CustomActionsSchema());
+      mySelectedSchema.copyFrom(new CustomActionsSchema(null));
       patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(mySelectedSchema.isModified(new CustomActionsSchema()));
+      e.getPresentation().setEnabled(mySelectedSchema.isModified(new CustomActionsSchema(null)));
     }
 
     @Override

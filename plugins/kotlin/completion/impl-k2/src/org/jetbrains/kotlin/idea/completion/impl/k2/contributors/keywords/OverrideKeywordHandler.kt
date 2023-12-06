@@ -5,25 +5,33 @@ package org.jetbrains.kotlin.idea.completion.contributors.keywords
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.RowIcon
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
-import org.jetbrains.kotlin.idea.completion.*
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
+import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
-import org.jetbrains.kotlin.idea.core.overrideImplement.*
+import org.jetbrains.kotlin.idea.completion.lookups.withAllowedResolve
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler
+import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -34,14 +42,16 @@ internal class OverrideKeywordHandler(
     private val basicContext: FirBasicCompletionContext
 ) : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.OVERRIDE_KEYWORD) {
 
-    override fun KtAnalysisSession.createLookups(
+    context(KtAnalysisSession)
+    override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project
     ): Collection<LookupElement> = createOverrideMemberLookups(parameters, declaration = null, project) + lookup
 
-    fun KtAnalysisSession.createOverrideMemberLookups(
+    context(KtAnalysisSession)
+    fun createOverrideMemberLookups(
         parameters: CompletionParameters,
         declaration: KtCallableDeclaration?,
         project: Project
@@ -49,13 +59,14 @@ internal class OverrideKeywordHandler(
         val result = mutableListOf<LookupElement>()
         val position = parameters.position
         val isConstructorParameter = position.getNonStrictParentOfType<KtPrimaryConstructor>() != null
-        val classOrObject = position.getNonStrictParentOfType<KtClassOrObject>() ?: return result
+        val parent = position.getNonStrictParentOfType<KtClassOrObject>() ?: return result
+        val classOrObject = parent.getOriginalDeclaration() as? KtClassOrObject ?: parent
         val members = collectMembers(classOrObject, isConstructorParameter)
 
         for (member in members) {
             val symbolPointer = member.memberInfo.symbolPointer
             val memberSymbol = symbolPointer.restoreSymbol()
-            requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored"}
+            requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
 
             if (declaration != null && !canCompleteDeclarationWithMember(declaration, memberSymbol)) continue
             result += createLookupElementToGenerateSingleOverrideMember(member, declaration, classOrObject, isConstructorParameter, project)
@@ -74,7 +85,8 @@ internal class OverrideKeywordHandler(
         } else allMembers.toList()
     }
 
-    private fun KtAnalysisSession.canCompleteDeclarationWithMember(
+    context(KtAnalysisSession)
+    private fun canCompleteDeclarationWithMember(
         declaration: KtCallableDeclaration,
         symbolToOverride: KtCallableSymbol
     ): Boolean = when (declaration) {
@@ -91,8 +103,9 @@ internal class OverrideKeywordHandler(
         else -> false
     }
 
+    context(KtAnalysisSession)
     @OptIn(KtAllowAnalysisOnEdt::class)
-    private fun KtAnalysisSession.createLookupElementToGenerateSingleOverrideMember(
+    private fun createLookupElementToGenerateSingleOverrideMember(
         member: KtClassMember,
         declaration: KtCallableDeclaration?,
         classOrObject: KtClassOrObject,
@@ -101,7 +114,7 @@ internal class OverrideKeywordHandler(
     ): OverridesCompletionLookupElementDecorator {
         val symbolPointer = member.memberInfo.symbolPointer
         val memberSymbol = symbolPointer.restoreSymbol()
-        requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored"}
+        requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
         check(memberSymbol is KtNamedSymbol)
         check(classOrObject !is KtEnumEntry)
 
@@ -116,9 +129,7 @@ internal class OverrideKeywordHandler(
         val baseClassName = containingSymbol?.name?.asString()
         val baseClassIcon = member.memberInfo.containingSymbolIcon
 
-        val baseLookupElement = with(basicContext.lookupElementFactory) {
-            createLookupElement(memberSymbol, basicContext.importStrategyDetector)
-        }
+        val baseLookupElement = basicContext.lookupElementFactory.createLookupElement(memberSymbol, basicContext.importStrategyDetector)
 
         val classOrObjectPointer = classOrObject.createSmartPointer()
         return OverridesCompletionLookupElementDecorator(
@@ -135,19 +146,13 @@ internal class OverrideKeywordHandler(
                 generateMemberInNewAnalysisSession(classOrObjectPointer.element!!, member, project)
             },
             shortenReferences = { element ->
-                val shortenings = allowAnalysisOnEdt {
-                    analyze(element) {
-                        collectPossibleReferenceShortenings(element.containingKtFile, element.textRange)
-                    }
-                }
-                runWriteAction {
-                    shortenings.invokeShortening()
-                }
+                shortenReferencesInRange(element.containingKtFile, element.textRange)
             }
         )
     }
 
-    private fun KtAnalysisSession.getSymbolTextForLookupElement(memberSymbol: KtCallableSymbol): String = buildString {
+    context(KtAnalysisSession)
+    private fun getSymbolTextForLookupElement(memberSymbol: KtCallableSymbol): String = buildString {
         append(KtTokens.OVERRIDE_KEYWORD.value)
             .append(" ")
             .append(memberSymbol.render(renderingOptionsForLookupElementRendering))
@@ -161,11 +166,11 @@ internal class OverrideKeywordHandler(
         classOrObject: KtClassOrObject,
         member: KtClassMember,
         project: Project
-    ) = allowAnalysisOnEdt {
+    ) = withAllowedResolve {
         analyze(classOrObject) {
             val symbolPointer = member.memberInfo.symbolPointer
             val symbol = symbolPointer.restoreSymbol()
-            requireNotNull(symbol) { "${symbolPointer::class} can't be restored"}
+            requireNotNull(symbol) { "${symbolPointer::class} can't be restored" }
             generateMember(
                 project,
                 member,
@@ -184,7 +189,7 @@ internal class OverrideKeywordHandler(
                     annotationFilter = KtRendererAnnotationsFilter.NONE
                 }
                 modifiersRenderer = modifiersRenderer.with {
-                    modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS)
+                    keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS) }
                 }
             }
     }

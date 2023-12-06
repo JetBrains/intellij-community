@@ -6,29 +6,30 @@ import com.intellij.ide.SelectInManager
 import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchTreeStructureProvider
+import com.intellij.openapi.vfs.VirtualFile
 import java.util.Objects
 
 internal class RootTypeBookmark(override val provider: RootTypeBookmarkProvider, val type: RootType) : Bookmark {
 
-  val file
+  val file: VirtualFile?
     get() = ScratchTreeStructureProvider.getVirtualFile(type)
 
   override val attributes: Map<String, String>
     get() = mapOf("root.type.id" to type.id)
 
-  override fun createNode() = RootTypeNode(provider.project, this)
+  override fun createNode(): RootTypeNode = RootTypeNode(provider.project, this)
 
-  override fun canNavigate() = !provider.project.isDisposed && file?.isValid == true
-  override fun canNavigateToSource() = false
+  override fun canNavigate(): Boolean = !provider.project.isDisposed && file?.isValid == true
+  override fun canNavigateToSource(): Boolean = false
   override fun navigate(requestFocus: Boolean) {
     val context = file?.let { FileSelectInContext(provider.project, it, null) } ?: return
     SelectInManager.getInstance(provider.project).targetList.find { context.selectIn(it, requestFocus) }
   }
 
-  override fun hashCode() = Objects.hash(provider, type)
-  override fun equals(other: Any?) = other === this || other is RootTypeBookmark
-                                     && other.provider == provider
-                                     && other.type == type
+  override fun hashCode(): Int = Objects.hash(provider, type)
+  override fun equals(other: Any?): Boolean = other === this || other is RootTypeBookmark
+                                              && other.provider == provider
+                                              && other.type == type
 
-  override fun toString() = "ScratchBookmark(module=${type.id},provider=$provider)"
+  override fun toString(): String = "ScratchBookmark(module=${type.id},provider=$provider)"
 }

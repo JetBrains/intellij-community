@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -24,30 +23,24 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.*;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
-import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
  */
 class GrChageSignatureUsageSearcher {
-  private static final Logger LOG = Logger.getInstance(GrChageSignatureUsageSearcher.class);
 
   private final JavaChangeInfo myChangeInfo;
 
@@ -197,44 +190,10 @@ class GrChageSignatureUsageSearcher {
       PsiReference[] refs = MethodReferencesSearch.search(method, projectScope, true).toArray(PsiReference.EMPTY_ARRAY);
       for (PsiReference ref : refs) {
         PsiElement element = ref.getElement();
+        if (!GroovyLanguage.INSTANCE.equals(element.getLanguage())) continue; //everything else should be found by java
 
-        if (!GroovyLanguage.INSTANCE.equals(element.getLanguage())) continue;
-
-        boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
-        if (PsiUtil.isMethodUsage(element)) {
-          result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions, method));
-        }
-        else if (element instanceof GrDocTagValueToken) {
-          result.add(new UsageInfo(ref.getElement()));
-        }
-        else if (element instanceof GrMethod && ((GrMethod)element).isConstructor()) {
-          DefaultConstructorImplicitUsageInfo implicitUsageInfo =
-            new DefaultConstructorImplicitUsageInfo((GrMethod)element, ((GrMethod)element).getContainingClass(), method);
-          result.add(implicitUsageInfo);
-        }
-        else if (element instanceof PsiClass psiClass) {
-          LOG.assertTrue(method.isConstructor());
-          if (psiClass instanceof GrAnonymousClassDefinition) {
-            result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions, method));
-            continue;
-          }
-          /*if (!(myChangeInfo instanceof JavaChangeInfoImpl)) continue; todo propagate methods
-          if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
-                                                 ((JavaChangeInfoImpl)myChangeInfo).propagateParametersMethods)) {
-            continue;
-          }
-          if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
-                                                 ((JavaChangeInfoImpl)myChangeInfo).propagateExceptionsMethods)) {
-            continue;
-          }*/
-          result.add(new NoConstructorClassUsageInfo(psiClass));
-        }
-        else if (ref instanceof PsiCallReference) {
-          result.add(new CallReferenceUsageInfo((PsiCallReference)ref));
-        }
-        else {
-          result.add(new MoveRenameUsageInfo(element, ref, method));
-        }
+        ChangeSignatureUsageProvider provider = Objects.requireNonNull(ChangeSignatureUsageProviders.findProvider(GroovyLanguage.INSTANCE));
+        ContainerUtil.addIfNotNull(result, provider.createUsageInfo(myChangeInfo, ref, method, isToModifyArgs, isToThrowExceptions));
       }
     }
     else if (myChangeInfo.isParameterTypesChanged()) {
@@ -261,22 +220,12 @@ class GrChageSignatureUsageSearcher {
   }
 
 
-
   private static void addParameterUsages(PsiParameter parameter, ArrayList<UsageInfo> results, ParameterInfo info) {
     for (PsiReference psiReference : ReferencesSearch.search(parameter)) {
       PsiElement parmRef = psiReference.getElement();
       UsageInfo usageInfo = new ChangeSignatureParameterUsageInfo(parmRef, parameter.getName(), info.getName());
       results.add(usageInfo);
     }
-  }
-
-  private boolean needToCatchExceptions(PsiMethod caller) {
-    /*if (myChangeInfo instanceof JavaChangeInfoImpl) { //todo propagate methods
-      return myChangeInfo.isExceptionSetOrOrderChanged() &&
-             !((JavaChangeInfoImpl)myChangeInfo).propagateExceptionsMethods.contains(caller);
-    }
-    else {*/
-    return myChangeInfo.isExceptionSetOrOrderChanged();
   }
 
   private static class RenamedParameterCollidesWithLocalUsageInfo extends UnresolvableCollisionUsageInfo {

@@ -20,17 +20,7 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       // force generating "Groovy" inner class to preserve backward compatiblity
       "intellij.groovy.psi" -> IntellijIconClassGeneratorModuleConfig(className = "JetgroovyIcons", iconDirectory = "icons")
       "intellij.clouds.docker" -> IntellijIconClassGeneratorModuleConfig(className = "DockerIcons", packageName = "com.intellij.docker")
-      "intellij.struts2.ognl" -> IntellijIconClassGeneratorModuleConfig(
-        className = "OgnlIcons",
-        packageName = "com.intellij.lang.ognl",
-        iconDirectory = "icons",
-      )
-
-      "intellij.struts2.dom" -> IntellijIconClassGeneratorModuleConfig(
-        className = "Struts2Icons",
-        packageName = "com.intellij.struts2",
-        iconDirectory = "icons",
-      )
+      "intellij.clouds.docker.gateway" -> IntellijIconClassGeneratorModuleConfig(className = "DockerGatewayIcons", packageName = "com.intellij.clouds.docker.gateway")
       "intellij.css" -> IntellijIconClassGeneratorModuleConfig(
         className = "CssIcons",
         packageName = "com.intellij.lang.css",
@@ -68,7 +58,6 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
                                                                          packageName = "org.intellij.plugins.markdown")
 
       "intellij.grazie.core" -> IntellijIconClassGeneratorModuleConfig(className = "GrazieIcons", packageName = "com.intellij.grazie.icons")
-      "intellij.sh.core" -> IntellijIconClassGeneratorModuleConfig(className = "ShIcons", packageName = "com.intellij.sh")
       "intellij.django.core" -> IntellijIconClassGeneratorModuleConfig(
         className = "DjangoIcons",
         packageName = "com.jetbrains.django"
@@ -77,6 +66,30 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "Jinja2Icons",
         packageName = "com.jetbrains.jinja2"
       )
+
+      "intellij.bigdatatools.visualisation" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsVisualisationIcons",
+                                                                                      packageName = "com.intellij.bigdatatools.visualization")
+      "intellij.bigdatatools.core" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsCoreIcons",
+                                                                             packageName = "com.jetbrains.bigdatatools.common")
+      "intellij.swagger.core" -> IntellijIconClassGeneratorModuleConfig(className = "SwaggerCoreIcons",
+                                                                        packageName = "com.intellij.swagger.core")
+      "intellij.ml.llm" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmIcons", packageName = "com.intellij.ml.llm")
+      "intellij.ml.llm.core" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmCoreIcons", packageName = "com.intellij.ml.llm.core")
+
+      "intellij.dts" -> IntellijIconClassGeneratorModuleConfig(className = "DtsIcons", packageName = "com.intellij.dts")
+
+      "intellij.protoeditor.core" -> IntellijIconClassGeneratorModuleConfig(className = "ProtoeditorCoreIcons", packageName = "com.intellij.protobuf")
+
+      "intellij.ide.startup.importSettings" -> IntellijIconClassGeneratorModuleConfig(
+        className = "StartupImportIcons",
+        packageName = "com.intellij.ide.startup.importSettings"
+      )
+
+      "intellij.pest" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PestIcons",
+        packageName = "com.pestphp.pest"
+      )
+
       else -> super.getConfigForModule(moduleName)
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.google.common.collect.EvictingQueue;
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class EditorModel {
+public final class EditorModel {
   private static final Logger LOG = Logger.getInstance(EditorModel.class);
 
   private static final int EDITOR_LINE_BEGINNING_INDENT = 5;
@@ -830,6 +831,15 @@ public class EditorModel {
 
     if (editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y == targetTopOfVisibleArea) {
       isLocalScrollBarStabilized = true;
+    }
+  }
+
+  public void trySetHighlighter(@NotNull EditorHighlighter highlighter) {
+    if (editor instanceof EditorEx) {
+      ((EditorEx)editor).setHighlighter(highlighter);
+    } else {
+      LOG.warn("[Large File Editor Subsystem] EditorModel.trySetHighlighter: " + editor.getClass().getName()
+               + " is not instance of EditorEx. Can't set proper editor highlighter.");
     }
   }
 

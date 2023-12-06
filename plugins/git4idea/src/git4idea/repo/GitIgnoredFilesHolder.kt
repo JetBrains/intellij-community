@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.VcsManagedFilesHolderBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
+import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitVcs
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 
@@ -13,8 +14,8 @@ class GitIgnoredFilesHolder private constructor(val manager: GitRepositoryManage
 
   override fun isInUpdatingMode() = allHolders.any(GitRepositoryIgnoredFilesHolder::isInUpdateMode)
 
-  override fun containsFile(file: FilePath): Boolean {
-    val repository = manager.getRepositoryForFileQuick(file) ?: return false
+  override fun containsFile(file: FilePath, vcsRoot: VirtualFile): Boolean {
+    val repository = manager.getRepositoryForRootQuick(vcsRoot) ?: return false
     return repository.ignoredFilesHolder.containsFile(file)
   }
 

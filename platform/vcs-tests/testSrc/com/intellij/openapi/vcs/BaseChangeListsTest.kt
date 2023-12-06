@@ -126,15 +126,18 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   protected fun addLocalFile(name: String, content: String): VirtualFile {
-    val file = runWriteAction {
+    val file = createLocalFile(name, content)
+    assertFalse(changeProvider.files.contains(file))
+    changeProvider.files.add(file)
+    return file
+  }
+
+  protected fun createLocalFile(name: String, content: String): VirtualFile {
+    return runWriteAction {
       val file = testRoot.createChildData(this, name)
       VfsUtil.saveText(file, parseInput(content))
       file
     }
-
-    assertFalse(changeProvider.files.contains(file))
-    changeProvider.files.add(file)
-    return file
   }
 
   protected fun removeLocalFile(name: String) {

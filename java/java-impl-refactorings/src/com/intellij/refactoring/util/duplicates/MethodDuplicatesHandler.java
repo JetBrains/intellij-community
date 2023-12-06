@@ -36,9 +36,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +56,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   private static @Nullable PsiMember findMember(@Nullable Editor editor, @Nullable PsiFile file) {
     if (editor == null || file == null) return null;
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    PsiMember member = RefactoringActionContextUtil.getJavaMethodHeader(element);
+    PsiMember member = MethodUtils.getJavaMethodFromHeader(element);
     if (member == null) {
       member = PsiTreeUtil.getParentOfType(element, PsiField.class);
     }

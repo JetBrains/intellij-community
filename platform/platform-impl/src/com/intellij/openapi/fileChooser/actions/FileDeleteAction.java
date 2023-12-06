@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.CommonBundle;
@@ -24,8 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.nio.file.Path;
 
-public class FileDeleteAction extends FileChooserAction {
+public final class FileDeleteAction extends FileChooserAction {
   /** @deprecated please use {@link FileDeleteAction#FileDeleteAction(String, String, Icon)} instead */
   @Deprecated
   public FileDeleteAction() { }
@@ -59,9 +60,9 @@ public class FileDeleteAction extends FileChooserAction {
 
     try {
       var progress = IdeBundle.message("progress.deleting");
-      ProgressManager.getInstance().run(new Task.WithResult<Void, IOException>(e.getProject(), panel.getComponent(), progress, true) {
+      panel.reloadAfter(() -> ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(e.getProject(), panel.getComponent(), progress, true) {
         @Override
-        protected Void compute(@NotNull ProgressIndicator indicator) throws IOException {
+        protected Path compute(@NotNull ProgressIndicator indicator) throws IOException {
           for (var path : paths) {
             if (indicator.isCanceled()) break;
             indicator.setText(path.toString());
@@ -72,8 +73,7 @@ public class FileDeleteAction extends FileChooserAction {
           }
           return null;
         }
-      });
-      panel.reload(null);
+      }));
     }
     catch (IOException ex) {
       Messages.showErrorDialog(panel.getComponent(), IoErrorText.message(ex), CommonBundle.getErrorTitle());

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,12 +17,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * Use {@link TempCopyArchiveHandler} if you'd like to extract archive to a temporary file
@@ -109,10 +111,10 @@ public abstract class ArchiveHandler {
   }
 
   private AddonlyKeylessHash<EntryInfo, Object> getParentChildrenMap() {
-    AddonlyKeylessHash<EntryInfo, Object> map = SoftReference.dereference(myChildrenEntries);
+    AddonlyKeylessHash<EntryInfo, Object> map = dereference(myChildrenEntries);
     if (map == null) {
       synchronized (myLock) {
-        map = SoftReference.dereference(myChildrenEntries);
+        map = dereference(myChildrenEntries);
 
         if (map == null) {
           if (myCorrupted) {
@@ -174,10 +176,10 @@ public abstract class ArchiveHandler {
   }
 
   protected @NotNull Map<String, EntryInfo> getEntriesMap() {
-    Map<String, EntryInfo> map = SoftReference.dereference(myEntries);
+    Map<String, EntryInfo> map = dereference(myEntries);
     if (map == null) {
       synchronized (myLock) {
-        map = SoftReference.dereference(myEntries);
+        map = dereference(myEntries);
 
         if (map == null) {
           if (myCorrupted) {
@@ -250,8 +252,7 @@ public abstract class ArchiveHandler {
     map.put(normalizedName, entryFun.apply(parent, path.second));
   }
 
-  @NotNull
-  protected String normalizeName(@NotNull String entryName) {
+  protected @NotNull String normalizeName(@NotNull String entryName) {
     return StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
   }
 

@@ -7,6 +7,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTestBase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
@@ -19,12 +21,27 @@ abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
         else super.afterFileNameSuffix(ktFilePath)
     }
 
+    override fun fileName(): String {
+        val fileName = super.fileName()
+        val firFileName = IgnoreTests.deriveFirFileName(fileName)
+
+        return if (File(testDataDirectory, firFileName).exists()) firFileName else fileName
+    }
+
     override fun isFirPlugin() = true
 
-    override fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR) {
-            super.doTestFor(mainFile, pathToFiles, intentionAction, fileText)
+    override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
+
+    override fun doTest(unused: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
+            super.doTest(unused)
         }
+    }
+
+    override fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
+        super.doTestFor(mainFile, pathToFiles, intentionAction, fileText)
     }
 
     override fun checkForErrorsAfter(fileText: String) {}

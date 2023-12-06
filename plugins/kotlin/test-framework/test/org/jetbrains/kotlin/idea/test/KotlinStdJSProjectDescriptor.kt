@@ -20,3 +20,26 @@ object KotlinStdJSProjectDescriptor : KotlinLightProjectDescriptor() {
         }
     }
 }
+
+object KotlinStdJSWithStdLibProjectDescriptor : KotlinLightProjectDescriptor() {
+    override fun getSdk(): Sdk? = null
+
+    override fun configureModule(module: Module, model: ModifiableRootModel) {
+        ConfigLibraryUtil.addLibrary(model, "kotlin-stdlib-js", KotlinJavaScriptLibraryKind) {
+            addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinStdlibJs), OrderRootType.CLASSES)
+            addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinStdlib), OrderRootType.CLASSES)
+            addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinStdlibSources), OrderRootType.SOURCES)
+        }
+    }
+}
+
+object KotlinStdJSWithDomApiCompatProjectDescriptor : KotlinLightProjectDescriptor() {
+    override fun getSdk(): Sdk? = null
+
+    override fun configureModule(module: Module, model: ModifiableRootModel) {
+        KotlinStdJSProjectDescriptor.configureModule(module, model)
+        ConfigLibraryUtil.addLibrary(model, "kotlin-dom-api-compat", KotlinJavaScriptLibraryKind) {
+            addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinDomApiCompat), OrderRootType.CLASSES)
+        }
+    }
+}

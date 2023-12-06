@@ -41,3 +41,4 @@ fun test(n: Int, s: String) {
     J().bar(true, n, s)
     J().baz()
 }
+// IGNORE_K2

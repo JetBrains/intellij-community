@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
@@ -6,9 +6,9 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder
 import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
@@ -68,8 +70,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
     get() = true
 
   init {
-    @Suppress("DEPRECATION")
-    val scope = ApplicationManager.getApplication().coroutineScope
+    val scope = service<CoreUiCoroutineScopeHolder>().coroutineScope
     val updatePathJob = scope.launch {
       updatePathRequests
         .debounce(100.milliseconds)
@@ -171,7 +172,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
       installListeners()
     }
 
-  var multipleSameNamed = false
+  var multipleSameNamed: Boolean = false
     set(value) {
       if (field == value) {
         return
@@ -181,7 +182,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
       updateProjectPath()
     }
 
-  var classPathNeeded = false
+  var classPathNeeded: Boolean = false
     set(value) {
       if (field == value) {
         return
@@ -348,7 +349,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
   open fun getCustomTitle(): String? = null
 
   private var isClipped = false
-  var titleString = ""
+  var titleString: String = ""
 
   data class Pattern(val preferredWidth: Int, val createTitle: () -> String)
 
@@ -393,6 +394,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
     }
     else null)?.let {
       HelpTooltip().setTitle(it).installOn(label)
+      CustomHeader.ensureClickTransparent(label)
     }
 
     coroutineContext.ensureActive()

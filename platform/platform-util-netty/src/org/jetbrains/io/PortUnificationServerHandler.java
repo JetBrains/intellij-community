@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.handler.codec.compression.ZlibCodecFactory;
@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.Security;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @ChannelHandler.Sharable
 final class PortUnificationServerHandler extends Decoder {
@@ -28,7 +29,7 @@ final class PortUnificationServerHandler extends Decoder {
   // https://github.com/kaikramer/keystore-explorer (use cert.cet as cert ext template)
   // keytool -genkey -keyalg EC -keysize 256 -alias selfsigned -keystore cert.jks -storepass jetbrains -validity 10000 -ext 'san=dns:localhost,dns:*.localhost,dns:*.dev,dns:*.local'
   @SuppressWarnings("SpellCheckingInspection")
-  private static final NotNullLazyValue<SslContext> SSL_SERVER_CONTEXT = NotNullLazyValue.atomicLazy(() -> {
+  private static final Supplier<SslContext> SSL_SERVER_CONTEXT = new SynchronizedClearableLazy<>(() -> {
     String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
     if (algorithm == null) {
       algorithm = "SunX509";
@@ -80,7 +81,7 @@ final class PortUnificationServerHandler extends Decoder {
   private void decode(@NotNull ChannelHandlerContext context, @NotNull ByteBuf buffer) {
     ChannelPipeline pipeline = context.pipeline();
     if (detectSsl && SslHandler.isEncrypted(buffer)) {
-      SSLEngine engine = SSL_SERVER_CONTEXT.getValue().newEngine(context.alloc());
+      SSLEngine engine = SSL_SERVER_CONTEXT.get().newEngine(context.alloc());
       engine.setUseClientMode(false);
       pipeline.addLast(new SslHandler(engine), new ChunkedWriteHandler(),
                        new PortUnificationServerHandler(delegatingHttpRequestHandler, false, detectGzip));
@@ -157,7 +158,7 @@ final class PortUnificationServerHandler extends Decoder {
       }
 
       UUID uuid = new UUID(buffer.readLong(), buffer.readLong());
-      for (BinaryRequestHandler customHandler : BinaryRequestHandler.EP_NAME.getExtensions()) {
+      for (BinaryRequestHandler customHandler : BinaryRequestHandler.EP_NAME.getExtensionList()) {
         if (uuid.equals(customHandler.getId())) {
           ChannelPipeline pipeline = context.pipeline();
           pipeline.addLast(customHandler.getInboundHandler(context));

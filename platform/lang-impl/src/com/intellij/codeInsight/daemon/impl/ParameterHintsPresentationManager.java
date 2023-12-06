@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.InlayHintsUtilsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -15,6 +16,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -25,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+@Service
 public final class ParameterHintsPresentationManager implements Disposable {
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
   private static final Key<Boolean> PREVIEW_MODE = Key.create("ParameterHintsPreviewMode");
@@ -52,7 +55,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
 
   public String getHintText(@NotNull Inlay inlay) {
     EditorCustomElementRenderer renderer = inlay.getRenderer();
-    return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
+    return renderer instanceof MyRenderer myRenderer ? myRenderer.getText() : null;
   }
 
   public Inlay addHint(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, @NotNull String hintText,
@@ -128,7 +131,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
   }
 
   private void scheduleRendererUpdate(@NotNull Editor editor, @NotNull Inlay inlay) {
-    ApplicationManager.getApplication().assertIsDispatchThread(); // to avoid race conditions in "new AnimationStep"
+    ThreadingAssertions.assertEventDispatchThread(); // to avoid race conditions in "new AnimationStep"
     AnimationStep step = editor.getUserData(ANIMATION_STEP);
     if (step == null) {
       editor.putUserData(ANIMATION_STEP, step = new AnimationStep(editor));
@@ -144,7 +147,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
 
   @TestOnly
   public boolean isAnimationInProgress(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return editor.getUserData(ANIMATION_STEP) != null;
   }
 
@@ -169,9 +172,8 @@ public final class ParameterHintsPresentationManager implements Disposable {
       updateState(editor, newText, widthAdjustment, animated);
     }
 
-    @Nullable
     @Override
-    protected TextAttributes getTextAttributes(@NotNull Editor editor) {
+    protected @Nullable TextAttributes getTextAttributes(@NotNull Editor editor) {
       if (step > steps || startWidth != 0) {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(current
                                                                            ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT
@@ -210,7 +212,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
     }
   }
 
-  private class AnimationStep implements Runnable {
+  private final class AnimationStep implements Runnable {
     private final Editor myEditor;
     private final Set<Inlay> inlays = new HashSet<>();
 

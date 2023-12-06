@@ -133,7 +133,9 @@ public interface ViewSettings extends NodeOptions {
       if (object == this) return true;
       if (!super.equals(object)) return false;
       ViewSettings settings = (ViewSettings)object;
-      return settings.isShowMembers() == isShowMembers() &&
+      return
+             settings.isFoldersAlwaysOnTop() == isFoldersAlwaysOnTop() &&
+             settings.isShowMembers() == isShowMembers() &&
              settings.isStructureView() == isStructureView() &&
              settings.isShowModules() == isShowModules() &&
              settings.isFlattenModules() == isFlattenModules() &&
@@ -144,6 +146,7 @@ public interface ViewSettings extends NodeOptions {
     @Override
     public int hashCode() {
       int result = super.hashCode();
+      result = 31 * result + Boolean.hashCode(isFoldersAlwaysOnTop());
       result = 31 * result + Boolean.hashCode(isShowMembers());
       result = 31 * result + Boolean.hashCode(isStructureView());
       result = 31 * result + Boolean.hashCode(isShowModules());

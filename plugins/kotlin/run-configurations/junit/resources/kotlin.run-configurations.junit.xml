@@ -7,18 +7,12 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer"/>
 
-    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit3FrameworkAdapter"
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit3Framework"
                    order="before junit3"/>
-    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit4FrameworkAdapter"
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit4Framework"
                    order="before junit4"/>
-    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit5FrameworkAdapter"
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit5Framework"
                    order="before junit5"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <kotlinTestFramework id="junit5PsiFramework" order="before junit4PsiFramework" implementation="org.jetbrains.kotlin.idea.junit.framework.JUnit5KotlinTestFramework"/>
-    <kotlinTestFramework id="junit4PsiFramework" order="before junit3PsiFramework" implementation="org.jetbrains.kotlin.idea.junit.framework.JUnit4KotlinTestFramework"/>
-    <kotlinTestFramework id="junit3PsiFramework" implementation="org.jetbrains.kotlin.idea.junit.framework.JUnit3KotlinTestFramework"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">

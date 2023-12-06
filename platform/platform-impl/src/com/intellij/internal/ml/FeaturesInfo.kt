@@ -57,7 +57,7 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
 
     private fun <T> String.fromJson(): T {
       val typeToken = object : TypeToken<T>() {}
-      return gson.fromJson<T>(this, typeToken.type)
+      return gson.fromJson(this, typeToken.type)
     }
 
     fun buildFeaturesIndex(vararg featureGroups: List<Feature>): Map<String, Feature> {

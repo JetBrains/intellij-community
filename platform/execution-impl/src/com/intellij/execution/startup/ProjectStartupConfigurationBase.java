@@ -23,9 +23,8 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     myList = new ArrayList<>();
   }
 
-  @Nullable
   @Override
-  public ProjectStartupConfigurationBase getState() {
+  public @Nullable ProjectStartupConfigurationBase getState() {
     return this;
   }
 
@@ -43,7 +42,7 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     return myList;
   }
 
-  public void setList(@NotNull final List<? extends ConfigurationDescriptor> list) {
+  public void setList(final @NotNull List<? extends ConfigurationDescriptor> list) {
     myList.clear();
     list.sort(new ConfigurationDescriptorComparator());
     myList.addAll(list);
@@ -139,7 +138,7 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     }
   }
 
-  private static class ConfigurationDescriptorComparator implements Comparator<ConfigurationDescriptor> {
+  private static final class ConfigurationDescriptorComparator implements Comparator<ConfigurationDescriptor> {
     @Override
     public int compare(ConfigurationDescriptor o1,
                        ConfigurationDescriptor o2) {

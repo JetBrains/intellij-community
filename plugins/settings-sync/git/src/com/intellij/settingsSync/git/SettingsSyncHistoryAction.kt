@@ -13,7 +13,7 @@ import git4idea.GitVcs
 import git4idea.log.showExternalGitLogInToolwindow
 import java.util.function.Supplier
 
-class SettingsSyncHistoryAction : DumbAwareAction() {
+private class SettingsSyncHistoryAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val settingsSyncStorage = SettingsSyncMain.getInstance().controls.settingsSyncStorage

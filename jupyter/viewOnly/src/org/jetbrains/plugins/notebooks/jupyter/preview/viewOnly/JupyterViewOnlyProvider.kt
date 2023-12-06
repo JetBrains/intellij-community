@@ -10,9 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.notebooks.jupyter.JupyterFileType
 
-
-class JupyterViewOnlyProvider : FileEditorProvider, DumbAware {
+internal class JupyterViewOnlyProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean = FileTypeRegistry.getInstance().isFileOfType(file, JupyterFileType)
+
+  override fun acceptRequiresReadAction() = false
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor = JupyterViewOnlyFileEditor.create(file)
 

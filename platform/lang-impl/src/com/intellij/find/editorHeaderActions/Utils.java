@@ -12,11 +12,9 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -31,8 +29,7 @@ public final class Utils {
                                          JList<String> list,
                                          @NlsContexts.PopupTitle String title,
                                          JTextComponent textField,
-                                         @NlsContexts.PopupAdvertisement String ad,
-                                         @Nullable PopupState<JBPopup> popupState) {
+                                         @NlsContexts.PopupAdvertisement String ad) {
 
     final Runnable callback = () -> {
       String selectedValue = list.getSelectedValue();
@@ -50,14 +47,13 @@ public final class Utils {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(callback)
+      .setItemChosenCallback(callback)
       .createPopup();
 
     if (ad != null) {
       popup.setAdText(ad, SwingConstants.LEFT);
     }
 
-    if (popupState != null) popupState.prepareToShow(popup);
     JComponent parent = toolbarComponent != null ? toolbarComponent : textField;
     AlignedPopup.showUnderneathWithoutAlignment(popup, parent);
   }

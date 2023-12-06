@@ -9,9 +9,10 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.RunToolbarWidgetKt;
+import com.intellij.execution.ui.RunToolbarPopupKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -22,6 +23,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +37,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class StopAction extends DumbAwareAction {
+import static com.intellij.execution.StoppableRunDescriptorsKt.getStoppableDescriptors;
+
+public class StopAction extends DumbAwareAction implements ActionRemotePermissionRequirements.RunAccess {
 
   private WeakReference<JBPopup> myActivePopupRef = null;
 
@@ -70,7 +74,7 @@ public class StopAction extends DumbAwareAction {
 
       if (stopCount > 1) {
         presentation.setText(getTemplatePresentation().getText() + "...");
-        String text = RunToolbarWidgetKt.runCounterToString(e, stopCount);
+        String text = RunToolbarPopupKt.runCounterToString(e, stopCount);
         icon = IconUtil.addText(icon, text);
       }
       else if (stopCount == 1) {
@@ -127,7 +131,7 @@ public class StopAction extends DumbAwareAction {
       }
 
       if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace()) && project != null) {
-        JBPopup popup = RunToolbarWidgetKt.createStopPopup(dataContext, project);
+        JBPopup popup = RunToolbarPopupKt.createStopPopup(dataContext, project);
         showStopPopup(e, dataContext, project, popup);
         return;
       }
@@ -207,7 +211,7 @@ public class StopAction extends DumbAwareAction {
     }
   }
 
-  private void showStopPopup(@NotNull AnActionEvent e, DataContext dataContext, Project project, JBPopup popup) {
+  private static void showStopPopup(@NotNull AnActionEvent e, DataContext dataContext, Project project, JBPopup popup) {
     InputEvent inputEvent = e.getInputEvent();
     Component component = inputEvent != null ? inputEvent.getComponent() : null;
     if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
@@ -271,7 +275,7 @@ public class StopAction extends DumbAwareAction {
   @ApiStatus.Internal
   public static @NotNull List<RunContentDescriptor> getActiveStoppableDescriptors(@Nullable Project project) {
     List<RunContentDescriptor> runningProcesses = project != null ?
-                                                  ExecutionManagerImpl.getAllDescriptors(project) :
+                                                  ContainerUtil.map(getStoppableDescriptors(project), kotlin.Pair::getFirst) :
                                                   Collections.emptyList();
     if (runningProcesses.isEmpty()) {
       return Collections.emptyList();

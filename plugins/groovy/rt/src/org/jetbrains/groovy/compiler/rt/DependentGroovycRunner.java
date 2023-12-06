@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.Binding;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -80,7 +81,7 @@ public final class DependentGroovycRunner {
     catch (NoSuchMethodError ignored) { // old groovyc's don't have optimization options
     }
 
-    if (configScript != null && configScript.length() > 0) {
+    if (configScript != null && !configScript.isEmpty()) {
       try {
         applyConfigurationScript(new File(configScript), config, err);
       }
@@ -88,7 +89,7 @@ public final class DependentGroovycRunner {
       }
     }
 
-    out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
+    out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources…");
     renameResources(finalOutputs, "", TEMP_RESOURCE_SUFFIX);
 
     final List<OutputItem> compiledFiles;
@@ -107,6 +108,7 @@ public final class DependentGroovycRunner {
           }
         }
 
+        @Override
         @SuppressWarnings("RedundantMethodOverride")
         public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
           super.doPhaseOperation(unit);
@@ -116,7 +118,7 @@ public final class DependentGroovycRunner {
       addSources(forStubs, srcFiles, unit);
       runPatchers(patchers, compilerMessages, unit, resourceLoader, srcFiles);
 
-      out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: compiling...");
+      out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: compiling…");
       compiledFiles = wrapper.compile(unit, forStubs && mailbox == null ? Phases.CONVERSION : Phases.ALL);
     }
     finally {
@@ -234,10 +236,11 @@ public final class DependentGroovycRunner {
           while (!GroovyRtConstants.END.equals(s = reader.readLine())) {
             try {
               final Class<?> patcherClass = classLoader.loadClass(s);
-              final CompilationUnitPatcher patcher = (CompilationUnitPatcher)patcherClass.newInstance();
+              final CompilationUnitPatcher patcher = (CompilationUnitPatcher)patcherClass.getConstructor().newInstance();
               patchers.add(patcher);
             }
-            catch (InstantiationException | ClassNotFoundException | IllegalAccessException e) {
+            catch (InstantiationException | ClassNotFoundException | IllegalAccessException | NoSuchMethodException |
+                   InvocationTargetException e) {
               addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
             }
           }
@@ -299,7 +302,7 @@ public final class DependentGroovycRunner {
     }
   }
 
-  private static void reportCompiledItems(@NotNull PrintStream out, @NotNull List<? extends OutputItem> compiledFiles) {
+  private static void reportCompiledItems(@NotNull PrintStream out, @NotNull List<OutputItem> compiledFiles) {
     for (OutputItem compiledFile : compiledFiles) {
       /*
        * output path
@@ -452,6 +455,7 @@ public final class DependentGroovycRunner {
               }
             }
 
+            @Override
             @SuppressWarnings("RedundantMethodOverride")
             public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
               super.doPhaseOperation(unit);
@@ -475,8 +479,10 @@ public final class DependentGroovycRunner {
       }
     };
     unit.setCompilerFactory(new JavaCompilerFactory() {
+      @Override
       public JavaCompiler createCompiler(final CompilerConfiguration config) {
         return new JavaCompiler() {
+          @Override
           public void compile(List<String> files, CompilationUnit cu) {
             if (mailbox != null) {
               reportCompiledItems(
@@ -530,6 +536,7 @@ public final class DependentGroovycRunner {
     };
 
     GroovyClassLoader classLoader = AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
+      @Override
       public GroovyClassLoader run() {
         return new GroovyClassLoader(Thread.currentThread().getContextClassLoader(), compilerConfiguration) {
           @Override

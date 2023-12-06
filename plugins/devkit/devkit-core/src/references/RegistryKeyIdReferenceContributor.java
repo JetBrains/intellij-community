@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator;
+import org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotatorKt;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UExpression;
 
@@ -131,12 +131,12 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
 
       for (IProperty property : registryProperties.getProperties()) {
         final String key = property.getKey();
-        if (key == null || RegistryPropertiesAnnotator.isImplicitUsageKey(key)) continue;
+        if (key == null || RegistryPropertiesAnnotatorKt.isImplicitUsageKey(key)) continue;
 
         final boolean requireRestart =
-          registryProperties.findPropertyByKey(key + RegistryPropertiesAnnotator.RESTART_REQUIRED_SUFFIX) != null;
+          registryProperties.findPropertyByKey(key + RegistryPropertiesAnnotatorKt.RESTART_REQUIRED_SUFFIX) != null;
 
-        final IProperty descriptionKey = registryProperties.findPropertyByKey(key + RegistryPropertiesAnnotator.DESCRIPTION_SUFFIX);
+        final IProperty descriptionKey = registryProperties.findPropertyByKey(key + RegistryPropertiesAnnotatorKt.DESCRIPTION_SUFFIX);
         String description = descriptionKey != null ? " " + cleanupDescription(descriptionKey.getUnescapedValue()) : "";
         variants.add(LookupElementBuilder.create(property.getPsiElement(), key)
                        .withIcon(requireRestart ? AllIcons.Nodes.PluginRestart : AllIcons.Nodes.Plugin)

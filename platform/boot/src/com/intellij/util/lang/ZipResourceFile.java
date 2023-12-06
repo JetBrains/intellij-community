@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.util.lang.ZipFile.ZipResource;
@@ -61,7 +61,8 @@ final class ZipResourceFile implements ResourceFile {
   @Override
   public @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() {
     // name hash is not added - doesn't make sense as fast lookup by name is supported by ImmutableZipFile
-    if (zipFile instanceof ImmutableZipFile file) {
+    if (zipFile instanceof ImmutableZipFile) {
+      ImmutableZipFile file = (ImmutableZipFile)zipFile;
       return new ClasspathCache.IndexRegistrar() {
         @Override
         public int classPackageCount() {
@@ -83,6 +84,9 @@ final class ZipResourceFile implements ResourceFile {
           return file.resourcePackages;
         }
       };
+    }
+    else if (zipFile instanceof EmptyZipFile) {
+      return new ClasspathCache.LoaderDataBuilder();
     }
     else {
       return computePackageIndex();
@@ -172,6 +176,11 @@ final class ZipResourceFile implements ResourceFile {
     @Override
     public byte @NotNull [] getBytes() throws IOException {
       return entry.getData();
+    }
+
+    @Override
+    public @NotNull ByteBuffer getByteBuffer() throws IOException {
+      return entry.getByteBuffer();
     }
   }
 

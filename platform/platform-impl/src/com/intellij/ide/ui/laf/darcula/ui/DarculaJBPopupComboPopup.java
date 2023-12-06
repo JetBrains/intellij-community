@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.DataManager;
@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ComboBoxPopup;
-import com.intellij.ui.popup.util.PopupImplUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,21 +59,18 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     return myPopup;
   }
 
-  @Nullable
   @Override
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComboBox));
   }
 
-  @NotNull
   @Override
-  public ListModel<T> getModel() {
+  public @NotNull ListModel<T> getModel() {
     return myComboBox.getModel();
   }
 
-  @NotNull
   @Override
-  public ListCellRenderer<? super T> getRenderer() {
+  public @NotNull ListCellRenderer<? super T> getRenderer() {
     return myComboBox.getRenderer();
   }
 
@@ -99,6 +96,9 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     //noinspection unchecked
     T selectedItem = (T)myComboBox.getSelectedItem();
     myPopup = createPopup(selectedItem);
+    if (ScreenReader.isActive()) {
+      myPopup.setRequestFocus(true);
+    }
     myPopup.addListener(new JBPopupListener() {
 
       @Override
@@ -280,7 +280,6 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
 
   protected ComboBoxPopup<T> createPopup(@Nullable T selectedItem) {
     ComboBoxPopup<T> popup = new ComboBoxPopup<>(this, selectedItem, value -> myComboBox.setSelectedItem(value));
-    PopupImplUtil.setPopupToggleButton(popup, myComboBox);
     return popup;
   }
 
@@ -288,11 +287,12 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
       accessibleContext = new AccessibleDarculaJBPopupComboPopup();
+
     }
     return accessibleContext;
   }
 
-  private class AccessibleDarculaJBPopupComboPopup extends AccessibleContext implements JBPopupListener {
+  private final class AccessibleDarculaJBPopupComboPopup extends AccessibleContext implements JBPopupListener {
 
     @Override
     public AccessibleRole getAccessibleRole() {

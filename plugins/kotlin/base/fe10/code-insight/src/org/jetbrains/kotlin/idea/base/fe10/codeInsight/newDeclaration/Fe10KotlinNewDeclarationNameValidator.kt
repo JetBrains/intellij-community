@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
-open class Fe10KotlinNewDeclarationNameValidator constructor(
+open class Fe10KotlinNewDeclarationNameValidator(
     private val visibleDeclarationsContext: KtElement?,
     private val checkDeclarationsIn: Sequence<PsiElement>,
     private val target: ValidatorTarget,

@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests" scope="RUNTIME" />
@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jps.graphImplementationTests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.i18n.tests" scope="RUNTIME" />
@@ -41,7 +42,7 @@
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.performance-tests.performance-test-utils" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.performance-tests" scope="RUNTIME" />
@@ -58,5 +59,13 @@
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.facet.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.injection.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.indices.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
   </component>
 </module>

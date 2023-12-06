@@ -9,6 +9,7 @@ import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,12 +29,12 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
 
     result = super.validate(psiAnnotation, psiClass, problemSink);
 
-    if (!isForceConstructor(psiAnnotation)) {
+    if (result && !isForceConstructor(psiAnnotation)) {
       final String staticConstructorName = getStaticConstructorName(psiAnnotation);
-      result &= validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.emptyList(), problemSink);
+      result = validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.emptyList(), problemSink);
 
       if (problemSink.deepValidation()) {
-        final Collection<PsiField> requiredFields = getRequiredFields(psiClass);
+        final Collection<PsiField> requiredFields = getRequiredFields(psiClass, true);
         if (!requiredFields.isEmpty()) {
           problemSink.addErrorMessage("inspection.message.constructor.noargs.needs.to.be.forced")
             .withLocalQuickFixes(() -> PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "force", "true"));
@@ -68,7 +69,7 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     if (null != methodVisibility) {
       target.addAll(createNoArgsConstructor(psiClass, methodVisibility, psiAnnotation));

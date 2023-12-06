@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -200,7 +200,7 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
                                     .mapNotNull { ref -> ref.expression.getStrictParentOfType<KtImportDirective>() }
                                     .filter { import -> !import.isAllUnder && import.targetDescriptors().size == 1 }
                             }
-                            ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL)
+                            ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal())
                             {
                                 project.executeWriteCommand(text) {
                                     importsToDelete.forEach { import ->

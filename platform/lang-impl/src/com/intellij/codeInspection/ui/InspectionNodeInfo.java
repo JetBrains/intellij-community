@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionEP;
@@ -34,7 +34,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionNodeInfo extends JPanel {
+public final class InspectionNodeInfo extends JPanel {
   private final static Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
 
   public InspectionNodeInfo(@NotNull final InspectionTree tree,
@@ -72,7 +72,7 @@ public class InspectionNodeInfo extends JPanel {
     }
     final String toolDescription =
       stripUIRefsFromInspectionDescription(StringUtil.notNullize(descriptionText));
-    DescriptionEditorPaneKt.readHTML(description, toolDescription);
+    DescriptionEditorPaneKt.readHTMLWithCodeHighlighting(description, toolDescription, toolWrapper.getLanguage());
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
     pane.setAlignmentX(0);
 

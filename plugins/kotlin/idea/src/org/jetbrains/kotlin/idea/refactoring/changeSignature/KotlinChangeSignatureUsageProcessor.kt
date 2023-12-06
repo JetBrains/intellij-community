@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
@@ -26,7 +27,6 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.projectStructure.forcedModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.caches.resolve.*
@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.javaResolutionFacade
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
+import org.jetbrains.kotlin.idea.refactoring.getDeclarationBody
 import org.jetbrains.kotlin.idea.refactoring.isTrueJavaMethod
 import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
@@ -50,7 +51,10 @@ import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
@@ -60,6 +64,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
@@ -95,7 +100,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         result.add(OriginalJavaMethodDescriptorWrapper(info.method))
 
-        val kotlinChangeInfo = info.asKotlinChangeInfo
+        val kotlinChangeInfo = info as? KotlinChangeInfo
         if (kotlinChangeInfo != null) {
             findAllMethodUsages(kotlinChangeInfo, result)
         } else {
@@ -110,7 +115,9 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         return result.toTypedArray()
     }
 
-    private fun canHandle(changeInfo: ChangeInfo) = changeInfo.asKotlinChangeInfo is KotlinChangeInfo || changeInfo is JavaChangeInfo
+    private fun canHandle(changeInfo: ChangeInfo): Boolean {
+        return changeInfo is KotlinChangeInfo || changeInfo is JavaChangeInfo
+    }
 
     private fun findAllMethodUsages(changeInfo: KotlinChangeInfo, result: MutableSet<UsageInfo>) {
         loop@ for (functionUsageInfo in changeInfo.getAffectedCallables()) {
@@ -583,23 +590,21 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         }
 
         private fun getNullabilityAnnotation(element: PsiModifierListOwner): PsiAnnotation? {
-            val nullAnnotation = nullManager.getNullableAnnotation(element, false)
-            val notNullAnnotation = nullManager.getNotNullAnnotation(element, false)
-            if ((nullAnnotation == null) == (notNullAnnotation == null)) return null
-            return nullAnnotation ?: notNullAnnotation
+            val info = nullManager.findEffectiveNullabilityInfo(element) ?: return null
+            if (info.inheritedFrom != null || info.isContainer) return null
+            return info.annotation
         }
 
         private fun addNullabilityAnnotationIfApplicable(element: PsiModifierListOwner, annotation: PsiAnnotation?) {
-            val nullableAnnotation = nullManager.getNullableAnnotation(element, false)
-            val notNullAnnotation = nullManager.getNotNullAnnotation(element, false)
-
-            if (notNullAnnotation != null && nullableAnnotation == null && element is PsiMethod) return
+            val info = nullManager.findEffectiveNullabilityInfo(element)
+            if (info != null && info.nullability == Nullability.NOT_NULL && info.inheritedFrom == null && element is PsiMethod) return
 
             val annotationQualifiedName = annotation?.qualifiedName
             if (annotationQualifiedName != null && javaPsiFacade.findClass(annotationQualifiedName, element.resolveScope) == null) return
 
-            notNullAnnotation?.delete()
-            nullableAnnotation?.delete()
+            if (info != null && !info.isContainer && info.inheritedFrom == null) {
+                info.annotation.delete()
+            }
 
             if (annotationQualifiedName == null) return
 
@@ -736,7 +741,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         @Suppress("UNCHECKED_CAST")
         val kotlinUsageInfo = usageInfo as? KotlinUsageInfo<PsiElement>
-        val ktChangeInfo = changeInfo.asKotlinChangeInfo
+        val ktChangeInfo = changeInfo as? KotlinChangeInfo
         return ktChangeInfo != null && kotlinUsageInfo != null && kotlinUsageInfo.processUsage(
             ktChangeInfo,
             element,
@@ -769,7 +774,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 changeInfo.updateMethod(method)
             }
         } else {
-            changeInfo.asKotlinChangeInfo ?: return false
+            changeInfo as? KotlinChangeInfo ?: return false
         }
 
         for (primaryFunction in ktChangeInfo.methodDescriptor.primaryCallables) {

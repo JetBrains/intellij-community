@@ -7,24 +7,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.function.Supplier;
-
-public class JavaFXCommonBundle extends AbstractBundle {
-  @NonNls private static final String BUNDLE = "messages.JavaFXCommonBundle";
+public final class JavaFXCommonBundle extends AbstractBundle {
+  private static final @NonNls String BUNDLE = "messages.JavaFXCommonBundle";
   private static final JavaFXCommonBundle INSTANCE = new JavaFXCommonBundle();
 
   private JavaFXCommonBundle() {
     super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
-  }
-
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                                     Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
   }
 }

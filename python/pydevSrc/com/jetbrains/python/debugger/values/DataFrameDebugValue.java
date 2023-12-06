@@ -2,32 +2,22 @@
 package com.jetbrains.python.debugger.values;
 
 import com.intellij.util.SmartFMap;
+import com.intellij.xdebugger.frame.XValueNode;
 import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyFrameAccessor;
+import com.jetbrains.python.debugger.ValuesPolicy;
+import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
 
+import static com.jetbrains.python.debugger.values.DataFrameDebugValueUtilKt.getColumnData;
+
 public final class DataFrameDebugValue extends PyDebugValue {
   private final ColumnNode treeColumns = new ColumnNode();
-
-  private static final String PANDAS_COLUMN_NAMES_CODE = """
-    try:
-     import json
-     if str(%1$s.columns.__class__) == "<class 'pandas.core.indexes.multi.MultiIndex'>":
-       print(json.dumps({"columns": list(%1$s.columns), "isMultiIndex": True}))
-     else:
-       print(json.dumps({"columns": [[_] for _ in list(%1$s.columns)], "isMultiIndex": False}))
-    except:
-      pass
-    """;
-
-  private static final String PANDAS_COLUMN_NAMES_CODE_ONE_LINE =
-    "__import__('json').dumps({\"columns\": list(%1$s.columns), \"isMultiIndex\": True}) " +
-    "if str(%1$s.columns.__class__) == \"<class 'pandas.core.indexes.multi.MultiIndex'>\" " +
-    "else __import__('json').dumps({\"columns\": [[_] for _ in list(%1$s.columns)], \"isMultiIndex\": False})";
 
   public DataFrameDebugValue(@NotNull String name,
                              @Nullable String type,
@@ -67,6 +57,34 @@ public final class DataFrameDebugValue extends PyDebugValue {
     super(value);
   }
 
+
+  @Override
+  @NotNull
+  public PyDebugCallback<String> createDebugValueCallback() {
+    return new PyDebugCallback<>() {
+      @Override
+      public void ok(String value) {
+        myLoadValuePolicy = ValuesPolicy.SYNC;
+        myValue = value;
+        DataFrameDebugValue.InformationColumns columns = getColumnData(value);
+        if (columns != null) {
+          setColumns(columns);
+        }
+        for (XValueNode node : myValueNodes) {
+          if (node != null && !node.isObsolete()) {
+            updateNodeValueAfterLoading(node, value, "", null);
+          }
+        }
+      }
+
+      @Override
+      public void error(PyDebuggerException exception) {
+        LOG.error(exception.getMessage());
+      }
+    };
+  }
+
+
   public ColumnNode getTreeColumns() {
     return treeColumns;
   }
@@ -80,22 +98,6 @@ public final class DataFrameDebugValue extends PyDebugValue {
           node = node.addChildIfNotExist(columns.get(j));
         }
       }
-    }
-  }
-
-  private static final String PYDEV_COMMAND_PREFIX = "# pydev_util_command\n";
-
-  /**
-   * @param dfName  - DataFrame identifier (it must be a valid Python identifier, either will be a useless function call)
-   * @param oneLine - flag to construct one/multi line Python script
-   */
-  public static String commandExtractPandasColumns(@NotNull String dfName, boolean oneLine) {
-    if (oneLine) {
-      return String.format(PANDAS_COLUMN_NAMES_CODE_ONE_LINE, dfName);
-    }
-    else {
-      return PYDEV_COMMAND_PREFIX +
-             String.format(PANDAS_COLUMN_NAMES_CODE, dfName);
     }
   }
 

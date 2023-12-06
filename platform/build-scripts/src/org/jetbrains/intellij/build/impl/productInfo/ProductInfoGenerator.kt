@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.productInfo
 
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -7,8 +7,12 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.attribute.FileTime
+import java.util.concurrent.TimeUnit
 
-internal const val PRODUCT_INFO_FILE_NAME = "product-info.json"
+const val PRODUCT_INFO_FILE_NAME = "product-info.json"
 
 @OptIn(ExperimentalSerializationApi::class)
 internal val jsonEncoder by lazy {
@@ -23,19 +27,19 @@ internal val jsonEncoder by lazy {
 /**
  * Generates product-info.json file containing meta-information about product installation.
  */
-internal fun generateMultiPlatformProductJson(relativePathToBin: String,
-                                              builtinModules: BuiltinModulesFileData?,
-                                              launch: List<ProductInfoLaunchData>,
-                                              context: BuildContext): String {
+internal fun generateProductInfoJson(relativePathToBin: String,
+                                     builtinModules: BuiltinModulesFileData?,
+                                     launch: List<ProductInfoLaunchData>,
+                                     context: BuildContext): String {
   val appInfo = context.applicationInfo
   val json = ProductInfoData(
-    name = appInfo.productName,
+    name = appInfo.fullProductName,
     version = appInfo.fullVersion,
     versionSuffix = appInfo.versionSuffix,
     buildNumber = context.buildNumber,
     productCode = appInfo.productCode,
     dataDirectoryName = context.systemSelector,
-    svgIconPath = if (appInfo.svgRelativePath == null) null else "$relativePathToBin/${context.productProperties.baseFileName}.svg",
+    svgIconPath = if (appInfo.svgRelativePath == null) null else "${relativePathToBin}/${context.productProperties.baseFileName}.svg",
     productVendor = appInfo.shortCompanyName,
     launch = launch,
     customProperties = context.productProperties.generateCustomPropertiesForProductInfo(),
@@ -43,12 +47,18 @@ internal fun generateMultiPlatformProductJson(relativePathToBin: String,
     fileExtensions = builtinModules?.fileExtensions ?: emptyList(),
     modules = builtinModules?.modules ?: emptyList(),
   )
-
   return jsonEncoder.encodeToString(serializer(), json)
 }
 
+internal fun writeProductInfoJson(targetFile: Path, json: String, context: BuildContext) {
+  Files.createDirectories(targetFile.parent)
+  Files.writeString(targetFile, json)
+  Files.setLastModifiedTime(targetFile, FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
+}
+
 /**
- * Describes format of JSON file containing meta-information about a product installation. Must be consistent with 'product-info.schema.json' file.
+ * Describes the format of JSON file containing meta-information about a product installation.
+ * Must be consistent with 'product-info.schema.json' file.
  */
 @Serializable
 data class ProductInfoData(
@@ -76,7 +86,19 @@ data class ProductInfoLaunchData(
   val vmOptionsFilePath: String,
   val startupWmClass: String? = null,
   val bootClassPathJarNames: List<String>,
-  val additionalJvmArguments: List<String>
+  val additionalJvmArguments: List<String>,
+  val mainClass: String,
+  val customCommands: List<CustomCommandLaunchData> = emptyList(),
+)
+
+@Serializable
+data class CustomCommandLaunchData(
+  val commands: List<String>,
+  val vmOptionsFilePath: String? = null,
+  val bootClassPathJarNames: List<String> = emptyList(),
+  val additionalJvmArguments: List<String> = emptyList(),
+  val mainClass: String? = null,
+  val dataDirectoryName: String? = null,
 )
 
 @Serializable

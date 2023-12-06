@@ -9,7 +9,6 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.layout.PropertyBinding
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -18,9 +17,9 @@ import javax.swing.JLabel
 /**
  * Empty label parameter for [Panel.row] method in case label is omitted.
  */
-@Deprecated("Use \"\" instead of this constant")
+@Deprecated("Use \"\" instead of this constant", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
-val EMPTY_LABEL = ""
+val EMPTY_LABEL: String = ""
 
 @ApiStatus.NonExtendable
 @JvmDefaultWithCompatibility
@@ -34,11 +33,11 @@ interface Panel : CellBase<Panel> {
 
   override fun enabledIf(predicate: ComponentPredicate): Panel
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Panel
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Panel
 
@@ -49,6 +48,7 @@ interface Panel : CellBase<Panel> {
   override fun gap(rightGap: RightGap): Panel
 
   @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): Panel
 
   override fun customize(customGaps: UnscaledGaps): Panel
@@ -84,10 +84,6 @@ interface Panel : CellBase<Panel> {
    */
   fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
-  @Deprecated(message = "Use overloaded method or group/groupRowsRange instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun separator(@NlsContexts.Separator title: String? = null, background: Color? = null): Row
-
   /**
    * Adds horizontal line separator. Use [group] or [groupRowsRange] if you need a separator with title
    */
@@ -122,14 +118,6 @@ interface Panel : CellBase<Panel> {
    */
   fun group(title: JBLabel, indent: Boolean = true, init: Panel.() -> Unit): Row
 
-  @Deprecated("Use overloaded group(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun group(@NlsContexts.BorderTitle title: String? = null,
-            indent: Boolean = true,
-            topGroupGap: Boolean? = null,
-            bottomGroupGap: Boolean? = null,
-            init: Panel.() -> Unit): Panel
-
   /**
    * Similar to [Panel.group] but uses the same grid as the parent.
    *
@@ -152,18 +140,13 @@ interface Panel : CellBase<Panel> {
                        indent: Boolean = true,
                        init: Panel.() -> Unit): CollapsibleRow
 
-  @Deprecated("Use buttonsGroup(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null,
-                      indent: Boolean = title != null, init: Panel.() -> Unit)
-
   /**
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.
    * Note that [Panel.group] provides different gaps around the title
 
    * @param indent true if left indent is needed. By default, true if title exists and false otherwise
    */
-  fun buttonsGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit): ButtonsGroup
+  fun buttonsGroup(@NlsContexts.Label title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit): ButtonsGroup
 
   /**
    * Registers [callback] that will be called from [DialogPanel.apply] method

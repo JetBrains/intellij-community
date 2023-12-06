@@ -17,15 +17,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class OpenInEditorAction extends EditSourceAction implements DumbAware {
-  public static final DataKey<OpenInEditorAction> KEY = DataKey.create("DiffOpenInEditorAction");
+  public static final DataKey<Runnable> AFTER_NAVIGATE_CALLBACK = DataKey.create("diff_after_navigate_callback");
 
   public OpenInEditorAction() {
     ActionUtil.copyFrom(this, "EditSource");
-  }
-
-  protected void onAfterEditorOpened() {
   }
 
   @Override
@@ -67,23 +65,26 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
     Project project = e.getProject();
     if (project == null) return;
 
+    Runnable callback = e.getData(AFTER_NAVIGATE_CALLBACK);
     Navigatable[] navigatables = e.getData(DiffDataKeys.NAVIGATABLE_ARRAY);
     if (navigatables == null) return;
 
-    openEditor(project, navigatables);
+    openEditor(project, navigatables, callback);
   }
 
-  public void openEditor(@NotNull Project project, @NotNull Navigatable navigatable) {
-    openEditor(project, new Navigatable[]{navigatable});
+  public static boolean openEditor(@NotNull Project project, @NotNull Navigatable navigatable, @Nullable Runnable callback) {
+    return openEditor(project, new Navigatable[]{navigatable}, callback);
   }
 
-  public void openEditor(@NotNull Project project, Navigatable @NotNull [] navigatables) {
+  public static boolean openEditor(@NotNull Project project, Navigatable @NotNull [] navigatables, @Nullable Runnable callback) {
     FileNavigatorImpl fileNavigator = (FileNavigatorImpl)FileNavigator.getInstance();
-
     boolean success = false;
     for (Navigatable navigatable : navigatables) {
       success |= fileNavigator.navigateIgnoringContextEditor(navigatable);
     }
-    if (success) onAfterEditorOpened();
+    if (success && callback != null) {
+      callback.run();
+    }
+    return success;
   }
 }

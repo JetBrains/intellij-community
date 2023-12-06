@@ -5,8 +5,8 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.layout.CCFlags
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.util.function.Supplier
@@ -41,13 +41,8 @@ class TargetCustomToolPanel(private val project: Project,
     languagePanel?.configurable?.apply()
   }
 
-  /**
-   * While [targetSupplier] might return temp [TargetEnvironmentConfiguration], [preparedConfiguration] is the actual configuration that can be
-   * used for creating Python SDK.
-   * Call [validateCustomTool] before this method to make sure there are no errors
-   */
-  fun createCustomTool(preparedConfiguration: TargetEnvironmentConfiguration): Any? {
-    return customToolLanguageConfigurable?.createCustomTool(preparedConfiguration)
+  fun createCustomTool(): Any? {
+    return customToolLanguageConfigurable?.createCustomTool()
   }
 
   fun validateCustomTool(): Collection<ValidationInfo> = customToolLanguageConfigurable?.validate() ?: emptyList()
@@ -74,7 +69,7 @@ class TargetCustomToolPanel(private val project: Project,
     val panel = panel {
       row {
         val languageUI = configurable.createComponent() ?: throw IllegalStateException("for runtime: $language")
-        languageUI(CCFlags.growX)
+        cell(languageUI).align(AlignX.FILL)
       }
     }
     configurable.reset()

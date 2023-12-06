@@ -1,4 +1,4 @@
 // IS_APPLICABLE: false
 
-@Suppress("UNSUPPORTED_FEATURE")
+@Suppress("NOT_A_MULTIPLATFORM_COMPILATION")
 expect class Foo()<caret>

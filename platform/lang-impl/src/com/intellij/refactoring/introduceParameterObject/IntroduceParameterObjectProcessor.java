@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -14,6 +15,7 @@ import com.intellij.refactoring.changeSignature.OverriderMethodUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -25,7 +27,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>>
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
+public final class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>>
   extends FixableUsagesRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(IntroduceParameterObjectProcessor.class);
   private final C myClassDescriptor;
@@ -106,7 +110,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usageInfos = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     myDelegate.collectConflicts(conflicts, usageInfos, myMethod, myClassDescriptor);
 
     List<UsageInfo> changeSignatureUsages = new ArrayList<>();
@@ -118,7 +122,10 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
         if (element != null && IntroduceParameterObjectDelegate.findDelegate(element) == null) {
           final PsiFile containingFile = element.getContainingFile();
           if (filesWithUsages.add(containingFile)) {
-            conflicts.putValue(element, "Method is overridden in a language that doesn't support this refactoring: " + containingFile.getName());
+            String message =
+              RefactoringBundle.message("dialog.message.method.overridden.in.language.that.doesn.t.support.this.refactoring",
+                                        RefactoringUIUtil.getDescription(myMethod, false), element.getLanguage().getDisplayName());
+            conflicts.putValue(element, StringUtil.capitalize(message));
           }
         }
         changeSignatureUsages.add(info);
@@ -131,9 +138,8 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
       }
     }
 
-    ChangeSignatureProcessorBase
-      .collectConflictsFromExtensions(new Ref<>(changeSignatureUsages.toArray(UsageInfo.EMPTY_ARRAY)), conflicts,
-                                      myChangeInfo);
+    ChangeSignatureProcessorBase.collectConflictsFromExtensions(
+      new Ref<>(changeSignatureUsages.toArray(UsageInfo.EMPTY_ARRAY)), conflicts, myChangeInfo);
 
     return showConflicts(conflicts, usageInfos);
   }
@@ -168,7 +174,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
       .message("refactoring.introduce.parameter.object.command.name", myClassDescriptor.getClassName(), myMethod.getName());
   }
 
-  public static class ChangeSignatureUsageWrapper extends FixableUsageInfo {
+  public static final class ChangeSignatureUsageWrapper extends FixableUsageInfo {
     private final UsageInfo myInfo;
 
     public ChangeSignatureUsageWrapper(UsageInfo info) {

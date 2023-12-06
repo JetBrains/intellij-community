@@ -3,7 +3,6 @@ package com.intellij.filePrediction.features
 
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.binary
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.numerical
-import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -63,7 +62,7 @@ class FilePredictionSimilarityFeatures : FilePredictionFeatureProvider {
         val fileIndex = FileIndexFacade.getInstance(project)
         result["in_project"] = binary(fileIndex.isInProjectScope(newFile))
         result["in_source"] = binary(fileIndex.isInSource(newFile))
-        result["in_library"] = binary(fileIndex.isInLibraryClasses(newFile) || fileIndex.isInLibrarySource(newFile))
+        result["in_library"] = binary(fileIndex.isInLibrary(newFile))
         result["excluded"] = binary(fileIndex.isExcludedFile(newFile))
 
         if (prevFile != null && prevFile.isValid) {

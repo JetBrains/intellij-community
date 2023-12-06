@@ -1,10 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.presentation.VirtualFilePresentation;
-import com.intellij.navigation.TargetPresentation;
-import com.intellij.navigation.TargetPresentationBuilder;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -15,6 +13,8 @@ import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandlerBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.presentation.TargetPresentation;
+import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @State(name = "ReadonlyStatusHandler", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
@@ -61,8 +60,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
   }
 
   @Override
-  @NotNull
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
@@ -71,9 +69,8 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     myState = state;
   }
 
-  @NotNull
   @Override
-  protected OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
+  protected @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
     List<FileInfo> fileInfos = files.stream()
       .filter(vf-> vf != null && !vf.isWritable() && vf.isInLocalFileSystem())
       .map(vf -> new FileInfo(vf, myProject))
@@ -95,7 +92,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     // Otherwise data manager stuff will fire up an assertion saying that event count has been changed (due to modal dialog show-up)
     // The hack itself is safe since we guarantee that focus will return to the same component had it before modal dialog have been shown.
     final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
-    if (myState.SHOW_DIALOG) {
+    if (myState.SHOW_DIALOG && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       List<PresentableFileInfo> presentableFileInfos = ActionUtil.underModalProgress(
         myProject,
         FileTypesBundle.message("progress.title.resolving.filetype"),

@@ -6,7 +6,7 @@ class Main {
         System.out.println();
       case null:
         System.out.println(<error descr="Cannot resolve symbol 'i'">i</error>);
-      case default:
+      default:
     };
   }
 
@@ -27,7 +27,6 @@ class Main {
       case null:
         throw new RuntimeException();
       default: {}
-      case default:
       case null:
         System.out.println(<error descr="Cannot resolve symbol 'i'">i</error>);
     }
@@ -41,7 +40,6 @@ class Main {
       default: {
         throw new RuntimeException();
       }
-      case default:
       case null:
         System.out.println(<error descr="Cannot resolve symbol 'i'">i</error>);
     }
@@ -53,7 +51,7 @@ class Main {
         case Integer i:
           System.out.println();
         case null:
-        case default:
+        default:
           continue;
         case null:
           System.out.println(<error descr="Cannot resolve symbol 'i'">i</error>);

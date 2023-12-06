@@ -9,7 +9,7 @@ import java.awt.*;
 /**
  * @deprecated Will be removed with deprecated version of Kotlin UI DSL
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface VisualPaddingsProvider {
   @Nullable
   Insets

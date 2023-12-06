@@ -38,19 +38,11 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
 
   public void testAnonymous() { doTest(); }
 
-  public void testFromGuardToDestructuringVariable() { doGotoTest(); }
-
   public void testFromGuardToDestructuringPattern() { doGotoTest(); }
-
-  public void testFromArrowToDestructuringVariable() { doGotoTest(); }
 
   public void testFromArrowToDestructuringPattern() { doGotoTest(); }
 
-  public void testFromStatementToDestructuringVariable() { doGotoTest(); }
-
   public void testFromStatementToDestructuringPattern() { doGotoTest(); }
-
-  public void testFromIfToDestructuringVariable() { doGotoTest(); }
 
   public void testFromIfToDestructuringPattern() { doGotoTest(); }
 
@@ -201,14 +193,6 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
 
   public void testDefaultAfterPatternMatchingExpr() {
     doTestGoToField();
-  }
-
-  public void testGuardWithInstanceOfPatternMatchingInIf() {
-    doTestGoToSecondPatternVariable();
-  }
-
-  public void testGuardWithInstanceOfPatternMatchingInSwitch() {
-    doTestGoToSecondPatternVariable();
   }
 
   private void doTestGoToField() {

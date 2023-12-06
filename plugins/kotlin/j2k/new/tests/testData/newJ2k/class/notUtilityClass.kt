@@ -1,6 +1,6 @@
 internal open class Base {
     companion object {
-        const val CONSTANT = 10
+        const val CONSTANT: Int = 10
     }
 }
 

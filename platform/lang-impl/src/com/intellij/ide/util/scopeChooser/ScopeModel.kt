@@ -5,6 +5,8 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.WeighedItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.PredefinedSearchScopeProvider
 import com.intellij.psi.search.SearchScope
@@ -28,6 +30,7 @@ class ScopeModel(options: Set<Option>) {
     EMPTY_SCOPES
   }
 
+  private val separators: HashMap<String, ListSeparator> = HashMap()
   private val options = mutableSetOf<Option>().apply { addAll(options) }
   private lateinit var project: Project
 
@@ -38,6 +41,8 @@ class ScopeModel(options: Set<Option>) {
 
     this.project = project
   }
+
+  fun getSeparatorName(firstElementName: String): ListSeparator? = separators[firstElementName]
 
   fun setOption(option: Option, set: Boolean) {
     if (set) {
@@ -64,7 +69,9 @@ class ScopeModel(options: Set<Option>) {
           options.contains(Option.USAGE_VIEW),
           options.contains(Option.EMPTY_SCOPES)
         ).then { predefinedScopes ->
-          doProcessScopes(project, dataContext, predefinedScopes, filter)
+          separators.clear()
+          doProcessScopes(project, dataContext, predefinedScopes,
+                          { firstScopeName, separatorName -> separators[firstScopeName] = ListSeparator(separatorName) }, filter)
         }
       }
   }
@@ -84,13 +91,14 @@ class ScopeModel(options: Set<Option>) {
         options.contains(Option.USAGE_VIEW),
         options.contains(Option.EMPTY_SCOPES)
       )
-      return doProcessScopes(project, dataContext, predefinedScopes) { true }
+      return doProcessScopes(project, dataContext, predefinedScopes, null) { true }
     }
 
     @RequiresEdt
     private fun doProcessScopes(project: Project,
                                 dataContext: DataContext,
                                 predefinedScopes: List<SearchScope>,
+                                putToSeparatorsGroup: ((@Nls String, @NlsContexts.Separator String) -> Unit)?,
                                 filter: Predicate<in ScopeDescriptor>): List<ScopeDescriptor> {
       val result = mutableListOf<ScopeDescriptor>()
 
@@ -103,7 +111,7 @@ class ScopeModel(options: Set<Option>) {
       }
 
       for (provider in ScopeDescriptorProvider.EP_NAME.extensionList) {
-        for (descriptor in provider.getScopeDescriptors(project)) {
+        for (descriptor in provider.getScopeDescriptors(project, dataContext)) {
           if (filter.test(descriptor)) {
             result.add(descriptor)
           }
@@ -120,7 +128,7 @@ class ScopeModel(options: Set<Option>) {
       for (provider in SearchScopeProvider.EP_NAME.extensions) {
         val displayName = provider.displayName
         if (StringUtil.isEmpty(displayName)) continue
-        val scopes = SlowOperations.allowSlowOperations<List<SearchScope>, RuntimeException> {
+        val scopes = SlowOperations.knownIssue("IDEA-304699, EA-835226").use {
           provider.getSearchScopes(project, dataContext)
         }
         if (scopes.isEmpty()) continue
@@ -129,9 +137,14 @@ class ScopeModel(options: Set<Option>) {
             result.add(this)
           }
         }
+        var isFirstScope = false
         for (scope in ContainerUtil.sorted(scopes, comparator)) {
           with(ScopeDescriptor(scope)) {
             if (filter.test(this)) {
+              if (!isFirstScope) {
+                isFirstScope = true
+                putToSeparatorsGroup?.invoke(scope.displayName, displayName)
+              }
               result.add(this)
             }
           }

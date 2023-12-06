@@ -7,10 +7,9 @@
   <properties>
     <java.version>11</java.version>
     <kotlin.target>11</kotlin.target>
-    <gradle.version>7.5.1</gradle.version>
-    <kotlin.version>1.8.0</kotlin.version>
-    <compose.version>1.3.0</compose.version>
-    <agp.version>7.3.0</agp.version>
+    <gradle.version>8.3</gradle.version>
+    <kotlin.version>1.9.20</kotlin.version>
+    <compose.version>1.5.10</compose.version>
   </properties>
 
   <dependencyManagement>

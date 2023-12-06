@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
-import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
@@ -10,22 +9,23 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +38,7 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.*;
 
-public class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener, EditorColorsListener {
+public final class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener, EditorColorsListener {
   private static final Key<RangeHighlighter> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
 
   private final Disposable myDisposable = Disposer.newDisposable("livePreview");
@@ -56,6 +56,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   private VisibleAreaListener myVisibleAreaListener;
   private Delegate myDelegate;
   private final SearchResults mySearchResults;
+  private final LivePreviewPresentation myPresentation;
   private Balloon myReplacementBalloon;
 
   @Override
@@ -195,16 +196,15 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
     if (cursor != null && cursor.getEndOffset() <= editor.getDocument().getTextLength()) {
-      Color color = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-      myCursorHighlighter = addHighlighter(cursor.getStartOffset(), cursor.getEndOffset(),
-                                           new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, Font.PLAIN));
-
+      myCursorHighlighter = addHighlighter(cursor.getStartOffset(), cursor.getEndOffset(), myPresentation.getCursorAttributes(),
+                                           myPresentation.getCursorLayer());
       editor.getScrollingModel().runActionOnScrollingFinished(() -> showReplacementPreview());
     }
   }
 
-  public LivePreview(@NotNull SearchResults searchResults) {
+  public LivePreview(@NotNull SearchResults searchResults, @NotNull LivePreviewPresentation presentation) {
     mySearchResults = searchResults;
+    myPresentation = presentation;
     searchResultsUpdated(searchResults);
     searchResults.addListener(this);
     EditorUtil.addBulkSelectionListener(mySearchResults.getEditor(), this, myDisposable);
@@ -259,7 +259,8 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       TextAttributes attributes = createAttributes(range);
       RangeHighlighter existingHighlighter = findExistingHighlighter(range.getStartOffset(), range.getEndOffset(), attributes);
       if (existingHighlighter == null) {
-        RangeHighlighter highlighter = addHighlighter(range.getStartOffset(), range.getEndOffset(), attributes);
+        RangeHighlighter highlighter = addHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                      attributes, myPresentation.getDefaultLayer());
         if (highlighter != null) {
           highlighter.putUserData(SEARCH_MARKER, Boolean.TRUE);
           newHighlighters.add(highlighter);
@@ -273,17 +274,15 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   private TextAttributes createAttributes(FindResult range) {
-    EditorColorsScheme colorsScheme = mySearchResults.getEditor().getColorsScheme();
     if (mySearchResults.isExcluded(range)) {
-      return new TextAttributes(null, null, colorsScheme.getDefaultForeground(), EffectType.STRIKEOUT, Font.PLAIN);
+      return myPresentation.getExcludedAttributes();
     }
-    TextAttributes attributes = colorsScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
-    if (range.getLength() == 0) {
-      attributes = attributes.clone();
-      attributes.setEffectType(EffectType.BOXED);
-      attributes.setEffectColor(attributes.getBackgroundColor());
+    else if (range.isEmpty()) {
+      return myPresentation.getEmptyRangeAttributes();
     }
-    return attributes;
+    else {
+      return myPresentation.getDefaultAttributes();
+    }
   }
 
   private RangeHighlighter findExistingHighlighter(int startOffset, int endOffset, TextAttributes attributes) {
@@ -325,11 +324,12 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       if (inSelectionHighlighter != null) {
         if (!needsAdditionalHighlighting) {
           removeHighlighter(inSelectionHighlighter);
+          highlighter.putUserData(IN_SELECTION_KEY, null);
         }
       } else if (needsAdditionalHighlighting) {
         RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
-                                                                new TextAttributes(null, null,
-                                                                                   JBColor.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN));
+                                                                myPresentation.getSelectionAttributes(),
+                                                                myPresentation.getDefaultLayer());
         highlighter.putUserData(IN_SELECTION_KEY, additionalHighlighter);
       }
     }
@@ -391,23 +391,22 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
   }
 
-  private RangeHighlighter addHighlighter(int startOffset, int endOffset, @NotNull TextAttributes attributes) {
+  private RangeHighlighter addHighlighter(int startOffset, int endOffset, @NotNull TextAttributes attributes, int layer) {
     Project project = mySearchResults.getProject();
-    if (project == null || project.isDisposed()) return null;
-    List<RangeHighlighter> sink = new ArrayList<>();
-    HighlightManager.getInstance(project).addRangeHighlight(mySearchResults.getEditor(), startOffset, endOffset, attributes, false, sink);
-    RangeHighlighter result = ContainerUtil.getFirstItem(sink);
-    if (result instanceof RangeHighlighterEx) ((RangeHighlighterEx)result).setVisibleIfFolded(true);
-    return result;
+    if (project.isDisposed()) return null;
+    var markupModel = mySearchResults.getEditor().getMarkupModel();
+    var highlighter = markupModel.addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+    if (highlighter instanceof RangeHighlighterEx ex) ex.setVisibleIfFolded(true);
+    return highlighter;
   }
 
   private void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     Project project = mySearchResults.getProject();
-    if (project == null || project.isDisposed()) return;
-    HighlightManager.getInstance(project).removeSegmentHighlighter(mySearchResults.getEditor(), highlighter);
+    if (project.isDisposed()) return;
+    mySearchResults.getEditor().getMarkupModel().removeHighlighter(highlighter);
   }
 
-  private class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
+  private final class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
     private final Editor myEditor;
 
     ReplacementBalloonPositionTracker(Editor editor) {

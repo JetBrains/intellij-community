@@ -35,7 +35,7 @@ fun targetAsPsiElement(targetType: PyRunTargetVariant,
                          configuration.getWorkingDirectorySafe()))
   : PsiElement? {
   if (targetType == PyRunTargetVariant.PYTHON) {
-    val module = configuration.getModule() ?: return null
+    val module = configuration.module ?: return null
     val context = TypeEvalContext.userInitiated(configuration.getProject(), null)
 
     return runReadAction {

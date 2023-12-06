@@ -40,9 +40,8 @@ open class RemovePsiElementSimpleFix private constructor(element: PsiElement, @N
 
     object RemoveSpreadFactory : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         public override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            val element = psiElement
-            if (element.node.elementType != KtTokens.MUL) return emptyList()
-            return listOf(RemovePsiElementSimpleFix(element, KotlinBundle.message("remove.star")))
+            if (psiElement.node.elementType != KtTokens.MUL) return emptyList()
+            return listOf(RemovePsiElementSimpleFix(psiElement, KotlinBundle.message("remove.star")))
         }
     }
 
@@ -71,7 +70,9 @@ open class RemovePsiElementSimpleFix private constructor(element: PsiElement, @N
         public override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
             if (psiElement is KtDestructuringDeclarationEntry) return emptyList()
             val ktProperty = psiElement.getNonStrictParentOfType<KtProperty>() ?: return emptyList()
-            if (ktProperty.isExplicitTypeReferenceNeededForTypeInference()) return emptyList()
+
+            val typeReference = ktProperty.typeReference
+            if (typeReference != null && ktProperty.isExplicitTypeReferenceNeededForTypeInference(typeReference)) return emptyList()
 
             val removePropertyFix = object : RemovePsiElementSimpleFix(ktProperty, KotlinBundle.message("remove.variable.0", ktProperty.name.toString())) {
                 override fun invoke(project: Project, editor: Editor?, file: KtFile) {

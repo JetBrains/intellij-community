@@ -15,27 +15,16 @@
  */
 package com.intellij.java.parser.partial;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 import com.intellij.lang.java.parser.JavaParser;
 
-public class AnnotationParserTest extends JavaParsingTestCase {
+public class AnnotationParserTest extends AbstractBasicAnnotationParserTest {
   public AnnotationParserTest() {
-    super("parser-partial/annotations");
+    super(new JavaParsingTestConfigurator());
   }
 
-  public void testMarker() { doParserTest("@Preliminary"); }
-  public void testSimple0() { doParserTest("@Copyright(\"blah-blah-blah\")"); }
-  public void testSimple1() { doParserTest("@Copyright(treatedAsValue)"); }
-  public void testComplex() { doParserTest("@Author(first=\"Eugene\", second=\"Another Eugene\")"); }
-  public void testMultiple() { doParserTest("@Preliminary @Other(name=value)"); }
-  public void testArray() { doParserTest("@Endorsers({\"Children\", \"Unscrupulous dentists\"})"); }
-  public void testNested() { doParserTest("@Author(@Name(first=\"Eugene\", second=\"Yet One Eugene\"))"); }
-  public void testQualifiedAnnotation() { doParserTest("@org.jetbrains.annotations.Nullable"); }
-  public void testExtraCommaInList() { doParserTest("@Anno({0, 1,})"); }
-  public void testParameterizedAnnotation () { doParserTest("@Nullable<T>"); }
-  public void testFirstNameMissed() { doParserTest("@Anno(value1, param2=value2)"); }
-
-  private void doParserTest(String text) {
+  @Override
+  protected void doParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getDeclarationParser().parseAnnotations(builder));
   }
 }

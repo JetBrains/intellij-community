@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.html.HTMLLanguage;
@@ -65,8 +65,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
 
   private FileType myType = null;
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     if (myType == null) {
       myType = getLanguage().getAssociatedFileType();
       if (myType == null) {
@@ -97,9 +96,8 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
 
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getFileResolveScope() {
+  public @NotNull GlobalSearchScope getFileResolveScope() {
     return ProjectScope.getAllScope(getProject());
   }
 

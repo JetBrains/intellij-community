@@ -7,18 +7,23 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.toUiPathProperty
-import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.ui.validation.CHECK_DIRECTORY
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.util.minimumWidth
 import com.intellij.util.ui.JBUI
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
@@ -27,7 +32,8 @@ import org.jetbrains.plugins.gradle.service.settings.IdeaGradleDefaultProjectSet
 import org.jetbrains.plugins.gradle.service.settings.PlaceholderGroup.Companion.placeholderGroup
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.suggestGradleVersion
 
 class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
 
@@ -58,7 +64,7 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
         row {
           label(GradleBundle.message("gradle.project.settings.distribution"))
             .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
-          comboBox(listOf(WRAPPER, LOCAL), listCellRenderer { text = it.text })
+          comboBox(listOf(WRAPPER, LOCAL), textListCellRenderer { it?.text })
             .columns(COLUMNS_SHORT)
             .bindItem(distributionTypeProperty)
         }
@@ -113,7 +119,7 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
 
   private fun setCurrentDefaultProjectSettings(settings: GradleDefaultProjectSettings) {
     distributionType = DistributionTypeItem.valueOf(settings.distributionType)
-    gradleVersions = getAllSupportedGradleVersions().map { it.version }
+    gradleVersions = GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea().map { it.version }
     autoSelectGradleVersion = settings.gradleVersion == null
     when (distributionType) {
       WRAPPER -> when (autoSelectGradleVersion) {

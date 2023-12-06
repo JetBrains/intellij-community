@@ -3,7 +3,7 @@
 <p>Reports problems with nesting decorators. The inspection highlights the cases when <code>classmethod</code> or <code>staticmethod</code>
   is applied before another decorator.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 def innocent(f):
     return f
 
@@ -18,7 +18,7 @@ class A:
     @staticmethod
     def f1():
         pass
-</pre>
+</code></pre>
 <p>As a quick-fix, the IDE offers to remove the decorator.</p>
 </body>
 </html>

@@ -8,29 +8,36 @@ class InsecureHashBuilderTest {
   @Test
   fun `empty map`() {
     val builder = InsecureHashBuilder()
-    builder.stringMap(mapOf())
-    assertThat(builder.build()).isEqualTo(longArrayOf(5238470482016868669L))
+    builder.putStringMap(mapOf())
+    assertThat(builder.build()).isEqualTo(longArrayOf(8533677159333351289L, -1821838690670370510L))
   }
 
   @Test
-  fun `string map`() {
+  fun `string map with one item`() {
     val builder = InsecureHashBuilder()
-    builder.stringMap(mapOf("foo" to "bar"))
-    assertThat(builder.build()).isEqualTo(longArrayOf(-2665511616818817272L, -4484417689633454546L, -3459221722170984053L))
+    builder.putStringMap(hashMapOf("foo" to "bar"))
+    assertThat(builder.build()).isEqualTo(longArrayOf(-6651769613387598404L, 4571830712784234484L))
+  }
+
+  @Test
+  fun `string map with several items`() {
+    val builder = InsecureHashBuilder()
+    builder.putStringMap(hashMapOf("foo" to "bar", "bar" to "foo", "oof" to "rab"))
+    assertThat(builder.build()).isEqualTo(longArrayOf(639191527324638794L, 6004879382959229018L))
   }
 
   @Test
   fun `string int map`() {
     val builder = InsecureHashBuilder()
-    builder.stringIntMap(mapOf("foo" to 123, "bar" to 543))
-    assertThat(builder.build()).isEqualTo(longArrayOf(8139571457004014537L, 3354812099852591849L, 3303764292165953682L))
+    builder.putStringIntMap(mapOf("foo" to 123, "bar" to 543))
+    assertThat(builder.build()).isEqualTo(longArrayOf(5329019894502154008L, 7570391518939860400L))
   }
 
   @Test
   fun `several maps`() {
     val builder = InsecureHashBuilder()
-    builder.stringMap(mapOf("foo" to "bar"))
-    builder.stringIntMap(mapOf("foo" to 123, "bar" to 543))
-    assertThat(builder.build()).isEqualTo(longArrayOf(-2665511616818817272L, -4484417689633454546L, -3459221722170984053L, 8139571457004014537L, 3354812099852591849L, 3303764292165953682L))
+    builder.putStringMap(hashMapOf("foo" to "bar"))
+    builder.putStringIntMap(hashMapOf("foo" to 123, "bar" to 543))
+    assertThat(builder.build()).isEqualTo(longArrayOf(8812214546876945120L, 6345156962213596110L))
   }
 }

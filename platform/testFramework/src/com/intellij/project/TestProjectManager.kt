@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.project
@@ -17,6 +17,7 @@ import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -49,7 +50,7 @@ var totalCreatedProjectsCount = 0
 @TestOnly
 open class TestProjectManager : ProjectManagerImpl() {
   companion object {
-
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(
       message = "moved to LeakHunter",
       replaceWith = ReplaceWith("LeakHunter.getCreationPlace(project)", "com.intellij.testFramework.LeakHunter")
@@ -60,10 +61,10 @@ open class TestProjectManager : ProjectManagerImpl() {
     }
 
     suspend fun loadAndOpenProject(path: Path, parent: Disposable): Project {
-      ApplicationManager.getApplication().assertIsNonDispatchThread();
+      ApplicationManager.getApplication().assertIsNonDispatchThread()
       val project = getInstanceEx().openProjectAsync(path, OpenProjectTask {})!!
       Disposer.register(parent) {
-        ApplicationManager.getApplication().assertIsNonDispatchThread();
+        ApplicationManager.getApplication().assertIsNonDispatchThread()
         runBlocking {
           getInstanceEx().forceCloseProjectAsync(project)
         }
@@ -111,7 +112,7 @@ open class TestProjectManager : ProjectManagerImpl() {
       val projectFilePath = if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.directoryStorePath!! else store.projectFilePath
       for (p in openProjects) {
         if (ProjectUtil.isSameProject(projectFilePath, p)) {
-          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) { ProjectUtil.focusProjectWindow(p, false) }
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal()) { ProjectUtil.focusProjectWindow(p, false) }
           return false
         }
       }
@@ -157,7 +158,7 @@ open class TestProjectManager : ProjectManagerImpl() {
     }
   }
 
-  override fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
+  override suspend fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
     val project = super.instantiateProject(projectStoreBaseDir, options)
     totalCreatedProjectCount++
     trackProject(project)
@@ -172,10 +173,11 @@ open class TestProjectManager : ProjectManagerImpl() {
         }
       }
     }
-    val result = super.closeProject(project, saveProject, dispose, checkCanClose)
-    val undoManager = UndoManager.getGlobalInstance() as UndoManagerImpl
+
+    val result = super.closeProject(project = project, saveProject = saveProject, dispose = dispose, checkCanClose = checkCanClose)
+    val undoManager = serviceIfCreated<UndoManager>() as UndoManagerImpl?
     // test may use WrapInCommand (it is ok - in this case HeavyPlatformTestCase will call dropHistoryInTests)
-    if (!undoManager.isInsideCommand) {
+    if (undoManager != null && !undoManager.isInsideCommand) {
       undoManager.dropHistoryInTests()
     }
     return result

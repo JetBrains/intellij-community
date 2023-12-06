@@ -15,7 +15,6 @@
  */
 package com.intellij.credentialStore.kdbx
 
-import com.intellij.util.getOrCreate
 import com.intellij.util.text.nullize
 import org.jdom.Element
 
@@ -60,7 +59,7 @@ internal class KdbxEntry(internal val entryElement: Element, private val databas
       propertyElement = createPropertyElement(entryElement, propertyName)
     }
 
-    val valueElement = propertyElement.getOrCreate(KdbxEntryElementNames.value)
+    val valueElement = propertyElement.getOrCreateChild(KdbxEntryElementNames.value)
     if (valueElement.text.nullize() == normalizedValue) {
       return null
     }
@@ -100,7 +99,7 @@ internal class KdbxEntry(internal val entryElement: Element, private val databas
         return
       }
 
-      val valueElement = getOrCreatePropertyElement(KdbxEntryElementNames.password).getOrCreate(KdbxEntryElementNames.value)
+      val valueElement = getOrCreatePropertyElement(KdbxEntryElementNames.password).getOrCreateChild(KdbxEntryElementNames.value)
       valueElement.setAttribute(KdbxAttributeNames.protected, "True")
       val oldValue = valueElement.content.firstOrNull()
       if (oldValue === value) {
@@ -115,7 +114,7 @@ internal class KdbxEntry(internal val entryElement: Element, private val databas
 
   @Synchronized
   private fun touch() {
-    entryElement.getOrCreate("Times").getOrCreate("LastModificationTime").text = formattedNow()
+    entryElement.getOrCreateChild("Times").getOrCreateChild("LastModificationTime").text = formattedNow()
     database.isDirty = true
   }
 }

@@ -3,14 +3,18 @@
 package org.jetbrains.kotlin.idea.search.declarationsSearch
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.util.PsiSuperMethodUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
@@ -33,6 +37,7 @@ import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
+@ApiStatus.Internal
 fun forEachKotlinOverride(
     ktClass: KtClass,
     members: List<KtNamedDeclaration>,
@@ -46,22 +51,43 @@ fun forEachKotlinOverride(
     if (baseDescriptors.isEmpty()) return true
 
     HierarchySearchRequest(ktClass, scope, searchDeeply).searchInheritors().forEach(Processor { psiClass ->
-        val inheritor = psiClass.unwrapped as? KtClassOrObject ?: return@Processor true
-        runReadAction {
-            val inheritorDescriptor = inheritor.unsafeResolveToDescriptor() as ClassDescriptor
-            val substitutor = getTypeSubstitution(baseClassDescriptor.defaultType, inheritorDescriptor.defaultType)?.toSubstitutor()
-                ?: return@runReadAction true
+        when (val inheritor = psiClass.unwrapped) {
+            is KtClassOrObject ->
+                runReadAction {
+                    val inheritorDescriptor = inheritor.unsafeResolveToDescriptor() as ClassDescriptor
+                    val substitutor = getTypeSubstitution(baseClassDescriptor.defaultType, inheritorDescriptor.defaultType)?.toSubstitutor()
+                        ?: return@runReadAction true
 
-            baseDescriptors.asSequence()
-                .mapNotNull { baseDescriptor ->
-                    val superMember = baseDescriptor.source.getPsi()!!
-                    val overridingDescriptor =
-                        (baseDescriptor.substitute(substitutor) as? CallableMemberDescriptor)?.let { memberDescriptor ->
-                            inheritorDescriptor.findCallableMemberBySignature(memberDescriptor)
+                    baseDescriptors.asSequence()
+                        .mapNotNull { baseDescriptor ->
+                            val superMember = baseDescriptor.source.getPsi()!!
+                            val overridingDescriptor =
+                                (baseDescriptor.substitute(substitutor) as? CallableMemberDescriptor)?.let { memberDescriptor ->
+                                    inheritorDescriptor.findCallableMemberBySignature(memberDescriptor)
+                                }
+                            overridingDescriptor?.source?.getPsi()?.let { overridingMember -> superMember to overridingMember }
                         }
-                    overridingDescriptor?.source?.getPsi()?.let { overridingMember -> superMember to overridingMember }
+                        .all { (superMember, overridingMember) ->
+                            processor(superMember, overridingMember)
+                        }
                 }
-                .all { (superMember, overridingMember) -> processor(superMember, overridingMember) }
+            is PsiClass -> {
+                for (baseDescriptor in baseDescriptors) {
+                    val superMember = baseDescriptor.source.getPsi() ?: continue
+                    val lightMethods = superMember.toLightMethods()
+                    val name = baseDescriptor.name.asString()
+                    val methodsByName = inheritor.findMethodsByName(name, false)
+                    for (method in methodsByName) {
+                        for (lightMethod in lightMethods) {
+                            if (PsiSuperMethodUtil.isSuperMethod(method, lightMethod)) {
+                                if (!processor(superMember, method)) return@Processor false
+                            }
+                        }
+                    }
+                }
+                true
+            }
+            else -> true
         }
     })
 
@@ -97,12 +123,13 @@ fun PsiMethod.forEachOverridingMethod(
     }
 }
 
-fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
+fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement> {
     return when (val element = method.unwrapped) {
-        is PsiMethod -> element.findDeepestSuperMethods().toList()
+        is PsiMethod -> (if (deepest) element.findDeepestSuperMethods() else element.findSuperMethods()).toList()
         is KtCallableDeclaration -> {
             val descriptor = element.resolveToDescriptorIfAny() as? CallableMemberDescriptor ?: return emptyList()
-            descriptor.getDeepestSuperDeclarations(false).mapNotNull {
+            val superDeclarations = if (deepest) descriptor.getDeepestSuperDeclarations(false) else descriptor.getDirectlyOverriddenDeclarations()
+            superDeclarations.mapNotNull {
                 it.source.getPsi() ?: DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, it)
             }
         }
@@ -139,21 +166,3 @@ private fun findSuperDescriptors(descriptor: DeclarationDescriptor): Sequence<De
 
     return superDescriptors.asSequence().filterNot { it is ClassDescriptor && KotlinBuiltIns.isAny(it) }
 }
-
-fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
-    return when (val element = method.unwrapped) {
-        is PsiMethod -> element.findSuperMethods().toList()
-        is KtCallableDeclaration -> {
-            val descriptor = element.resolveToDescriptorIfAny() as? CallableMemberDescriptor ?: return emptyList()
-            descriptor.getDirectlyOverriddenDeclarations().mapNotNull {
-                it.source.getPsi() ?: DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, it)
-            }
-        }
-
-        else -> emptyList()
-    }
-}
-
-
-
-

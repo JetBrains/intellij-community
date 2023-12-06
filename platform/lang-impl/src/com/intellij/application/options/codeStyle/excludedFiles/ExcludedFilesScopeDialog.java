@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.formatting.fileSet.FileSetDescriptor;
@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
+public final class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   private ExcludedFilesScopeForm myForm;
   private DefaultComboBoxModel<String> myScopeListModel;
 
@@ -24,8 +24,8 @@ public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   /**
    * @param availableScopes editable scopes, means that names are @NlsSafe
    */
-  protected ExcludedFilesScopeDialog(@NotNull Project project,
-                                     @NotNull List<? extends NamedScope> availableScopes) {
+  ExcludedFilesScopeDialog(@NotNull Project project,
+                           @NotNull List<? extends NamedScope> availableScopes) {
     super(project);
     myAvailableScopes = availableScopes;
     setTitle(LangBundle.message("dialog.title.add.scope"));

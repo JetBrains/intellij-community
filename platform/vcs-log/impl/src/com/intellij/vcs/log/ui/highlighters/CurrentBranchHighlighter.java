@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.highlighters;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
@@ -13,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static com.intellij.ui.JBColor.namedColor;
 
@@ -31,8 +31,8 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     if (isSelected) return VcsCommitStyle.DEFAULT;
     if (!myIsHighlighted.getOrDefault(details.getRoot(), false)) return VcsCommitStyle.DEFAULT;
 
-    Condition<Integer> condition = myLogData.getContainingBranchesGetter().getContainedInCurrentBranchCondition(details.getRoot());
-    if (condition.value(commitId)) {
+    Predicate<Integer> condition = myLogData.getContainingBranchesGetter().getContainedInCurrentBranchCondition(details.getRoot());
+    if (condition.test(commitId)) {
       return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
     }
     return VcsCommitStyle.DEFAULT;

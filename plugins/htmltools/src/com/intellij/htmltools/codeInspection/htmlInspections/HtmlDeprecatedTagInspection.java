@@ -28,10 +28,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.documentation.mdn.MdnDocumentationKt.getHtmlMdnDocumentation;
+import static com.intellij.webSymbols.WebSymbolApiStatus.isDeprecatedOrObsolete;
 
-public class HtmlDeprecatedTagInspection extends HtmlLocalInspectionTool {
-  @NonNls private static final Set<String> ourHtmlReplaceableTags;
-  @NonNls private static final Set<String> ourCssReplaceableTags;
+public final class HtmlDeprecatedTagInspection extends HtmlLocalInspectionTool {
+  private static final @NonNls Set<String> ourHtmlReplaceableTags;
+  private static final @NonNls Set<String> ourCssReplaceableTags;
 
   static {
     ourHtmlReplaceableTags = new HashSet<>();
@@ -60,7 +61,7 @@ public class HtmlDeprecatedTagInspection extends HtmlLocalInspectionTool {
   }
 
   @Override
-  protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkTag(final @NotNull XmlTag tag, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     if (HtmlUtil.isHtmlTagContainingFile(tag)) {
       XmlElementDescriptor descriptor = tag.getDescriptor();
       if (!(descriptor instanceof HtmlElementDescriptorImpl) || !((HtmlElementDescriptorImpl)descriptor).isDeprecated()) {
@@ -91,7 +92,7 @@ public class HtmlDeprecatedTagInspection extends HtmlLocalInspectionTool {
       }
 
       MdnSymbolDocumentation documentation = getHtmlMdnDocumentation(tag, null);
-      boolean deprecatedInHtml5 = documentation != null && documentation.isDeprecated();
+      boolean deprecatedInHtml5 = documentation != null && isDeprecatedOrObsolete(documentation.getApiStatus());
       boolean inHtml5 = HtmlUtil.isHtml5Context(tag);
       if (!inHtml5 && !deprecatedInHtml5 && !HtmlUtil.hasNonHtml5Doctype(tag)) {
         fixes = ArrayUtil.append(fixes, new SwitchToHtml5Action());

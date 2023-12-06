@@ -1,36 +1,68 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.NonNls
 
 open class ReportProblemAction : DumbAwareAction() {
-  companion object {
+
+  object Handler {
     fun submit(project: Project?) {
-      val appInfo = ApplicationInfoEx.getInstanceEx()
-      ProgressManager.getInstance().run(object : Task.Backgroundable(project,
-                                                                     IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
-        override fun run(indicator: ProgressIndicator) {
-          SendFeedbackAction.submit(project, appInfo.youtrackUrl, SendFeedbackAction.getDescription(project))
+      if (project == null) return
+      service<ReportFeedbackService>().coroutineScope.launch {
+        withBackgroundProgress(project, IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
+          val url = ExternalProductResourceUrls.getInstance().bugReportUrl
+          if (url != null) {
+            val description = getIssueDescription(project)
+            BrowserUtil.browse(url(description).toExternalForm(), project)
+          }
         }
-      })
+      }
     }
-  }
-  override fun update(e: AnActionEvent) {
-    val info = ApplicationInfoEx.getInstanceEx()
-    e.presentation.isEnabledAndVisible = info != null && info.youtrackUrl != null
+
+    private suspend fun getIssueDescription(project: Project?): String {
+      val uploadLogs = withContext(Dispatchers.EDT) {
+        confirmLogsUploading(project)
+      }
+      val description = SendFeedbackAction.getDescription(project)
+      val sb: @NonNls StringBuilder = StringBuilder("\n\n")
+      sb.append(description)
+      if (uploadLogs) {
+        val url = ReportFeedbackService.getInstance().collectLogs(project)
+        if (!url.isNullOrEmpty()) {
+          sb.append("\nAuto-uploaded logs URL (accessible to JetBrains employees only): ${url}")
+        }
+      }
+      return sb.toString()
+    }
+
+    private fun confirmLogsUploading(project: Project?): Boolean = MessageDialogBuilder.yesNo(
+      IdeBundle.message("reportProblemAction.upload.logs.title"),
+      IdeBundle.message("reportProblemAction.upload.logs.message", ApplicationNamesInfo.getInstance().fullProductName)
+    ).ask(project)
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = ExternalProductResourceUrls.getInstance().bugReportUrl != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    submit(e.project)
+    Handler.submit(e.project)
   }
 }

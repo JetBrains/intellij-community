@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.editor.Document;
@@ -21,13 +21,12 @@ final class ChangedRangesUtil {
   private ChangedRangesUtil() {
   }
 
-  @NotNull
-  static List<TextRange> processChangedRanges(@NotNull PsiFile file,
-                                              @NotNull ChangedRangesInfo changedRangesInfo) {
+  static @NotNull List<TextRange> processChangedRanges(@NotNull PsiFile file,
+                                                       @NotNull ChangedRangesInfo changedRangesInfo) {
     Document document = file.getViewProvider().getDocument();
     List<TextRange> result = new ArrayList<>();
     if (document != null) {
-      FormattingRangesExtender extender = new FormattingRangesExtender(document, file);
+      LineFormattingRangesExtender extender = new LineFormattingRangesExtender(document);
       for (TextRange range : changedRangesInfo.allChangedRanges) {
         List<TextRange> extended = extender.getExtendedRanges(Collections.singletonList(range));
         result.addAll(extended);
@@ -39,8 +38,7 @@ final class ChangedRangesUtil {
     return optimizedChangedRanges(result);
   }
 
-  @NotNull
-  private static List<TextRange> optimizedChangedRanges(@NotNull List<TextRange> allChangedRanges) {
+  private static @NotNull List<TextRange> optimizedChangedRanges(@NotNull List<TextRange> allChangedRanges) {
     if (allChangedRanges.isEmpty()) return allChangedRanges;
     List<TextRange> sorted = ContainerUtil.sorted(allChangedRanges, Segment.BY_START_OFFSET_THEN_END_OFFSET);
 

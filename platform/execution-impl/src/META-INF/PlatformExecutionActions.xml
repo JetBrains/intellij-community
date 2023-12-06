@@ -55,28 +55,37 @@
 
     <group id="RunTab.TopToolbar.More" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup"/>
 
+    <!-- New UI Run Widget -->
+    <group id="AdditionalRunningOptionsGroup" popup="false"/>
+    <group id="AdditionalRunningOptionsGroupMain" popup="false"/>
+
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
-    <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
+    <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" bundle="messages.LangBundle" key="run.toolbar.configurable.title"/>
     <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
     <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"
                     serviceImplementation="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"/>
     <customizableActionGroupProvider implementation="com.intellij.execution.ui.RunTabCustomizableActionGroupProvider"/>
     <postStartupActivity implementation="com.intellij.execution.ui.ExecutionReasonableHistoryManager" order="last"/>
-    <registryKey key="ide.experimental.ui.redesigned.run.popup"
-                 description="Use redesigned run popup"
-                 defaultValue="TRUE"
-                 restartRequired="false"/>
-    <registryKey key="ide.experimental.ui.contrast.run.widget"
-                 description="Use contrast run widget in the new UI"
-                 defaultValue="FALSE"
-                 restartRequired="false"/>
 
     <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint interface="com.intellij.execution.DisplayDescriptorChooser"
+                    dynamic="true"
+                    qualifiedName="com.intellij.execution.displayDescriptorChooser" />
+
+    <!-- Multi-Launch: Extension points -->
+    <extensionPoint qualifiedName="com.intellij.multilaunch.task.definition"
+                    interface="com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.multilaunch.condition.template"
+                    interface="com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate"
+                    dynamic="true" />
+  </extensionPoints>
   <projectListeners>
     <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"
               topic="com.intellij.execution.ExecutionListener"/>

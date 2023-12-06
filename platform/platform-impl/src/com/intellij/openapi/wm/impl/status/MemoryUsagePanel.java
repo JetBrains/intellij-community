@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -62,7 +63,21 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
     return component instanceof MemoryUsagePanelImpl;
   }
 
-private class MemoryUsagePanelImpl extends TextPanel {
+  // These three methods are purely for internal ABI compatibility, as some plugins use them.
+
+  public void addMouseListener(MouseListener l) {
+    myComponent.get().addMouseListener(l);
+  }
+
+  public MouseListener[] getMouseListeners() {
+    return myComponent.get().getMouseListeners();
+  }
+
+  public void removeMouseListener(MouseListener l) {
+    myComponent.get().removeMouseListener(l);
+  }
+
+private final class MemoryUsagePanelImpl extends TextPanel {
 
   private final Color myUsedColor = JBColor.namedColor("MemoryIndicator.usedBackground", new JBColor(Gray._185, Gray._110));
   private final Color myUnusedColor = JBColor.namedColor("MemoryIndicator.allocatedBackground", new JBColor(Gray._215, Gray._90));

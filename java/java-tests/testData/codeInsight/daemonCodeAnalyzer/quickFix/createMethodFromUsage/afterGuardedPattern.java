@@ -2,7 +2,7 @@
 class Main {
     void foo(Object obj) {
         switch (obj) {
-            case String s && isEmpty(s) -> {}
+            case String s when isEmpty(s) -> {}
             default -> {}
         }
     }

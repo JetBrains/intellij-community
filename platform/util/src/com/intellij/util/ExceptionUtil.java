@@ -1,18 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public final class ExceptionUtil extends ExceptionUtilRt {
@@ -57,7 +56,7 @@ public final class ExceptionUtil extends ExceptionUtilRt {
   public static @NotNull Throwable makeStackTraceRelative(@NotNull Throwable th, @NotNull Throwable relativeTo) {
     StackTraceElement[] trace = th.getStackTrace();
     StackTraceElement[] rootTrace = relativeTo.getStackTrace();
-    for (int i=0, len = Math.min(trace.length, rootTrace.length); i < len; i++) {
+    for (int i = 0, len = Math.min(trace.length, rootTrace.length); i < len; i++) {
       if (trace[trace.length - i - 1].equals(rootTrace[rootTrace.length - i - 1])) continue;
       int newDepth = trace.length - i;
       th.setStackTrace(Arrays.copyOf(trace, newDepth));
@@ -92,7 +91,7 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     return result;
   }
 
-  public static @Nullable String getMessage(@NotNull Throwable e) {
+  public static @NlsSafe @Nullable String getMessage(@NotNull Throwable e) {
     String result = e.getMessage();
     String exceptionPattern = "Exception: ";
     String errorPattern = "Error: ";
@@ -117,6 +116,7 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     return result;
   }
 
+  /** Throw t if it is unchecked (RuntimeException or Error), do nothing otherwise */
   public static void rethrowUnchecked(@Nullable Throwable t) throws RuntimeException, Error {
     ExceptionUtilRt.rethrowUnchecked(t);
   }
@@ -126,12 +126,21 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     ExceptionUtilRt.rethrowAll(t);
   }
 
+  /**
+   * Throw throwable as-is, if it is unchecked (RuntimeException or Error), otherwise throw it
+   * wrapped in RuntimeException.
+   * BEWARE: null argument is still thrown as RuntimeException(cause: null)
+   */
   @Contract("_->fail")
   public static void rethrow(@Nullable Throwable throwable) throws RuntimeException, Error {
     rethrowUnchecked(throwable);
     throw new RuntimeException(throwable);
   }
 
+  /**
+   * Same as {@link #rethrow(Throwable)}, but t=null is just ignored, instead of throwing a
+   * RuntimeException(cause: null)
+   */
   @Contract("!null->fail")
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) throws RuntimeException, Error {
     if (t != null) {
@@ -151,6 +160,72 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     }
     catch (Exception e) {
       return e;
+    }
+  }
+
+  /**
+   * Runs _all_ the tasks passed in, collect the exceptions risen, and rethrow them.
+   * <p/>
+   * How exceptions are rethrown depends on their type: we try to throw exception of
+   * type E. If the _first_ exception caught is of type E -> we rethrow it, otherwise
+   * -> we use exampleSupplier to generate an exception to throw. All other exceptions
+   * are added to main exception's 'suppressed' list.
+   * <p/>
+   * More formally:
+   * If the first exception caught is lof type E -> the first exception is rethrown with
+   * the following exceptions, if any, attached as 'suppressed'.
+   * If the first exception caught is of type E -> the example exception is thrown, with
+   * the first and following exceptions attached as 'suppressed'.
+   */
+  @SafeVarargs
+  public static <E extends Exception>
+  void runAllAndRethrowAllExceptions(@NotNull Class<? extends E> exampleClass,
+                                     @NotNull Supplier<E> exampleSupplier,
+                                     ThrowableRunnable<? extends Exception> @NotNull ... potentiallyFailingTasks) throws E {
+    Function<List<? extends Throwable>, E> combiner = exceptions -> {
+      E exception = null;
+      for (Throwable e : exceptions) {
+        if (exception == null) {
+          if (exampleClass.isAssignableFrom(e.getClass())) {
+            //noinspection unchecked
+            exception = (E)e;
+          }
+          else {
+            exception = exampleSupplier.get();
+            exception.addSuppressed(e);
+          }
+        }
+        else {
+          exception.addSuppressed(e);
+        }
+      }
+      return exception;
+    };
+
+    runAllAndRethrowAllExceptions(combiner, potentiallyFailingTasks);
+  }
+
+
+  @SafeVarargs
+  @ApiStatus.Internal
+  public static <E extends Exception>
+  void runAllAndRethrowAllExceptions(@NotNull Function<List<? extends Throwable>, E> exceptionsCombiner,
+                                     ThrowableRunnable<? extends Exception> @NotNull ... potentiallyFailingTasks) throws E {
+    List<Throwable> exceptions = null;
+    for (ThrowableRunnable<? extends Exception> potentiallyFailingTask : potentiallyFailingTasks) {
+      try {
+        potentiallyFailingTask.run();
+      }
+      catch (Throwable e) {
+        if (exceptions == null) {
+          exceptions = new ArrayList<>();
+        }
+        exceptions.add(e);
+      }
+    }
+
+    if (exceptions != null) {
+      throw exceptionsCombiner.apply(exceptions);
     }
   }
 }

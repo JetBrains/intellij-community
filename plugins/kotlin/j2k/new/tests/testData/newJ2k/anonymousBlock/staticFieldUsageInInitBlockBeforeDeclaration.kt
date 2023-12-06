@@ -1,5 +1,5 @@
 internal object Test {
-    var a = 0
+    var a: Int = 0
 
     init {
         println("0")
@@ -10,19 +10,21 @@ internal object Test {
         println("1")
     }
 
-    var c = 0
+    var c: Int = 0
 
     init {
         println("2")
         println(c)
     }
 
-    var b = 0
+
+    var b: Int = 0
 
     init {
         println("3")
         b = 2
     }
+
 
     init {
         println("4")

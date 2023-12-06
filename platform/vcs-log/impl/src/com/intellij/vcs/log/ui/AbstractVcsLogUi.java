@@ -4,17 +4,16 @@ package com.intellij.vcs.log.ui;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.PairFunction;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -24,6 +23,7 @@ import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.CompoundVisibleGraph;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -80,9 +80,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   }
 
   public void setVisiblePack(@NotNull VisiblePack pack) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
-    boolean permGraphChanged = myVisiblePack.getDataPack() != pack.getDataPack();
+    boolean permGraphChanged =
+      pack.getVisibleGraph() instanceof CompoundVisibleGraph
+      || myVisiblePack.getDataPack() != pack.getDataPack();
 
     myVisiblePack = pack;
 
@@ -181,7 +183,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
                                           boolean commitExists,
                                           @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
     String message = getCommitNotFoundMessage(commitId, commitExists);
-    VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING);
+    VcsNotifier.getInstance(myProject).notifyWarning(VcsLogNotificationIdsHolder.COMMIT_NOT_FOUND, "", message);
   }
 
   protected static @NotNull @Nls <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
@@ -204,18 +206,18 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
 
   @Override
   public void addLogListener(@NotNull VcsLogListener listener) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myLogListeners.add(listener);
   }
 
   @Override
   public void removeLogListener(@NotNull VcsLogListener listener) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myLogListeners.remove(listener);
   }
 
   protected void fireFilterChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     for (VcsLogListener listener : myLogListeners) {
       listener.onChange(visiblePack, refresh);
@@ -232,7 +234,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.debug("Disposing VcsLogUi '" + myId + "'");
     myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();

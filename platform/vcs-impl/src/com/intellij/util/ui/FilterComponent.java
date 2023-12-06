@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
-import com.intellij.ui.dsl.gridLayout.Gaps;
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.vcs.log.VcsLogBundle;
 import org.jetbrains.annotations.Nls;
@@ -41,7 +41,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
   protected FilterComponent(@NotNull Supplier<@NlsContexts.Label @NotNull String> displayName) {
     super(null);
     myDisplayName = displayName;
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY);
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY);
   }
 
   public JComponent initUi() {

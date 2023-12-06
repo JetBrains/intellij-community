@@ -765,7 +765,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
                            f(A, 1)
                            f(B, 2)
-                           f(<warning descr="Expected type 'Type[T]', got 'Type[C]' instead">C</warning>, 3)""")
+                           f(<warning descr="Expected type 'Type[T ≤: Union[A, B]]', got 'Type[C]' instead">C</warning>, 3)""")
     );
   }
 
@@ -779,7 +779,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            F = TypeVar('F', bound=int)
 
                            def deco(func: F) -> F:
-                               return <warning descr="Expected type 'F', got 'str' instead">""</warning>""")
+                               return <warning descr="Expected type 'F ≤: int', got 'str' instead">""</warning>""")
     );
   }
 
@@ -1300,7 +1300,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            def accepts_anything(x: str) -> None:
                                pass
 
-                           func(<warning descr="Expected type '(Any) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead">accepts_anything</warning>)
+                           func(<warning descr="Expected type '(T ≤: int) -> None', got '(x: str) -> None' instead">accepts_anything</warning>)
                            """)
     );
   }
@@ -1491,7 +1491,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                }
                            }</warning>
                            """
-                         )
+      )
     );
   }
 
@@ -1514,6 +1514,47 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            class GroupWithOtherKey(Group, Generic[T1]):
                                some_other_key: T1
                            group: GroupWithOtherKey[str, int] = {"key": <warning descr="Expected type 'str', got 'int' instead">1</warning>, "group": [], "some_other_key": <warning descr="Expected type 'int', got 'str' instead">''</warning>}""")
+    );
+  }
+
+  // PY-27551
+  public void testDunderInitAnnotatedWithNoReturn() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import NoReturn
+                                                      
+                           class Test:
+                               def __init__(self) -> NoReturn:
+                                   raise Exception()
+                                                      
+                           """)
+    );
+  }
+
+  // PY-61883
+  public void testTypeParameterBoundWithPEP695Syntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> doTestByText("""
+                           def foo[T: str](p: T):
+                               return p
+                                                      
+                           expr = foo(<warning descr="Expected type 'T ≤: str', got 'int' instead">42</warning>)
+                           """)
+    );
+  }
+
+  // PY-61883
+  public void testTypeParameterConstraintsWithPEP695Syntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> doTestByText("""
+                           def foo[T: (str, bool)](p: T):
+                               return p
+                                                      
+                           expr = foo(<warning descr="Expected type 'T ≤: str | bool', got 'int' instead">42</warning>)
+                           """)
     );
   }
 }

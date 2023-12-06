@@ -2,7 +2,7 @@
 package com.jetbrains.env
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
@@ -20,7 +20,7 @@ class PySdkAdditionalDataSaveRestoreTest {
 
   @Test
   fun test() = invokeAndWaitIfNeeded {
-    val sdk = ProjectJdkImpl("mySdk", PythonSdkType.getInstance(), "path", "ver")
+    val sdk = ProjectJdkTable.getInstance().createSdk("mySdk", PythonSdkType.getInstance())
     val data = sdk.getOrCreateAdditionalData()
     val uuid = data.uuid
     val elem = Element("root")

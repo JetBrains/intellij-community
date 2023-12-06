@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinFacetUtils")
+
 package org.jetbrains.kotlin.idea.facet
 
 import com.intellij.openapi.application.runReadAction
@@ -16,7 +17,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
+import org.jetbrains.kotlin.compilerRunner.toArgumentStrings
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.platforms.IdePlatformKindProjectStructure
 import org.jetbrains.kotlin.idea.compiler.configuration.*
@@ -26,13 +27,14 @@ import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.isKotlinNative
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import kotlin.reflect.KProperty1
 
 var Module.hasExternalSdkConfiguration: Boolean by NotNullableUserDataProperty(Key.create("HAS_EXTERNAL_SDK_CONFIGURATION"), false)
 
-fun KotlinFacetSettings.initializeIfNeeded(
+fun IKotlinFacetSettings.initializeIfNeeded(
     module: Module,
     rootModel: ModuleRootModel?,
     platform: TargetPlatform? = null, // if null, detect by module dependencies
@@ -52,15 +54,23 @@ fun KotlinFacetSettings.initializeIfNeeded(
     if (compilerArguments == null) {
         val targetPlatform = platform ?: getDefaultTargetPlatform(module, rootModel)
 
-        compilerArguments = targetPlatform.createArguments {
-            val argumentsForPlatform = IdePlatformKindProjectStructure.getInstance(project)
-                .getCompilerArguments(targetPlatform.idePlatformKind)
+        val argumentsForPlatform = IdePlatformKindProjectStructure.getInstance(project)
+            .getCompilerArguments(targetPlatform.idePlatformKind)
 
+        compilerArguments = targetPlatform.createArguments {
             if (argumentsForPlatform != null) {
-                mergeBeans(argumentsForPlatform, this)
+                when {
+                    argumentsForPlatform is K2JVMCompilerArguments &&
+                            this is K2JVMCompilerArguments -> copyK2JVMCompilerArguments(argumentsForPlatform, this)
+
+                    argumentsForPlatform is K2JSCompilerArguments &&
+                            this is K2JSCompilerArguments -> copyK2JSCompilerArguments(argumentsForPlatform, this)
+
+                    else -> error("Unsupported copy arguments combination: ${argumentsForPlatform.javaClass.name} and ${javaClass.name}")
+                }
             }
 
-            mergeBeans(commonArguments, this)
+            copyCommonCompilerArguments(commonArguments, this)
         }
 
         this.targetPlatform = targetPlatform
@@ -68,27 +78,38 @@ fun KotlinFacetSettings.initializeIfNeeded(
 
     if (shouldInferLanguageLevel) {
         languageLevel = (if (useProjectSettings) LanguageVersion.fromVersionString(commonArguments.languageVersion) else null)
-            ?: getDefaultLanguageLevel(module, compilerVersion, coerceRuntimeLibraryVersionToReleased = compilerVersion == null)
+            ?: getDefaultLanguageLevel(compilerVersion, coerceRuntimeLibraryVersionToReleased = compilerVersion == null)
     }
 
     if (shouldInferAPILevel) {
-        apiLevel = if (useProjectSettings) {
-            LanguageVersion.fromVersionString(commonArguments.apiVersion) ?: languageLevel
-        } else {
-            val maximumValue = getLibraryVersion(
-                module,
-                rootModel,
-                this.targetPlatform?.idePlatformKind,
-                coerceRuntimeLibraryVersionToReleased = compilerVersion == null
-            )
-            languageLevel?.coerceAtMostVersion(maximumValue)
+        apiLevel = when {
+            useProjectSettings -> {
+                LanguageVersion.fromVersionString(commonArguments.apiVersion) ?: languageLevel
+            }
+            /*
+            The below 'getLibraryVersion' call tries to figure out apiVersion by inspecting the stdlib available in dependencies.
+            This is not supported for K/N (07.2023), we therefore just fallback to the compiler version
+             */
+            targetPlatform?.idePlatformKind?.isKotlinNative == true && compilerVersion != null -> {
+                languageLevel?.coerceAtMostVersion(compilerVersion)
+            }
+
+            else -> run apiLevel@{
+                val maximumValue = getKotlinStdlibVersionOrNull(
+                    module,
+                    rootModel,
+                    this.targetPlatform?.idePlatformKind,
+                    coerceRuntimeLibraryVersionToReleased = compilerVersion == null
+                ) ?: compilerVersion ?: getDefaultVersion()
+                languageLevel?.coerceAtMostVersion(maximumValue)
+            }
         }
     }
 }
 
 private fun getDefaultTargetPlatform(module: Module, rootModel: ModuleRootModel?): TargetPlatform {
     val platformKind = IdePlatformKind.ALL_KINDS.firstOrNull {
-        getRuntimeLibraryVersions(module, rootModel, it).isNotEmpty()
+        getRuntimeLibraryVersions(module, rootModel, it).any()
     } ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind
     if (platformKind == JvmIdePlatformKind) {
         var jvmTarget = Kotlin2JvmCompilerArgumentsHolder.getInstance(module.project).settings.jvmTarget?.let { JvmTarget.fromString(it) }
@@ -104,7 +125,7 @@ private fun getDefaultTargetPlatform(module: Module, rootModel: ModuleRootModel?
     return platformKind.defaultPlatform
 }
 
-private fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): LanguageVersion {
+fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): LanguageVersion {
     fun isUpToNextMinor(major: Int, minor: Int, patch: Int): Boolean {
         return version.kotlinVersion.isAtLeast(major, minor, patch) && !version.kotlinVersion.isAtLeast(major, minor + 1)
     }
@@ -119,37 +140,40 @@ private fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): Lang
     return this.coerceAtMost(languageVersion)
 }
 
-fun parseCompilerArgumentsToFacet(
+fun parseCompilerArgumentsToFacetSettings(
     arguments: List<String>,
-    defaultArguments: List<String>,
-    kotlinFacet: KotlinFacet,
+    kotlinFacetSettings: IKotlinFacetSettings,
     modelsProvider: IdeModifiableModelsProvider?
 ) {
-    val compilerArgumentsClass = kotlinFacet.configuration.settings.compilerArguments?.javaClass ?: return
-    val currentArgumentsBean = compilerArgumentsClass.newInstance()
-    val defaultArgumentsBean = compilerArgumentsClass.newInstance()
-    val defaultArgumentWithDefaults = substituteDefaults(defaultArguments, defaultArgumentsBean)
+    val compilerArgumentsClass = kotlinFacetSettings.compilerArguments?.javaClass ?: return
+    val currentArgumentsBean = compilerArgumentsClass.getDeclaredConstructor().newInstance()
     val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
-    parseCommandLineArguments(defaultArgumentWithDefaults, defaultArgumentsBean)
     parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
-    applyCompilerArgumentsToFacet(currentArgumentsBean, defaultArgumentsBean, kotlinFacet, modelsProvider)
+    applyCompilerArgumentsToFacetSettings(currentArgumentsBean, kotlinFacetSettings, null, modelsProvider)
 }
 
-fun applyCompilerArgumentsToFacet(
-    arguments: CommonCompilerArguments,
-    defaultArguments: CommonCompilerArguments?,
+fun parseCompilerArgumentsToFacet(
+    arguments: List<String>,
     kotlinFacet: KotlinFacet,
+    modelsProvider: IdeModifiableModelsProvider?,
+) {
+    val compilerArgumentsClass = kotlinFacet.configuration.settings.compilerArguments?.javaClass ?: return
+    val currentArgumentsBean = compilerArgumentsClass.getDeclaredConstructor().newInstance()
+    val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
+    parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
+    applyCompilerArgumentsToFacetSettings(currentArgumentsBean, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
+}
+
+fun applyCompilerArgumentsToFacetSettings(
+    arguments: CommonCompilerArguments,
+    kotlinFacetSettings: IKotlinFacetSettings,
+    module: Module?,
     modelsProvider: IdeModifiableModelsProvider?
 ) {
-    with(kotlinFacet.configuration.settings) {
+    with(kotlinFacetSettings) {
         val compilerArguments = this.compilerArguments ?: return
-
-        val defaultCompilerArguments = defaultArguments?.let { copyBean(it) } ?: compilerArguments::class.java.newInstance()
-        defaultCompilerArguments.convertPathsToSystemIndependent()
-
         val oldPluginOptions = compilerArguments.pluginOptions
-
-        val emptyArgs = compilerArguments::class.java.newInstance()
+        val emptyArgs = compilerArguments::class.java.getDeclaredConstructor().newInstance()
 
         // Ad-hoc work-around for android compilations: middle source sets could be actualized up to
         // Android target, meanwhile compiler arguments are of type K2Metadata
@@ -164,27 +188,69 @@ fun applyCompilerArgumentsToFacet(
         // Retain only fields exposed (and not explicitly ignored) in facet configuration editor.
         // The rest is combined into string and stored in CompilerSettings.additionalArguments
 
-        if (modelsProvider != null)
-            kotlinFacet.module.configureSdkIfPossible(compilerArguments, modelsProvider)
+        if (modelsProvider != null && module != null)
+            module.configureSdkIfPossible(compilerArguments, modelsProvider)
 
-        val primaryFields = compilerArguments.primaryFields
-        val ignoredFields = compilerArguments.ignoredFields
+        val allFacetFields = compilerArguments.kotlinFacetFields.allFields
+
+        val ignoredFields = hashSetOf(
+            K2JVMCompilerArguments::noJdk.name,
+            K2JVMCompilerArguments::jdkHome.name,
+        )
+
+        val ignoredAsAdditionalArguments = ignoredFields + hashSetOf(
+            CommonCompilerArguments::fragments.name,
+            CommonCompilerArguments::fragmentRefines.name,
+            CommonCompilerArguments::fragmentSources.name,
+
+            K2JVMCompilerArguments::moduleName.name,
+            K2JVMCompilerArguments::noReflect.name,
+            K2JVMCompilerArguments::noStdlib.name,
+            K2JVMCompilerArguments::allowNoSourceFiles.name,
+            K2JVMCompilerArguments::jvmDefault.name,
+            K2JVMCompilerArguments::reportPerf.name,
+            K2JVMCompilerArguments::noKotlinNothingValueException.name,
+            K2JVMCompilerArguments::noOptimizedCallableReferences,
+
+            K2NativeCompilerArguments::enableAssertions.name,
+            K2NativeCompilerArguments::debug.name,
+            K2NativeCompilerArguments::outputName.name,
+            K2NativeCompilerArguments::linkerArguments.name,
+            K2NativeCompilerArguments::singleLinkerArguments.name,
+            K2NativeCompilerArguments::produce.name,
+            K2NativeCompilerArguments::target.name,
+            K2NativeCompilerArguments::shortModuleName.name,
+            K2NativeCompilerArguments::noendorsedlibs.name,
+
+            // These fields can be removed after they will be removed in Kotlin master
+            K2JSCompilerArguments::metaInfo.name,
+            K2JSCompilerArguments::outputFile.name,
+            K2JSCompilerArguments::outputDir.name,
+            K2JSCompilerArguments::moduleName.name,
+        )
 
         fun exposeAsAdditionalArgument(property: KProperty1<CommonCompilerArguments, Any?>) =
-            property.name !in primaryFields && property.get(compilerArguments) != property.get(defaultCompilerArguments)
+            /* Handled by facet directly */
+            property.name !in allFacetFields &&
+                    /* Explicitly  not shown to users as 'additional arguments' */
+                    property.name !in ignoredAsAdditionalArguments &&
+                    /* Default value from compiler arguments is used */
+                    property.get(compilerArguments) != property.get(emptyArgs)
 
-        val additionalArgumentsString = with(compilerArguments::class.java.newInstance()) {
-            copyFieldsSatisfying(compilerArguments, this) { exposeAsAdditionalArgument(it) && it.name !in ignoredFields }
-            ArgumentUtils.convertArgumentsToStringListNoDefaults(this).joinToString(separator = " ") {
+
+        val additionalArgumentsString = with(compilerArguments::class.java.getDeclaredConstructor().newInstance()) {
+            copyFieldsSatisfying(compilerArguments, this) { exposeAsAdditionalArgument(it) }
+            toArgumentStrings().joinToString(separator = " ") {
                 if (StringUtil.containsWhitespaces(it) || it.startsWith('"')) {
                     StringUtil.wrapWithDoubleQuote(StringUtil.escapeQuotes(it))
                 } else it
             }
         }
-        compilerSettings?.additionalArguments =
-            if (additionalArgumentsString.isNotEmpty()) additionalArgumentsString else CompilerSettings.DEFAULT_ADDITIONAL_ARGUMENTS
 
-        with(compilerArguments::class.java.newInstance()) {
+        compilerSettings?.additionalArguments = additionalArgumentsString.ifEmpty { CompilerSettings.DEFAULT_ADDITIONAL_ARGUMENTS }
+
+        /* 'Reset' ignored fields and arguments that will be exposed as 'additional arguments' to the user */
+        with(compilerArguments::class.java.getDeclaredConstructor().newInstance()) {
             copyFieldsSatisfying(this, compilerArguments) { exposeAsAdditionalArgument(it) || it.name in ignoredFields }
         }
 

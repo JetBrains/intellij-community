@@ -1,19 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A PSI element representing a file.
  * <p/>
- * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/psi_files.html">PSI Files</a>
+ * Please see <a href="https://plugins.jetbrains.com/docs/intellij/psi-files.html">PSI Files</a>
  * for high-level overview.
  *
  * @see com.intellij.openapi.actionSystem.LangDataKeys#PSI_FILE
@@ -29,8 +31,12 @@ public interface PsiFile extends PsiFileSystemItem {
 
   /**
    * Returns the virtual file corresponding to the PSI file.
+   * <p>
+   * If you want to get a non-null virtual file consider using {@link FileViewProvider#getVirtualFile()}<br>
+   * ({@code psiFile.getViewProvider().getVirtualFile()})
    *
-   * @return the virtual file, or {@code null} if the file exists only in memory.
+   * @return the virtual file, or {@code null} if the file exists only in memory
+   * @see FileViewProvider#getVirtualFile()
    */
   @Override
   VirtualFile getVirtualFile();
@@ -86,6 +92,25 @@ public interface PsiFile extends PsiFileSystemItem {
   @NotNull
   FileViewProvider getViewProvider();
 
+  /**
+   * Returns the document corresponding to this file. Note that the document content could be out of sync
+   * with the {@link PsiFile}. It's a caller responsibility to synchronize the document and the {@code PsiFile}
+   * using {@link PsiDocumentManager#commitDocument(Document)} and 
+   * {@link PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)}.
+   * 
+   * @return the document corresponding to this file
+   * @throws UnsupportedOperationException if the document is not associated with this type of file
+   * (for example, if the file is binary).
+   */
+  @ApiStatus.NonExtendable
+  default @NotNull Document getFileDocument() {
+    Document document = getViewProvider().getDocument();
+    if (document == null) {
+      throw new UnsupportedOperationException("No document is available for file " + getClass());
+    }
+    return document;
+  }
+
   @Override
   FileASTNode getNode();
 
@@ -106,8 +131,7 @@ public interface PsiFile extends PsiFileSystemItem {
   /**
    * @return the element type of the file node, but possibly in an efficient node that doesn't instantiate the node.
    */
-  @Nullable
-  default IFileElementType getFileElementType() {
+  default @Nullable IFileElementType getFileElementType() {
     return ObjectUtils.tryCast(PsiUtilCore.getElementType(getNode()), IFileElementType.class);
   }
 }

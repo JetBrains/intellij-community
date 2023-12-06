@@ -8,3 +8,4 @@ object Util {
     fun f1(o: Any, p: Int): Any = o
     fun f2(o: Any): Any = o
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix

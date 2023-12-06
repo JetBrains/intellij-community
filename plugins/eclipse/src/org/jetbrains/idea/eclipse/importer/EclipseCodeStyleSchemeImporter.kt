@@ -2,6 +2,7 @@
 package org.jetbrains.idea.eclipse.importer
 
 import com.intellij.application.options.ImportSchemeChooserDialog
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeFactory
 import com.intellij.openapi.options.SchemeImportException
 import com.intellij.openapi.options.SchemeImporter
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.component2
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import org.jetbrains.idea.eclipse.EclipseBundle
 import org.jetbrains.idea.eclipse.codeStyleMapping.buildEclipseCodeStyleMappingTo
 import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileReader.OptionHandler
 import java.io.IOException
@@ -31,11 +33,23 @@ class EclipseCodeStyleSchemeImporter : SchemeImporter<CodeStyleScheme>, EclipseX
   }
 
   companion object {
+    val LOG = logger<EclipseCodeStyleSchemeImporter>()
+
     @JvmStatic
     @Throws(SchemeImportException::class)
     fun importCodeStyleSettings(external: Map<String, String>, codeStyleSettings: CodeStyleSettings) {
       val mapping = buildEclipseCodeStyleMappingTo(codeStyleSettings)
-      mapping.importSettings(external)
+      val importProblems = mapping.importSettings(external)
+      if (importProblems.isNotEmpty()) {
+        importProblems.forEach { LOG.info("Unexpected value in Eclipse XML profile: $it") }
+        throw SchemeImportException(
+          EclipseBundle.message("eclipse.xml.profile.import.unexpected.values", importProblems.size)
+          + "\n" + importProblems.joinToString(
+            separator = "\n",
+            limit = 5,
+            truncated = EclipseBundle.message("eclipse.xml.profile.import.unexpected.values.and.x.more", importProblems.size - 5))
+          + "\n" + EclipseBundle.message("eclipse.xml.profile.import.unexpected.values.see.logs"))
+      }
     }
 
     @JvmStatic
@@ -47,7 +61,7 @@ class EclipseCodeStyleSchemeImporter : SchemeImporter<CodeStyleScheme>, EclipseX
 
     @JvmStatic
     @Throws(SchemeImportException::class)
-    fun VirtualFile.readEclipseXmlProfileNames() : Array<String> {
+    fun VirtualFile.readEclipseXmlProfileNames(): Array<String> {
       val names: MutableSet<String> = mutableSetOf()
       this.readEclipseXmlProfile(object : OptionHandler {
         override fun handleOption(eclipseKey: String, value: String) {}

@@ -2,32 +2,29 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElementKt;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UParameter;
 
 import java.util.List;
 
-public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspectionBase {
+@VisibleForTesting
+public final class UnsafeReturnStatementVisitorInspection extends DevKitUastInspectionBase {
 
   private static final @NonNls String BASE_WALKING_VISITOR_NAME = JavaRecursiveElementWalkingVisitor.class.getName();
   private static final @NonNls String BASE_VISITOR_NAME = JavaRecursiveElementVisitor.class.getName();
@@ -42,7 +39,7 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspection
   @Override
   protected boolean isAllowed(@NotNull ProblemsHolder holder) {
     return super.isAllowed(holder) &&
-           JavaPsiFacade.getInstance(holder.getProject()).findClass(BASE_VISITOR_NAME, holder.getFile().getResolveScope()) != null;
+           DevKitInspectionUtil.isClassAvailable(holder, BASE_VISITOR_NAME);
   }
 
   @Override
@@ -54,14 +51,11 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspection
         final boolean visitLambdaMissing = !hasMethod(uClass, "visitLambdaExpression", PsiLambdaExpression.class.getName());
         final boolean visitClassMissing = !hasMethod(uClass, "visitClass", PsiClass.class.getName());
         if (visitLambdaMissing || visitClassMissing) {
-          PsiElement classNameAnchor = UElementKt.getSourcePsiElement(uClass.getUastAnchor());
-          if (classNameAnchor != null) {
-            final ProblemsHolder holder = createProblemsHolder(uClass, manager, isOnTheFly);
-            holder.registerProblem(classNameAnchor,
-                                   DevKitBundle.message("inspections.unsafe.return.message"),
-                                   createFixes(uClass, visitLambdaMissing, visitClassMissing));
-            return holder.getResultsArray();
-          }
+          final ProblemsHolder holder = createProblemsHolder(uClass, manager, isOnTheFly);
+          ProblemHolderUtilKt.registerUProblem(holder, uClass,
+                                               DevKitBundle.message("inspections.unsafe.return.message"),
+                                               createFixes(uClass, visitLambdaMissing, visitClassMissing));
+          return holder.getResultsArray();
         }
       }
     }

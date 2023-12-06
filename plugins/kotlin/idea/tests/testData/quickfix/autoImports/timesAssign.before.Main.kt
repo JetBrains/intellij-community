@@ -9,4 +9,4 @@ fun f(h: H) {
     h <caret>*= 3
 }
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

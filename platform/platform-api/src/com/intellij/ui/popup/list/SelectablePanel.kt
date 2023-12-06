@@ -19,6 +19,8 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
   }
 
   enum class SelectionArcCorners(internal val sides: Set<Side>) {
+    NONE(emptySet()),
+
     TOP_LEFT(setOf(Side.TOP, Side.LEFT)),
     TOP_RIGHT(setOf(Side.TOP, Side.RIGHT)),
     BOTTOM_LEFT(setOf(Side.BOTTOM, Side.LEFT)),
@@ -46,11 +48,8 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
     @JvmStatic
     @JvmOverloads
     fun wrap(component: Component, background: Color? = null): SelectablePanel {
-      val result = object : SelectablePanel(background) {
-        override fun getAccessibleContext(): AccessibleContext {
-          return component.accessibleContext
-        }
-      }
+      val result = SelectablePanel(background)
+      result.accessibleContextProvider = component
       result.layout = BorderLayout()
       result.add(component, BorderLayout.CENTER)
       return result
@@ -58,7 +57,7 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
   }
 
   var selectionArc: Int = 0
-  var selectionArcCorners = SelectionArcCorners.ALL
+  var selectionArcCorners: SelectionArcCorners = SelectionArcCorners.ALL
   var selectionColor: Color? = null
     set(value) {
       if (field != value) {
@@ -73,10 +72,20 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
       invalidate()
     }
 
+  @ApiStatus.Experimental
+  var accessibleContextProvider: Component? = null
+
   init {
     if (background != null) {
       this.background = background
     }
+  }
+
+  override fun getAccessibleContext(): AccessibleContext {
+    accessibleContextProvider?.let {
+      return it.accessibleContext
+    }
+    return super.getAccessibleContext()
   }
 
   override fun getPreferredSize(): Dimension {

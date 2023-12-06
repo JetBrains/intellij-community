@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -43,26 +42,23 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
+@SuppressWarnings("DialogTitleCapitalization")
 public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.StatusCallback {
   private static final Logger LOG = Logger.getInstance(PlaybackDebugger.class);
 
   private static final Color ERROR_COLOR = JBColor.RED;
+  @SuppressWarnings("UseJBColor")
   private static final Color MESSAGE_COLOR = Color.BLACK;
   private static final Color CODE_COLOR = PlatformColors.BLUE;
   private static final Color TEST_COLOR = JBColor.GREEN.darker();
 
   private JPanel myComponent;
 
-  private PlaybackRunner myRunner;
+  private PlaybackRunner runner;
 
   private JEditorPane myLog;
-
-  private final JTextField myScriptsPath = new JTextField();
-
-  private static final String EXT = "ijs";
-
-  private static final String DOT_EXT = "." + EXT;
 
   private final JTextField myCurrentScript = new JTextField();
 
@@ -132,7 +128,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
       }
     });
     if (pathToFile() != null) {
-      loadFrom(pathToFile());
+      loadFrom(Objects.requireNonNull(pathToFile()));
     }
 
     final Splitter script2Log = new Splitter(true);
@@ -154,7 +150,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     LocalFileSystem.getInstance().addVirtualFileListener(myVfsListener);
   }
 
-  private class SaveAction extends AnAction {
+  private final class SaveAction extends AnAction {
   SaveAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.save"),
           IdeBundle.messagePointer("action.AnAction.description.save"), AllIcons.Actions.MenuSaveall);
@@ -179,6 +175,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
           myCurrentScript.setText(myState.currentScript);
         }
         else {
+          //noinspection DialogTitleCapitalization
           Messages.showErrorDialog(LangBundle.message("dialog.message.file.to.save.selected"),
                                    LangBundle.message("dialog.title.cannot.save.script"));
           return;
@@ -188,7 +185,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  private static class ScriptFileChooserDescriptor extends FileChooserDescriptor {
+  private static final class ScriptFileChooserDescriptor extends FileChooserDescriptor {
     ScriptFileChooserDescriptor() {
       super(true, false, false, false, false, false);
       putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
@@ -203,8 +200,9 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  private class SetScriptFileAction extends AnAction {
+  private final class SetScriptFileAction extends AnAction {
   SetScriptFileAction() {
+    //noinspection DialogTitleCapitalization
     super(IdeBundle.messagePointer("action.AnAction.text.set.script.file"),
           IdeBundle.messagePointer("action.AnAction.description.set.script.file"), AllIcons.Actions.MenuOpen);
   }
@@ -220,7 +218,8 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  private class NewScriptAction extends AnAction {
+  @SuppressWarnings("DialogTitleCapitalization")
+  private final class NewScriptAction extends AnAction {
   NewScriptAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.new.script"),
           IdeBundle.messagePointer("action.AnAction.description.new.script"), AllIcons.Actions.New);
@@ -240,7 +239,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
 
   @Nullable
   private VirtualFile pathToFile() {
-    if (myState.currentScript.length() == 0) {
+    if (myState.currentScript.isEmpty()) {
       return null;
     }
     return LocalFileSystem.getInstance().findFileByPath(myState.currentScript);
@@ -251,6 +250,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
       VirtualFile file = pathToFile();
       final String toWrite = myCodeEditor.getText();
       String text = toWrite != null ? toWrite : "";
+      assert file != null;
       VfsUtil.saveText(file, text);
       myChanged = false;
     }
@@ -265,15 +265,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     myChanged = false;
   }
 
-  private File getScriptsFile() {
-    final String text = myScriptsPath.getText();
-    if (text == null) return null;
-
-    final File file = new File(text);
-    return file.exists() ? file : null;
-  }
-
-  private class StopAction extends AnAction {
+  private final class StopAction extends AnAction {
   StopAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.stop"),
           IdeBundle.messagePointer("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
@@ -281,7 +273,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(myRunner != null);
+      e.getPresentation().setEnabled(runner != null);
     }
 
     @Override
@@ -291,14 +283,14 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (myRunner != null) {
-        myRunner.stop();
-        SwingUtilities.invokeLater(() -> myRunner = null);
+      if (runner != null) {
+        runner.stop();
+        SwingUtilities.invokeLater(() -> runner = null);
       }
     }
   }
 
-  private class ActivateFrameAndRun extends AnAction {
+  private final class ActivateFrameAndRun extends AnAction {
   ActivateFrameAndRun() {
     super(IdeBundle.messagePointer("action.AnAction.text.activate.frame.and.run"),
           IdeBundle.messagePointer("action.AnAction.description.activate.frame.and.run"), AllIcons.Nodes.Deploy);
@@ -311,7 +303,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(myRunner == null);
+      e.getPresentation().setEnabled(runner == null);
     }
 
     @Override
@@ -320,7 +312,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  private class RunOnFameActivationAction extends AnAction {
+  private final class RunOnFameActivationAction extends AnAction {
   RunOnFameActivationAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.run.on.frame.activation"),
           IdeBundle.messagePointer("action.AnAction.description.run.on.frame.activation"), AllIcons.RunConfigurations.TestState.Run);
@@ -328,7 +320,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(myRunner == null);
+      e.getPresentation().setEnabled(runner == null);
     }
 
     @Override
@@ -343,7 +335,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private void activateAndRun() {
-    assert myRunner == null;
+    assert runner == null;
 
     myLog.setText(null);
 
@@ -356,9 +348,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(c, true));
     }
 
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> startWhenFrameActive());
-
   }
 
   private static JFrame getFrame() {
@@ -373,7 +363,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private void runOnFrame() {
-    assert myRunner == null;
+    assert runner == null;
 
     startWhenFrameActive();
   }
@@ -382,12 +372,12 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     myLog.setText(null);
 
     addInfo("Waiting for IDE frame activation", -1, MESSAGE_COLOR, 0);
-    myRunner = new PlaybackRunner(myCodeEditor.getText(), this, false, true, false);
+    runner = new PlaybackRunner(myCodeEditor.getText(), this, false, true, false);
     VirtualFile file = pathToFile();
     if (file != null) {
       VirtualFile scriptDir = file.getParent();
       if (scriptDir != null) {
-        myRunner.setScriptDir(new File(scriptDir.getPresentableUrl()));
+        runner.setScriptDir(new File(scriptDir.getPresentableUrl()));
       }
     }
 
@@ -397,11 +387,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
         new WaitFor(60000) {
           @Override
           protected boolean condition() {
-            return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame || myRunner == null;
+            return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame || runner == null;
           }
         };
 
-        if (myRunner == null) {
+        if (runner == null) {
           message(null, "Script stopped", -1, Type.message, true);
           return;
         }
@@ -411,16 +401,15 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
         TimeoutUtil.sleep(1000);
 
 
-        if (myRunner == null) {
+        if (runner == null) {
           message(null, "Script stopped", -1, Type.message, true);
           return;
         }
 
-        final PlaybackRunner runner = myRunner;
-
-        myRunner.run().doWhenProcessed(() -> {
-          if (runner == myRunner) {
-            SwingUtilities.invokeLater(() -> myRunner = null);
+        PlaybackRunner runner = PlaybackDebugger.this.runner;
+        PlaybackDebugger.this.runner.run().whenComplete((o, throwable) -> {
+          if (runner == PlaybackDebugger.this.runner) {
+            SwingUtilities.invokeLater(() -> PlaybackDebugger.this.runner = null);
           }
         });
       }
@@ -471,7 +460,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     storages = @Storage(value = "playbackDebugger.xml", roamingType = RoamingType.PER_OS),
     category = SettingsCategory.TOOLS
   )
-  public static class PlaybackDebuggerState implements PersistentStateComponent<PlaybackDebuggerState> {
+  public static final class PlaybackDebuggerState implements PersistentStateComponent<PlaybackDebuggerState> {
     @Attribute
     public String currentScript = "";
 
@@ -495,10 +484,9 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private void addInfo(String text, int line, Color fg, int depth) {
-    if (text == null || text.length() == 0) return;
+    if (text == null || text.isEmpty()) return;
 
-    String inset = StringUtil.repeat("   ", depth);
-
+    String inset = "   ".repeat(depth);
     Document doc = myLog.getDocument();
     SimpleAttributeSet attr = new SimpleAttributeSet();
     StyleConstants.setFontFamily(attr, UIManager.getFont("Label.font").getFontName());

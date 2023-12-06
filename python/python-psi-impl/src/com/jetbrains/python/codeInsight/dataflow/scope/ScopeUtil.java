@@ -113,24 +113,32 @@ public final class ScopeUtil {
     if (decoratorAncestor != null && !isAncestor(decoratorAncestor, firstOwner, true)) {
       return nextOwner;
     }
-    // References in default values or in annotations of parameters are resolved outside of the function (if the lambda is not inside the
-    // default value)
+    /*
+     * References in default values are resolved outside of the function (if the lambda is not inside the default value).
+     * Annotations of parameters are resolved outside of the function if the function doesn't have type parameters list
+     */
     final PyNamedParameter parameterAncestor = getParentOfType(element, PyNamedParameter.class);
     if (parameterAncestor != null && !isAncestor(parameterAncestor, firstOwner, true)) {
       final PyExpression defaultValue = parameterAncestor.getDefaultValue();
       final PyAnnotation annotation = parameterAncestor.getAnnotation();
-      if (isAncestor(defaultValue, element, false) || isAncestor(annotation, element, false)) {
-        return nextOwner;
+      if (firstOwner instanceof PyFunction function) {
+        PyTypeParameterList typeParameterList = function.getTypeParameterList();
+        if ((typeParameterList == null && isAncestor(annotation, element, false))
+            || (isAncestor(defaultValue, element, false))) {
+          return nextOwner;
+        }
       }
     }
-    // Superclasses are resolved outside of the class
+    // Superclasses are resolved outside of the class if the class doesn't have type parameters list
     final PyClass containingClass = getParentOfType(element, PyClass.class);
-    if (containingClass != null && isAncestor(containingClass.getSuperClassExpressionList(), element, false)) {
+    if (containingClass != null && isAncestor(containingClass.getSuperClassExpressionList(), element, false) && containingClass.getTypeParameterList() == null) {
       return nextOwner;
     }
-    // Function return annotations and type comments are resolved outside of the function
+    // Function return annotations and type comments are resolved outside of the function if the function doesn't have type parameters list
     if (firstOwner instanceof PyFunction function) {
-      if (isAncestor(function.getAnnotation(), element, false) || isAncestor(function.getTypeComment(), element, false)) {
+      PyTypeParameterList typeParameterList = function.getTypeParameterList();
+      if ((typeParameterList == null && isAncestor(function.getAnnotation(), element, false)
+           || isAncestor(function.getTypeComment(), element, false))) {
         return nextOwner;
       }
     }

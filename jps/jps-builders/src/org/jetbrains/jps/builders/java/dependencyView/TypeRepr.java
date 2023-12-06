@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -31,7 +31,7 @@ public final class TypeRepr {
     void save(DataOutput out);
   }
 
-  public static class PrimitiveType implements AbstractType {
+  public static final class PrimitiveType implements AbstractType {
     public final int type;
 
     @Override
@@ -84,7 +84,7 @@ public final class TypeRepr {
     }
   }
 
-  public static class ArrayType implements AbstractType {
+  public static final class ArrayType implements AbstractType {
     public final AbstractType elementType;
 
     public AbstractType getDeepElementType() {
@@ -138,7 +138,7 @@ public final class TypeRepr {
     }
   }
 
-  public static class ClassType implements AbstractType {
+  public static final class ClassType implements AbstractType {
     public static final ClassType[] EMPTY_ARRAY = new ClassType[0];
     public final int className;
 
@@ -194,9 +194,7 @@ public final class TypeRepr {
     }
   }
 
-  public static Collection<AbstractType> createClassType(final DependencyContext context,
-                                                         final String[] args,
-                                                         final Collection<AbstractType> acc) {
+  static <T extends Collection<ClassType>> T createClassType(final DependencyContext context, final String[] args, final T acc) {
     if (args != null) {
       for (String a : args) {
         acc.add(createClassType(context, context.get(a)));
@@ -206,18 +204,19 @@ public final class TypeRepr {
     return acc;
   }
 
-  public static ClassType createClassType(final DependencyContext context, final int s) {
-    return (ClassType)context.getType(new ClassType(s));
+  static ClassType createClassType(final DependencyContext context, final int s) {
+    return context.getType(new ClassType(s));
   }
 
-  public static AbstractType getType(final DependencyContext context, final int descr) {
+  static AbstractType getType(final DependencyContext context, final int descr) {
     return getType(InternedString.create(context, descr));
   }
-  public static AbstractType getType(final DependencyContext context, final String descr) {
+  
+  static AbstractType getType(final DependencyContext context, final String descr) {
     return getType(InternedString.create(context, descr));
   }
 
-  public static AbstractType getType(InternedString descr) {
+  static AbstractType getType(InternedString descr) {
     final DependencyContext context = descr.getContext();
     final Type t = Type.getType(descr.asString());
 
@@ -233,11 +232,11 @@ public final class TypeRepr {
     }
   }
 
-  public static AbstractType getType(final DependencyContext context, final Type t) {
+  static AbstractType getType(final DependencyContext context, final Type t) {
     return getType(context, t.getDescriptor());
   }
 
-  public static AbstractType[] getType(final DependencyContext context, final Type[] t) {
+  static AbstractType[] getType(final DependencyContext context, final Type[] t) {
     if(t.length == 0) return AbstractType.EMPTY_TYPE_ARRAY;
     final AbstractType[] r = new AbstractType[t.length];
 
@@ -248,34 +247,15 @@ public final class TypeRepr {
     return r;
   }
 
-  public static DataExternalizer<ClassType> classTypeExternalizer(final DependencyContext context) {
-    final DataExternalizer<AbstractType> delegate = externalizer(context);
-    return new DataExternalizer<ClassType>() {
+  static <T extends AbstractType> DataExternalizer<T> externalizer(final DependencyContext context) {
+    return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull DataOutput out, ClassType value) throws IOException {
-        delegate.save(out, value);
-      }
-
-      @Override
-      public ClassType read(@NotNull DataInput in) throws IOException {
-        final AbstractType read = delegate.read(in);
-        if (read instanceof ClassType) {
-          return (ClassType)read;
-        }
-        throw new IOException("Expected: "+ ClassType.class.getName() + "; Actual: " + (read == null? "null" : read.getClass().getName()));
-      }
-    };
-  }
-
-  public static DataExternalizer<AbstractType> externalizer(final DependencyContext context) {
-    return new DataExternalizer<AbstractType>() {
-      @Override
-      public void save(@NotNull final DataOutput out, final AbstractType value) throws IOException {
+      public void save(final @NotNull DataOutput out, final T value) {
         value.save(out);
       }
 
       @Override
-      public AbstractType read(@NotNull final DataInput in) throws IOException {
+      public T read(final @NotNull DataInput in) throws IOException {
         AbstractType elementType;
         int level = 0;
 
@@ -304,7 +284,12 @@ public final class TypeRepr {
           elementType = context.getType(new ArrayType(elementType));
         }
 
-        return elementType;
+        try {
+          return (T)elementType;
+        }
+        catch (ClassCastException e) {
+          throw new IOException("Expected a different data type: " + e.getMessage(), e);
+        }
       }
     };
   }

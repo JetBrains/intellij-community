@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.collaboration.util.resolveRelative
-import org.jetbrains.plugins.gitlab.project.GitLabProjectPath
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 import java.net.URLEncoder
 

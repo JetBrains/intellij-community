@@ -22,8 +22,9 @@ import com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateExpressionCondi
 import com.jetbrains.python.psi.PyClass
 import javax.swing.JComponent
 
-class PyPostfixTemplateEditor(provider: PyPostfixTemplateProvider) : PostfixTemplateEditorBase<PyPostfixTemplateExpressionCondition?>(
-  provider, true) {
+class PyPostfixTemplateEditor(provider: PyPostfixTemplateProvider) :
+  PostfixTemplateEditorBase<PyPostfixTemplateExpressionCondition?>(provider, true) {
+
   override fun fillConditions(group: DefaultActionGroup) {
     for (condition in PyPostfixTemplateExpressionCondition.PUBLIC_CONDITIONS.values) {
       group.add(AddConditionAction(condition))
@@ -71,7 +72,7 @@ class PyPostfixTemplateEditor(provider: PyPostfixTemplateProvider) : PostfixTemp
           if (!popup.closedCorrectly) {
             return
           }
-          val chosenElement = popup.chosenElement!!
+          val chosenElement = popup.chosenElement
           if (chosenElement is PyClass) {
             val condition = create(chosenElement)
             if (condition != null) {

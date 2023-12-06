@@ -2,15 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.google.common.graph.Graph
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.progress.ProgressIndicator
-import git4idea.changes.GitParsedChangesBundle
+import git4idea.changes.GitBranchComparisonResult
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.concurrent.CompletableFuture
 
-interface GHPRChangesService {
+interface GHPRChangesService: Disposable {
 
   @CalledInAny
   fun fetch(progressIndicator: ProgressIndicator, refspec: String): CompletableFuture<Unit>
@@ -37,5 +38,5 @@ interface GHPRChangesService {
                             mergeBaseRef: String,
                             headRef: String,
                             commits: Pair<GHCommit, Graph<GHCommit>>)
-    : CompletableFuture<GitParsedChangesBundle>
+    : CompletableFuture<GitBranchComparisonResult>
 }

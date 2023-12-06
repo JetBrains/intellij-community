@@ -7,14 +7,14 @@ Reports usages of the following elements that can be safely removed because the 
   <li><code>/** noinspection */</code> JavaDoc comment</li>
 </ul>
 <p>Example:</p>
-<pre><code>
-<b><font color="#000080">public class</font></b> C {
+<pre><code lang="java">
+public class C {
  // symbol is already private,
  // but annotation is still around
   @SuppressWarnings({"WeakerAccess"})
- <b><font color="#000080">private boolean</font></b> CONST = <b><font color="#000080">true</font></b>;
- <b><font color="#000080">void</font></b> f() {
-    CONST = <b><font color="#000080">false</font></b>;
+  private boolean CONST = true;
+  void f() {
+    CONST = false;
   }
 }
 </code></pre>

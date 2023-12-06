@@ -128,7 +128,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   @Property(surroundWithTag = false)
   @XCollection(elementName = "MESSAGE")
   public List<String> myLastCommitMessages = new ArrayList<>();
-  public String LAST_COMMIT_MESSAGE = null;
+  public @Nullable String LAST_COMMIT_MESSAGE = null;
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
   public boolean PRESELECT_EXISTING_CHANGELIST = false;
 
@@ -163,7 +163,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   public void saveCommitMessage(final String comment) {
     LAST_COMMIT_MESSAGE = comment;
-    if (comment == null || comment.length() == 0) return;
+    if (comment == null || comment.isBlank()) return;
 
     updateRecentMessages(recentMessages -> {
       recentMessages.remove(comment);
@@ -227,22 +227,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   /**
    * @deprecated Always start progress in background
    */
-  @Deprecated(forRemoval = true)
-  public PerformInBackgroundOption getCommitOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
-  /**
-   * @deprecated Always start progress in background
-   */
-  @Deprecated(forRemoval = true)
-  public PerformInBackgroundOption getEditOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
-  /**
-   * @deprecated Always start progress in background
-   */
   @Deprecated
   public PerformInBackgroundOption getCheckoutOption() {
     return PerformInBackgroundOption.ALWAYS_BACKGROUND;
@@ -253,14 +237,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
    */
   @Deprecated
   public PerformInBackgroundOption getAddRemoveOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
-  /**
-   * @deprecated Always start progress in background
-   */
-  @Deprecated(forRemoval = true)
-  public PerformInBackgroundOption getRollbackOption() {
     return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 

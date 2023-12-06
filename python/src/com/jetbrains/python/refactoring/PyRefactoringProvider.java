@@ -20,9 +20,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureHandler;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHandler;
 import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHandler;
@@ -85,7 +87,7 @@ public class PyRefactoringProvider extends RefactoringSupportProvider {
 
   @Override
   public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement element, @Nullable PsiElement context) {
-    return true;
+    return !PyUtil.isInitOrNewMethod(element);
   }
 
   @Nullable

@@ -13,6 +13,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -155,7 +156,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
 
             val lambdaParameterList = lambda.getOrCreateParameterList()
             if (lambda.valueParameters.isEmpty() && lambdaDescriptor.valueParameters.isNotEmpty()) {
-                val parameterToAdd = psiFactory.createLambdaParameterList("it").parameters.first()
+                val parameterToAdd = psiFactory.createLambdaParameterList(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier).parameters.first()
                 lambdaParameterList.addParameterBefore(parameterToAdd, lambdaParameterList.parameters.firstOrNull())
             }
 
@@ -332,7 +333,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
         element.getConversionData()?.let { Converter(it, editor, element.project).run() }
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
+    object Factory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction = ConvertFunctionTypeReceiverToParameterIntention()
     }
 }

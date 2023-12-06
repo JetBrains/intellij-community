@@ -67,10 +67,10 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
 
   private fun newNotification(sdkName: String, oldVersion: JdkItem = mockZipOld, newVersion: JdkItem = mockZipNew): JdkUpdateNotification? {
     val oldSdk = ProjectJdkTable.getInstance().findJdk(sdkName) ?: ProjectJdkTable.getInstance().createSdk(sdkName, JavaSdk.getInstance())
-    oldSdk.sdkModificator.apply {
-      homePath = tempDir.newDirectory().toString()
-      versionString = oldVersion.versionString
-    }.commitChanges()
+    val sdkModificator = oldSdk.sdkModificator
+    sdkModificator.homePath = tempDir.newDirectory().toString()
+    sdkModificator.versionString = oldVersion.versionString
+    ApplicationManager.getApplication().runWriteAction { sdkModificator.commitChanges() }
 
     if (oldSdk is Disposable) {
       Disposer.register(testRootDisposable, oldSdk)
@@ -181,7 +181,7 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
     Assert.assertEquals(1, listOurActions().size)
 
     runWriteAction {
-      old1.jdk.sdkModificator.also { it.homePath = it.homePath + "-123" }.commitChanges()
+      old1.jdk.sdkModificator.also { it.homePath += "-123" }.commitChanges()
     }
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
 

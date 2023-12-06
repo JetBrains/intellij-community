@@ -11,3 +11,4 @@ fun test() {
         bar(<caret>foo(n))
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

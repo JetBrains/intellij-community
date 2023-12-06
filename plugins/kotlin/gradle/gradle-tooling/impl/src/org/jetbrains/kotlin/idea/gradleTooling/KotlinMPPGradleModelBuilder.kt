@@ -6,7 +6,6 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO_KOTLIN_NATIVE_HOME
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinTargetBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.buildIdeaKotlinDependenciesContainer
@@ -48,9 +47,10 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 importReflection = KotlinMultiplatformImportReflection(kotlinExtensionReflection),
                 kotlinExtensionReflection = kotlinExtensionReflection,
                 kotlinGradlePluginVersion = kotlinExtensionReflection.parseKotlinGradlePluginVersion(),
-                compilerArgumentsCacheMapper = CompilerArgumentsCacheMapperImpl(),
                 modelBuilderContext = builderContext ?: return null
             )
+
+            val dependenciesContainer = buildIdeaKotlinDependenciesContainer(importingContext, kotlinExtensionReflection)
 
             val sourceSets = buildSourceSets(importingContext)
             importingContext.initializeSourceSets(sourceSets)
@@ -64,19 +64,17 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             val coroutinesState = getCoroutinesState(project)
             val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: NO_KOTLIN_NATIVE_HOME
 
-            val dependenciesContainer = buildIdeaKotlinDependenciesContainer(importingContext, kotlinExtensionReflection)
 
             val model = KotlinMPPGradleModelImpl(
                 sourceSetsByName = filterOrphanSourceSets(importingContext),
                 targets = importingContext.targets,
                 extraFeatures = ExtraFeaturesImpl(
                     coroutinesState = coroutinesState,
-                    isHMPPEnabled = importingContext.getProperty(IS_HMPP_ENABLED),
+                    isHMPPEnabled = importingContext.isHMPPEnabled,
                 ),
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
                 dependencies = dependenciesContainer,
-                cacheAware = importingContext.compilerArgumentsCacheMapper,
                 kotlinGradlePluginVersion = importingContext.kotlinGradlePluginVersion
             ).apply {
                 kotlinImportingDiagnostics += collectDiagnostics(importingContext)
@@ -126,7 +124,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
     private fun computeSourceSetsDeferredInfo(importingContext: MultiplatformModelImportingContext) {
         for (sourceSet in importingContext.sourceSets) {
-            if (!importingContext.getProperty(IS_HMPP_ENABLED)) {
+            if (!importingContext.isHMPPEnabled) {
                 val name = sourceSet.name
                 if (name == COMMON_MAIN_SOURCE_SET_NAME) {
                     sourceSet.isTestComponent = false
@@ -162,7 +160,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             return
         }
 
-        if (!getProperty(IS_HMPP_ENABLED) && !isDeclaredSourceSet(sourceSet)) {
+        if (!isHMPPEnabled && !isDeclaredSourceSet(sourceSet)) {
             // intermediate source sets should be common if HMPP is disabled
             sourceSet.actualPlatforms.pushPlatforms(KotlinPlatform.COMMON)
             return
@@ -175,7 +173,6 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
     }
 
     private fun MultiplatformModelImportingContext.shouldCoerceToCommon(sourceSet: KotlinSourceSetImpl): Boolean {
-        val isHMPPEnabled = getProperty(IS_HMPP_ENABLED)
         val coerceRootSourceSetsToCommon = getProperty(COERCE_ROOT_SOURCE_SETS_TO_COMMON)
         val isRoot = sourceSet.name == COMMON_MAIN_SOURCE_SET_NAME || sourceSet.name == COMMON_TEST_SOURCE_SET_NAME
 

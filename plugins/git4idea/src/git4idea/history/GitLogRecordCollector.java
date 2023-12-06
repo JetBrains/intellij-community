@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import git4idea.commands.Git;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static git4idea.history.GitLogParser.GitLogOption.HASH;
 import static git4idea.history.GitLogParser.GitLogOption.TREE;
@@ -26,12 +26,12 @@ import static git4idea.history.GitLogParser.GitLogOption.TREE;
 abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer<R> {
   private static final Logger LOG = Logger.getInstance(GitLogRecordCollector.class);
 
-  @NotNull protected final Project myProject;
-  @NotNull protected final VirtualFile myRoot;
-  @NotNull protected final Consumer<? super List<R>> myConsumer;
+  protected final @NotNull Project myProject;
+  protected final @NotNull VirtualFile myRoot;
+  protected final @NotNull Consumer<? super List<R>> myConsumer;
 
-  @NotNull private final MultiMap<String, R> myHashToRecord = MultiMap.createLinked();
-  @Nullable private String myLastHash = null;
+  private final @NotNull MultiMap<String, R> myHashToRecord = MultiMap.createLinked();
+  private @Nullable String myLastHash = null;
 
   protected GitLogRecordCollector(@NotNull Project project,
                                   @NotNull VirtualFile root,
@@ -42,7 +42,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
   }
 
   @Override
-  public void consume(@NotNull R record) {
+  public void accept(@NotNull R record) {
     if (!record.getHash().equals(myLastHash)) {
       processCollectedRecords();
     }
@@ -67,7 +67,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
         processIncompleteRecord(hash, records);
       }
       else {
-        myConsumer.consume(records);
+        myConsumer.accept(records);
       }
     }
     myHashToRecord.clear();
@@ -103,15 +103,14 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
     for (String hash : incompleteRecords.keySet()) {
       ArrayList<R> records = new ArrayList<>(Objects.requireNonNull(incompleteRecords.get(hash)));
       fillWithEmptyRecords(records, hashToTreeMap);
-      consumer.consume(records);
+      consumer.accept(records);
     }
   }
 
   /*
    * This method calculates tree hashes for commits and their parents.
    */
-  @NotNull
-  private static <R extends GitLogRecord> Map<String, String> getHashToTreeMap(@NotNull Project project,
+  private static @NotNull <R extends GitLogRecord> Map<String, String> getHashToTreeMap(@NotNull Project project,
                                                                                @NotNull VirtualFile root,
                                                                                @NotNull Collection<? extends R> records)
     throws VcsException {

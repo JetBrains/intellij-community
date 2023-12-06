@@ -46,6 +46,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
+import kotlin.Unit;
 import one.util.streamex.StreamEx;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
@@ -359,6 +360,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       catch (Exception e) {
         LOG.warn(e);
       }
+      return Unit.INSTANCE;
     });
 
     final List<BaseInjection> defaultInjections = new ArrayList<>();
@@ -762,14 +764,9 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
       if (myDfaOption != DfaOption.RESOLVE) {
         switch (myDfaOption) {
-          case OFF:
-            break;
-          case ASSIGNMENTS:
-            JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
-            break;
-          case DFA:
-            JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
-            break;
+          case OFF -> {}
+          case ASSIGNMENTS -> JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
+          case DFA -> JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
         }
       }
     }

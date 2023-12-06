@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.CommonBundle;
@@ -32,7 +32,7 @@ import java.nio.file.StandardOpenOption;
 
 import static java.util.Objects.requireNonNullElse;
 
-class NewFileAction extends FileChooserAction implements LightEditCompatible {
+final class NewFileAction extends FileChooserAction implements LightEditCompatible {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
     var visible = e.getData(FileChooserKeys.NEW_FILE_TYPE) != null;
@@ -62,7 +62,7 @@ class NewFileAction extends FileChooserAction implements LightEditCompatible {
 
       var progress = UIBundle.message("file.chooser.creating.progress", name);
       try {
-        var newFile = ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(e.getProject(), panel.getComponent(), progress, true) {
+        panel.reloadAfter(() -> ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(e.getProject(), panel.getComponent(), progress, true) {
           @Override
           protected Path compute(@NotNull ProgressIndicator indicator) throws IOException {
             indicator.setIndeterminate(true);
@@ -72,8 +72,7 @@ class NewFileAction extends FileChooserAction implements LightEditCompatible {
             Files.writeString(newFile, content, StandardOpenOption.CREATE_NEW);
             return newFile;
           }
-        });
-        panel.reload(newFile);
+        }));
         break;
       }
       catch (IOException | InvalidPathException ex) {

@@ -2,6 +2,9 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -18,6 +21,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +68,7 @@ public final class CommonMoveClassesOrPackagesUtil {
     return directory;
   }
 
+  @RequiresEdt
   @Nullable
   public static VirtualFile chooseSourceRoot(@NotNull PackageWrapper targetPackage,
                                              @NotNull List<? extends VirtualFile> contentSourceRoots,
@@ -72,16 +77,23 @@ public final class CommonMoveClassesOrPackagesUtil {
     //ensure that there would be no duplicates: e.g. when one content root is subfolder of another root (configured via excluded roots)
     LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<>();
     Map<PsiDirectory, String> relativePathsToCreate = new HashMap<>();
-    buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
+
+    ActionUtil.underModalProgress(project, JavaRefactoringBundle.message("move.class.or.package.build.directories"), () -> {
+      buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
+      return null;
+    });
 
     PsiDirectory selectedDir = DirectoryChooserUtil.chooseDirectory(
       targetDirectories.toArray(PsiDirectory.EMPTY_ARRAY),
       initialDirectory,
       project,
-      relativePathsToCreate);
+      relativePathsToCreate
+    );
 
-    VirtualFile vDir = selectedDir == null ? null : selectedDir.getVirtualFile();
-    return vDir == null ? null : ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(vDir);
+    return ReadAction.compute(() -> {
+      VirtualFile vDir = selectedDir == null ? null : selectedDir.getVirtualFile();
+      return vDir == null ? null : ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(vDir);
+    });
   }
 
   public static void buildDirectoryList(@NotNull PackageWrapper aPackage,

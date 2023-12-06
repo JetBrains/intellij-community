@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.CopyPasteManagerEx;
@@ -26,14 +26,14 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-public class MultiplePasteAction extends AnAction implements DumbAware {
+public final class MultiplePasteAction extends AnAction implements DumbAware {
 
   public MultiplePasteAction() {
     setEnabledInModalContext(true);
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     Component focusedComponent = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
@@ -111,12 +111,13 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     return DialogWrapper.NEXT_USER_EXIT_CODE;
   }
 
-  private static class ClipboardContentChooser extends ContentChooser<Transferable> {
+  private static final class ClipboardContentChooser extends ContentChooser<Transferable> {
 
     ClipboardContentChooser(Project project) {
       super(project, UIBundle.message("choose.content.to.paste.dialog.title"), true, true);
       setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
       setOKButtonMnemonic('P');
+      setKeepPopupsOpen(true);
     }
 
     @Override
@@ -124,9 +125,8 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       return new Action[]{getHelpAction(), getOKAction(), new PasteSimpleAction(), getCancelAction()};
     }
 
-    @Nullable
     @Override
-    protected String getHelpId() {
+    protected @Nullable String getHelpId() {
       return "ixPasteSelected";
     }
 
@@ -141,9 +141,8 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       }
     }
 
-    @NotNull
     @Override
-    protected List<Transferable> getContents() {
+    protected @NotNull List<Transferable> getContents() {
       return Arrays.asList(CopyPasteManager.getInstance().getAllContents());
     }
 

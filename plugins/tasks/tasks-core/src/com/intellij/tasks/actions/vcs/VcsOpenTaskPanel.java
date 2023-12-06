@@ -74,6 +74,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     myProject = project;
     myTask = task;
     myBranchFrom.setMinimumAndPreferredWidth(JBUIScale.scale(150));
+    myUseBranchCombo.setUsePreferredSizeAsMinimum(false);
     myPreviousTask = myTaskManager.getActiveTask();
     ActionListener listener = new ActionListener() {
       @Override

@@ -8,14 +8,14 @@ import java.lang.Deprecated
 
 @Deprecated(forRemoval = true)
 internal class AbstractUrlBookmarkProvider(private val project: Project) : BookmarkProvider {
-  override fun getWeight() = Int.MAX_VALUE
-  override fun getProject() = project
+  override fun getWeight(): Int = Int.MAX_VALUE
+  override fun getProject(): Project = project
 
-  override fun compare(bookmark1: Bookmark?, bookmark2: Bookmark?) = 0
+  override fun compare(bookmark1: Bookmark?, bookmark2: Bookmark?): Int = 0
 
   override fun createBookmark(map: Map<String, String>): Bookmark? = null
 
-  override fun createBookmark(context: Any?) = when (context) {
+  override fun createBookmark(context: Any?): Bookmark? = when (context) {
     is AbstractUrlFavoriteAdapter -> context.createBookmark(project)
     else -> null
   }

@@ -1,13 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.util.PathUtil;
 import org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection;
 
-abstract class UnsafeReturnStatementVisitorInsertVisitMethodsTestBase extends DevKitInspectionFixTestBase {
+abstract class UnsafeReturnStatementVisitorInsertVisitMethodsTestBase extends LightDevKitInspectionFixTestBase {
 
   protected static final String INSERT_LAMBDA_AND_CLASS_VISIT_METHODS = "Insert visitLambdaExpression/visitClass methods";
   protected static final String INSERT_LAMBDA_VISIT_METHOD = "Insert visitLambdaExpression method";
@@ -16,12 +12,44 @@ abstract class UnsafeReturnStatementVisitorInsertVisitMethodsTestBase extends De
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    myFixture.addClass("""
+      package com.intellij.psi;
+      public abstract class PsiElementVisitor {}
+      """);
+    myFixture.addClass("""
+      package com.intellij.psi;
+      public interface PsiElement {
+        void accept(PsiElementVisitor visitor);
+      }
+      """);
+    myFixture.addClass("""
+      package com.intellij.psi;
+      public interface PsiClass extends PsiElement {}
+      """);
+    myFixture.addClass("""
+      package com.intellij.psi;
+      public interface PsiReturnStatement extends PsiElement {}
+      """);
+    myFixture.addClass("""
+      package com.intellij.psi;
+      public interface PsiLambdaExpression extends PsiElement {}
+      """);
+    myFixture.addClass("""
+      package com.intellij.psi;
+      public abstract class JavaElementVisitor extends PsiElementVisitor {
+        public void visitClass(PsiClass aClass) {}
+        public void visitReturnStatement(PsiReturnStatement statement) {}
+        public void visitLambdaExpression(PsiLambdaExpression expression) {}
+      }
+      """);
+    myFixture.addClass("""
+      package com.intellij.psi;
+      public abstract class JavaRecursiveElementVisitor extends JavaElementVisitor {}
+      """);
+    myFixture.addClass("""
+      package com.intellij.psi;
+      public abstract class JavaRecursiveElementWalkingVisitor extends JavaElementVisitor {}
+      """);
     myFixture.enableInspections(new UnsafeReturnStatementVisitorInspection());
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.addLibrary("platform-core-api", PathUtil.getJarPathForClass(PsiElement.class));
-    moduleBuilder.addLibrary("java-psi", PathUtil.getJarPathForClass(JavaRecursiveElementWalkingVisitor.class));
   }
 }

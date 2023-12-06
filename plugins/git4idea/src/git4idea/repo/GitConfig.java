@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,10 +43,10 @@ public final class GitConfig {
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch", Pattern.CASE_INSENSITIVE);
   private static final String CORE_SECTION = "core";
 
-  @NotNull private final Collection<? extends Remote> myRemotes;
-  @NotNull private final Collection<? extends Url> myUrls;
-  @NotNull private final Collection<? extends BranchConfig> myTrackedInfos;
-  @NotNull private final Core myCore;
+  private final @NotNull Collection<? extends Remote> myRemotes;
+  private final @NotNull Collection<? extends Url> myUrls;
+  private final @NotNull Collection<? extends BranchConfig> myTrackedInfos;
+  private final @NotNull Core myCore;
 
 
   private GitConfig(@NotNull Collection<? extends Remote> remotes, @NotNull Collection<? extends Url> urls, @NotNull Collection<? extends BranchConfig> trackedInfos, @NotNull Core core) {
@@ -75,8 +75,7 @@ public final class GitConfig {
           .toList();
   }
 
-  @NotNull
-  private static GitRemote convertRemoteToGitRemote(@NotNull Collection<? extends Url> urls, @NotNull Remote remote) {
+  private static @NotNull GitRemote convertRemoteToGitRemote(@NotNull Collection<? extends Url> urls, @NotNull Remote remote) {
     UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
     return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(),
                          remote.getFetchSpecs(), remote.getPushSpec());
@@ -86,8 +85,8 @@ public final class GitConfig {
    * Create branch tracking information based on the information defined in {@code .git/config}.
    */
   @NotNull
-  Collection<GitBranchTrackInfo> parseTrackInfos(@NotNull final Collection<? extends GitLocalBranch> localBranches,
-                                                 @NotNull final Collection<? extends GitRemoteBranch> remoteBranches) {
+  Collection<GitBranchTrackInfo> parseTrackInfos(final @NotNull Collection<? extends GitLocalBranch> localBranches,
+                                                 final @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
     return ContainerUtil.mapNotNull(myTrackedInfos, config -> convertBranchConfig(config, localBranches, remoteBranches));
   }
 
@@ -104,8 +103,7 @@ public final class GitConfig {
    * <p/>
    * If some section is invalid, it is skipped, and a warning is reported.
    */
-  @NotNull
-  static GitConfig read(@NotNull File configFile) {
+  static @NotNull GitConfig read(@NotNull File configFile) {
     GitConfig emptyConfig = new GitConfig(emptyList(), emptyList(), emptyList(), new Core(null));
     if (!configFile.exists() || configFile.isDirectory()) {
       LOG.info("No .git/config file at " + configFile.getPath());
@@ -128,8 +126,7 @@ public final class GitConfig {
     return new GitConfig(remotesAndUrls.getFirst(), remotesAndUrls.getSecond(), trackedInfos, core);
   }
 
-  @NotNull
-  private static Collection<BranchConfig> parseTrackedInfos(@NotNull Ini ini) {
+  private static @NotNull Collection<BranchConfig> parseTrackedInfos(@NotNull Ini ini) {
     Collection<BranchConfig> configs = new ArrayList<>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
@@ -143,10 +140,9 @@ public final class GitConfig {
     return configs;
   }
 
-  @Nullable
-  private static GitBranchTrackInfo convertBranchConfig(@Nullable BranchConfig branchConfig,
-                                                        @NotNull Collection<? extends GitLocalBranch> localBranches,
-                                                        @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
+  private static @Nullable GitBranchTrackInfo convertBranchConfig(@Nullable BranchConfig branchConfig,
+                                                                  @NotNull Collection<? extends GitLocalBranch> localBranches,
+                                                                  @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
     if (branchConfig == null) {
       return null;
     }
@@ -177,24 +173,21 @@ public final class GitConfig {
     return new GitBranchTrackInfo(localBranch, remoteBranch, merge);
   }
 
-  @Nullable
-  private static GitLocalBranch findLocalBranch(@NotNull String branchName, @NotNull Collection<? extends GitLocalBranch> localBranches) {
+  private static @Nullable GitLocalBranch findLocalBranch(@NotNull String branchName, @NotNull Collection<? extends GitLocalBranch> localBranches) {
     final String name = GitBranchUtil.stripRefsPrefix(branchName);
     return ContainerUtil.find(localBranches, input -> input.getName().equals(name));
   }
 
-  @Nullable
-  public static GitRemoteBranch findRemoteBranch(@NotNull String remoteBranchName,
-                                                 @NotNull String remoteName,
-                                                 @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
+  public static @Nullable GitRemoteBranch findRemoteBranch(@NotNull String remoteBranchName,
+                                                           @NotNull String remoteName,
+                                                           @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
     final String branchName = GitBranchUtil.stripRefsPrefix(remoteBranchName);
     return ContainerUtil.find(remoteBranches, branch -> branch.getNameForRemoteOperations().equals(branchName) &&
                                                         branch.getRemote().getName().equals(remoteName));
   }
 
-  @Nullable
-  private static BranchConfig parseBranchSection(@NotNull String sectionName,
-                                                 @NotNull Profile.Section section) {
+  private static @Nullable BranchConfig parseBranchSection(@NotNull String sectionName,
+                                                           @NotNull Profile.Section section) {
     Matcher matcher = BRANCH_INFO_SECTION.matcher(sectionName);
     if (matcher.matches()) {
       String remote = section.get("remote");
@@ -209,8 +202,7 @@ public final class GitConfig {
     return null;
   }
 
-  @NotNull
-  private static Pair<Collection<Remote>, Collection<Url>> parseRemotes(@NotNull Ini ini) {
+  private static @NotNull Pair<Collection<Remote>, Collection<Url>> parseRemotes(@NotNull Ini ini) {
     Collection<Remote> remotes = new ArrayList<>();
     Collection<Url> urls = new ArrayList<>();
     for (String sectionName : ini.keySet()) {
@@ -256,8 +248,7 @@ public final class GitConfig {
    *   <a href="http://thread.gmane.org/gmane.comp.version-control.git/127910">pushInsteadOf doesn't override explicit pushUrl</a>.
    * </p>
    */
-  @NotNull
-  private static UrlsAndPushUrls substituteUrls(@NotNull Collection<? extends Url> urlSections, @NotNull Remote remote) {
+  private static @NotNull UrlsAndPushUrls substituteUrls(@NotNull Collection<? extends Url> urlSections, @NotNull Remote remote) {
     List<String> urls = new ArrayList<>(remote.getUrls().size());
     Collection<String> pushUrls = new ArrayList<>();
 
@@ -331,14 +322,12 @@ public final class GitConfig {
     }
   }
 
-  @NotNull
-  private static String substituteUrl(@NotNull String remoteUrl, @NotNull Url url, @NotNull String insteadOf) {
+  private static @NotNull String substituteUrl(@NotNull String remoteUrl, @NotNull Url url, @NotNull String insteadOf) {
     return url.myName + remoteUrl.substring(insteadOf.length());
   }
 
-  @Nullable
-  private static Remote parseRemoteSection(@NotNull String sectionName,
-                                           @NotNull Profile.Section section) {
+  private static @Nullable Remote parseRemoteSection(@NotNull String sectionName,
+                                                     @NotNull Profile.Section section) {
     Matcher matcher = REMOTE_SECTION.matcher(sectionName);
     if (matcher.matches() && matcher.groupCount() == 1) {
       List<String> fetch = ContainerUtil.notNullize(section.getAll("fetch"));
@@ -350,8 +339,7 @@ public final class GitConfig {
     return null;
   }
 
-  @Nullable
-  private static Url parseUrlSection(@NotNull String sectionName, @NotNull Profile.Section section) {
+  private static @Nullable Url parseUrlSection(@NotNull String sectionName, @NotNull Profile.Section section) {
     Matcher matcher = URL_SECTION.matcher(sectionName);
     if (matcher.matches() && matcher.groupCount() == 1) {
       String insteadof = section.get("insteadof");
@@ -361,8 +349,7 @@ public final class GitConfig {
     return null;
   }
 
-  @NotNull
-  private static Core parseCore(@NotNull Ini ini) {
+  private static @NotNull Core parseCore(@NotNull Ini ini) {
     String hooksPath = null;
 
     List<Profile.Section> sections = ContainerUtil.notNullize(ini.getAll(CORE_SECTION));
@@ -374,7 +361,7 @@ public final class GitConfig {
 
   private static final class Remote {
 
-    @NotNull private final String myName;
+    private final @NotNull String myName;
     @NotNull List<String> myFetchSpecs;
     @NotNull List<String> myPushSpec;
     @NotNull List<String> myUrls;
@@ -392,31 +379,27 @@ public final class GitConfig {
       myPushUrls = pushUrls;
     }
 
-    @NotNull
-    private Collection<String> getUrls() {
+    private @NotNull Collection<String> getUrls() {
       return myUrls;
     }
 
-    @NotNull
-    private Collection<String> getPushUrls() {
+    private @NotNull Collection<String> getPushUrls() {
       return myPushUrls;
     }
 
-    @NotNull
-    private List<String> getPushSpec() {
+    private @NotNull List<String> getPushSpec() {
       return myPushSpec;
     }
 
-    @NotNull
-    private List<String> getFetchSpecs() {
+    private @NotNull List<String> getFetchSpecs() {
       return myFetchSpecs;
     }
   }
 
   private static final class Url {
     private final String myName;
-    @Nullable private final String myInsteadof;
-    @Nullable private final String myPushInsteadof;
+    private final @Nullable String myInsteadof;
+    private final @Nullable String myPushInsteadof;
 
     private Url(String name, @Nullable String insteadof, @Nullable String pushInsteadof) {
       myName = name;
@@ -424,24 +407,22 @@ public final class GitConfig {
       myPushInsteadof = pushInsteadof;
     }
 
-    @Nullable
     // null means no entry, i.e. nothing to substitute. Empty string means substituting everything
-    public String getInsteadOf() {
+    public @Nullable String getInsteadOf() {
       return myInsteadof;
     }
 
-    @Nullable
     // null means no entry, i.e. nothing to substitute. Empty string means substituting everything
-    public String getPushInsteadOf() {
+    public @Nullable String getPushInsteadOf() {
       return myPushInsteadof;
     }
   }
 
   private static final class BranchConfig {
     private final String myName;
-    @Nullable private final String myRemote;
-    @Nullable private final String myMerge;
-    @Nullable private final String myRebase;
+    private final @Nullable String myRemote;
+    private final @Nullable String myMerge;
+    private final @Nullable String myRebase;
 
     private BranchConfig(String name, @Nullable String remote, @Nullable String merge, @Nullable String rebase) {
       myName = name;
@@ -454,31 +435,27 @@ public final class GitConfig {
       return myName;
     }
 
-    @Nullable
-    private String getRemote() {
+    private @Nullable String getRemote() {
       return myRemote;
     }
 
-    @Nullable
-    private String getMerge() {
+    private @Nullable String getMerge() {
       return myMerge;
     }
 
-    @Nullable
-    private String getRebase() {
+    private @Nullable String getRebase() {
       return myRebase;
     }
   }
 
   public static final class Core {
-    @Nullable private final String myHooksPath;
+    private final @Nullable String myHooksPath;
 
     private Core(@Nullable String hooksPath) {
       myHooksPath = hooksPath;
     }
 
-    @Nullable
-    public String getHooksPath() {
+    public @Nullable String getHooksPath() {
       return myHooksPath;
     }
   }

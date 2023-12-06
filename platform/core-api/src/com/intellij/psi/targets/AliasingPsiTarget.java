@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.targets;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,23 +24,19 @@ public class AliasingPsiTarget extends DelegatePsiTarget implements PomRenameabl
   }
 
    @Override
-   @NotNull
-  public String getName() {
+   public @NotNull String getName() {
     return StringUtil.notNullize(getNameAlias(StringUtil.notNullize(((PsiNamedElement)getNavigationElement()).getName())));
   }
 
-  @NotNull
-  public AliasingPsiTarget setAliasName(@NotNull String newAliasName) {
+  public @NotNull AliasingPsiTarget setAliasName(@NotNull String newAliasName) {
     return this;
   }
 
-  @Nullable
-  public String getNameAlias(@NotNull String delegatePsiTargetName) {
+  public @Nullable String getNameAlias(@NotNull String delegatePsiTargetName) {
     return delegatePsiTargetName;
   }
 
-  @NotNull
-  public String getTargetName(@NotNull String aliasName) {
+  public @NotNull String getTargetName(@NotNull String aliasName) {
     return aliasName;
   }
 }

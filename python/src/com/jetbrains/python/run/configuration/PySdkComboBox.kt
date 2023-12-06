@@ -13,7 +13,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 import java.util.function.Consumer
 
 class PySdkComboBox(private val addDefault: Boolean,
-                    private val moduleProvider: Computable<out Module?>) : ComboBox<Sdk>(), PyInterpreterModeNotifier {
+                    private val moduleProvider: Computable<out Module?>) : ComboBox<Sdk?>(), PyInterpreterModeNotifier {
   private val interpreterModeListeners: MutableList<Consumer<Boolean>> = mutableListOf()
 
   fun reset(config: AbstractPythonRunConfigurationParams) {
@@ -27,7 +27,7 @@ class PySdkComboBox(private val addDefault: Boolean,
     updateRemoteInterpreterMode()
   }
 
-  private fun initList() {
+  fun initList() {
     val pythonSdks: MutableList<Sdk?> = PythonSdkUtil.getAllSdks().toMutableList()
     if (addDefault) {
       pythonSdks.add(0, null)

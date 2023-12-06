@@ -48,7 +48,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.ChunkExtractor;
@@ -62,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
@@ -295,7 +295,7 @@ public final class FindManagerImpl extends FindManager {
     }
   }
 
-  private static class FindExceptCommentsOrLiteralsData implements Predicate<FindResult> {
+  private static final class FindExceptCommentsOrLiteralsData implements Predicate<FindResult> {
     private final VirtualFile myFile;
     private final FindModel myFindModel;
     private final TreeMap<Integer, Integer> mySkipRangesSet;
@@ -484,7 +484,7 @@ public final class FindManagerImpl extends FindManager {
     }
   }
 
-  private static class CommentsLiteralsSearchData {
+  private static final class CommentsLiteralsSearchData {
     final VirtualFile lastFile;
     int startOffset;
     final SyntaxHighlighterOverEditorHighlighter highlighter;

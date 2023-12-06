@@ -82,3 +82,16 @@ class ReplaceExplicitInvokeWithImplicitTest27 : KotlinLightCodeInsightFixtureTes
         )
     }
 }
+
+
+operator fun Any.invoke(action: () -> Unit) {
+    println(this)
+    action()
+}
+
+fun foo(): Int = 42
+
+fun main() {
+    (foo()) {
+    }
+}

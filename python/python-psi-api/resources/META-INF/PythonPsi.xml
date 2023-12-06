@@ -36,6 +36,9 @@
     <extensionPoint qualifiedName="Pythonid.inspectionExtension"
                     interface="com.jetbrains.python.inspections.PyInspectionExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.statementEffectQuickFixProvider"
+                    interface="com.jetbrains.python.inspections.PyStatementEffectQuickFixProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyClassInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider"
@@ -43,13 +46,6 @@
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="Python"
-              language="Python"
-              extensions="py;pyw"
-              hashBangs="python"
-              implementationClass="com.jetbrains.python.PythonFileType"
-              fieldName="INSTANCE"/>
-    <iconMapper mappingFile="PythonPsiApiIconMappings.json"/>
     <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
                     serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
   </extensions>

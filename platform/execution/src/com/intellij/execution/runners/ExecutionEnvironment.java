@@ -1,16 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.target.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -21,6 +21,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Aggregates all the settings, information, target, and program runner required to execute a process.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
+ */
 public final class ExecutionEnvironment extends UserDataHolderBase implements Disposable {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
@@ -223,9 +228,9 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   }
 
   /**
-   * By default a new unique executionId is assigned to each new {@link ExecutionEnvironment} ({@see assignNewExecutionId}).
+   * By default, a new unique execution ID is assigned to each new {@link ExecutionEnvironment} (see {@link #assignNewExecutionId}).
    * Can be set manually to create a batch of {@link ExecutionEnvironment} that are semantically a "single launch".
-   * {@link RunContentDescriptor}s will not reuse each other tabs if they have the same executionId.
+   * {@link RunContentDescriptor}s will not reuse each other tabs if they have the same execution ID.
    *
    * @return An id that will be propagated to resulting {@link RunContentDescriptor}.
    */
@@ -256,8 +261,19 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     isHeadless = true;
   }
 
-  void setDataContext(@NotNull DataContext dataContext) {
-    myDataContext = IdeUiService.getInstance().createAsyncDataContext(dataContext);
+  @ApiStatus.Internal
+  public void setDataContext(@NotNull DataContext dataContext) {
+    myDataContext = CustomizedDataContext.create(IdeUiService.getInstance().createAsyncDataContext(dataContext), dataId -> {
+      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
+        Module module = null;
+        if (myRunnerAndConfigurationSettings != null &&
+            myRunnerAndConfigurationSettings.getConfiguration() instanceof ModuleBasedConfiguration<?, ?> configuration) {
+          module = configuration.getConfigurationModule().getModule();
+        }
+        return module == null ? CustomizedDataContext.EXPLICIT_NULL : module;
+      }
+      return null;
+    });
   }
 
   @Nullable

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.lang.java.JavaFindUsagesProvider;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
@@ -132,22 +131,7 @@ public final class MoveClassesOrPackagesUtil {
       }
     }
 
-    return findPackage(aPackage.getManager(), scope, newPackageQualifiedName);
-  }
-
-  @NotNull
-  private static PsiPackageImpl findPackage(@NotNull PsiManager manager, @NotNull GlobalSearchScope scope, String qName) {
-    return new PsiPackageImpl(manager, qName) {
-      @Override
-      public boolean isValid() {
-        if (scope.getModelBranchesAffectingScope().isEmpty()) {
-          // Already merged -- PsiPackage can live longer than the branch
-          return super.isValid();
-        }
-        return !getProject().isDisposed() &&
-               PackageIndex.getInstance(getProject()).getDirsByPackageName(qName, scope).findFirst() != null;
-      }
-    };
+    return new PsiPackageImpl(aPackage.getManager(), newPackageQualifiedName);
   }
 
   public static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination)
@@ -244,21 +228,18 @@ public final class MoveClassesOrPackagesUtil {
     Project project = moveDestination.getProject();
     VirtualFile dstDir = moveDestination.getVirtualFile();
     String pkgName = PackageIndex.getInstance(project).getPackageNameByDirectory(dstDir);
-    PsiPackage newPackage = pkgName == null ? null
-                                            : findPackage(moveDestination.getManager(), moveDestination.getResolveScope(), pkgName);
+    PsiPackage newPackage = pkgName == null ? null : new PsiPackageImpl(moveDestination.getManager(), pkgName);
 
     newClass = aClass;
     final PsiDirectory containingDirectory = file.getContainingDirectory();
     if (!Comparing.equal(dstDir, containingDirectory != null ? containingDirectory.getVirtualFile() : null)) {
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
 
-      if (ModelBranch.getPsiBranch(moveDestination) == null) {
-        DumbService.getInstance(project).completeJustSubmittedTasks();
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-        Document document = documentManager.getCachedDocument(file);
-        if (document != null) {
-          documentManager.commitDocument(document);
-        }
+      DumbService.getInstance(project).completeJustSubmittedTasks();
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      Document document = documentManager.getCachedDocument(file);
+      if (document != null) {
+        documentManager.commitDocument(document);
       }
 
       file = moveDestination.findFile(file.getName());
@@ -309,15 +290,6 @@ public final class MoveClassesOrPackagesUtil {
                                         @NotNull LinkedHashSet<? super PsiDirectory> targetDirectories,
                                         @NotNull Map<PsiDirectory, String> relativePathsToCreate) {
     CommonMoveClassesOrPackagesUtil.buildDirectoryList(aPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
-  }
-
-  /**
-   * @deprecated use CommonMoveClassesOrPackagesUtil.chooseDestinationPackage
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static PsiDirectory chooseDestinationPackage(Project project, String packageName, @Nullable PsiDirectory baseDir) {
-    return CommonMoveClassesOrPackagesUtil.chooseDestinationPackage(project, packageName, baseDir);
   }
 
   /**

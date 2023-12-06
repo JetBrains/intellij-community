@@ -17,13 +17,13 @@ class DefaultTabPainterAdapter(val painter: JBTabPainter): TabPainterAdapter {
     val rect = Rectangle(0, 0, label.width, label.height)
 
     val g2d = g as Graphics2D
-    if (isSelected && tabs.visibleInfos.size > 1) {
+    if (isSelected && tabs.getVisibleInfos().size > 1) {
       painter
         .paintSelectedTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info),
                           tabs.isHoveredTab(label))
     }
     else {
-      painter.paintTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info), tabs.isHoveredTab(label) && tabs.visibleInfos.size > 1)
+      painter.paintTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info), tabs.isHoveredTab(label) && tabs.getVisibleInfos().size > 1)
     }
   }
 }

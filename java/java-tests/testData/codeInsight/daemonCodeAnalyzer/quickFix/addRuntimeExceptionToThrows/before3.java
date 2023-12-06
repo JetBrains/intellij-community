@@ -1,4 +1,4 @@
-// "Add runtime exception(s) to method signature" "false"
+// "Add 'throws RuntimeException' to method signature" "false"
 class a {
    int f() {
      Runnable r = () -> {

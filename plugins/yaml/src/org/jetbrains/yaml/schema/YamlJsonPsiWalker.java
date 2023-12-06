@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
@@ -132,8 +134,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition) {
-    YAMLMapping object = PsiTreeUtil.getParentOfType(originalPosition, YAMLMapping.class);
-    YAMLMapping otherObject = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class);
+    YAMLMapping object = PsiTreeUtil.getParentOfType(originalPosition, YAMLMapping.class, false);
+    YAMLMapping otherObject = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class, false);
     // the original position can be either a sound element or a whitespace; whitespaces can belong to the parent
     if (object == null || otherObject != null
                           && PsiTreeUtil.isAncestor(CompletionUtil.getOriginalOrSelf(object),
@@ -142,6 +144,16 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     }
     if (object == null) return Collections.emptySet();
     return new YamlObjectAdapter(object).getPropertyList().stream().map(p -> p.getName()).collect(Collectors.toSet());
+  }
+
+  @Override
+  public int indentOf(@NotNull PsiElement element) {
+    return YAMLUtil.getIndentToThisElement(element);
+  }
+
+  @Override
+  public int indentOf(@NotNull PsiFile file) {
+    return CodeStyle.getSettings(file.getProject(), file.getVirtualFile()).getIndentOptionsByFile(file).INDENT_SIZE;
   }
 
   @Nullable
@@ -165,23 +177,28 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         if (idx != -1) {
           pos.addPrecedingStep(idx);
         }
-      } else if (current instanceof YAMLSequenceItem) {
+      }
+      else if (current instanceof YAMLSequenceItem) {
         // do nothing - handled by the upper condition
-      } else if (current instanceof YAMLKeyValue) {
+      }
+      else if (current instanceof YAMLKeyValue) {
         final String propertyName = StringUtil.notNullize(((YAMLKeyValue)current).getName());
         current = current.getParent();
         if (!(current instanceof YAMLMapping)) return null;//incorrect syntax?
         pos.addPrecedingStep(propertyName);
-      } else if (current instanceof YAMLMapping && position instanceof YAMLKeyValue) {
+      }
+      else if (current instanceof YAMLMapping && position instanceof YAMLKeyValue) {
         // if either value or not first in the chain - needed for completion variant
         final String propertyName = StringUtil.notNullize(((YAMLKeyValue)position).getName());
         if (propertyName.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) continue;
         if (position != element || forceLastTransition) {
           pos.addPrecedingStep(propertyName);
         }
-      } else if (breakCondition(current)) {
+      }
+      else if (breakCondition(current)) {
         break;
-      } else {
+      }
+      else {
         if (current instanceof YAMLMapping) {
           List<YAMLPsiElement> elements = ((YAMLMapping)current).getYAMLElements();
           if (elements.size() == 0) return null;
@@ -232,10 +249,20 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
   @Override
   public TextRange adjustErrorHighlightingRange(@NotNull PsiElement element) {
     YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(element, YAMLAnchor.class);
-    if (anchors == null || anchors.length == 0) return element.getTextRange();
-    YAMLAnchor lastAnchor = anchors[anchors.length - 1];
-    PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(lastAnchor);
-    return next == null ? element.getTextRange() : next.getTextRange();
+    if (anchors != null && anchors.length > 0) {
+      YAMLAnchor lastAnchor = anchors[anchors.length - 1];
+      PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(lastAnchor);
+      return next == null ? element.getTextRange() : next.getTextRange();
+    }
+    PsiElement parent = element.getParent();
+    if (parent instanceof YAMLDocument) {
+      PsiElement firstYamlChild = element.getFirstChild();
+      while (firstYamlChild != null && !(firstYamlChild instanceof YAMLPsiElement)) {
+        firstYamlChild = firstYamlChild.getNextSibling();
+      }
+      return firstYamlChild == null ? element.getTextRange() : firstYamlChild.getTextRange();
+    }
+    return element.getTextRange();
   }
 
   @Override
@@ -269,7 +296,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         return ((YAMLKeyValue)property).getName();
       }
 
-      private YAMLKeyValue findPrecedingKeyValueWithNoValue(PsiElement element) {
+      private static YAMLKeyValue findPrecedingKeyValueWithNoValue(PsiElement element) {
         if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT) {
           PsiElement prev = element.getPrevSibling();
           prev = prev == null ? null : PsiTreeUtil.skipWhitespacesAndCommentsBackward(prev);
@@ -302,7 +329,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == YAMLTokenTypes.EOL) {
           PsiElement nextSibling;
           while ((nextSibling = forward.getNextSibling()) instanceof LeafPsiElement
-                 && ((LeafPsiElement)nextSibling).getElementType() == YAMLTokenTypes.INDENT){
+                 && ((LeafPsiElement)nextSibling).getElementType() == YAMLTokenTypes.INDENT) {
             nextSibling.delete();
           }
           forward.delete();
@@ -332,7 +359,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       @Override
       public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
         YAMLKeyValue keyValue = findPrecedingKeyValueWithNoValue(element);
-        assert keyValue != null: "Should come here only for YAMLKeyValue with no value and a following indent";
+        assert keyValue != null : "Should come here only for YAMLKeyValue with no value and a following indent";
         PsiComment nextComment = ObjectUtils.tryCast(skipNonNewlineSpaces(keyValue), PsiComment.class);
         if (nextComment != null) {
           keyValue.addBefore(myGenerator.createSpace(), null);
@@ -348,7 +375,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       }
 
       @Nullable
-      private PsiElement skipNonNewlineSpaces(YAMLKeyValue keyValue) {
+      private static PsiElement skipNonNewlineSpaces(YAMLKeyValue keyValue) {
         PsiElement sibling = keyValue.getNextSibling();
         while (sibling instanceof PsiWhiteSpace && !sibling.getText().contains("\n")) {
           sibling = sibling.getNextSibling();
@@ -374,6 +401,12 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       roots.add(topLevelValue == null ? document : topLevelValue);
     }
     return roots;
+  }
+
+  @Override
+  @Deprecated(forRemoval = true)
+  public boolean requiresReformatAfterArrayInsertion() {
+    return false;
   }
 
   @Nullable

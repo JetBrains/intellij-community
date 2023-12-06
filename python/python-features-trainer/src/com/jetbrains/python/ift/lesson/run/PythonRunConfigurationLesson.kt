@@ -5,6 +5,7 @@ import com.jetbrains.python.ift.PythonLessonsBundle
 import com.jetbrains.python.run.PythonRunConfiguration
 import training.dsl.*
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
+import training.ui.LearningUiHighlightingManager
 
 class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.configuration") {
   override val demoConfigurationName = "sandbox"
@@ -21,6 +22,9 @@ class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.co
 
   override fun LessonContext.runTask() {
     task("RunClass") {
+      before {
+        LearningUiHighlightingManager.clearHighlights()
+      }
       text(PythonLessonsBundle.message("python.run.configuration.lets.run", action(it)))
       timerCheck { configurations().isNotEmpty() }
       //Wait toolwindow

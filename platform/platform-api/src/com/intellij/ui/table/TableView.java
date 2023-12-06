@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.table;
 
 import com.intellij.ui.BooleanTableCellRenderer;
@@ -50,7 +36,7 @@ public class TableView<Item> extends BaseTableView implements SelectionProvider 
   }
 
   @Override
-  public void setModel(@NotNull final TableModel dataModel) {
+  public void setModel(final @NotNull TableModel dataModel) {
     assert dataModel instanceof SortableColumnModel : "SortableColumnModel required";
     super.setModel(dataModel);
   }
@@ -197,15 +183,13 @@ public class TableView<Item> extends BaseTableView implements SelectionProvider 
     return getSelectedObjects();
   }
 
-  @Nullable
-  public Item getSelectedObject() {
+  public @Nullable Item getSelectedObject() {
     final int row = getSelectedRow();
     ListTableModel<Item> model = getListTableModel();
     return row >= 0 && row < model.getRowCount() ? model.getRowValue(convertRowIndexToModel(row)) : null;
   }
 
-  @NotNull
-  public List<Item> getSelectedObjects() {
+  public @NotNull List<Item> getSelectedObjects() {
     ListSelectionModel selectionModel = getSelectionModel();
     int minSelectionIndex = selectionModel.getMinSelectionIndex();
     int maxSelectionIndex = selectionModel.getMaxSelectionIndex();

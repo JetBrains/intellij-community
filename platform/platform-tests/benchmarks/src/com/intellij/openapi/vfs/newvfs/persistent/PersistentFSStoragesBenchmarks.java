@@ -2,8 +2,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.util.io.PagedFileStorageLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -11,10 +12,8 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,8 +21,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
+import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
+import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.*;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.openjdk.jmh.runner.options.TimeValue.seconds;
 
 /**
  * Compares read/write speed from few chosen {@link PersistentFSRecordsStorage} implementations with
@@ -36,8 +38,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class PersistentFSStoragesBenchmarks {
   //@Param
   public static final int RECORDS_COUNT = 1 << 22;
-  //@Param
-  public static final int RECORD_SIZE_IN_BYTES = PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES;
+
   public static final StorageLockContext CONTEXT = new StorageLockContext(true, true, true);
 
   @State(Scope.Thread)
@@ -52,44 +53,70 @@ public class PersistentFSStoragesBenchmarks {
     public int nextSequential() {
       cursor++;
       if (cursor >= RECORDS_COUNT) {
-        cursor = 0;
+        cursor = 1;
       }
       return cursor;
     }
 
     public int nextRandom() {
-      return ThreadLocalRandom.current().nextInt(RECORDS_COUNT);
+      return ThreadLocalRandom.current().nextInt(1, RECORDS_COUNT);
     }
   }
 
   @State(Scope.Benchmark)
-  public static class ArrayState extends IterationState {
-    public final int recordSize = RECORD_SIZE_IN_BYTES;
-    public final int recordSizeInInts = recordSize / Integer.BYTES;
-    public final int[] array = new int[recordSizeInInts * RECORDS_COUNT];
+  public static class RecordsState {
+    @Param({"24", "40", "56"})
+    public int recordSize;
   }
 
   @State(Scope.Benchmark)
-  public static class AtomicArrayState {
-    public final int recordSize = RECORD_SIZE_IN_BYTES;
-    public final int recordSizeInInts = recordSize / Integer.BYTES;
-    public final AtomicIntegerArray array = new AtomicIntegerArray(recordSizeInInts * RECORDS_COUNT);
+  public static class ArrayState extends RecordsState {
+    public int recordSizeInInts;
+    public int[] array;
+
+    @Setup
+    public void setup() {
+      recordSizeInInts = recordSize / Integer.BYTES;
+      array = new int[recordSizeInInts * RECORDS_COUNT];
+    }
   }
 
   @State(Scope.Benchmark)
-  public static class ByteBufferState {
-    public final int recordSize = RECORD_SIZE_IN_BYTES;
-    public final int recordSizeInInts = recordSize / Integer.BYTES;
-    public final ByteBuffer buffer = ByteBuffer.allocate(recordSize * RECORDS_COUNT)
-      .order(ByteOrder.nativeOrder());
+  public static class AtomicArrayState extends RecordsState {
+    public int recordSizeInInts;
+    public AtomicIntegerArray array;
+
+    @Setup
+    public void setup() {
+      recordSizeInInts = recordSize / Integer.BYTES;
+      array = new AtomicIntegerArray(recordSizeInInts * RECORDS_COUNT);
+    }
   }
 
   @State(Scope.Benchmark)
-  public static class DirectByteBufferState {
-    public final int recordSize = RECORD_SIZE_IN_BYTES;
-    public final int recordSizeInInts = recordSize / Integer.BYTES;
-    public final ByteBuffer buffer = ByteBuffer.allocateDirect(recordSize * RECORDS_COUNT)
-      .order(ByteOrder.nativeOrder());
+  public static class ByteBufferState extends RecordsState {
+    public int recordSizeInInts;
+    public ByteBuffer buffer;
+
+    @Setup
+    public void setup() {
+      recordSizeInInts = recordSize / Integer.BYTES;
+      buffer = ByteBuffer.allocate(recordSize * RECORDS_COUNT)
+        .order(nativeOrder());
+    }
+  }
+
+  @State(Scope.Benchmark)
+  public static class DirectByteBufferState extends RecordsState {
+    public int recordSizeInInts;
+    public ByteBuffer buffer;
+
+    @Setup
+    public void setup() {
+      recordSizeInInts = recordSize / Integer.BYTES;
+      buffer = ByteBuffer.allocateDirect(recordSize * RECORDS_COUNT)
+        .order(nativeOrder());
+    }
   }
 
   @State(Scope.Benchmark)
@@ -108,35 +135,34 @@ public class PersistentFSStoragesBenchmarks {
   }
 
   @State(Scope.Benchmark)
-  public static class MappedByteBufferState extends FileState {
-    public final int recordSize = RECORD_SIZE_IN_BYTES;
-    public final int recordSizeInInts = recordSize / Integer.BYTES;
-
+  public static class MappedByteBufferState extends RecordsState {
     public ByteBuffer buffer;
+    public int recordSizeInInts;
 
-    @Override
     @Setup
-    public void setup() throws IOException {
-      super.setup();
-
-      try (FileChannel channel = FileChannel.open(file, WRITE, READ, CREATE)) {
+    public void setup(FileState fileState) throws IOException {
+      recordSizeInInts = recordSize / Integer.BYTES;
+      try (FileChannel channel = FileChannel.open(fileState.file, WRITE, READ, CREATE)) {
         buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, recordSize * RECORDS_COUNT)
-          .order(ByteOrder.nativeOrder());
+          .order(nativeOrder());
       }
+    }
+
+    @TearDown
+    public void close() {
+      buffer = null;//help GC unmap it faster
     }
   }
 
   @State(Scope.Benchmark)
-  public static class FSRecordsInMemoryState extends FileState {
+  public static class FSRecordsInMemoryState extends RecordsState {
 
     private PersistentInMemoryFSRecordsStorage storage;
 
-    @Override
     @Setup
-    public void setup() throws IOException {
-      super.setup();
+    public void setup(FileState fileState) throws IOException {
       storage = new PersistentInMemoryFSRecordsStorage(
-        file,
+        fileState.file,
         RECORDS_COUNT
       );
       for (int i = 0; i < RECORDS_COUNT; i++) {
@@ -144,31 +170,26 @@ public class PersistentFSStoragesBenchmarks {
       }
     }
 
-    @Override
     @TearDown
     public void close() throws IOException {
       storage.close();
-      super.close();
     }
   }
 
   @State(Scope.Benchmark)
-  public static class FSRecordsOverLockFreeFPCState extends FileState {
+  public static class FSRecordsOverLockFreeFPCState {
 
     private PersistentFSRecordsOverLockFreePagedStorage storage;
 
-    @Override
     @Setup
-    public void setup() throws IOException {
-      super.setup();
-
+    public void setup(FileState fileState) throws IOException {
       final int pageSize = 1 << 20;
       storage = new PersistentFSRecordsOverLockFreePagedStorage(
-        new PagedFileStorageLockFree(
-          file,
+        new PagedFileStorageWithRWLockedPageContent(
+          fileState.file,
           CONTEXT,
           pageSize,
-          true
+          PageContentLockingStrategy.LOCK_PER_PAGE
         )
       );
       for (int i = 0; i < RECORDS_COUNT; i++) {
@@ -176,25 +197,21 @@ public class PersistentFSStoragesBenchmarks {
       }
     }
 
-    @Override
     @TearDown
     public void close() throws IOException {
       storage.close();
-      super.close();
     }
   }
 
   @State(Scope.Benchmark)
-  public static class FSRecordsOverMMappedFileState extends FileState {
+  public static class FSRecordsOverMMappedFileState {
 
     private PersistentFSRecordsLockFreeOverMMappedFile storage;
 
-    @Override
     @Setup
-    public void setup() throws IOException {
-      super.setup();
+    public void setup(FileState fileState) throws IOException {
       storage = new PersistentFSRecordsLockFreeOverMMappedFile(
-        file,
+        fileState.file,
         PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE
       );
       for (int i = 0; i < RECORDS_COUNT; i++) {
@@ -202,11 +219,9 @@ public class PersistentFSStoragesBenchmarks {
       }
     }
 
-    @Override
     @TearDown
     public void close() throws IOException {
       storage.close();
-      super.close();
     }
   }
 
@@ -299,7 +314,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     private static final VarHandle BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE =
-      MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.nativeOrder());
+      byteBufferViewVarHandle(int[].class, nativeOrder());
 
     @Benchmark
     public int byteBuffer_RandomVolatileRead_ViaVarHandle(final IterationState it,
@@ -483,8 +498,8 @@ public class PersistentFSStoragesBenchmarks {
       }
     }
 
-    private static final VarHandle BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE =
-      MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.nativeOrder());
+    private static final VarHandle BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE = byteBufferViewVarHandle(int[].class, nativeOrder())
+      .withInvokeExactBehavior();
 
     @Benchmark
     public void byteBuffer_RandomVolatileWrite_ViaVarHandle(final IterationState it,
@@ -494,7 +509,23 @@ public class PersistentFSStoragesBenchmarks {
       final ByteBuffer buffer = state.buffer;
       final int offset = recordSizeInBytes * it.nextRandom();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
-        BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.setVolatile(buffer, offset + recordField * Integer.BYTES, recordField);
+        int value = recordField;
+        BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.setVolatile(buffer, offset + recordField * Integer.BYTES, value);
+      }
+    }
+
+    @Benchmark
+    public void byteBufferMemoryMapped_RandomCASWrite_ViaVarHandle(final IterationState it,
+                                                                   final MappedByteBufferState state) throws IOException {
+      final int recordSizeInInts = state.recordSizeInInts;
+      final ByteBuffer mmappedBuffer = state.buffer;
+
+      //RC: Somehow on m1 CAS is 2x faster than volatile!
+      final int offset = state.recordSize * it.nextRandom();
+      for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
+        int oldValue = (int)BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.getVolatile(mmappedBuffer, offset + recordField * Integer.BYTES);
+        int newValue = recordField;
+        BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.compareAndSet(mmappedBuffer, offset + recordField * Integer.BYTES, oldValue, newValue);
       }
     }
 
@@ -504,7 +535,7 @@ public class PersistentFSStoragesBenchmarks {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer mmappedBuffer = state.buffer;
 
-      final int offset = RECORD_SIZE_IN_BYTES * it.nextRandom();
+      final int offset = state.recordSize * it.nextRandom();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.setVolatile(mmappedBuffer, offset + recordField * Integer.BYTES, recordField);
       }
@@ -582,9 +613,18 @@ public class PersistentFSStoragesBenchmarks {
 
   public static void main(String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
+      .jvmArgs(//to enable 'new' API:
+               "-Dvfs.lock-free-impl.enable=true",
+               "-Dvfs.lock-free-impl.fraction-direct-memory-to-utilize=0.5"
+      )
       .mode(Mode.SampleTime)
-      .include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*AccessTest.*Volatile.*")
-      .threads(7)
+      //.include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*AccessTest.*Volatile.*")
+      .include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*AccessTest.*byteBuffer.*")
+      .threads(4)
+      .forks(1)
+      .warmupIterations(2).warmupTime(seconds(1))
+      .measurementIterations(3).measurementTime(seconds(2))
+      .mode(Mode.AverageTime)
       .build();
 
     new Runner(opt).run();

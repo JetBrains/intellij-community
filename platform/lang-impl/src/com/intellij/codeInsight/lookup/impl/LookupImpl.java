@@ -15,7 +15,6 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -51,6 +50,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -109,6 +109,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private boolean myFinishing;
   boolean myUpdating;
   private LookupUi myUi;
+  private LookupPresentation myPresentation = new LookupPresentation.Builder().build();
   private final ClientId myClientId = ClientId.getCurrent();
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
@@ -184,6 +185,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return getLookupFocusDegree() == LookupFocusDegree.FOCUSED;
   }
 
+  @Override
+  public @NotNull LookupPresentation getPresentation() {
+    return myPresentation;
+  }
+
+  @Override
+  public void setPresentation(@NotNull LookupPresentation presentation) {
+    myPresentation = presentation;
+    refreshUi(false, true);
+  }
+
   @NotNull
   @Override
   public LookupFocusDegree getLookupFocusDegree() {
@@ -210,7 +222,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void markSelectionTouched() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
     mySelectionTouched = true;
     myList.repaint();
@@ -299,7 +311,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void requestResize() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myResizePending = true;
   }
 
@@ -415,7 +427,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   private boolean updateList(boolean onExplicitAction, boolean reused) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
     checkValid();
 
@@ -428,6 +440,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       LOG.error("Arranger " + myPresentableArranger + " returned invalid selection index=" + toSelect + "; items=" + items);
       toSelect = 0;
     }
+    if (!myPresentation.getMostRelevantOnTop()) {
+      items = ContainerUtil.reverse(items);
+      toSelect = Math.max(0, items.size() - toSelect - 1);
+    }
 
     if (!myFirstElementAdded && !items.isEmpty()) {
       myFirstElementAdded = true;
@@ -437,13 +453,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myOffsets.checkMinPrefixLengthChanges(items, this);
     List<LookupElement> oldModel = listModel.toList();
 
+    List<LookupElement> finalItems = items;
     listModel.performBatchUpdate(model -> {
       synchronized (myUiLock) {
         model.removeAll();
-        if (!items.isEmpty()) {
+        if (!finalItems.isEmpty()) {
           Long currentTimeMillis = System.currentTimeMillis();
-          items.forEach(item -> item.putUserDataIfAbsent(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS, currentTimeMillis));
-          model.add(items);
+          finalItems.forEach(item -> item.putUserDataIfAbsent(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS, currentTimeMillis));
+          model.add(finalItems);
           addDummyItems(myDummyItemCount.get());
         }
         else {
@@ -500,7 +517,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   private void updateListHeight(ListModel<LookupElement> model) {
     myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, model.getElementAt(0), 0, false, false).getPreferredSize().height);
-    myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().getMaxLookupListHeight()));
+    myList.setVisibleRowCount(Math.min(model.getSize(), myPresentation.getMaxVisibleItemsCount()));
   }
 
   private void addEmptyItem(CollectionListModel<? super LookupElement> model) {
@@ -679,13 +696,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   public boolean isShown() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
     return myShown;
   }
 
   public boolean showLookup() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     checkValid();
     LOG.assertTrue(!myShown);
     myShown = true;
@@ -1095,7 +1112,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public List<LookupElement> getVisibleItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     var itemsCount = myList.getItemsCount();
     if (!myShown || itemsCount == 0) return Collections.emptyList();
@@ -1122,7 +1139,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public void hideLookup(boolean explicitly) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (myHidden) return;
 
@@ -1165,7 +1182,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert myHidden;
 
     myOffsets.disposeMarkers();
@@ -1189,6 +1206,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       boolean itemsChanged = updateList(onExplicitAction, reused);
       if (isVisible()) {
         LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
+        myCellRenderer.refreshUi();
         myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
       }
     }
@@ -1274,7 +1292,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return myFontPreferences;
   }
 
-  private static class NewUILookupAdvertiser extends Advertiser {
+  private static final class NewUILookupAdvertiser extends Advertiser {
 
     private NewUILookupAdvertiser() {
       setBorder(JBUI.Borders.empty());
@@ -1295,7 +1313,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
    * it gains focus when "Screen Reader" mode is enabled. So we need to delegate
    * key events and declare a permanent component to provide proper data context for actions.
    */
-  private class LookupList extends JBList<LookupElement> implements DependentTransientComponent {
+  private final class LookupList extends JBList<LookupElement> implements DependentTransientComponent {
     LookupList() { super(new CollectionListModelWithBatchUpdate<>()); }
 
     @Override

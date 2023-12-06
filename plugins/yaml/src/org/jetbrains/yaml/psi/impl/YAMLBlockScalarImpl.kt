@@ -138,7 +138,7 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
       if (includeFirstLineInContent) return IMPLICIT_INDENT
       val headerNode = getNthContentTypeChild(0) ?: return IMPLICIT_INDENT
       val header = headerNode.text
-      for (i in 0 until header.length) {
+      for (i in header.indices) {
         if (Character.isDigit(header[i])) {
           val k = i + 1
           // YAML 1.2 standard does not allow more then 1 symbol in indentation number

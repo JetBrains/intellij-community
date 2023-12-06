@@ -5,8 +5,10 @@ package com.intellij.webSymbols.context.impl
 
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -25,15 +27,15 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
-import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider
-import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.Companion.mergeProximity
-import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.SourceKind
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.WEB_SYMBOLS_CONTEXT_EP
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextProvider
+import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider
+import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.Companion.mergeProximity
+import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.SourceKind
 import com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkExtension
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl
@@ -52,6 +54,7 @@ internal val WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED = WebSymbolsFrameworkExtension<
   "com.intellij.javascript.web.context")
 
 internal fun findWebSymbolsContext(kind: ContextKind, location: PsiElement): ContextName? {
+  ProgressManager.checkCanceled()
   if (!location.isValid) {
     return null
   }
@@ -382,12 +385,14 @@ private fun reloadProject(kind: ContextKind, prevState: ContextName, newState: C
           .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED)
         project.putUserData(CONTEXT_RELOAD_MARKER_KEY, null)
       }
-    }, Condition<Any> {
-    project.disposed.value(null).also {
-      // Clear the flag in case the project is recycled
-      if (it) project.putUserData(CONTEXT_RELOAD_MARKER_KEY, null)
-    }
-  })
+    },
+    ModalityState.nonModal(),
+    Condition<Any> {
+      project.disposed.value(null).also {
+        // Clear the flag in case the project is recycled
+        if (it) project.putUserData(CONTEXT_RELOAD_MARKER_KEY, null)
+      }
+    })
 }
 
 private val Project.contextInfo

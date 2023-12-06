@@ -26,9 +26,8 @@ public class CoreJobLauncher extends JobLauncher {
     return ContainerUtil.process(things, thingProcessor);
   }
 
-  @NotNull
   @Override
-  public Job<Void> submitToJobThread(@NotNull Runnable action, Consumer<? super Future<?>> onDoneCallback) {
+  public @NotNull Job<Void> submitToJobThread(@NotNull Runnable action, Consumer<? super Future<?>> onDoneCallback) {
     action.run();
     if (onDoneCallback != null) {
       onDoneCallback.accept(CompletableFuture.completedFuture(null));

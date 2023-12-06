@@ -1,7 +1,7 @@
 13 <bold>foo</bold>(1) (in C.f())
 9 	val v = <bold>p</bold> (in C.foo(Int))
 8 		override fun foo(<bold>p: Int</bold>) { (in C.foo(Int))
-2 			void foo(int <bold>p</bold>);
+2 			JAVA: void foo(int <bold>p</bold>); (in JavaInterface.foo(int))
 13 				<bold>foo</bold>(1) (in C.f())
 
 13 foo(<bold>1</bold>) (in C.f())
@@ -17,5 +17,5 @@
 22 i.<bold>foo</bold>(3) (in g(JavaInterface))
 9 	val v = <bold>p</bold> (in C.foo(Int))
 8 		override fun foo(<bold>p: Int</bold>) { (in C.foo(Int))
-2 			void foo(int <bold>p</bold>);
+2 			JAVA: void foo(int <bold>p</bold>); (in JavaInterface.foo(int))
 22 				i.<bold>foo</bold>(3) (in g(JavaInterface))

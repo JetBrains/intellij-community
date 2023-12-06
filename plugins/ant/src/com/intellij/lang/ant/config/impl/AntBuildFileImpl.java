@@ -84,9 +84,9 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
       return classpath;
     }
 
-    private void collectClasspath(List<File> files,
-                                  ListProperty<AntClasspathEntry> property,
-                                  AbstractProperty.AbstractPropertyContainer container) {
+    private static void collectClasspath(List<File> files,
+                                         ListProperty<AntClasspathEntry> property,
+                                         AbstractProperty.AbstractPropertyContainer container) {
       if (!container.hasProperty(property)) return;
       Iterator<AntClasspathEntry> entries = property.getIterator(container);
       while (entries.hasNext()) {
@@ -242,11 +242,8 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   @Override
   @Nullable
   public XmlFile getAntFile() {
-    final PsiFile psiFile = myVFile.isValid() ? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
-    if (!(psiFile instanceof XmlFile xmlFile)) {
-      return null;
-    }
-    return AntDomFileDescription.isAntFile(xmlFile) ? xmlFile : null;
+    final PsiFile psiFile = myVFile.isValid()? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
+    return (psiFile instanceof XmlFile xmlFile) && AntDomFileDescription.isAntFile(xmlFile)? xmlFile : null;
   }
 
   @Override

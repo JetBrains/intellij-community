@@ -1,15 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -19,6 +18,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -254,5 +255,32 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
         LinePainter2D.paint((Graphics2D)g, 0, r.height - 1, r.width, r.height - 1);
       }
     }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) accessibleContext = new AccessibleStripe();
+    accessibleContext.setAccessibleName(getAccessibleStripeName());
+
+    return accessibleContext;
+  }
+
+  private final class AccessibleStripe extends AccessibleJPanel {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibilityUtils.GROUPED_ELEMENTS;
+    }
+  }
+
+  private @NlsSafe String getAccessibleStripeName() {
+    if (getButtons().isEmpty()) return "";
+
+    return switch (this.anchor) {
+      case SwingConstants.TOP -> UIBundle.message("stripe.top.accessible.group.name");
+      case SwingConstants.BOTTOM -> UIBundle.message("stripe.bottom.accessible.group.name");
+      case SwingConstants.LEFT -> UIBundle.message("stripe.left.accessible.group.name");
+      case SwingConstants.RIGHT -> UIBundle.message("stripe.right.accessible.group.name");
+      default -> "";
+    };
   }
 }

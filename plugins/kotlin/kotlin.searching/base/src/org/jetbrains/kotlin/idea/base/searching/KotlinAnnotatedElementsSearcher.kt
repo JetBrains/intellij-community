@@ -14,10 +14,12 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -109,12 +111,15 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                     if (psiBasedResolveResult == ImpreciseResolveResult.UNSURE) {
                         @OptIn(KtAllowAnalysisOnEdt::class)
                         allowAnalysisOnEdt {
-                            analyze(elt) {
-                                val annotationSymbol = elt.resolveCall().singleConstructorCallOrNull()?.symbol
-                                    ?: return false
-                                val annotationType = annotationSymbol.returnType as? KtNonErrorClassType ?: return false
-                                val fqName = annotationType.classId.asFqNameString()
-                                if (fqName != annotationFQN) return true
+                            @OptIn(KtAllowAnalysisFromWriteAction::class)
+                            allowAnalysisFromWriteAction {
+                                analyze(elt) {
+                                    val annotationSymbol = elt.resolveCall()?.singleConstructorCallOrNull()?.symbol
+                                        ?: return false
+                                    val annotationType = annotationSymbol.returnType as? KtNonErrorClassType ?: return false
+                                    val fqName = annotationType.classId.asFqNameString()
+                                    if (fqName != annotationFQN) return true
+                                }
                             }
                         }
                     }

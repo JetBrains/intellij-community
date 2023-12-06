@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -107,8 +107,7 @@ public interface CaretModel {
    *
    * @return the caret position.
    */
-  @NotNull
-  default LogicalPosition getLogicalPosition() {
+  default @NotNull LogicalPosition getLogicalPosition() {
     return getCurrentCaret().getLogicalPosition();
   }
 
@@ -117,8 +116,7 @@ public interface CaretModel {
    *
    * @return the caret position.
    */
-  @NotNull
-  default VisualPosition getVisualPosition() {
+  default @NotNull VisualPosition getVisualPosition() {
     return getCurrentCaret().getVisualPosition();
   }
 
@@ -227,8 +225,7 @@ public interface CaretModel {
   /**
    * Same as {@link #addCaret(VisualPosition, boolean)} with {@code true} as a {@code makePrimary} boolean parameter value.
    */
-  @Nullable
-  default Caret addCaret(@NotNull VisualPosition pos) {
+  default @Nullable Caret addCaret(@NotNull VisualPosition pos) {
     return addCaret(pos, true);
   }
 

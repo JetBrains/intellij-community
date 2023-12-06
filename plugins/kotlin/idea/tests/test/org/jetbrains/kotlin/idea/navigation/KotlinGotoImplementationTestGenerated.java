@@ -113,6 +113,11 @@ public class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImp
         runTest("testData/navigation/implementations/ObjectImported.kt");
     }
 
+    @TestMetadata("OverridesInAnonymous.kt")
+    public void testOverridesInAnonymous() throws Exception {
+        runTest("testData/navigation/implementations/OverridesInAnonymous.kt");
+    }
+
     @TestMetadata("OverridesInEnumEntries.kt")
     public void testOverridesInEnumEntries() throws Exception {
         runTest("testData/navigation/implementations/OverridesInEnumEntries.kt");

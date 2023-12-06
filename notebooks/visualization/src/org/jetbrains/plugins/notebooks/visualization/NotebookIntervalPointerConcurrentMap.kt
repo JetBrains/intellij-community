@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.MessageBus
 import java.util.concurrent.ConcurrentHashMap
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
  * 1. pointer becomes invalid (.get() == null)
  * 2. this class receives event from messageBus
  */
-class NotebookIntervalPointerConcurrentMap<Value>(messageBus: MessageBus, parent: Disposable) : Disposable {
+class NotebookIntervalPointerConcurrentMap<Value>(messageBus: MessageBus, parent: Disposable) : CheckedDisposable {
 
   private val mapReference = AtomicReference(ConcurrentHashMap<NotebookIntervalPointer, Value>())
 
@@ -63,11 +64,19 @@ class NotebookIntervalPointerConcurrentMap<Value>(messageBus: MessageBus, parent
     return mapReference.get()?.remove(cellPointer)
   }
 
+  /**
+   * It's possible to pass any collection, but implementation has special mode for a case with large Set<NotebookIntervalPointer>
+   * see [java.util.concurrent.ConcurrentHashMap.CollectionView.removeAll]
+   */
+  fun removeAll(cellPointers: Collection<NotebookIntervalPointer>): Boolean {
+    return mapReference.get()?.keys?.removeAll(cellPointers) ?: false
+  }
+
   override fun dispose() {
     mapReference.set(null)
   }
 
-  fun isDisposed(): Boolean {
+  override fun isDisposed(): Boolean {
     return mapReference.get() == null
   }
 }

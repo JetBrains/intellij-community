@@ -3,21 +3,19 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.isInheritorOf
-import com.intellij.codeInspection.nonPreviewElement
+import com.intellij.jvm.analysis.quickFix.CompositeModCommandQuickFix
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.ui.ConflictsDialog
@@ -96,7 +94,7 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
       override fun visitCallExpression(node: UCallExpression): Boolean {
         if (migratableMethodNames.contains(node.methodName)) return false
         if (node.kind == UastCallKind.CONSTRUCTOR_CALL) return false
-        val method = node.resolveToUElement()?.asSafely<UMethod>() ?: return false
+        val method = node.resolveToUElementOfType<UMethod>() ?: return false
         if (migratableConstructorNames.contains(method.name)) return false
         if (method.isStatic) return false // filter out assertions, they will be converted later
         val containingMethodClass = method.javaPsi.containingClass ?: return false
@@ -203,37 +201,41 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
 
   private fun addAnnotation(aClass: PsiClass, fqn: String, vararg parameters: AnnotationAttributeRequest) {
     createAddAnnotationActions(aClass, annotationRequest(fqn, *parameters)).forEach {
-      it.invoke(aClass.project, null, aClass.containingFile)
+      invoke(it, aClass.containingFile!!)
     }
   }
 
   private fun addAnnotation(method: UMethod, fqn: String, vararg parameters: AnnotationAttributeRequest) {
     createAddAnnotationActions(method.javaPsi, annotationRequest(fqn, *parameters)).forEach {
-      it.invoke(method.javaPsi.project, null,  method.sourcePsi?.containingFile)
+      invoke(it, method.sourcePsi?.containingFile!!)
     }
   }
 
+  private fun invoke(action: IntentionAction, file: PsiFile) {
+    PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(file.viewProvider.document)
+    action.invoke(file.project, null, file)
+  }
+
   private fun transformSetUpOrTearDownMethod(method: UMethod) {
-    val project = method.javaPsi.project
-    val nonPreviewElement = method.javaPsi.nonPreviewElement ?: return
-    val actions = createModifierActions(nonPreviewElement, modifierRequest(JvmModifier.PUBLIC, true)) +
-                  createChangeOverrideActions(nonPreviewElement, shouldBePresent = false)
-    actions.forEach {
-      if (IntentionPreviewUtils.isIntentionPreviewActive()) {
-        it.generatePreview(project, IntentionPreviewUtils.getPreviewEditor() ?: return, method.sourcePsi?.containingFile ?: return)
-      }
-      else {
-        it.invoke(project, null, method.sourcePsi?.containingFile ?: return)
-      }
-    }
+    val containingFile = method.sourcePsi?.containingFile ?: return
+    CompositeModCommandQuickFix.performActions(createModifierActions(method.javaPsi, modifierRequest(JvmModifier.PUBLIC, true)), containingFile)
+    CompositeModCommandQuickFix.performActions(createChangeOverrideActions(method.javaPsi, shouldBePresent = false), containingFile)
     method.accept(SuperCallRemoverVisitor(method.name))
   }
 
   private fun transformTesSuite(method: UMethod) {
     val containingClass = method.javaPsi.containingClass ?: return
     val classValues = findAddedTestSuites(method).map { AnnotationAttributeValueRequest.ClassValue(it) }
-    addAnnotation(containingClass, ORG_JUNIT_RUNNERS_SUITE_SUITE_CLASSES, arrayAttribute("value", classValues))
-    addAnnotation(containingClass, ORG_JUNIT_RUNNER_RUN_WITH, classAttribute("value", ORG_JUNIT_RUNNERS_SUITE))
+    addAnnotation(
+      containingClass,
+      ORG_JUNIT_RUNNERS_SUITE_SUITE_CLASSES,
+      arrayAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, classValues)
+    )
+    addAnnotation(
+      containingClass,
+      ORG_JUNIT_RUNNER_RUN_WITH,
+      classAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, ORG_JUNIT_RUNNERS_SUITE)
+    )
     method.sourcePsi?.delete()
   }
 
@@ -303,7 +305,7 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
   private class AssertionsConverter : AbstractUastVisitor() {
     override fun visitCallExpression(node: UCallExpression): Boolean {
       if (!node.isPsiValid) return true
-      val method = node.resolveToUElement()?.asSafely<UMethod>() ?: return false
+      val method = node.resolveToUElementOfType<UMethod>() ?: return false
       if (!method.isStatic) return false // assert methods are always static
       val containingMethodClass = method.javaPsi.containingClass ?: return false
       val containingClassFqn = containingMethodClass.qualifiedName

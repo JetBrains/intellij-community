@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.model.gotosymbol;
 
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -42,7 +43,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
 
   protected abstract boolean acceptModule(final Module module);
 
-  protected static void addNewNames(@NotNull final List<? extends DomElement> elements, final Set<? super String> existingNames) {
+  protected static void addNewNames(final @NotNull List<? extends DomElement> elements, final Set<? super String> existingNames) {
     for (DomElement name : elements) {
       existingNames.add(name.getGenericInfo().getElementName(name));
     }
@@ -53,8 +54,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       CachedValueProvider.Result.create(calcAcceptableModules(project), PsiModificationTracker.MODIFICATION_COUNT), false);
   }
 
-  @NotNull
-  protected Collection<Module> calcAcceptableModules(@NotNull Project project) {
+  protected @NotNull Collection<Module> calcAcceptableModules(@NotNull Project project) {
     return ContainerUtil.findAll(ModuleManager.getInstance(project).getModules(), module -> acceptModule(module));
   }
 
@@ -76,8 +76,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
-  @Nullable
-  protected static NavigationItem createNavigationItem(final DomElement domElement) {
+  protected static @Nullable NavigationItem createNavigationItem(final DomElement domElement) {
     final GenericDomValue name = domElement.getGenericInfo().getNameDomElement(domElement);
     assert name != null;
     final XmlElement psiElement = name.getXmlElement();
@@ -89,10 +88,9 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     return createNavigationItem(psiElement, value, icon);
   }
 
-  @NotNull
-  protected static NavigationItem createNavigationItem(@NotNull final PsiElement element,
-                                                       @NotNull @NonNls final String text,
-                                                       @Nullable final Icon icon) {
+  protected static @NotNull NavigationItem createNavigationItem(final @NotNull PsiElement element,
+                                                                final @NotNull @NonNls String text,
+                                                                final @Nullable Icon icon) {
     return new BaseNavigationItem(element, text, icon);
   }
 
@@ -120,8 +118,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     }
 
     @Override
-    @NotNull
-    public PsiElement getNavigationElement() {
+    public @NotNull PsiElement getNavigationElement() {
       return myPsiElement;
     }
 
@@ -146,12 +143,11 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
 
         @Override
         public String getLocationString() {
-          return '(' + myPsiElement.getContainingFile().getName() + ')';
+          return ReadAction.nonBlocking(() -> '(' + myPsiElement.getContainingFile().getName() + ')').executeSynchronously();
         }
 
         @Override
-        @Nullable
-        public Icon getIcon(boolean open) {
+        public @Nullable Icon getIcon(boolean open) {
           return myIcon;
         }
       };
@@ -162,9 +158,8 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       return myPsiElement.getParent();
     }
 
-    @NotNull
     @Override
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myPsiElement.getProject();
     }
 

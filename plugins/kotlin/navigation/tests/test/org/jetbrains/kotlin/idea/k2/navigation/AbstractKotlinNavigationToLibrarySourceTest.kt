@@ -9,7 +9,7 @@ import com.intellij.refactoring.suggested.startOffset
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -29,7 +29,7 @@ abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceRe
     override fun performAdditionalResolveChecks(results: List<PsiElement>) {
         for (result in results) {
             val navigationElement = result.navigationElement
-            val ktModule = navigationElement.getKtModule()
+            val ktModule = ProjectStructureProvider.getModule(project, navigationElement, null)
             UsefulTestCase.assertTrue(
                 "reference should be resolved to the psi element from ${KtLibrarySourceModule::class} but was resolved to ${ktModule::class}",
                 ktModule is KtLibrarySourceModule
@@ -45,7 +45,7 @@ abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceRe
     }
 
     private fun KtNamedDeclaration.signatureText(): String {
-        val firstElement = children.first { it !is PsiComment && it !is PsiWhiteSpace }
+        val firstElement = children.firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: return nameAsSafeName.asString()
         val endOffset = when (this) {
             is KtNamedFunction -> typeReference ?: valueParameterList?.rightParenthesis
             is KtProperty -> typeReference ?: equalsToken?.getPrevSiblingIgnoringWhitespace()

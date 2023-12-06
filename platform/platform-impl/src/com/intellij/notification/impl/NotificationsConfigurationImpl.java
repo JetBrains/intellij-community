@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.*;
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   private static final Logger LOG = Logger.getInstance(NotificationsConfigurationImpl.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
   private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
+  private static final String NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE = "notificationsAnnouncingMode";
 
   private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR =
     (o1, o2) -> o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
@@ -29,6 +31,8 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   public boolean SHOW_BALLOONS = true;
   public boolean SYSTEM_NOTIFICATIONS = true;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private NotificationAnnouncingMode NOTIFICATION_ANNOUNCING_MODE;
 
   public static NotificationsConfigurationImpl getInstanceImpl() {
     return (NotificationsConfigurationImpl)getNotificationsConfiguration();
@@ -45,8 +49,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     }
   }
 
-  @Nullable
-  public String getToolWindowId(@NotNull String groupId) {
+  public @Nullable String getToolWindowId(@NotNull String groupId) {
     NotificationGroup group = NotificationGroup.findRegisteredGroup(groupId);
     return group == null ? null : group.getToolWindowId();
   }
@@ -85,8 +88,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     return settings == null ? getDefaultSettings(groupId) : settings;
   }
 
-  @NotNull
-  private static NotificationSettings getDefaultSettings(String groupId) {
+  private static @NotNull NotificationSettings getDefaultSettings(String groupId) {
     NotificationGroup group = NotificationGroup.findRegisteredGroup(groupId);
     if (group != null) {
       return new NotificationSettings(groupId, group.getDisplayType(), group.isLogByDefault(), false);
@@ -114,9 +116,18 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
                        @NotNull NotificationDisplayType displayType,
                        boolean shouldLog,
                        boolean shouldReadAloud) {
+    register(groupDisplayName, displayType, shouldLog, shouldReadAloud, null);
+  }
+
+  @Override
+  public void register(@NotNull String groupDisplayName,
+                       @NotNull NotificationDisplayType displayType,
+                       boolean shouldLog,
+                       boolean shouldReadAloud,
+                       @Nullable String toolWindowId) {
     if (!isRegistered(groupDisplayName)) {
       // register a new group and remember these settings as default
-      new NotificationGroup(groupDisplayName, displayType, shouldLog);
+      new NotificationGroup(groupDisplayName, displayType, shouldLog, toolWindowId);
       // and decide whether to save them explicitly (in case of non-default shouldReadAloud)
       changeSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud);
     }
@@ -130,6 +141,18 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   @Override
   public boolean areNotificationsEnabled() {
     return SHOW_BALLOONS;
+  }
+
+  @Override
+  public @NotNull NotificationAnnouncingMode getNotificationAnnouncingMode() {
+    if (NOTIFICATION_ANNOUNCING_MODE != null) return NOTIFICATION_ANNOUNCING_MODE;
+    else if (SystemInfo.isWindows) return NotificationAnnouncingMode.NONE;
+    else return NotificationAnnouncingMode.MEDIUM;
+  }
+
+  @Override
+  public void setNotificationAnnouncingMode(@NotNull NotificationAnnouncingMode mode) {
+    NOTIFICATION_ANNOUNCING_MODE = mode;
   }
 
   @Override
@@ -181,6 +204,10 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
       element.setAttribute(SYSTEM_NOTIFICATIONS_ATTRIBUTE, "false");
     }
 
+    if (NOTIFICATION_ANNOUNCING_MODE != null) {
+      element.setAttribute(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE, NOTIFICATION_ANNOUNCING_MODE.getStringValue());
+    }
+
     return element;
   }
 
@@ -205,6 +232,11 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     if ("false".equals(state.getAttributeValue(SYSTEM_NOTIFICATIONS_ATTRIBUTE))) {
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
       SYSTEM_NOTIFICATIONS = false;
+    }
+
+    NotificationAnnouncingMode announcingMode = NotificationAnnouncingMode.get(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE));
+    if (announcingMode != null) {
+      NOTIFICATION_ANNOUNCING_MODE = announcingMode;
     }
   }
 }

@@ -14,7 +14,7 @@ public final class WaitForSmartCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "waitForSmart";
 
   /**
-   * Wait for 10 seconds after the dumb mode completes.
+   * Wait for 3 seconds after the dumb mode completes.
    * <p/>
    * There are background IDE processes (<backgroundPostStartupActivity/>)
    * that start after 5 seconds of project opening, or in general, at random time.
@@ -29,7 +29,7 @@ public final class WaitForSmartCommand extends AbstractCommand {
    * But for now we use this `waitForSmart` only in indexes-related tests and
    * call it before every "comparing" command (checkIndices/compareIndexes/etc)
    */
-  private static final int SMART_MODE_MINIMUM_DELAY = 10000;
+  private static final int SMART_MODE_MINIMUM_DELAY = 3000;
 
   private final Alarm myAlarm = new Alarm();
 
@@ -45,7 +45,7 @@ public final class WaitForSmartCommand extends AbstractCommand {
   }
 
   private void completeWhenSmartModeIsLongEnough(@NotNull Project project, @NotNull AsyncPromise<Object> completion) {
-    DumbService.getInstance(project).smartInvokeLater(() -> myAlarm.addRequest(() -> {
+    DumbService.getInstance(project).runWhenSmart(() -> myAlarm.addRequest(() -> {
       if (DumbService.isDumb(project)) {
         completeWhenSmartModeIsLongEnough(project, completion);
       }

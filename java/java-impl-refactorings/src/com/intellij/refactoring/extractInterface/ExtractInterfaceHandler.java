@@ -24,15 +24,12 @@ import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareActionHandler {
 
@@ -49,21 +46,17 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = file.findElementAt(offset);
-    while (true) {
-      if (element == null || element instanceof PsiFile) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
-        return;
-      }
-      if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
-        invoke(project, new PsiElement[]{element}, dataContext);
-        return;
-      }
-      element = element.getParent();
+
+    List<PsiMember> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, e -> {
+      return e instanceof PsiMember member && !(member.getContainingClass() instanceof PsiAnonymousClass);
+    });
+    if (elements.isEmpty()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
+      return;
     }
+    invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
   }
 
   @Override
@@ -74,6 +67,12 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
               : PsiTreeUtil.getParentOfType(parent, PsiClass.class, false);
     if (myClass == null) {
       String message = RefactoringBundle.message("error.select.class.to.be.refactored");
+      CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
+      return;
+    }
+
+    if (myClass instanceof PsiUnnamedClass) {
+      String message = RefactoringBundle.message("error.interface.cannot.be.extracted.from.unnamed.class");
       CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
       return;
     }
@@ -114,7 +113,7 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
                                    PsiClass aClass,
                                    String interfaceName,
                                    MemberInfo[] selectedMembers,
-                                   DocCommentPolicy javaDocPolicy) throws IncorrectOperationException {
+                                   DocCommentPolicy javaDocPolicy) {
     final Project project = aClass.getProject();
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringStarted(ExtractSuperClassUtil.REFACTORING_EXTRACT_SUPER_ID, ExtractSuperClassUtil.createBeforeData(aClass, selectedMembers));

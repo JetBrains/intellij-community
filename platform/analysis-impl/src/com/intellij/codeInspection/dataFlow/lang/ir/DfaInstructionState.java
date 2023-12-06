@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
@@ -21,8 +21,7 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
     this.myInstruction = myInstruction;
   }
 
-  @NotNull
-  public Instruction getInstruction() {
+  public @NotNull Instruction getInstruction() {
     return myInstruction;
   }
 
@@ -36,8 +35,7 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
     return myInstruction.nextStates(interpreter, myBeforeMemoryState);
   }
 
-  @NotNull
-  public DfaMemoryState getMemoryState() {
+  public @NotNull DfaMemoryState getMemoryState() {
     return myBeforeMemoryState;
   }
 
@@ -56,7 +54,7 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(myBeforeMemoryState, myInstruction);
+    return 31 * myBeforeMemoryState.hashCode() + myInstruction.hashCode();
   }
 
   @Override

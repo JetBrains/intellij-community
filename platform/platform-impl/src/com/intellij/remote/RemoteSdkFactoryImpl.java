@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +31,17 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
 
     final SdkType sdkType = getSdkType(data);
 
-    final ProjectJdkImpl sdk = createSdk(existingSdks, sdkType, data, name);
+    final Sdk sdk = createSdk(existingSdks, sdkType, data, name);
 
-    sdk.setVersionString(sdkVersion);
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setVersionString(sdkVersion);
+    Application application = ApplicationManager.getApplication();
+    Runnable runnable = () -> sdkModificator.commitChanges();
+    if (application.isDispatchThread()) {
+      application.runWriteAction(runnable);
+    } else {
+      application.invokeAndWait(() -> application.runWriteAction(runnable));
+    }
 
     data.setValid(true);
 
@@ -43,23 +53,19 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
     return data.getSdkId();
   }
 
-  @NotNull
-  protected abstract SdkType getSdkType(@NotNull T data);
+  protected abstract @NotNull SdkType getSdkType(@NotNull T data);
 
-  @NotNull
-  protected abstract String getSdkName(@NotNull T data, @Nullable String version) throws RemoteSdkException;
+  protected abstract @NotNull String getSdkName(@NotNull T data, @Nullable String version) throws RemoteSdkException;
 
-  @Nullable
-  protected abstract String getSdkVersion(Project project, @NotNull T data) throws RemoteSdkException;
+  protected abstract @Nullable String getSdkVersion(Project project, @NotNull T data) throws RemoteSdkException;
 
   @Override
-  @NotNull
-  public Sdk createUnfinished(T data, Collection<Sdk> existingSdks) {
+  public @NotNull Sdk createUnfinished(T data, Collection<Sdk> existingSdks) {
     final String name = getDefaultUnfinishedName();
 
     final SdkType sdkType = getSdkType(data);
 
-    final ProjectJdkImpl sdk = createSdk(existingSdks, sdkType, data, name);
+    final Sdk sdk = createSdk(existingSdks, sdkType, data, name);
 
     data.setValid(false);
 
@@ -78,8 +84,7 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
    * @param sdkName      the name of SDK
    * @return the SDK with the corresponding data
    */
-  @NotNull
-  protected abstract ProjectJdkImpl createSdk(@NotNull Collection<Sdk> existingSdks,
+  protected abstract @NotNull Sdk createSdk(@NotNull Collection<Sdk> existingSdks,
                                               @NotNull SdkType sdkType,
                                               @NotNull T data,
                                               @Nullable String sdkName);
@@ -107,9 +112,7 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
    *
    * @see #getDefaultUnfinishedName()
    */
-  @NotNull
-  @Nls
-  public static String getDefaultUnfinishedInterpreterName(@NotNull String sdkName) {
+  public static @NotNull @Nls String getDefaultUnfinishedInterpreterName(@NotNull String sdkName) {
     return IdeBundle.message("interpreter.default.name", sdkName);
   }
 }

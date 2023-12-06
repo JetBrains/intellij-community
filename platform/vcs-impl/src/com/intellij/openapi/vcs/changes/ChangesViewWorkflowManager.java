@@ -1,9 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class ChangesViewWorkflowManager implements Disposable {
   @Topic.ProjectLevel
   public static final Topic<ChangesViewWorkflowListener> TOPIC =
@@ -42,7 +40,7 @@ public final class ChangesViewWorkflowManager implements Disposable {
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateCommitWorkflowHandler());
-    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflowHandler(), ModalityState.NON_MODAL, myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflowHandler(), ModalityState.nonModal(), myProject.getDisposed());
   }
 
   @Nullable
@@ -60,7 +58,7 @@ public final class ChangesViewWorkflowManager implements Disposable {
     boolean isNonModal = CommitModeManager.getInstance(myProject).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode;
     if (isNonModal) {
       if (myCommitWorkflowHandler == null) {
-        Activity activity = StartUpMeasurer.startActivity("ChangesViewWorkflowManager initialization", ActivityCategory.DEFAULT);
+        Activity activity = StartUpMeasurer.startActivity("ChangesViewWorkflowManager initialization");
 
         // ChangesViewPanel can be reused between workflow instances -> should clean up after ourselves
         ChangesViewPanel changesPanel = ((ChangesViewManager)ChangesViewManager.getInstance(myProject)).initChangesPanel();

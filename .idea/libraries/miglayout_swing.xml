@@ -1,17 +1,26 @@
 <component name="libraryTable">
   <library name="miglayout-swing" type="repository">
-    <properties maven-id="com.miglayout:miglayout-swing:11.0" />
+    <properties maven-id="com.miglayout:miglayout-swing:11.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.2/miglayout-swing-11.2.jar">
+          <sha256sum>58125eace2fd03f9c0e64445bed1662befe69da2aa0029aabef9ccdc6d6a641c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.2/miglayout-core-11.2.jar">
+          <sha256sum>64ad8c5474a7948707fd1cd6f5a6a999d1f21865ffdd2db94b14de4fb00b15aa</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/migLayout" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.0/miglayout-swing-11.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.0/miglayout-core-11.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.2/miglayout-swing-11.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.2/miglayout-core-11.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.0/miglayout-swing-11.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.0/miglayout-core-11.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.2/miglayout-swing-11.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.2/miglayout-core-11.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

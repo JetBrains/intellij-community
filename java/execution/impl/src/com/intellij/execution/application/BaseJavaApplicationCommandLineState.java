@@ -12,7 +12,6 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -33,8 +32,6 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   }
 
   protected void setupJavaParameters(@NotNull JavaParameters params) throws ExecutionException {
-    JavaParametersUtil.configureConfiguration(params, myConfiguration);
-
     ReadAction.run(() -> JavaRunConfigurationExtensionManager.getInstance()
       .updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor()));
   }
@@ -83,13 +80,20 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     if (content != null) {
       content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));
     }
-    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process,
-                                                                        targetedCommandLine.getCommandPresentation(remoteEnvironment),
-                                                                        targetedCommandLine.getCharset(),
-                                                                        targetedCommandLineBuilder.getFilesToDeleteOnTermination());
+    OSProcessHandler handler = createProcessHandler(remoteEnvironment, targetedCommandLineBuilder, targetedCommandLine, process);
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
+  }
+
+  protected @NotNull OSProcessHandler createProcessHandler(TargetEnvironment remoteEnvironment,
+                                                           TargetedCommandLineBuilder targetedCommandLineBuilder,
+                                                           TargetedCommandLine targetedCommandLine,
+                                                           Process process) throws ExecutionException {
+    return new KillableColoredProcessHandler.Silent(process,
+                                                    targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                                    targetedCommandLine.getCharset(),
+                                                    targetedCommandLineBuilder.getFilesToDeleteOnTermination());
   }
 
   @NotNull

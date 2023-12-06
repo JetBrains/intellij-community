@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.util.ElementsChooser;
@@ -12,7 +12,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 
-public class SearchEverywhereFiltersStatisticsCollector extends CounterUsagesCollector {
+public final class SearchEverywhereFiltersStatisticsCollector extends CounterUsagesCollector {
 
   public enum QuickFilterButtons {
     ALL, NONE, INVERT
@@ -67,21 +67,21 @@ public class SearchEverywhereFiltersStatisticsCollector extends CounterUsagesCol
     }
   }
 
-  public static class FileTypeFilterCollector extends BaseFilterStatisticsCollector<FileTypeRef> {
+  public static final class FileTypeFilterCollector extends BaseFilterStatisticsCollector<FileTypeRef> {
     @Override
     public void elementMarkChanged(FileTypeRef element, boolean isMarked) {
       FILE_TYPE_CHANGED_EVENT.log(element.getName(), isMarked);
     }
   }
 
-  public static class LangFilterCollector extends BaseFilterStatisticsCollector<LanguageRef> {
+  public static final class LangFilterCollector extends BaseFilterStatisticsCollector<LanguageRef> {
     @Override
     public void elementMarkChanged(LanguageRef element, boolean isMarked) {
       LANG_CHANGED_EVENT.log(element.getId(), isMarked);
     }
   }
 
-  public static class ContributorFilterCollector extends BaseFilterStatisticsCollector<String> {
+  public static final class ContributorFilterCollector extends BaseFilterStatisticsCollector<String> {
     @Override
     public void elementMarkChanged(String contributorID, boolean isMarked) {
       CONTRIBUTOR_CHANGED_EVENT.log(contributorID, isMarked);

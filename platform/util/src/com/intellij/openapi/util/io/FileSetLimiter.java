@@ -3,9 +3,11 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,10 +17,7 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.time.Clock;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -48,7 +47,7 @@ import static java.util.stream.Collectors.toList;
  * </pre>
  */
 @ApiStatus.Internal
-public class FileSetLimiter {
+public final class FileSetLimiter {
   private static final Logger LOG = Logger.getInstance(FileSetLimiter.class);
 
   public static final int DEFAULT_FILES_TO_KEEP = 10;
@@ -72,7 +71,7 @@ public class FileSetLimiter {
 
   public static final Consumer<Collection<? extends Path>> DELETE_ASYNC = paths -> {
     if (!paths.isEmpty()) {
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
+      ExecutorsKt.asExecutor(Dispatchers.getIO()).execute(() -> {
         final Thread currentThread = Thread.currentThread();
         final int priority = currentThread.getPriority();
         currentThread.setPriority(Thread.MIN_PRIORITY);
@@ -173,17 +172,7 @@ public class FileSetLimiter {
     // find files matching fileNameFormat, extract dates of creation, and remove the oldest files
     try (final Stream<Path> children = Files.list(directory)) {
       final Comparator<Pair<Path, Date>> byDateOfCreation = comparing(pair -> pair.second);
-      final List<Path> excessiveFilesToRemove = children.map(path -> {
-          final String fileName = directory.relativize(path).toString();
-          try {
-            final Object[] results = fileNameFormat.parse(fileName);
-            final Date fileCreatedAt = (Date)results[0];
-            return new Pair<>(path, fileCreatedAt);
-          }
-          catch (ParseException e) {
-            return new Pair<>(path, (Date)null);
-          }
-        })
+      final List<Path> excessiveFilesToRemove = children.map(this::tryParsePath)
         .filter(pair -> pair.second != null)
         .sorted(byDateOfCreation.reversed())
         .skip(maxFilesToKeep)
@@ -259,18 +248,80 @@ public class FileSetLimiter {
     return newFile;
   }
 
+  public List<Path> listExistentFiles() throws IOException {
+    if (!Files.exists(directory) || !Files.isDirectory(directory)) {
+      return Collections.emptyList();
+    }
+    // find files matching fileNameFormat, extract dates of creation, and remove the oldest files
+    try (final Stream<Path> children = Files.list(directory)) {
+      return children.map(this::tryParsePath)
+        .filter(pair -> pair.second != null)
+        .map(pair -> pair.first)
+        .collect(toList());
+    }
+  }
+
+  public Optional<Path> mostRecentFile() throws IOException {
+    if (!Files.exists(directory) || !Files.isDirectory(directory)) {
+      return Optional.empty();
+    }
+    // find files matching fileNameFormat, extract dates of creation, and remove the oldest files
+    final Comparator<Pair<Path, Date>> byDateOfCreation = comparing(pair -> pair.second);
+    try (final Stream<Path> children = Files.list(directory)) {
+      return children.map(this::tryParsePath)
+        .filter(pair -> pair.second != null)
+        .max(byDateOfCreation)
+        .map(pair -> pair.first);
+    }
+  }
+
   /**
    * Splits baseFileName into the name and the extension, and insert dateFormat between them.
    * E.g.: ('my-file.log','yyyy-MM-dd-HH-mm-ss') -> 'my-file.{0,date,yyyy-MM-dd-HH-mm-ss}.log'
    */
-  @NotNull
-  private static String fileNameFormatFromBaseFileNameAndDateFormat(final @NotNull String baseFileName,
+  private static @NotNull String fileNameFormatFromBaseFileNameAndDateFormat(final @NotNull String baseFileName,
                                                                     final @NotNull String dateFormat) {
     final String extension = FileUtilRt.getExtension(baseFileName);
-    final String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(baseFileName);
+    String unzippedExtension = "";
+    String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(baseFileName);
+
+    if (extension.equals("gz")) {
+      unzippedExtension = FileUtilRt.getExtension(nameWithoutExtension) + ".";
+      nameWithoutExtension = FileUtilRt.getNameWithoutExtension(nameWithoutExtension);
+    }
 
     return extension.isEmpty()
            ? nameWithoutExtension + ".{0,date," + dateFormat + "}"
-           : nameWithoutExtension + ".{0,date," + dateFormat + "}." + extension;
+           : nameWithoutExtension + ".{0,date," + dateFormat + "}." + unzippedExtension + extension;
   }
+
+  private @NotNull Pair<Path, Date> tryParsePath(final Path path) {
+    //TODO RC: use FileRecord instead of Pair, and parse sub-millisecond suffix also
+    final String fileName = directory.relativize(path).toString();
+    try {
+      final Object[] results = fileNameFormat.parse(fileName);
+      final Date fileCreatedAt = (Date)results[0];
+      return new Pair<>(path, fileCreatedAt);
+    }
+    catch (ParseException e) {
+      return new Pair<>(path, null);
+    }
+  }
+
+  /** TODO RC: use it in tryParsePath instead of Pair */
+  @SuppressWarnings("unused")
+  public static final class FileRecord {
+    public final @NotNull Path path;
+    public final @Nullable Date date;
+    public final int subMillisecondId;
+
+    public FileRecord(final @NotNull Path path,
+                      final @Nullable Date date,
+                      final int subMillisecondId) {
+      this.path = path;
+      this.date = date;
+      this.subMillisecondId = subMillisecondId;
+    }
+  }
+
 }

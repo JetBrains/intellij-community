@@ -68,6 +68,7 @@ public class MoveToTestRootFix extends LocalQuickFixAndIntentionActionOnPsiEleme
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     ModuleFileIndex fileIndex = rootManager.getFileIndex();
     if (!fileIndex.isInSourceContent(virtualFile)) return false;
+    if (JavaDirectoryService.getInstance().getPackage(file.getContainingDirectory()) == null) return false;
     return getTestRoots(rootManager).findFirst().isPresent();
   }
 
@@ -107,6 +108,7 @@ public class MoveToTestRootFix extends LocalQuickFixAndIntentionActionOnPsiEleme
     if (sourceRoot == null) return;
     
     PsiPackage targetPackage = JavaDirectoryService.getInstance().getPackage(myFile.getContainingDirectory());
+    if (targetPackage == null) return;
     
     PackageWrapper wrapper = PackageWrapper.create(targetPackage);
 

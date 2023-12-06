@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -18,6 +20,8 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
+@ApiStatus.Internal
+@IntellijInternalApi
 class SortModifiersInspection : AbstractApplicabilityBasedInspection<KtModifierList>(
     KtModifierList::class.java
 ), CleanupLocalInspectionTool {
@@ -25,8 +29,7 @@ class SortModifiersInspection : AbstractApplicabilityBasedInspection<KtModifierL
         val modifiers = element.modifierKeywordTokens()
         if (modifiers.isEmpty()) return false
         val sortedModifiers = sortModifiers(modifiers)
-        if (modifiers == sortedModifiers && !element.modifiersBeforeAnnotations()) return false
-        return true
+        return modifiers != sortedModifiers || element.modifiersBeforeAnnotations()
     }
 
     override fun inspectionHighlightRangeInElement(element: KtModifierList): TextRange? {

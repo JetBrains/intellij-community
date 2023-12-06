@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
+public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private final boolean myCloseSource;
 
   @SuppressWarnings("unused")
@@ -24,7 +25,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent event) {
+  public void actionPerformed(final @NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -40,7 +41,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     List<EditorWindow> siblings = window.getSiblings();
     if (siblings.size() == 1) {
       EditorComposite editorComposite = window.getSelectedComposite();
-      HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
+      HistoryEntry entry = editorComposite.currentStateAsHistoryEntry$intellij_platform_ide_impl();
       vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
       if (myCloseSource) {
         window.closeFile(vFile, true, false);

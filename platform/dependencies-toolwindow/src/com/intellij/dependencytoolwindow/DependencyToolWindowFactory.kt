@@ -1,21 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.dependencytoolwindow
 
+import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.util.PlatformUtils.*
 import icons.PlatformDependencyToolwindowIcons
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -38,15 +41,13 @@ internal class DependencyToolWindowFactory : ProjectActivity {
   }
 
   private suspend fun ToolWindowManager.Companion.awaitToolWindows(project: Project) = suspendCancellableCoroutine {
-    getInstance(project).invokeLater { it.resume(Unit) }
+    getInstance(project).invokeLater(ContextAwareRunnable { it.resume(Unit) })
   }
 }
 
-const val DEPENDENCIES_TOOL_WINDOW_ID = "Dependencies"
-
 object DependencyToolWindowOpener {
   fun activateToolWindow(project: Project, id: DependenciesToolWindowTabProvider.Id, action: () -> Unit) {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(DEPENDENCIES_TOOL_WINDOW_ID) ?: return
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.BUILD_DEPENDENCIES) ?: return
     toolWindow.activate(action, true, true)
     DependenciesToolWindowTabProvider.extensions(project)
       .filter { it.isAvailable(project) }
@@ -64,20 +65,22 @@ internal class DependencyToolWindowInitializer(
 ) {
   internal suspend fun createToolwindow() {
     withContext(Dispatchers.EDT) {
-      val toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(
-        RegisterToolWindowTask.closable(
-          id = DEPENDENCIES_TOOL_WINDOW_ID,
-          stripeTitle = DependencyToolWindowBundle.messagePointer("toolwindow.stripe.Dependencies"),
-          icon = PlatformDependencyToolwindowIcons.ArtifactSmall
+      blockingContext {
+        val toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(
+          RegisterToolWindowTask(
+            id = ToolWindowId.BUILD_DEPENDENCIES,
+            stripeTitle = IdeBundle.messagePointer("toolwindow.stripe.Dependencies"),
+            icon = PlatformDependencyToolwindowIcons.ArtifactSmall,
+            shouldBeAvailable = DependenciesToolWindowTabProvider.hasAnyExtensions()
+          )
         )
-      )
-      initialize(toolWindow)
+        initialize(toolWindow)
+      }
     }
   }
 
   private fun initialize(toolWindow: ToolWindow) {
     toolWindow.contentManager.removeAllContents(true)
-    toolWindow.isAvailable = false
 
     toolWindow.contentManager.addSelectionChangedListener { event ->
       val actionToolWindow = event.content.component as? HasToolWindowActions

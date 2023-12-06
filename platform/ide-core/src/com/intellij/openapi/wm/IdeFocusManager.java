@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.diagnostic.LoadingState;
@@ -141,12 +141,8 @@ public abstract class IdeFocusManager implements FocusRequestor {
       focusManager = app.getService(IdeFocusManager.class);
     }
 
-    if (focusManager == null) {
-      // happens when app is semi-initialized (e.g. when IDEA server dialog is shown)
-      focusManager = PassThroughIdeFocusManager.getInstance();
-    }
-
-    return focusManager;
+    // happens when app is semi-initialized (e.g. when IDEA server dialog is shown)
+    return focusManager == null ? PassThroughIdeFocusManager.getInstance() : focusManager;
   }
 
   @Override

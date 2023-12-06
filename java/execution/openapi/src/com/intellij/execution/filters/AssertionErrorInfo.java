@@ -13,9 +13,13 @@ public class AssertionErrorInfo extends ExceptionInfo {
   }
 
   @Override
-  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
+  ExceptionLineRefiner.RefinerMatchResult matchSpecificExceptionElement(@NotNull PsiElement e) {
     if (e instanceof PsiKeyword && e.textMatches(PsiKeyword.ASSERT)) {
-      return ObjectUtils.tryCast(e.getParent(), PsiAssertStatement.class);
+      PsiAssertStatement statement = ObjectUtils.tryCast(e.getParent(), PsiAssertStatement.class);
+      if (statement == null) {
+        return null;
+      }
+      return ExceptionLineRefiner.RefinerMatchResult.of(statement);
     }
     return null;
   }

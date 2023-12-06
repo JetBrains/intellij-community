@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Objects;
 
 class A {
   Object[] a1;
@@ -25,25 +26,20 @@ class A {
         if (o == null || getClass() != o.getClass()) return false;
 
         final A a = (A) o;
-
-        if (a7 != a.a7) return false;
-        if (a8 != a.a8) return false;
-        if (a9 != a.a9) return false;
-        if (a10 != a.a10) return false;
-        if (Float.compare(a.a11, a11) != 0) return false;
-        if (Double.compare(a.a12, a12) != 0) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(a1, a.a1)) return false;
-        if (!Arrays.deepEquals(a2, a.a2)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(a3, a.a3)) return false;
-        if (!Arrays.deepEquals(a4, a.a4)) return false;
-        if (!Arrays.equals(a5, a.a5)) return false;
-        if (!Arrays.deepEquals(a6, a.a6)) return false;
-        if (a13 != null ? !a13.equals(a.a13) : a.a13 != null) return false;
-        if (a14 != null ? !a14.equals(a.a14) : a.a14 != null) return false;
-
-        return true;
+        return a7 == a.a7 &&
+                a8 == a.a8 &&
+                a9 == a.a9 &&
+                a10 == a.a10 &&
+                Float.compare(a11, a.a11) == 0 &&
+                Double.compare(a12, a.a12) == 0 &&
+                Arrays.equals(a1, a.a1) &&
+                Arrays.deepEquals(a2, a.a2) &&
+                Arrays.equals(a3, a.a3) &&
+                Arrays.deepEquals(a4, a.a4) &&
+                Arrays.equals(a5, a.a5) &&
+                Arrays.deepEquals(a6, a.a6) &&
+                Objects.equals(a13, a.a13) &&
+                Objects.equals(a14, a.a14);
     }
 
     @Override
@@ -56,15 +52,15 @@ class A {
         result = 31 * result + Arrays.deepHashCode(a4);
         result = 31 * result + Arrays.hashCode(a5);
         result = 31 * result + Arrays.deepHashCode(a6);
-        result = 31 * result + (int) a7;
-        result = 31 * result + (int) a8;
+        result = 31 * result + a7;
+        result = 31 * result + a8;
         result = 31 * result + a9;
         result = 31 * result + (int) (a10 ^ (a10 >>> 32));
-        result = 31 * result + (a11 != +0.0f ? Float.floatToIntBits(a11) : 0);
+        result = 31 * result + Float.floatToIntBits(a11);
         temp = Double.doubleToLongBits(a12);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
-        result = 31 * result + (a13 != null ? a13.hashCode() : 0);
-        result = 31 * result + (a14 != null ? a14.hashCode() : 0);
+        result = 31 * result + Objects.hashCode(a13);
+        result = 31 * result + Objects.hashCode(a14);
         return result;
     }
 }

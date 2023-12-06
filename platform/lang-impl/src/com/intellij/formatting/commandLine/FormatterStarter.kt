@@ -3,11 +3,10 @@ package com.intellij.formatting.commandLine
 
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ArgumentsException
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ShowUsageException
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -63,7 +62,7 @@ internal class FormatterStarter : ApplicationStarter {
 
 }
 
-fun createFormatter(args: List<String>, messageOutput: MessageOutput = StdIoMessageOutput) =
+fun createFormatter(args: List<String>, messageOutput: MessageOutput = StdIoMessageOutput): FileSetCodeStyleProcessor =
   CodeStyleProcessorBuilder(messageOutput)
     .apply {
       if (args.size < 2) throw ShowUsageException()
@@ -136,7 +135,7 @@ fun readSettings(settingsFile: File): CodeStyleSettings? {
 private fun readSettings(settingsPath: String): CodeStyleSettings? = readSettings(File(settingsPath))
 
 private val appInfo: String =
-  (ApplicationInfoEx.getInstanceEx() as ApplicationInfoImpl)
+  ApplicationInfo.getInstance()
     .let { "${it.fullApplicationName}, build ${it.build.asString()}" }
 
 sealed class CodeStyleProcessorBuildException : RuntimeException {

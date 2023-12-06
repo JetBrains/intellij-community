@@ -36,6 +36,31 @@
       "key": "Review.Timeline.Thread.Diff.AnchorLine",
       "description": "Background of an anchor line in thread diff",
       "since": "[2023.1]"
+    },
+    {
+      "key": "Review.State.Foreground",
+      "description": "Foreground of review state (opened, closed, merged, drafted)",
+      "since": "[2023.2]"
+    },
+    {
+      "key": "Review.State.Background",
+      "description": "Background of review state (opened, closed, merged, drafted)",
+      "since": "[2023.2]"
+    },
+    {
+      "key": "Review.Branch.Background",
+      "description": "Background of branch component",
+      "since": "[2023.2]"
+    },
+    {
+      "key": "Review.Branch.Background.Hover",
+      "description": "Hovered background of branch component",
+      "since": "[2023.2]"
+    },
+    {
+      "key": "Review.Editor.Line.Status.Marker",
+      "description": "Color of the line status markers in gutter and scrollbar for lines changed in review",
+      "since": "[2023.3]"
     }
   ]
 }

@@ -23,14 +23,13 @@ public class Test {
   <T> void testRawDeconstruction(TypedRecord<T> r) {
     if (r instanceof TypedRecord<T>(I t)){ }
     if (r instanceof TypedRecord<T>(T t)){ }
-    if (r instanceof <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(I t)){ }
-    if (r instanceof <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(T t)){ }
+    if (r instanceof TypedRecord(I t)){ }
+    if (r instanceof TypedRecord(T t)){ }
   }
 
   void resolveHighlighting1(Object o){
-    if (o instanceof Child(A a, B b) c){
+    if (o instanceof Child(A a, B b)){
       System.out.println(a);
-      System.out.println(c);
     }
     else {
       System.out.println(<error descr="Cannot resolve symbol 'a'">a</error>);
@@ -39,25 +38,22 @@ public class Test {
   }
 
   void resolveHighlighting2(Object o){
-    if (!(o instanceof Child(A a, B b) c)){
+    if (!(o instanceof Child(A a, B b))){
       System.out.println(<error descr="Cannot resolve symbol 'a'">a</error>);
       System.out.println(<error descr="Cannot resolve symbol 'c'">c</error>);
     }
     else {
       System.out.println(a);
-      System.out.println(c);
     }
   }
 
   void resolveHighlighting3(Object o){
-    if (!(o instanceof Child(A a, B b) c)) return;
+    if (!(o instanceof Child(A a, B b))) return;
     System.out.println(a);
-    System.out.println(c);
   }
 
   void resolveHighlighting4(Object o){
-    if (o instanceof Child(A a, B b) c) return;
+    if (o instanceof Child(A a, B b)) return;
     System.out.println(<error descr="Cannot resolve symbol 'a'">a</error>);
-    System.out.println(<error descr="Cannot resolve symbol 'c'">c</error>);
   }
 }

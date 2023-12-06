@@ -10,20 +10,18 @@ import com.intellij.openapi.vcs.VcsTestUtil.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ContentRevision
-import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManagerGate
 import com.intellij.testFramework.vcs.MockChangelistBuilder
-import com.intellij.testFramework.vcs.MockDirtyScope
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitVcsDirtyScope
 import git4idea.config.GitVersion
 import git4idea.status.GitChangeProvider
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.addCommit
 import git4idea.test.createFileStructure
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import junit.framework.TestCase
 import org.junit.Assume
 import java.io.File
@@ -36,7 +34,7 @@ import java.io.File
  */
 abstract class GitChangeProviderTest : GitSingleRepoTest() {
   private lateinit var changeProvider: GitChangeProvider
-  protected lateinit var dirtyScope: VcsModifiableDirtyScope
+  protected lateinit var dirtyScope: GitVcsDirtyScope
   private lateinit var subDir: VirtualFile
 
   protected lateinit var atxt: VirtualFile
@@ -57,7 +55,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
     subdir_dtxt = getVirtualFile("dir/subdir/d.txt")
     subDir = projectRoot.findChild("dir")!!
 
-    dirtyScope = MockDirtyScope(myProject, vcs)
+    dirtyScope = GitVcsDirtyScope(myProject)
 
     cd(projectPath)
   }

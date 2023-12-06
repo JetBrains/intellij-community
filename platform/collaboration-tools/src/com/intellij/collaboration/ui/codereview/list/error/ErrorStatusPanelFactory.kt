@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.error
 
-import com.intellij.collaboration.ui.util.getName
+import com.intellij.collaboration.ui.util.name
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -9,7 +9,7 @@ import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
@@ -24,10 +24,12 @@ import javax.swing.event.HyperlinkEvent
 object ErrorStatusPanelFactory {
   private const val ERROR_ACTION_HREF = "ERROR_ACTION"
 
+  @JvmOverloads
   fun <T> create(
     scope: CoroutineScope,
-    errorState: StateFlow<T?>,
-    errorPresenter: ErrorStatusPresenter<T>
+    errorState: Flow<T?>,
+    errorPresenter: ErrorStatusPresenter<T>,
+    alignment: Alignment = Alignment.CENTER
   ): JComponent {
     val htmlEditorPane = JEditorPane().apply {
       editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
@@ -37,16 +39,17 @@ object ErrorStatusPanelFactory {
       isOpaque = false
     }
 
-    Controller(scope, errorState, errorPresenter, htmlEditorPane)
+    Controller(scope, errorState, errorPresenter, htmlEditorPane, alignment)
 
     return htmlEditorPane
   }
 
   private class Controller<T>(
     scope: CoroutineScope,
-    errorState: StateFlow<T?>,
+    errorState: Flow<T?>,
     private val errorPresenter: ErrorStatusPresenter<T>,
-    private val htmlEditorPane: JEditorPane
+    private val htmlEditorPane: JEditorPane,
+    private val alignment: Alignment
   ) {
     private var action: Action? = null
 
@@ -95,15 +98,20 @@ object ErrorStatusPanelFactory {
       val errorAction = errorPresenter.getErrorAction(error)
       if (errorAction != null) {
         action = errorAction
-        errorTextBuilder.appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.getName()))
+        errorTextBuilder.appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.name.orEmpty()))
       }
 
       htmlEditorPane.text = errorTextBuilder.wrapWithHtmlBody().toString()
       htmlEditorPane.isVisible = true
     }
 
-    private fun HtmlBuilder.appendP(chunk: HtmlChunk): HtmlBuilder = append(HtmlChunk.p().attr("align", "center").child(chunk))
+    private fun HtmlBuilder.appendP(chunk: HtmlChunk): HtmlBuilder = append(HtmlChunk.p().attr("align", alignment.htmlValue).child(chunk))
 
     private fun HtmlBuilder.appendP(@Nls text: String): HtmlBuilder = appendP(HtmlChunk.text(text))
+  }
+
+  enum class Alignment(val htmlValue: String) {
+    LEFT("left"),
+    CENTER("center");
   }
 }

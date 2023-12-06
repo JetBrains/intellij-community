@@ -354,6 +354,19 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     );
   }
 
+  public void testUnnamedClass() {
+    doTest(
+      """
+        void foo() {
+        }
+        """,
+
+      """
+        -Test.java
+         foo(): void"""
+    );
+  }
+
   public void testRecursive() {
     myFixture.configureByText("I.java", "interface I {" +
                                         "  class Impl implements I {" +

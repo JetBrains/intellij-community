@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,17 +7,15 @@ import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import org.jetbrains.annotations.NotNull;
 
-class TogglePathShowingAction extends FileChooserAction implements Toggleable {
+final class TogglePathShowingAction extends FileChooserAction implements Toggleable {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    Toggleable.setSelected(e.getPresentation(), panel.showPathBar());
+    Toggleable.setSelected(e.getPresentation(), panel.pathBar());
   }
 
   @Override
   protected void actionPerformed(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    boolean state = !panel.showPathBar();
-    panel.showPathBar(state);
-    Toggleable.setSelected(e.getPresentation(), state);
+    Toggleable.setSelected(e.getPresentation(), panel.togglePathBar());
   }
 
   @Override

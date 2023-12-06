@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -14,7 +15,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.uast.UastModificationTracker
 import com.intellij.util.containers.SLRUCache
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForProject.Companion.resolverForLibrariesName
@@ -28,8 +29,10 @@ import org.jetbrains.kotlin.context.GlobalContext
 import org.jetbrains.kotlin.context.GlobalContextImpl
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.useCompositeAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
@@ -38,7 +41,8 @@ import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.caches.project.getDependentModules
+import org.jetbrains.kotlin.idea.caches.project.isLibraryClasses
 import org.jetbrains.kotlin.idea.caches.resolve.util.GlobalFacadeModuleFilters
 import org.jetbrains.kotlin.idea.caches.resolve.util.contextWithCompositeExceptionTracker
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
@@ -48,7 +52,6 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.KotlinSuppressCache
@@ -84,7 +87,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             val settings = file.moduleInfo.platformSettings(file.platform)
             CachedValueProvider.Result(
                 getFacadeToAnalyzeFile(file, settings),
-                PsiModificationTracker.MODIFICATION_COUNT,
+                UastModificationTracker.getInstance(project),
                 ProjectRootModificationTracker.getInstance(project),
             )
         }
@@ -133,10 +136,10 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     }
 
     private fun canGetFacadeWithForcedPlatform(
-      elements: List<KtElement>,
-      files: List<KtFile>,
-      moduleInfo: IdeaModuleInfo,
-      platform: TargetPlatform
+        elements: List<KtElement>,
+        files: List<KtFile>,
+        moduleInfo: IdeaModuleInfo,
+        platform: TargetPlatform
     ): Boolean {
         val specialFiles = files.filterNotInProjectSource(moduleInfo)
         val scripts = specialFiles.filterScripts()
@@ -196,13 +199,10 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     override fun getSuppressionCache(): KotlinSuppressCache = kotlinSuppressCache.value
 
     private val globalFacadesPerPlatformAndSdk: SLRUCache<PlatformAnalysisSettings, GlobalFacade> =
-        object : SLRUCache<PlatformAnalysisSettings, GlobalFacade>(2 * 3 * 2, 2 * 3 * 2) {
-            override fun createValue(settings: PlatformAnalysisSettings): GlobalFacade {
-                return GlobalFacade(settings)
-            }
-        }
+        SLRUCache.slruCache(2 * 3 * 2, 2 * 3 * 2) { GlobalFacade(it) }
 
-    private val facadeForScriptDependenciesForProject = createFacadeForScriptDependencies(ScriptDependenciesInfo.ForProject(project))
+    private val facadeForScriptDependenciesForProject =
+        lazy { createFacadeForScriptDependencies(ScriptDependenciesInfo.ForProject(project)) }
 
     private fun createFacadeForScriptDependencies(
         dependenciesModuleInfo: ScriptDependenciesInfo
@@ -212,7 +212,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val settings = createPlatformAnalysisSettings(project, platform, sdk)
 
         val dependenciesForScriptDependencies = listOf(
-            LibraryModificationTracker.getInstance(project),
+            JavaLibraryModificationTracker.getInstance(project),
             ScriptDependenciesModificationTracker.getInstance(project)
         )
 
@@ -247,7 +247,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             project, sdkContext, settings,
             moduleFilter = moduleFilters::sdkFacadeFilter,
             dependencies = listOf(
-                LibraryModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project),
                 ProjectRootModificationTracker.getInstance(project)
             ),
             invalidateOnOOCB = false,
@@ -262,7 +262,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             moduleFilter = moduleFilters::libraryFacadeFilter,
             invalidateOnOOCB = false,
             dependencies = listOf(
-                LibraryModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project),
                 ProjectRootModificationTracker.getInstance(project)
             )
         )
@@ -313,11 +313,11 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             "$resolverForSpecialInfoName $specialModuleInfo for files ${files.joinToString { it.name }} for platform $targetPlatform"
 
         fun makeProjectResolutionFacade(
-          debugName: String,
-          globalContext: GlobalContextImpl,
-          reuseDataFrom: ProjectResolutionFacade? = null,
-          moduleFilter: (IdeaModuleInfo) -> Boolean = { true },
-          allModules: Collection<IdeaModuleInfo>? = null
+            debugName: String,
+            globalContext: GlobalContextImpl,
+            reuseDataFrom: ProjectResolutionFacade? = null,
+            moduleFilter: (IdeaModuleInfo) -> Boolean = { true },
+            allModules: Collection<IdeaModuleInfo>? = null
         ): ProjectResolutionFacade {
             return ProjectResolutionFacade(
                 debugName,
@@ -370,17 +370,18 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                     moduleFilter = { it == specialModuleInfo }
                 )
             }
-            specialModuleInfo is ScriptDependenciesInfo -> facadeForScriptDependenciesForProject
+
+            specialModuleInfo is ScriptDependenciesInfo -> facadeForScriptDependenciesForProject.value
             specialModuleInfo is ScriptDependenciesSourceInfo -> {
                 val globalContext =
-                    facadeForScriptDependenciesForProject.globalContext.contextWithCompositeExceptionTracker(
+                    facadeForScriptDependenciesForProject.value.globalContext.contextWithCompositeExceptionTracker(
                         project,
                         "facadeForSpecialModuleInfo (ScriptDependenciesSourceInfo)"
                     )
                 makeProjectResolutionFacade(
                     "facadeForSpecialModuleInfo (ScriptDependenciesSourceInfo)",
                     globalContext,
-                    reuseDataFrom = facadeForScriptDependenciesForProject,
+                    reuseDataFrom = facadeForScriptDependenciesForProject.value,
                     allModules = specialModuleInfo.dependencies(),
                     moduleFilter = { it == specialModuleInfo }
                 )
@@ -439,8 +440,8 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                         return annotated.annotationEntries.mapNotNull { context.get(BindingContext.ANNOTATION, it) }
                     }
                 },
-                LibraryModificationTracker.getInstance(project),
-                PsiModificationTracker.MODIFICATION_COUNT
+                JavaLibraryModificationTracker.getInstance(project),
+                UastModificationTracker.getInstance(project)
             )
         },
         false
@@ -450,11 +451,10 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         // NOTE: computations inside createFacadeForFilesWithSpecialModuleInfo depend on project root structure
         // so we additionally drop the whole slru cache on change
         CachedValueProvider.Result(
-            object : SLRUCache<Pair<Set<KtFile>, PlatformAnalysisSettings>, ProjectResolutionFacade>(2, 3) {
-                override fun createValue(filesAndSettings: Pair<Set<KtFile>, PlatformAnalysisSettings>) =
-                    createFacadeForFilesWithSpecialModuleInfo(filesAndSettings.first, filesAndSettings.second)
+            SLRUCache.slruCache<Pair<Set<KtFile>, PlatformAnalysisSettings>, ProjectResolutionFacade>(2, 3) {
+                createFacadeForFilesWithSpecialModuleInfo(it.first, it.second)
             },
-            LibraryModificationTracker.getInstance(project),
+            JavaLibraryModificationTracker.getInstance(project),
             ProjectRootModificationTracker.getInstance(project)
         )
     }
@@ -471,10 +471,8 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
 
     private val scriptsCacheProvider = CachedValueProvider {
         CachedValueProvider.Result(
-            object : SLRUCache<Set<KtFile>, ProjectResolutionFacade>(10, 5) {
-                override fun createValue(files: Set<KtFile>) = createFacadeForFilesWithSpecialModuleInfo(files)
-            },
-            LibraryModificationTracker.getInstance(project),
+            SLRUCache.slruCache<Set<KtFile>, ProjectResolutionFacade>(10, 5, ::createFacadeForFilesWithSpecialModuleInfo),
+            JavaLibraryModificationTracker.getInstance(project),
             ProjectRootModificationTracker.getInstance(project),
             ScriptDependenciesModificationTracker.getInstance(project)
         )
@@ -493,7 +491,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         } ?: run {
             // do actual value calculation out of any locks
             // trade-off: several instances could be created, but only one would be used
-            val newValue = this.createValue(key)!!
+            val newValue = this.createValue(key)
             synchronized(this) {
                 val cached = this.getIfCached(key)
                 cached ?: run {
@@ -556,12 +554,13 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     }
 
     private fun getResolutionFacadeByModuleInfoAndSettings(
-      moduleInfo: IdeaModuleInfo,
-      settings: PlatformAnalysisSettings
+        moduleInfo: IdeaModuleInfo,
+        settings: PlatformAnalysisSettings
     ): ResolutionFacade {
         val projectFacade = when (moduleInfo) {
             is ScriptDependenciesInfo.ForProject,
-            is ScriptDependenciesSourceInfo.ForProject -> facadeForScriptDependenciesForProject
+            is ScriptDependenciesSourceInfo.ForProject -> facadeForScriptDependenciesForProject.value
+
             is ScriptDependenciesInfo.ForFile -> createFacadeForScriptDependencies(moduleInfo)
             else -> facadeForModules(settings)
         }
@@ -569,7 +568,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     }
 
     override fun getResolutionFacadeByModuleInfo(moduleInfo: ModuleInfo, platform: TargetPlatform): ResolutionFacade? =
-      (moduleInfo as? IdeaModuleInfo)?.let { getResolutionFacadeByModuleInfo(it, platform) }
+        (moduleInfo as? IdeaModuleInfo)?.let { getResolutionFacadeByModuleInfo(it, platform) }
 
     override fun getResolutionFacadeByModuleInfo(moduleInfo: ModuleInfo, settings: PlatformAnalysisSettings): ResolutionFacade? {
         val ideaModuleInfo = moduleInfo as? IdeaModuleInfo ?: return null
@@ -590,7 +589,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         }
 
         val isInProjectSource = RootKindFilter.projectSources.matches(fileToAnalyze)
-            && moduleInfo.contentScope.contains(fileToAnalyze)
+                && moduleInfo.contentScope.contains(fileToAnalyze)
 
         return if (!isInProjectSource) fileToAnalyze else null
     }

@@ -7,11 +7,12 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -300,7 +301,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static class ReplaceWithCollectionFactoryFix implements LocalQuickFix {
+  private static class ReplaceWithCollectionFactoryFix extends PsiUpdateModCommandQuickFix {
     private final @IntentionName String myMessage;
 
     ReplaceWithCollectionFactoryFix(@IntentionName String message) {
@@ -320,8 +321,8 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class, false);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
       if(call == null) return;
       PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
       if(model == null) return;
@@ -347,7 +348,8 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
         StreamEx.of(model.myElementsToDelete).map(PsiElement::getParent).select(PsiLocalVariable.class).toList();
       model.myElementsToDelete.forEach(ct::delete);
       PsiElement replacement = ct.replaceAndRestoreComments(call, replacementText);
-      vars.stream().filter(var -> ReferencesSearch.search(var).findFirst() == null).forEach(PsiElement::delete);
+      vars.stream().filter(var -> !VariableAccessUtils.variableIsUsed(var, PsiUtil.getVariableCodeBlock(var, null)))
+        .forEach(PsiElement::delete);
       RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(replacement);
     }
 

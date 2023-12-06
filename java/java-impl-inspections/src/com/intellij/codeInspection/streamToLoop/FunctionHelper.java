@@ -150,16 +150,23 @@ public abstract class FunctionHelper {
       PsiElement body = lambda.getBody();
       PsiExpression lambdaExpression = LambdaUtil.extractSingleExpressionFromBody(body);
       if (lambdaExpression == null) {
-        if (PsiTypes.voidType().equals(returnType) && body instanceof PsiCodeBlock) {
+        if (body instanceof PsiCodeBlock block) {
           List<PsiReturnStatement> returns = getReturns(body);
-          if (!allowReturns && (!returns.isEmpty() || !ControlFlowUtils.codeBlockMayCompleteNormally((PsiCodeBlock)body))) return null;
-          // Return inside loop is not supported yet
-          for (PsiReturnStatement ret : returns) {
-            if (PsiTreeUtil.getParentOfType(ret, PsiLoopStatement.class, true, PsiLambdaExpression.class) != null) {
-              return null;
+          if (PsiTypes.voidType().equals(returnType)) {
+            if (!allowReturns && (!returns.isEmpty() || !ControlFlowUtils.codeBlockMayCompleteNormally(block))) return null;
+            // Return inside loop is not supported yet
+            for (PsiReturnStatement ret : returns) {
+              if (PsiTreeUtil.getParentOfType(ret, PsiLoopStatement.class, true, PsiLambdaExpression.class) != null) {
+                return null;
+              }
             }
+            return new VoidBlockLambdaFunctionHelper(block, parameters);
+          } else if (returns.size() == 1 && ArrayUtil.getLastElement(block.getStatements()) == returns.get(0)) {
+            PsiExpression trivialCall = JavaPsiFacade.getElementFactory(lambda.getProject())
+              .createExpressionFromText("((" + type.getCanonicalText() + ")" + lambda.getText() + ")." +
+                                        interfaceMethod.getName() + "(" + String.join(",", parameters) + ")", lambda);
+            return new LambdaFunctionHelper(returnType, trivialCall, parameters);
           }
-          return new VoidBlockLambdaFunctionHelper((PsiCodeBlock)body, parameters);
         }
         return null;
       }
@@ -533,10 +540,10 @@ public abstract class FunctionHelper {
   }
 
   private static class LambdaFunctionHelper extends FunctionHelper {
-    String[] myParameters;
-    PsiElement myBody;
+    @NotNull String @NotNull [] myParameters;
+    @NotNull PsiElement myBody;
 
-    LambdaFunctionHelper(PsiType returnType, PsiElement body, String[] parameters) {
+    LambdaFunctionHelper(PsiType returnType, @NotNull PsiElement body, @NotNull String @NotNull [] parameters) {
       super(returnType);
       myParameters = parameters;
       myBody = body;

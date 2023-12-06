@@ -1,4 +1,3 @@
 PyFile:magic1.py
   PyEmptyExpression
-    PsiElement(Py:PERC)('%')
-    PsiElement(Py:IDENTIFIER)('xmode')
+    PsiElement(Py:MAGIC_COMMAND_LINE)('%xmode')

@@ -38,7 +38,7 @@ public class BintrayRepositoryService extends MavenRepositoryService {
       BintrayEndpoint bintrayEndpoint = new BintrayEndpoint();
       if (info.repo != null) {
         RemoteRepositoryDescription repository = bintrayEndpoint.getRepository(info.subject, info.repo);
-        return repository == null ? emptyList() : singletonList(repository);
+        return ContainerUtil.createMaybeSingletonList(repository);
       } else {
         return bintrayEndpoint.getRepositories(info.subject);
       }

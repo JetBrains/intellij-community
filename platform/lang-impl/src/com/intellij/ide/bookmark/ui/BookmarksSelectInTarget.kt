@@ -11,11 +11,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore.isAncestor
 import com.intellij.openapi.wm.ToolWindowId.BOOKMARKS
 import com.intellij.openapi.wm.ToolWindowManager
+import org.jetbrains.annotations.Nls
 
 internal class BookmarksSelectInTarget(val project: Project) : SelectInTarget {
-  override fun toString() = message("select.in.target.name")
-  override fun getToolWindowId() = BOOKMARKS
-  override fun getWeight() = BOOKMARKS_WEIGHT
+  override fun toString(): @Nls String = message("select.in.target.name")
+  override fun getToolWindowId(): String = BOOKMARKS
+  override fun getWeight(): Float = BOOKMARKS_WEIGHT
 
   override fun canSelect(context: SelectInContext?): Boolean {
     val file = context?.virtualFile ?: return false

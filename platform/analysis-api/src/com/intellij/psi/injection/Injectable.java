@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.injection;
 
 import com.intellij.lang.Language;
@@ -30,21 +16,15 @@ import javax.swing.*;
 public abstract class Injectable implements Comparable<Injectable> {
 
   /** Unique ID among injected language and reference injector IDs */
-  @NotNull
-  public abstract String getId();
+  public abstract @NotNull String getId();
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public abstract String getDisplayName();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getDisplayName();
 
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String getAdditionalDescription() {
+  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getAdditionalDescription() {
     return null;
   }
 
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return EmptyIcon.ICON_16;
   }
 
@@ -56,15 +36,13 @@ public abstract class Injectable implements Comparable<Injectable> {
   /**
    * @return null for reference injections
    */
-  @Nullable
-  public abstract Language getLanguage();
+  public abstract @Nullable Language getLanguage();
 
   public Language toLanguage() {
     Language language = getLanguage();
     return language == null ? new Language(getId(), false) {
-      @NotNull
       @Override
-      public String getDisplayName() {
+      public @NotNull String getDisplayName() {
         return Injectable.this.getDisplayName();
       }
     } : language;
@@ -72,28 +50,24 @@ public abstract class Injectable implements Comparable<Injectable> {
 
   public static Injectable fromLanguage(final Language language) {
     return new Injectable() {
-      @NotNull
       @Override
-      public String getId() {
+      public @NotNull String getId() {
         return language.getID();
       }
 
-      @NotNull
       @Override
-      public String getDisplayName() {
+      public @NotNull String getDisplayName() {
         return language.getDisplayName();
       }
 
-      @Nullable
       @Override
-      public String getAdditionalDescription() {
+      public @Nullable String getAdditionalDescription() {
         final FileType ft = language.getAssociatedFileType();
         return ft != null ? " (" + ft.getDescription() + ")" : null;
       }
 
-      @NotNull
       @Override
-      public Icon getIcon() {
+      public @NotNull Icon getIcon() {
         final FileType ft = language.getAssociatedFileType();
         return ft != null && ft.getIcon() != null ? ft.getIcon() : EmptyIcon.ICON_16;
       }

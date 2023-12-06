@@ -11,51 +11,47 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JCheckBox
-import javax.swing.event.DocumentEvent
 
 class EventsSchemeConfigurationModel {
   val panel: DialogPanel
   val recorderToSettings: MutableMap<String, EventsSchemePathSettings> = mutableMapOf()
-  private val recorderComboBox = ComboBox<String>()
+  private lateinit var recorderComboBox: ComboBox<String>
   private val pathField = TextFieldWithBrowseButton()
-  private val useCustomPathCheckBox: JCheckBox = JCheckBox("Use custom path:")
+  private lateinit var useCustomPathCheckBox: JCheckBox
   private var currentSettings: EventsSchemePathSettings? = null
 
   init {
-    getLogProvidersInTestMode().forEach { provider ->
-      val recorderId = provider.recorderId
-      recorderComboBox.addItem(recorderId)
-    }
-    recorderComboBox.addActionListener { updatePanel() }
-
-    pathField.addBrowseFolderListener("Select Events Scheme Location ", null, null, FileChooserDescriptorFactory.createSingleFileDescriptor())
-    pathField.textField.document.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        if (useCustomPathCheckBox.isSelected) {
-          currentSettings?.customPath = pathField.text
-        }
-      }
-    })
-
-    useCustomPathCheckBox.addActionListener {
-      currentSettings?.useCustomPath = useCustomPathCheckBox.isSelected
-      updatePathField()
-    }
-    updatePanel()
-
     panel = panel {
-      row {
-        label("Recorder:")
-        recorderComboBox(growX, pushX)
+      row("Recorder:") {
+        recorderComboBox = comboBox(getLogProvidersInTestMode().map { it.recorderId })
+          .align(AlignX.FILL)
+          .onChanged { updatePanel() }
+          .component
       }
       row {
-        useCustomPathCheckBox()
-        pathField(growX, pushX)
-      }
+        useCustomPathCheckBox = checkBox("Use custom path:")
+          .onChanged {
+            currentSettings?.useCustomPath = it.isSelected
+            updatePathField()
+          }.component
+        cell(pathField)
+          .align(AlignX.FILL)
+          .onChanged {
+            if (useCustomPathCheckBox.isSelected) {
+              currentSettings?.customPath = pathField.text
+            }
+          }
+      }.layout(RowLayout.LABEL_ALIGNED)
     }
+
+    pathField.addBrowseFolderListener("Select Events Scheme Location ", null, null,
+                                      FileChooserDescriptorFactory.createSingleFileDescriptor())
+
+    updatePanel()
   }
 
   private fun updatePathField() {

@@ -30,12 +30,11 @@ class HunspellDictionary(path: String, name: String? = null) : Dictionary {
     }
   }
 
-  private val name: String
+  private val name: String = name ?: path
   private val dict: HunspellWordList
   private val alphabet: HashSet<Int> = HashSet()
 
   init {
-    this.name = name ?: path
 
     val bundle = loadHunspellBundle(path)
     if (bundle !== null) {

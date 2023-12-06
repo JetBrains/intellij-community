@@ -23,83 +23,88 @@ public class FirReferenceResolveWithLibTestGenerated extends AbstractFirReferenc
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("dataClassSyntheticMethods.kt")
+    @TestMetadata("dataClassSyntheticMethods")
     public void testDataClassSyntheticMethods() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/dataClassSyntheticMethods.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/dataClassSyntheticMethods/");
     }
 
-    @TestMetadata("delegatedPropertyWithTypeParameters.kt")
+    @TestMetadata("delegatedPropertyWithTypeParameters")
     public void testDelegatedPropertyWithTypeParameters() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters/");
     }
 
-    @TestMetadata("enumSyntheticMethods.kt")
+    @TestMetadata("enumSyntheticMethods")
     public void testEnumSyntheticMethods() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/enumSyntheticMethods.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/enumSyntheticMethods/");
     }
 
-    @TestMetadata("fakeOverride.kt")
+    @TestMetadata("fakeOverride")
     public void testFakeOverride() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/fakeOverride.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/fakeOverride/");
     }
 
-    @TestMetadata("fakeOverride2.kt")
+    @TestMetadata("fakeOverride2")
     public void testFakeOverride2() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/fakeOverride2.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/fakeOverride2/");
     }
 
-    @TestMetadata("infinityAndNanInJavaAnnotation.kt")
+    @TestMetadata("infinityAndNanInJavaAnnotation")
     public void testInfinityAndNanInJavaAnnotation() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/infinityAndNanInJavaAnnotation.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/infinityAndNanInJavaAnnotation/");
     }
 
-    @TestMetadata("innerClassFromLib.kt")
+    @TestMetadata("innerClassFromLib")
     public void testInnerClassFromLib() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/innerClassFromLib.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/innerClassFromLib/");
     }
 
-    @TestMetadata("iteratorWithTypeParameter.kt")
+    @TestMetadata("iteratorWithTypeParameter")
     public void testIteratorWithTypeParameter() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/iteratorWithTypeParameter.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/iteratorWithTypeParameter/");
     }
 
-    @TestMetadata("multiDeclarationWithTypeParameters.kt")
+    @TestMetadata("multiDeclarationWithTypeParameters")
     public void testMultiDeclarationWithTypeParameters() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters/");
     }
 
-    @TestMetadata("nestedClassFromLib.kt")
+    @TestMetadata("namedArguments")
+    public void testNamedArguments() throws Exception {
+        runTest("../idea/tests/testData/resolve/referenceWithLib/namedArguments/");
+    }
+
+    @TestMetadata("nestedClassFromLib")
     public void testNestedClassFromLib() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/nestedClassFromLib.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/nestedClassFromLib/");
     }
 
-    @TestMetadata("overloadFun.kt")
+    @TestMetadata("overloadFun")
     public void testOverloadFun() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/overloadFun.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/overloadFun/");
     }
 
-    @TestMetadata("overridingFunctionWithSamAdapter.kt")
+    @TestMetadata("overridingFunctionWithSamAdapter")
     public void testOverridingFunctionWithSamAdapter() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/overridingFunctionWithSamAdapter.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/overridingFunctionWithSamAdapter/");
     }
 
-    @TestMetadata("packageOfLibDeclaration.kt")
+    @TestMetadata("packageOfLibDeclaration")
     public void testPackageOfLibDeclaration() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/packageOfLibDeclaration.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/packageOfLibDeclaration/");
     }
 
-    @TestMetadata("referenceToRootJavaClassFromLib.kt")
+    @TestMetadata("referenceToRootJavaClassFromLib")
     public void testReferenceToRootJavaClassFromLib() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/referenceToRootJavaClassFromLib.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/referenceToRootJavaClassFromLib/");
     }
 
-    @TestMetadata("sameNameInLib.kt")
+    @TestMetadata("sameNameInLib")
     public void testSameNameInLib() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/sameNameInLib.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/sameNameInLib/");
     }
 
-    @TestMetadata("setWithTypeParameters.kt")
+    @TestMetadata("setWithTypeParameters")
     public void testSetWithTypeParameters() throws Exception {
-        runTest("../idea/tests/testData/resolve/referenceWithLib/setWithTypeParameters.kt");
+        runTest("../idea/tests/testData/resolve/referenceWithLib/setWithTypeParameters/");
     }
 }

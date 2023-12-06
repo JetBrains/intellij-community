@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
 import com.intellij.diff.util.FileEditorBase
@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsLogEditorUtil.disposeLogUis
-import com.intellij.vcs.log.ui.VcsLogPanel
+import com.intellij.vcs.log.ui.VcsLogUiHolder
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -53,17 +53,17 @@ class VcsLogEditor(private val project: Project, private val vcsLogFile: VcsLogF
   }
 
   override fun getComponent(): JComponent = rootComponent
-  override fun getPreferredFocusedComponent(): JComponent? = VcsLogPanel.getLogUis(component).firstOrNull()?.mainComponent
+  override fun getPreferredFocusedComponent(): JComponent? = VcsLogUiHolder.getLogUis(component).firstOrNull()?.mainComponent
   override fun getName(): String = VcsLogBundle.message("vcs.log.editor.name")
   override fun getFile() = vcsLogFile
 }
 
-class VcsLogEditorProvider : FileEditorProvider, StructureViewFileEditorProvider, DumbAware {
+private class VcsLogEditorProvider : FileEditorProvider, StructureViewFileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is VcsLogFile
 
-  override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return VcsLogEditor(project, file as VcsLogFile)
-  }
+  override fun acceptRequiresReadAction() = false
+
+  override fun createEditor(project: Project, file: VirtualFile) = VcsLogEditor(project, file as VcsLogFile)
 
   override fun getEditorTypeId(): String = "VcsLogEditor"
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR

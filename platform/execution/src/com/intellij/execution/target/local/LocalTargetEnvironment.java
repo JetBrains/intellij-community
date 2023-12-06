@@ -10,7 +10,6 @@ import com.intellij.execution.target.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +24,7 @@ import java.util.Map;
 public class LocalTargetEnvironment extends TargetEnvironment {
   private final Map<UploadRoot, UploadableVolume> myUploadVolumes = new HashMap<>();
   private final Map<DownloadRoot, DownloadableVolume> myDownloadVolumes = new HashMap<>();
-  private final Map<TargetPortBinding, Integer> myTargetPortBindings = new HashMap<>();
+  private final Map<TargetPortBinding, ResolvedPortBinding> myTargetPortBindings = new HashMap<>();
   private final Map<LocalPortBinding, ResolvedPortBinding> myLocalPortBindings = new HashMap<>();
 
   public LocalTargetEnvironment(@NotNull LocalTargetEnvironmentRequest request) {
@@ -71,7 +70,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
       if (targetPortBinding.getLocal() != null && !targetPortBinding.getLocal().equals(theOnlyPort)) {
         throw new UnsupportedOperationException("Local target's TCP port forwarder is not implemented");
       }
-      myTargetPortBindings.put(targetPortBinding, theOnlyPort);
+      myTargetPortBindings.put(targetPortBinding, getResolvedPortBinding(theOnlyPort));
     }
 
     for (LocalPortBinding localPortBinding : request.getLocalPortBindings()) {
@@ -107,7 +106,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
 
   @NotNull
   @Override
-  public Map<TargetPortBinding, Integer> getTargetPortBindings() {
+  public Map<TargetPortBinding, ResolvedPortBinding> getTargetPortBindings() {
     return Collections.unmodifiableMap(myTargetPortBindings);
   }
 

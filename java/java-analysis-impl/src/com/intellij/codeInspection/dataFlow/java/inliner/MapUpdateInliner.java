@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
@@ -14,6 +12,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +39,7 @@ public class MapUpdateInliner implements CallInliner {
         .pushExpression(qualifier) // stack: .. qualifier
         .ensure(RelationType.IS, Mutability.MUTABLE.asDfType(), new MutabilityProblem(call, true), null)
         .pushExpression(key) // stack: .. qualifier; key
+        .boxUnbox(key, PsiUtil.substituteTypeParameter(qualifier.getType(), CommonClassNames.JAVA_UTIL_MAP, 0, true))
         .evaluateFunction(function);
       String name = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
       switch (name) {

@@ -14,6 +14,7 @@ import training.featuresSuggester.IntroduceVariableSuggesterTest
 
 /**
  * Note: when user is declaring variable and it's name starts with any language keyword suggestion will not be thrown
+ * Use `intellij.python.tests` module as a classpath to run this test locally
  */
 class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
   override val testingCodeFileName = "PythonCodeExample.py"

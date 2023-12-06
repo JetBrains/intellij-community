@@ -1,0 +1,150 @@
+<idea-plugin package="com.intellij.searchEverywhereMl.ranking">
+  <description><![CDATA[
+    <p>The plugin improves the Search Everywhere feature by ordering the search results using machine learning,
+    making more relevant results appear higher up the list.
+    </p>
+    <br>
+    <i>Machine learning ranking is currently available and switched on by default for the Classes, Files, and Actions tabs.
+    As an experiment, some portion of users will also have it enabled in the All tab.</i>
+  ]]></description>
+
+  <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">
+    <rankingService implementation="com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlRankingService"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with actions order won't be performed"
+                 key="search.everywhere.force.disable.experiment.action.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with files order won't be performed"
+                 key="search.everywhere.force.disable.experiment.files.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with classes order won't be performed"
+                 key="search.everywhere.force.disable.experiment.classes.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments to order All tab items won't be performed"
+                 key="search.everywhere.force.disable.experiment.all.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML logs and experiments in Search Everywhere will be disabled"
+                 key="search.everywhere.force.disable.logging.ml"/>
+    <registryKey defaultValue="-1"
+                 description="Defines the experiment group number. Negative value will be ignored."
+                 key="search.everywhere.ml.experiment.group"/>
+    <registryKey defaultValue="false"
+                 description="Mark position changes in Search Everywhere"
+                 key="search.everywhere.ml.show.diff"/>
+
+    <registryKey defaultValue=""
+                 description="Path to the local action-ranking model."
+                 key="search.everywhere.ml.action.model.path"/>
+    <registryKey defaultValue=""
+                 description="Path to the local file-ranking model."
+                 key="search.everywhere.ml.files.model.path"/>
+    <registryKey defaultValue=""
+                 description="Path to the local class-ranking model."
+                 key="search.everywhere.ml.classes.model.path"/>
+    <registryKey defaultValue=""
+                 description="Path to the local all-ranking model."
+                 key="search.everywhere.ml.all.model.path"/>
+
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereFileStatistician"/>
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereActionStatistician"/>
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereSymbolStatistician"/>
+
+    <statistician key="searchEverywhereContributor"
+                  implementationClass="com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereContributorStatistician"/>
+
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereRunConfigurationFeaturesProvider$RunConfigurationTypeValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereMlElementFeatureValidationRule"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.searchEverywhereElementFeaturesProvider"
+                    interface="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereElementFeaturesProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.elementKeyForIdProvider"
+                    interface="com.intellij.searchEverywhereMl.ranking.id.ElementKeyForIdProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.rankingModelLoader"
+                    interface="com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereMLRankingModelLoader"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereGeneralActionFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereOptionFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereClassOrFileFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereClassFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereCommonFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereSymbolFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereRunConfigurationFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywherePsiElementFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereTypoFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileGroupFeatureProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereTextFeaturesProvider"/>
+
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.ActionKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.PsiElementKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.RunConfigurationsKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.NavigationItemKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.TypoKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.TextKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.CalculatorKeyProvider"/>
+
+    <rankingModelLoader
+      implementation="com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereActionsRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereFilesRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereClassesRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereAllRankingModelLoader"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$ProjectClosureListener"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
+
+  <projectListeners>
+    <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$EditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+
+  <actions>
+    <action id="com.intellij.searchEverywhereMl.ranking.actions.OpenFeaturesInScratchFileAction"
+            class="com.intellij.searchEverywhereMl.ranking.actions.OpenFeaturesInScratchFileAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt 1"/>
+      <override-text place="GoToAction"/>
+    </action>
+  </actions>
+</idea-plugin>

@@ -53,7 +53,7 @@ public class Simple {
       String s1 = (source());
       s1 = (foo());
       String s = (s1);
-      sink((<warning descr="Unsafe string is used as safe parameter">s</warning>));
+      sink(<warning descr="Unknown string is used as safe parameter" textAttributesKey="WARNING_ATTRIBUTES">(s)</warning>);
     }
   
     @Untainted String unsafeReturn() {
@@ -69,12 +69,12 @@ public class Simple {
       @Tainted String s = source();
       String s1 = "safe";
       String s2 = "safe2";
-      sink(s1 + <warning descr="Unsafe string is used as safe parameter">s</warning> + s2);
+      sink(<warning descr="Unsafe string is used as safe parameter">s1 + s + s2</warning>);
     }
 
     void unsafeTernary(boolean b) {
       @Tainted String s = source();
-      sink(b ? <warning descr="Unsafe string is used as safe parameter">s</warning> : null);
+      sink(<warning descr="Unsafe string is used as safe parameter">b ? s : null</warning>);
     }
   
     void fieldFromGetter() {

@@ -5,14 +5,5 @@ Reports any instances of hardcoded <code>String</code> literals.
 internationalized environment. This inspection won't report empty strings and strings consisting only of whitespaces. A quick-fix is available
 to transform a string literal into a <code>java.util.ResourceBundle.getString()</code> method call.</p>
 <!-- tooltip end -->
-<p>Use inspection's options to further specialize whether this inspection should report strings in:</p>
-<ul>
-  <li>Assert statements like in <code>assert str.equals("message")</code></li>
-  <li>Exception constructor calls like in <code>new Exception("message")</code></li>
-  <li>JUnit assert calls like in <code>assertEquals(str, "message")</code></li>
-  <li>The only argument to a method returning String like in <code>getStringByKey("key")</code></li>
-  <li>Literals with value of legal and existing class name like <code>Class.forName("java.lang.Object")</code></li>
-  <li>Literals with value of legal and existing property key <code>bundle.getString("authentication.failed")</code></li>
-</ul>
 </body>
 </html>

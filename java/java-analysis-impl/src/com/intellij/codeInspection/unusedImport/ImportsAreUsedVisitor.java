@@ -32,7 +32,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
   private final List<PsiImportStatementBase> importStatements;
   private final List<PsiImportStatementBase> usedImportStatements = new ArrayList<>();
 
-  ImportsAreUsedVisitor(PsiJavaFile file) {
+  ImportsAreUsedVisitor(@NotNull PsiJavaFile file) {
     myFile = file;
     final PsiImportList importList = file.getImportList();
     if (importList == null) {
@@ -91,25 +91,25 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  private PsiImportStatementBase findImport(PsiMember member, List<? extends PsiImportStatementBase> importStatements) {
-    final String qualifiedName;
-    final String packageName;
+  private PsiImportStatementBase findImport(@NotNull PsiMember member, List<? extends PsiImportStatementBase> importStatements) {
+    final String memberQualifiedName;
+    final String memberPackageName;
     final PsiClass containingClass = member.getContainingClass();
     if (member instanceof PsiClass referencedClass) {
-      qualifiedName = referencedClass.getQualifiedName();
-      packageName = qualifiedName != null ? StringUtil.getPackageName(qualifiedName) : null;
+      memberQualifiedName = referencedClass.getQualifiedName();
+      memberPackageName = memberQualifiedName != null ? StringUtil.getPackageName(memberQualifiedName) : null;
     }
     else {
       if (!member.hasModifierProperty(PsiModifier.STATIC) || containingClass == null) {
         return null;
       }
-      packageName = containingClass.getQualifiedName();
-      qualifiedName = packageName + '.' + member.getName();
+      memberPackageName = containingClass.getQualifiedName();
+      memberQualifiedName = memberPackageName + '.' + member.getName();
     }
-    if (packageName == null) {
+    if (memberPackageName == null) {
       return null;
     }
-    final boolean hasOnDemandImportConflict = ImportUtils.hasOnDemandImportConflict(qualifiedName, myFile);
+    final boolean hasOnDemandImportConflict = ImportUtils.hasOnDemandImportConflict(memberQualifiedName, myFile);
     for (PsiImportStatementBase importStatement : importStatements) {
       if (!importStatement.isOnDemand()) {
         final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
@@ -129,7 +129,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
         }
         final PsiElement target = importStatement.resolve();
         if (target instanceof PsiPackage aPackage) {
-          if (packageName.equals(aPackage.getQualifiedName())) {
+          if (memberPackageName.equals(aPackage.getQualifiedName())) {
             return importStatement;
           }
         }

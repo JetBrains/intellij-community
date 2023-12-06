@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 
-import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static java.util.Objects.requireNonNull;
 
@@ -108,14 +107,16 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
 
     FilePath contextFilePath = getContextFilePath(shelvedChange);
 
+    String leftTitle = DiffBundle.message("merge.version.title.base");
+    String rightTitle = VcsBundle.message("shelve.shelved.version");
+
     if (patch.isDeletedFile() || patch.isNewFile()) {
       DiffContent shelfContent = factory.create(myProject, patch.getSingleHunkPatchText(), contextFilePath);
       DiffContent emptyContent = factory.createEmpty();
 
       DiffContent leftContent = patch.isDeletedFile() ? shelfContent : emptyContent;
       DiffContent rightContent = !patch.isDeletedFile() ? shelfContent : emptyContent;
-      String leftTitle = DiffBundle.message("merge.version.title.base");
-      String rightTitle = VcsBundle.message("shelve.shelved.version");
+
       return new SimpleDiffRequest(title, leftContent, rightContent, leftTitle, rightTitle);
     }
 
@@ -127,13 +128,11 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
         DiffContent leftContent = factory.create(myProject, baseContents.toString(), contextFilePath);
         DiffContent rightContent = factory.create(myProject, patchedContent, contextFilePath);
 
-        String leftTitle = DiffBundle.message("merge.version.title.base");
-        String rightTitle = VcsBundle.message("shelve.shelved.version");
         return new SimpleDiffRequest(title, leftContent, rightContent, leftTitle, rightTitle);
       }
     }
 
-    return new PatchDiffRequest(createAppliedTextPatch(patch), title, null);
+    return new PatchDiffRequest(patch, title, leftTitle, rightTitle);
   }
 
   @Override
@@ -168,7 +167,7 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
     }
 
     byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
-    FilePath filePath = VcsUtil.getFilePath(binaryFile.SHELVED_PATH);
+    FilePath filePath = VcsUtil.getFilePath(binaryFile.SHELVED_PATH, false);
     DiffContent shelfContent = factory.createFromBytes(myProject, binaryContent, filePath);
     return new SimpleDiffRequest(title, factory.createEmpty(), shelfContent, null, null);
   }

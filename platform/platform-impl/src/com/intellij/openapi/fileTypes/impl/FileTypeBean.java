@@ -41,43 +41,32 @@ public final class FileTypeBean implements PluginAware {
   /**
    * Name of the file type. Needs to match the return value of {@link FileType#getName()}.
    */
-  @Attribute("name")
-  @RequiredElement
-  @NonNls
-  public String name;
+  @Attribute("name") @RequiredElement public @NonNls String name;
 
   /**
    * Semicolon-separated list of extensions to be associated with the file type. Extensions
    * must not be prefixed with a `.`.
    */
-  @Attribute("extensions")
-  @NonNls
-  public String extensions;
+  @Attribute("extensions") public @NonNls String extensions;
 
   /**
    * Semicolon-separated list of exact file names to be associated with the file type.
    *
    * @see #fileNamesCaseInsensitive
    */
-  @Attribute("fileNames")
-  @NonNls
-  public String fileNames;
+  @Attribute("fileNames") public @NonNls String fileNames;
 
   /**
    * Semicolon-separated list of patterns (strings containing '?' and '*' characters) to be associated with the file type.
    */
-  @Attribute("patterns")
-  @NonNls
-  public String patterns;
+  @Attribute("patterns") public @NonNls String patterns;
 
   /**
    * Semicolon-separated list of exact file names (case-insensitive) to be associated with the file type.
    *
    * @see #fileNames
    */
-  @Attribute("fileNamesCaseInsensitive")
-  @NonNls
-  public String fileNamesCaseInsensitive;
+  @Attribute("fileNamesCaseInsensitive") public @NonNls String fileNamesCaseInsensitive;
 
   /**
    * For file types that extend {@link LanguageFileType} and are the primary file type for the corresponding language, this must be set
@@ -89,9 +78,7 @@ public final class FileTypeBean implements PluginAware {
   /**
    * Semicolon-separated list of hash bang patterns to be associated with the file type.
    */
-  @Attribute("hashBangs")
-  @NonNls
-  public String hashBangs;
+  @Attribute("hashBangs") public @NonNls String hashBangs;
 
   @ApiStatus.Internal
   void addMatchers(@NotNull List<? extends FileNameMatcher> matchers) {
@@ -104,8 +91,7 @@ public final class FileTypeBean implements PluginAware {
   }
 
   @Transient
-  @NotNull
-  public PluginDescriptor getPluginDescriptor() {
+  public @NotNull PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
   }
 
@@ -114,8 +100,7 @@ public final class FileTypeBean implements PluginAware {
     myPluginDescriptor = pluginDescriptor;
   }
 
-  @NotNull
-  public PluginId getPluginId() {
+  public @NotNull PluginId getPluginId() {
     return myPluginDescriptor.getPluginId();
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.PsiSymbolReferenceService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
@@ -29,6 +30,9 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import com.intellij.psi.impl.source.tree.injected.changesHandler.innerRange
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
@@ -41,31 +45,49 @@ import org.jetbrains.annotations.PropertyKey
 internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Document) : TextEditorHighlightingPass(file.project,
                                                                                                                      document) {
 
-  private val referencesWithProblems = ContainerUtil.createConcurrentList<WebSymbolReference>()
+  private val referencesWithProblems = ContainerUtil.createConcurrentList<Pair<Int, WebSymbolReference>>()
   private val myInspectionToolInfos = mutableMapOf<String, InspectionToolInfo>()
 
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(file)) return
 
-    SyntaxTraverser.psiTraverser(file)
-      .flatMap { PsiSymbolReferenceService.getService().getReferences(it, WebSymbolReference::class.java) }
-      .filter { it.getProblems().isNotEmpty() }
-      .forEach(referencesWithProblems::add)
+    analyseFile(file) { 0 }
 
+    for (injectedDocument in InjectedLanguageManager.getInstance(file.project).getCachedInjectedDocumentsInRange(file, file.textRange)) {
+      if (!injectedDocument.isValid) {
+        continue
+      }
+      InjectedLanguageUtil.enumerate(injectedDocument, file) { injectedFile, places ->
+        if (!injectedFile.isValid) return@enumerate
+        analyseFile(injectedFile) { offset ->
+          val place = places.find { it.innerRange.contains(offset) }
+                      ?: return@analyseFile null
+          val hostOffset = place.rangeInsideHost.startOffset - place.innerRange.startOffset
+          hostOffset + (place.host?.startOffset ?: return@analyseFile null)
+        }
+      }
+    }
   }
 
   override fun doApplyInformationToEditor() {
     val dirtyScope = DaemonCodeAnalyzerEx.getInstanceEx(myProject).fileStatusMap.getFileDirtyScope(myDocument, file, id) ?: return
 
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, dirtyScope.startOffset, dirtyScope.endOffset,
-                                                   referencesWithProblems.flatMap { it.createProblemAnnotations() },
+                                                   referencesWithProblems.flatMap { (offset, ref) -> ref.createProblemAnnotations(offset) },
                                                    colorsScheme, id)
+  }
+
+  private fun analyseFile(file: PsiFile, offsetProvider: (Int) -> Int?) {
+    SyntaxTraverser.psiTraverser(file)
+      .flatMap { PsiSymbolReferenceService.getService().getReferences(it, WebSymbolReference::class.java) }
+      .filter { it.getProblems().isNotEmpty() }
+      .forEach { ref -> offsetProvider(ref.absoluteRange.startOffset)?.let { referencesWithProblems.add(Pair(it, ref)) } }
   }
 
   private val inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).currentProfile
 
-  private fun WebSymbolReference.createProblemAnnotations(): List<HighlightInfo> =
+  private fun WebSymbolReference.createProblemAnnotations(offset: Int): List<HighlightInfo> =
     getProblems().mapNotNull { problem ->
       val inspectionInfos = problem.getInspectionInfo(problem.kind)
       if (inspectionInfos.isNotEmpty() && inspectionInfos.any { !it.enabled || it.isSuppressedFor(element) })
@@ -81,12 +103,11 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
       val highlightDisplayKey = firstTool?.highlightDisplayKey
 
       val descriptorFixes = descriptor.fixes
-        ?.let { fixes ->
-          fixes.indices.asSequence().filter { fixes[it] != null }.map { QuickFixWrapper.wrap(descriptor, it) }.toList()
-        }
+        ?.indices
+        ?.map { QuickFixWrapper.wrap(descriptor, it) }
         ?.takeIf { it.isNotEmpty() }
 
-      createAnnotation(absoluteRange,
+      createAnnotation(absoluteRange.shiftRight(offset),
                        ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.NONE),
                        firstTool?.shortName,
                        attributesKey,
@@ -164,6 +185,7 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
       get() =
         when (this) {
           ProblemKind.DeprecatedSymbol -> HighlightSeverity.WEAK_WARNING
+          ProblemKind.ObsoleteSymbol -> HighlightSeverity.WARNING
           ProblemKind.UnknownSymbol -> HighlightSeverity.WARNING
           ProblemKind.MissingRequiredPart -> HighlightSeverity.WARNING
           ProblemKind.DuplicatedPart -> HighlightSeverity.WARNING
@@ -174,7 +196,12 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
     internal fun ProblemKind.getDefaultProblemMessage(symbolKindName: String?): String {
       @PropertyKey(resourceBundle = WebSymbolsBundle.BUNDLE)
       val key = when (this) {
-        ProblemKind.DeprecatedSymbol -> "web.inspection.message.deprecated.symbol"
+        ProblemKind.DeprecatedSymbol -> return WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.message") +
+                                               " " +
+                                               WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
+        ProblemKind.ObsoleteSymbol -> return WebSymbolsBundle.message("web.inspection.message.obsolete.symbol.message") +
+                                             " " +
+                                             WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
         ProblemKind.UnknownSymbol -> "web.inspection.message.segment.unrecognized-identifier"
         ProblemKind.MissingRequiredPart -> "web.inspection.message.segment.missing"
         ProblemKind.DuplicatedPart -> "web.inspection.message.segment.duplicated"

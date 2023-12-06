@@ -12,12 +12,11 @@ import java.util.function.Supplier;
 /**
  * Provides access to localized properties of the IntelliJ Platform.
  */
-public final class ApplicationBundle extends DynamicBundle {
+public final class ApplicationBundle {
   public static final String BUNDLE = "messages.ApplicationBundle";
-  public static final ApplicationBundle INSTANCE = new ApplicationBundle();
+  public static final DynamicBundle INSTANCE = new DynamicBundle(ApplicationBundle.class, BUNDLE);
 
   private ApplicationBundle() {
-    super(BUNDLE);
   }
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

@@ -3,9 +3,13 @@ package com.intellij.ide
 
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import junit.framework.TestCase.assertFalse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Test
@@ -20,9 +24,7 @@ class RecentProjectManagerTest {
 
   // IDEA-298050
   @Test
-  fun `state modification tracker updated on groups expand`() {
-    val manager = RecentProjectsManagerBase()
-
+  fun `state modification tracker updated on groups expand`(): Unit = test { manager ->
     @Language("XML")
     val element = JDOMUtil.load("""
     <application>
@@ -109,13 +111,12 @@ class RecentProjectManagerTest {
       newModCounter > initialModCounter,
       "Modification counter didn't change on group expand. Old counter: $initialModCounter, new counter: $newModCounter"
     )
+
   }
 
   // IDEA-298050
   @Test
-  fun `state modification tracker updated on groups expand when one was expanded before`() {
-    val manager = RecentProjectsManagerBase()
-
+  fun `state modification tracker updated on groups expand when one was expanded before`() = test { manager ->
     @Language("XML")
     val element = JDOMUtil.load("""
     <application>
@@ -208,9 +209,7 @@ class RecentProjectManagerTest {
   }
 
   @Test
-  fun `ignore projects in additionalInfo if not in recentPaths`() {
-    val manager = RecentProjectsManagerBase()
-
+  fun `ignore projects in additionalInfo if not in recentPaths`() = test { manager ->
     val element = JDOMUtil.load("""
     <application>
       <component name="RecentDirectoryProjectsManager">
@@ -280,9 +279,7 @@ class RecentProjectManagerTest {
   }
 
   @Test
-  fun `use order of recentPaths`() {
-    val manager = RecentProjectsManagerBase()
-
+  fun `use order of recentPaths`() = test { manager ->
     val element = JDOMUtil.load("""
       <application>
   <component name="RecentDirectoryProjectsManager">
@@ -562,9 +559,7 @@ class RecentProjectManagerTest {
   }
 
   @Test
-  fun `validate a lot of recent opened projects`() {
-    val manager = RecentProjectsManagerBase()
-
+  fun `validate a lot of recent opened projects`() = test { manager ->
     val entries = StringBuilder()
     val openedProjectCount = 2000
     for (i in 0 until openedProjectCount) {
@@ -599,9 +594,7 @@ class RecentProjectManagerTest {
   }
 
   @Test
-  fun `validate a lot of recent projects`() {
-    val manager = RecentProjectsManagerBase()
-
+  fun `validate a lot of recent projects`() = test { manager ->
     val entries = StringBuilder()
     val openedProjectCount = 2000
     for (i in 0 until openedProjectCount) {
@@ -636,9 +629,7 @@ class RecentProjectManagerTest {
   }
 
   @Test
-  fun `remove old recent projects`() {
-    val manager = RecentProjectsManagerBase()
-
+  fun `remove old recent projects`(): Unit = test { manager ->
     val entries = StringBuilder()
     val openedProjectCount = 60
     for (i in 0 until openedProjectCount) {
@@ -669,5 +660,18 @@ class RecentProjectManagerTest {
     element.getChild("component")!!.deserializeInto(state)
     manager.loadState(state)
     assertThat(manager.getRecentPaths().joinToString(separator = "\n")).isEqualTo(Array(50) { "/home/boo/project-${it + 10}" }.reversed().joinToString(separator = "\n"))
+  }
+}
+
+fun test(task: (manager: RecentProjectsManagerBase) -> Unit) {
+  runBlocking(Dispatchers.Default) {
+    val coroutineScope = childScope()
+    val manager = RecentProjectsManagerBase(coroutineScope)
+    try {
+      task(manager)
+    }
+    finally {
+      coroutineScope.cancel()
+    }
   }
 }

@@ -12,6 +12,7 @@ public class SourceStubPsiFactory extends StubPsiFactory {
   public PsiClass createClass(PsiClassStub stub) {
     if (stub.isEnumConstantInitializer()) return new PsiEnumConstantInitializerImpl(stub);
     if (stub.isAnonymous()) return new PsiAnonymousClassImpl(stub);
+    if (stub.isUnnamed()) return new PsiUnnamedClassImpl(stub);
     return new PsiClassImpl(stub);
   }
 

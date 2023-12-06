@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
+import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -36,17 +37,15 @@ public class MockApplication extends MockComponentManager implements Application
     Extensions.setRootArea(getExtensionArea(), parentDisposable);
   }
 
-  @NotNull
   @TestOnly
-  public static MockApplication setUp(@NotNull Disposable parentDisposable) {
+  public static @NotNull MockApplication setUp(@NotNull Disposable parentDisposable) {
     MockApplication app = new MockApplication(parentDisposable);
     ApplicationManager.setApplication(app, parentDisposable);
     return app;
   }
 
-  @Nullable
   @Override
-  public final <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+  public final @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     return doGetService(serviceClass, false);
   }
 
@@ -151,15 +150,13 @@ public class MockApplication extends MockComponentManager implements Application
     return true;
   }
 
-  @NotNull
   @Override
-  public Future<?> executeOnPooledThread(@NotNull Runnable action) {
+  public @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action) {
     return AppExecutorUtil.getAppExecutorService().submit(action);
   }
 
-  @NotNull
   @Override
-  public <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
+  public @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
     return AppExecutorUtil.getAppExecutorService().submit(action);
   }
 
@@ -213,15 +210,13 @@ public class MockApplication extends MockComponentManager implements Application
     return computation.compute();
   }
 
-  @NotNull
   @Override
-  public AccessToken acquireReadActionLock() {
+  public @NotNull AccessToken acquireReadActionLock() {
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 
-  @NotNull
   @Override
-  public AccessToken acquireWriteActionLock(@Nullable Class<?> marker) {
+  public @NotNull AccessToken acquireWriteActionLock(@Nullable Class<?> marker) {
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 
@@ -252,18 +247,17 @@ public class MockApplication extends MockComponentManager implements Application
     return 0;
   }
 
-  @NotNull
   @Override
-  public ModalityState getNoneModalityState() {
-    return ModalityState.NON_MODAL;
+  public @NotNull ModalityState getNoneModalityState() {
+    return ModalityState.nonModal();
   }
 
   @Override
-  public void invokeLater(@NotNull final Runnable runnable, @NotNull final Condition<?> expired) {
+  public void invokeLater(final @NotNull Runnable runnable, final @NotNull Condition<?> expired) {
   }
 
   @Override
-  public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition<?> expired) {
+  public void invokeLater(final @NotNull Runnable runnable, final @NotNull ModalityState state, final @NotNull Condition<?> expired) {
   }
 
   @Override
@@ -276,8 +270,7 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Deprecated
   @Override
-  @NotNull
-  public ModalityInvokator getInvokator() {
+  public @NotNull ModalityInvokator getInvokator() {
     throw new UnsupportedOperationException();
   }
 
@@ -301,27 +294,23 @@ public class MockApplication extends MockComponentManager implements Application
     invokeAndWait(runnable, getDefaultModalityState());
   }
 
-  @NotNull
   @Override
-  public ModalityState getCurrentModalityState() {
+  public @NotNull ModalityState getCurrentModalityState() {
     return getNoneModalityState();
   }
 
-  @NotNull
   @Override
-  public ModalityState getAnyModalityState() {
+  public @NotNull ModalityState getAnyModalityState() {
     return AnyModalityState.ANY;
   }
 
-  @NotNull
   @Override
-  public ModalityState getModalityStateForComponent(@NotNull Component c) {
+  public @NotNull ModalityState getModalityStateForComponent(@NotNull Component c) {
     return getNoneModalityState();
   }
 
-  @NotNull
   @Override
-  public ModalityState getDefaultModalityState() {
+  public @NotNull ModalityState getDefaultModalityState() {
     return getNoneModalityState();
   }
 
@@ -358,7 +347,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void assertIsDispatchThread(@Nullable final JComponent component) {
+  public void assertIsDispatchThread(final @Nullable JComponent component) {
   }
 
   @Override
@@ -393,5 +382,13 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void setSaveAllowed(boolean value) {
+  }
+
+  @Override
+  public void dispose() {
+    // A mock application may cause incorrect caching during tests. It does not fire extension point removed events.
+    // Ensure that we have cached against correct application.
+    MetaLanguage.clearAllMatchingMetaLanguagesCache();
+    super.dispose();
   }
 }

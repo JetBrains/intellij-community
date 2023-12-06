@@ -139,12 +139,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     if (isInplace(info, editor)) {
       final GrIntroduceContext context = createContext(info, editor);
       Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = GrIntroduceHandlerBase.fillChoice(context);
-      new IntroduceOccurrencesChooser(editor).showChooser(new Pass<>() {
-        @Override
-        public void pass(OccurrencesChooser.ReplaceChoice choice) {
-          startInplace(info, context, choice);
-        }
-      }, occurrencesMap);
+      new IntroduceOccurrencesChooser(editor).showChooser(occurrencesMap,choice -> startInplace(info, context, choice));
     }
     else {
       showDialog(info);

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.workspace
 
 import com.google.gson.GsonBuilder
@@ -8,7 +9,6 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.core.Suggestion
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.workspace.info.FileSessionsInfo
-import org.apache.commons.lang.StringEscapeUtils
 import java.lang.reflect.Type
 
 class SessionSerializer {
@@ -23,21 +23,12 @@ class SessionSerializer {
       .registerTypeAdapter(Suggestion::class.java, object : JsonSerializer<Suggestion> {
         override fun serialize(src: Suggestion, typeOfSrc: Type, context: JsonSerializationContext): JsonObject {
           val jsonObject = JsonObject()
-          jsonObject.addProperty("text", escapeHtml(src.text))
-          jsonObject.addProperty("presentationText", escapeHtml(src.presentationText))
+          jsonObject.addProperty("text", src.text)
+          jsonObject.addProperty("presentationText", src.presentationText)
           return jsonObject
         }
       })
       .create()
-
-    private fun escapeHtml(value: String) =
-      StringEscapeUtils.escapeHtml(value)
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("([\r\n\t])".toRegex(), "")
-        .replace("""(\\r|\\n|\\t)""".toRegex(), "")
-        .replace("\\", "&#92;")
-        .replace("★", "*")
   }
 
   fun serialize(sessions: FileSessionsInfo): String = gson.toJson(sessions)

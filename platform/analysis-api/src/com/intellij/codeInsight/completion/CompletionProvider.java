@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.patterns.ElementPattern;
@@ -17,9 +17,9 @@ public abstract class CompletionProvider<V extends CompletionParameters> {
 
   protected abstract void addCompletions(@NotNull V parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result);
 
-  public final void addCompletionVariants(@NotNull final V parameters,
+  public final void addCompletionVariants(final @NotNull V parameters,
                                           @NotNull ProcessingContext context,
-                                          @NotNull final CompletionResultSet result) {
+                                          final @NotNull CompletionResultSet result) {
     addCompletions(parameters, context, result);
   }
 }

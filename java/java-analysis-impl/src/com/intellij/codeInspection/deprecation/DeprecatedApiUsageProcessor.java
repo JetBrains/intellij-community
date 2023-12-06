@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -6,8 +6,8 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -47,7 +47,6 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
 
   @Override
   public void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
-    if (sourceNode instanceof ULambdaExpression) return;
     checkTargetDeprecated(sourceNode, target);
   }
 
@@ -74,7 +73,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                            @Nullable PsiMethod constructor,
                                            @Nullable UClass subclassDeclaration) {
     if (constructor != null) {
-      if (PsiImplUtil.isDeprecated(constructor) && myForRemoval == isForRemovalAttributeSet(constructor)) {
+      if (JavaDeprecationUtils.isDeprecated(constructor, sourceNode.getSourcePsi()) && myForRemoval == isForRemovalAttributeSet(constructor)) {
         checkTargetDeprecated(sourceNode, constructor);
         return;
       }

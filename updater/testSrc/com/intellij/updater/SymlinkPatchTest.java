@@ -1,14 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.IoTestUtil;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,47 +21,37 @@ public class SymlinkPatchTest extends PatchTestCase {
 
   @Test
   public void same() throws Exception {
-    @NotNull Path link1 = new File(myOlderDir, "Readme.link").toPath();
-    @NotNull Path target1 = Paths.get("Readme.txt");
-    Files.createSymbolicLink(link1, target1);
-    @NotNull Path link = new File(myNewerDir, "Readme.link").toPath();
-    @NotNull Path target = Paths.get("Readme.txt");
-    Files.createSymbolicLink(link, target);
+    var target = Path.of("Readme.txt");
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("Readme.link"), target);
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("Readme.link"), target);
     assertThat(createPatch().getActions()).containsExactly();
   }
 
   @Test
   public void create() throws Exception {
-    @NotNull Path link = new File(myNewerDir, "Readme.link").toPath();
-    @NotNull Path target = Paths.get("Readme.txt");
-    Files.createSymbolicLink(link, target);
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("Readme.link"), Path.of("Readme.txt"));
 
-    Patch patch = createPatch();
+    var patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
       new CreateAction(patch, "Readme.link"));
   }
 
   @Test
   public void delete() throws Exception {
-    @NotNull Path link = new File(myOlderDir, "Readme.link").toPath();
-    @NotNull Path target = Paths.get("Readme.txt");
-    Files.createSymbolicLink(link, target);
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("Readme.link"), Path.of("Readme.txt"));
 
-    Patch patch = createPatch();
+    var patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "Readme.link", CHECKSUMS.LINK_TO_README_TXT));
   }
 
   @Test
   public void rename() throws Exception {
-    @NotNull Path link1 = new File(myOlderDir, "Readme.lnk").toPath();
-    @NotNull Path target1 = Paths.get("Readme.txt");
-    Files.createSymbolicLink(link1, target1);
-    @NotNull Path link = new File(myNewerDir, "Readme.link").toPath();
-    @NotNull Path target = Paths.get("Readme.txt");
-    Files.createSymbolicLink(link, target);
+    var target = Path.of("Readme.txt");
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("Readme.lnk"), target);
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("Readme.link"), target);
 
-    Patch patch = createPatch();
+    var patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "Readme.lnk", CHECKSUMS.LINK_TO_README_TXT),
       new CreateAction(patch, "Readme.link"));
@@ -72,14 +59,10 @@ public class SymlinkPatchTest extends PatchTestCase {
 
   @Test
   public void retarget() throws Exception {
-    @NotNull Path link1 = new File(myOlderDir, "Readme.link").toPath();
-    @NotNull Path target1 = Paths.get("Readme.txt");
-    Files.createSymbolicLink(link1, target1);
-    @NotNull Path link = new File(myNewerDir, "Readme.link").toPath();
-    @NotNull Path target = Paths.get("./Readme.txt");
-    Files.createSymbolicLink(link, target);
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("Readme.link"), Path.of("Readme.txt"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("Readme.link"), Path.of("./Readme.txt"));
 
-    Patch patch = createPatch();
+    var patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "Readme.link", CHECKSUMS.LINK_TO_README_TXT),
       new CreateAction(patch, "Readme.link"));
@@ -87,14 +70,10 @@ public class SymlinkPatchTest extends PatchTestCase {
 
   @Test
   public void renameAndRetarget() throws Exception {
-    @NotNull Path link1 = new File(myOlderDir, "Readme.lnk").toPath();
-    @NotNull Path target1 = Paths.get("./Readme.txt");
-    Files.createSymbolicLink(link1, target1);
-    @NotNull Path link = new File(myNewerDir, "Readme.link").toPath();
-    @NotNull Path target = Paths.get("Readme.txt");
-    Files.createSymbolicLink(link, target);
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("Readme.lnk"), Path.of("./Readme.txt"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("Readme.link"), Path.of("Readme.txt"));
 
-    Patch patch = createPatch();
+    var patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "Readme.lnk", CHECKSUMS.LINK_TO_DOT_README_TXT),
       new CreateAction(patch, "Readme.link"));
@@ -102,12 +81,10 @@ public class SymlinkPatchTest extends PatchTestCase {
 
   @Test
   public void fileToLink() throws Exception {
-    Files.move(new File(myNewerDir, "Readme.txt").toPath(), new File(myNewerDir, "Readme.md").toPath());
-    @NotNull Path link = new File(myNewerDir, "Readme.txt").toPath();
-    @NotNull Path target = Paths.get("Readme.md");
-    Files.createSymbolicLink(link, target);
+    Files.move(myNewerDir.toPath().resolve("Readme.txt"), myNewerDir.toPath().resolve("Readme.md"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("Readme.txt"), Path.of("Readme.md"));
 
-    Patch patch = createPatch();
+    var patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "Readme.txt", CHECKSUMS.README_TXT),
       new CreateAction(patch, "Readme.md"),
@@ -115,17 +92,15 @@ public class SymlinkPatchTest extends PatchTestCase {
   }
 
   @Test
-  public void multipleDirectorySymlinks() throws Exception {
-    long l1 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
-    long l2 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
-    long r1 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r1.bin"));
-    long r2 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r2.bin"));
-    @NotNull Path target6 = Paths.get("A");
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), target6);
-    @NotNull Path target5 = Paths.get("Versions/Current/Libraries");
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), target5);
-    @NotNull Path target4 = Paths.get("Versions/Current/Resources");
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), target4);
+  @SuppressWarnings("DuplicateExpressions")
+    public void multipleDirectorySymlinks() throws Exception {
+    var l1 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
+    var l2 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
+    var r1 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r1.bin"));
+    var r2 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r2.bin"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), Path.of("A"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), Path.of("Versions/Current/Libraries"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), Path.of("Versions/Current/Resources"));
 
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
@@ -135,16 +110,12 @@ public class SymlinkPatchTest extends PatchTestCase {
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Libraries/lib2.dylib"));
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Resources/r1.bin"));
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Resources/r2.bin"));
-    @NotNull Path target3 = Paths.get("A");
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Previous"), target3);
-    @NotNull Path target2 = Paths.get("B");
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Current"), target2);
-    @NotNull Path target1 = Paths.get("Versions/Current/Libraries");
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Libraries"), target1);
-    @NotNull Path target = Paths.get("Versions/Current/Resources");
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Resources"), target);
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Previous"), Path.of("A"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Current"), Path.of("B"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Libraries"), Path.of("Versions/Current/Libraries"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Resources"), Path.of("Versions/Current/Resources"));
 
-    Patch patch = createPatch();
+    var patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "A.framework/Versions/Current", 2305843012767948427L),  // = crc32("A") | SYM_LINK
       new CreateAction(patch, "A.framework/Versions/B/"),

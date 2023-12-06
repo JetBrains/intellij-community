@@ -24,12 +24,19 @@ fragment pullRequestInfo on PullRequest {
     isFork
   }
 
+  baseRef {
+    refUpdateRule {
+      ...refUpdateRule
+    }
+  }
+
   headRefName
   headRefOid
   headRepository {
     owner {
       login
     }
+    nameWithOwner
     isFork
     url
     sshUrl

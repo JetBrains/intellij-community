@@ -9,25 +9,30 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.mac.MacFullScreenControlsManager;
 import kotlin.Unit;
 import kotlinx.coroutines.CompletableDeferredKt;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Konstantin Bulenkov
  */
-public final class TogglePresentationModeAction extends AnAction implements DumbAware {
+public final class TogglePresentationModeAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private static final Logger LOG = Logger.getInstance(TogglePresentationModeAction.class);
 
   @Override
@@ -62,7 +67,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
 
     Job callback = project == null ? CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE) : tweakFrameFullScreen(project, inPresentation);
     callback.invokeOnCompletion(__ -> {
-      restoreToolWindows(project);
+      SwingUtilities.invokeLater(() -> restoreToolWindows(project));
       return Unit.INSTANCE;
     });
   }
@@ -71,6 +76,10 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(IdeFrameImpl.getActiveFrame());
     if (frame == null) {
       return CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE);
+    }
+
+    if (SystemInfo.isMac) {
+      MacFullScreenControlsManager.INSTANCE.updateForPresentationMode();
     }
 
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
@@ -100,7 +109,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   }
 
   private static void storeToolWindows(@Nullable Project project) {
-     storeToolWindows(project, ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled());
+     storeToolWindows(project, DistractionFreeModeController.isDistractionFreeModeEnabled());
   }
 
   static void storeToolWindows(@Nullable Project project, boolean inDistractionFree) {
@@ -119,7 +128,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   }
 
   private static void restoreToolWindows(@Nullable Project project) {
-    restoreToolWindows(project, ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled());
+    restoreToolWindows(project, DistractionFreeModeController.isDistractionFreeModeEnabled());
   }
 
   static void restoreToolWindows(@Nullable Project project, boolean inDistractionFree) {

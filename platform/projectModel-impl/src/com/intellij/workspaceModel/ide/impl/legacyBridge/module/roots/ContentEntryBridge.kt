@@ -8,9 +8,9 @@ import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
@@ -76,10 +76,10 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
                                                 type: JpsModuleSourceRootType<P>,
                                                 properties: P): SourceFolder = throwReadonly()
 
-  override fun <P : JpsElement?> addSourceFolder(url: String,
-                                                 type: JpsModuleSourceRootType<P>,
-                                                 properties: P,
-                                                 isAutomaticallyImported: Boolean): SourceFolder = throwReadonly()
+  override fun <P : JpsElement> addSourceFolder(url: String,
+                                                type: JpsModuleSourceRootType<P>,
+                                                properties: P,
+                                                isAutomaticallyImported: Boolean): SourceFolder = throwReadonly()
 
   override fun <P : JpsElement> addSourceFolder(url: String,
                                                 type: JpsModuleSourceRootType<P>,
@@ -103,7 +103,7 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
   override fun clearSourceFolders() = throwReadonly()
   override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = throwReadonly()
   override fun addExcludeFolder(url: String): ExcludeFolder = throwReadonly()
-  override fun addExcludeFolder(url: String, source: ProjectModelExternalSource?): ExcludeFolder = throwReadonly()
+  override fun addExcludeFolder(url: String, isAutomaticallyImported: Boolean): ExcludeFolder = throwReadonly()
   override fun removeExcludeFolder(excludeFolder: ExcludeFolder) = throwReadonly()
   override fun removeExcludeFolder(url: String): Boolean = throwReadonly()
   override fun clearExcludeFolders() = throwReadonly()

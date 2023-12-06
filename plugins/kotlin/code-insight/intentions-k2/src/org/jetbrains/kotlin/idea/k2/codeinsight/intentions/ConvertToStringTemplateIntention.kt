@@ -28,13 +28,15 @@ internal class ConvertToStringTemplateIntention :
     AbstractKotlinApplicableIntentionWithContext<KtBinaryExpression, ConvertToStringTemplateIntention.Context>(
         KtBinaryExpression::class
     ) {
+
     class Context(val replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
 
-    override fun getFamilyName() = KotlinBundle.message("convert.concatenation.to.template")
+    override fun getFamilyName(): String = KotlinBundle.message("convert.concatenation.to.template")
 
     override fun getActionName(element: KtBinaryExpression, context: Context): String = familyName
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
+
     override fun apply(element: KtBinaryExpression, context: Context, project: Project, editor: Editor?) {
         context.replacement.element?.let { element.replaced(it) }
     }
@@ -53,8 +55,6 @@ internal class ConvertToStringTemplateIntention :
         return Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
     }
 
-    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
-        if (element.operationToken != KtTokens.PLUS) return false
-        return element.containNoNewLine()
-    }
+    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
+        element.operationToken == KtTokens.PLUS && element.containNoNewLine()
 }

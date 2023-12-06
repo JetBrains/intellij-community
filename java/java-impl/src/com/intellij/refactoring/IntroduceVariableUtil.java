@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -181,15 +181,19 @@ public final class IntroduceVariableUtil {
 
       final PsiElement parent = literalExpression != null ? literalExpression : elementAt;
       PsiElement commonParent = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
-      tempExpr = elementFactory.createExpressionFromText(text, Objects.requireNonNullElse(parent, commonParent));
+      PsiElement context = Objects.requireNonNullElse(parent, commonParent);
+      if (TextRange.create(startOffset, endOffset).contains(context.getTextRange())){
+        context = context.getParent();
+      }
+      tempExpr = elementFactory.createExpressionFromText(text, context);
 
       if (ErrorUtil.containsDeepError(tempExpr)) return null;
 
       tempExpr.putUserData(ElementToWorkOn.PREFIX, prefix);
       tempExpr.putUserData(ElementToWorkOn.SUFFIX, suffix);
 
-      final RangeMarker rangeMarker =
-        FileDocumentManager.getInstance().getDocument(file.getVirtualFile()).createRangeMarker(startOffset, endOffset);
+      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      RangeMarker rangeMarker = document != null ? document.createRangeMarker(startOffset, endOffset) : null;
       tempExpr.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
 
       if (parent != null) {
@@ -216,7 +220,7 @@ public final class IntroduceVariableUtil {
 
       final String fakeInitializer = "intellijidearulezzz";
       final int[] refIdx = new int[1];
-      final PsiElement toBeExpression = createReplacement(fakeInitializer, project, prefix, suffix, parent, rangeMarker, refIdx);
+      final PsiElement toBeExpression = createReplacement(fakeInitializer, project, prefix, suffix, parent, TextRange.create(startOffset, endOffset), refIdx);
       if (ErrorUtil.containsDeepError(toBeExpression)) return null;
       if (literalExpression != null && toBeExpression instanceof PsiExpression) {
         PsiType type = ((PsiExpression)toBeExpression).getType();
@@ -285,6 +289,9 @@ public final class IntroduceVariableUtil {
           }
         }
       }
+      if (topLevelExpression.getParent() instanceof PsiField f && f.getParent() instanceof PsiUnnamedClass) {
+        return JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.in.unnamed.class");
+      }
     }
     return null;
   }
@@ -339,22 +346,22 @@ public final class IntroduceVariableUtil {
     return null;
   }
 
-  public static PsiElement createReplacement(final @NonNls String refText, final Project project,
+  private static PsiElement createReplacement(final @NonNls String refText, final Project project,
                                              final String prefix,
                                              final String suffix,
-                                             final PsiElement parent, final RangeMarker rangeMarker, int[] refIdx) {
+                                             final PsiElement parent, final TextRange textRange, int[] refIdx) {
     String text = refText;
     if (parent != null) {
       final String allText = parent.getContainingFile().getText();
       final TextRange parentRange = parent.getTextRange();
 
-      LOG.assertTrue(parentRange.getStartOffset() <= rangeMarker.getStartOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
-      String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
+      LOG.assertTrue(parentRange.getStartOffset() <= textRange.getStartOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
+      String beg = allText.substring(parentRange.getStartOffset(), textRange.getStartOffset());
       //noinspection SSBasedInspection (suggested replacement breaks behavior)
       if (StringUtil.stripQuotesAroundValue(beg).trim().isEmpty() && prefix == null) beg = "";
 
-      LOG.assertTrue(rangeMarker.getEndOffset() <= parentRange.getEndOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
-      String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
+      LOG.assertTrue(textRange.getEndOffset() <= parentRange.getEndOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
+      String end = allText.substring(textRange.getEndOffset(), parentRange.getEndOffset());
       //noinspection SSBasedInspection (suggested replacement breaks behavior)
       if (StringUtil.stripQuotesAroundValue(end).trim().isEmpty() && suffix == null) end = "";
 
@@ -425,8 +432,8 @@ public final class IntroduceVariableUtil {
           PsiDiamondTypeUtil.expandTopLevelDiamondsInside(copyVariableInitializer);
         }
       }
-      else if (copyVariableInitializer instanceof PsiArrayInitializerExpression) {
-        new AddNewArrayExpressionFix((PsiArrayInitializerExpression)copyVariableInitializer).doFix();
+      else if (copyVariableInitializer instanceof PsiArrayInitializerExpression initializer) {
+        AddNewArrayExpressionFix.doFix(initializer);
       }
       else if (copyVariableInitializer instanceof PsiFunctionalExpression) {
         PsiTypeCastExpression castExpression =
@@ -459,7 +466,9 @@ public final class IntroduceVariableUtil {
       final RangeMarker rangeMarker = expr1.getUserData(ElementToWorkOn.TEXT_RANGE);
 
       LOG.assertTrue(parent != null, expr1);
-      return parent.replace(createReplacement(ref.getText(), project, prefix, suffix, parent, rangeMarker, new int[1]));
+      LOG.assertTrue(rangeMarker != null, expr1);
+      final TextRange textRange = rangeMarker.getTextRange();
+      return parent.replace(createReplacement(ref.getText(), project, prefix, suffix, parent, textRange, new int[1]));
     }
   }
 }

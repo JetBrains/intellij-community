@@ -2,7 +2,10 @@
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -11,25 +14,41 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.kotlin.config.ExplicitApiMode
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
+import org.jetbrains.kotlin.config.additionalArgumentsAsList
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 private val LOG = logger<WorkspaceModelGenerator>()
 
-object WorkspaceModelGenerator {
-  const val GENERATED_FOLDER_NAME = "gen"
+@Service(Service.Level.PROJECT)
+class WorkspaceModelGenerator(private val project: Project, private val coroutineScope: CoroutineScope) {
 
-  fun generate(project: Project, module: Module) {
+  fun generate(module: Module) {
     val acceptedSourceRoots = getSourceRoot(module)
     if (acceptedSourceRoots.isEmpty()) {
       LOG.info("Acceptable module source roots not found")
       return
     }
-    acceptedSourceRoots.forEach{ sourceRoot ->
-      WriteAction.run<RuntimeException> {
-        CodeWriter.generate(project, module, sourceRoot.file!!) {
-          createGeneratedSourceFolder(module, sourceRoot)
+    coroutineScope.launch {
+      acceptedSourceRoots.map { sourceRoot ->
+        withContext(Dispatchers.EDT) {
+          CodeWriter.generate(
+            project, module, sourceRoot.file!!,
+            processAbstractTypes = module.withAbstractTypes,
+            explicitApiEnabled = module.explicitApiEnabled,
+            isTestModule = module.isTestModule // TODO(It doesn't work for all modules)
+          ) {
+            createGeneratedSourceFolder(module, sourceRoot)
+          }
         }
       }
     }
@@ -82,5 +101,25 @@ object WorkspaceModelGenerator {
       if (javaSourceRootProperties == null) return@filter true
       return@filter !javaSourceRootProperties.isForGeneratedSources
     }
+  }
+
+  private val Module.withAbstractTypes: Boolean
+    get() = name in modulesWithAbstractTypes || name.startsWith(RIDER_MODULES_PREFIX)
+
+  private val Module.explicitApiEnabled: Boolean
+    get() {
+      val facetSettings: IKotlinFacetSettings? = KotlinFacet.get(this)?.configuration?.settings
+      val compilerArguments = facetSettings?.compilerSettings?.additionalArgumentsAsList
+      return compilerArguments?.contains("-Xexplicit-api=${ExplicitApiMode.STRICT.state}") == true
+    }
+
+  companion object {
+    const val GENERATED_FOLDER_NAME = "gen"
+
+    private const val RIDER_MODULES_PREFIX = "intellij.rider"
+
+    val modulesWithAbstractTypes: Set<String> = setOf("intellij.platform.workspace.storage.testEntities")
+
+    fun getInstance(project: Project): WorkspaceModelGenerator = project.service()
   }
 }

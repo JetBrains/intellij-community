@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
 import com.intellij.diagnostic.ThreadDumper
@@ -52,7 +52,7 @@ suspend fun <Y> runTaskAndLogTime(
   action: suspend CoroutineScope.(TimeCookie) -> Y
 ): Y = coroutineScope {
   val cookie = TimeCookie()
-  ConsoleLog.info("Waiting for $progressName...")
+  WarmupLogger.logInfo("Started waiting for '$progressName'...")
 
   val stackElement = coroutineContext[TaskAndLogTimeKey] ?: TaskAndLogTimeElement()
   stackElement.push(progressName)
@@ -62,6 +62,7 @@ suspend fun <Y> runTaskAndLogTime(
       while (true) {
         delay(Duration.ofSeconds(5))
         stackElement.logStack(progressName)?.let { message ->
+          // don't print it to logs, too noisy
           ConsoleLog.info("... keep running ${message}.... so far ${cookie.formatDuration()}")
         }
       }
@@ -96,6 +97,6 @@ suspend fun <Y> runTaskAndLogTime(
   finally {
     loggerJob.cancelAndJoin()
     stackElement.pop(progressName)
-    ConsoleLog.info("Completed waiting for $progressName in ${cookie.formatDuration()}")
+    WarmupLogger.logInfo("Completed waiting for '$progressName' in ${cookie.formatDuration()}")
   }
 }

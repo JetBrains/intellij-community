@@ -40,13 +40,6 @@ object LangTool : GrazieStateLifecycle {
 
   internal fun globalIdPrefix(lang: Lang): String = "LanguageTool." + lang.remote.iso.name + "."
 
-  @ApiStatus.ScheduledForRemoval
-  @Suppress("UNUSED_PARAMETER", "DeprecatedCallableAddReplaceWith")
-  @Deprecated("use the other overload")
-  fun getTool(lang: Lang, state: GrazieConfig.State): JLanguageTool {
-    return getTool(lang)
-  }
-
   fun getTool(lang: Lang): JLanguageTool {
     // this is equivalent to computeIfAbsent, but allows multiple threads to create tools concurrently,
     // so that threads can be interrupted (with checkCanceled on their own indicator) instead of waiting on a lock

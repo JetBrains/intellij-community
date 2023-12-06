@@ -2,7 +2,9 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.configurationStore.deserializeInto
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.module.ModulePointerManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.packaging.artifacts.ArtifactPointerManager
@@ -10,13 +12,15 @@ import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.UnknownPackagingElementTypeException
+import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.elements
+import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.mutableElements
 import com.intellij.packaging.impl.elements.*
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.workspaceModel.ide.workspaceModel
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.locks.ReadWriteLock
@@ -47,6 +51,7 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
     rwLock.readLock().unlock()
     rwLock.writeLock().lock()
     try {
+      ProgressManager.checkCanceled()
       testCheck(2)
       // Double check
       existing = storage.base.elements.getDataByEntity(this)
@@ -78,6 +83,7 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
         }
         mappingsCollector.add(this to element)
         if (addToMapping) {
+          ProgressManager.checkCanceled()
           val storageBase = storage.base
           if (storageBase is MutableEntityStorage) {
             val mutableMapping = storageBase.mutableElements
@@ -105,6 +111,7 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
   }
 
   rwLock.readLock().unlock()
+  ProgressManager.checkCanceled()
   return existing as CompositePackagingElement<*>
 }
 
@@ -128,6 +135,7 @@ fun PackagingElementEntity.toElement(
     rwLock.readLock().unlock()
     rwLock.writeLock().lock()
     try {
+      ProgressManager.checkCanceled()
       testCheck(4)
       // Double check
       existing = storage.base.elements.getDataByEntity(this)
@@ -192,9 +200,21 @@ fun PackagingElementEntity.toElement(
             val directory = this.filePath
             DirectoryCopyPackagingElement(JpsPathUtil.urlToPath(directory.url))
           }
-          is ArchivePackagingElementEntity -> this.toCompositeElement(project, storage, false, mappingsCollector)
-          is DirectoryPackagingElementEntity -> this.toCompositeElement(project, storage, false, mappingsCollector)
-          is ArtifactRootElementEntity -> this.toCompositeElement(project, storage, false, mappingsCollector)
+          is ArchivePackagingElementEntity -> {
+            val element = this.toCompositeElement(project, storage, false, mappingsCollector)
+            ProgressManager.checkCanceled()
+            element
+          }
+          is DirectoryPackagingElementEntity -> {
+            val element = this.toCompositeElement(project, storage, false, mappingsCollector)
+            ProgressManager.checkCanceled()
+            element
+          }
+          is ArtifactRootElementEntity -> {
+            val element = this.toCompositeElement(project, storage, false, mappingsCollector)
+            ProgressManager.checkCanceled()
+            element
+          }
           is LibraryFilesPackagingElementEntity -> {
             val mapping = storage.base.getExternalMapping<PackagingElement<*>>("intellij.artifacts.packaging.elements")
             val data = mapping.getDataByEntity(this)
@@ -218,6 +238,7 @@ fun PackagingElementEntity.toElement(
 
         mappingsCollector.add(this to element)
         if (addToMapping) {
+          ProgressManager.checkCanceled()
           val storageBase = storage.base
           if (storageBase is MutableEntityStorage) {
             val mutableMapping = storageBase.mutableElements
@@ -287,7 +308,10 @@ private fun List<PackagingElementEntity>.pushTo(
   storage: VersionedEntityStorage,
   mappingsCollector: MutableList<Pair<PackagingElementEntity, PackagingElement<*>>>,
 ) {
-  val children = this.map { it.toElement(project, storage, addToMapping = false, mappingsCollector = mappingsCollector) }.toList()
+  val children = this.map {
+    ProgressManager.checkCanceled()
+    it.toElement(project, storage, addToMapping = false, mappingsCollector = mappingsCollector)
+  }.toList()
   children.reversed().forEach { element.addFirstChild(it) }
 }
 

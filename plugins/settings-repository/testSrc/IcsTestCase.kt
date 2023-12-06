@@ -2,10 +2,13 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.writeChild
+import com.intellij.util.io.write
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.IcsManager
 import org.jetbrains.settingsRepository.git.AddLoadedFile
@@ -16,11 +19,12 @@ import org.junit.Rule
 import org.junit.rules.RuleChain
 import java.nio.file.FileSystem
 import java.nio.file.Path
+import kotlin.coroutines.EmptyCoroutineContext
 
 fun Repository.add(path: String, data: String) = add(path, data.toByteArray())
 
 fun Repository.add(path: String, data: ByteArray): Repository {
-  workTreePath.writeChild(path, data)
+  workTreePath.resolve(path).write(data)
   edit(AddLoadedFile(path, data))
   return this
 }
@@ -53,12 +57,21 @@ abstract class IcsTestCase {
     get() = fsRule.fs
 
   val configDir = lazy { tempDirManager.newPath() }
-  private val settingsRepositoryDir: Path get() = configDir.value.resolve("settingsRepository")
-  val repositoryDir: Path get() = settingsRepositoryDir.resolve("repository")
+
+  private val settingsRepositoryDir: Path
+    get() = configDir.value.resolve("settingsRepository")
+
+  val repositoryDir: Path
+    get() = settingsRepositoryDir.resolve("repository")
 
   val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-    val icsManager = IcsManager(settingsRepositoryDir, disposableRule.disposable,
-                                lazy { SchemeManagerFactoryBase.TestSchemeManagerFactory(repositoryDir) })
+    val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    Disposer.register(disposableRule.disposable) {
+      coroutineScope.cancel()
+    }
+    val icsManager = IcsManager(dir = settingsRepositoryDir,
+                                coroutineScope = coroutineScope,
+                                schemeManagerFactory = lazy { SchemeManagerFactoryBase.TestSchemeManagerFactory(repositoryDir) })
 
     if (createAndActivateRepository()) {
       icsManager.repositoryManager.createRepositoryIfNeeded()
@@ -67,7 +80,7 @@ abstract class IcsTestCase {
     icsManager
   }
 
-  open fun createAndActivateRepository() : Boolean = true
+  open fun createAndActivateRepository(): Boolean = true
 
   val provider by lazy(LazyThreadSafetyMode.NONE) { icsManager.IcsStreamProvider() }
 

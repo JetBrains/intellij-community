@@ -54,22 +54,22 @@ public final class TaskProjectConfiguration implements PersistentStateComponent<
   @XCollection(elementName = "server")
   public List<SharedServer> servers = new ArrayList<>();
 
-  private final TaskManagerImpl myManager;
+  private final Project myProject;
 
   // for serialization
   @NonInjectable
   public TaskProjectConfiguration() {
-    myManager = null;
+    myProject = null;
   }
 
   public TaskProjectConfiguration(@NotNull Project project) {
-    myManager = (TaskManagerImpl)TaskManager.getManager(project);
+    myProject = project;
   }
 
   @Override
   public TaskProjectConfiguration getState() {
     LinkedHashSet<SharedServer> set = new LinkedHashSet<>(this.servers);
-    for (TaskRepository repository : myManager.getAllRepositories()) {
+    for (TaskRepository repository : TaskManager.getManager(myProject).getAllRepositories()) {
       if (repository.isShared()) {
         SharedServer server = new SharedServer();
         server.type = repository.getRepositoryType().getName();

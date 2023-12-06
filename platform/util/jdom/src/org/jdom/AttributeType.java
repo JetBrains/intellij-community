@@ -164,8 +164,7 @@ public enum AttributeType {
       return valueOf(typeName);
     }
     catch (IllegalArgumentException iae) {
-      if (typeName.length() > 0 &&
-          typeName.trim().charAt(0) == '(') {
+      if (!typeName.isEmpty() && typeName.trim().charAt(0) == '(') {
         // Xerces 1.4.X reports attributes of enumerated type with
         // a type string equals to the enumeration definition, i.e.
         // starting with a parenthesis.

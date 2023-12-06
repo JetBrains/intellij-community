@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.StateStorageManager
@@ -10,13 +10,23 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.messages.MessageBus
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import kotlin.coroutines.EmptyCoroutineContext
 
-val testPluginDescriptor = DefaultPluginDescriptor("test")
+val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("test")
 
+@OptIn(DelicateCoroutinesApi::class)
 @TestOnly
-class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) : ComponentManagerImpl(null, setExtensionsRootArea = false /* must work without */) {
+class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) :
+  ComponentManagerImpl(
+    parent = null,
+    parentScope = GlobalScope,
+    additionalContext = EmptyCoroutineContext,
+  ) {
+
   init {
     registerService(IComponentStore::class.java, TestComponentStore::class.java, testPluginDescriptor, false)
   }

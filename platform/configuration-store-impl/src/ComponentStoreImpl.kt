@@ -1,5 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
@@ -9,6 +10,7 @@ import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -20,9 +22,10 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.util.*
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.ResourceUtil
+import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.toArray
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.Dispatchers
@@ -33,12 +36,15 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 internal val LOG = logger<ComponentStoreImpl>()
 private val SAVE_MOD_LOG = Logger.getInstance("#configurationStore.save.skip")
+
+private val isUseLoadedStateAsExistingVmProperty = System.getProperty("use.loaded.state.as.existing", "true").toBoolean()
 
 internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   val w1 = if (o1.deprecated) 1 else 0
@@ -79,6 +85,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   abstract override val storageManager: StateStorageManager
 
+  private val featureUsageSettingManager by lazy {
+    val project = project
+    @Suppress("IfThenToElvis")
+    if (project == null) service<FeatureUsageSettingsEvents>() else project.service<FeatureUsageSettingsEvents>()
+  }
+
   internal fun getComponents(): Map<String, ComponentInfo> = components
 
   override fun clearCaches() {
@@ -101,13 +113,13 @@ abstract class ComponentStoreImpl : IComponentStore {
             return
           }
 
-          val componentInfo = createComponentInfo(component, null, serviceDescriptor)
+          val componentInfo = createComponentInfo(component = component, stateSpec = null, serviceDescriptor = serviceDescriptor)
           initComponent(info = componentInfo, changedStorages = null, reloadData = ThreeState.NO)
         }
         else {
           componentName = stateSpec.name
           val componentInfo = createComponentInfo(component = component, stateSpec = stateSpec, serviceDescriptor = serviceDescriptor)
-          // still must be added to component list to support explicit save later
+          // still must be added to a component list to support explicit save later
           if (!stateSpec.allowLoadInTests && !(loadPolicy == StateLoadPolicy.LOAD ||
                                                (loadPolicy == StateLoadPolicy.LOAD_ONLY_DEFAULT && stateSpec.defaultStateAsResource))) {
             component.noStateLoaded()
@@ -116,13 +128,13 @@ abstract class ComponentStoreImpl : IComponentStore {
             return
           }
 
-          if (initComponent(componentInfo, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
+          if (initComponent(info = componentInfo, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
             // if not service, so, component manager will check it later for all components
             val project = project
-            if (project != null) {
+            if (project != null && project.isInitialized) {
               val app = ApplicationManager.getApplication()
-              if (!app.isHeadlessEnvironment && !app.isUnitTestMode && project.isInitialized) {
-                notifyUnknownMacros(this, project, componentName)
+              if (!app.isHeadlessEnvironment && !app.isUnitTestMode) {
+                notifyUnknownMacros(store = this, project = project, componentName = componentName)
               }
             }
           }
@@ -131,15 +143,29 @@ abstract class ComponentStoreImpl : IComponentStore {
         component.initializeComponent()
       }
       else if (loadPolicy == StateLoadPolicy.LOAD && component is com.intellij.openapi.util.JDOMExternalizable) {
+        if (component.javaClass.name !in ignoredDeprecatedJDomExternalizableComponents) {
+          LOG.error(PluginException("""
+          |Component ${component.javaClass.name} implements deprecated JDOMExternalizable interface to serialize its state.
+          |IntelliJ Platform will stop supporting such components in the future, so it must be migrated to use PersistentStateComponent.
+          |See https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html for details.
+          """.trimMargin(), pluginId))
+        }
         componentName = getComponentName(component)
         val componentInfo = createComponentInfo(component = component, stateSpec = null, serviceDescriptor = null)
         val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)
-                        ?.getState(component, componentName, Element::class.java, null, false)
+          ?.getState(component = component,
+                     componentName = componentName,
+                     stateClass = Element::class.java,
+                     mergeInto = null,
+                     reload = false)
         if (element != null) {
           component.readExternal(element)
         }
         registerComponent(name = componentName, info = componentInfo)
       }
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       if (e is ControlFlowException) {
@@ -174,30 +200,21 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal abstract suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean)
 
-  internal suspend fun commitComponentsOnEdt(saveResult: SaveResult,
-                                             forceSavingAllSettings: Boolean,
-                                             saveSessionProducerManager: SaveSessionProducerManager) {
-    withContext(Dispatchers.EDT) {
-      commitComponents(forceSavingAllSettings, saveSessionProducerManager, saveResult)
-      saveSessionProducerManager
-    }
-  }
-
-  @RequiresEdt
-  internal open fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, saveResult: SaveResult) {
-    if (components.isEmpty()) {
+  internal open suspend fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, saveResult: SaveResult) {
+    val names = ArrayUtilRt.toStringArray(components.keys)
+    if (names.isEmpty()) {
       return
     }
 
+    names.sort()
+
+    @NonNls var timeLog: StringBuilder? = null
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
-    val names = ArrayUtilRt.toStringArray(components.keys)
-    names.sort()
-    @NonNls var timeLog: StringBuilder? = null
-
-    // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
-    val nowInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
     val isSaveModLogEnabled = SAVE_MOD_LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode
+
+    // well, strictly speaking, each component saving takes some time, but +/- several seconds doesn't matter
+    val nowInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
     for (name in names) {
       val start = System.currentTimeMillis()
       try {
@@ -210,20 +227,23 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
           else {
             if (isSaveModLogEnabled) {
-              SAVE_MOD_LOG.debug("Skip $name: was already saved in last ${TimeUnit.SECONDS.toMinutes(NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT.toLong())} minutes" +
-                                 " (lastSaved ${info.lastSaved}, now: $nowInSeconds)")
+              SAVE_MOD_LOG.debug("Skip $name: was already saved in last " +
+                                 "${TimeUnit.SECONDS.toMinutes(NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT.toLong())} minutes " +
+                                 "(lastSaved ${info.lastSaved}, now: $nowInSeconds)")
             }
             continue
           }
         }
+
         var modificationCountChanged = false
         if (info.isModificationTrackingSupported) {
           currentModificationCount = info.currentModificationCount
           if (currentModificationCount == info.lastModificationCount) {
             if (isSaveModLogEnabled) {
-              SAVE_MOD_LOG.debug("${if (isUseModificationCount) "Skip " else ""}$name: modificationCount $currentModificationCount equals to last saved")
+              SAVE_MOD_LOG.debug(
+                "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount $currentModificationCount equals to last saved")
             }
-            if (isUseModificationCount) {
+            if (isUseModificationCount && !isForce) {
               continue
             }
           }
@@ -232,7 +252,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        commitComponent(session, info, name, modificationCountChanged)
+        commitComponent(session = session, info = info, componentName = name, modificationCountChanged = modificationCountChanged)
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
@@ -242,12 +262,12 @@ abstract class ComponentStoreImpl : IComponentStore {
       val duration = System.currentTimeMillis() - start
       if (duration > 10) {
         if (timeLog == null) {
-          timeLog = StringBuilder("Saving " + toString())
+          timeLog = StringBuilder("Saving ").append(toString())
         }
         else {
           timeLog.append(", ")
         }
-        timeLog.append(name).append(" took ").append(duration).append(" ms")
+        timeLog!!.append(name).append(" took ").append(duration).append(" ms")
       }
     }
 
@@ -262,11 +282,17 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpec(component)
     LOG.debug { "saveComponent is called for ${stateSpec.name}" }
     val saveManager = createSaveSessionProducerManager()
-    commitComponent(saveManager, ComponentInfoImpl(component, stateSpec), null, false)
-    val absolutePath = storageManager.expandMacro(findNonDeprecated(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)).path).toString()
+    val absolutePath = storageManager.expandMacro(
+      findNonDeprecated(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)).path).toString()
     Disposer.newDisposable().use {
       VfsRootAccess.allowRootAccess(it, absolutePath)
+      @Suppress("DEPRECATION")
       runUnderModalProgressIfIsEdt {
+        commitComponent(session = saveManager,
+                        info = ComponentInfoImpl(component, stateSpec),
+                        componentName = null,
+                        modificationCountChanged = false)
+
         val saveResult = saveManager.save()
         saveResult.throwIfErrored()
 
@@ -279,10 +305,10 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   open fun createSaveSessionProducerManager() = SaveSessionProducerManager()
 
-  private fun commitComponent(session: SaveSessionProducerManager,
-                              info: ComponentInfo,
-                              componentName: String?,
-                              modificationCountChanged: Boolean) {
+  private suspend fun commitComponent(session: SaveSessionProducerManager,
+                                      info: ComponentInfo,
+                                      componentName: String?,
+                                      modificationCountChanged: Boolean) {
     val component = info.component
     @Suppress("DEPRECATION")
     if (component is com.intellij.openapi.util.JDOMExternalizable) {
@@ -300,11 +326,19 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = info.stateSpec!!
     val effectiveComponentName = componentName ?: stateSpec.name
     val stateStorageChooser = component as? StateStorageChooserEx
+
     @Suppress("UNCHECKED_CAST")
-    val storageSpecs = getStorageSpecs(component as PersistentStateComponent<Any>, stateSpec, StateStorageOperation.WRITE)
+    val storageSpecs = getStorageSpecs(component = component as PersistentStateComponent<Any>,
+                                       stateSpec = stateSpec,
+                                       operation = StateStorageOperation.WRITE)
     for (storageSpec in storageSpecs) {
       @Suppress("IfThenToElvis")
-      var resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.WRITE)
+      var resolution = if (stateStorageChooser == null) {
+        Resolution.DO
+      }
+      else {
+        stateStorageChooser.getResolution(storage = storageSpec, operation = StateStorageOperation.WRITE)
+      }
       if (resolution == Resolution.SKIP) {
         continue
       }
@@ -320,35 +354,41 @@ abstract class ComponentStoreImpl : IComponentStore {
 
       val sessionProducer = session.getProducer(storage) ?: continue
       if (resolution == Resolution.CLEAR ||
-          storageSpec.deprecated && storageSpecs.none { !it.deprecated && it.value == storageSpec.value }) {
-        sessionProducer.setState(component, effectiveComponentName, null)
+          (storageSpec.deprecated && storageSpecs.none { !it.deprecated && it.value == storageSpec.value })) {
+        sessionProducer.setState(component = component, componentName = effectiveComponentName, state = null)
       }
       else {
         if (!stateRequested) {
           stateRequested = true
-          state = (info.component as PersistentStateComponent<*>).state
+          state = getStateForComponent(component = component, stateSpec = stateSpec)
         }
 
         if (modificationCountChanged && state != null && isReportStatisticAllowed(stateSpec, storageSpec)) {
-          LOG.runAndLogException {
-            FeatureUsageSettingsEvents.logConfigurationChanged(effectiveComponentName, state, project)
-          }
+          featureUsageSettingManager.logConfigurationChanged(effectiveComponentName, state)
         }
 
-        setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
+        setStateToSaveSessionProducer(state = state,
+                                      info = info,
+                                      effectiveComponentName = effectiveComponentName,
+                                      sessionProducer = sessionProducer)
       }
     }
   }
 
-  // method is not called if storage is deprecated or clear was requested (state in these cases is null), but called if state is null if returned so from component
-  protected open fun setStateToSaveSessionProducer(state: Any?, info: ComponentInfo, effectiveComponentName: String, sessionProducer: SaveSessionProducer) {
-    sessionProducer.setState(info.component, effectiveComponentName, state)
+  // method is not called if storage is deprecated or clear was requested
+  // (state in these cases is null), but called if state is null if returned so from a component
+  protected open fun setStateToSaveSessionProducer(state: Any?,
+                                                   info: ComponentInfo,
+                                                   effectiveComponentName: String,
+                                                   sessionProducer: SaveSessionProducer) {
+    sessionProducer.setState(component = info.component, componentName = effectiveComponentName, state = state)
   }
 
   private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo {
     val existing = components.putIfAbsent(name, info)
     if (existing != null && existing.component !== info.component) {
-      LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${info.component.javaClass} (componentManager=${storageManager.componentManager})")
+      LOG.error(
+        "Conflicting component name '$name': ${existing.component.javaClass} and ${info.component.javaClass} (componentManager=${storageManager.componentManager})")
       return existing
     }
     else {
@@ -361,11 +401,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     val component = info.component as PersistentStateComponent<Any>
     if (info.stateSpec == null) {
       val configurationSchemaKey = info.configurationSchemaKey
-                                   ?: throw UnsupportedOperationException("configurationSchemaKey must be specified for ${component.javaClass.name}")
+                                   ?: throw UnsupportedOperationException(
+                                     "configurationSchemaKey must be specified for ${component.javaClass.name}")
       return initComponentWithoutStateSpec(component, configurationSchemaKey)
     }
     else {
-      return doInitComponent(info, component, changedStorages, reloadData)
+      doInitComponent(info = info, component = component, changedStorages = changedStorages, reloadData = reloadData)
+      return true
     }
   }
 
@@ -386,7 +428,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     return null
   }
 
-  private fun doInitComponent(info: ComponentInfo, component: PersistentStateComponent<Any>, changedStorages: Set<StateStorage>?, reloadData: ThreeState): Boolean {
+  private fun doInitComponent(info: ComponentInfo,
+                              component: PersistentStateComponent<Any>,
+                              changedStorages: Set<StateStorage>?,
+                              reloadData: ThreeState) {
     @Suppress("UNCHECKED_CAST")
     val stateClass: Class<Any> = when (component) {
       is PersistenceStateAdapter -> component.component::class.java as Class<Any>
@@ -396,7 +441,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = info.stateSpec!!
     val name = stateSpec.name
 
-    // KT-39968: PathMacrosImpl could increase modCount on loadState and the change has to be persisted
+    // KT-39968: PathMacrosImpl could increase modCount on loadState, and the change has to be persisted
     // all other components follow general rule: initial modCount is calculated after loadState phase
     val postLoadStateUpdateModificationCount = name != "PathMacrosImpl"
 
@@ -410,20 +455,30 @@ abstract class ComponentStoreImpl : IComponentStore {
 
         val storage = storageManager.getStateStorage(storageSpec)
 
-        // if storage marked as  changed, it means that analyzeExternalChangesAndUpdateIfNeeded was called for it and storage is already reloaded
-        val isReloadDataForStorage = if (reloadData == ThreeState.UNSURE) isStorageChanged(changedStorages!!, storage) else reloadData.toBoolean()
+        // if storage marked as changed,
+        // it means that analyzeExternalChangesAndUpdateIfNeeded was called for it and storage is already reloaded
+        val isReloadDataForStorage = if (reloadData == ThreeState.UNSURE) {
+          isStorageChanged(changedStorages!!, storage)
+        }
+        else {
+          reloadData.toBoolean()
+        }
 
-        val stateGetter = doCreateStateGetter(isReloadDataForStorage, storage, info, name, stateClass)
+        val stateGetter = doCreateStateGetter(reloadData = isReloadDataForStorage,
+                                              storage = storage,
+                                              info = info,
+                                              name = name,
+                                              stateClass = stateClass)
         var state = stateGetter.getState(defaultState)
         if (state == null) {
           if (changedStorages != null && isStorageChanged(changedStorages, storage)) {
             // state will be null if file deleted
             // we must create empty (initial) state to reinit component
-            state = deserializeState(Element("state"), stateClass, null)!!
+            state = deserializeState(stateElement = Element("state"), stateClass = stateClass, mergeInto = null)!!
           }
           else {
             if (isReportStatisticAllowed(stateSpec, storageSpec)) {
-              FeatureUsageSettingsEvents.logDefaultConfigurationState(name, stateClass, project)
+              featureUsageSettingManager.logDefaultConfigurationState(name, stateClass)
             }
             continue
           }
@@ -435,19 +490,18 @@ abstract class ComponentStoreImpl : IComponentStore {
         component.loadState(state)
         val stateAfterLoad = stateGetter.archiveState()
         if (isReportStatisticAllowed(stateSpec, storageSpec)) {
-          LOG.runAndLogException {
-            FeatureUsageSettingsEvents.logConfigurationState(name, stateAfterLoad ?: state, project)
-          }
+          featureUsageSettingManager.logConfigurationState(name, stateAfterLoad ?: state)
         }
 
         if (postLoadStateUpdateModificationCount) {
           info.updateModificationCount(info.currentModificationCount)
         }
-        return true
+        return
       }
     }
 
-    // we load default state even if isLoadComponentState false - required for app components (for example, at least one color scheme must exist)
+    // we load the default state even if isLoadComponentState false - required for app components
+    // (for example, at least one color scheme must exist)
     if (defaultState == null) {
       component.noStateLoaded()
     }
@@ -460,7 +514,6 @@ abstract class ComponentStoreImpl : IComponentStore {
         info.updateModificationCount(info.currentModificationCount)
       }
     }
-    return true
   }
 
   protected open fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean {
@@ -470,7 +523,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean {
-    return changedStorages.contains(storage) || storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage)
+    return changedStorages.contains(storage) || storage is ExternalStorageWithInternalPart && changedStorages.contains(
+      storage.internalStorage)
   }
 
   protected open fun doCreateStateGetter(reloadData: Boolean,
@@ -478,15 +532,18 @@ abstract class ComponentStoreImpl : IComponentStore {
                                          info: ComponentInfo,
                                          name: String,
                                          stateClass: Class<Any>): StateGetter<Any> {
-    // use.loaded.state.as.existing used in upsource
     val isUseLoadedStateAsExisting = info.stateSpec!!.useLoadedStateAsExisting && isUseLoadedStateAsExisting(storage)
     @Suppress("UNCHECKED_CAST")
-    return createStateGetter(isUseLoadedStateAsExisting, storage, info.component as PersistentStateComponent<Any>, name, stateClass, reloadData)
+    return createStateGetter(isUseLoadedStateAsExisting = isUseLoadedStateAsExisting,
+                             storage = storage,
+                             component = info.component as PersistentStateComponent<Any>,
+                             componentName = name,
+                             stateClass = stateClass,
+                             reloadData = reloadData)
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean {
-    return (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
-           && SystemProperties.getBooleanProperty("use.loaded.state.as.existing", true)
+    return (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED && isUseLoadedStateAsExistingVmProperty
   }
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
@@ -507,7 +564,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>,
                                          stateSpec: State,
                                          operation: StateStorageOperation): List<Storage> {
-    val storages = stateSpec.storages.modifyPerOsStorages()
+    val storages = getWithPerOsStorages(stateSpec.storages)
     if (storages.size == 1 || component is StateStorageChooserEx) {
       return storages.toList()
     }
@@ -519,12 +576,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
       throw AssertionError("No storage specified")
     }
-    return storages.sortByDeprecated()
+    return sortStoragesByDeprecated(storages)
   }
 
-  private fun Array<out Storage>.modifyPerOsStorages(): Array<Storage> {
+  private fun getWithPerOsStorages(storages: Array<Storage>): List<Storage> {
     val result = mutableListOf<Storage>()
-    for (storage in this) {
+    for (storage in storages) {
       if (storage.roamingType == RoamingType.PER_OS) {
         result.add(StorageImpl.copyWithNewValue(storage, getOsDependentStorage(storage.value)))
         result.add(StorageImpl.deprecatedCopy(storage))
@@ -533,7 +590,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         result.add(storage)
       }
     }
-    return result.toArray(arrayOf())
+    return result
   }
 
   final override fun isReloadPossible(componentNames: Set<String>): Boolean = !componentNames.any { isNotReloadable(it) }
@@ -581,18 +638,19 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   /**
    * null if reloaded
-   * empty list if nothing to reload
-   * list of not reloadable components (reload is not performed)
+   * an empty list if nothing to reload
+   * a list of not reloadable components (reload is not performed)
    */
   open fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
     if (changedStorages.isEmpty()) {
+      LOG.debug("There is no changed storages to reload")
       return emptySet()
     }
 
     val componentNames = HashSet<String>()
     for (storage in changedStorages) {
       LOG.runAndLogException {
-        // we must update (reload in-memory storage data) even if non-reloadable component will be detected later
+        // we must update (reload in-memory storage data) even if non-reloadable component is detected later
         // not saved -> user does own modification -> new (on disk) state will be overwritten and not applied
         storage.analyzeExternalChangesAndUpdateIfNeeded(componentNames)
       }
@@ -601,6 +659,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (componentNames.isEmpty()) {
       return emptySet()
     }
+    LOG.debug { "Reload components: $componentNames" }
 
     val notReloadableComponents = getNotReloadableComponents(componentNames)
     reinitComponents(componentNames, changedStorages, notReloadableComponents)
@@ -612,8 +671,8 @@ abstract class ComponentStoreImpl : IComponentStore {
    * You must call it in batch mode (use runBatchUpdate)
    */
   open fun reinitComponents(componentNames: Set<String>,
-                       changedStorages: Set<StateStorage> = emptySet(),
-                       notReloadableComponents: Collection<String> = emptySet()) {
+                            changedStorages: Set<StateStorage> = emptySet(),
+                            notReloadableComponents: Collection<String> = emptySet()) {
     for (componentName in componentNames) {
       if (!notReloadableComponents.contains(componentName)) {
         reloadState(componentName, changedStorages)
@@ -627,6 +686,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override fun release() {
     components.clear()
+    (storageManager as? StateStorageManagerImpl)?.disposed()
   }
 
   override fun toString() = storageManager.componentManager.toString()
@@ -640,19 +700,27 @@ enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
 }
 
-internal fun Array<out Storage>.sortByDeprecated(): List<Storage> {
-  if (size < 2) {
-    return toList()
+/**
+ * Provides a way to temporarily ignore a known component extending deprecated JDOMExternalizable interface to avoid having unnecessary
+ * errors in the log. Each entry must be accompanied by a link to the corresponding YouTrack issue.
+ */
+private val ignoredDeprecatedJDomExternalizableComponents = setOf(
+  "jetbrains.buildServer.codeInspection.InspectionPassRegistrar", //TW-82189
+)
+
+internal fun sortStoragesByDeprecated(storages: List<Storage>): List<Storage> {
+  if (storages.size < 2) {
+    return storages.toList()
   }
 
-  if (!first().deprecated) {
-    val othersAreDeprecated = (1 until size).any { get(it).deprecated }
+  if (!storages.first().deprecated) {
+    val othersAreDeprecated = (1 until storages.size).any { storages.get(it).deprecated }
     if (othersAreDeprecated) {
-      return toList()
+      return storages.toList()
     }
   }
 
-  return sortedWith(deprecatedComparator)
+  return storages.sortedWith(deprecatedComparator)
 }
 
 private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {
@@ -670,7 +738,7 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
     for (notification in manager.getNotificationsOfType(
       UnknownMacroNotification::class.java, project)) {
       if (notified == null) {
-        notified = SmartList()
+        notified = ArrayList()
       }
       notified.addAll(notification.macros)
     }
@@ -697,10 +765,29 @@ abstract class ChildlessComponentStore : ComponentStoreImpl() {
 
 internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: SaveResult, forceSavingAllSettings: Boolean) {
   val saveSessionManager = createSaveSessionProducerManager()
-  commitComponentsOnEdt(result, forceSavingAllSettings, saveSessionManager)
+  commitComponents(isForce = forceSavingAllSettings, session = saveSessionManager, saveResult = result)
   saveSessionManager.save().appendTo(result)
 }
 
 private fun getComponentName(component: Any): String {
+  @Suppress("DEPRECATION")
   return if (component is NamedComponent) component.componentName else component.javaClass.name
+}
+
+internal suspend fun getStateForComponent(component: PersistentStateComponent<*>, stateSpec: State): Any? {
+  return when {
+    component is SerializablePersistentStateComponent<*> -> {
+      component.state
+    }
+    stateSpec.getStateRequiresEdt -> {
+      withContext(Dispatchers.EDT) {
+        component.state
+      }
+    }
+    else -> {
+      readAction {
+        component.state
+      }
+    }
+  }
 }

@@ -6,7 +6,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.util.DimensionRestrictions
-import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.ActionLink
@@ -26,7 +26,7 @@ object CodeReviewDetailsDescriptionComponentFactory {
     htmlPaneFactory: () -> JEditorPane
   ): JComponent {
     val descriptionPanel = htmlPaneFactory().apply {
-      bindText(scope, detailsVm.description)
+      detailsVm.description?.also { bindTextIn(scope, it) }
       PopupHandler.installPopupMenu(this, actionGroup, "CodeReviewDetailsPopup")
     }.let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, DimensionRestrictions.LinesHeight(it, VISIBLE_DESCRIPTION_LINES))

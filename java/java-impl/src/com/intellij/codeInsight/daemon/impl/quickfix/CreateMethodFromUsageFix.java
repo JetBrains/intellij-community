@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -50,10 +50,19 @@ public final class CreateMethodFromUsageFix {
     return false;
   }
 
-  public static PsiMethod createMethod(PsiClass targetClass,
-                                       PsiClass parentClass,
-                                       PsiMember enclosingContext,
-                                       String methodName) {
+  /**
+   * Creates a new void no-arg method, adds it into class and returns it
+   * 
+   * @param targetClass class to add method to
+   * @param parentClass context class from where creation was invoked
+   * @param enclosingContext context from where creation was invoked
+   * @param methodName name of the new method
+   * @return newly created method
+   */
+  public static PsiMethod createMethod(@NotNull PsiClass targetClass,
+                                       @Nullable PsiClass parentClass,
+                                       @Nullable PsiMember enclosingContext,
+                                       @NotNull String methodName) {
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
     if (factory == null) {
       return null;
@@ -61,6 +70,11 @@ public final class CreateMethodFromUsageFix {
 
     PsiMethod method = factory.createMethod(methodName, PsiTypes.voidType());
 
+    return addMethod(targetClass, parentClass, enclosingContext, method);
+  }
+
+  public static @NotNull PsiMethod addMethod(@NotNull PsiClass targetClass, @Nullable PsiClass parentClass,
+                                    @Nullable PsiMember enclosingContext, @NotNull PsiMethod method) {
     if (targetClass.equals(parentClass)) {
       method = (PsiMethod)targetClass.addAfter(method, enclosingContext);
     }

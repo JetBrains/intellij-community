@@ -8,3 +8,5 @@ class Container {
         open fun foo(): String = ""
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention

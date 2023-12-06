@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
@@ -68,14 +69,12 @@ abstract class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware
   }
 
   @Contract("null -> null")
-  @Nullable
-  static Editor findEditor(@Nullable AnActionEvent event) {
+  static @Nullable Editor findEditor(@Nullable AnActionEvent event) {
     return event == null ? null : event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
   }
 
   @Contract("null -> null")
-  @Nullable
-  static String findLanguageID(@Nullable AnActionEvent event) {
+  static @Nullable String findLanguageID(@Nullable AnActionEvent event) {
     if (event == null) return null;
 
     PsiFile psiFile = event.getData(CommonDataKeys.PSI_FILE);

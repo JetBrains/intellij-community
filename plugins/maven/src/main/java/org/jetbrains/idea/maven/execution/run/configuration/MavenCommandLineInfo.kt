@@ -2,13 +2,16 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
 import com.intellij.openapi.externalSystem.service.ui.command.line.CompletionTableInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
-import com.intellij.openapi.ui.getActionShortcutText
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
+import com.intellij.openapi.observable.util.createTextModificationTracker
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.ui.getActionShortcutText
+import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.idea.maven.execution.MavenCommandLineOptions
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
@@ -34,8 +37,8 @@ class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryF
   )
 
   private class PhasesAndGoalsCompletionTableInfo(
-    project: Project,
-    workingDirectoryField: WorkingDirectoryField
+    private val project: Project,
+    private val workingDirectoryField: WorkingDirectoryField
   ) : CompletionTableInfo {
     override val emptyState: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.tasks.empty.text")
 
@@ -46,27 +49,38 @@ class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryF
     override val descriptionColumnName: String = MavenConfigurableBundle.message(
       "maven.run.configuration.command.line.description.column")
 
-    private val phases: List<TextCompletionInfo> =
-      MavenConstants.BASIC_PHASES.map { TextCompletionInfo(it) }
+    override val completionModificationTracker: ModificationTracker =
+      workingDirectoryField.createTextModificationTracker()
 
-    private val goals: List<TextCompletionInfo> by lazy {
+    private fun collectPhases(): List<TextCompletionInfo> {
+      return MavenConstants.BASIC_PHASES
+        .map { TextCompletionInfo(it) }
+        .sortedBy { it.text }
+    }
+
+    private suspend fun collectGoals(): List<TextCompletionInfo> {
+      val projectDirectory = blockingContext { workingDirectoryField.getWorkingDirectoryVirtualFile() }
+                             ?: return emptyList()
       val projectsManager = MavenProjectsManager.getInstance(project)
-      val localFileSystem = LocalFileSystem.getInstance()
-      val projectPath = workingDirectoryField.workingDirectory
-      val projectDir = localFileSystem.refreshAndFindFileByPath(projectPath) ?: return@lazy emptyList()
-      val mavenProject = projectsManager.findContainingProject(projectDir) ?: return@lazy emptyList()
-      val localRepository = projectsManager.localRepository
-      mavenProject.declaredPlugins
-        .mapNotNull { MavenArtifactUtil.readPluginInfo(localRepository, it.mavenId) }
-        .flatMap { it.mojos }
-        .map { TextCompletionInfo(it.displayName) }
+      val mavenProject = readAction { projectsManager.findContainingProject(projectDirectory) }
+                         ?: return emptyList()
+      val localRepository = blockingContext { projectsManager.localRepository }
+      return blockingContext {
+        mavenProject.declaredPlugins
+          .mapNotNull { MavenArtifactUtil.readPluginInfo(localRepository, it.mavenId) }
+          .flatMap { it.mojos }
+          .map { TextCompletionInfo(it.displayName) }
+          .sortedBy { it.text }
+      }
     }
 
-    override val completionInfo: List<TextCompletionInfo> by lazy {
-      phases.sortedBy { it.text } + goals.sortedBy { it.text }
+    override suspend fun collectCompletionInfo(): List<TextCompletionInfo> {
+      return collectPhases() + collectGoals()
     }
 
-    override val tableCompletionInfo: List<TextCompletionInfo> by lazy { completionInfo }
+    override suspend fun collectTableCompletionInfo(): List<TextCompletionInfo> {
+      return collectCompletionInfo()
+    }
   }
 
   private class ArgumentsCompletionTableInfo : CompletionTableInfo {
@@ -79,20 +93,21 @@ class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryF
     override val descriptionColumnName: String = MavenConfigurableBundle.message(
       "maven.run.configuration.command.line.description.column")
 
-    private val options: Collection<MavenCommandLineOptions.Option> =
-      MavenCommandLineOptions.getAllOptions()
-
-    override val completionInfo: List<TextCompletionInfo> by lazy {
-      options
-        .map { TextCompletionInfo(it.getName(false), it.description) }
-        .sortedBy { it.text } +
-      options
-        .map { TextCompletionInfo(it.getName(true), it.description) }
-        .sortedBy { it.text }
+    private suspend fun collectOptionCompletion(isLongOptions: Boolean): List<TextCompletionInfo> {
+      return blockingContext {
+        MavenCommandLineOptions.getAllOptions()
+          .map { TextCompletionInfo(it.getName(isLongOptions), it.description) }
+          .sortedBy { it.text }
+      }
     }
 
-    override val tableCompletionInfo: List<TextCompletionInfo> by lazy {
-      completionInfo.filter { it.text.startsWith("--") }
+    override suspend fun collectCompletionInfo(): List<TextCompletionInfo> {
+      return collectOptionCompletion(isLongOptions = false) +
+             collectOptionCompletion(isLongOptions = true)
+    }
+
+    override suspend fun collectTableCompletionInfo(): List<TextCompletionInfo> {
+      return collectOptionCompletion(isLongOptions = true)
     }
   }
 }

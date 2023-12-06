@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.help;
 
 import com.intellij.openapi.extensions.PluginAware;
@@ -24,16 +24,14 @@ public abstract class WebHelpProvider implements PluginAware {
    *
    * @param helpTopicId full ID of help topic including {@code '<plugin ID>.'} prefix
    */
-  @Nullable
-  public abstract String getHelpPageUrl(@NotNull String helpTopicId);
+  public abstract @Nullable String getHelpPageUrl(@NotNull String helpTopicId);
 
   @Override
   public final void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myHelpTopicPrefix = pluginDescriptor.getPluginId().getIdString() + ".";
   }
 
-  @NotNull
-  public String getHelpTopicPrefix() {
+  public @NotNull String getHelpTopicPrefix() {
     return myHelpTopicPrefix;
   }
 }

@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.*
-import com.intellij.util.indexing.snapshot.SnapshotInputMappings
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
@@ -21,8 +20,7 @@ object DefaultIndexStorageLayout {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun <Key, Value> getLayout(indexExtension: FileBasedIndexExtension<Key, Value>,
-                             contentHashEnumeratorReopen: Boolean): VfsAwareIndexStorageLayout<Key, Value> {
+  fun <Key, Value> getLayout(indexExtension: FileBasedIndexExtension<Key, Value>): VfsAwareIndexStorageLayout<Key, Value> {
     val layoutEP = indexLayout
     if (layoutEP != null) {
       log.info("Layout '${layoutEP.id}' will be used to for '${indexExtension.name}' index")
@@ -34,14 +32,11 @@ object DefaultIndexStorageLayout {
     if (indexExtension is SingleEntryFileBasedIndexExtension<*>) {
       return SingleEntryStorageLayout(indexExtension as FileBasedIndexExtension<Key, Value>)
     }
-    return if (FileBasedIndex.hasSnapshotMapping(indexExtension)) {
-      SnapshotMappingsStorageLayout(indexExtension, contentHashEnumeratorReopen)
-    }
-    else DefaultStorageLayout(indexExtension)
+    return DefaultStorageLayout(indexExtension)
   }
 
   @JvmStatic
-  val usedLayoutId
+  val usedLayoutId: String?
     get() = indexLayout?.id
 
   val availableLayouts : List<FileBasedIndexLayoutProviderBean> get() {
@@ -116,49 +111,6 @@ object DefaultIndexStorageLayout {
       log.info("Clearing storage data for: $extension")
       deleteIndexDirectory(extension)
     }
-  }
-
-  class SnapshotMappingsStorageLayout<K, V> internal constructor(private val extension: FileBasedIndexExtension<K, V>,
-                                                                 contentHashEnumeratorReopen: Boolean) : VfsAwareIndexStorageLayout<K, V> {
-    private val storageLockContext = newStorageLockContext()
-    private val mySnapshotInputMappings: SnapshotInputMappings<K, V> by lazy(LazyThreadSafetyMode.NONE) {
-      SnapshotInputMappings<K, V>(extension, getForwardIndexAccessor(extension))
-    }
-
-    private fun deleteIndexData() {
-      deleteIndexDirectory(extension)
-      FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(extension.name).toFile())
-    }
-
-    @Throws(IOException::class)
-    override fun createOrClearSnapshotInputMappings(): SnapshotInputMappings<K, V> {
-      return mySnapshotInputMappings
-    }
-
-    @Throws(IOException::class)
-    override fun openIndexStorage(): IndexStorage<K, V> {
-      mySnapshotInputMappings
-      return createIndexStorage(extension, storageLockContext)
-    }
-
-    @Throws(IOException::class)
-    override fun openForwardIndex(): ForwardIndex {
-      val storageFile = mySnapshotInputMappings.inputIndexStorageFile
-      return IntMapForwardIndex(storageFile, true)
-    }
-
-    @Throws(IOException::class)
-    override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
-      return mySnapshotInputMappings.forwardIndexAccessor
-    }
-
-    init {
-      if (!contentHashEnumeratorReopen) {
-        deleteIndexData()
-      }
-    }
-
-    override fun clearIndexData() = deleteIndexData()
   }
 
   class SingleEntryStorageLayout<K, V> internal constructor(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {

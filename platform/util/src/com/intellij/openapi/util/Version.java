@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,8 +18,7 @@ public class Version implements Comparable<Version>, Serializable {
     this.major = major;
   }
 
-  @Nullable
-  public static Version parseVersion(@NotNull String versionString) {
+  public static @Nullable Version parseVersion(@NotNull String versionString) {
     String[] versions = versionString.split("\\.");
     String version = versions[0];
     int major = parseNumber(version, -1);

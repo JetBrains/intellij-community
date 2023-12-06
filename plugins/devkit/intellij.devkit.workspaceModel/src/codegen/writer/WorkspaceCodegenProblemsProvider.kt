@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -21,7 +21,7 @@ import com.intellij.workspaceModel.codegen.engine.ProblemLocation
 import org.jetbrains.kotlin.resolve.source.getPsi
 import javax.swing.Icon
 
-@Service
+@Service(Service.Level.PROJECT)
 class WorkspaceCodegenProblemsProvider(override val project: Project): ProblemsProvider {
   private var currentProblems = emptyList<WorkspaceModelCodeGenerationProblem>()
   

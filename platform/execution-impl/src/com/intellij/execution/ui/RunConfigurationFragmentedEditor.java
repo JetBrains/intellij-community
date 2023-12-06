@@ -10,6 +10,8 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -19,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GotItComponentBuilder;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +34,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfigurationBase<?>> extends FragmentedSettingsEditor<Settings> {
-  private final static Logger LOG = Logger.getInstance(RunConfigurationFragmentedEditor.class);
+  private static final Logger LOG = Logger.getInstance(RunConfigurationFragmentedEditor.class);
   private final RunConfigurationExtensionsManager<RunConfigurationBase<?>, RunConfigurationExtensionBase<RunConfigurationBase<?>>> myExtensionsManager;
   private boolean myDefaultSettings;
 
@@ -49,8 +52,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     return myDefaultSettings;
   }
 
-  @NotNull
-  protected Project getProject() {
+  protected @NotNull Project getProject() {
     return mySettings.getProject();
   }
 
@@ -152,8 +154,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     }
   }
 
-  @NotNull
-  private List<@NotNull RunConfigurationEditorFragment<?,?>> getRunFragments() {
+  private @NotNull List<@NotNull RunConfigurationEditorFragment<?,?>> getRunFragments() {
     return ContainerUtil.mapNotNull(getFragments(),
                                     fragment -> fragment instanceof RunConfigurationEditorFragment
                                                 ? (RunConfigurationEditorFragment<?,?>)fragment
@@ -189,16 +190,21 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
 
   private void checkGotIt(SettingsEditorFragment<Settings, ?> fragment) {
     if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isTag() && StringUtil.isNotEmpty(fragment.getName())) {
-      //noinspection unchecked
-      Settings clone = (Settings)mySettings.clone();
-      fragment.applyEditorTo(clone);
-      if (!fragment.isInitiallyVisible(clone)) {
-        JComponent component = fragment.getEditorComponent();
-        String text = fragment.getName().replace("\u001B", "");
-        new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", text), fragment).
-          withHeader(ExecutionBundle.message("gotIt.popup.title")).
-          show(component, (c, b) -> new Point(GotItComponentBuilder.getArrowShift(), c.getHeight()));
-      }
+      ReadAction.nonBlocking(() -> {
+          //noinspection unchecked
+          Settings clone = (Settings)mySettings.clone();
+          fragment.applyEditorTo(clone);
+          return fragment.isInitiallyVisible(clone);
+        })
+        .finishOnUiThread(ModalityState.defaultModalityState(), visible -> {
+          if (visible) return;
+          JComponent component = fragment.getEditorComponent();
+          String text = fragment.getName().replace("\u001B", "");
+          new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", text), fragment).
+            withHeader(ExecutionBundle.message("gotIt.popup.title")).
+            show(component, (c, b) -> new Point(GotItComponentBuilder.getArrowShift(), c.getHeight()));
+        })
+        .expireWith(fragment).submit(NonUrgentExecutor.getInstance());
     }
   }
 }

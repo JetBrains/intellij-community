@@ -66,7 +66,7 @@ public class PyStructureViewTest extends PyTestCase {
   public void testInherited() {
     myFixture.configureByFile(TEST_DIRECTORY + "inherited.py");
     doTest("""
-             -inherited.py
+              -inherited.py
               -C(object)
                f(self, x)
                __str__(self)
@@ -74,24 +74,25 @@ public class PyStructureViewTest extends PyTestCase {
                __class__(self)
                __init__(self)
                __new__(cls)
-               __setattr__(self, name, value)
-               __eq__(self, o)
-               __ne__(self, o)
+               __setattr__(self, __name, __value)
+               __delattr__(self, __name)
+               __eq__(self, __value)
+               __ne__(self, __value)
                __repr__(self)
                __hash__(self)
-               __format__(self, format_spec)
-               __getattribute__(self, name)
-               __delattr__(self, name)
+               __format__(self, __format_spec)
+               __getattribute__(self, __name)
                __sizeof__(self)
                __reduce__(self)
-               __reduce_ex__(self, protocol)
+               __reduce_ex__(self, __protocol)
+               __getstate__(self)
                __dir__(self)
                __init_subclass__(cls)
+               __subclasshook__(cls, __subclass)
                __annotations__
                __dict__
                __doc__
                __module__
-               __slots__
              """,
            true);
   }
@@ -121,25 +122,26 @@ public class PyStructureViewTest extends PyTestCase {
                __class__(self)
                __init__(self)
                __new__(cls)
-               __setattr__(self, name, value)
-               __eq__(self, o)
-               __ne__(self, o)
+               __setattr__(self, __name, __value)
+               __delattr__(self, __name)
+               __eq__(self, __value)
+               __ne__(self, __value)
                __str__(self)
                __repr__(self)
                __hash__(self)
-               __format__(self, format_spec)
-               __getattribute__(self, name)
-               __delattr__(self, name)
+               __format__(self, __format_spec)
+               __getattribute__(self, __name)
                __sizeof__(self)
                __reduce__(self)
-               __reduce_ex__(self, protocol)
+               __reduce_ex__(self, __protocol)
+               __getstate__(self)
                __dir__(self)
                __init_subclass__(cls)
+               __subclasshook__(cls, __subclass)
                __annotations__
                __dict__
                __doc__
                __module__
-               __slots__
              """,
            true);
   }

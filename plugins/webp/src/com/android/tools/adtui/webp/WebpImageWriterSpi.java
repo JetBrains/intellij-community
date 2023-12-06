@@ -15,7 +15,6 @@
  */
 package com.android.tools.adtui.webp;
 
-
 import com.google.webp.libwebp;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,13 +33,13 @@ import java.util.Locale;
 /**
  * Encoder for WebP. This needs the webp jni library loaded to function.
  */
-public class WebpImageWriterSpi extends ImageWriterSpi {
+public final class WebpImageWriterSpi extends ImageWriterSpi {
   WebpImageWriterSpi() {
     vendorName = WebpMetadata.WEBP_VENDOR;
     version = WebpNativeLibHelper.getEncoderVersion();
-    suffixes = WebpMetadata.WEBP_SUFFIXES;
-    names = WebpMetadata.WEBP_FORMAT_NAMES;
-    MIMETypes = WebpMetadata.WEBP_MIME_TYPES;
+    suffixes = WebpMetadata.Companion.getWEBP_SUFFIXES();
+    names = WebpMetadata.Companion.getWEBP_FORMAT_NAMES();
+    MIMETypes = WebpMetadata.Companion.getWEBP_MIME_TYPES();
     pluginClassName = WebpWriter.class.getName();
     outputTypes = new Class<?>[]{ImageOutputStream.class};
   }
@@ -98,8 +97,8 @@ public class WebpImageWriterSpi extends ImageWriterSpi {
     return "WebP Image Encoder";
   }
 
-  private static class WebpWriter extends ImageWriter {
-    public WebpWriter(ImageWriterSpi originatingProvider) {
+  private static final class WebpWriter extends ImageWriter {
+    private WebpWriter(ImageWriterSpi originatingProvider) {
       super(originatingProvider);
     }
 

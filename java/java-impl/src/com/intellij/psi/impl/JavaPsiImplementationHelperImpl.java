@@ -7,13 +7,12 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.navigation.NavigationRequest;
-import com.intellij.navigation.NavigationService;
+import com.intellij.model.Pointer;
+import com.intellij.model.Symbol;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -24,11 +23,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.platform.backend.documentation.DocumentationTarget;
+import com.intellij.platform.backend.navigation.NavigationRequest;
+import com.intellij.platform.backend.navigation.NavigationTarget;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -38,6 +43,8 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
+import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -345,96 +352,72 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   @Override
-  public @Nullable PsiElement resolveSnippetRegion(@NotNull PsiElement context,
-                                                   @NotNull PsiSnippetDocTagValue snippet,
-                                                   @NotNull String region) {
-    SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
-    if (markup == null) return null;
-    SnippetMarkup.MarkupNode start = markup.getRegionStart(region);
-    if (start == null) return null;
-    PsiElement markupContext = markup.getContext();
-    PsiFile file = markupContext.getContainingFile();
-    if (file == null) return null;
-    return new SnippetRegionTarget(file, start.range().shiftRight(markupContext.getTextRange().getStartOffset()));
+  public @NotNull PsiSymbolReference getSnippetRegionSymbol(@NotNull PsiSnippetAttributeValue value) {
+    return new PsiSymbolReference() {
+      @Override
+      public @NotNull PsiElement getElement() {
+        return value;
+      }
+
+      @Override
+      public @NotNull TextRange getRangeInElement() {
+        return ((PsiSnippetAttributeValueImpl)value).getValueRange();
+      }
+
+      @Override
+      public @NotNull Collection<? extends Symbol> resolveReference() {
+        PsiSnippetDocTagValue snippet = PsiTreeUtil.getParentOfType(value, PsiSnippetDocTagValue.class);
+        if (snippet == null) return List.of();
+        SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
+        if (markup == null) return List.of();
+        String region = value.getValue();
+        SnippetMarkup.MarkupNode start = markup.getRegionStart(region);
+        if (start == null) return List.of();
+        PsiElement markupContext = markup.getContext();
+        PsiFile file = markupContext.getContainingFile();
+        if (file == null) return List.of();
+        return List.of(
+          new SnippetRegionSymbol(file,
+                                  start.range().shiftRight(markupContext.getTextRange().getStartOffset())));
+      }
+    };
   }
 
-  public static final class SnippetRegionTarget extends FakePsiElement implements SyntheticElement {
+  public static final class SnippetRegionSymbol implements Symbol, DocumentationTarget, NavigationTarget {
+
     private final @NotNull PsiFile myFile;
     private final @NotNull TextRange myRangeInFile;
-    private final VirtualFile myVirtualFile;
 
-    private SnippetRegionTarget(@NotNull PsiFile file, @NotNull TextRange rangeInFile) {
+    private SnippetRegionSymbol(@NotNull PsiFile file, @NotNull TextRange rangeInFile) {
       myFile = file;
       myRangeInFile = rangeInFile;
-      myVirtualFile = file.getVirtualFile();
     }
 
     @Override
-    public @NotNull Language getLanguage() {
-      return JavaLanguage.INSTANCE;
+    public @NotNull Pointer<SnippetRegionSymbol> createPointer() {
+      return Pointer.fileRangePointer(myFile, myRangeInFile, SnippetRegionSymbol::new);
     }
 
-    @Override
-    public PsiElement getParent() {
-      return myFile;
-    }
-
-    @Override
-    public @NotNull TextRange getTextRange() {
-      return myRangeInFile;
-    }
-
-    @Override
-    public @NotNull TextRange getTextRangeInParent() {
-      return myRangeInFile;
-    }
-
-    @Override
-    public @NotNull String getText() {
+    private @NlsSafe @NotNull String getText() {
       return myRangeInFile.substring(myFile.getText());
     }
 
     @Override
-    public void navigate(boolean requestFocus) {
-      new OpenFileDescriptor(myFile.getProject(), myVirtualFile, myRangeInFile.getStartOffset()).navigate(requestFocus);
+    public @NotNull TargetPresentation computePresentation() {
+      VirtualFile virtualFile = myFile.getVirtualFile();
+      return TargetPresentation.builder(getText())
+        .locationText(virtualFile.getName(), virtualFile.getFileType().getIcon())
+        .presentation();
+    }
+
+    @Override
+    public @NotNull @NlsContexts.HintText String computeDocumentationHint() {
+      return getText();
     }
 
     @Override
     public @Nullable NavigationRequest navigationRequest() {
-      return NavigationService.getInstance().sourceNavigationRequest(myVirtualFile, myRangeInFile.getStartOffset());
-    }
-
-    @Override
-    public String getPresentableText() {
-      return getText();
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return true;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return true;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-      if (this == object) return true;
-      if (object == null || getClass() != object.getClass()) return false;
-      SnippetRegionTarget element = (SnippetRegionTarget)object;
-      return myRangeInFile == element.myRangeInFile && Objects.equals(myVirtualFile, element.myVirtualFile);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myVirtualFile, myRangeInFile);
-    }
-
-    @Override
-    public String toString() {
-      return getText();
+      return NavigationRequest.sourceNavigationRequest(myFile, myRangeInFile);
     }
   }
 }

@@ -5,8 +5,8 @@ import com.intellij.diagnostic.CoreAttachmentFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
@@ -35,7 +35,6 @@ import com.intellij.util.indexing.diagnostic.dump.paths.hasPresentablePathMatchi
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex.IndexerIdHolder
-import com.intellij.util.io.readText
 import com.intellij.util.progress.ConcurrentTasksProgressManager
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
@@ -49,9 +48,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.readText
 
 internal const val PREFIX = AbstractCommand.CMD_PREFIX + "compareIndices"
-private val LOG = Logger.getInstance(CompareIndices::class.java)
+private val LOG = logger<CompareIndices>()
 
 /**
  * Fully compares two indexes built for the same project: the *stored* index and the *current* index,
@@ -71,6 +71,9 @@ private val LOG = Logger.getInstance(CompareIndices::class.java)
  *
  * The current index must not contain extra data for the current project files, as compared to the stored index.
  * But the current index is allowed to contain extra data for irrelevant files.
+ *
+ * Compares the stored indices with the last created indices, which are in the current moment on the disk.
+ * The folder with the stored indices should be defined by the parameter '-Dcompare.indices.command.stored.indexes.directory'.
  */
 internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, line) {
 
@@ -142,7 +145,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
       patternsList.add(Pair(attrs[0], attrs[1]))
     }
     LOG.info("The following patterns will be ignored from failure reporting: ")
-    patternsList.forEach{  LOG.info("Files .${it.first} in index ${it.second}") }
+    patternsList.forEach { LOG.info("Files .${it.first} in index ${it.second}") }
     patternsList
   }
 
@@ -391,7 +394,8 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
         if (IndexDataComparer.areValuesTheSame(extension, storedValue, currentValue)) {
           continue
         }
-        if (ignoredPatternsForReporting.isEmpty() || !isKnownError(extension, fileDescriptor.originalFilePath.portableFilePath.presentablePath)) {
+        if (ignoredPatternsForReporting.isEmpty() || !isKnownError(extension,
+                                                                   fileDescriptor.originalFilePath.portableFilePath.presentablePath)) {
           errorCollector.runCatchingError {
             val message = buildFileDataMismatchMessage(
               "Values mismatch for key ${IndexDataPresenter.getPresentableIndexKey(storedKey)}",
@@ -491,7 +495,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     val propertyName = "index_root_path"
     val oldValue = System.setProperty(propertyName, storedIndexDir.toAbsolutePath().toString())
     try {
-      return VfsAwareMapReduceIndex<K, V, IndexerIdHolder>(extension, DefaultIndexStorageLayout.getLayout(extension, true))
+      return VfsAwareMapReduceIndex<K, V, IndexerIdHolder>(extension, DefaultIndexStorageLayout.getLayout(extension))
     }
     finally {
       SystemProperties.setProperty(propertyName, oldValue)
@@ -548,7 +552,8 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
       return
     }
 
-    if (ignoredPatternsForReporting.isEmpty() || !isKnownError(extension, fileDescriptor.originalFilePath.portableFilePath.presentablePath)) {
+    if (ignoredPatternsForReporting.isEmpty() || !isKnownError(extension,
+                                                               fileDescriptor.originalFilePath.portableFilePath.presentablePath)) {
       val message = buildFileDataMismatchMessage(
         "Indexed data maps do not match for ${fileDescriptor.originalFilePath.portableFilePath.presentablePath}",
         extension,

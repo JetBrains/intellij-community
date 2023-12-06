@@ -6,6 +6,8 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.TreeFileChooserFactory;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.ResourceFileUtil;
@@ -29,6 +31,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -319,12 +322,14 @@ public final class ComponentItemDialog extends DialogWrapper {
         }
         return false;
       }
-      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(myProject);
-      PsiClass psiClass = javaPsiFacade.findClass(myDocument.getText(), ProjectScope.getAllScope(myProject));
-      PsiClass componentClass = javaPsiFacade.findClass(JComponent.class.getName(), ProjectScope.getAllScope(myProject));
-      if (psiClass != null && componentClass != null && !InheritanceUtil.isInheritorOrSelf(psiClass, componentClass, true)) {
-        myErrorLabel.setText(UIDesignerBundle.message("add.component.error.component.required"));
-        return false;
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-766233")) {
+        final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(myProject);
+        PsiClass psiClass = javaPsiFacade.findClass(myDocument.getText(), ProjectScope.getAllScope(myProject));
+        PsiClass componentClass = javaPsiFacade.findClass(JComponent.class.getName(), ProjectScope.getAllScope(myProject));
+        if (psiClass != null && componentClass != null && !InheritanceUtil.isInheritorOrSelf(psiClass, componentClass, true)) {
+          myErrorLabel.setText(UIDesignerBundle.message("add.component.error.component.required"));
+          return false;
+        }
       }
     }
     else {
@@ -355,14 +360,19 @@ public final class ComponentItemDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(final ActionEvent e) {
-      final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
-      final TreeClassChooser chooser = factory.createInheritanceClassChooser(UIDesignerBundle.message("title.choose.component.class"),
-                                                                             GlobalSearchScope.allScope(myProject), JavaPsiFacade.getInstance(myProject).findClass(
-        JComponent.class.getName(), GlobalSearchScope.allScope(myProject)), true, true, null);
-      chooser.showDialog();
-      final PsiClass result = chooser.getSelected();
-      if (result != null) {
-        setEditorText(result.getQualifiedName());
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-766230")) {
+        final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
+        final TreeClassChooser chooser = factory.createInheritanceClassChooser(UIDesignerBundle.message("title.choose.component.class"),
+                                                                               GlobalSearchScope.allScope(myProject),
+                                                                               JavaPsiFacade.getInstance(myProject)
+                                                                                 .findClass(JComponent.class.getName(),
+                                                                                            GlobalSearchScope.allScope(myProject)), true,
+                                                                               true, null);
+        chooser.showDialog();
+        final PsiClass result = chooser.getSelected();
+        if (result != null) {
+          setEditorText(result.getQualifiedName());
+        }
       }
     }
   }
@@ -385,7 +395,6 @@ public final class ComponentItemDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       PsiFile formFile = null;
       if (myTextField.getText().length() > 0) {
         VirtualFile formVFile = ResourceFileUtil.findResourceFileInScope(myTextField.getText(), myProject, ProjectScope.getAllScope(myProject));
@@ -393,6 +402,7 @@ public final class ComponentItemDialog extends DialogWrapper {
           formFile = PsiManager.getInstance(myProject).findFile(formVFile);
         }
       }
+      final TreeFileChooserFactory factory = TreeFileChooserFactory.getInstance(myProject);
       TreeFileChooser fileChooser = factory.createFileChooser(myTitle, formFile, null, myFilter, true, true);
       fileChooser.showDialog();
       PsiFile file = fileChooser.getSelectedFile();

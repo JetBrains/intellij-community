@@ -23,8 +23,7 @@ public final class IntObjectLRUMap<T> {
     myHeader.before = myHeader.after = myHeader;
   }
 
-  @Nullable
-  public MapEntry<T> getEntry(int key) {
+  public @Nullable MapEntry<T> getEntry(int key) {
     MapEntry<T> candidate = myArray[getArrayIndex(key)];
     while (candidate != null) {
       if (candidate.key == key) {
@@ -85,7 +84,7 @@ public final class IntObjectLRUMap<T> {
     return eldest;
   }
 
-  public static class MapEntry<T> {
+  public static final class MapEntry<T> {
     public final int key;
     public final T value;
     MapEntry<T> next; // in the list of entries with the same hash

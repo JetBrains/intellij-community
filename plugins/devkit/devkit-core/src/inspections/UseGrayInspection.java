@@ -8,11 +8,15 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
@@ -22,10 +26,8 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class UseGrayInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
+@VisibleForTesting
+public final class UseGrayInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
 
   private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
   private static final String GRAY_CLASS_NAME = Gray.class.getName();
@@ -43,7 +45,7 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
           Integer grayValue = getGrayValue(expression);
           if (grayValue != null) {
             PsiElement sourcePsi = expression.getSourcePsi();
-            if (sourcePsi != null && grayClassAccessible(sourcePsi)) {
+            if (sourcePsi != null && DevKitInspectionUtil.isClassAvailable(holder, GRAY_CLASS_NAME)) {
               holder.registerProblem(sourcePsi,
                                      DevKitBundle.message("inspections.use.gray.awt.color.used.name"),
                                      new ConvertToGrayQuickFix(grayValue));
@@ -85,9 +87,6 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
     return null;
   }
 
-  private static boolean grayClassAccessible(@NotNull PsiElement checkedPlace) {
-    return JavaPsiFacade.getInstance(checkedPlace.getProject()).findClass(GRAY_CLASS_NAME, checkedPlace.getResolveScope()) != null;
-  }
 
   @NotNull
   @Override

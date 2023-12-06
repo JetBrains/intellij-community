@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -41,22 +42,21 @@ final class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
       if (enabled != factory.isEnabledByDefault()) {
         result.add(WIDGET.metric(pluginInfo, factory.getId(), enabled));
       }
+      return Unit.INSTANCE;
     });
     return result;
   }
 
-  final static class StatusBarWidgetFactoryValidationRule extends CustomValidationRule {
+  static final class StatusBarWidgetFactoryValidationRule extends CustomValidationRule {
     public static final String RULE_ID = "status_bar_widget_factory";
 
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return RULE_ID;
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       for (StatusBarWidgetFactory type : StatusBarWidgetFactory.EP_NAME.getExtensions()) {
         if (StringUtil.equals(type.getId(), data)) {
           final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(type.getClass());

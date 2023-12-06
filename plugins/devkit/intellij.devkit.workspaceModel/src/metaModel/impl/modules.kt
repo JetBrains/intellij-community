@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl
 
 import com.intellij.workspaceModel.codegen.deft.meta.*
@@ -8,6 +8,7 @@ val objModuleType: ObjType<ObjModule> = ObjTypeImpl()
 open class ObjModuleImpl(override val name: String) : ObjModule {
   private val mutableDependencies: MutableList<ObjModule> = ArrayList()
   private val mutableTypes: MutableList<ObjClass<*>> = ArrayList()
+  private val mutableAbstractTypes: MutableList<ValueType.AbstractClass<*>> = ArrayList()
   private val mutableExtensions: MutableList<ExtProperty<*, *>> = ArrayList()
 
   override val objType: ObjType<*>
@@ -19,8 +20,15 @@ open class ObjModuleImpl(override val name: String) : ObjModule {
   override val types: List<ObjClass<*>>
     get() = mutableTypes
 
+  override val abstractTypes: List<ValueType.AbstractClass<*>>
+    get() = mutableAbstractTypes
+
   fun addType(objType: ObjClass<*>) {
     mutableTypes.add(objType)
+  }
+
+  fun addAbstractType(abstractType: ValueType.AbstractClass<*>) {
+    mutableAbstractTypes.add(abstractType)
   }
 
   fun addExtension(ext: ExtProperty<*, *>) {

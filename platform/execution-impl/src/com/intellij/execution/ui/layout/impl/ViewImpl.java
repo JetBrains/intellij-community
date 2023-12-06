@@ -7,7 +7,7 @@ import com.intellij.execution.ui.layout.Tab;
 import com.intellij.execution.ui.layout.View;
 import com.intellij.openapi.util.Key;
 
-public class ViewImpl implements View {
+public final class ViewImpl implements View {
 
   public static final Key<String> ID = Key.create("ViewID");
 
@@ -93,7 +93,7 @@ public class ViewImpl implements View {
     myWindow = windowNumber;
   }
 
-  public static class Default {
+  public static final class Default {
 
     private final String myID;
     private final int myTabID;

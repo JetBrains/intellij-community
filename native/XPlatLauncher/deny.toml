@@ -17,9 +17,8 @@ confidence-threshold = 0.95
 allow = [
     "MIT",
     "Apache-2.0",
-    "BSD-3-Clause", # instant, BSD-2-like, test-only dependency
     "ISC", # libloading, MIT / Apache 2.0 alike
-    "Unicode-DFS-2016" # simplelog -> [..] -> unicode-ident
+    "Unicode-DFS-2016" # serde -> [..] -> unicode-ident
 ]
 deny = [ ]
 exceptions = [ ]
@@ -37,7 +36,11 @@ highlight = "all"
 allow = [ ]
 deny = [ ]
 skip = [ ]
-skip-tree = [ ]
+skip-tree = [
+    { name = "redox_users" },
+    { name = "redox_syscall" },
+    { name = "windows-sys", version = "0.45.0" }
+]
 
 [sources]
 unknown-registry = "deny"

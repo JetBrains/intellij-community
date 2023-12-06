@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.model.ModelBranch;
-import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -23,9 +21,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -47,7 +46,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     myManager = PsiManager.getInstance(project);
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(key -> ReadAction.compute(() -> createScopeByFile(key)), ContainerUtil::createConcurrentWeakKeySoftValueMap);
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(key -> ReadAction.compute(() -> createScopeByFile(key)),
+                                                              () -> CollectionFactory.createConcurrentWeakKeySoftValueMap());
 
     myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -62,8 +62,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     ResolveScopeEnlarger.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), this);
   }
 
-  @NotNull
-  private GlobalSearchScope createScopeByFile(@NotNull VirtualFile key) {
+  private @NotNull GlobalSearchScope createScopeByFile(@NotNull VirtualFile key) {
     VirtualFile file = key;
     VirtualFile original = key instanceof LightVirtualFile ? ((LightVirtualFile)key).getOriginalFile() : null;
     if (original != null) {
@@ -75,7 +74,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
       if (scope != null) break;
     }
     if (scope == null) scope = getInherentResolveScope(file);
-    for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
+    for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensionList()) {
       SearchScope extra = enlarger.getAdditionalResolveScope(file, myProject);
       if (extra != null) {
         scope = scope.union(extra);
@@ -87,13 +86,11 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     return scope;
   }
 
-  @NotNull
-  private GlobalSearchScope getResolveScopeFromProviders(@NotNull VirtualFile vFile) {
+  private @NotNull GlobalSearchScope getResolveScopeFromProviders(@NotNull VirtualFile vFile) {
     return myDefaultResolveScopesCache.get(vFile);
   }
 
-  @NotNull
-  private GlobalSearchScope getInherentResolveScope(@NotNull VirtualFile vFile) {
+  private @NotNull GlobalSearchScope getInherentResolveScope(@NotNull VirtualFile vFile) {
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
@@ -113,8 +110,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
+  public @NotNull GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
 
     if (element instanceof PsiDirectory) {
@@ -139,13 +135,10 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     if (containingFile == null) {
       return GlobalSearchScope.allScope(myProject);
     }
-    GlobalSearchScope scope = getPsiFileResolveScope(containingFile);
-    ModelBranch branch = ModelBranch.getPsiBranch(containingFile);
-    return branch != null ? ((ModelBranchImpl)branch).modifyScope(scope) : scope;
+    return getPsiFileResolveScope(containingFile);
   }
 
-  @NotNull
-  private GlobalSearchScope getPsiFileResolveScope(@NotNull PsiFile psiFile) {
+  private @NotNull GlobalSearchScope getPsiFileResolveScope(@NotNull PsiFile psiFile) {
     if (psiFile instanceof FileResolveScopeProvider) {
       return ((FileResolveScopeProvider)psiFile).getFileResolveScope();
     }
@@ -162,9 +155,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   }
 
 
-  @NotNull
   @Override
-  public GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
+  public @NotNull GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
     PsiFile psiFile = myManager.findFile(vFile);
     assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject+"; vFile="+vFile+"; type="+vFile.getFileType();
     return getResolveScopeFromProviders(vFile);
@@ -172,8 +164,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
 
 
   @Override
-  @NotNull
-  public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
+  public @NotNull GlobalSearchScope getUseScope(@NotNull PsiElement element) {
     VirtualFile vDirectory;
     VirtualFile virtualFile;
     PsiFile containingFile;
@@ -203,7 +194,9 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     Module module = projectFileIndex.getModuleForFile(notNullVFile);
     if (module == null) {
       List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
-      if (entries.isEmpty() && (projectFileIndex.isInLibrary(notNullVFile) || myAdditionalIndexableFileSet.isInSet(notNullVFile))) {
+      if (entries.isEmpty() &&
+          (WorkspaceFileIndex.getInstance(myProject).findFileSet(notNullVFile, true, false, true, true, true) != null ||
+           myAdditionalIndexableFileSet.isInSet(notNullVFile))) {
         return allScope;
       }
 

@@ -22,8 +22,8 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
@@ -31,8 +31,6 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.move.*
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinDirectoryMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.sourceRoot
@@ -161,7 +159,7 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
     private data class TargetData(
         val openInEditor: Boolean,
         val newName: String,
-        val targetDirWrapper: AutocreatingPsiDirectoryWrapper,
+        val targetDirWrapper: AutoCreatingPsiDirectoryWrapper,
         val targetSourceRoot: VirtualFile?
     )
 
@@ -191,7 +189,7 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
 
         val openInEditor: Boolean
         val newName: String?
-        val targetDirWrapper: AutocreatingPsiDirectoryWrapper?
+        val targetDirWrapper: AutoCreatingPsiDirectoryWrapper?
         val targetSourceRoot: VirtualFile?
 
         val singleNamedSourceElement = sourceData.singleElementToCopy as? KtNamedDeclaration
@@ -234,9 +232,9 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
 
     private fun collectInternalUsages(sourceData: SourceData, targetData: TargetData) = runReadAction {
         val targetPackageName = targetData.targetDirWrapper.getPackageName()
-        val changeInfo = ContainerChangeInfo(
-            ContainerInfo.Package(sourceData.originalFile.packageFqName),
-            ContainerInfo.Package(FqName(targetPackageName))
+        val changeInfo = MoveContainerChangeInfo(
+            MoveContainerInfo.Package(sourceData.originalFile.packageFqName),
+            MoveContainerInfo.Package(FqName(targetPackageName))
         )
         sourceData.elementsToCopy.flatMapTo(LinkedHashSet()) { elementToCopy ->
             elementToCopy.getInternalReferencesToUpdateOnPackageNameChange(changeInfo).filter {
@@ -469,16 +467,16 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
 
         if (sourceData.project != sourceData.originalFile.project) return MultiMap.empty()
 
-        val conflictChecker = MoveConflictChecker(
+        val moveCheckerInfo = KotlinMoveConflictCheckerInfo(
             sourceData.project,
             sourceData.elementsToCopy,
-            KotlinDirectoryMoveTarget(FqName.ROOT, targetSourceRootPsi.virtualFile),
+            KotlinMoveTarget.Directory(FqName.ROOT, targetSourceRootPsi.virtualFile),
             sourceData.originalFile
         )
 
-        return MultiMap<PsiElement, String>().also {
-            conflictChecker.checkModuleConflictsInDeclarations(internalUsages, it)
-            conflictChecker.checkVisibilityInDeclarations(it)
+        return MultiMap<PsiElement, String>().apply {
+            putAllValues(checkModuleConflictsInDeclarations(moveCheckerInfo, internalUsages))
+            putAllValues(checkVisibilityInDeclarations(moveCheckerInfo))
         }
     }
 

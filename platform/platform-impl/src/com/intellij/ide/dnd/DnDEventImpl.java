@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public class DnDEventImpl extends UserDataHolderBase implements Transferable, DnDEvent {
+public final class DnDEventImpl extends UserDataHolderBase implements Transferable, DnDEvent {
   private static final Logger LOG = Logger.getInstance(DnDEventImpl.class);
 
   public static final DataFlavor ourDataFlavor = FileCopyPasteUtil.createDataFlavor(DataFlavor.javaJVMLocalObjectMimeType);
@@ -173,7 +173,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     return myDropHandler != null;
   }
 
-  protected void handleDrop() {
+  void handleDrop() {
     myDropHandler.performDrop(this);
   }
 
@@ -320,8 +320,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "DnDEvent[attachedObject: " + myAttachedObject + ", delegatedTarget: " + myDelegatedTarget + ", dropHandler: " + myDropHandler + "]";
   }
 

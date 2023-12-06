@@ -82,7 +82,7 @@ public final class ModifierChooser {
     PsiElement scope = position.getParent();
     while (scope != null) {
       if (scope instanceof PsiJavaFile) {
-        return addClassModifiers(list, scope);
+        return addMemberModifiers(list, false, position);
       }
       if (scope instanceof PsiClass) {
         return addMemberModifiers(list, ((PsiClass)scope).isInterface(), scope);

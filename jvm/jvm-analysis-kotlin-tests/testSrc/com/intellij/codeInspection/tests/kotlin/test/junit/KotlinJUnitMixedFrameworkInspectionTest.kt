@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestBase() {
   fun `test no highlighting`() {
@@ -55,7 +55,7 @@ class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTes
   }
 
   fun `test junit 3 test case with junit 4 test remove annotation quickfix`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       public class MyTest : junit.framework.TestCase() {
         @org.junit.Test
         public fun test<caret>Foo() { }
@@ -64,11 +64,11 @@ class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTes
       public class MyTest : junit.framework.TestCase() {
         public fun testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation")
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation", testPreview = true)
   }
 
   fun `test junit 3 test case with junit 4 test remove test annotation and rename quickfix`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       public class MyTest : junit.framework.TestCase() {
         @org.junit.Test
         public fun f<caret>oo() { }
@@ -77,11 +77,11 @@ class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTes
       public class MyTest : junit.framework.TestCase() {
         public fun testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation")
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation", testPreview = true)
   }
 
   fun `test junit 3 test case with junit 4 test remove ignore annotation and rename quickfix`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       public class MyTest : junit.framework.TestCase() {
         @org.junit.Ignore
         public fun testF<caret>oo() { }
@@ -90,7 +90,7 @@ class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTes
       public class MyTest : junit.framework.TestCase() {
         public fun _testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Ignore' annotation")
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Ignore' annotation", testPreview = true)
   }
 
   fun `test highlighting junit 4 test case with junit 5 test`() {
@@ -139,15 +139,15 @@ class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTes
     """.trimIndent(), """
       import org.junit.jupiter.api.Test
       
-      public class MyTest {
+      class MyTest {
         @Test
-        public fun testFoo() { }
+        fun testFoo() { }
         
         @org.junit.jupiter.api.Test
-        public fun testBar() { }
+        fun testBar() { }
         
         @org.junit.jupiter.api.Test
-        public fun testFooBar() { }
+        fun testFooBar() { }
       }
     """.trimIndent(), fileName = "MyTest", hint = "Migrate to JUnit 5")
   }

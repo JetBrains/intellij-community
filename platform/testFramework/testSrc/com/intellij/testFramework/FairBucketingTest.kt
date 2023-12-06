@@ -1,16 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.TestCaseLoader
 import org.junit.Assert
 import org.junit.Test
-import java.util.*
 
 class FairBucketingTest {
   private data class BucketedClass(var className: String, var expectedBucket: Int)
 
   private val totalBucketsCount = 5
-  private val testClasses = Arrays.asList<BucketedClass>(
+  private val testClasses: List<BucketedClass> = listOf(
     BucketedClass("com.intellij.integrationTests.smoke.idea.IdeaBuildOnJavaTest", 0),
     BucketedClass("com.intellij.integrationTests.smoke.idea.IdeaBuildOnKotlinTest", 1),
     BucketedClass("com.intellij.integrationTests.smoke.idea.IdeaCleanImportMavenProjectTest", 2),

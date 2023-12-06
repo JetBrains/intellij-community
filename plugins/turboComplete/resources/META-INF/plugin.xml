@@ -1,0 +1,76 @@
+<idea-plugin>
+  <id>com.intellij.turboComplete</id>
+  <name>Turbo Complete</name>
+  <vendor>JetBrains</vendor>
+  <category>AI-Powered</category>
+
+  <description>
+    <![CDATA[
+      Experimental approach to speed up code completion.
+      <br><br>
+      The plugin implements a <a href="https://youtrack.jetbrains.com/issue/MLP-17/ML-for-IDE-Performance">new approach</a>
+      to improve code completion's performance perception.
+      Currently, it works only for Kotlin.
+      If you are experiencing problems with code completion, you could disable
+      the plugin.
+    ]]>
+  </description>
+
+  <resource-bundle>messages.TurboComplete</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint
+      interface="com.intellij.platform.ml.impl.turboComplete.KindCollector"
+      dynamic="true"
+      name="kindCollector"/>
+    <extensionPoint
+      interface="com.intellij.turboComplete.analysis.PipelineListener"
+      dynamic="true"
+      name="analysis.pipelineListener"/>
+    <extensionPoint
+      interface="com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutorProvider"
+      dynamic="true"
+      name="suggestionGeneratorExecutorProvider"/>
+    <extensionPoint
+      interface="com.intellij.turboComplete.features.kind.KindFeatureProvider"
+      dynamic="true"
+      name="features.kind.provider"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.ml.contextFeatures language="" implementationClass="com.intellij.turboComplete.features.context.AllKindsUsageFeatures"/>
+    <completion.ml.contextFeatures language=""
+                                   implementationClass="com.intellij.turboComplete.features.context.CompletionPerformanceStatusFeatures"/>
+
+    <completion.ml.elementFeatures language="" implementationClass="com.intellij.turboComplete.features.element.ElementsKindFeatures"/>
+
+    <turboComplete.features.kind.provider implementation="com.intellij.turboComplete.features.kind.KindCommonFeatures"/>
+    <turboComplete.features.kind.provider implementation="com.intellij.turboComplete.features.kind.KindUsageFeatures"/>
+
+    <turboComplete.analysis.pipelineListener
+      implementation="com.intellij.turboComplete.analysis.usage.KindVarietyUsageTracker$UsagePipelineListener"/>
+    <turboComplete.analysis.pipelineListener implementation="com.intellij.turboComplete.platform.EarlyLookupOpener"/>
+    <turboComplete.analysis.pipelineListener implementation="com.intellij.turboComplete.analysis.PipelineDebugLogger"/>
+
+    <platform.ml.impl.turboComplete.smartPipelineRunner implementation="com.intellij.turboComplete.platform.contributor.MLPipelineRunner"/>
+
+    <lookup.usageDetails implementation="com.intellij.turboComplete.analysis.fus.MLPerformanceTracker"/>
+    <statistics.collectorExtension
+      implementation="com.intellij.turboComplete.analysis.fus.MLPerformanceTracker$MLPerformanceUsageCollectorExtension"/>
+
+    <registryKey key="ml.completion.performance.showLookupEarly" defaultValue="true"
+                 description="Show lookup as soon as the first CompletionKind finished working"/>
+    <registryKey key="ml.completion.performance.experiment" defaultValue="true"
+                 description="Perform an A/B experiment turning on and off performance"/>
+    <registryKey key="ml.completion.performance.executeImmediately" defaultValue="false"
+                 description="Immediately execute suggestion generators"/>
+    <registryKey key="ml.completion.performance.logDebug" defaultValue="false"
+                 description="Log performance pipeline to idea.log"/>
+  </extensions>
+
+  <content>
+    <module name="intellij.turboComplete.languages.kotlin"/>
+  </content>
+
+  <depends>com.intellij.completion.ml.ranking</depends>
+</idea-plugin>

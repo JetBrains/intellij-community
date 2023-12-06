@@ -44,7 +44,7 @@ class PyPluginCommonOptionsPanel {
       buttonsGroup {
         row(PyBundle.message("runcfg.labels.python.interpreter")) {
           useModuleSdkRadioButton = radioButton(PyBundle.message("runcfg.labels.use.sdk.of.module"))
-            .applyToComponent { isSelected = true }
+            .selected(true)
             .gap(RightGap.SMALL)
             .component
 
@@ -84,12 +84,12 @@ class PyPluginCommonOptionsPanel {
       }
       row {
         addContentRootsCheckbox = checkBox(PyBundle.message("runcfg.labels.add.content.roots.to.pythonpath"))
-          .applyToComponent { isSelected = true }
+          .selected(true)
           .component
       }
       row {
         addSourceRootsCheckbox = checkBox(PyBundle.message("runcfg.labels.add.source.roots.to.pythonpath"))
-          .applyToComponent { isSelected = true }
+          .selected(true)
           .component
       }
     }.apply {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notification
@@ -37,9 +37,13 @@ open class FileBasedStorage(file: Path,
                             fileSpec: String,
                             rootElementName: String?,
                             pathMacroManager: PathMacroSubstitutor? = null,
-                            roamingType: RoamingType? = null,
+                            roamingType: RoamingType,
                             provider: StreamProvider? = null) :
-  XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
+  XmlElementStorage(fileSpec = fileSpec,
+                    rootElementName = rootElementName,
+                    pathMacroSubstitutor = pathMacroManager,
+                    roamingType = roamingType,
+                    provider = provider) {
 
   @Volatile
   private var cachedVirtualFile: VirtualFile? = null
@@ -78,10 +82,10 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  override fun createSaveSession(states: StateMap) = FileSaveSession(states, this)
+  override fun createSaveSession(states: StateMap) = FileSaveSessionProducer(states, this)
 
-  protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) :
-    XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
+  protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
+    XmlElementStorage.XmlElementStorageSaveSessionProducer<FileBasedStorage>(storageData, storage) {
 
     final override fun isSaveAllowed(): Boolean {
       if (!super.isSaveAllowed()) {
@@ -120,7 +124,7 @@ open class FileBasedStorage(file: Path,
           val file = storage.file
           LOG.debug { "Save $file" }
           try {
-            dataWriter.writeTo(file, this, lineSeparator.separatorString)
+            dataWriter.writeTo(file, this, lineSeparator)
           }
           catch (e: ReadOnlyModificationException) {
             throw e
@@ -348,7 +352,7 @@ private fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFi
         output.write(lineSeparator.separatorBytes)
       }
       if (dataWriterOrByteArray is DataWriter) {
-        dataWriterOrByteArray.write(output, lineSeparator.separatorString)
+        dataWriterOrByteArray.write(output, lineSeparator)
       }
       else {
         (dataWriterOrByteArray as BufferExposingByteArrayOutputStream).writeTo(output)

@@ -31,13 +31,13 @@ class VcsCloneComponentStub(
   }
 
   @Suppress("DEPRECATION")
-  override fun doClone(listener: CheckoutProvider.Listener) = checkoutProvider.doCheckout(project, listener)
+  override fun doClone(listener: CheckoutProvider.Listener): Unit = checkoutProvider.doCheckout(project, listener)
 
-  override fun isOkEnabled() = true
+  override fun isOkEnabled(): Boolean = true
 
-  override fun doValidateAll() = emptyList<ValidationInfo>()
+  override fun doValidateAll(): List<ValidationInfo> = emptyList<ValidationInfo>()
 
-  override fun getOkButtonText() = primaryActionText
+  override fun getOkButtonText(): String = primaryActionText
 
   override fun getPreferredFocusedComponent(): JComponent? {
     // TODO: implement obtaining focus for GitHub

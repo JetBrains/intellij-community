@@ -1,7 +1,8 @@
-// "Suppress 'REDUNDANT_NULLABLE' for fun foo" "true"
+// "Suppress 'DIVISION_BY_ZERO' for fun foo" "true"
 
-@ann fun foo(): String?<caret>? = null
+@ann fun foo() = 2 / <caret>0
 
 annotation class ann
 
-// IGNORE_FIR
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -107,10 +106,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     set(value) {
       service<TerminalUiSettingsManager>().cursorShape = value
     }
-
-  @Deprecated("To be removed", ReplaceWith("org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider.setEnvData"))
-  fun setEnvData(@Suppress("UNUSED_PARAMETER") envData: EnvironmentVariablesData) {
-  }
 
   companion object {
     val instance: TerminalOptionsProvider

@@ -30,10 +30,11 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.jetbrains.kotlin.asJava.finder.KtLightPackage
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.findClassAcrossModuleDependencies
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
@@ -55,6 +56,13 @@ enum class RenameType {
     KOTLIN_CLASS,
     KOTLIN_FUNCTION,
     KOTLIN_PROPERTY,
+
+    /**
+     * Kotlin enum entries are classes in FE10 (represented as `LazyClassDescriptor`s), but variables/callables in FIR (represented as
+     * `FirEnumEntry`, which is a `FirVariable`). Hence, they have to be treated separately from classes and callables in test data.
+     */
+    KOTLIN_ENUM_ENTRY,
+
     KOTLIN_PACKAGE,
     MARKED_ELEMENT,
     FILE,
@@ -90,66 +98,80 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         if (withRuntime != null) {
             return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
         }
-        return KotlinLightProjectDescriptor.INSTANCE
+        return getDefaultProjectDescriptor()
     }
 
     open fun doTest(path: String) {
         val testFile = File(path)
         val renameObject = loadTestConfiguration(testFile)
 
-        val renameTypeStr = renameObject.getString("type")
+        val testIsEnabledInK2 = renameObject.get(if (isFirPlugin) "enabledInK2" else "enabledInK1")?.asBoolean ?: if (isFirPlugin) error("`enabledInK2` has to be specified explicitly") else true
 
-        val hintDirective = renameObject.getNullableString("hint")
+        val result = runCatching {
+            val renameTypeStr = renameObject.getString("type")
 
-        val fixtureClasses = renameObject.getAsJsonArray("fixtureClasses")?.map { it.asString } ?: emptyList()
+            val hintsDirective = setOfNotNull(renameObject.getNullableString("hint"), renameObject.getNullableString("k1Hint"))
 
-        try {
-            fixtureClasses.forEach { TestFixtureExtension.loadFixture(it, module) }
+            val fixtureClasses = renameObject.getAsJsonArray("fixtureClasses")?.map { it.asString } ?: emptyList()
 
-            val context = TestContext(testFile)
+            try {
+                fixtureClasses.forEach { TestFixtureExtension.loadFixture(it, module) }
 
-            when (RenameType.valueOf(renameTypeStr)) {
-                RenameType.JAVA_CLASS -> renameJavaClassTest(renameObject, context)
-                RenameType.JAVA_METHOD -> renameJavaMethodTest(renameObject, context)
-                RenameType.KOTLIN_CLASS -> renameKotlinClassTest(renameObject, context)
-                RenameType.KOTLIN_FUNCTION -> renameKotlinFunctionTest(renameObject, context)
-                RenameType.KOTLIN_PROPERTY -> renameKotlinPropertyTest(renameObject, context)
-                RenameType.KOTLIN_PACKAGE -> renameKotlinPackageTest(renameObject, context)
-                RenameType.MARKED_ELEMENT -> renameMarkedElement(renameObject, context)
-                RenameType.FILE -> renameFile(renameObject, context)
-                RenameType.BUNDLE_PROPERTY -> renameBundleProperty(renameObject, context)
-                RenameType.AUTO_DETECT -> renameWithAutoDetection(renameObject, context)
-            }
+                val context = TestContext(testFile)
 
-            if (hintDirective != null) {
-                Assert.fail("""Hint "$hintDirective" was expected""")
-            }
+                when (RenameType.valueOf(renameTypeStr)) {
+                    RenameType.JAVA_CLASS -> renameJavaClassTest(renameObject, context)
+                    RenameType.JAVA_METHOD -> renameJavaMethodTest(renameObject, context)
+                    RenameType.KOTLIN_CLASS -> renameKotlinClassTest(renameObject, context)
+                    RenameType.KOTLIN_FUNCTION -> renameKotlinFunctionTest(renameObject, context)
+                    RenameType.KOTLIN_PROPERTY -> renameKotlinPropertyTest(renameObject, context)
+                    RenameType.KOTLIN_ENUM_ENTRY -> renameKotlinEnumEntryTest(renameObject, context)
+                    RenameType.KOTLIN_PACKAGE -> renameKotlinPackageTest(renameObject, context)
+                    RenameType.MARKED_ELEMENT -> renameMarkedElement(renameObject, context)
+                    RenameType.FILE -> renameFile(renameObject, context)
+                    RenameType.BUNDLE_PROPERTY -> renameBundleProperty(renameObject, context)
+                    RenameType.AUTO_DETECT -> renameWithAutoDetection(renameObject, context)
+                }
 
-            if (renameObject["checkErrorsAfter"]?.asBoolean == true) {
-                val psiManager = myFixture.psiManager
-                val visitor = object : VirtualFileVisitor<Any>() {
-                    override fun visitFile(file: VirtualFile): Boolean {
-                        (psiManager.findFile(file) as? KtFile)?.let { DirectiveBasedActionUtils.checkForUnexpectedErrors(it) }
-                        return true
+                if (hintsDirective.isNotEmpty()) {
+                    Assert.fail("""Hint "${hintsDirective.first()}" was expected""")
+                }
+
+                if (renameObject["checkErrorsAfter"]?.asBoolean == true) {
+                    val psiManager = myFixture.psiManager
+                    val visitor = object : VirtualFileVisitor<Any>() {
+                        override fun visitFile(file: VirtualFile): Boolean {
+                            (psiManager.findFile(file) as? KtFile)?.let { checkForUnexpectedErrors(it) }
+                            return true
+                        }
+                    }
+
+                    for (sourceRoot in ModuleRootManager.getInstance(module).sourceRoots) {
+                        VfsUtilCore.visitChildrenRecursively(sourceRoot, visitor)
                     }
                 }
+            } catch (e: Exception) {
+                if (e !is RefactoringErrorHintException && e !is ConflictsInTestsException) throw e
 
-                for (sourceRoot in ModuleRootManager.getInstance(module).sourceRoots) {
-                    VfsUtilCore.visitChildrenRecursively(sourceRoot, visitor)
+                val hintExceptionUnquoted = StringUtil.unquoteString(e.message!!)
+                if (hintsDirective.isNotEmpty()) {
+                    Assert.assertTrue("Expected one of $hintsDirective but was $hintExceptionUnquoted",
+                                      hintsDirective.contains(hintExceptionUnquoted))
+                } else {
+                    Assert.fail("""Unexpected "hint: $hintExceptionUnquoted" """)
                 }
+            } finally {
+                fixtureClasses.forEach { TestFixtureExtension.unloadFixture(it) }
             }
-        } catch (e: Exception) {
-            if (e !is RefactoringErrorHintException && e !is ConflictsInTestsException) throw e
-
-            val hintExceptionUnquoted = StringUtil.unquoteString(e.message!!)
-            if (hintDirective != null) {
-                Assert.assertEquals(hintDirective, hintExceptionUnquoted)
-            } else {
-                Assert.fail("""Unexpected "hint: $hintExceptionUnquoted" """)
-            }
-        } finally {
-            fixtureClasses.forEach { TestFixtureExtension.unloadFixture(it) }
         }
+        result.fold(
+            onSuccess = { require(testIsEnabledInK2) { "This test passes and should be enabled!" } },
+            onFailure = { exception -> if (testIsEnabledInK2) throw exception }
+        )
+    }
+
+    protected open fun checkForUnexpectedErrors(ktFile: KtFile) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
     }
 
     protected open fun configExtra(rootDir: VirtualFile, renameParamsObject: JsonObject) {
@@ -206,6 +228,11 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
 
         class Classifier(val classId: ClassId) : KotlinTarget
 
+        class EnumEntry(val enumClassId: ClassId, val enumEntryName: Name) : KotlinTarget {
+            val classId: ClassId get() = enumClassId.createNestedClassId(enumEntryName)
+            val callableId: CallableId get() = CallableId(enumClassId, enumEntryName)
+        }
+
         companion object {
             fun fromJson(renameParamsObject: JsonObject): KotlinTarget {
                 val packageFqn = renameParamsObject.getNullableString("packageFqn")?.let(::FqName)
@@ -215,6 +242,11 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                     throw AssertionError("Both classId and packageFqn are defined. Where should I search: in class or in package?")
                 } else if (classId == null && packageFqn == null) {
                     throw AssertionError("Define classId or packageFqn")
+                }
+
+                val enumEntryName = renameParamsObject.getNullableString("enumEntryName")?.let(Name::identifier)
+                if (enumEntryName != null) {
+                    return EnumEntry(classId!!, enumEntryName)
                 }
 
                 val oldName = renameParamsObject.getNullableString("oldName")?.let(Name::identifier)
@@ -255,6 +287,13 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun renameKotlinClassTest(renameParamsObject: JsonObject, context: TestContext) {
         val target = KotlinTarget.fromJson(renameParamsObject)
         require(target is KotlinTarget.Classifier)
+
+        renameKotlinTarget(target, renameParamsObject, context)
+    }
+
+    private fun renameKotlinEnumEntryTest(renameParamsObject: JsonObject, context: TestContext) {
+        val target = KotlinTarget.fromJson(renameParamsObject)
+        require(target is KotlinTarget.EnumEntry)
 
         renameKotlinTarget(target, renameParamsObject, context)
     }
@@ -327,6 +366,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                 RenamePsiElementProcessor.forElement(psiElement).substituteElementToRename(psiElement, null)
 
             runRenameProcessor(context.project, newName, substitution, renameParamsObject, true, true)
+            PsiTestUtil.checkFileStructure(ktFile)
         }
     }
 
@@ -358,6 +398,8 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                     ).first()
                 }
             }
+
+            is KotlinTarget.EnumEntry -> module.findClassAcrossModuleDependencies(target.classId)!!
         }
 
         return DescriptorToSourceUtils.descriptorToDeclaration(descriptor)!!
@@ -388,7 +430,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                 handler = handler.getRenameHandler(dataContext)!!
             }
 
-            if (handler is VariableInplaceRenameHandler) {
+            if (handler is VariableInplaceRenameHandler && renameParamsObject.get("forceInlineRename")?.asBoolean != false) {
                 val elementToRename = psiFile.findElementAt(currentCaret.offset)!!.getNonStrictParentOfType<PsiNamedElement>()!!
                 CodeInsightTestUtil.doInlineRename(handler, newName, editor, elementToRename)
             } else {

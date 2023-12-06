@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.application.options.XmlSettings;
@@ -19,7 +19,6 @@ import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.ant.dom.AntResolveInspection;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.model.psi.PsiSymbolService;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -33,7 +32,6 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -45,9 +43,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -86,7 +84,13 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(false);
   }
   private void doTest(boolean checkWarnings) throws Exception {
-    doTest(getFullRelativeTestName(), checkWarnings, false);
+    XmlHighlightVisitor.setDoJaxpTesting(myTestJustJaxpValidation);
+    try {
+      doTest(getFullRelativeTestName(), checkWarnings, false);
+    }
+    finally {
+      XmlHighlightVisitor.setDoJaxpTesting(false);
+    }
   }
 
   private String getFullRelativeTestName() {
@@ -95,21 +99,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   private String getFullRelativeTestName(String ext) {
     return BASE_PATH + getTestName(false) + ext;
-  }
-
-  @NotNull
-  @Override
-  protected List<HighlightInfo> doHighlighting() {
-    if(myTestJustJaxpValidation) {
-      XmlHighlightVisitor.setDoJaxpTesting(true);
-    }
-
-    final List<HighlightInfo> highlightInfos = super.doHighlighting();
-    if(myTestJustJaxpValidation) {
-      XmlHighlightVisitor.setDoJaxpTesting(false);
-    }
-
-    return highlightInfos;
   }
 
   @Override
@@ -1048,8 +1037,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     text = "<!DOCTYPE schema [ <!ENTITY RelativeURL  \"[^:#/\\?]*(:{0,0}|[#/\\?].*)\">";
     xmlHighlighter.setText(text);
     iterator = xmlHighlighter.createIterator(53);
-    assertSame("Xml attribute value", XmlTokenType.XML_DATA_CHARACTERS, iterator.getTokenType());
-    assertEquals(41, iterator.getStart());
+    assertSame("Xml unfinished markup declaration", XmlElementType.XML_MARKUP_DECL, iterator.getTokenType());
+    assertEquals(17, iterator.getStart());
     assertEquals(70, iterator.getEnd());
 
     //              10        20        30        40          50        60
@@ -1245,7 +1234,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBigPrologHighlightingPerformance() {
-    MadTestingUtil.enableAllInspections(myProject, XMLLanguage.INSTANCE);
     configureByText(XmlFileType.INSTANCE,
                     "<!DOCTYPE rules [\n" +
                     IntStream.range(0, 10000).mapToObj(i -> "<!ENTITY pnct" + i + " \"x\">\n").collect(Collectors.joining()) +
@@ -2016,8 +2004,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDropAnyAttributeCacheOnExitFromDumbMode() throws Exception {
-    try {
-      DumbServiceImpl.getInstance(myProject).setDumb(true);
+    DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
       configureByFiles(null, findVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xml"),
                        findVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xsd"),
                        findVirtualFile(BASE_PATH + "AnyAttributeNavigation/library.xsd"));
@@ -2027,10 +2014,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       XmlElementDescriptor descriptor = tag.getDescriptor();
       XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
       LOG.debug(String.valueOf(Arrays.asList(descriptors)));
-    }
-    finally {
-      DumbServiceImpl.getInstance(myProject).setDumb(false);
-    }
+    });
 
     doDoTest(true, false);
   }
@@ -2201,6 +2185,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
                      BASE_PATH + "ImportedAttr/main.xsd",
                      BASE_PATH + "ImportedAttr/include.xsd");
     doHighlighting();
+  }
+
+  public void testXhtml() {
+    configureByFiles(null, BASE_PATH + "test.xhtml");
+    doDoTest(true, false);
   }
 
   @Override

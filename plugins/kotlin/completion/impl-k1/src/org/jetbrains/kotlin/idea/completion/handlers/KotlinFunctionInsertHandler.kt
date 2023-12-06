@@ -3,12 +3,9 @@
 package org.jetbrains.kotlin.idea.completion.handlers
 
 import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.CompletionInitializationContext.IDENTIFIER_END_OFFSET
 import com.intellij.codeInsight.completion.CompletionInitializationContext.START_OFFSET
-import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
-import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
-import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
@@ -33,17 +30,17 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
 
 class KotlinFunctionCompositeDeclarativeInsertHandler(
-    handlers: Map<String, Lazy<DeclarativeInsertHandler2>>,
-    fallbackInsertHandler: InsertHandler<LookupElement>?,
-    val isLambda: Boolean,
-    val inputValueArguments: Boolean,
-    val inputTypeArguments: Boolean
+  handlers: Map<String, Lazy<DeclarativeInsertHandler>>,
+  fallbackInsertHandler: InsertHandler<LookupElement>?,
+  val isLambda: Boolean,
+  val inputValueArguments: Boolean,
+  val inputTypeArguments: Boolean
 ) : CompositeDeclarativeInsertHandler(handlers, fallbackInsertHandler) {
 
     companion object {
         fun withUniversalHandler(
             completionChars: String,
-            handler: DeclarativeInsertHandler2.LazyBuilder
+            handler: DeclarativeInsertHandler.LazyBuilder
         ): CompositeDeclarativeInsertHandler {
             val handlersMap = mapOf(completionChars to handler)
             // it's important not to provide a fallbackInsertHandler here
@@ -66,13 +63,13 @@ fun createNormalFunctionInsertHandler(
         assert(argumentText == "")
     }
 
-    val chars = editor.document.charsSequence
-    val lazyHandlers = mutableMapOf<String, Lazy<DeclarativeInsertHandler2>>()
+    val lazyHandlers = mutableMapOf<String, Lazy<DeclarativeInsertHandler>>()
 
     // \n - NormalCompletion
-    lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler2.LazyBuilder(holdReadLock = true) { builder ->
+    lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler.LazyBuilder(holdReadLock = true) { builder ->
         val argumentsStringToInsert = StringBuilder()
 
+        val chars = editor.document.charsSequence
         val offset = editor.caretModel.offset
         val insertLambda = lambdaInfo != null
         val openingBracket = if (insertLambda) '{' else '('
@@ -111,7 +108,7 @@ fun createNormalFunctionInsertHandler(
                 // no need to insert typeParams, may move cursor around valueParams
                 if (shouldPlaceCaretInBrackets) {
                     builder.offsetToPutCaret += noLambdaCaseInsideBracketOffset + lambdaCaseInsideBracketOffset
-                    builder.withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
+                    builder.withPopupOptions(DeclarativeInsertHandler.PopupOptions.ParameterInfo)
                 } else {
                     builder.offsetToPutCaret += argumentsStringToInsert.toString().length
                 }
@@ -129,12 +126,12 @@ fun createNormalFunctionInsertHandler(
                 builder.offsetToPutCaret = absoluteOpeningBracketOffset + 1 - offset
                 val shouldPlaceCaretInBrackets = inputValueArguments || lambdaInfo != null
                 if (shouldPlaceCaretInBrackets) {
-                    builder.withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
+                    builder.withPopupOptions(DeclarativeInsertHandler.PopupOptions.ParameterInfo)
                 }
             }
         }
 
-        var prefixModificationOperation: DeclarativeInsertHandler2.RelativeTextEdit? = null
+        var prefixModificationOperation: DeclarativeInsertHandler.RelativeTextEdit? = null
         var alreadyHasBackTickInTheEnd = false
         if (!argumentsOnly) {
             val specialSymbols = charArrayOf('_', '`', '~')
@@ -185,7 +182,7 @@ fun createNormalFunctionInsertHandler(
                         if (!dollarIsEscaped) {
                             argumentsStringToInsert.append('}')
 
-                            prefixModificationOperation = DeclarativeInsertHandler2.RelativeTextEdit(
+                            prefixModificationOperation = DeclarativeInsertHandler.RelativeTextEdit(
                                 normalizedBeforeFunctionOffset,
                                 normalizedBeforeFunctionOffset,
                                 "{"
@@ -210,7 +207,7 @@ fun createNormalFunctionInsertHandler(
                         if (!alreadyHasTickAtFront) {
                             // backtick is not present already, so need to add it manually
                             prefixModificationOperation = when (val operation = prefixModificationOperation) {
-                                null -> DeclarativeInsertHandler2.RelativeTextEdit(
+                                null -> DeclarativeInsertHandler.RelativeTextEdit(
                                     normalizedBeforeFunctionOffset,
                                     normalizedBeforeFunctionOffset,
                                     "`"
@@ -228,7 +225,7 @@ fun createNormalFunctionInsertHandler(
                         // no backticks required
                         if (alreadyHasTickAtFront) {
                             prefixModificationOperation = when (val operation = prefixModificationOperation) {
-                                null -> DeclarativeInsertHandler2.RelativeTextEdit(
+                                null -> DeclarativeInsertHandler.RelativeTextEdit(
                                     normalizedBeforeFunctionOffset,
                                     normalizedBeforeFunctionOffset + 1,
                                     ""
@@ -347,6 +344,10 @@ private fun insertLambdaSignatureTemplate(
     )
 }
 
+private operator fun OffsetMap.get(key: OffsetKey): Int? {
+    return if (containsOffset(key)) getOffset(key) else null
+}
+
 sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallableInsertHandler(callType) {
 
     class Normal(
@@ -386,15 +387,21 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
             psiDocumentManager.commitDocument(document)
             psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
 
-            val startOffset = context.startOffset
-            val element = context.file.findElementAt(startOffset) ?: return
+            // One of the offsets could become invalidated on the previous steps of insertion
+            // We try to increase our chances to find a valid offset for the element
+            val offsetMap = context.offsetMap
+            val elementOffset = offsetMap[START_OFFSET]
+                ?: offsetMap[InsertionContext.TAIL_OFFSET]?.let { it - 1 }
+                ?: throw IllegalStateException("No valid offsets found in context: $offsetMap")
+
+            val element = context.file.findElementAt(elementOffset) ?: return
 
             addArguments(context, element)
 
             // hack for KT-31902
             if (callType == CallType.DEFAULT) {
                 context.file
-                    .findElementAt(startOffset)
+                    .findElementAt(elementOffset)
                     ?.parent?.getLastParentOfTypeInRow<KtDotQualifiedExpression>()
                     ?.createSmartPointer()?.let {
                         psiDocumentManager.commitDocument(document)

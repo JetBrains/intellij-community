@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApp
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 
-class RemoveEmptySecondaryConstructorBodyInspection :
+internal class RemoveEmptySecondaryConstructorBodyInspection :
     AbstractApplicabilityBasedInspection<KtBlockExpression>(KtBlockExpression::class.java), CleanupLocalInspectionTool {
     override fun isApplicable(element: KtBlockExpression): Boolean {
         if (element.parent !is KtSecondaryConstructor) return false

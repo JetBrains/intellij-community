@@ -28,7 +28,7 @@ public final class MappingsToRoots {
       result.sort(FilePathComparator.getInstance());
 
       ApplicationManager.getApplication().runReadAction(() -> {
-        final FileIndexFacade facade = project.getService(FileIndexFacade.class);
+        final FileIndexFacade facade = FileIndexFacade.getInstance(project);
         int i = 1;
         while (i < result.size()) {
           final VirtualFile previous = result.get(i - 1);
@@ -48,8 +48,11 @@ public final class MappingsToRoots {
   /**
    * @return mapped roots and all modules inside: modules might have different settings
    * @see com.intellij.openapi.vcs.VcsRootSettings
+   *
+   * @deprecated To be removed
    */
   @NotNull
+  @Deprecated(forRemoval = true)
   public static List<VirtualFile> getDetailedVcsMappings(@NotNull Project project, @NotNull NewMappings newMappings, @NotNull AbstractVcs vcs) {
     // same as above, but no compression
     List<VirtualFile> roots = new ArrayList<>(newMappings.getMappingsAsFilesUnderVcs(vcs));
@@ -62,7 +65,7 @@ public final class MappingsToRoots {
     });
 
     List<VirtualFile> modulesToAdd = ApplicationManager.getApplication().runReadAction((Computable<List<VirtualFile>>)() -> {
-      final FileIndexFacade facade = project.getService(FileIndexFacade.class);
+      final FileIndexFacade facade = FileIndexFacade.getInstance(project);
       return ContainerUtil.filter(modulesUnderVcs,
                                   module -> ContainerUtil.or(roots, root -> facade.isValidAncestor(root, module)));
     });

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ui.CellRendererPanel;
@@ -15,9 +15,11 @@ import java.awt.*;
 
 /**
  * Should be moved into common place, used not only in SE
+ * @deprecated Use {@link com.intellij.ui.GroupHeaderSeparator} instead. (see UX-2329)
  */
 @ApiStatus.Internal
-public class GroupTitleRenderer extends CellRendererPanel {
+@Deprecated
+public final class GroupTitleRenderer extends CellRendererPanel {
 
   private final SimpleColoredComponent titleLabel = new SimpleColoredComponent();
 

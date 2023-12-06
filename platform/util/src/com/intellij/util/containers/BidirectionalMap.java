@@ -2,22 +2,19 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.*;
 
-@ApiStatus.NonExtendable
-public class BidirectionalMap<K, V> implements Map<K, V> {
+public final class BidirectionalMap<K, V> implements Map<K, V> {
   private final Map<K, V> myKeyToValueMap = new HashMap<>();
   private final Map<V, List<K>> myValueToKeysMap = new HashMap<>();
 
   @Override
-  public final V put(K key, V value){
+  public V put(K key, V value) {
     V oldValue = myKeyToValueMap.put(key, value);
-    if (oldValue != null){
+    if (oldValue != null) {
       if (oldValue.equals(value)) {
         return oldValue;
       }
@@ -33,49 +30,46 @@ public class BidirectionalMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public final void clear() {
+  public void clear() {
     myKeyToValueMap.clear();
     myValueToKeysMap.clear();
   }
 
-  @Nullable
-  public final List<K> getKeysByValue(V value){
+  public @Nullable List<K> getKeysByValue(V value) {
     return myValueToKeysMap.get(value);
   }
 
-  @NotNull
   @Override
-  public final Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     return myKeyToValueMap.keySet();
   }
 
   @Override
-  public final int size(){
+  public int size() {
     return myKeyToValueMap.size();
   }
 
   @Override
-  public final boolean isEmpty(){
+  public boolean isEmpty() {
     return myKeyToValueMap.isEmpty();
   }
 
   @Override
-  public final boolean containsKey(Object key){
+  public boolean containsKey(Object key) {
     return myKeyToValueMap.containsKey(key);
   }
 
   @Override
-  @SuppressWarnings("SuspiciousMethodCalls")
-  public final boolean containsValue(Object value){
+  public boolean containsValue(Object value) {
     return myValueToKeysMap.containsKey(value);
   }
 
   @Override
-  public final V get(Object key) {
+  public V get(Object key) {
     return myKeyToValueMap.get(key);
   }
 
-  public final void removeValue(V v) {
+  public void removeValue(V v) {
     List<K> ks = myValueToKeysMap.remove(v);
     if (ks != null) {
       for (K k : ks) {
@@ -85,8 +79,7 @@ public class BidirectionalMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  @SuppressWarnings("SuspiciousMethodCalls")
-  public final V remove(Object key) {
+  public V remove(Object key) {
     final V value = myKeyToValueMap.remove(key);
     final List<K> ks = myValueToKeysMap.get(value);
     if (ks != null) {
@@ -101,26 +94,24 @@ public class BidirectionalMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public final void putAll(@NotNull Map<? extends K, ? extends V> t){
+  public void putAll(@NotNull Map<? extends K, ? extends V> t) {
     for (final Entry<? extends K, ? extends V> entry : t.entrySet()) {
       put(entry.getKey(), entry.getValue());
     }
   }
 
-  @NotNull
   @Override
-  public final Collection<V> values(){
+  public @NotNull Collection<V> values() {
     return myValueToKeysMap.keySet();
   }
 
-  @NotNull
   @Override
-  public final Set<Entry<K, V>> entrySet(){
+  public @NotNull Set<Entry<K, V>> entrySet() {
     return myKeyToValueMap.entrySet();
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     return myKeyToValueMap.toString();
   }
 }

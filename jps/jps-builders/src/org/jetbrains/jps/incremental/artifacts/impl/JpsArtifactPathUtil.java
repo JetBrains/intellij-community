@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public final class JpsArtifactPathUtil {
-  //todo[nik] copied from DeploymentUtil
+  //todo reuse code from DeploymentUtil instead
   public static String trimForwardSlashes(@NotNull String path) {
     while (path.length() != 0 && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
       path = path.substring(1);
@@ -16,7 +16,7 @@ public final class JpsArtifactPathUtil {
     return path;
   }
 
-  //todo[nik] copied from DeploymentUtil
+  //todo reuse code from DeploymentUtil instead
   public static String appendToPath(@NotNull String basePath, @NotNull String relativePath) {
     final boolean endsWithSlash = StringUtilRt.endsWithChar(basePath, '/') || StringUtilRt.endsWithChar(basePath, '\\');
     final boolean startsWithSlash = StringUtil.startsWithChar(relativePath, '/') || StringUtil.startsWithChar(relativePath, '\\');

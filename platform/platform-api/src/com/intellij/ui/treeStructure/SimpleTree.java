@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -104,8 +104,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return node != null ? node : NULL_NODE;
   }
 
-  @Nullable
-  public TreePath getPathFor(SimpleNode node) {
+  public @Nullable TreePath getPathFor(SimpleNode node) {
     final TreeNode nodeWithObject = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)getModel().getRoot(), node);
     if (nodeWithObject != null) {
       return TreeUtil.getPathFromRoot(nodeWithObject);
@@ -113,8 +112,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return null;
   }
 
-  @Nullable
-  public SimpleNode getSelectedNode() {
+  public @Nullable SimpleNode getSelectedNode() {
     if (isSelectionEmpty()) {
       return null;
     }

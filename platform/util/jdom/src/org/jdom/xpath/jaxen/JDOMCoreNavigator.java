@@ -146,7 +146,7 @@ class JDOMCoreNavigator extends DefaultNavigator {
     return ((NamespaceContainer)namespace).getNamespace().getPrefix();
   }
 
-  private void recurseElementText(Element element, StringBuilder sb) {
+  private static void recurseElementText(Element element, StringBuilder sb) {
     for (Iterator<?> it = element.getContent().iterator(); it.hasNext(); ) {
       Content c = (Content)it.next();
       if (c instanceof Element) {
@@ -291,7 +291,7 @@ class JDOMCoreNavigator extends DefaultNavigator {
   }
 
   @Override
-  public final Iterator<?> getParentAxisIterator(Object contextNode) throws UnsupportedAxisException {
+  public final Iterator<?> getParentAxisIterator(Object contextNode) {
 
     Parent p = null;
     if (contextNode instanceof Content) {

@@ -53,7 +53,7 @@
       langType: "string",
      },
      complete: true,
-     description: "<p>The cool directive</p>",
+     description: "<p>The cool directive",
      priority: NORMAL,
      segments: [
       {
@@ -68,13 +68,14 @@
    },
    {
     name-part: "bc455",
+    display-name: "modifier",
     matchScore: 0,
     symbol: {
      matchedName: "html/modifiers/<pattern>",
      name: "id",
      origin: "test-lib@2.0.0-rc.24 (vue)",
      complete: true,
-     description: "<p>Id is completly a pattern</p>",
+     description: "<p>Id is completly a pattern",
      priority: NORMAL,
      has-pattern: true,
      properties: {

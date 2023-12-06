@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
 import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.internal.statistic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.BaseKotlinApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtFile
@@ -16,8 +17,8 @@ class KotlinApplicatorBasedQuickFix<PSI : PsiElement, in INPUT : KotlinApplicato
     @FileModifier.SafeFieldForPreview
     private val input: INPUT,
     @FileModifier.SafeFieldForPreview
-    val applicator: KotlinApplicator<PSI, INPUT>,
-) : KotlinQuickFixAction<PSI>(target) {
+    val applicator: BaseKotlinApplicator<PSI, INPUT>,
+) : KotlinQuickFixAction<PSI>(target), ReportingClassSubstitutor {
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         if (applicator.isApplicableByPsi(element, project) && input.isValidFor(element)) {
@@ -36,4 +37,11 @@ class KotlinApplicatorBasedQuickFix<PSI : PsiElement, in INPUT : KotlinApplicato
 
     override fun getFamilyName(): String =
         applicator.getFamilyName()
+
+    override fun startInWriteAction(): Boolean {
+        return applicator.startInWriteAction()
+    }
+
+    override fun getSubstitutedClass(): Class<*> =
+        (applicator as? ReportingClassSubstitutor)?.substitutedClass ?: applicator.javaClass
 }

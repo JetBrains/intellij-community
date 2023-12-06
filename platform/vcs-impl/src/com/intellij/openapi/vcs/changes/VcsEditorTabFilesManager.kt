@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.editor.DiffContentVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -64,6 +65,12 @@ class VcsEditorTabFilesManager :
 
   fun openFile(project: Project, file: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
+
+    if (!ClientId.isCurrentlyUnderLocalId) {
+      // do not use FileEditorManagerImpl.getWindows - these are not implemented for clients
+      return editorManager.openFile(file, focusEditor, true)
+    }
+
     if (editorManager.isFileOpen(file)) {
       editorManager.selectAndFocusEditor(file, focusEditor)
       return emptyArray()
@@ -107,6 +114,7 @@ interface VcsEditorTabFilesListener {
 
   companion object {
     @JvmField
+    @Topic.AppLevel
     val TOPIC: Topic<VcsEditorTabFilesListener> =
       Topic(VcsEditorTabFilesListener::class.java, Topic.BroadcastDirection.NONE, true)
   }

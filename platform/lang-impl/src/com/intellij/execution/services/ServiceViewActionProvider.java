@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -8,8 +8,11 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarSpacer;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,15 +27,18 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.execution.services.ServiceViewDragHelper.getTheOnlyRootContributor;
 
-class ServiceViewActionProvider {
+final class ServiceViewActionProvider {
   @NonNls private static final String SERVICE_VIEW_ITEM_TOOLBAR = "ServiceViewItemToolbar";
   @NonNls static final String SERVICE_VIEW_ITEM_POPUP = "ServiceViewItemPopup";
   @NonNls private static final String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
+
+  static final DataKey<List<ServiceViewItem>> SERVICES_SELECTED_ITEMS = DataKey.create("services.selected.items");
 
   private static final ServiceViewActionProvider ourInstance = new ServiceViewActionProvider();
 
@@ -40,17 +46,17 @@ class ServiceViewActionProvider {
     return ourInstance;
   }
 
-  ActionToolbar createServiceToolbar(@NotNull JComponent component) {
+  ActionToolbar createServiceToolbar(@NotNull JComponent component, boolean horizontal) {
     ActionGroup actions = (ActionGroup)ActionManager.getInstance().getAction(SERVICE_VIEW_ITEM_TOOLBAR);
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, actions, false);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, actions, horizontal);
     toolbar.setTargetComponent(component);
     return toolbar;
   }
 
-  JComponent wrapServiceToolbar(@NotNull ActionToolbar toolbar) {
+  JComponent wrapServiceToolbar(@NotNull JComponent toolbarComponent, boolean horizontal) {
     JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(toolbar.getComponent(), BorderLayout.CENTER);
-    toolbar.getComponent().addComponentListener(new ComponentListener() {
+    wrapper.add(toolbarComponent, BorderLayout.CENTER);
+    toolbarComponent.addComponentListener(new ComponentListener() {
       @Override
       public void componentResized(ComponentEvent e) {
       }
@@ -69,7 +75,7 @@ class ServiceViewActionProvider {
         wrapper.setVisible(false);
       }
     });
-    wrapper.add(new ActionToolbarSpacer(false), BorderLayout.SOUTH);
+    wrapper.add(new ActionToolbarSpacer(horizontal), horizontal ? BorderLayout.EAST : BorderLayout.SOUTH);
     return wrapper;
   }
 
@@ -101,8 +107,15 @@ class ServiceViewActionProvider {
   }
 
   List<AnAction> getAdditionalGearActions() {
+    List<AnAction> result = new ArrayList<>();
+    AnAction selectActiveServiceActions = ActionManager.getInstance().getAction("ServiceView.SelectActiveService");
+    ContainerUtil.addIfNotNull(result, selectActiveServiceActions);
+    result.add(Separator.getInstance());
+    AnAction configureServicesActions = ActionManager.getInstance().getAction("ServiceView.ConfigureServices");
+    ContainerUtil.addIfNotNull(result, configureServicesActions);
     AnAction showServicesActions = ActionManager.getInstance().getAction("ServiceView.ShowServices");
-    return showServicesActions == null ? Collections.emptyList() : Collections.singletonList(showServicesActions);
+    ContainerUtil.addIfNotNull(result, showServicesActions);
+    return result;
   }
 
   @Nullable
@@ -115,6 +128,42 @@ class ServiceViewActionProvider {
     return getSelectedView(ObjectUtils.tryCast(provider.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName()), Component.class));
   }
 
+  static @NotNull List<ServiceViewItem> getSelectedItems(@NotNull AnActionEvent e) {
+    List<ServiceViewItem> items = e.getData(SERVICES_SELECTED_ITEMS);
+    return items != null ? items : Collections.emptyList();
+  }
+
+  static @NotNull List<ServiceViewItem> getSelectedItems(@NotNull DataContext dataContext) {
+    List<ServiceViewItem> items = dataContext.getData(SERVICES_SELECTED_ITEMS);
+    return items != null ? items : Collections.emptyList();
+  }
+
+  static boolean isActionToolBarRequired(JComponent component) {
+    Boolean holder = ClientProperty.get(component, ServiceViewDescriptor.ACTION_HOLDER_KEY);
+    if (Boolean.TRUE == holder) {
+      return false;
+    }
+    while (true) {
+      if (component instanceof JBTabs || component instanceof JTabbedPane) {
+        return false;
+      }
+      if (component.getComponentCount() > 1) {
+        // JBTabs is placed next to some component.
+        return ContainerUtil.filterIsInstance(component.getComponents(), JBTabs.class).size() != 1;
+      }
+      if (component.getComponentCount() != 1) {
+        return true;
+      }
+      Component child = component.getComponent(0);
+      if (child instanceof JComponent childComponent) {
+        component = childComponent;
+      }
+      else {
+        return true;
+      }
+    }
+  }
+
   @Nullable
   private static ServiceView getSelectedView(@Nullable Component contextComponent) {
     while (contextComponent != null && !(contextComponent instanceof ServiceView)) {
@@ -123,7 +172,7 @@ class ServiceViewActionProvider {
     return (ServiceView)contextComponent;
   }
 
-  private static class ServiceViewTreeExpander extends DefaultTreeExpander {
+  private static final class ServiceViewTreeExpander extends DefaultTreeExpander {
     private boolean myFlat;
 
     ServiceViewTreeExpander(JTree tree) {
@@ -185,7 +234,7 @@ class ServiceViewActionProvider {
     ServiceView serviceView = getSelectedView(e);
     if (serviceView == null) return AnAction.EMPTY_ARRAY;
 
-    List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
+    List<ServiceViewItem> selectedItems = getSelectedItems(e);
     if (selectedItems.isEmpty()) return AnAction.EMPTY_ARRAY;
 
     ServiceViewDescriptor descriptor;
@@ -202,14 +251,14 @@ class ServiceViewActionProvider {
     return group == null ? AnAction.EMPTY_ARRAY : group.getChildren(e);
   }
 
-  public static class ItemToolbarActionGroup extends ActionGroup {
+  public static final class ItemToolbarActionGroup extends ActionGroup {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return doGetActions(e, true);
     }
   }
 
-  public static class ItemPopupActionGroup extends ActionGroup {
+  public static final class ItemPopupActionGroup extends ActionGroup {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return doGetActions(e, false);

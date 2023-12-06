@@ -2,214 +2,59 @@
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiCodeFragment
 import com.intellij.refactoring.BaseRefactoringProcessor
-import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.ui.MethodSignatureComponent
-import com.intellij.refactoring.ui.RefactoringDialog
-import com.intellij.ui.EditorTextField
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.selected
-import com.intellij.util.Alarm
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinBaseChangeSignatureDialog.Companion.showWarningMessage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.showWarningMessage
-import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent
-import org.jetbrains.kotlin.idea.refactoring.validateElement
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
-import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
-import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.awt.Dimension
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.SwingUtilities
-import javax.swing.event.ChangeEvent
-import javax.swing.event.ChangeListener
+import javax.swing.DefaultComboBoxModel
 
 class KotlinChangePropertySignatureDialog(
     project: Project,
     private val methodDescriptor: KotlinMethodDescriptor,
     @NlsContexts.Command private val commandName: String?
-) : RefactoringDialog(project, true) {
-    private val visibilityCombo = ComboBox(
-        arrayOf(
-            DescriptorVisibilities.INTERNAL,
-            DescriptorVisibilities.PRIVATE,
-            DescriptorVisibilities.PROTECTED,
-            DescriptorVisibilities.PUBLIC,
-        )
-    )
+) : KotlinBaseChangePropertySignatureDialog<KotlinParameterInfo, DescriptorVisibility, KotlinMethodDescriptor>(project, methodDescriptor) {
 
-    private val signatureUpdater = object : DocumentListener, ChangeListener, ActionListener {
-        private fun update() = updateSignature()
-
-        override fun documentChanged(event: DocumentEvent) = update()
-        override fun stateChanged(e: ChangeEvent?) = update()
-        override fun actionPerformed(e: ActionEvent?) = update()
+    override fun isDefaultVisibility(v: DescriptorVisibility): Boolean {
+        return v == DescriptorVisibilities.PUBLIC
     }
 
-    private val kotlinPsiFactory = KtPsiFactory(project)
-    private val returnTypeCodeFragment = kotlinPsiFactory.createTypeCodeFragment(
-        methodDescriptor.returnTypeInfo.render(),
-        methodDescriptor.baseDeclaration,
-    )
-
-    private val receiverTypeCodeFragment = kotlinPsiFactory.createTypeCodeFragment(
-        methodDescriptor.receiverTypeInfo.render(),
-        methodDescriptor.baseDeclaration,
-    )
-
-    private val receiverDefaultValueCodeFragment = kotlinPsiFactory.createExpressionCodeFragment(
-        "",
-        methodDescriptor.baseDeclaration,
-    )
-
-    private val nameField = EditorTextField(methodDescriptor.name).apply { addDocumentListener(signatureUpdater) }
-    private val name: String get() = nameField.text.quoteIfNeeded()
-
-    private val returnTypeField = createKotlinEditorTextField(returnTypeCodeFragment, withListener = true)
-    private val receiverTypeField = createKotlinEditorTextField(receiverTypeCodeFragment, withListener = true)
-    private val receiverDefaultValueField = createKotlinEditorTextField(receiverDefaultValueCodeFragment, withListener = false)
-
-    private var receiverTypeCheckBox: JCheckBox? = null
-
-    private val updateSignatureAlarm = Alarm()
-    private val signatureComponent: MethodSignatureComponent = KotlinSignatureComponent("", project).apply {
-        preferredSize = Dimension(-1, 130)
-        minimumSize = Dimension(-1, 130)
-    }
-
-    init {
-        title = RefactoringBundle.message("changeSignature.refactoring.name")
-        init()
-        Disposer.register(myDisposable) {
-            updateSignatureAlarm.cancelAllRequests()
-        }
-    }
-
-    private fun updateSignature(): Unit = SwingUtilities.invokeLater label@{
-        if (Disposer.isDisposed(myDisposable)) return@label
-
-        updateSignatureAlarm.cancelAllRequests()
-        updateSignatureAlarm.addRequest(
-            { PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted { updateSignatureAlarmFired() } },
-            100,
-            ModalityState.stateForComponent(signatureComponent)
+    override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtCodeFragment {
+        return kotlinPsiFactory.createTypeCodeFragment(
+            m.returnTypeInfo.render(),
+            m.baseDeclaration,
         )
     }
 
-    private fun updateSignatureAlarmFired() {
-        doUpdateSignature()
-        validateButtons()
+    override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtCodeFragment {
+        return kotlinPsiFactory.createTypeCodeFragment(
+            m.receiverTypeInfo.render(),
+            m.baseDeclaration,
+        )
     }
 
-    private fun doUpdateSignature() {
-        signatureComponent.setSignature(calculateSignature())
+    override fun PsiCodeFragment?.isValidType(): Boolean {
+        return this?.getTypeInfo(false, false)?.type != null
     }
 
-    private fun calculateSignature(): String = buildString {
-        methodDescriptor.baseDeclaration.safeAs<KtValVarKeywordOwner>()?.valOrVarKeyword?.let {
-            val visibility = if (methodDescriptor.canChangeVisibility()) visibilityCombo.selectedItem else methodDescriptor.visibility
-            if (visibility != DescriptorVisibilities.DEFAULT_VISIBILITY) {
-                append("$visibility ")
-            }
-
-            append("${it.text} ")
-        }
-
-        if (receiverTypeCheckBox?.isSelected == true && receiverTypeField.isEnabled) {
-            val receiverText = receiverTypeField.text
-            if ("->" in receiverText) {
-                append("($receiverText).")
-            } else {
-                append("$receiverText.")
-            }
-        }
-
-        append("$name: ${returnTypeField.text}")
-    }
-
-    override fun getPreferredFocusedComponent() = nameField
-
-    override fun createCenterPanel(): JComponent = panel {
-        if (methodDescriptor.canChangeVisibility()) {
-            row(KotlinBundle.message("label.text.visibility")) {
-                cell(visibilityCombo)
-                    .applyToComponent {
-                        selectedItem = methodDescriptor.visibility
-                        addActionListener(signatureUpdater)
-                    }
-            }
-        }
-
-        row(KotlinBundle.message("label.text.name")) { cell(nameField).align(AlignX.FILL) }
-        row(KotlinBundle.message("label.text.type")) { cell(returnTypeField).align(AlignX.FILL) }
-
-        if (methodDescriptor.baseDeclaration is KtProperty) {
-            row {
-                receiverTypeCheckBox = checkBox(KotlinBundle.message("checkbox.text.extension.property"))
-                    .applyToComponent {
-                        addActionListener(signatureUpdater)
-                        isSelected = methodDescriptor.receiver != null
-                    }.component
-            }
-
-            row(KotlinBundle.message("label.text.receiver.type")) {
-                cell(receiverTypeField).align(AlignX.FILL)
-            }.enabledIf(receiverTypeCheckBox!!.selected)
-
-            if (methodDescriptor.receiver == null) {
-                row(KotlinBundle.message("label.text.default.receiver.value")) {
-                    cell(receiverDefaultValueField).align(AlignX.FILL)
-                }.enabledIf(receiverTypeCheckBox!!.selected)
-            }
-        }
-
-        group(RefactoringBundle.message("signature.preview.border.title"), indent = false) {
-            row { cell(signatureComponent).align(AlignX.FILL) }
-        }
-
-        updateSignature()
-    }
-
-    private fun createKotlinEditorTextField(file: PsiFile, withListener: Boolean): EditorTextField = EditorTextField(
-        PsiDocumentManager.getInstance(myProject).getDocument(file),
-        myProject,
-        KotlinFileType.INSTANCE
-    ).apply {
-        if (withListener) addDocumentListener(signatureUpdater)
-    }
-
-    override fun canRun() {
-        if (!name.isIdentifier()) {
-            throw ConfigurationException(KotlinBundle.message("error.text.invalid.name"))
-        }
-
-        returnTypeCodeFragment.validateElement(KotlinBundle.message("error.text.invalid.return.type"))
-        if (receiverTypeCheckBox?.isSelected == true) {
-            receiverTypeCodeFragment.validateElement(KotlinBundle.message("error.text.invalid.receiver.type"))
-        }
+    override fun fillVisibilities(model: DefaultComboBoxModel<DescriptorVisibility>) {
+        model.addAll(
+            listOf(
+                DescriptorVisibilities.INTERNAL,
+                DescriptorVisibilities.PRIVATE,
+                DescriptorVisibilities.PROTECTED,
+                DescriptorVisibilities.PUBLIC,
+            )
+        )
     }
 
     private fun evaluateKotlinChangeInfo(): KotlinChangeInfo {
@@ -257,8 +102,6 @@ class KotlinChangePropertySignatureDialog(
         invokeRefactoring(KotlinChangeSignatureProcessor(myProject, changeInfo, commandName ?: title))
     }
 
-    override fun getHelpId(): String = "refactoring.changeSignature"
-
     companion object {
         fun createProcessorForSilentRefactoring(
             project: Project,
@@ -272,7 +115,7 @@ class KotlinChangePropertySignatureDialog(
             return KotlinChangeSignatureProcessor(project, changeInfo, commandName)
         }
 
-        private fun normalizeReceiver(receiver: KotlinParameterInfo, withCopy: Boolean) {
+        private fun normalizeReceiver(receiver: KotlinModifiableParameterInfo, withCopy: Boolean) {
             val defaultValue = receiver.defaultValueForCall ?: return
             val newElement = if (withCopy) {
                 val fragment = KtPsiFactory(defaultValue.project).createExpressionCodeFragment(defaultValue.text, defaultValue)
@@ -281,7 +124,7 @@ class KotlinChangePropertySignatureDialog(
                 defaultValue
             }
 
-            receiver.defaultValueForCall = AddFullQualifierIntention.addQualifiersRecursively(newElement) as? KtExpression
+            receiver.defaultValueForCall = AddFullQualifierIntention.Holder.addQualifiersRecursively(newElement) as? KtExpression
         }
     }
 }

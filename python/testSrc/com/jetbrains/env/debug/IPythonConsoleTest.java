@@ -82,6 +82,23 @@ public class IPythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  public void testCheckForThreadLeaks() {
+    runPythonTest(new IPythonTask() {
+      @Override
+      public void testing() throws Exception {
+        exec("x = 42");
+        exec("print(x)");
+        waitForOutput("42");
+      }
+
+      @Override
+      public boolean reportThreadLeaks() {
+        return true;
+      }
+    });
+  }
+
   private static class IPythonTask extends PyConsoleTask {
     @NotNull
     @Override

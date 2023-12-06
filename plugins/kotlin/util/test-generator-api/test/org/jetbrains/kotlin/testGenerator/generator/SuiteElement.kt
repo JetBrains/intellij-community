@@ -71,7 +71,9 @@ class SuiteElement private constructor(
                     if (file.isDirectory) "$path/" else path,
                     file.toRelativeStringSystemIndependent(rootFile),
                     group.isCompilerTestData,
-                    model.passTestDataPath
+                    model.passTestDataPath,
+                    file,
+                    model.ignored
                 )
             }
 
@@ -153,8 +155,28 @@ class SuiteElement private constructor(
         }
     }
 
+    fun testDataPath(): File =
+        File(group.testDataRoot, model.path)
+
+    fun testCaseMethods(): Map<String, List<TestCaseMethod>> {
+        val testDataPath = testDataPath()
+        val className = suite.generatedClassName + (if (isNested) "$" + this.className else "")
+        return this.nestedSuites.fold<SuiteElement, MutableMap<String, List<TestCaseMethod>>>(
+            mutableMapOf<String, List<TestCaseMethod>>(
+                className to this.methods.filterIsInstance<TestCaseMethod>().map { it.copy(file = it.testDataPath(testDataPath))})
+        ) { acc: MutableMap<String, List<TestCaseMethod>>, curr: SuiteElement ->
+            val testDataMethodPaths = curr.testCaseMethods()
+            acc += testDataMethodPaths.map<String, List<TestCaseMethod>, Pair<String, List<TestCaseMethod>>> {
+                "$className\$${curr.className}" to it.value
+            }.toMap<String, List<TestCaseMethod>>()
+            acc
+        }
+    }
+
     override fun Code.render() {
-        val testDataPath = File(group.testDataRoot, model.path).toRelativeStringSystemIndependent(group.moduleRoot)
+        if (model.ignored) return
+
+        val testDataPath = testDataPath().toRelativeStringSystemIndependent(group.moduleRoot)
 
         appendAnnotation(TAnnotation<RunWith>(JUnit3RunnerWithInners::class.java))
         appendAnnotation(TAnnotation<TestMetadata>(testDataPath))

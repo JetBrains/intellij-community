@@ -30,7 +30,7 @@ import java.util.*;
  *
  * intellij changes: made some fields final
  */
-abstract public class AbstractClassGenerator
+public abstract class AbstractClassGenerator
 implements ClassGenerator
 {
     private static final Object NAME_KEY = new Object();
@@ -47,7 +47,7 @@ implements ClassGenerator
     private String className;
     private boolean attemptLoad;
 
-    protected static class Source {
+    protected static final class Source {
       //change by Peter: made fields final
         final String name;
         final Map cache = new WeakHashMap<>();
@@ -64,7 +64,7 @@ implements ClassGenerator
         this.namePrefix = namePrefix;
     }
 
-    final protected String getClassName() {
+    protected final String getClassName() {
         if (className == null)
             className = getClassName(getClassLoader());
         return className;
@@ -185,7 +185,7 @@ implements ClassGenerator
         return t;
     }
 
-    abstract protected ClassLoader getDefaultClassLoader();
+    protected abstract ClassLoader getDefaultClassLoader();
 
     protected Object create(Object key) {
         try {
@@ -240,6 +240,6 @@ implements ClassGenerator
         }
     }
 
-    abstract protected Object firstInstance(Class type) throws Exception;
-    abstract protected Object nextInstance(Object instance) throws Exception;
+    protected abstract Object firstInstance(Class type) throws Exception;
+    protected abstract Object nextInstance(Object instance) throws Exception;
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +33,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   private final boolean myKeyIsUniqueForIndexedFile;
   private final boolean myReadOnly;
   private final boolean myEnableWal;
-  @NotNull private final ValueContainerInputRemapping myInputRemapping;
+  private final @NotNull ValueContainerInputRemapping myInputRemapping;
 
   public MapIndexStorage(Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -70,7 +70,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   protected void initMapAndCache() throws IOException {
     ValueContainerMap<Key, Value> map = createValueContainerMap();
-    myCache = MapIndexStorageCacheProvider.getActualProvider().createCache(
+    myCache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
       key -> map.getModifiableValueContainer(key),
       (key, container) -> onDropFromCache(key, container),
       myKeyDescriptor,
@@ -196,8 +196,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     }
   }
 
-  @NotNull
-  private Path getStorageFile() {
+  private @NotNull Path getStorageFile() {
     return getIndexStorageFile(myBaseStorageFile);
   }
 
@@ -207,6 +206,21 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
       clearCachedMappings();
       if (myMap.isDirty()) myMap.force();
     }
+  }
+
+  @Override
+  public boolean isDirty() {
+    if (myMap.isDirty()) {
+      return true;
+    }
+
+    for (ChangeTrackingValueContainer<Value> container : myCache.getCachedValues()) {
+      if (container.isDirty()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @Override
@@ -250,8 +264,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   }
 
   @Override
-  @NotNull
-  public ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
+  public @NotNull ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
     try {
       return myCache.read(key);
     }
@@ -302,8 +315,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     myMap.merge(key, valueContainer);
   }
 
-  @Nullable
-  private ChangeTrackingValueContainer<Value> readIfCached(Key key) {
+  private @Nullable ChangeTrackingValueContainer<Value> readIfCached(Key key) {
     return myCache.readIfCached(key);
   }
 
@@ -313,7 +325,9 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Override
   public void clearCaches() {
-    myCache.processCachedValues(container -> container.dropMergedData());
+    for (ChangeTrackingValueContainer<Value> container : myCache.getCachedValues()) {
+      container.dropMergedData();
+    }
   }
 
   @ApiStatus.Internal
@@ -356,8 +370,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     return myMap.getStorageMap();
   }
 
-  @NotNull
-  public static Path getIndexStorageFile(@NotNull Path baseFile) {
+  public static @NotNull Path getIndexStorageFile(@NotNull Path baseFile) {
     return baseFile.resolveSibling(baseFile.getFileName() + ".storage");
   }
 }

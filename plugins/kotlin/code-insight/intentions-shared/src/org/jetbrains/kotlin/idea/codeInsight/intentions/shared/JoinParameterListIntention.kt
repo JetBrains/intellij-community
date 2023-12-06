@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-abstract class AbstractJoinListIntention<TList : KtElement, TElement : KtElement>(
+internal abstract class AbstractJoinListIntention<TList : KtElement, TElement : KtElement>(
     listClass: Class<TList>,
     elementClass: Class<TElement>,
     textGetter: () -> String
@@ -58,7 +58,7 @@ abstract class AbstractJoinListIntention<TList : KtElement, TElement : KtElement
 
 }
 
-class JoinParameterListIntention : AbstractJoinListIntention<KtParameterList, KtParameter>(
+internal class JoinParameterListIntention : AbstractJoinListIntention<KtParameterList, KtParameter>(
     KtParameterList::class.java,
     KtParameter::class.java,
     KotlinBundle.lazyMessage("put.parameters.on.one.line")
@@ -69,7 +69,7 @@ class JoinParameterListIntention : AbstractJoinListIntention<KtParameterList, Kt
     }
 }
 
-class JoinArgumentListIntention : AbstractJoinListIntention<KtValueArgumentList, KtValueArgument>(
+internal class JoinArgumentListIntention : AbstractJoinListIntention<KtValueArgumentList, KtValueArgument>(
     KtValueArgumentList::class.java,
     KtValueArgument::class.java,
     KotlinBundle.lazyMessage("put.arguments.on.one.line")

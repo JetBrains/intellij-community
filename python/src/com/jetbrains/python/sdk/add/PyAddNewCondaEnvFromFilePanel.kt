@@ -66,8 +66,7 @@ class PyAddNewCondaEnvFromFilePanel(private val module: Module, localCondaBinary
     initialEnvironmentYmlPath = environmentYmlField.text
   }
 
-  fun validateAll(): List<ValidationInfo> = listOfNotNull(
-    CondaEnvSdkFlavor.validateCondaPath(condaPathField.text))
+  fun validateAll(): List<ValidationInfo> = emptyList() // No validation for pre-target
 
   /**
    * Must be called if the input is confirmed and the current instance will not be used anymore

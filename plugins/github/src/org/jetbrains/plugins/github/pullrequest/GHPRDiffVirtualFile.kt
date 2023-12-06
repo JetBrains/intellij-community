@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
@@ -22,10 +23,10 @@ internal class GHPRDiffVirtualFile(fileManagerId: String,
     val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, dataDisposable)
     val diffRequestModel = dataProvider.diffRequestModel
 
-    val diffProcessor = GHPRDiffRequestChainProcessor(project, diffRequestModel)
-    Disposer.register(diffProcessor, dataDisposable)
-
-    return diffProcessor
+    return MutableDiffRequestChainProcessor(project, null).also {
+      diffRequestModel.process(it)
+      Disposer.register(it, dataDisposable)
+    }
   }
 
   override fun getName() = "#${pullRequest.number}.diff"

@@ -15,3 +15,5 @@ private data class Data(val x: Int)
 class First {
     val <caret>foo = Data(13)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPrivateFix

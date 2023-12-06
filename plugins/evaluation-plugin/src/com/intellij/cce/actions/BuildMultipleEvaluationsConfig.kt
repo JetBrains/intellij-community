@@ -1,17 +1,32 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.actions
 
+import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
+import java.io.File
 
-fun List<EvaluationWorkspace>.buildMultipleEvaluationsConfig(): Config {
-  val existingConfig = this.first().readConfig()
-  return Config.build(existingConfig.projectPath, existingConfig.language) {
+fun <T : EvaluationStrategy> List<EvaluationWorkspace>.buildMultipleEvaluationsConfig(
+  strategySerializer: StrategySerializer<T>,
+  title: String? = null,
+): Config {
+  val existingConfig = this.first().readConfig(strategySerializer)
+  val projectPath = createTempProject()
+  return Config.build(projectPath, existingConfig.language) {
     for (workspace in this@buildMultipleEvaluationsConfig) {
-      val config = workspace.readConfig()
+      val config = workspace.readConfig(strategySerializer)
       mergeFilters(config.reports.sessionsFilters)
       mergeComparisonFilters(config.reports.comparisonFilters)
     }
+    strategy = existingConfig.strategy
     outputDir = existingConfig.outputDir
-    evaluationTitle = "COMPARE_MULTIPLE"
+    title?.let { evaluationTitle = title }
   }
+}
+
+private fun createTempProject(): String {
+  val dir = File("temp-project/.idea")
+  dir.mkdirs()
+  return dir.absolutePath
 }

@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
+import com.intellij.codeInspection.ui.OptionPaneRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -25,8 +25,7 @@ import java.util.*;
 
 public final class ScopeToolState {
   private static final Logger LOG = Logger.getInstance(ScopeToolState.class);
-  @NotNull
-  private final String myScopeName;
+  private final @NotNull String myScopeName;
   private NamedScope myScope;
   private InspectionToolWrapper<?, ?> myToolWrapper;
   private boolean myEnabled;
@@ -52,26 +51,22 @@ public final class ScopeToolState {
     myLevel = level;
   }
 
-  @NotNull
-  public ScopeToolState copy() {
+  public @NotNull ScopeToolState copy() {
     return new ScopeToolState(myScopeName, myToolWrapper, myEnabled, myLevel);
   }
 
-  @Nullable
-  public NamedScope getScope(@Nullable Project project) {
+  public @Nullable NamedScope getScope(@Nullable Project project) {
     if (myScope == null && project != null) {
       myScope = NamedScopesHolder.getScope(project, myScopeName);
     }
     return myScope;
   }
 
-  @NotNull
-  public String getScopeName() {
+  public @NotNull String getScopeName() {
     return myScopeName;
   }
 
-  @NotNull
-  public InspectionToolWrapper<?, ?> getTool() {
+  public @NotNull InspectionToolWrapper<?, ?> getTool() {
     return myToolWrapper;
   }
 
@@ -79,8 +74,7 @@ public final class ScopeToolState {
     return myEnabled;
   }
 
-  @NotNull
-  public HighlightDisplayLevel getLevel() {
+  public @NotNull HighlightDisplayLevel getLevel() {
     return myLevel;
   }
 
@@ -108,11 +102,10 @@ public final class ScopeToolState {
     myEditorAttributesKey = textAttributesKey;
   }
 
-  @Nullable
-  public JComponent getAdditionalConfigPanel(Disposable parent, @NotNull Project project) {
+  public @Nullable JComponent getAdditionalConfigPanel(@NotNull Disposable parent, @NotNull Project project) {
     if (myAdditionalConfigPanelState == null) {
       myAdditionalConfigPanelState = ConfigPanelState.of(
-        InspectionOptionPaneRenderer.createOptionsPanel(myToolWrapper.getTool(), parent, project), myToolWrapper);
+        OptionPaneRenderer.createOptionsPanel(myToolWrapper.getTool(), parent, project), myToolWrapper);
     }
     return myAdditionalConfigPanelState.getPanel(isEnabled());
   }

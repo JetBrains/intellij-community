@@ -24,7 +24,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.List;
 
@@ -57,7 +56,8 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       LOG.warn("ClasspathDirectory and myHostClasspathDirectory set to null!");
       myClasspathDirectory = null;
       myHostClasspathDirectory = null;
-    } else {
+    }
+    else {
       myHostWorkingDirectory = buildDirectory.toString();
       myWorkingDirectory = myDistribution.getWslPath(myHostWorkingDirectory);
       myClasspathDirectory = myWorkingDirectory + "/jps-" + ApplicationInfo.getInstance().getBuild().asString();
@@ -104,7 +104,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
           myProgressIndicator.setText(JavaCompilerBundle.message("progress.preparing.wsl.build.environment"));
           myReportedProgress = true;
         }
-        builder.append(myDistribution.getWslPath(targetPath.toString()));
+        builder.append(myDistribution.getWslPath(targetPath));
       }
     }
     for (String s : classpathInTarget) {
@@ -150,16 +150,17 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public InetAddress getListenAddress() {
-    return myDistribution.getHostIpAddress();
+    try {
+      return myDistribution.getHostIpAddress();
+    }
+    catch (ExecutionException ignored) {
+      return null;
+    }
   }
 
   @Override
   public @NotNull String getHostIp() throws ExecutionException {
-    String hostIp = myDistribution.getHostIp();
-    if (hostIp == null) {
-      throw new ExecutionException(JavaCompilerBundle.message("dialog.message.failed.to.determine.host.ip.for.wsl.jdk"));
-    }
-    return hostIp;
+    return myDistribution.getHostIpAddress().getHostAddress();
   }
 
   @Override

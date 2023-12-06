@@ -9,11 +9,6 @@
             interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
             area="IDEA_PROJECT"
             dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
-            interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -28,7 +23,11 @@
                          instance="org.jetbrains.kotlin.idea.script.configuration.KotlinScriptingSettingsConfigurable"
                          parentId="preferences.language.Kotlin"/>
 
-    <fileEditorProvider implementation="org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorProvider"/>
+    <fileEditorProvider id="KtsScratchFileEditorProvider" implementation="org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorProvider"/>
+
+    <projectService serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KtFe10CompilerPluginsProvider"
+                    serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

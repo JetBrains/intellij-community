@@ -1,14 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.actions.JavaQualifiedNameProvider;
+import com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor.DefaultClassProcessor;
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -18,6 +21,8 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +33,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
+public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor, PossiblyDumbAware {
   @Nullable
   @Override
   public String getQualifiedName(@NotNull NavigationItem item) {
@@ -44,7 +49,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return "$";
   }
 
-  private static boolean isOpenable(PsiMember member) {
+  public static boolean isOpenable(PsiMember member) {
     final PsiFile file = member.getContainingFile();
     return file != null && file.getVirtualFile() != null;
   }
@@ -73,11 +78,16 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     });
   }
 
-  private static boolean hasSuperMethod(PsiMethod method,
+  private static boolean hasSuperMethod(Project project,
+                                        PsiMethod method,
                                         GlobalSearchScope scope,
                                         Predicate<? super PsiMember> qualifiedMatcher,
                                         String pattern) {
     if (pattern.contains(".") && Registry.is("ide.goto.symbol.include.overrides.on.qualified.patterns")) {
+      return false;
+    }
+
+    if (DumbService.getInstance(project).isDumb()) {
       return false;
     }
 
@@ -96,10 +106,14 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
-    cache.processAllClassNames(processor, scope, filter);
-    cache.processAllFieldNames(processor, scope, filter);
-    cache.processAllMethodNames(processor, scope, filter);
+    Project project = scope.getProject();
+    if (project == null) return;
+    DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
+      PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+      cache.processAllClassNames(processor, scope, filter);
+      cache.processAllFieldNames(processor, scope, filter);
+      cache.processAllMethodNames(processor, scope, filter);
+    });
   }
 
   @Override
@@ -108,38 +122,36 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
                                       @NotNull final FindSymbolParameters parameters) {
 
     GlobalSearchScope scope = parameters.getSearchScope();
+    Project project = scope.getProject();
+    if (project == null) return;
     IdFilter filter = parameters.getIdFilter();
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
-
     String completePattern = parameters.getCompletePattern();
     final Predicate<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(completePattern);
-
-    //noinspection UnusedDeclaration
     final Set<PsiMethod> collectedMethods = new HashSet<>();
-    boolean success = cache.processFieldsWithName(name, field -> {
-      if (isOpenable(field) && qualifiedMatcher.test(field)) return processor.process(field);
-      return true;
-    }, scope, filter) &&
-                      cache.processClassesWithName(name, aClass -> {
-                        if (isOpenable(aClass) && qualifiedMatcher.test(aClass)) return processor.process(aClass);
-                        return true;
-                      }, scope, filter) &&
-                      cache.processMethodsWithName(name, method -> {
-                        if (!method.isConstructor() && isOpenable(method) && qualifiedMatcher.test(method)) {
-                          collectedMethods.add(method);
-                        }
-                        return true;
-                      }, scope, filter);
-    if (success) {
-      // hashSuperMethod accesses index and can not be invoked without risk of the deadlock in processMethodsWithName
-      Iterator<PsiMethod> iterator = collectedMethods.iterator();
-      while (iterator.hasNext()) {
-        PsiMethod method = iterator.next();
-        if (!hasSuperMethod(method, scope, qualifiedMatcher, completePattern) && !processor.process(method)) return;
-        ProgressManager.checkCanceled();
-        iterator.remove();
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+      boolean success = cache.processFieldsWithName(name, field -> {
+        if (isOpenable(field) && qualifiedMatcher.test(field)) return processor.process(field);
+        return true;
+      }, scope, filter) &&
+                        cache.processClassesWithName(name, new DefaultClassProcessor(processor, parameters, true), scope, filter) &&
+                        cache.processMethodsWithName(name, method -> {
+                          if (!method.isConstructor() && isOpenable(method) && qualifiedMatcher.test(method)) {
+                            collectedMethods.add(method);
+                          }
+                          return true;
+                        }, scope, filter);
+      if (success) {
+        // hashSuperMethod can access index and can not be invoked without risk of the deadlock in processMethodsWithName
+        Iterator<PsiMethod> iterator = collectedMethods.iterator();
+        while (iterator.hasNext()) {
+          PsiMethod method = iterator.next();
+          if (!hasSuperMethod(project, method, scope, qualifiedMatcher, completePattern) && !processor.process(method)) return;
+          ProgressManager.checkCanceled();
+          iterator.remove();
+        }
       }
-    }
+    });
   }
 
   private static Predicate<PsiMember> getQualifiedNameMatcher(String completePattern) {
@@ -147,8 +159,8 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       return member -> member instanceof PsiMethod && JavaQualifiedNameProvider.hasQualifiedName(completePattern, (PsiMethod)member);
     }
 
-    if (completePattern.contains(".") || completePattern.contains("#")) {
-      String normalized = StringUtil.replace(StringUtil.replace(completePattern, "#", ".*"), ".", ".*");
+    if (completePattern.contains(".") || completePattern.contains("#") || completePattern.contains("$")) {
+      String normalized = completePattern.replace("#", ".*").replace(".", ".*").replace("$", ".*");
       MinusculeMatcher matcher = NameUtil.buildMatcher("*" + normalized).build();
       return member -> {
         String qualifiedName = PsiUtil.getMemberQualifiedName(member);
@@ -156,6 +168,11 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       };
     }
     return Predicates.alwaysTrue();
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return FileBasedIndex.isIndexAccessDuringDumbModeEnabled();
   }
 
   public static class JavadocSeparatorContributor implements ChooseByNameContributorEx, GotoClassContributor {

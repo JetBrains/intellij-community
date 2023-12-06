@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -58,7 +58,7 @@ class InstallFromDiskAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
+    if (!PluginManagementPolicy.getInstance().isInstallFromDiskAllowed()) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       presentation.setDescription(IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"));
@@ -73,17 +73,22 @@ class InstallFromDiskAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
+    if (!PluginManagementPolicy.getInstance().isInstallFromDiskAllowed()) {
       Messages.showErrorDialog(project,
                                IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"),
                                IdeBundle.message("action.InstallFromDiskAction.text"));
       return;
     }
 
+    VirtualFile contextFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    VirtualFile toSelect = contextFile != null && contextFile.isInLocalFileSystem() && isPluginArchive(contextFile.getPath())
+                           ? contextFile
+                           : getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
+
     FileChooser.chooseFile(new FileChooserDescriptorImpl(),
                            project,
                            myParentComponent,
-                           getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH)),
+                           toSelect,
                            virtualFile -> {
                              File file = VfsUtilCore.virtualToIoFile(virtualFile);
                              PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH,
@@ -91,6 +96,11 @@ class InstallFromDiskAction extends DumbAwareAction {
 
                              installFromDisk(file, project);
                            });
+  }
+
+  public static boolean isPluginArchive(String filePath) {
+    return FileUtilRt.extensionEquals(filePath, "jar") ||
+           FileUtilRt.extensionEquals(filePath, "zip");
   }
 
   @RequiresEdt
@@ -115,7 +125,7 @@ class InstallFromDiskAction extends DumbAwareAction {
            null;
   }
 
-  private static class FileChooserDescriptorImpl extends FileChooserDescriptor {
+  private static final class FileChooserDescriptorImpl extends FileChooserDescriptor {
 
     private FileChooserDescriptorImpl() {
       super(false, false, true, true, false, false);

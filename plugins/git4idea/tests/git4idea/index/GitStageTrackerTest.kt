@@ -1,16 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
-import com.intellij.AppTopics
-import com.intellij.idea.Bombed
+import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -20,8 +20,7 @@ import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
-import org.apache.commons.lang.RandomStringUtils
-import java.util.*
+import org.apache.commons.lang3.RandomStringUtils
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -37,7 +36,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     _tracker = object : GitStageTracker(project) {
       override fun isStagingAreaAvailable() = true
     }
-    project.messageBus.connect(tracker).subscribe(AppTopics.FILE_DOCUMENT_SYNC, object : GitStageFileDocumentManagerListener() {
+    project.messageBus.connect(tracker).subscribe(FileDocumentManagerListener.TOPIC, object : GitStageFileDocumentManagerListener() {
       override fun getTrackers(): List<GitStageTracker> = listOf(tracker)
     })
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : GitStageDocumentListener() {
@@ -123,7 +122,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     }
   }
 
-  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Julia.Beliaeva")
+  @IgnoreJUnit3
   fun `test untracked`() {
     val fileName = "file.txt"
     val file = runWithTrackerUpdate("createChildData") {

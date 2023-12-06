@@ -1,6 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.concurrency.currentTemporaryThreadContextOrNull
+import com.intellij.concurrency.currentThreadContext
+import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -9,7 +12,11 @@ import kotlin.coroutines.CoroutineContext
  * The code within [ModalityState.any] context modality state must only perform pure UI operations,
  * it must not access any PSI, VFS, project model, or indexes. It also must not show any modal dialogs.
  */
-@Suppress("CONFLICTING_OVERLOADS")
+suspend fun isModalAwareContext(): Boolean {
+  return currentCoroutineContext().contextModality() != ModalityState.any()
+}
+
+@Suppress("CONFLICTING_OVERLOADS") // KT-61878
 fun ModalityState.asContextElement(): CoroutineContext {
   return ModalityStateElement(this)
 }
@@ -17,6 +24,12 @@ fun ModalityState.asContextElement(): CoroutineContext {
 @Internal
 fun CoroutineContext.contextModality(): ModalityState? {
   return this[ModalityStateElementKey]?.modalityState
+}
+
+@Internal
+fun currentThreadContextModality(): ModalityState? {
+  return currentTemporaryThreadContextOrNull()?.contextModality()
+         ?: currentThreadContext().contextModality()
 }
 
 private object ModalityStateElementKey

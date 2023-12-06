@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.j2k.usageProcessing
 import com.intellij.psi.PsiReference
 
 class ElementRenamedCodeProcessor(private val newName: String) : ExternalCodeProcessor {
-    override fun processUsage(reference: PsiReference): Array<PsiReference>? {
+    override fun processUsage(reference: PsiReference): Array<PsiReference> {
         return reference.handleElementRename(newName).references
     }
 }

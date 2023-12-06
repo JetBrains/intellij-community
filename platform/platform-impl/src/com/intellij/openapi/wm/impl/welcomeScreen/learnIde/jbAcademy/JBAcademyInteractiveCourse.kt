@@ -4,9 +4,15 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.util.StandardProgressIndicatorBase
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.getBrowseCoursesAction
 import com.intellij.util.PlatformUtils
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -20,9 +26,20 @@ internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
   override val isActive: Boolean
     get() = PlatformUtils.isIntelliJ() ||
             PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell() ||
-            PlatformUtils.isGoIde()
+            PlatformUtils.isWebStorm() ||
+            PlatformUtils.isCLion() ||
+            PlatformUtils.isGoIde() ||
+            PlatformUtils.isPhpStorm() ||
+            PlatformUtils.isRustRover()
+
+  override val isEnabled: Boolean = true
+
+  override val disabledText: String = ""
 
   override fun getInteractiveCourseComponent(): JComponent = JBAcademyInteractiveCoursePanel(EduToolsInteractiveCourseData())
+  override fun getCourseData(): InteractiveCourseData {
+    return EduToolsInteractiveCourseData()
+  }
 }
 
 private class EduToolsInteractiveCourseData : InteractiveCourseData {
@@ -55,8 +72,6 @@ private class EduToolsInteractiveCourseData : InteractiveCourseData {
     }
   }
 
-  override fun isEduTools(): Boolean {
-    return true
-  }
+  override fun isEduTools(): Boolean = true
 }
 

@@ -24,14 +24,17 @@ fun canConvert(element: PsiElement, targets: Array<out Class<out UElement>>): Bo
     if (!checkCanConvert) return true
     val psiElementClass = element.javaClass
 
-    if (targets.any { getPossibleSourceTypes(it).let { psiElementClass in it } })
-        return true
+    for (target in targets) {
+        if (getPossibleSourceTypes(target).contains(psiElementClass)) {
+            return true
+        }
+    }
 
     val ktOriginalCls = (element as? KtLightElementBase)?.kotlinOrigin?.javaClass ?: return false
     return targets.any { getPossibleSourceTypes(it).let { ktOriginalCls in it } }
 }
 
-fun getPossibleSourceTypes(uastType: Class<out UElement>) =
+fun getPossibleSourceTypes(uastType: Class<out UElement>): ClassSet<PsiElement> =
     possibleSourceTypes[uastType] ?: emptyClassSet()
 
 /**
@@ -600,6 +603,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
       KtProperty::class.java,
       KtPropertyAccessor::class.java,
       KtSecondaryConstructor::class.java,
+      UastFakeSourceLightAccessor::class.java,
+      UastFakeSourceLightDefaultAccessor::class.java,
       UastFakeSourceLightMethod::class.java,
       UastFakeSourceLightPrimaryConstructor::class.java
     ),

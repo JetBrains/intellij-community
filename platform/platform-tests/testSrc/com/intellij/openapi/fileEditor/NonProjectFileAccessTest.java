@@ -17,6 +17,7 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,10 +47,11 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    EditorNotifications notifications = new EditorNotificationsImpl(getProject());
-    ServiceContainerUtil.replaceService(getProject(), EditorNotifications.class, notifications, getTestRootDisposable());
-    NonProjectFileWritingAccessProvider.enableChecksInTests(getProject());
-    StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
+    Project project = getProject();
+    EditorNotifications notifications = new EditorNotificationsImpl(project, project.getCoroutineScope());
+    ServiceContainerUtil.replaceService(project, EditorNotifications.class, notifications, getTestRootDisposable());
+    NonProjectFileWritingAccessProvider.enableChecksInTests(project);
+    StoreReloadManager.Companion.getInstance(project).blockReloadingProjectOnExternalChanges();
   }
 
   @Override
@@ -72,8 +74,9 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       addSuppressedException(e);
     }
     finally {
+      StoreReloadManager.Companion.getInstance(getProject()).unblockReloadingProjectOnExternalChanges();
+
       super.tearDown();
-      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed;
     }
   }
 

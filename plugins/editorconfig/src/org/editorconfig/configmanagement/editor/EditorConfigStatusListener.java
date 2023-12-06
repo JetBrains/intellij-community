@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -16,12 +15,12 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
-import org.editorconfig.configmanagement.ConfigEncodingManager;
+import org.editorconfig.configmanagement.ConfigEncodingCharsetUtil;
 import org.editorconfig.configmanagement.EditorConfigEncodingCache;
+import org.editorconfig.language.psi.EditorConfigFlatOptionKey;
 import org.editorconfig.language.psi.EditorConfigOption;
+import org.editorconfig.language.psi.EditorConfigOptionValueIdentifier;
 import org.editorconfig.language.psi.EditorConfigSection;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
@@ -29,13 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class EditorConfigStatusListener implements CodeStyleSettingsListener, Disposable {
+final class EditorConfigStatusListener implements CodeStyleSettingsListener, Disposable {
   private boolean myEnabledStatus;
   private final VirtualFile myVirtualFile;
   private final Project myProject;
   private Set<String> myEncodings;
 
-  public EditorConfigStatusListener(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  EditorConfigStatusListener(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     myProject = project;
     myEnabledStatus = Utils.INSTANCE.isEnabled(project);
     myVirtualFile = virtualFile;
@@ -88,34 +87,41 @@ public final class EditorConfigStatusListener implements CodeStyleSettingsListen
   }
 
   private static boolean containsValidEncodings(@NotNull Set<String> encodings) {
-    return ContainerUtil.and(encodings, encoding -> ConfigEncodingManager.Companion.toCharset(encoding) != null);
+    for (String t : encodings) {
+      if (ConfigEncodingCharsetUtil.INSTANCE.toCharset(t) == null) {
+        return false;
+      }
+    }
+    return true;
   }
 
-  @NotNull
-  private Set<String> extractEncodings() {
-    final Set<String> charsets = new HashSet<>();
+  private @NotNull Set<String> extractEncodings() {
+    Set<String> charsets = new HashSet<>();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myVirtualFile);
-    if (psiFile != null) {
-      PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-        @Override
-        public void visitElement(@NotNull PsiElement element) {
-          if (element instanceof PsiFile || element instanceof EditorConfigSection) {
-            super.visitElement(element);
-          }
-          else if (element instanceof EditorConfigOption) {
-            String keyName = ObjectUtils.doIfNotNull(((EditorConfigOption)element).getFlatOptionKey(), NavigationItem::getName);
-            if (ConfigEncodingManager.charsetKey.equals(keyName)) {
-              String charsetStr =
-                ObjectUtils.doIfNotNull(((EditorConfigOption)element).getOptionValueIdentifier(), NavigationItem::getName);
-              if (charsetStr != null) {
-                charsets.add(charsetStr);
-              }
+    if (psiFile == null) {
+      return charsets;
+    }
+
+    PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof PsiFile || element instanceof EditorConfigSection) {
+          super.visitElement(element);
+        }
+        else if (element instanceof EditorConfigOption) {
+          EditorConfigFlatOptionKey obj1 = ((EditorConfigOption)element).getFlatOptionKey();
+          String keyName = obj1 == null ? null : obj1.getName();
+          if (ConfigEncodingCharsetUtil.charsetKey.equals(keyName)) {
+            EditorConfigOptionValueIdentifier obj = ((EditorConfigOption)element).getOptionValueIdentifier();
+            String charsetStr = obj == null ? null : obj.getName();
+            if (charsetStr != null) {
+              charsets.add(charsetStr);
             }
           }
         }
-      };
-      psiFile.accept(visitor);
-    }
+      }
+    };
+    psiFile.accept(visitor);
     return charsets;
   }
 }

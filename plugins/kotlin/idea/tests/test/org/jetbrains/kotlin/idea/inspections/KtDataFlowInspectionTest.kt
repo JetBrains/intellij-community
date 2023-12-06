@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
 import org.jetbrains.kotlin.idea.base.test.TestRoot
@@ -49,6 +49,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testInRange() = doTest()
     fun testInIterable() = doTest()
     fun testIncompleteCode1() = doTest()
+    fun testInlineClass() = doTest()
     fun testInlineLambda() = doTest()
     fun testInlineStandardCalls() = doTest()
     fun testIndices() = doTest()
@@ -58,6 +59,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testLambda() = doTest()
     fun testLanguageConstructs() = doTest()
     fun testList() = doTest()
+    fun testListApply() = doTest()
     fun testMapEmpty() = doTest()
     fun testMath() = doTest()
     fun testMembers() = doTest()
@@ -79,8 +81,11 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testQualifier() = doTest()
     fun testRangeAnnotation() = doTest()
     fun testReifiedGeneric() = doTest()
+    fun testReturnContract() = doTest()
     fun testSingleton() = doTest()
     fun testSmartCastConflict() = doTest()
+    fun testSmartCastExtensionCondition() = doTest()
+    fun testSmartCastWhen() = doTest()
     fun testStaticAnalysisVsHumanBrain() = doTest()
     fun testStringComparison() = doTest()
     fun testStringTemplate() = doTest()
@@ -93,7 +98,9 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testTypeCast() = doTest()
     fun testTypeTest() = doTest()
     fun testWhen() = doTest()
+    fun testWhenIsObject() = doTest()
     fun testWhileLoop() = doTest()
+    fun testUInt() = doTest()
 
     fun doTest(warnOnConstantRefs: Boolean = true) {
         val fileName = "${getTestName(false)}.kt"

@@ -1,22 +1,28 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
+import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
@@ -26,15 +32,17 @@ internal class ApplicationPathMacroManager : PathMacroManager(null)
 
 @NonNls const val APP_CONFIG = "\$APP_CONFIG$"
 
-open class ApplicationStoreImpl : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
-  override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication(), PathMacroManager.getInstance(ApplicationManager.getApplication()))
+@Suppress("NonDefaultConstructor")
+open class ApplicationStoreImpl(private val app: Application)
+  : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
+  override val storageManager = ApplicationStorageManager(PathMacroManager.getInstance(app))
 
   override val serviceContainer: ComponentManagerImpl
-    get() = ApplicationManager.getApplication() as ComponentManagerImpl
+    get() = app as ComponentManagerImpl
 
-  // number of app components require some state, so, we load default state in test mode
+  // a number of app components require some state, so we load the default state in test mode
   override val loadPolicy: StateLoadPolicy
-    get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
+    get() = if (app.isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
 
   override fun setPath(path: Path) {
     storageManager.setMacros(listOf(
@@ -47,8 +55,8 @@ open class ApplicationStoreImpl : ComponentStoreWithExtraComponents(), Applicati
 
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
-    if (GlobalLibraryTableBridge.isEnabled()) {
-      (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities(AppStorageContentWriter(saveSessionManager))
+    if (GlobalLibraryTableBridge.isEnabled() || GlobalSdkTableBridge.isEnabled()) {
+      (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities()
     }
     saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
     // todo can we store default project in parallel to regular saving? for now only flush on disk is async, but not component committing
@@ -57,16 +65,22 @@ open class ApplicationStoreImpl : ComponentStoreWithExtraComponents(), Applicati
         saveSessionManager.save().appendTo(result)
       }
 
+      @Suppress("TestOnlyProblems")
       if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
         launch {
-          // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
-          val r = service<DefaultProjectExportableAndSaveTrigger>().save(forceSavingAllSettings)
+          // here, because no Project (and so, ProjectStoreImpl) on a Welcome Screen
+          val r = serviceAsync<DefaultProjectExportableAndSaveTrigger>().save(forceSavingAllSettings)
           // ignore
           r.isChanged = false
           r.appendTo(result)
         }
       }
     }
+  }
+
+  override fun createContentWriter(): JpsAppFileContentWriter {
+    val saveSessionManager = createSaveSessionProducerManager()
+    return AppStorageContentWriter(saveSessionManager)
   }
 
   override fun createContentReader(): JpsFileContentReader = AppStorageContentReader()
@@ -82,8 +96,10 @@ internal val appFileBasedStorageConfiguration = object: FileBasedStorageConfigur
     get() = false
 }
 
-class ApplicationStorageManager(application: Application?, pathMacroManager: PathMacroManager? = null)
-  : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor (), application) {
+class ApplicationStorageManager(pathMacroManager: PathMacroManager? = null)
+  : StateStorageManagerImpl(rootTagName = "application",
+                            macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(),
+                            componentManager = null) {
   override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {

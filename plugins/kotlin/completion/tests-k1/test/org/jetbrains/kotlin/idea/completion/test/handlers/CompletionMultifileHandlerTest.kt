@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.completion.test.testWithAutoCompleteSetting
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -46,32 +47,40 @@ open class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCas
     fun testNotImportedExtension() = doTest()
     fun testNotImportedTypeAlias() = doTest()
     fun testKT12077() = doTest()
+    fun testPackageDirective() = if (isFirPlugin) doTest() else Unit
+    fun testPackageInImportDirective() = if (isFirPlugin) doTest() else Unit
+
+    protected fun getTestFileName(): String = "${getTestName(false)}-1.kt"
+
+    protected fun getDependencyFileName(): String = "${getTestName(false)}-2.kt"
 
     open fun doTest(completionChar: Char = '\n', vararg extraFileNames: String, tailText: String? = null) {
-        val fileNameBase = getTestName(false)
-        val defaultFiles = listOf("$fileNameBase-1.kt", "$fileNameBase-2.kt")
+        val defaultFiles = listOf(getTestFileName(), getDependencyFileName())
         val filteredFiles = defaultFiles.filter { File(testDataDirectory, it).exists() }
 
         require(filteredFiles.isNotEmpty()) { "At least one of $defaultFiles should exist!" }
 
         myFixture.configureByFiles(*extraFileNames)
         myFixture.configureByFiles(*filteredFiles.toTypedArray())
-        val items = complete(CompletionType.BASIC, 2)
 
-        if (items != null) {
-            val item = if (tailText == null)
-                items.singleOrNull() ?: error("Multiple items in completion")
-            else {
-                val presentation = LookupElementPresentation()
-                items.first {
-                    it.renderElement(presentation)
-                    presentation.tailText == tailText
+        testWithAutoCompleteSetting(File(testDataDirectory, getTestFileName()).readText()) {
+            val items = complete(CompletionType.BASIC, 2)
+
+            if (items != null) {
+                val item = if (tailText == null)
+                    items.singleOrNull() ?: error("Multiple items in completion")
+                else {
+                    val presentation = LookupElementPresentation()
+                    items.first {
+                        it.renderElement(presentation)
+                        presentation.tailText == tailText
+                    }
                 }
-            }
 
-            CompletionHandlerTestBase.selectItem(myFixture, item, completionChar)
+                CompletionHandlerTestBase.selectItem(myFixture, item, completionChar)
+            }
+            myFixture.checkResultByFile("${getTestName(false)}.kt.after")
         }
-        myFixture.checkResultByFile("$fileNameBase.kt.after")
     }
 
     override val testDataDirectory: File

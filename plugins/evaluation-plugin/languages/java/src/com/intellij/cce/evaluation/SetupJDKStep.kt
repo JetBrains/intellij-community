@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.core.Language
@@ -30,7 +31,8 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
         val projectSdk = projectRootManager.projectSdk
         if (projectSdk != null) {
           println("Project JDK already configured")
-        } else {
+        }
+        else {
           println("Project JDK not configured")
           val sdk = configureProjectSdk(projectRootManager.projectSdkName)
           if (sdk != null) {
@@ -53,7 +55,8 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
       println("Java found in $javaHome")
       return if (isIdeaCommunityProject()) {
         configureIdeaJdks(javaHome)
-      } else {
+      }
+      else {
         val jdkName = expectedSdkName ?: "Evaluation JDK"
         val jdk = JavaSdk.getInstance().createJdk(jdkName, javaHome, false)
         sdkTable.addJdk(jdk)

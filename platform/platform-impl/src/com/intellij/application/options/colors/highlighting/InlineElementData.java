@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Map;
 
-public class InlineElementData extends HighlightData {
+public final class InlineElementData extends HighlightData {
   private final String myText;
   private final boolean myAddBorder;
 
@@ -35,9 +35,8 @@ public class InlineElementData extends HighlightData {
   public void addHighlToView(Editor view, EditorColorsScheme scheme, Map<TextAttributesKey, String> displayText) {
     int offset = getStartOffset();
     RendererWrapper renderer = new RendererWrapper(new HintRenderer(myText) {
-      @Nullable
       @Override
-      protected TextAttributes getTextAttributes(@NotNull Editor editor) {
+      protected @Nullable TextAttributes getTextAttributes(@NotNull Editor editor) {
         return editor.getColorsScheme().getAttributes(getHighlightKey());
       }
     }, myAddBorder);

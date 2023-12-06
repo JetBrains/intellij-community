@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -9,12 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogCommitSelection;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.table.VcsLogCommitSelectionUtils;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +62,7 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
     e.getPresentation().setVisible(true);
 
     String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
-    e.getPresentation().setEnabled(VcsLogCommitSelection.isNotEmpty(selection) && commitMessage != null);
+    e.getPresentation().setEnabled(VcsLogCommitSelectionUtils.isNotEmpty(selection) && commitMessage != null);
   }
 
   @Override
@@ -74,7 +74,7 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
     String commitMessage = e.getRequiredData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
 
     selection.requestFullDetails(detailsList -> {
-      List<Change> changes = VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges);
+      List<Change> changes = VcsLogUtil.collectChanges(detailsList);
       CreatePatchFromChangesAction.createPatch(project, commitMessage, changes, mySilentClipboard);
     });
   }

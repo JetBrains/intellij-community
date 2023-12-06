@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.testFramework.GlobalState;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
@@ -12,7 +9,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.tests.DynamicExtensionPointsTester;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.junit.Assume;
 import org.junit.FixMethodOrder;
@@ -22,7 +18,6 @@ import org.junit.runners.MethodSorters;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This must be the last test.
@@ -58,17 +53,7 @@ public class _LastInSuiteTest extends TestCase {
   }
 
   public void testProjectLeak() {
-    if (Boolean.getBoolean("idea.test.guimode")) {
-      Application application = ApplicationManager.getApplication();
-      application.invokeAndWait(() -> {
-        UIUtil.dispatchAllInvocationEvents();
-        application.exit(true, true, false);
-      });
-      ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
-      return;
-    }
-
-    TestApplicationManager.disposeApplicationAndCheckForLeaks();
+    TestApplicationManager.testProjectLeak();
   }
 
   // should be run as late as possible to give the Languages the chance to instantiate as many of them as possible

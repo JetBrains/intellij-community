@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class GrSortMapTest extends GrIntentionTestCase {
   GrSortMapTest() {
-    super(GrSortMapKeysIntention)
+    super("Sort alphabetically")
   }
 
   @Override

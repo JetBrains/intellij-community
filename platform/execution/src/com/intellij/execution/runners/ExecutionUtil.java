@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,8 +45,6 @@ public final class ExecutionUtil {
 
   private static final Logger LOG = Logger.getInstance(ExecutionUtil.class);
 
-  private static final NotificationGroup ourSilentNotificationGroup =
-    NotificationGroupManager.getInstance().getNotificationGroup("Silent Execution");
   private static final NotificationGroup ourNotificationGroup =
     NotificationGroupManager.getInstance().getNotificationGroup("Execution");
 
@@ -150,11 +147,8 @@ public final class ExecutionUtil {
         return;
       }
 
-      boolean balloonShown = IdeUiService.getInstance().notifyByBalloon(project, toolWindowId, MessageType.ERROR,
-                                                                        fullMessage, null, _listener);
-
-      NotificationGroup notificationGroup = balloonShown ? ourSilentNotificationGroup : ourNotificationGroup;
-      Notification notification = notificationGroup.createNotification(title, _description, NotificationType.ERROR);
+      Notification notification = ourNotificationGroup.createNotification(title, _description, NotificationType.ERROR);
+      notification.setToolWindowId(toolWindowId);
       if (_listener != null) {
         notification.setListener((_notification, event) -> {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -267,8 +261,7 @@ public final class ExecutionUtil {
     ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(environment);
   }
 
-  @Nullable
-  public static ExecutionEnvironmentBuilder createEnvironment(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
+  public static @Nullable ExecutionEnvironmentBuilder createEnvironment(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
     try {
       return ExecutionEnvironmentBuilder.create(executor, settings);
     }
@@ -285,29 +278,24 @@ public final class ExecutionUtil {
     }
   }
 
-  @NotNull
-  public static Icon getLiveIndicator(@Nullable final Icon base) {
+  public static @NotNull Icon getLiveIndicator(final @Nullable Icon base) {
     return getLiveIndicator(base, true);
   }
 
-  @NotNull
-  public static Icon getLiveIndicator(@Nullable final Icon base, boolean isAlive) {
+  public static @NotNull Icon getLiveIndicator(final @Nullable Icon base, boolean isAlive) {
     return getLiveIndicator(base, 13, 13, isAlive);
   }
 
-  @NotNull
-  public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight) {
+  public static @NotNull Icon getLiveIndicator(final @Nullable Icon base, int emptyIconWidth, int emptyIconHeight) {
     return getLiveIndicator(base, emptyIconWidth, emptyIconHeight, true);
   }
 
   @SuppressWarnings("UseJBColor")
-  @NotNull
-  public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, boolean isAlive) {
+  public static @NotNull Icon getLiveIndicator(final @Nullable Icon base, int emptyIconWidth, int emptyIconHeight, boolean isAlive) {
     return getIndicator(base, emptyIconWidth, emptyIconHeight, isAlive ? Color.GREEN : Color.GRAY);
   }
 
-  @NotNull
-  public static Icon getIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
-    return new LayeredIcon(base, new IndicatorIcon(base, emptyIconWidth, emptyIconHeight, color));
+  public static @NotNull Icon getIndicator(final @Nullable Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
+    return LayeredIcon.layeredIcon(new Icon[]{base, new IndicatorIcon(base, emptyIconWidth, emptyIconHeight, color)});
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor
@@ -27,8 +27,7 @@ import com.intellij.util.containers.tail
 import com.intellij.util.text.splitLineRanges
 import kotlin.math.max
 
-
-class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor, newDocument: Document, injectedFile: PsiFile) :
+internal class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor, newDocument: Document, injectedFile: PsiFile) :
   CommonInjectedFileChangesHandler(shreds, editor, newDocument, injectedFile) {
 
   init {
@@ -52,7 +51,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
     val affectedRange = TextRange.from(e.offset, max(e.newLength, e.oldLength))
     val affectedMarkers = markers.filter { affectedRange.intersects(it.fragmentMarker) }
 
-    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.range }
+    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.textRange }
     if (affectedMarkers.isEmpty() && guardedRanges.any { it.intersects(affectedRange) }) {
       // changed guarded blocks are on fragment document editor conscience, we just ignore them silently
       return
@@ -72,7 +71,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       "distributeTextToMarkers:\n  ${distributeTextToMarkers.joinToString("\n  ") { (m, t) -> "${markerString(m)} <<< '${t.esclbr()}'" }}"
     }
     for ((affectedMarker, markerText) in distributeTextToMarkers.reversed()) {
-      var rangeInHost = affectedMarker.hostMarker.range
+      var rangeInHost = affectedMarker.hostMarker.textRange
 
       myHostEditor.caretModel.moveToOffset(rangeInHost.startOffset)
       val newText0 =

@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Disposer;
@@ -48,6 +49,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   private void doTestWithFix(String intentionAction) {
     doTest();
     myFixture.launchAction(myFixture.findSingleIntention(intentionAction));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
@@ -139,6 +141,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
 
   public void testNotNullByDefaultParameterOverridesNotAnnotated() {
     myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
+  
+  public void testNullableCalledWithNullUnderNotNullByDefault() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
@@ -240,6 +248,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     myFixture.enableInspections(myInspection);
     myFixture.checkHighlighting(true, false, true);
   }
+  
+  public void testDefaultOverridesExplicit() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
 
   public void testBeanValidationNotNull() {
     myFixture.addClass("package javax.annotation.constraints; public @interface NotNull{}");
@@ -302,7 +316,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
 
   public void testAnnotateOverridingParametersOnNotNullMethod() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
-    doTestWithFix("Annotate overridden method parameters");
+    doTestWithFix("Annotate overriding method parameters");
   }
 
   public void testRemoveMethodAnnotationRemovesOverriders() {
@@ -335,6 +349,11 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
+  
+  public void testMismatchOnArrayElementTypeUse() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 
   public void testInheritAmbiguous() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
@@ -355,7 +374,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testOverridersHaveNonDefaultAnnotation() {
     myFixture.addClass("package org.eclipse.jdt.annotation;\n\nimport java.lang.annotation.*;\n\n@Target(ElementType.PARAMETER) public @interface NonNull { }");
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
-    doTestWithFix("Annotate overridden method parameters");
+    doTestWithFix("Annotate overriding method parameters");
   }
 
   public void testQuickFixOnTypeArgument() {

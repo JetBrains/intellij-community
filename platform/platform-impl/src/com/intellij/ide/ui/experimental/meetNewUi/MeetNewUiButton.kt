@@ -28,7 +28,7 @@ internal class MeetNewUiButton(text: @NlsContexts.Button String? = null,
       }
     }
 
-  var selectionArc = 6
+  var selectionArc: Int = 6
     set(value) {
       if (field != value) {
         field = value

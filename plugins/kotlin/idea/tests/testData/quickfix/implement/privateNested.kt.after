@@ -10,3 +10,5 @@ class Container {
 
     private class BaseImpl : Base()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention

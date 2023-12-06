@@ -2,7 +2,6 @@
 package git4idea.index.vfs
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressManager
@@ -73,7 +72,7 @@ class GitIndexVirtualFile(private val project: Project,
                                newTimeStamp: Long): OutputStream {
     val outputStream: ByteArrayOutputStream = object : ByteArrayOutputStream() {
       override fun close() {
-        project.service<GitIndexFileSystemRefresher>().write(this@GitIndexVirtualFile, requestor, toByteArray(), newModificationStamp)
+        GitIndexFileSystemRefresher.getInstance(project).write(this@GitIndexVirtualFile, requestor, toByteArray(), newModificationStamp)
       }
     }
     return VfsUtilCore.outputStreamAddingBOM(outputStream, this)
@@ -89,11 +88,11 @@ class GitIndexVirtualFile(private val project: Project,
     try {
       if (ApplicationManager.getApplication().isDispatchThread) {
         return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ByteArray, IOException> {
-          project.service<GitIndexFileSystemRefresher>().readContentFromGit(root, filePath)
+          GitIndexFileSystemRefresher.getInstance(project).readContentFromGit(root, filePath)
         }, GitBundle.message("stage.vfs.read.process", name), false, project)
       }
       else {
-        return project.service<GitIndexFileSystemRefresher>().readContentFromGit(root, filePath)
+        return GitIndexFileSystemRefresher.getInstance(project).readContentFromGit(root, filePath)
       }
     }
     catch (e: Exception) {
@@ -139,7 +138,7 @@ class GitIndexVirtualFile(private val project: Project,
       val locationHash = StringUtil.unescapeChar(components[0], SEPARATOR)
       val project = ProjectManager.getInstance().openProjects.firstOrNull { it.locationHash == locationHash } ?: return null
       val root = LocalFileSystem.getInstance().findFileByPath(StringUtil.unescapeChar(components[1], SEPARATOR)) ?: return null
-      val filePath = VcsUtil.getFilePath(StringUtil.unescapeChar(components[2], SEPARATOR))
+      val filePath = VcsUtil.getFilePath(StringUtil.unescapeChar(components[2], SEPARATOR), false)
 
       return Triple(project, root, filePath)
     }

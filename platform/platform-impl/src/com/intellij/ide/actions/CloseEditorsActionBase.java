@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class CloseEditorsActionBase extends AnAction implements DumbAware {
+public abstract class CloseEditorsActionBase extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   protected List<Pair<EditorComposite, EditorWindow>> getFilesToClose(@NotNull AnActionEvent event) {
     List<Pair<EditorComposite, EditorWindow>> result = new ArrayList<>();
     DataContext dataContext = event.getDataContext();

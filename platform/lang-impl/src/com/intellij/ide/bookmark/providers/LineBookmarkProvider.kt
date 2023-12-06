@@ -39,9 +39,10 @@ import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 
+@kotlin.Suppress("ExtensionClassShouldBeFinalAndNonPublic")
 class LineBookmarkProvider(private val project: Project) : BookmarkProvider, EditorMouseListener, Simple, AsyncFileListener {
-  override fun getWeight() = Int.MIN_VALUE
-  override fun getProject() = project
+  override fun getWeight(): Int = Int.MIN_VALUE
+  override fun getProject(): Project = project
 
   override fun compare(bookmark1: Bookmark, bookmark2: Bookmark): Int {
     val fileBookmark1 = bookmark1 as? FileBookmark
@@ -93,9 +94,9 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     }
   }
 
-  override fun createBookmark(map: Map<String, String>) = map["url"]?.let { createBookmark(it, StringUtil.parseInt(map["line"], -1)) }
+  override fun createBookmark(map: Map<String, String>): Bookmark? = map["url"]?.let { createBookmark(it, StringUtil.parseInt(map["line"], -1)) }
 
-  override fun createBookmark(context: Any?) = when (context) {
+  override fun createBookmark(context: Any?): Bookmark? = when (context) {
     // below // migrate old bookmarks and favorites
     is com.intellij.ide.bookmarks.Bookmark -> createBookmark(context.file, context.line)
     is DirectoryUrl -> createBookmark(context.url)
@@ -227,14 +228,14 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     }
   }
 
-  companion object {
+  object Util {
     @JvmStatic
     fun find(project: Project): LineBookmarkProvider? = when {
       project.isDisposed -> null
       else -> BookmarkProvider.EP.findExtension(LineBookmarkProvider::class.java, project)
     }
 
-    fun readLineText(bookmark: LineBookmark?) = bookmark?.let { readLineText(it.file, it.line) }
+    fun readLineText(bookmark: LineBookmark?): String? = bookmark?.let { readLineText(it.file, it.line) }
 
     private fun readLineText(file: VirtualFile, line: Int): String? {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null

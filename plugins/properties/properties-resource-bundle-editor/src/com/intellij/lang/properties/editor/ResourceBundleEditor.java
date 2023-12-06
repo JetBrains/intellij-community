@@ -9,7 +9,6 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
@@ -51,10 +50,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.JBSplitter;
-import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
@@ -72,6 +68,8 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -168,7 +166,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
         }
       }
 
-      private boolean arePropertiesEquivalent(@Nullable IProperty oldSelected, @Nullable IProperty newSelected) {
+      private static boolean arePropertiesEquivalent(@Nullable IProperty oldSelected, @Nullable IProperty newSelected) {
         if (oldSelected == newSelected) {
           return true;
         }
@@ -271,7 +269,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     }
     JTree tree = myStructureViewComponent.getTree();
     Object root = tree.getModel().getRoot();
-    if (AbstractTreeUi.isLoadingChildrenFor(root)) {
+    if (isLoadingChildrenFor(root)) {
       boolean isEditorVisible = false;
       for (FileEditor editor : FileEditorManager.getInstance(myProject).getSelectedEditors()) {
         if (editor == this) {
@@ -314,6 +312,18 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
 
   public void flush() {
     myVfsListener.flush();
+  }
+
+  private static boolean isLoadingChildrenFor(Object nodeObject) {
+    if (!(nodeObject instanceof DefaultMutableTreeNode node)) return false;
+    int loadingNodes = 0;
+    for (int i = 0; i < Math.min(node.getChildCount(), 2); i++) {
+      TreeNode child = node.getChildAt(i);
+      if (child instanceof LoadingNode) {
+        loadingNodes++;
+      }
+    }
+    return loadingNodes > 0 && loadingNodes == node.getChildCount();
   }
 
   @Nullable

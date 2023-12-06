@@ -1,99 +1,94 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.longLine;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.settingLink;
 
-public class LongLineInspection extends LocalInspectionTool {
+public final class LongLineInspection extends LocalInspectionTool {
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(
-      settingLink(LangBundle.message("link.label.edit.code.style.settings"),
-                                       CodeStyleSchemesConfigurable.CONFIGURABLE_ID));
+    return pane(settingLink(LangBundle.message("link.label.edit.code.style.settings"), CodeStyleSchemesConfigurable.CONFIGURABLE_ID));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    PsiFile file = holder.getFile();
-    final int codeStyleRightMargin = CodeStyle.getSettings(file).getRightMargin(file.getLanguage());
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+    final PsiFile file = holder.getFile();
+    if (InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file) != null) return PsiElementVisitor.EMPTY_VISITOR;
 
-    final VirtualFile vFile = file.getVirtualFile();
-    if (vFile instanceof VirtualFileWindow) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    if (document == null) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+    final Document document = file.getViewProvider().getDocument();
+    if (document == null) return PsiElementVisitor.EMPTY_VISITOR;
 
+    final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
+    final int codeStyleRightMargin = codeStyleSettings.getRightMargin(file.getLanguage());
+    final int tabSize = codeStyleSettings.getTabSize(file.getFileType());
+    final TextRange restrictRange = session.getRestrictRange();
+    final CharSequence text = document.getImmutableCharSequence();
+    final int lineCount = document.getLineCount();
     return new PsiElementVisitor() {
+
       @Override
-      public void visitElement(@NotNull PsiElement element) {
-        int length = element.getTextLength();
-        if (element.getTextLength() != 0 && element.getFirstChild() == null && !ignoreFor(element)) {
-          int offset = element.getTextOffset();
-          int endOffset = offset + length;
+      public void visitFile(@NotNull PsiFile file) {
+        final TextRange range = restrictRange.intersection(file.getTextRange());
+        if (range == null || range.isEmpty()) return;
 
-          int startLine = document.getLineNumber(offset);
-          if (offset > document.getLineStartOffset(startLine) + codeStyleRightMargin) {
-            startLine++;
+        int line = document.getLineNumber(range.getStartOffset());
+        while (true) {
+          final int lineStart = document.getLineStartOffset(line);
+          if (lineStart > range.getEndOffset()) {
+            break;
           }
-
-          int endLine = document.getLineNumber(endOffset - 1);
-
-          for (int l = startLine; l <= endLine; l++) {
-            int lineEndOffset = document.getLineEndOffset(l);
-            int lineMarginOffset = document.getLineStartOffset(l) + codeStyleRightMargin;
-            if (lineEndOffset > lineMarginOffset) {
-              int highlightingStartOffset = lineMarginOffset - offset;
-              int highlightingEndOffset = Math.min(endOffset, lineEndOffset) - offset;
-              if (highlightingStartOffset < highlightingEndOffset) {
-                TextRange exceedingRange = new TextRange(highlightingStartOffset, highlightingEndOffset);
-                holder.registerProblem(element,
-                                       exceedingRange,
-                                       LangBundle.message("inspection.message.line.longer.than.allowed.by.code.style.columns", codeStyleRightMargin));
+          final int lineEnd = document.getLineEndOffset(line);
+          int count = 0;
+          for (int i = lineStart; i < lineEnd; i++) {
+            count += (text.charAt(i) == '\t') ? tabSize : 1;
+            if (count > codeStyleRightMargin) {
+              String message =
+                LangBundle.message("inspection.message.line.longer.than.allowed.by.code.style.columns", codeStyleRightMargin);
+              final TextRange problemRange = new TextRange(i, lineEnd);
+              final PsiElement element = findElementInRange(file, problemRange);
+              if (!ignoreFor(element)) {
+                holder.registerProblem(element, problemRange.shiftLeft(element.getTextRange().getStartOffset()), message);
               }
+              break;
             }
           }
+          line++;
+          if (line >= lineCount) break;
         }
       }
     };
   }
 
+  @Nullable
+  private static PsiElement findElementInRange(@NotNull PsiFile file, @NotNull TextRange range) {
+    PsiElement left = file.findElementAt(range.getStartOffset());
+    if (left == null) return null;
+    PsiElement right = file.findElementAt(range.getEndOffset() - 1);
+    if (right == null) return null;
+    return PsiTreeUtil.findCommonParent(left, right);
+  }
+
   private static boolean ignoreFor(@Nullable PsiElement element) {
-    return element != null &&
-           LongLineInspectionPolicy.EP_NAME.getExtensionList().stream().anyMatch(policy -> policy.ignoreLongLineFor(element));
+    if (element == null) return true;
+    return ContainerUtil.exists(LongLineInspectionPolicy.EP_NAME.getExtensionList(), policy -> policy.ignoreLongLineFor(element));
   }
 }

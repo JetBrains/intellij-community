@@ -21,11 +21,13 @@ internal open class A : I {
     }
 
     fun bar(i: Int) {}
+
     open fun x() {
         x(1)
     }
 
     fun x(i: Int) {}
+
     fun y() {
         y(1)
     }

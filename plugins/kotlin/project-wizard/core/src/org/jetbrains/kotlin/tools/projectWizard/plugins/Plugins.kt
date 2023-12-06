@@ -20,7 +20,7 @@ object Plugins {
             service<BuildSystemAvailabilityWizardService>()
         }
 
-        buildPersistenceList<Plugin> {
+        buildPersistenceList {
             +StructurePlugin(context)
             if (buildSystemService.isAvailable(BuildSystemType.GradleGroovyDsl))
                 +GroovyDslPlugin(context)

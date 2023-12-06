@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.execution.Executor;
@@ -10,6 +10,8 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -37,7 +39,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class RunConfigurationsSEContributor implements SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> {
+public final class RunConfigurationsSEContributor implements SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> {
 
   private final SearchEverywhereCommandInfo RUN_COMMAND =
     new SearchEverywhereCommandInfo("run", IdeBundle.message("searcheverywhere.runconfigurations.command.run.description"), this);
@@ -269,5 +271,22 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
     }
 
     return executor;
+  }
+
+  public static final class Factory implements SearchEverywhereContributorFactory<ChooseRunConfigurationPopup.ItemWrapper> {
+    @Override
+    public @NotNull SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> createContributor(@NotNull AnActionEvent initEvent) {
+      Project project = initEvent.getProject();
+      Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      Supplier<String> commandSupplier = () -> {
+        SearchEverywhereManager manager = SearchEverywhereManager.getInstance(project);
+        if (!manager.isShown()) return null;
+
+        return manager.getCurrentlyShownUI().getSearchField().getText();
+      };
+
+      return new RunConfigurationsSEContributor(project, contextComponent, commandSupplier);
+    }
+
   }
 }

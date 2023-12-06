@@ -13,19 +13,18 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.function.Supplier
 import javax.swing.JComponent
 
 /**
  * This class provides logic for handling change in EPs and sends the update signals to the listeners.
- * e.g. EPs can be updated when settings dialog is open: in this case we have to update the UI according to the changes.
+ * E.g., EPs can be updated when the settings dialog is open: in this case, we have to update the UI according to the changes.
  */
 @ApiStatus.Experimental
-internal class EpBasedConfigurableGroup(private val project: Project?, delegate: Supplier<ConfigurableGroup>) : NoScroll, MutableConfigurableGroup, Weighted, SearchableConfigurable, Disposable {
-  private val value = ClearableLazyValue.createAtomic(delegate)
+internal class EpBasedConfigurableGroup(private val project: Project?, delegate: () -> ConfigurableGroup) : NoScroll, MutableConfigurableGroup, Weighted, SearchableConfigurable, Disposable {
+  private val value = SynchronizedClearableLazy(delegate)
   private val listeners = CopyOnWriteArrayList<MutableConfigurableGroup.Listener>()
   private val extendableConfigurableWrappers: MutableList<ConfigurableWrapper> = ArrayList()
   private val configurablesWithEpDependencies: MutableList<WithEpDependencies> = ArrayList()
@@ -41,7 +40,7 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
 
   override fun createComponent(): JComponent? = null
 
-  override fun isModified() = false
+  override fun isModified(): Boolean = false
 
   @Synchronized
   override fun addListener(listener: MutableConfigurableGroup.Listener) {

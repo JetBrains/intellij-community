@@ -37,7 +37,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   protected String getFileExtension() {
     return "html";
   }
-  
+
   public void test1() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_KEEP_BLANK_LINES = 0;
@@ -49,7 +49,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     settings.HTML_KEEP_LINE_BREAKS_IN_TEXT = false;
     settings.HTML_KEEP_WHITESPACES = false;
 
-    doTest();                             
+    doTest();
   }
 
   public void test2() throws Exception {
@@ -261,7 +261,11 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   public void testTableformatting() throws Exception {
     doTest();
   }
-                                    
+
+  public void testUnknownScriptFormatting() throws Exception  {
+    doTest();
+  }
+
   public void testHtmlReformatDoesntProduceAssertion() {
     @NonNls String fileText =
       """
@@ -298,7 +302,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
       bodyTag.getTextRange().getEndOffset());
 
   }
-  
+
   public void testInvalidChar() throws Exception {
     doTest();
   }
@@ -435,7 +439,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   protected boolean doCheckDocumentUpdate() {
     return "Performance".equals(getTestName(false));
   }
-  
+
   public void test10809() {
     doTextTest(
       """
@@ -519,7 +523,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
       settings.HTML_ENFORCE_QUOTES = enforce;
     }
   }
-  
+
   public void testWeb18213() {
     doTextTest(
       """

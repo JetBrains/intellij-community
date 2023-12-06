@@ -8,3 +8,4 @@ class B {
             <caret>foo = v
         }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

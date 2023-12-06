@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.ide.IdeCoreBundle
@@ -18,6 +18,7 @@ import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
+import java.util.*
 import java.util.function.Predicate
 import java.util.zip.GZIPOutputStream
 
@@ -181,6 +182,19 @@ class HttpRequestsTest {
     assertThatExceptionOfType(HttpRequests.HttpStatusException::class.java)
       .isThrownBy { HttpRequests.request(url).isReadResponseOnError(true).readString(null) }
       .`is`(statusCode(HttpURLConnection.HTTP_NOT_FOUND))
+  }
+
+  @Test(timeout = 5000)
+  fun customErrorMessage() {
+    val message = UUID.randomUUID().toString()
+    server.createContext("/") { ex ->
+      ex.responseHeaders.add("error-message", message)
+      ex.sendResponseHeaders(HttpRequests.CUSTOM_ERROR_CODE, 0)
+      ex.close()
+    }
+    assertThatExceptionOfType(HttpRequests.HttpStatusException::class.java)
+      .isThrownBy { HttpRequests.request(url).readString(null) }
+      .withMessage(message)
   }
 
   private fun statusCode(expected: Int) =

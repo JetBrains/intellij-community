@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.LimitHistoryCheck.VcsFileHistoryLimitReachedException;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
 
@@ -128,7 +128,7 @@ public final class VcsCachingHistory {
       return new HistoryPartnerProxy(partner, session -> {
         if (session == null) return;
         FilePath correctedPath = cacheableFactory.getUsedFilePath(session);
-        myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), cacheableFactory, true);
+        myVcsHistoryCache.putSession(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), cacheableFactory, true);
       });
     }
     return partner;
@@ -142,7 +142,7 @@ public final class VcsCachingHistory {
     if (indicator != null) {
       indicator.setText2(VcsBundle.message("file.history.checking.last.revision.process"));
     }
-    VcsAbstractHistorySession cached = myVcsHistoryCache.getFull(filePath, vcsKey, cacheableFactory);
+    VcsAbstractHistorySession cached = myVcsHistoryCache.getSession(filePath, vcsKey, cacheableFactory, false);
     if (cached == null || cached.getRevisionList().isEmpty()) return null;
 
     FilePath correctedFilePath = cacheableFactory.getUsedFilePath(cached);
@@ -198,9 +198,9 @@ public final class VcsCachingHistory {
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsBackgroundableActions actionKey,
-                                         @NotNull Consumer<? super VcsHistorySession> consumer) {
+                                         @NotNull com.intellij.util.Consumer<? super VcsHistorySession> consumer) {
     VcsCachingHistory history = new VcsCachingHistory(vcs, Objects.requireNonNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
-    CollectingHistoryPartner partner = new CollectingHistoryPartner(vcs.getProject(), filePath, consumer);
+    CollectingHistoryPartner partner = new CollectingHistoryPartner(vcs.getProject(), filePath, consumer::consume);
     BackgroundableActionLock lock = getHistoryLock(vcs, actionKey, filePath, null);
     history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, true);
   }
@@ -235,7 +235,7 @@ public final class VcsCachingHistory {
 
     VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = history.getCacheableFactory();
     if (cacheableFactory != null) {
-      VcsAbstractHistorySession session = history.getHistoryCache().getFull(filePath, vcs.getKeyInstanceMethod(), cacheableFactory);
+      VcsAbstractHistorySession session = history.getHistoryCache().getSession(filePath, vcs.getKeyInstanceMethod(), cacheableFactory, false);
       if (session != null) {
         ProgressManager.getInstance().run(new Task.Backgroundable(vcs.getProject(),
                                                                   VcsBundle.message("loading.file.history.progress"),
@@ -306,7 +306,7 @@ public final class VcsCachingHistory {
     @Override
     public void finished() {
       if (mySession != null) {
-        ApplicationManager.getApplication().invokeLater(() -> myContinuation.consume(mySession), ModalityState.defaultModalityState());
+        ApplicationManager.getApplication().invokeLater(() -> myContinuation.accept(mySession), ModalityState.defaultModalityState());
       }
     }
   }
@@ -341,7 +341,7 @@ public final class VcsCachingHistory {
     @Override
     public void finished() {
       myPartner.finished();
-      myFinish.consume(myCopy);
+      myFinish.accept(myCopy);
     }
   }
 }

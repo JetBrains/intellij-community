@@ -7,8 +7,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.Query
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
@@ -31,6 +33,14 @@ abstract class AbstractDirectKotlinInheritorsSearcherTest : AbstractKotlinSearch
 
     override fun searchJavaClass(psiClass: PsiClass): Query<PsiElement> {
         return ClassInheritorsSearch.search(psiClass, false).mapping { it as PsiElement }
+    }
+
+    override fun searchJavaMethod(psiMethod: PsiMethod): Query<PsiElement> {
+        //with only direct inheritance, the results are unstable:
+        //KotlinOverridingMethodsWithFlexibleTypesSearcher does the search in addition to the normal JavaOverridingMethodsSearcher
+        //thus it happens that sometimes it founds another inheritor first,
+        // and then 2 results are found in one run and in another run we find only one
+        return OverridingMethodsSearch.search(psiMethod).mapping { it as PsiElement }
     }
 
     /**

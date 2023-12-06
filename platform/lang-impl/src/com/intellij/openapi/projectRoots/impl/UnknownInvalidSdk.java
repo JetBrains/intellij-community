@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,10 +6,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
@@ -20,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnknownInvalidSdk implements UnknownSdk {
+public final class UnknownInvalidSdk implements UnknownSdk {
   private static final Logger LOG = Logger.getInstance(UnknownInvalidSdk.class);
 
   @NotNull final Sdk mySdk;
@@ -82,7 +79,7 @@ public class UnknownInvalidSdk implements UnknownSdk {
 
     //for tests
     //noinspection TestOnlyProblems
-    if (ApplicationManager.getApplication().isUnitTestMode() && sdk instanceof MockSdk) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && MockSdkExtentionKt.isMockSdk(sdk)) {
       return null;
     }
 

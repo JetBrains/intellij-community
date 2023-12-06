@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -23,11 +24,12 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AppUIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownUsageCollector.Companion.RUNNER_EXECUTED
+import org.intellij.plugins.markdown.MarkdownUsageCollector.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
+import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
@@ -42,11 +44,13 @@ internal class CommandRunnerExtension(
   private val hash2Cmd = mutableMapOf<String, String>()
 
   init {
-    panel.browserPipe?.subscribe(RUN_LINE_EVENT, this::runLine)
-    panel.browserPipe?.subscribe(RUN_BLOCK_EVENT, this::runBlock)
+    val runLineHandler = createRunLineHandler()
+    val runBlockHandler = createRunBlockHandler()
+    panel.browserPipe?.subscribe(RUN_LINE_EVENT, runLineHandler)
+    panel.browserPipe?.subscribe(RUN_BLOCK_EVENT, runBlockHandler)
     Disposer.register(this) {
-      panel.browserPipe?.removeSubscription(RUN_LINE_EVENT, ::runLine)
-      panel.browserPipe?.removeSubscription(RUN_BLOCK_EVENT, ::runBlock)
+      panel.browserPipe?.removeSubscription(RUN_LINE_EVENT, runLineHandler)
+      panel.browserPipe?.removeSubscription(RUN_BLOCK_EVENT, runBlockHandler)
     }
   }
 
@@ -107,6 +111,8 @@ internal class CommandRunnerExtension(
       else return null
     }
     catch (e: Exception) {
+      if (e is ControlFlowException) throw e
+
       LOG.warn(e)
       return null
     }
@@ -147,16 +153,18 @@ internal class CommandRunnerExtension(
     }
   }
 
-
-  private fun runLine(encodedLine: String) {
-    val executorId = encodedLine.substringBefore(":")
-    val cmdHash: String = encodedLine.substringAfter(":")
-    val command = hash2Cmd[cmdHash]
-    if (command == null) {
-      LOG.error("Command index $cmdHash not found. Please attach .md file to error report. commandCache = ${hash2Cmd}")
-      return
+  private fun createRunLineHandler() = object : BrowserPipe.Handler {
+    override fun processMessageReceived(data: String): Boolean {
+      val executorId = data.substringBefore(":")
+      val cmdHash: String = data.substringAfter(":")
+      val command = hash2Cmd[cmdHash]
+      if (command == null) {
+        LOG.error("Command index $cmdHash not found. Please attach .md file to error report. commandCache = ${hash2Cmd}")
+        return true
+      }
+      executeLineCommand(command, executorId)
+      return false
     }
-    executeLineCommand(command, executorId)
   }
 
   private fun executeLineCommand(command: String, executorId: String) {
@@ -183,51 +191,55 @@ internal class CommandRunnerExtension(
     }
   }
 
-  private fun runBlock(encodedLine: String) {
-    val args = encodedLine.split(":")
-    val executorId = args[0]
-    val cmdHash: String = args[1]
-    val command = hash2Cmd[cmdHash]
-    val firstLineCommand = hash2Cmd[args[2]]
-    if (command == null) {
-      LOG.error("Command hash $cmdHash not found. Please attach .md file to error report.\n${hash2Cmd}")
-      return
-    }
-    val trimmedCmd = trimPrompt(command)
-    if (firstLineCommand == null) {
-      ApplicationManager.getApplication().invokeLater {
-        executeBlock(trimmedCmd, executorId)
+  private fun createRunBlockHandler() = object : BrowserPipe.Handler{
+    override fun processMessageReceived(data: String): Boolean {
+      val args = data.split(":")
+      val executorId = args[0]
+      val cmdHash: String = args[1]
+      val command = hash2Cmd[cmdHash]
+      val firstLineCommand = hash2Cmd[args[2]]
+      if (command == null) {
+        LOG.error("Command hash $cmdHash not found. Please attach .md file to error report.\n${hash2Cmd}")
+        return true
       }
-      return
-    }
-    val x = args[3].toInt()
-    val y = args[4].toInt()
-
-    val actionManager = ActionManager.getInstance()
-    val actionGroup = DefaultActionGroup()
-
-    val runBlockAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.block") },
-                                           AllIcons.RunConfigurations.TestState.Run_run) {
-      override fun actionPerformed(e: AnActionEvent) {
+      val trimmedCmd = trimPrompt(command)
+      if (firstLineCommand == null) {
         ApplicationManager.getApplication().invokeLater {
           executeBlock(trimmedCmd, executorId)
         }
+        return false
       }
-    }
-    val runLineAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.line") },
-                                           AllIcons.RunConfigurations.TestState.Run) {
-      override fun actionPerformed(e: AnActionEvent) {
-        ApplicationManager.getApplication().invokeLater {
-          executeLineCommand(firstLineCommand, executorId)
+      val x = args[3].toInt()
+      val y = args[4].toInt()
+
+      val actionManager = ActionManager.getInstance()
+      val actionGroup = DefaultActionGroup()
+
+      val runBlockAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.block") },
+                                             AllIcons.RunConfigurations.TestState.Run_run) {
+        override fun actionPerformed(e: AnActionEvent) {
+          ApplicationManager.getApplication().invokeLater {
+            executeBlock(trimmedCmd, executorId)
+          }
         }
       }
-    }
+      val runLineAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.line") },
+                                            AllIcons.RunConfigurations.TestState.Run) {
+        override fun actionPerformed(e: AnActionEvent) {
+          ApplicationManager.getApplication().invokeLater {
+            executeLineCommand(firstLineCommand, executorId)
+          }
+        }
+      }
 
-    actionGroup.add(runBlockAction)
-    actionGroup.add(runLineAction)
-    AppUIUtil.invokeOnEdt {
-      actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup)
-        .component.show(panel.component, x, y)
+      actionGroup.add(runBlockAction)
+      actionGroup.add(runLineAction)
+      AppUIUtil.invokeOnEdt {
+        actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup)
+          .component.show(panel.component, x, y)
+      }
+
+      return false
     }
   }
 

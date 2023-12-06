@@ -7,6 +7,8 @@ import org.intellij.markdown.parser.constraints.MarkdownConstraints
 import org.intellij.markdown.parser.markerblocks.MarkerBlock
 import org.intellij.markdown.parser.markerblocks.MarkerBlockImpl
 import org.intellij.markdown.parser.sequentialparsers.SequentialParser
+import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider.Companion.isTomlDelimiters
+import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider.Companion.isYamlDelimiters
 
 internal class FrontMatterHeaderBlock(
   private val startPosition: LookaheadText.Position,
@@ -34,7 +36,7 @@ internal class FrontMatterHeaderBlock(
     if (shouldClose) {
       return MarkerBlock.ProcessingResult.DEFAULT
     }
-    if (!isDelimiterLine(position.currentLine)) {
+    if (!isClosingDelimiter(position.currentLine)) {
       lastContentPosition = position
       return MarkerBlock.ProcessingResult.CANCEL
     }
@@ -54,8 +56,8 @@ internal class FrontMatterHeaderBlock(
     return MarkerBlock.ProcessingResult.CANCEL
   }
 
-  private fun isDelimiterLine(line: String): Boolean {
-    return FrontMatterHeaderMarkerProvider.isDelimiterLine(line) && line == openingDelimiterText
+  private fun isClosingDelimiter(line: String): Boolean {
+    return isYamlDelimiters(openingDelimiterText, line) || isTomlDelimiters(openingDelimiterText, line)
   }
 
   override fun getDefaultAction(): MarkerBlock.ClosingAction {

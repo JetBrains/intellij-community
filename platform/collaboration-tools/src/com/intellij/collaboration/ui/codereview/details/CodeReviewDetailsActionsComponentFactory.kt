@@ -1,27 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details
 
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.util.bindContent
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewState
+import com.intellij.collaboration.ui.util.bindContentIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import java.awt.event.ActionListener
 import javax.swing.Action
 import javax.swing.JButton
@@ -30,57 +28,39 @@ import javax.swing.JComponent
 object CodeReviewDetailsActionsComponentFactory {
   private const val BUTTONS_GAP = 10
 
-  fun <Reviewer> createActionsForAuthor(
+  fun <Reviewer> createRequestReviewButton(
     scope: CoroutineScope,
     reviewState: Flow<ReviewState>,
     requestedReviewers: Flow<List<Reviewer>>,
-    reviewActions: CodeReviewActions,
-    moreActionsGroup: DefaultActionGroup
+    requestReviewAction: Action
   ): JComponent {
-    val requestReviewButton = JButton(reviewActions.requestReviewAction).apply {
+    return JButton(requestReviewAction).apply {
       isOpaque = false
-      bindVisibility(scope, combine(reviewState, requestedReviewers) { reviewState, requestedReviewers ->
+      bindVisibilityIn(scope, combine(reviewState, requestedReviewers) { reviewState, requestedReviewers ->
         reviewState == ReviewState.NEED_REVIEW || (reviewState == ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isNotEmpty())
       })
     }
-    val reRequestReviewButton = JButton(reviewActions.reRequestReviewAction).apply {
+  }
+
+  fun <Reviewer> createReRequestReviewButton(
+    scope: CoroutineScope,
+    reviewState: Flow<ReviewState>,
+    requestedReviewers: Flow<List<Reviewer>>,
+    reRequestReviewAction: Action
+  ): JComponent {
+    return JButton(reRequestReviewAction).apply {
       isOpaque = false
-      bindVisibility(scope, combine(reviewState, requestedReviewers) { reviewState, requestedReviewers ->
+      bindVisibilityIn(scope, combine(reviewState, requestedReviewers) { reviewState, requestedReviewers ->
         reviewState == ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isEmpty()
       })
     }
-    val mergeReviewButton = JBOptionButton(
-      reviewActions.mergeReviewAction,
-      arrayOf(reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
-    ).apply {
-      bindVisibility(scope, reviewState.map { it == ReviewState.ACCEPTED })
-    }
-    val moreActionsButton = createMoreButton(moreActionsGroup)
-    scope.launch(start = CoroutineStart.UNDISPATCHED) {
-      reviewState.collect { reviewState ->
-        moreActionsGroup.removeAll()
-        when (reviewState) {
-          ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
-            moreActionsGroup.add(createMergeActionGroup(reviewActions))
-            moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
-          }
-          ReviewState.ACCEPTED -> {
-            moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())
-            moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
-          }
-        }
-      }
-    }
-
-    return HorizontalListPanel(BUTTONS_GAP).apply {
-      add(requestReviewButton)
-      add(reRequestReviewButton)
-      add(mergeReviewButton)
-      add(moreActionsButton)
-    }
   }
 
-  fun createActionsForGuest(reviewActions: CodeReviewActions, moreActionsGroup: DefaultActionGroup): JComponent {
+  fun createActionsForGuest(
+    reviewActions: CodeReviewActions,
+    moreActionsGroup: DefaultActionGroup,
+    mergeActionsCreator: (CodeReviewActions) -> ActionGroup
+  ): JComponent {
     val setMyselfAsReviewerButton = JButton(reviewActions.setMyselfAsReviewerAction).apply {
       isOpaque = false
     }
@@ -88,7 +68,7 @@ object CodeReviewDetailsActionsComponentFactory {
     moreActionsGroup.apply {
       removeAll()
       add(reviewActions.requestReviewAction.toAnAction())
-      add(createMergeActionGroup(reviewActions))
+      add(mergeActionsCreator(reviewActions))
       add(reviewActions.closeReviewAction.toAnAction())
     }
 
@@ -100,19 +80,19 @@ object CodeReviewDetailsActionsComponentFactory {
 
   fun createActionsComponent(
     scope: CoroutineScope,
-    requestState: Flow<RequestState>,
+    reviewRequestState: Flow<ReviewRequestState>,
     openedStatePanel: JComponent,
     mergedStatePanel: JComponent,
     closedStatePanel: JComponent,
     draftedStatePanel: JComponent
   ): JComponent {
     return Wrapper().apply {
-      bindContent(scope, requestState.map { requestState ->
+      bindContentIn(scope, reviewRequestState.map { requestState ->
         when (requestState) {
-          RequestState.OPENED -> openedStatePanel
-          RequestState.MERGED -> mergedStatePanel
-          RequestState.CLOSED -> closedStatePanel
-          RequestState.DRAFT -> draftedStatePanel
+          ReviewRequestState.OPENED -> openedStatePanel
+          ReviewRequestState.MERGED -> mergedStatePanel
+          ReviewRequestState.CLOSED -> closedStatePanel
+          ReviewRequestState.DRAFT -> draftedStatePanel
         }
       })
     }
@@ -147,14 +127,6 @@ object CodeReviewDetailsActionsComponentFactory {
         val point = RelativePoint.getSouthWestOf(parentComponent).originalPoint
         popupMenu.component.show(parentComponent, point.x, point.y + JBUIScale.scale(8))
       }
-    }
-  }
-
-  fun createMergeActionGroup(reviewActions: CodeReviewActions): ActionGroup {
-    return DefaultActionGroup(CollaborationToolsBundle.message("review.details.action.merge.group"), true).apply {
-      add(reviewActions.mergeReviewAction.toAnAction())
-      add(reviewActions.mergeSquashReviewAction.toAnAction())
-      add(reviewActions.rebaseReviewAction.toAnAction())
     }
   }
 

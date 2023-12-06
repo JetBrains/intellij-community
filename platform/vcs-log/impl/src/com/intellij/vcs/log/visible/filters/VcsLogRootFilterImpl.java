@@ -9,6 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+/**
+ * @see VcsLogFilterObject#fromRoot(VirtualFile)
+ * @see VcsLogFilterObject#fromRoots(Collection)
+ */
 class VcsLogRootFilterImpl implements VcsLogRootFilter {
   private final @NotNull Collection<VirtualFile> myRoots;
 

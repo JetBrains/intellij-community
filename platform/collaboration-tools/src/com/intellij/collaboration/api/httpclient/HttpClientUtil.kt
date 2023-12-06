@@ -5,12 +5,17 @@ import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_GZIP
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_HEADER
 import com.intellij.collaboration.api.logName
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
 import java.io.InputStream
 import java.io.Reader
 import java.io.StringReader
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.net.http.HttpResponse.BodyHandler
 import java.net.http.HttpResponse.ResponseInfo
 import java.nio.ByteBuffer
 import java.util.concurrent.Flow
@@ -18,11 +23,14 @@ import java.util.zip.GZIPInputStream
 
 object HttpClientUtil {
 
+  const val ACCEPT_ENCODING_HEADER = "Accept-Encoding"
   const val CONTENT_ENCODING_HEADER = "Content-Encoding"
   const val CONTENT_ENCODING_GZIP = "gzip"
 
   const val CONTENT_TYPE_HEADER = "Content-Type"
   const val CONTENT_TYPE_JSON = "application/json"
+
+  const val USER_AGENT_HEADER = "User-Agent"
 
   /**
    * Checks the status code of the response and throws [HttpStatusErrorException] if status code is not a successful one
@@ -66,6 +74,42 @@ object HttpClientUtil {
                                          reader: (Reader) -> T): T {
     checkStatusCodeWithLogging(logger, request.logName(), responseInfo.statusCode(), bodyStream)
     return responseReaderWithLogging(logger, request.logName(), bodyStream).use(reader)
+  }
+
+  /**
+   * Shorthand for creating a body handler that inflates the incoming response body if it is zipped, checks that
+   * the status code is OK (throws [HttpStatusErrorException] otherwise), and applies the given function to read
+   * the result body and map it to some value.
+   *
+   * @param logger The logger to log non-OK status codes in.
+   * @param request The request performed, for logging purposes.
+   * @param mapToResult Maps a response to a result value. Exceptions thrown from this function are not logged by
+   * [inflateAndReadWithErrorHandlingAndLogging].
+   */
+  fun <T> inflateAndReadWithErrorHandlingAndLogging(
+    logger: Logger,
+    request: HttpRequest,
+    mapToResult: (Reader, ResponseInfo) -> T
+  ): BodyHandler<T> = InflatedStreamReadingBodyHandler { responseInfo, bodyStream ->
+    readSuccessResponseWithLogging(logger, request, responseInfo, bodyStream) { reader ->
+      mapToResult(reader, responseInfo)
+    }
+  }
+
+  /**
+   * Build the User-Agent header value for the [agentName]
+   * Append product, java and OS data
+   */
+  fun getUserAgentValue(agentName: String): String {
+    val ideName = ApplicationNamesInfo.getInstance().fullProductName.replace(' ', '-')
+    val ideBuild =
+      if (ApplicationManager.getApplication().isUnitTestMode) "test"
+      else ApplicationInfo.getInstance().build.asString()
+    val java = "JRE " + SystemInfo.JAVA_RUNTIME_VERSION
+    val os = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
+    val arch = SystemInfo.OS_ARCH
+
+    return "$agentName $ideName/$ideBuild ($java; $os; $arch)"
   }
 }
 

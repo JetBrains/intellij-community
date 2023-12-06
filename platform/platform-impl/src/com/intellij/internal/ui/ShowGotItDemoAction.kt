@@ -2,9 +2,11 @@
 package com.intellij.internal.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -13,16 +15,19 @@ import com.intellij.openapi.ui.popup.Balloon.Position
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.GotItTextBuilder
 import com.intellij.ui.GotItTooltip
+import com.intellij.ui.WebAnimationUtils
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.not
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
+import java.io.File
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import javax.swing.ComboBoxModel
@@ -47,20 +52,24 @@ class ShowGotItDemoAction : DumbAwareAction() {
 
   private class GotItConfigurationDialog(private val project: Project, private val component: JComponent) : DialogWrapper(project, false) {
     private var text: String = """
-      This is Debug tool window. 
+      This is the Debug tool window. Code element example: <code>cLodlpe ja</code>.
       Here, you can use various actions like <shortcut actionId="GotoAction"/>,
       <b>Resume</b> <icon src="AllIcons.Actions.Resume"/>, 
       and <b>Stop</b> <icon src="AllIcons.Actions.Suspend"/>.""".trimIndent()
     private var addInlineLinks: Boolean = true
 
+    private var showImageOrLottie: Boolean = false
     private var showImage: Boolean = true
     private var imageWidth: Int = JBUI.scale(248)
     private var imageHeight: Int = JBUI.scale(132)
+    private var showLottieAnimation: Boolean = false
+    private var lottieJsonPath: String = PropertiesComponent.getInstance().getValue(LAST_OPENED_LOTTIE_FILE, "")
+    private var withImageBorder: Boolean = true
 
     private var showIconOrStep: Boolean = true
     private var showIcon: Boolean = true
     private var showStepNumber: Boolean = false
-    private var stepNumber: Int = 1
+    private var stepText: String = "01"
 
     private var showHeader: Boolean = true
     private var headerText: String = "Some GotIt tooltip header"
@@ -72,6 +81,12 @@ class ShowGotItDemoAction : DumbAwareAction() {
     private var browserLinkText: String = "Open IDE web help"
 
     private var showButton: Boolean = true
+
+    private var showSecondaryButton: Boolean = false
+    private var secondaryButtonText: String = "Skip All"
+
+    private var useContrastColors: Boolean = false
+    private var useContrastButton: Boolean = false
 
     private val positionsModel: ComboBoxModel<Position> = DefaultComboBoxModel(Balloon.Position.values())
     private val position: Position
@@ -90,8 +105,19 @@ class ShowGotItDemoAction : DumbAwareAction() {
           .bindText(::text)
           .align(AlignX.FILL)
       }
+      lateinit var contrastColorsCheckbox: Cell<JBCheckBox>
       row {
-        checkBox("Add inline links to text").bindSelected(::addInlineLinks)
+        contrastColorsCheckbox = checkBox("Use contrast colors").bindSelected(::useContrastColors)
+      }
+      row {
+        checkBox("Use contrast button")
+          .bindSelected(::useContrastButton)
+          .enabledIf(contrastColorsCheckbox.selected.not())
+      }
+      row {
+        checkBox("Add inline links to text")
+          .bindSelected(::addInlineLinks)
+          .enabledIf(contrastColorsCheckbox.selected.not())
       }
       row {
         val checkbox = checkBox("Header:").bindSelected(::showHeader)
@@ -100,17 +126,38 @@ class ShowGotItDemoAction : DumbAwareAction() {
           .enabledIf(checkbox.selected)
           .align(AlignX.FILL)
       }
+
+      lateinit var imageOrLottieCheckbox: Cell<JBCheckBox>
       row {
-        val checkbox = checkBox("Image").bindSelected(::showImage)
-        intTextField(IntRange(JBUI.scale(100), JBUI.scale(500)))
-          .label("Width:")
-          .bindIntText(::imageWidth)
-          .enabledIf(checkbox.selected)
-        intTextField(IntRange(JBUI.scale(50), JBUI.scale(300)))
-          .label("Height:")
-          .bindIntText(::imageHeight)
-          .enabledIf(checkbox.selected)
+        imageOrLottieCheckbox = checkBox("Image or Lottie animation:").bindSelected(::showImageOrLottie)
       }
+      buttonsGroup(indent = true) {
+        row {
+          checkBox("With border")
+            .bindSelected(::withImageBorder)
+            .enabledIf(imageOrLottieCheckbox.selected)
+        }
+        row {
+          val button = radioButton("Image").bindSelected(::showImage)
+          intTextField(IntRange(JBUI.scale(100), JBUI.scale(500)))
+            .label("Width:")
+            .bindIntText(::imageWidth)
+            .enabledIf(button.selected)
+          intTextField(IntRange(JBUI.scale(50), JBUI.scale(300)))
+            .label("Height:")
+            .bindIntText(::imageHeight)
+            .enabledIf(button.selected)
+        }
+        row {
+          val button = radioButton("Lottie").bindSelected(::showLottieAnimation)
+          textFieldWithBrowseButton(
+            project = project,
+            fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("json")
+          ).bindText(::lottieJsonPath)
+            .align(AlignX.FILL)
+            .enabledIf(button.selected)
+        }
+      }.enabledIf(imageOrLottieCheckbox.selected)
 
       lateinit var iconOrStepCheckbox: Cell<JBCheckBox>
       row {
@@ -121,8 +168,8 @@ class ShowGotItDemoAction : DumbAwareAction() {
         row {
           val button = radioButton("Step number:")
             .bindSelected(::showStepNumber)
-          intTextField(IntRange(1, 99))
-            .bindIntText(::stepNumber)
+          textField()
+            .bindText(::stepText)
             .enabledIf(button.selected)
         }
         row {
@@ -155,9 +202,17 @@ class ShowGotItDemoAction : DumbAwareAction() {
         }
       }.enabledIf(linkCheckbox.selected)
 
+      lateinit var buttonCheckbox: Cell<JBCheckBox>
       row {
-        checkBox("GotIt button").bindSelected(::showButton)
+        buttonCheckbox = checkBox("GotIt button").bindSelected(::showButton)
       }
+      row {
+        val checkbox = checkBox("Secondary button:").bindSelected(::showSecondaryButton)
+        textField()
+          .bindText(::secondaryButtonText)
+          .enabledIf(checkbox.selected)
+          .align(AlignX.FILL)
+      }.enabledIf(buttonCheckbox.selected)
       row("Position:") {
         comboBox(positionsModel)
       }
@@ -181,7 +236,7 @@ class ShowGotItDemoAction : DumbAwareAction() {
       val image = createTestImage()
 
       val textSupplier: GotItTextBuilder.() -> String = {
-        if (addInlineLinks) buildString {
+        if (addInlineLinks && !useContrastColors) buildString {
           append(text)
           append(" ")
           append(link("Click") { ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.show() })
@@ -192,19 +247,35 @@ class ShowGotItDemoAction : DumbAwareAction() {
         else text
       }
 
-      val randomId = Random(System.currentTimeMillis()).nextBytes(32).toString(StandardCharsets.UTF_8)
-      val gotIt = GotItTooltip(randomId, textSupplier, Disposer.newDisposable())
-      if (showImage) gotIt.withImage(image)
-      if (showIconOrStep && showIcon) gotIt.withIcon(icon)
-      if (showIconOrStep && showStepNumber) gotIt.withStepNumber(stepNumber)
-      if (showHeader) gotIt.withHeader(headerText)
+      val gotItBuilder = GotItComponentBuilder(textSupplier)
+      if (showImageOrLottie && showImage) gotItBuilder.withImage(image, withImageBorder)
+      if (showImageOrLottie && showLottieAnimation && lottieJsonPath.isNotEmpty()) {
+        val lottieJson = File(lottieJsonPath).readText()
+        val htmlPage = WebAnimationUtils.createLottieAnimationPage(lottieJson, lottieScript = null,
+                                                                   JBUI.CurrentTheme.GotItTooltip.animationBackground(false))
+        val size = WebAnimationUtils.getLottieImageSize(lottieJson)
+        gotItBuilder.withBrowserPage(htmlPage, size, withImageBorder)
+        PropertiesComponent.getInstance().setValue(LAST_OPENED_LOTTIE_FILE, lottieJsonPath)
+      }
+      if (showIconOrStep && showIcon) gotItBuilder.withIcon(icon)
+      if (showIconOrStep && showStepNumber) gotItBuilder.withStepNumber(stepText)
+      if (showHeader) gotItBuilder.withHeader(headerText)
       if (showLink && actionLink) {
-        gotIt.withLink(actionLinkText) { ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.show() }
+        gotItBuilder.withLink(actionLinkText) { ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.show() }
       }
       if (showLink && browserLink) {
-        gotIt.withBrowserLink(browserLinkText, URL("https://www.jetbrains.com/help/idea/getting-started.html"))
+        gotItBuilder.withBrowserLink(browserLinkText, URL("https://www.jetbrains.com/help/idea/getting-started.html"))
       }
-      if (!showButton) gotIt.withTimeout(DateFormatUtil.HOUR.toInt())
+      gotItBuilder.showButton(showButton)
+      if (showButton && showSecondaryButton) {
+        gotItBuilder.withSecondaryButton(secondaryButtonText) {}
+      }
+
+      gotItBuilder.withContrastColors(useContrastColors)
+        .withContrastButton(useContrastButton)
+
+      val randomId = Random(System.currentTimeMillis()).nextBytes(32).toString(StandardCharsets.UTF_8)
+      val gotIt = GotItTooltip(randomId, gotItBuilder, Disposer.newDisposable())
       gotIt.withPosition(position)
       return gotIt
     }
@@ -232,6 +303,10 @@ class ShowGotItDemoAction : DumbAwareAction() {
           }
         }
       }
+    }
+
+    companion object {
+      private const val LAST_OPENED_LOTTIE_FILE = "LAST_OPENED_LOTTIE_FILE"
     }
   }
 }

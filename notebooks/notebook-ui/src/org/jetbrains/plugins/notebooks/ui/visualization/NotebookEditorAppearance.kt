@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.notebooks.ui.visualization
 
+import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Key
+import com.intellij.ui.JBColor
+import com.intellij.ui.NewUiValue
 import java.awt.Color
 
 
@@ -13,6 +16,19 @@ import java.awt.Color
 interface NotebookEditorAppearance: NotebookEditorAppearanceColors, NotebookEditorAppearanceSizes, NotebookEditorAppearanceFlags {
   companion object {
     val NOTEBOOK_APPEARANCE_KEY = Key.create<NotebookEditorAppearance>(NotebookEditorAppearance::class.java.name)
+    val CODE_CELL_BACKGROUND = ColorKey.createColorKey("JUPYTER.CODE_CELL_BACKGROUND")
+    internal val CODE_CELL_BACKGROUND_NEW_UI = ColorKey.createColorKey("JUPYTER.CODE_CELL_BACKGROUND_NEW_UI")
+  }
+
+  fun getCaretRowColor(scheme: EditorColorsScheme): Color?
+
+  fun getCodeCellBackgroundColorKey(): ColorKey {
+    return if (NewUiValue.isEnabled()) {
+      CODE_CELL_BACKGROUND_NEW_UI
+    }
+    else {
+      CODE_CELL_BACKGROUND
+    }
   }
 }
 
@@ -51,17 +67,17 @@ interface NotebookEditorAppearanceSizes {
 interface NotebookEditorAppearanceColors {
   // TODO Sort everything lexicographically.
 
-  fun getCodeCellBackground(scheme: EditorColorsScheme): Color? = null
+  fun getCodeCellBackground(scheme: EditorColorsScheme): Color? = scheme.defaultBackground
   fun getGutterInputExecutionCountForegroundColor(scheme: EditorColorsScheme): Color? = null
   fun getGutterOutputExecutionCountForegroundColor(scheme: EditorColorsScheme): Color? = null
-  fun getProgressStatusRunningColor(scheme: EditorColorsScheme): Color = Color.BLUE
+  fun getProgressStatusRunningColor(scheme: EditorColorsScheme): Color = JBColor.BLUE
   fun getInlayBackgroundColor(scheme: EditorColorsScheme): Color? = null
 
-  fun getSausageButtonAppearanceBackgroundColor(scheme: EditorColorsScheme): Color = Color.WHITE
-  fun getSausageButtonAppearanceForegroundColor(scheme: EditorColorsScheme): Color = Color.BLACK
+  fun getSausageButtonAppearanceBackgroundColor(scheme: EditorColorsScheme): Color = JBColor.WHITE
+  fun getSausageButtonAppearanceForegroundColor(scheme: EditorColorsScheme): Color = JBColor.BLACK
 
-  fun getSausageButtonShortcutColor(scheme: EditorColorsScheme): Color = Color.GRAY
-  fun getSausageButtonBorderColor(scheme: EditorColorsScheme): Color = Color.GRAY
+  fun getSausageButtonShortcutColor(scheme: EditorColorsScheme): Color = JBColor.GRAY
+  fun getSausageButtonBorderColor(scheme: EditorColorsScheme): Color = JBColor.GRAY
 
   /**
    * Takes lines of the cell and returns a color for the stripe that will be drawn behind the folding markers.
@@ -88,11 +104,11 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val EDIT_MODE_CELL_LEFT_LINE_WIDTH = 2
   override val CODE_AND_CODE_TOP_GRAY_HEIGHT = 6
   override val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT = 6
-  override val INNER_CELL_TOOLBAR_HEIGHT = 25
+  override val INNER_CELL_TOOLBAR_HEIGHT = 24
   override val CELL_BORDER_HEIGHT = 20
   override val SPACER_HEIGHT = CELL_BORDER_HEIGHT / 2
   override val EXECUTION_TIME_HEIGHT = SPACER_HEIGHT + 6
-  override val SPACE_BELOW_CELL_TOOLBAR = 12
+  override val SPACE_BELOW_CELL_TOOLBAR = 4
   override val CELL_TOOLBAR_TOTAL_HEIGHT = INNER_CELL_TOOLBAR_HEIGHT + SPACE_BELOW_CELL_TOOLBAR
   override val PROGRESS_STATUS_HEIGHT = 2
 

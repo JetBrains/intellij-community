@@ -19,7 +19,7 @@ fun showEapSurveyNotification(project: Project) {
 
     val compilerVersion = KotlinPluginLayout.ideCompilerVersion
     if (compilerVersion.kotlinVersion != KotlinVersion(major = 1, minor = 7, patch = 0)) return
-    if (compilerVersion.kind != IdeKotlinVersion.Kind.Beta(number = 1)) return
+    if (compilerVersion.kind != IdeKotlinVersion.Kind.Beta(number = 1) && compilerVersion.kind != IdeKotlinVersion.Kind.Beta(number = null)) return
 
     RunOnceUtil.runOnceForApp("kotlin.eap.survey.was.shown.once") {
         @Suppress("DialogTitleCapitalization")

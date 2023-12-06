@@ -1,1 +1,1 @@
-KtNamedFunction: foo
+KtNamedFunction: B

@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.DocumentAdapter;
@@ -22,19 +21,14 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.MavenVersionSupportUtil;
 import org.jetbrains.idea.maven.config.MavenConfig;
-import org.jetbrains.idea.maven.execution.MavenRCSettingsWatcher;
-import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
@@ -51,7 +45,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObservable {
+import static org.jetbrains.idea.maven.project.MavenHomeKt.*;
+
+public class MavenEnvironmentForm implements PanelWithAnchor {
   private JPanel panel;
   private LabeledComponent<ComponentWithBrowseButton<TextFieldWithHistory>> mavenHomeComponent;
   private ContextHelpLabel mavenHomeOnTargetHelpLabel;
@@ -116,7 +112,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenConfig config = projectsManager != null ? projectsManager.getGeneralSettings().getMavenConfig() : null;
     return MavenWslUtil.getLocalRepo(myProject, "",
-                                     FileUtil.toSystemIndependentName(mavenHomeField.getText().trim()),
+                                     staticOrBundled(resolveMavenHomeType(mavenHomeField.getText().trim())),
                                      settingsFileComponent.getComponent().getText(), config);
   }
 
@@ -131,15 +127,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     mavenHomeField = new TextFieldWithHistory();
     mavenHomeField.setHistorySize(-1);
     final ArrayList<String> foundMavenHomes = new ArrayList<>();
-    MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.forEachExtensionSafe(e -> {
-      foundMavenHomes.addAll(e.supportedBundles());
-    });
-    foundMavenHomes.add(MavenServerManager.WRAPPED_MAVEN);
-    final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null);
-    final File bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3);
-    if (mavenHomeDirectory != null && !FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
-      foundMavenHomes.add(FileUtil.toSystemIndependentName(mavenHomeDirectory.getPath()));
-    }
+    getAllKnownHomes().forEach(it -> foundMavenHomes.add(it.getTitle()));
     mavenHomeField.setHistory(foundMavenHomes);
     mavenHomeComponent = LabeledComponent.create(
       new ComponentWithBrowseButton<>(mavenHomeField, null), MavenConfigurableBundle.message("maven.settings.environment.home.directory"));
@@ -163,7 +151,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
   }
 
   public void setData(MavenGeneralSettings data) {
-    data.setMavenHome(FileUtil.toSystemIndependentName(mavenHomeField.getText().trim()));
+    data.setMavenHomeType(resolveMavenHomeType(mavenHomeField.getText().trim()));
     data.setUserSettingsFile(userSettingsFileOverrider.getResult());
     data.setLocalRepository(localRepositoryOverrider.getResult());
   }
@@ -173,77 +161,41 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
 
     setAnchor(mavenHomeComponent.getLabel());
 
-    String text = MavenWslUtil.resolveWslAware(project,
-                                               () -> {
-                                                 final String resolvedMavenHome = resolveMavenHome(data.getMavenHome());
-                                                 final String mavenHome = ObjectUtils.chooseNotNull(resolvedMavenHome, data.getMavenHome());
-                                                 if (MavenServerManager.BUNDLED_MAVEN_3.equals(mavenHome)) {
-                                                   return MavenProjectBundle.message("maven.bundled.version.title");
-                                                 }
-                                                 if (MavenServerManager.WRAPPED_MAVEN.equals(mavenHome)) {
-                                                   return MavenProjectBundle.message("maven.wrapper.version.title");
-                                                 }
-                                                 return FileUtil.toSystemIndependentName(mavenHome);
-                                               },
-                                               wsl -> {
-                                                 File home = MavenWslUtil.resolveMavenHomeDirectory(wsl, data.getMavenHome());
-                                                 return home == null ? null : home.getAbsolutePath();
-                                               });
-
+    String text = data.getMavenHomeType().getTitle();
     mavenHomeField.setText(text);
-    mavenHomeField.addCurrentTextToHistory();
     updateMavenVersionLabel();
     userSettingsFileOverrider.reset(data.getUserSettingsFile());
     localRepositoryOverrider.reset(data.getLocalRepository());
   }
 
-  @Override
-  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
-    watcher.registerComponent("mavenHome", mavenHomeField);
-    watcher.registerComponent("settingsFileOverride.checkbox", userSettingsFileOverrider.checkBox);
-    watcher.registerComponent("settingsFileOverride.text", userSettingsFileOverrider.component);
-    watcher.registerComponent("localRepoOverride.checkbox", localRepositoryOverrider.checkBox);
-    watcher.registerComponent("localRepoOverride.text", localRepositoryOverrider.component);
-  }
-
-  @Nullable
-  private static String resolveMavenHome(@Nullable String mavenHome) {
-    if (StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome) ||
-        StringUtil.equals(MavenServerManager.WRAPPED_MAVEN, mavenHome)) {
-      return mavenHome;
-    }
-    final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(mavenHome);
-    return mavenHomeDirectory != null ? mavenHomeDirectory.getPath() : null;
-  }
 
   private void updateMavenVersionLabel() {
     boolean localTarget = myTargetName == null;
-    String version = MavenUtil.getMavenVersion(MavenUtil.getMavenHomeFile(getMavenHome()));
+    MavenHomeType type = resolveMavenHomeType(mavenHomeField.getText().trim());
+    String version = null;
+    if (type instanceof StaticResolvedMavenHomeType sType) {
+      version = MavenUtil.getMavenVersion(sType);
+    }
     String versionText = null;
     if (version != null) {
-      if (StringUtil.compareVersionNumbers(version, "3") < 0) {
-        versionText = getMaven2Message(version);
+      if (StringUtil.compareVersionNumbers(version, "3.1") < 0) {
+        versionText = getUnsupportedMavenMessage(version);
       }
       else {
         versionText = MavenProjectBundle.message("label.invalid.maven.home.version", version);
       }
     }
-    else if (StringUtil.equals(MavenProjectBundle.message("maven.wrapper.version.title"), mavenHomeField.getText())) {
-      versionText = MavenProjectBundle.message("maven.wrapper.version.label", version);
-    }
     else if (localTarget) {
-      if (MavenServerManager.BUNDLED_MAVEN_2.equals(mavenHomeField.getText().trim())) {
-        versionText = getMaven2Message(null);
-      }
-      else {
-        versionText = MavenProjectBundle.message("label.invalid.maven.home.directory");
-      }
+      versionText = type.getTitle();
     }
     mavenVersionLabelComponent.getComponent().setText(StringUtil.notNullize(versionText));
   }
 
   @NlsContexts.Label
-  private static String getMaven2Message(String version) {
+  private static String getUnsupportedMavenMessage(String version) {
+    if (StringUtil.compareVersionNumbers(version, "3.1") < 0 && StringUtil.compareVersionNumbers(version, "2") > 0) {
+      return MavenProjectBundle.message("label.invalid.maven30");
+    }
     if (!MavenVersionSupportUtil.isMaven2PluginInstalled()) {
       return MavenProjectBundle.message("label.invalid.install.maven2plugin");
     }
@@ -256,12 +208,6 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     return MavenProjectBundle.message("label.invalid.maven.home.version", version);
   }
 
-  @Nullable
-  public String getMavenHome() {
-    String mavenHome = FileUtil.toSystemIndependentName(mavenHomeField.getText().trim());
-    final File mavenHomeFile = MavenUtil.getMavenHomeFile(mavenHome);
-    return mavenHomeFile != null ? mavenHomeFile.getPath() : null;
-  }
 
   public JComponent createComponent() {
     // all listeners will be removed when dialog is closed
@@ -356,14 +302,13 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
   }
 
   private static List<String> findTargetMavenHomes(@NotNull Project project, @Nullable String targetName) {
-    List<String> mavenHomes = new ArrayList<>();
+    List<String> mavenHomes;
     boolean localTarget = targetName == null;
     if (localTarget) {
-      mavenHomes.add(MavenServerManager.BUNDLED_MAVEN_3);
-      final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null);
-      if (mavenHomeDirectory != null) {
-        mavenHomes.add(FileUtil.toSystemIndependentName(mavenHomeDirectory.getPath()));
-      }
+      mavenHomes = new ArrayList<>();
+      MavenUtil.getSystemMavenHomeVariants().forEach(it -> {
+        mavenHomes.add(it.getTitle());
+      });
     }
     else {
       TargetEnvironmentConfiguration targetEnvironmentConfiguration =
@@ -373,6 +318,9 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
           .filter(runtimeConfiguration -> runtimeConfiguration instanceof MavenRuntimeTargetConfiguration)
           .map(runtimeConfiguration -> ((MavenRuntimeTargetConfiguration)runtimeConfiguration).getHomePath())
           .collect(Collectors.toList());
+      }
+      else {
+        mavenHomes = new ArrayList<>();
       }
     }
     return mavenHomes;

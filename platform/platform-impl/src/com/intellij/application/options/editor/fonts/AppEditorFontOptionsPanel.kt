@@ -61,7 +61,7 @@ class AppEditorFontOptionsPanel(scheme: EditorColorsScheme) : AppFontOptionsPane
     if (allSettings != null) {
       val colorSchemeConfigurable = allSettings.find(ColorAndFontOptions.ID)
       if (colorSchemeConfigurable is ColorAndFontOptions) {
-        val generalSettings: Configurable? = colorSchemeConfigurable.findSubConfigurable(GeneralColorsPage.getDisplayNameText())
+        val generalSettings: Configurable? = colorSchemeConfigurable.findSubConfigurable(GeneralColorsPage.displayNameText)
         if (generalSettings != null) {
           allSettings.select(generalSettings, defaultTextOption)
         }

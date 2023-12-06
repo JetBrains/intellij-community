@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -12,11 +12,20 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class MavenIndicesManagerTest extends MavenIndicesTestCase {
+  @Override
+  public boolean runInDispatchThread() {
+    return true;
+  }
+
   private MavenIndicesTestFixture myIndicesFixture;
 
   @Override
@@ -54,7 +63,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     MavenIndexHolder indexHolder = myIndicesFixture.getIndicesManager().getIndex();
     MavenIndex localIndex = indexHolder.getLocalIndex();
     Assert.assertNotNull(localIndex);
-    localIndex.updateOrRepair(true, MavenProjectsManager.getInstance(myProject).getGeneralSettings(), getMavenProgressIndicator());
+    localIndex.updateOrRepair(true, getMavenProgressIndicator(), false);
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
   }
@@ -62,13 +71,13 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   @Test
   public void testAddingArchetypes() {
     MavenArchetype mavenArchetype = new MavenArchetype("myGroup", "myArtifact", "666", null, null);
-    myIndicesFixture.getIndicesManager().addArchetype(mavenArchetype);
+    MavenIndicesManager.addArchetype(mavenArchetype);
 
     assertArchetypeExists("myGroup:myArtifact:666");
   }
 
   @Test
-  public void testAddingFilesToIndex() throws IOException, MavenProcessCanceledException {
+  public void testAddingFilesToIndex() throws IOException, MavenProcessCanceledException, InterruptedException {
     File localRepo = myIndicesFixture.getRepositoryHelper().getTestData("local2");
 
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(localRepo.getPath());
@@ -82,7 +91,31 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     FileUtil.copyDir(artifactDir, localRepo);
     assertTrue(localIndex.getArtifactIds("junit").isEmpty());
     File artifactFile = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit/junit/4.0/junit-4.0.pom");
-    PlatformTestUtil.waitForPromise(MavenIndicesManager.getInstance(myProject).addArtifactIndexAsync(null, artifactFile));
+
+    var latch = new CountDownLatch(1);
+    Set<File> addedFiles = ConcurrentHashMap.newKeySet();
+    Set<File> failedToAddFiles = ConcurrentHashMap.newKeySet();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(MavenIndicesManager.INDEXER_TOPIC, new MavenIndicesManager.MavenIndexerListener() {
+        @Override
+        public void indexUpdated(Set<File> added, Set<File> failedToAdd) {
+          addedFiles.addAll(added);
+          failedToAddFiles.addAll(failedToAdd);
+          latch.countDown();
+        }
+      });
+
+    var indexingScheduled = MavenIndicesManager.getInstance(myProject).scheduleArtifactIndexing(null, artifactFile);
+    assertTrue("Failed to schedule indexing", indexingScheduled);
+
+    latch.await(1, TimeUnit.MINUTES);
+
+    assertEmpty(failedToAddFiles);
+    assertSize(1, addedFiles);
+
+    String indexedUri = Path.of(addedFiles.iterator().next().getAbsolutePath()).toUri().toString();
+    assertTrue("Junit pom not indexed", indexedUri.endsWith("local1/junit/junit/4.0/junit-4.0.pom"));
+
     myIndicesFixture.getIndicesManager().waitForBackgroundTasksInTests();
     Set<String> versions = localIndex.getVersions("junit", "junit");
     assertFalse(versions.isEmpty());

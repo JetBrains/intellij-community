@@ -6,7 +6,8 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
@@ -55,7 +56,7 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
     textField.selectAll()
 
     val label = JBLabel(labelText)
-    label.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD)
+    label.font = StartupUiUtil.labelFont.deriveFont(Font.BOLD)
 
     val panel = SwingHelper.newLeftAlignedVerticalPanel(label, Box.createVerticalStrut(JBUI.scale(2)), textField)
     panel.addFocusListener(object : FocusAdapter() {
@@ -78,14 +79,12 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
     textField.addKeyListener(object : KeyAdapter() {
       override fun keyPressed(e: KeyEvent?) {
         if (e != null && e.keyCode == KeyEvent.VK_ENTER) {
-          if (!Disposer.isDisposed(content)) {
-            if (textField.text.isEmpty()) {
-              textField.putClientProperty(OUTLINE_PROPERTY, ERROR_VALUE)
-              textField.repaint()
-              return
-            }
-            applyContentDisplayName(content, project, textField.text)
+          if (textField.text.isEmpty()) {
+            textField.putClientProperty(OUTLINE_PROPERTY, ERROR_VALUE)
+            textField.repaint()
+            return
           }
+          applyContentDisplayName(content, project, textField.text)
           balloon.hide()
         }
       }
@@ -102,6 +101,11 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
     })
 
     balloon.show(RelativePoint(baseLabel, Point(baseLabel.width / 2, 0)), Balloon.Position.above)
+    balloon.addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        IdeFocusManager.findInstance().requestFocus(content.preferredFocusableComponent ?: content.component, false)
+      }
+    })
   }
 
   open fun getContentDisplayNameToEdit(content: Content, project: Project): @NlsContexts.TabTitle String = content.displayName

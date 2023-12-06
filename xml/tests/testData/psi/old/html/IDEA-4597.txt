@@ -145,7 +145,7 @@ HtmlFile:test.html
       XmlText
         PsiWhiteSpace('\n     ')
       XmlToken:XML_END_TAG_START('</')
-      PsiErrorElement:Closing tag name missing
+      PsiErrorElement:Closing tag name is missing
         <empty list>
     XmlToken:XML_DATA_CHARACTERS('#list>')
     PsiWhiteSpace('\n  ')
@@ -155,6 +155,6 @@ HtmlFile:test.html
       XmlToken:XML_TAG_END('>')
     PsiWhiteSpace('\n')
     XmlToken:XML_END_TAG_START('</')
-    PsiErrorElement:Closing tag name missing
+    PsiErrorElement:Closing tag name is missing
       <empty list>
     XmlToken:XML_DATA_CHARACTERS('#list>')

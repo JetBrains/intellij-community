@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -25,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,12 +23,11 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private volatile long myProgressLimit;
   private final AtomicLong myProgressCount = new AtomicLong();
   private final AtomicLong myNextChunkThreshold = new AtomicLong(); // the value myProgressCount should exceed to generate next fireProgressAdvanced event
-  @NotNull
-  private final @Nls String myPresentableName;
+  private final @NotNull @Nls String myPresentableName;
   protected final PsiFile myFile;
-  @Nullable private final Editor myEditor;
-  @NotNull final TextRange myRestrictRange;
-  @NotNull final HighlightInfoProcessor myHighlightInfoProcessor;
+  private final @Nullable Editor myEditor;
+  final @NotNull TextRange myRestrictRange;
+  final @NotNull HighlightInfoProcessor myHighlightInfoProcessor;
   HighlightingSession myHighlightingSession;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
@@ -67,10 +53,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       }
     }
     if (editor != null) {
-      if (editor.getProject() != null && editor.getProject() != project) {
-        throw new IllegalArgumentException("Editor '" + editor + "' (" + editor.getClass() + ") " +
-                                           "belongs to an alien project '" + editor.getProject() + "' but expected: '" + project + "'");
-      }
+      PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
       if (editor.getDocument() != document) {
         throw new IllegalArgumentException("Editor '" + editor + "' (" + editor.getClass() + ") has document " +editor.getDocument()+" but expected: "+document);
       }
@@ -138,9 +121,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     return myFinished;
   }
 
-  @Nullable("null means do not show progress")
-  @Nls
-  protected String getPresentableName() {
+  protected @Nullable("null means do not show progress") @Nls String getPresentableName() {
     return myPresentableName;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -17,9 +17,9 @@ import java.util.function.Predicate;
 final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
   public final Set<ParamAnnotation> myParameterAnnotations;
   public final TypeRepr.AbstractType[] myArgumentTypes;
-  public final Set<TypeRepr.AbstractType> myExceptions;
+  public final Set<TypeRepr.ClassType> myExceptions;
 
-  public static abstract class Diff extends DifferenceImpl {
+  public abstract static class Diff extends DifferenceImpl {
 
     Diff(@NotNull Difference delegate) {
       super(delegate);
@@ -27,7 +27,7 @@ final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
 
     public abstract Specifier<ParamAnnotation, Difference> parameterAnnotations();
 
-    public abstract Specifier<TypeRepr.AbstractType, Difference> exceptions();
+    public abstract Specifier<TypeRepr.ClassType, Difference> exceptions();
 
     public abstract boolean defaultAdded();
 
@@ -38,7 +38,7 @@ final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
   public Diff difference(final Proto past) {
     final MethodRepr m = (MethodRepr)past;
     final Difference diff = super.difference(past);
-    final Difference.Specifier<TypeRepr.AbstractType, Difference> excs = Difference.make(m.myExceptions, myExceptions);
+    final Difference.Specifier<TypeRepr.ClassType, Difference> excs = Difference.make(m.myExceptions, myExceptions);
     final Difference.Specifier<ParamAnnotation, Difference> paramAnnotations = Difference.make(m.myParameterAnnotations, myParameterAnnotations);
     final int base = paramAnnotations.unchanged()? diff.base() : diff.base() | Difference.ANNOTATIONS;
 
@@ -64,7 +64,7 @@ final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
       }
 
       @Override
-      public Specifier<TypeRepr.AbstractType, Difference> exceptions() {
+      public Specifier<TypeRepr.ClassType, Difference> exceptions() {
         return excs;
       }
 
@@ -94,7 +94,7 @@ final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
     }
   }
 
-  public MethodRepr(final DependencyContext context,
+  MethodRepr(final DependencyContext context,
                     final int accessFlags,
                     final int name,
                     final int signature,
@@ -103,28 +103,24 @@ final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
                     final Object defaultValue) {
     super(accessFlags, signature, name, TypeRepr.getType(context, Type.getReturnType(descriptor)), annotations, defaultValue);
     myParameterAnnotations = parameterAnnotations;
-    Set<TypeRepr.AbstractType> typeCollection =
-      exceptions != null ? new HashSet<>(exceptions.length) : Collections.emptySet();
-    myExceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, exceptions, typeCollection);
+    myExceptions = exceptions != null? TypeRepr.createClassType(context, exceptions, new HashSet<>(exceptions.length)) : Collections.emptySet();
     myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
   }
 
   MethodRepr(final DependencyContext context, final DataInput in) {
     super(context, in);
     try {
-      final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
-
       final int size = DataInputOutputUtil.readINT(in);
-      myArgumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[size]);
+      myArgumentTypes = RW.read(TypeRepr.externalizer(context), in, new TypeRepr.AbstractType[size]);
+      myExceptions = RW.read(TypeRepr.externalizer(context), new HashSet<>(0), in);
 
-      myExceptions = RW.read(externalizer, new HashSet<>(0), in);
-
-      final DataExternalizer<TypeRepr.ClassType> clsTypeExternalizer = TypeRepr.classTypeExternalizer(context);
-      myParameterAnnotations = RW.read(new DataExternalizer<ParamAnnotation>() {
+      final DataExternalizer<TypeRepr.ClassType> clsTypeExternalizer = TypeRepr.externalizer(context);
+      myParameterAnnotations = RW.read(new DataExternalizer<>() {
         @Override
         public void save(@NotNull DataOutput out, ParamAnnotation value) {
           value.save(out);
         }
+
         @Override
         public ParamAnnotation read(@NotNull DataInput in) {
           return new ParamAnnotation(clsTypeExternalizer, in);
@@ -145,9 +141,9 @@ final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
   }
 
   public static DataExternalizer<MethodRepr> externalizer(final DependencyContext context) {
-    return new DataExternalizer<MethodRepr>() {
+    return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final MethodRepr value) {
+      public void save(final @NotNull DataOutput out, final MethodRepr value) {
         value.save(out);
       }
 

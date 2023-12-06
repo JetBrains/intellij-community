@@ -21,6 +21,7 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
   private val transparentComponent = ToolbarTransparentComponent()
   private val componentAnimator = TransparentComponentAnimator(transparentComponent, parentDisposable)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use constructor with parentDisposable")
   constructor(
     actionGroup: ActionGroup
@@ -68,11 +69,11 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     transparentComponent.fireActionsUpdated()
   }
 
-  override fun scheduleShow() = componentAnimator.scheduleShow()
+  override fun scheduleShow(): Unit = componentAnimator.scheduleShow()
 
-  override fun scheduleHide() = componentAnimator.scheduleHide()
+  override fun scheduleHide(): Unit = componentAnimator.scheduleHide()
 
-  override fun hideImmediately() = componentAnimator.hideImmediately()
+  override fun hideImmediately(): Unit = componentAnimator.hideImmediately()
 
   override fun paintComponent(g: Graphics) {
     val graphics = g.create()

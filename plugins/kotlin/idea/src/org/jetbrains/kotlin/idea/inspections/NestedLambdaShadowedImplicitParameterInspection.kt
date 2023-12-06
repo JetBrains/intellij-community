@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -23,16 +24,14 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
-class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection() {
-    companion object {
-        val scopeFunctions = listOf(
-            "kotlin.also",
-            "kotlin.let",
-            "kotlin.takeIf",
-            "kotlin.takeUnless"
-        ).map { FqName(it) }
-    }
+private val scopeFunctions: List<FqName> = listOf(
+    "kotlin.also",
+    "kotlin.let",
+    "kotlin.takeIf",
+    "kotlin.takeUnless"
+).map { FqName(it) }
 
+class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return lambdaExpressionVisitor(fun(lambda: KtLambdaExpression) {
             if (lambda.valueParameters.isNotEmpty()) return
@@ -46,7 +45,7 @@ class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection
             if (qualifiedExpression != null) {
                 val receiver = qualifiedExpression.receiverExpression
                 val call = qualifiedExpression.callExpression
-                if (receiver.text == "it" && call?.isCalling(scopeFunctions, context) == true) return
+                if (receiver.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier && call?.isCalling(scopeFunctions, context) == true) return
             }
 
             val containingFile = lambda.containingFile
@@ -74,7 +73,7 @@ class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection
             val lambda = implicitParameterReference.getStrictParentOfType<KtLambdaExpression>() ?: return
             val parentLambda = lambda.getParentImplicitParameterLambda() ?: return
             val parameter = parentLambda.functionLiteral.getOrCreateParameterList().addParameterBefore(
-                KtPsiFactory(project).createLambdaParameterList("it").parameters.first(), null
+                KtPsiFactory(project).createLambdaParameterList(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier).parameters.first(), null
             )
             val editor = parentLambda.findExistingEditor() ?: return
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
@@ -103,7 +102,7 @@ private fun KtNameReferenceExpression.isImplicitParameterReference(
     implicitParameter: ValueParameterDescriptor,
     context: BindingContext
 ): Boolean {
-    return text == "it"
+    return text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
             && getStrictParentOfType<KtLambdaExpression>() == lambda
             && getResolvedCall(context)?.resultingDescriptor == implicitParameter
 }

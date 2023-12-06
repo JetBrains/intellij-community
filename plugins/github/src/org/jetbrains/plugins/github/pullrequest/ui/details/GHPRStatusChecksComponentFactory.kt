@@ -1,15 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
-import com.intellij.collaboration.ui.util.bindContent
-import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindContentIn
+import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,13 +26,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowV
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.JScrollPane
 
 internal object GHPRStatusChecksComponentFactory {
-  private const val STATUSES_GAP = 10
-
   fun create(
     parentScope: CoroutineScope,
+    project: Project,
     reviewStatusVm: GHPRStatusViewModel,
     reviewFlowVm: GHPRReviewFlowViewModel,
     securityService: GHPRSecurityService,
@@ -36,7 +39,7 @@ internal object GHPRStatusChecksComponentFactory {
   ): JComponent {
     val scope = parentScope.childScope(Dispatchers.Main.immediate)
     val loadingPanel = createLoadingComponent(scope, reviewStatusVm, securityService)
-    val checksPanel = VerticalListPanel(STATUSES_GAP).apply {
+    val statusesPanel = VerticalListPanel().apply {
       add(createAccessDeniedLabel(scope, reviewStatusVm, securityService))
       add(CodeReviewDetailsStatusComponentFactory.createCiComponent(scope, reviewStatusVm))
       add(CodeReviewDetailsStatusComponentFactory.createConflictsComponent(scope, reviewStatusVm.hasConflicts))
@@ -49,17 +52,24 @@ internal object GHPRStatusChecksComponentFactory {
       add(CodeReviewDetailsStatusComponentFactory.createNeedReviewerComponent(scope, reviewFlowVm.reviewerReviews))
       add(CodeReviewDetailsStatusComponentFactory.createReviewersReviewStateComponent(
         scope, reviewFlowVm.reviewerReviews,
-        reviewerActionProvider = { reviewer -> DefaultActionGroup(GHPRRemoveReviewerAction(scope, reviewFlowVm, reviewer).toAnAction()) },
+        reviewerActionProvider = { reviewer ->
+          DefaultActionGroup(GHPRRemoveReviewerAction(scope, project, reviewFlowVm, reviewer).toAnAction())
+        },
         reviewerNameProvider = { reviewer -> reviewer.getPresentableName() },
         avatarKeyProvider = { reviewer -> reviewer.avatarUrl },
         iconProvider = { iconKey, iconSize -> avatarIconsProvider.getIcon(iconKey, iconSize) }
       ))
     }
+    val scrollableStatusesPanel = ScrollPaneFactory.createScrollPane(statusesPanel, true).apply {
+      isOpaque = false
+      horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+      viewport.isOpaque = false
+    }
 
     return Wrapper().apply {
       name = "Status check panel"
-      bindContent(scope, reviewStatusVm.mergeabilityState.map { mergeability ->
-        if (mergeability == null) loadingPanel else checksPanel
+      bindContentIn(scope, reviewStatusVm.mergeabilityState.map { mergeability ->
+        if (mergeability == null) loadingPanel else scrollableStatusesPanel
       })
     }
   }
@@ -69,12 +79,13 @@ internal object GHPRStatusChecksComponentFactory {
     reviewStatusVm: GHPRStatusViewModel,
     securityService: GHPRSecurityService
   ): JComponent {
-    val stateLabel = JLabel().apply {
-      icon = AllIcons.RunConfigurations.TestNotRan
+    val stateLabel = CodeReviewDetailsStatusComponentFactory.ReviewDetailsStatusLabel("Pull request status: loading label").apply {
+      border = JBUI.Borders.empty(5, 0)
+      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Run.TestNotRunYet else AllIcons.RunConfigurations.TestNotRan
       text = GithubBundle.message("pull.request.loading.status")
     }
     val accessDeniedLabel = createAccessDeniedLabel(scope, reviewStatusVm, securityService)
-    return VerticalListPanel(STATUSES_GAP).apply {
+    return VerticalListPanel().apply {
       name = "Loading statuses panel"
       add(stateLabel)
       add(accessDeniedLabel)
@@ -95,8 +106,8 @@ internal object GHPRStatusChecksComponentFactory {
 
     return CodeReviewDetailsStatusComponentFactory.ReviewDetailsStatusLabel("Code review status: access denied").apply {
       border = JBUI.Borders.empty(5, 0)
-      icon = AllIcons.RunConfigurations.TestError
-      bindText(scope, reviewStatusVm.isDraft.map { isDraft ->
+      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
+      bindTextIn(scope, reviewStatusVm.isDraft.map { isDraft ->
         when {
           !canClose -> GithubBundle.message("pull.request.repo.access.required")
           !canMarkReadyForReview && isDraft -> GithubBundle.message("pull.request.repo.write.access.required")

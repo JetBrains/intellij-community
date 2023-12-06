@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.codeInspection.tests.CallMatcherTestBase
-import com.intellij.codeInspection.tests.JvmLanguage
+import com.intellij.jvm.analysis.internal.testFramework.CallMatcherTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.siyeh.ig.callMatcher.CallMatcher
 
 class JavaCallMatcherTest : CallMatcherTestBase() {

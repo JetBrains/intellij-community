@@ -6,7 +6,9 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +68,11 @@ public interface SdkModificator {
 
   void removeAllRoots();
 
+  @RequiresWriteLock
   void commitChanges();
 
   boolean isWritable();
+
+  @ApiStatus.Internal
+  default void applyChangesWithoutWriteAction() { }
 }

@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
@@ -220,12 +219,11 @@ public final class VcsLogUtil {
     return branches.filter(vcsRef -> vcsRef.getName().equals(branchName)).findFirst().orElse(null);
   }
 
-  public static @NotNull List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList,
-                                                     @NotNull Function<? super VcsFullCommitDetails, ? extends Collection<Change>> getChanges) {
+  public static @NotNull List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     List<Change> changes = new ArrayList<>();
     List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
     for (VcsFullCommitDetails details : detailsListReversed) {
-      changes.addAll(getChanges.fun(details));
+      changes.addAll(details.getChanges());
     }
 
     return CommittedChangesTreeBrowser.zipChanges(changes);

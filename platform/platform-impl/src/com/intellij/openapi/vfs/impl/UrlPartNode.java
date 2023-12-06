@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -14,8 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * As soon as the corresponding file got created, this UrlPartNode is replaced with FilePartNode, which contains nameId and is faster and more succinct
  */
 final class UrlPartNode extends FilePartNode {
-  @NotNull
-  private final String name;
+  private final @NotNull String name;
 
   UrlPartNode(@NotNull String name, @NotNull String parentUrl, @NotNull NewVirtualFileSystem fs) {
     super(fs);
@@ -38,8 +37,7 @@ final class UrlPartNode extends FilePartNode {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "UrlPartNode: '"+getName() + "'; children:"+children.length;
   }
 }

@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details.model
 
-import com.intellij.collaboration.ui.codereview.details.ReviewState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import kotlinx.coroutines.flow.Flow
 
-interface CodeReviewFlowViewModel<UserDTO> {
-  val reviewerReviews: Flow<Map<UserDTO, ReviewState>>
+interface CodeReviewFlowViewModel<ReviewerDTO> {
+  val reviewerReviews: Flow<Map<ReviewerDTO, ReviewState>>
 }

@@ -124,7 +124,7 @@ public abstract class CheckinHandler {
   }
 
   /**
-   * Allows to skip {@link #beforeCheckin()} before checkin steps when not applicable.
+   * Allows to skip {@link #beforeCheckin()} steps when not applicable.
    * E.g., there should be no check for todos before shelf/create patch.
    *
    * @param executor current operation ({@code null} for VCS commit)

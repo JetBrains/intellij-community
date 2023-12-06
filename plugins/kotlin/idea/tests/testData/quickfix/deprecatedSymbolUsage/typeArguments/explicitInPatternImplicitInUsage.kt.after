@@ -1,4 +1,4 @@
-// "Replace with 'newFun()'" "true"
+// "Replace with 'newFun<T>()'" "true"
 
 @Deprecated("", ReplaceWith("newFun<T>()"))
 fun <T : Any> oldFun(): T? {
@@ -10,3 +10,5 @@ fun <T : Any> newFun(): T? = null
 fun foo(): String? {
     return newFun()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

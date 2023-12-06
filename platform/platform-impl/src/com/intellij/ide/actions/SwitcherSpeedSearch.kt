@@ -10,8 +10,8 @@ import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import javax.swing.ListModel
 
-internal class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSearchBase<SwitcherPanel>(switcher, null) {
-  fun updateEnteredPrefix() = searchField?.let {
+class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSearchBase<SwitcherPanel>(switcher, null) {
+  fun updateEnteredPrefix(): Unit? = searchField?.let {
     val text = it.text ?: ""
     when (text.length > 1) {
       true -> {
@@ -37,16 +37,16 @@ internal class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) 
   private val windows
     get() = myComponent.toolWindows
 
-  override fun getSelectedIndex() = when (windows.selectedIndex >= 0) {
+  override fun getSelectedIndex(): Int = when (windows.selectedIndex >= 0) {
     true -> windows.selectedIndex + files.itemsCount
     else -> files.selectedIndex
   }
 
-  override fun getElementText(element: Any?) = (element as? SwitcherListItem)?.mainText ?: ""
+  override fun getElementText(element: Any?): String = (element as? SwitcherListItem)?.mainText ?: ""
 
-  override fun getElementCount() = files.itemsCount + windows.itemsCount
+  override fun getElementCount(): Int = files.itemsCount + windows.itemsCount
 
-  override fun getElementAt(index: Int) = when {
+  override fun getElementAt(index: Int): SwitcherListItem? = when {
     index < 0 -> null
     index < files.itemsCount -> files.model.getElementAt(index)
     index < elementCount -> windows.model.getElementAt(index - files.itemsCount)
@@ -92,7 +92,7 @@ internal class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) 
                                        Registry.`is`("ide.recent.files.speed.search.camel.case"))
     addChangeListener {
       if (myComponent.project.isDisposed) {
-        myComponent.myPopup.cancel()
+        myComponent.myPopup?.cancel()
       }
       else {
         val isPopupActive = isPopupActive

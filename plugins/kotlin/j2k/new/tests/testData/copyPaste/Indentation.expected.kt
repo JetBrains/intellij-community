@@ -1,3 +1,7 @@
+// ERROR: Unresolved reference: x
+// ERROR: Unresolved reference: x
+// ERROR: Unresolved reference: x
 fun main(args: Array<String>) {
-    if (x > 0) x = 2 else x = 3
+    if (x > 0) x = 2
+    else x = 3
 }

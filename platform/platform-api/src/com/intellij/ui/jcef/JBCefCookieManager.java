@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,8 +62,7 @@ public final class JBCefCookieManager {
   }
 
   @SuppressWarnings("unused")
-  @NotNull
-  public CefCookieManager getCefCookieManager() {
+  public @NotNull CefCookieManager getCefCookieManager() {
     return myCefCookieManager;
   }
 
@@ -102,15 +101,6 @@ public final class JBCefCookieManager {
   }
 
   /**
-   * @see JBCefCookieManager#getCookies(String, Boolean, Integer)
-   * @deprecated use {@link #getCookies(String, Boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull List<JBCefCookie> getCookies(@NotNull String url) {
-    return getCookies(url, false, null);
-  }
-
-  /**
    * WARNING: The method can lead to a freeze when called from a browser callback.
    * <p>
    * Gets cookies. Underlying native method is asynchronous.
@@ -123,7 +113,7 @@ public final class JBCefCookieManager {
    *
    * @deprecated use {@link #getCookies(String, Boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull List<JBCefCookie> getCookies(@Nullable String url, @Nullable Boolean includeHttpOnly, @Nullable Integer maxTimeToWait) {
     boolean httpOnly = notNull(includeHttpOnly, Boolean.FALSE);
     JBCookieVisitor cookieVisitor = new JBCookieVisitor();
@@ -202,7 +192,7 @@ public final class JBCefCookieManager {
    *
    * @deprecated use {@link #setCookie(String, JBCefCookie)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie, @Nullable Integer maxTimeToWait) {
     if (!checkArgs(url, jbCefCookie)) return false;
 
@@ -339,47 +329,6 @@ public final class JBCefCookieManager {
     else {
       return myCefCookieManager.deleteCookies(url, "");
     }
-  }
-
-  /**
-   * Deletes all host and domain cookies matching |url| and |cookieName| values.
-   *
-   * @param doSync if {@code false}, underlying asynchronous native method {@link CefCookieManager#deleteCookies(String, String)} is used,
-   *               {@code true} - synchronous {@link JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)}.
-   *
-   * @deprecated use {@link #deleteCookies(String, String)}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean deleteCookies(@Nullable String url,
-                               @Nullable String cookieName,
-                               boolean doSync)
-  {
-    if (doSync) {
-      return deleteCookies(url, cookieName, null);
-    }
-    else {
-      return myCefCookieManager.deleteCookies(url, cookieName);
-    }
-  }
-
-  /**
-   * Deletes synchronously all host and domain cookies matching |url| and |cookieName| values with specified timeout.
-   *
-   * @see JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)
-   *
-   * @deprecated use {@link #deleteCookies(String, String)}
-   */
-  @Deprecated
-  public boolean deleteCookies(@Nullable String url,
-                               @Nullable String cookieName,
-                               @Nullable Integer maxTimeToWait)
-  {
-    IntFunction<Boolean> checkFunction = (timeout) -> {
-      List<JBCefCookie> cookies = getCookies(url, false, timeout);
-      return !ContainerUtil.exists(cookies, cefCookie -> cefCookie.getName().equals(cookieName));
-    };
-
-    return deleteCookies(url, cookieName, checkFunction, maxTimeToWait);
   }
 
   /**

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Provides a minimal accessible information about the object.
+ * Provides some minimal accessible information about the object.
  */
 public interface SimpleAccessible {
   /**

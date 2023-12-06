@@ -10,6 +10,9 @@ import org.jetbrains.kotlin.types.KotlinType
 
 object CodeFragmentUtils {
     val RUNTIME_TYPE_EVALUATOR: Key<Function1<KtExpression, KotlinType?>> = Key.create("RUNTIME_TYPE_EVALUATOR")
+
+    // Identifier that the codeFragment is used in the debugger evaluator for compilation. See [PerFileAnalysisCache.getAnalysisResults]
+    val USED_FOR_COMPILATION_IN_IR_EVALUATOR: Key<Boolean> = Key.create("USED_FOR_COMPILATION_IN_EVALUATOR")
 }
 
 var KtCodeFragment.externalDescriptors: List<DeclarationDescriptor>? by CopyablePsiUserDataProperty(Key.create("EXTERNAL_DESCRIPTORS"))

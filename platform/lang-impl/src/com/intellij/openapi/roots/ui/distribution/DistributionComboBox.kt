@@ -5,11 +5,17 @@ import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.lockOrSkip
+import com.intellij.openapi.observable.util.transform
+import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.Item
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.BrowseFolderRunnable
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.ui.*
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.JBInsets
@@ -47,6 +53,7 @@ class DistributionComboBox(
 
   override fun setSelectedItem(anObject: Any?) {
     if (anObject is Item.SpecifyDistributionAction) {
+      hidePopup()
       showBrowseDistributionDialog()
       return
     }
@@ -152,9 +159,9 @@ class DistributionComboBox(
     selectFolderAction.run()
   }
 
-  private fun createEditor(): Editor {
+  private fun createEditor(): AbstractComboBoxEditor {
     val property = AtomicProperty("")
-    val editor = object : Editor() {
+    val editor = object : AbstractComboBoxEditor() {
       override fun setItem(anObject: Any?) {}
       override fun getItem(): Any? = selectedItem
     }
@@ -242,7 +249,7 @@ class DistributionComboBox(
     }
   }
 
-  private abstract class Editor : BasicComboBoxEditor() {
+  private abstract class AbstractComboBoxEditor : BasicComboBoxEditor() {
     val textField get() = editor as ExtendableTextField
 
     override fun createEditorComponent(): JTextField {

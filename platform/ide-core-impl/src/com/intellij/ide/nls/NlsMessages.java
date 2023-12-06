@@ -403,7 +403,7 @@ public final class NlsMessages {
   /**
    * Immutable object to store locale-specific immutable formatters.
    */
-  private static class CachedFormats {
+  private static final class CachedFormats {
     final Locale locale;
     final MeasureFormat shortFormat;
     final LocalizedNumberFormatter narrowNumber;

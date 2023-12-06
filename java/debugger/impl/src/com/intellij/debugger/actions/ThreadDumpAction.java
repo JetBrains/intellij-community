@@ -56,7 +56,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
               if (xSession != null) {
                 DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session.getSearchScope());
               }
-            }, ModalityState.NON_MODAL);
+            }, ModalityState.nonModal());
           }
           finally {
             vm.resume();
@@ -155,7 +155,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
         }
 
         final List<StackFrame> frames = threadReference.frames();
-        hasEmptyStack = frames.size() == 0;
+        hasEmptyStack = frames.isEmpty();
 
         final Int2ObjectMap<List<ObjectReference>> lockedAt = new Int2ObjectOpenHashMap<>();
         if (vmProxy.canGetMonitorFrameInfo()) {

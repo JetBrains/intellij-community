@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -16,20 +15,20 @@ import java.util.Map;
 
 public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
   public void testSimpleProperties() throws IOException {
-    doTestBothConfigFiles("-DmyProperty=value", ContainerUtil.stringMap("myProperty", "value"));
-    doTestBothConfigFiles("-Da=b -Dc=d\n-De=f", ContainerUtil.stringMap("a", "b", "c", "d", "e", "f"));
+    doTestBothConfigFiles("-DmyProperty=value", Map.of("myProperty", "value"));
+    doTestBothConfigFiles("-Da=b -Dc=d\n-De=f", Map.of("a", "b", "c", "d", "e", "f"));
   }
 
   public void testPropertiesWithoutValue() throws IOException {
-    doTestJvmConfig("-DmyProperty", ContainerUtil.stringMap("myProperty", ""));
-    doTestMavenConfig("-DmyProperty", ContainerUtil.stringMap("myProperty", "true"));
-    doTestJvmConfig("-Da -Dc=d\n-De", ContainerUtil.stringMap("a", "", "c", "d", "e", ""));
-    doTestMavenConfig("-Da -Dc=d\n-De", ContainerUtil.stringMap("a", "true", "c", "d", "e", "true"));
+    doTestJvmConfig("-DmyProperty", Map.of("myProperty", ""));
+    doTestMavenConfig("-DmyProperty", Map.of("myProperty", "true"));
+    doTestJvmConfig("-Da -Dc=d\n-De", Map.of("a", "", "c", "d", "e", ""));
+    doTestMavenConfig("-Da -Dc=d\n-De", Map.of("a", "true", "c", "d", "e", "true"));
   }
 
   public void testSpacesInValues() throws IOException {
-    doTestJvmConfig("\"-DmyProperty=long value\"", ContainerUtil.stringMap("myProperty", "long value"));
-    doTestJvmConfig("-Da=b \"-DmyProperty=long value\"\n-Dc=d", ContainerUtil.stringMap("myProperty", "long value", "a", "b", "c", "d"));
+    doTestJvmConfig("\"-DmyProperty=long value\"", Map.of("myProperty", "long value"));
+    doTestJvmConfig("-Da=b \"-DmyProperty=long value\"\n-Dc=d", Map.of("myProperty", "long value", "a", "b", "c", "d"));
     //spaces in properties in maven.config aren't handled properly anyway, it just splits the whole content by spaces and feeds GnuParser with it, see org.apache.maven.cli.MavenCli#cli
   }
 
@@ -61,7 +60,7 @@ public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
     @NotNull
     protected Map<String, String> readProperties(File baseDir) {
       Map<String, String> result = new HashMap<>();
-      Maven3ServerEmbedder.readConfigFiles(baseDir, result);
+      MavenServerConfigUtil.readConfigFiles(baseDir, result);
       return result;
     }
   }

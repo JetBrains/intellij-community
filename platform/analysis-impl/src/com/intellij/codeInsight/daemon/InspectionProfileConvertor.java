@@ -24,19 +24,19 @@ import java.util.Map;
 
 public class InspectionProfileConvertor {
   private final Map<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<>();
-  @NonNls public static final String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
-  @NonNls public static final String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
+  public static final @NonNls String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
+  public static final @NonNls String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
 
   private static final Logger LOG = Logger.getInstance(InspectionProfileConvertor.class);
 
-  @NonNls private static final String NAME_ATT = "name";
-  @NonNls private static final String VERSION_ATT = "version";
-  @NonNls private static final String OPTION_TAG = "option";
-  @NonNls private static final String DISPLAY_LEVEL_MAP_OPTION = "DISPLAY_LEVEL_MAP";
-  @NonNls protected static final String VALUE_ATT = "value";
-  @NonNls private static final String DEFAULT_XML = "Default.xml";
-  @NonNls private static final String XML_EXTENSION = ".xml";
-  @NonNls public static final String LEVEL_ATT = "level";
+  private static final @NonNls String NAME_ATT = "name";
+  private static final @NonNls String VERSION_ATT = "version";
+  private static final @NonNls String OPTION_TAG = "option";
+  private static final @NonNls String DISPLAY_LEVEL_MAP_OPTION = "DISPLAY_LEVEL_MAP";
+  protected static final @NonNls String VALUE_ATT = "value";
+  private static final @NonNls String DEFAULT_XML = "Default.xml";
+  private static final @NonNls String XML_EXTENSION = ".xml";
+  public static final @NonNls String LEVEL_ATT = "level";
   private final InspectionProfileManager myManager;
 
   public InspectionProfileConvertor(@NotNull InspectionProfileManager manager) {

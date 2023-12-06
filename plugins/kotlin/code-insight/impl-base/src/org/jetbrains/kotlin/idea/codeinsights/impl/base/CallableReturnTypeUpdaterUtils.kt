@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -13,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -23,29 +25,56 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInp
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createByKtTypes
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.bfs
 
 object CallableReturnTypeUpdaterUtils {
-    fun updateType(declaration: KtCallableDeclaration, typeInfo: TypeInfo, project: Project, editor: Editor?) {
+    fun updateType(
+        declaration: KtCallableDeclaration,
+        typeInfo: TypeInfo,
+        project: Project,
+        editor: Editor? = null,
+        updater: ModPsiUpdater? = null
+    ) {
         if (editor == null || !typeInfo.useTemplate || !ApplicationManager.getApplication().isWriteAccessAllowed) {
-            declaration.setType(typeInfo.defaultType, project)
+            declaration.setType(typeInfo.defaultType, project, updater)
         } else {
             setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, editor)
         }
+
+        if (declaration is KtProperty && !typeInfo.useTemplate) {
+            val getter = declaration.getter
+            val returnTypeReference = getter?.returnTypeReference
+            if (returnTypeReference != null && !typeInfo.defaultType.isUnit) {
+                val typeRef = shortenReferences(returnTypeReference.replace(KtPsiFactory(project).createType(typeInfo.defaultType.longTypeRepresentation)) as KtElement)
+                if (typeRef != null) {
+                    updater?.moveTo(typeRef.endOffset)
+                }
+            }
+
+            val setterParameter = declaration.setter?.parameter
+            if (setterParameter?.typeReference != null) {
+                updateType(setterParameter, typeInfo, project, editor, updater)
+            }
+        }
     }
 
-    private fun KtCallableDeclaration.setType(type: TypeInfo.Type, project: Project) {
+    private fun KtCallableDeclaration.setType(type: TypeInfo.Type, project: Project, updater: ModPsiUpdater? = null) {
         val newTypeRef = if (isProcedure(type)) {
             null
         } else {
             KtPsiFactory(project).createType(type.longTypeRepresentation)
         }
         typeReference = newTypeRef
-        typeReference?.let { shortenReferences(it) }
+        typeReference?.let {
+            shortenReferences(it)
+            updater?.moveTo(it.endOffset)
+        }
     }
 
     private fun KtCallableDeclaration.isProcedure(type: TypeInfo.Type) =
@@ -183,13 +212,15 @@ object CallableReturnTypeUpdaterUtils {
         override fun isValidFor(psi: PsiElement): Boolean = true
 
         companion object {
-            fun KtAnalysisSession.createByKtTypes(
+            context(KtAnalysisSession)
+            fun createByKtTypes(
                 ktType: KtType,
                 otherTypes: List<KtType> = emptyList(),
                 useTemplate: Boolean = false
             ): TypeInfo = TypeInfo(createTypeByKtType(ktType), otherTypes.map { createTypeByKtType(it) }, useTemplate)
 
-            private fun KtAnalysisSession.createTypeByKtType(ktType: KtType): Type = Type(
+            context(KtAnalysisSession)
+            private fun createTypeByKtType(ktType: KtType): Type = Type(
                 isUnit = ktType.isUnit,
                 longTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),
                 shortTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),

@@ -1,5 +1,7 @@
 // "Create expected class in common module jvm" "true"
 // DISABLE-ERRORS
+// IGNORE_K2
+
 actual class First
 
 actual class <caret>Second

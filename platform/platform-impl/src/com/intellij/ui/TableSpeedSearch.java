@@ -116,9 +116,8 @@ public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
     return tableIsNotEmpty && !myComponent.isEditing() && super.isSpeedSearchEnabled();
   }
 
-  @NotNull
   @Override
-  protected ListIterator<Object> getElementIterator(int startingViewIndex) {
+  protected @NotNull ListIterator<Object> getElementIterator(int startingViewIndex) {
     int count = getElementCount();
     return new AbstractList<>() {
       @Override
@@ -171,8 +170,7 @@ public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
     return myToStringConvertor.fun(value, new Cell(row, col));
   }
 
-  @NotNull
-  private IntList findAllFilteredRows(String s) {
+  private @NotNull IntList findAllFilteredRows(String s) {
     IntList rows = new IntArrayList();
     String _s = s.trim();
 
@@ -201,9 +199,9 @@ public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
     return false;
   }
 
-  private static class MySelectAllAction extends DumbAwareAction {
-    @NotNull private final JTable myTable;
-    @NotNull private final TableSpeedSearch mySearch;
+  private static final class MySelectAllAction extends DumbAwareAction {
+    private final @NotNull JTable myTable;
+    private final @NotNull TableSpeedSearch mySearch;
 
     MySelectAllAction(@NotNull JTable table, @NotNull TableSpeedSearch search) {
       myTable = table;

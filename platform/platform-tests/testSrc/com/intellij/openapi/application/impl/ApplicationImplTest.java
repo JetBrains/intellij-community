@@ -5,6 +5,7 @@ import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -24,6 +25,7 @@ import com.intellij.testFramework.RunFirst;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +72,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
     application.disableEventsUntil(disposable);
-    application.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     try {
       PlatformTestUtil.startPerformanceTest("lock/unlock "+getTestName(false), expectedMs, () -> {
@@ -124,7 +126,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   public void testAppLockReadWritePreference() throws Throwable {
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    application.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assertFalse(application.isWriteAccessAllowed());
     assertFalse(application.isWriteActionPending());
 
@@ -178,7 +180,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
         while (!aboutToAcquireWrite.get()) checkTimeout();
         // make sure EDT called writelock
-        while (!application.myLock.isWriteRequested()) checkTimeout();
+        while (!application.getRwLock().isWriteRequested()) checkTimeout();
         assertTrue(application.isWriteActionPending());
         //assertFalse(application.tryRunReadAction(EmptyRunnable.getInstance()));
         application.runReadAction(() -> {
@@ -203,7 +205,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         while (!aboutToAcquireWrite.get()) checkTimeout();
         while (!read1Acquired.get()) checkTimeout();
         // make sure EDT called writelock
-        while (!application.myLock.isWriteRequested()) checkTimeout();
+        while (!application.getRwLock().isWriteRequested()) checkTimeout();
 
         doFor(100, TimeUnit.MILLISECONDS, ()->{
           checkTimeout();
@@ -454,7 +456,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   public void testRWLockPerformance() throws Throwable {
     pumpEventsFor(2, TimeUnit.SECONDS);
     int readIterations = 200_000_000;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
     final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
     final Field myThreadLocalsField = Objects.requireNonNull(ReflectionUtil.getDeclaredField(Thread.class, "threadLocals"));
@@ -474,7 +476,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     });
 
     PlatformTestUtil.startPerformanceTest("RWLock/unlock", 27_000, ()-> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
       List<Future<Void>> futures = AppExecutorUtil.getAppExecutorService().invokeAll(callables);
       ConcurrencyUtil.getAll(futures);
@@ -574,7 +576,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
       try {
         // wait for write action attempt to start - i.e. app.myLock.writeLock() started to execute
-        while (!app.myLock.isWriteRequested()) checkTimeout();
+        while (!app.getRwLock().isWriteRequested()) checkTimeout();
         app.executeByImpatientReader(() -> {
           try {
             assertFalse(app.isReadAccessAllowed());
@@ -632,7 +634,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
       // wait for write action attempt to start
-      while (!app.myLock.isWriteRequested()) {
+      while (!app.getRwLock().isWriteRequested()) {
         try {
           checkTimeout();
         }
@@ -732,6 +734,21 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           });
         }
       });
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+
+  public void testCleanersAreRunOnApplicationReset() {
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      ProgressManager.getInstance();
+      assertNotNull(ProgressManager.getInstanceOrNull());
+      MockApplication application = new MockApplication(disposable);
+      ApplicationManager.setApplication(application, disposable);
+      assertNull(ProgressManager.getInstanceOrNull());
     }
     finally {
       Disposer.dispose(disposable);

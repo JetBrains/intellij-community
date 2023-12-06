@@ -21,7 +21,7 @@ interface Placeholder : CellBase<Placeholder> {
 
   override fun enabled(isEnabled: Boolean): Placeholder
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Placeholder
 
@@ -32,6 +32,7 @@ interface Placeholder : CellBase<Placeholder> {
   override fun gap(rightGap: RightGap): Placeholder
 
   @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): Placeholder
 
   override fun customize(customGaps: UnscaledGaps): Placeholder

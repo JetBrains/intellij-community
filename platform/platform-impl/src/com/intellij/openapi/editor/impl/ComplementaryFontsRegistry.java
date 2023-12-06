@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
@@ -62,9 +62,9 @@ public final class ComplementaryFontsRegistry {
   private ComplementaryFontsRegistry() {
   }
 
-  @NonNls private static final String BOLD_SUFFIX = ".bold";
+  private static final @NonNls String BOLD_SUFFIX = ".bold";
 
-  @NonNls private static final String ITALIC_SUFFIX = ".italic";
+  private static final @NonNls String ITALIC_SUFFIX = ".italic";
 
   // This font renders all characters as empty glyphs, so there's no reason to use it for fallback
   private static final String ADOBE_BLANK = "Adobe Blank";
@@ -77,7 +77,7 @@ public final class ComplementaryFontsRegistry {
       if (PATCH_FONT_NAMES) {
         fillStyledFontMap();
       }
-      // This must match the corresponding call in com.intellij.idea.ApplicationLoader.loadSystemFonts for optimal performance
+      // This must match the corresponding call in com.intellij.idea.StartupUtil#updateFrameClassAndWindowIconAndPreloadSystemFonts for optimal performance
       String[] families = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
       for (final String fontName : families) {
         if (!fontName.endsWith(BOLD_SUFFIX) && !fontName.endsWith(ITALIC_SUFFIX) && !fontName.equals(ADOBE_BLANK)) {
@@ -119,8 +119,7 @@ public final class ComplementaryFontsRegistry {
    * If you intend to use font metrics from returned {@link FontInfo} object,
    * pass not-null correct {@link FontRenderContext} to this method.
    */
-  @NotNull
-  public static FontInfo getFontAbleToDisplay(@NotNull CharSequence text, int start, int end,
+  public static @NotNull FontInfo getFontAbleToDisplay(@NotNull CharSequence text, int start, int end,
                                               @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
                                               FontRenderContext context) {
     assert 0 <= start && start < end && end <= text.length() : "Start: " + start + ", end: " + end + ", length: " + text.length();
@@ -142,8 +141,7 @@ public final class ComplementaryFontsRegistry {
    * If you intend to use font metrics from returned {@link FontInfo} object,
    * pass not-null correct {@link FontRenderContext} to this method.
    */
-  @NotNull
-  public static FontInfo getFontAbleToDisplay(char @NotNull [] text, int start, int end,
+  public static @NotNull FontInfo getFontAbleToDisplay(char @NotNull [] text, int start, int end,
                                               @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
                                               FontRenderContext context) {
     assert 0 <= start && start < end && end <= text.length : "Start: " + start + ", end: " + end + ", length: " + text.length;
@@ -198,8 +196,7 @@ public final class ComplementaryFontsRegistry {
    * If you intend to use font metrics from returned {@link FontInfo} object,
    * pass not-null correct {@link FontRenderContext} to this method.
    */
-  @NotNull
-  public static FontInfo getFontAbleToDisplay(int codePoint, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
+  public static @NotNull FontInfo getFontAbleToDisplay(int codePoint, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
                                               FontRenderContext context) {
     boolean tryDefaultFallback = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
@@ -236,8 +233,7 @@ public final class ComplementaryFontsRegistry {
    * If you intend to use font metrics from returned {@link FontInfo} object,
    * pass not-null correct {@link FontRenderContext} to this method.
    */
-  @NotNull
-  public static FontInfo getFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily,
+  public static @NotNull FontInfo getFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily,
                                               FontRenderContext context) {
     FontInfo result = doGetFontAbleToDisplay(codePoint, size, style, defaultFontFamily, null, null, false, context, false, false);
     if (result != null) {
@@ -252,11 +248,10 @@ public final class ComplementaryFontsRegistry {
     return doGetFontAbleToDisplay(codePoint, null, 0, 0, size, style, false, context);
   }
 
-  @Nullable
-  private static FontInfo doGetFontAbleToDisplay(int codePoint, float size, @JdkConstants.FontStyle int originalStyle,
-                                                 @NotNull String defaultFontFamily, String regularSubFamily, String boldSubFamily,
-                                                 boolean useLigatures, FontRenderContext context, boolean disableFontFallback,
-                                                 boolean useTypographicNames) {
+  private static @Nullable FontInfo doGetFontAbleToDisplay(int codePoint, float size, @JdkConstants.FontStyle int originalStyle,
+                                                           @NotNull String defaultFontFamily, String regularSubFamily, String boldSubFamily,
+                                                           boolean useLigatures, FontRenderContext context, boolean disableFontFallback,
+                                                           boolean useTypographicNames) {
     if (originalStyle < 0 || originalStyle > 3) originalStyle = Font.PLAIN;
     synchronized (lock) {
       FallBackInfo fallBackInfo = null;
@@ -301,10 +296,9 @@ public final class ComplementaryFontsRegistry {
     }
   }
 
-  @NotNull
-  private static FontInfo doGetFontAbleToDisplay(int codePoint, char[] remainingText, int start, int end,
-                                                 float size, @JdkConstants.FontStyle int style, boolean useLigatures,
-                                                 FontRenderContext context) {
+  private static @NotNull FontInfo doGetFontAbleToDisplay(int codePoint, char[] remainingText, int start, int end,
+                                                          float size, @JdkConstants.FontStyle int style, boolean useLigatures,
+                                                          FontRenderContext context) {
     if (style < 0 || style > 3) style = Font.PLAIN;
     synchronized (lock) {
       FallBackInfo fallBackInfo = UNDISPLAYABLE_FONT_INFO;

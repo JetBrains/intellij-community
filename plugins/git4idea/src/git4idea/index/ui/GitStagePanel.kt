@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
+import com.intellij.diff.util.DiffUtil
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -9,16 +10,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
-import com.intellij.openapi.components.service
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.openapi.vcs.changes.ChangesViewManager.createTextStatusFactory
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
@@ -40,7 +39,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
-import com.intellij.vcs.commit.EditedCommitNode
+import com.intellij.vcs.commit.insertEditedCommitNode
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -103,7 +102,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   init {
     _tree = MyChangesTree(project)
 
-    commitPanel = GitStageCommitPanel(project)
+    commitPanel = GitStageCommitPanel(project, GitStageUiSettingsImpl(project))
     commitPanel.commitActionsPanel.isCommitButtonDefault = {
       !commitPanel.commitProgressUi.isDumbMode &&
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
@@ -185,9 +184,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private fun updateChangesStatusPanel() {
     val manager = ChangeListManagerImpl.getInstanceImpl(project)
-    val factory = manager.updateException?.let { createTextStatusFactory(VcsBundle.message("error.updating.changes", it.message), true) }
-                  ?: manager.additionalUpdateInfo
-    changesStatusPanel.setContent(factory?.create())
+    val components = manager.additionalUpdateInfo.mapNotNull { it.get() }
+    changesStatusPanel.setContent(DiffUtil.createStackedComponents(components, DiffUtil.TITLE_GAP))
   }
 
   @RequiresEdt
@@ -204,6 +202,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   override fun getData(dataId: String): Any? {
     if (QuickActionProvider.KEY.`is`(dataId)) return toolbar
     if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorTabPreview
+    if (PlatformDataKeys.HELP_ID.`is`(dataId)) return HELP_ID
     return null
   }
 
@@ -255,7 +254,17 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   override fun dispose() {
   }
 
-  private inner class MyChangesTree(project: Project) : GitStageTree(project, project.service<GitStageUiSettingsImpl>(),
+  private fun ChangesTree.setDefaultEmptyText() {
+    emptyText.setText(message("stage.default.status"))
+    if (!wasStagingAreaActionInvoked()) {
+      emptyText.appendLine("")
+        .appendLine(AllIcons.General.ContextHelp, message("stage.default.status.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+          HelpManager.getInstance().invokeHelp(HELP_ID)
+        }
+    }
+  }
+
+  private inner class MyChangesTree(project: Project) : GitStageTree(project, GitStageUiSettingsImpl(project),
                                                                      this@GitStagePanel) {
     override val state
       get() = this@GitStagePanel.state
@@ -267,6 +276,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     init {
       isShowCheckboxes = true
+      setDefaultEmptyText()
 
       setInclusionModel(GitStageRootInclusionModel(project, tracker, this@GitStagePanel))
       groupingSupport.addPropertyChangeListener(PropertyChangeListener {
@@ -320,10 +330,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     override fun customizeTreeModel(builder: TreeModelBuilder) {
       super.customizeTreeModel(builder)
 
-      commitPanel.editedCommit?.let {
-        val commitNode = EditedCommitNode(it)
-        builder.insertSubtreeRoot(commitNode)
-        builder.insertChanges(it.commit.changes, commitNode)
+      commitPanel.editedCommit?.let { editedCommit ->
+        insertEditedCommitNode(builder, editedCommit)
       }
     }
 
@@ -415,9 +423,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
         other as GitStageMergeHoverIcon
 
-        if (conflict != other.conflict) return false
-
-        return true
+        return conflict == other.conflict
       }
 
       override fun hashCode(): Int {
@@ -456,7 +462,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       }
       else {
         progressStripe.stopLoading()
-        tree.setEmptyText("")
+        tree.setDefaultEmptyText()
       }
     }
   }
@@ -489,7 +495,12 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     @NonNls
     private const val GROUPING_PROPERTY_NAME = "GitStage.ChangesTree.GroupingKeys"
     private const val GIT_STAGE_PANEL_PLACE = "GitStagePanelPlace"
+    internal const val HELP_ID = "reference.VersionControl.Git.StagingArea"
   }
 }
 
 internal fun createMergeHandler(project: Project) = GitMergeHandler(project, GitDefaultMergeDialogCustomizer(project))
+
+private const val GIT_STAGE_ACTION_INVOKED_PROPERTY = "git.stage.action.invoked"
+internal fun stagingAreaActionInvoked() = PropertiesComponent.getInstance().setValue(GIT_STAGE_ACTION_INVOKED_PROPERTY, true)
+internal fun wasStagingAreaActionInvoked() = PropertiesComponent.getInstance().getBoolean(GIT_STAGE_ACTION_INVOKED_PROPERTY, false)

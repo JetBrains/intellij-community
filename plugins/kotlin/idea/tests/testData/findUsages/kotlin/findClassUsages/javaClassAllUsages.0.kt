@@ -4,5 +4,11 @@
 package testing
 
 class <caret>Server() {
+
+    companion object {
+        @JvmField var ID = ""
+        @JvmStatic fun callStatic() {}
+    }
+
 }
 

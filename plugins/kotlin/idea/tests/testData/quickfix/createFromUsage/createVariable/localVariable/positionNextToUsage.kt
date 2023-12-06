@@ -6,3 +6,4 @@ fun test(n: Int) {
     test(i + 1)
     test(<caret>foo)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$CreateLocalFromUsageAction

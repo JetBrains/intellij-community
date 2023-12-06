@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -18,7 +18,7 @@ public interface InspectionApplicationFactory {
 
   @NotNull
   static InspectionApplicationBase getApplication(@NotNull String id, @NotNull List<String> args) throws InspectionApplicationException {
-    for (InspectionApplicationFactory extension : EP_NAME.getExtensions()) {
+    for (InspectionApplicationFactory extension : EP_NAME.getExtensionList()) {
       if (extension.id().equals(id)) {
         return extension.getApplication(args);
       }

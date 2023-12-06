@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -62,14 +63,13 @@ public abstract class DfaAssistBase implements Disposable {
     AssistMode mode = myMode;
     if (!hints.isEmpty() && mode.displayInlays()) {
       InlayModel model = editor.getInlayModel();
-      AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
       hints.forEach((expr, hint) -> {
         Segment range = expr.getTextRange();
         if (range == null) return;
         PresentationFactory factory = new PresentationFactory(editor);
         MenuOnClickPresentation presentation = new MenuOnClickPresentation(
           factory.roundWithBackground(factory.smallText(hint.getTitle())), myProject,
-          () -> Collections.singletonList(turnOffDfaProcessor));
+          () -> getInlayHintActions());
         newInlays.add(model.addInlineElement(range.getEndOffset(), new PresentationRenderer(presentation)));
       });
     }
@@ -85,6 +85,10 @@ public abstract class DfaAssistBase implements Disposable {
     if (!newInlays.isEmpty() || !ranges.isEmpty()) {
       myMarkup = new DfaAssistMarkup(editor, newInlays, ranges);
     }
+  }
+
+  protected @NotNull List<@NotNull AnAction> getInlayHintActions() {
+    return Collections.singletonList(new TurnOffDfaProcessorAction());
   }
 
   @Override
@@ -117,7 +121,7 @@ public abstract class DfaAssistBase implements Disposable {
 
     @Override
     public void dispose() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       myInlays.forEach(Disposer::dispose);
       myInlays.clear();
       myRanges.forEach(RangeHighlighter::dispose);

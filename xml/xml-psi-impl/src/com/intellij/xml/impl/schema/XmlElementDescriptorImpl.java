@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -30,12 +30,9 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
   protected volatile XmlNSDescriptor NSDescriptor;
   private volatile @Nullable Validator<XmlTag> myValidator;
 
-  @NonNls
-  public static final String QUALIFIED_ATTR_VALUE = "qualified";
-  @NonNls
-  public static final String NONQUALIFIED_ATTR_VALUE = "unqualified";
-  @NonNls
-  private static final String ELEMENT_FORM_DEFAULT = "elementFormDefault";
+  public static final @NonNls String QUALIFIED_ATTR_VALUE = "qualified";
+  public static final @NonNls String NONQUALIFIED_ATTR_VALUE = "unqualified";
+  private static final @NonNls String ELEMENT_FORM_DEFAULT = "elementFormDefault";
 
   public XmlElementDescriptorImpl(@Nullable XmlTag descriptorTag) {
     myDescriptorTag = descriptorTag;
@@ -153,13 +150,11 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return type instanceof ComplexTypeDescriptor ? ((ComplexTypeDescriptor)type).getTopGroup() : null;
   }
 
-  @Nullable
-  public TypeDescriptor getType() {
+  public @Nullable TypeDescriptor getType() {
     return getType(null);
   }
 
-  @Nullable
-  public TypeDescriptor getType(XmlElement context) {
+  public @Nullable TypeDescriptor getType(XmlElement context) {
     final XmlNSDescriptor nsDescriptor = getNSDescriptor(context);
     if (!(nsDescriptor instanceof XmlNSTypeDescriptorProvider)) return null;
 
@@ -317,8 +312,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return getAttributeDescriptorImpl(attributeName,context);
   }
 
-  @Nullable
-  private XmlAttributeDescriptor getAttributeDescriptorImpl(final String attributeName, XmlTag context) {
+  private @Nullable XmlAttributeDescriptor getAttributeDescriptorImpl(final String attributeName, XmlTag context) {
     final String localName = XmlUtil.findLocalNameByQualifiedName(attributeName);
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(attributeName);
     final String namespace = namespacePrefix.isEmpty() ?
@@ -358,8 +352,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return getAttributeDescriptorImpl(attribute.getName(),attribute.getParent());
   }
 
-  @Nullable
-  private XmlAttributeDescriptor getAttribute(String attributeName, String namespace, XmlTag context, String qName) {
+  private @Nullable XmlAttributeDescriptor getAttribute(String attributeName, String namespace, XmlTag context, String qName) {
     XmlAttributeDescriptor[] descriptors = getAttributesDescriptors(context);
 
     for (XmlAttributeDescriptor descriptor : descriptors) {
@@ -394,8 +387,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return CONTENT_TYPE_MIXED;
   }
 
-  @Nullable
-  public XmlElementDescriptor getElementDescriptor(final String name) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(final String name) {
       final String localName = XmlUtil.findLocalNameByQualifiedName(name);
       final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(name);
       final String namespace = namespacePrefix.isEmpty() ?
@@ -404,8 +396,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return getElementDescriptor(localName, namespace, null, name);
   }
 
-  @Nullable
-  protected XmlElementDescriptor getElementDescriptor(final String localName, final String namespace, XmlElement context, String fullName) {
+  protected @Nullable XmlElementDescriptor getElementDescriptor(final String localName, final String namespace, XmlElement context, String fullName) {
     XmlElementDescriptor[] elements = getElementsDescriptorsImpl(context);
 
     for (XmlElementDescriptor element1 : elements) {
@@ -486,8 +477,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return getName();
   }
 
-  @Nullable
-  private String getNS(){
+  private @Nullable String getNS(){
     return XmlUtil.findNamespacePrefixByURI((XmlFile) myDescriptorTag.getContainingFile(), getNamespace());
   }
 

@@ -13,3 +13,5 @@ object Str2 {
     }
 }
 
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.WrapWithSafeLetCallFixFactories$applicator$1

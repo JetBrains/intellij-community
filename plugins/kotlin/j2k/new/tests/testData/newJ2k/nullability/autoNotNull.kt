@@ -1,5 +1,8 @@
 internal class A {
     fun foo(s: String?): Int {
-        return s?.length ?: -1
+        if (s != null) {
+            return s.length
+        }
+        return -1
     }
 }

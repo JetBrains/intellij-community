@@ -4,7 +4,6 @@ package com.intellij.java.psi;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -16,6 +15,7 @@ import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.ref.GCWatcher;
@@ -276,7 +276,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
       assertEquals("o", parameters[1].getName());
     };
 
-    DumbServiceImpl.getInstance(getProject()).runInDumbMode(checkNames);
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), checkNames::run);
     checkNames.run();
   }
 

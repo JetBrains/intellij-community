@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml.stub;
 
 import com.intellij.psi.impl.source.xml.XmlStubBasedAttribute;
@@ -13,8 +13,8 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class XmlAttributeStubImpl extends StubBase<XmlStubBasedAttribute> implements XmlAttributeStub<XmlStubBasedAttribute> {
 
-  @NotNull private final String name;
-  @Nullable private final String value;
+  private final @NotNull String name;
+  private final @Nullable String value;
 
   public XmlAttributeStubImpl(@Nullable StubElement<?> parent,
                        @NotNull StubInputStream dataStream,
@@ -38,13 +38,11 @@ public class XmlAttributeStubImpl extends StubBase<XmlStubBasedAttribute> implem
     stream.writeName(value);
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
-  @Nullable
-  public String getValue() {
+  public @Nullable String getValue() {
     return value;
   }
 }

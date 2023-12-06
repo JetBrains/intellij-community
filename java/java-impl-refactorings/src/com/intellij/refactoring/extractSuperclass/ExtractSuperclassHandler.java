@@ -48,20 +48,13 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-    while (true) {
-      if (element == null || element instanceof PsiFile) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
-        return;
-      }
-      if (element instanceof PsiClass) {
-        invoke(project, new PsiElement[]{element}, dataContext);
-        return;
-      }
-      element = element.getParent();
+    List<PsiElement> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, e -> e instanceof PsiMember);
+    if (elements.isEmpty()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
+      return;
     }
+    invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
   }
 
   @Override
@@ -73,6 +66,12 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
               : PsiTreeUtil.getParentOfType(parent, PsiClass.class, false);
     if (mySubclass == null) {
       String message = RefactoringBundle.message("error.select.class.to.be.refactored");
+      CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
+      return;
+    }
+
+    if (mySubclass instanceof PsiUnnamedClass) {
+      String message = RefactoringBundle.message("error.superclass.cannot.be.extracted.from.unnamed.class");
       CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
       return;
     }

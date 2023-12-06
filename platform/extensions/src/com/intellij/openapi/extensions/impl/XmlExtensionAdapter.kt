@@ -1,24 +1,26 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl
 
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.XmlSerializer
-import java.util.*
+
+private val NOT_APPLICABLE = Any()
 
 internal open class XmlExtensionAdapter(implementationClassName: String,
                                         pluginDescriptor: PluginDescriptor,
                                         orderId: String?,
                                         order: LoadingOrder,
                                         private var extensionElement: XmlElement?,
-                                        implementationClassResolver: ImplementationClassResolver) : ExtensionComponentAdapter(
-  implementationClassName, pluginDescriptor, orderId, order, implementationClassResolver) {
-  companion object {
-    private val NOT_APPLICABLE = Any()
-  }
-
+                                        implementationClassResolver: ImplementationClassResolver)
+  : ExtensionComponentAdapter(implementationClassName = implementationClassName,
+                              pluginDescriptor = pluginDescriptor,
+                              orderId = orderId,
+                              order = order,
+                              implementationClassResolver = implementationClassResolver) {
   @Volatile
   private var extensionInstance: Any? = null
   private var initializing = false
@@ -78,35 +80,44 @@ internal open class XmlExtensionAdapter(implementationClassName: String,
   protected open fun <T> instantiateClass(aClass: Class<T>, componentManager: ComponentManager): T {
     return componentManager.instantiateClass(aClass, pluginDescriptor.pluginId)
   }
+}
 
-  internal class SimpleConstructorInjectionAdapter(implementationClassName: String,
-                                                   pluginDescriptor: PluginDescriptor,
-                                                   descriptor: ExtensionDescriptor,
-                                                   implementationClassResolver: ImplementationClassResolver) : XmlExtensionAdapter(
-    implementationClassName, pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, implementationClassResolver) {
-    override fun <T> instantiateClass(aClass: Class<T>, componentManager: ComponentManager): T {
-      if (aClass.name != "org.jetbrains.kotlin.asJava.finder.JavaElementFinder") {
-        try {
-          return super.instantiateClass(aClass, componentManager)
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: ExtensionNotApplicableException) {
-          throw e
-        }
-        catch (e: RuntimeException) {
-          val cause = e.cause
-          if (!(cause is NoSuchMethodException || cause is IllegalArgumentException)) {
-            throw e
-          }
-          ExtensionPointImpl.LOG.error(
-            "Cannot create extension without pico container (class=" + aClass.name + ", constructors=" +
-            Arrays.toString(aClass.declaredConstructors) + ")," +
-            " please remove extra constructor parameters", e)
-        }
+internal class SimpleConstructorInjectionAdapter(
+  implementationClassName: String,
+  pluginDescriptor: PluginDescriptor,
+  descriptor: ExtensionDescriptor,
+  extensionElement: XmlElement?,
+  implementationClassResolver: ImplementationClassResolver,
+) : XmlExtensionAdapter(
+  implementationClassName = implementationClassName,
+  pluginDescriptor = pluginDescriptor,
+  orderId = descriptor.orderId,
+  order = descriptor.order,
+  extensionElement = extensionElement,
+  implementationClassResolver = implementationClassResolver,
+) {
+  override fun <T> instantiateClass(aClass: Class<T>, componentManager: ComponentManager): T {
+    if (aClass.name != "org.jetbrains.kotlin.asJava.finder.JavaElementFinder") {
+      try {
+        return componentManager.instantiateClass(aClass, pluginDescriptor.pluginId)
       }
-      return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.pluginId)
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: ExtensionNotApplicableException) {
+        throw e
+      }
+      catch (e: RuntimeException) {
+        val cause = e.cause
+        if (!(cause is NoSuchMethodException || cause is IllegalArgumentException)) {
+          throw e
+        }
+        logger<ExtensionPointImpl<*>>().error(
+          "Cannot create extension without pico container " +
+          "(class=${aClass.name}, constructors=${aClass.declaredConstructors.contentToString()}), " +
+          "please remove extra constructor parameters", e)
+      }
     }
+    return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.pluginId)
   }
 }

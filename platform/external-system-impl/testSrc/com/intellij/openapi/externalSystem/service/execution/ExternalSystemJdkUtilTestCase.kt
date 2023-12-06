@@ -35,11 +35,11 @@ abstract class ExternalSystemJdkUtilTestCase : SdkTestCase() {
   }
 
   class TestJdkProvider : ExternalSystemJdkProvider, Disposable {
-    private val internalJdk by lazy { TestSdkGenerator.createNextSdk() }
+    private val lazyInternalJdk by lazy { TestSdkGenerator.createNextSdk() }
 
     override fun getJavaSdkType() = TestSdkType
 
-    override fun getInternalJdk(): Sdk = internalJdk
+    override fun getInternalJdk(): Sdk = lazyInternalJdk
 
     override fun createJdk(jdkName: String?, homePath: String): Sdk {
       val sdk = TestSdkGenerator.findTestSdk(homePath)!!
@@ -55,7 +55,7 @@ abstract class ExternalSystemJdkUtilTestCase : SdkTestCase() {
       assertNewlyRegisteredSdks({ null }, action = action)
     }
 
-    fun assertNewlyRegisteredSdks(expectedNewSdk: () -> TestSdk?, isAssertSdkName: Boolean = true, action: () -> Unit) {
+    fun assertNewlyRegisteredSdks(expectedNewSdk: () -> Sdk?, isAssertSdkName: Boolean = true, action: () -> Unit) {
       val projectSdkTable = ProjectJdkTable.getInstance()
       val beforeSdks = projectSdkTable.allJdks.toSet()
 
@@ -73,7 +73,7 @@ abstract class ExternalSystemJdkUtilTestCase : SdkTestCase() {
       if (throwable != null) throw throwable
     }
 
-    private fun assertNewlyRegisteredSdks(expectedNewSdk: TestSdk?, newSdks: Set<Sdk>, isAssertSdkName: Boolean) {
+    private fun assertNewlyRegisteredSdks(expectedNewSdk: Sdk?, newSdks: Set<Sdk>, isAssertSdkName: Boolean) {
       if (expectedNewSdk != null) {
         assertTrue("Expected registration of $expectedNewSdk but found $newSdks", newSdks.size == 1)
         val newSdk = newSdks.first()
@@ -85,14 +85,10 @@ abstract class ExternalSystemJdkUtilTestCase : SdkTestCase() {
     }
 
     fun withoutRegisteredSdks(action: () -> Unit) {
-      val application = ApplicationManager.getApplication()
-      Disposer.newDisposable().use {
-        application.replaceService(ProjectJdkTable::class.java, ProjectJdkTableImpl(), it)
-        assertUnexpectedSdksRegistration(action)
-      }
+      assertUnexpectedSdksRegistration(action)
     }
 
-    fun withRegisteredSdks(vararg sdks: TestSdk, action: () -> Unit) {
+    fun withRegisteredSdks(vararg sdks: Sdk, action: () -> Unit) {
       Disposer.newDisposable().use {
         registerSdks(*sdks, parentDisposable = it)
         assertUnexpectedSdksRegistration(action)

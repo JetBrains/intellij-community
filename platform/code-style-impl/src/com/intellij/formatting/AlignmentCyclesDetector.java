@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-public class AlignmentCyclesDetector {
+public final class AlignmentCyclesDetector {
   private final int myTotalAlignmentsCount;
 
   private final Map<OffsetPair,Integer> myRealignmentCounts = new HashMap<>();
@@ -26,7 +27,7 @@ public class AlignmentCyclesDetector {
 
 
   private record OffsetPair(int first, int second) {
-    private final static int MAX_VALUE = Integer.MAX_VALUE >>> 16;
+    private static final int MAX_VALUE = Integer.MAX_VALUE >>> 16;
 
     @Override
     public int hashCode() {

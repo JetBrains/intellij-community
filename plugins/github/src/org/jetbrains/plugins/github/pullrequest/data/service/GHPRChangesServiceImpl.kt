@@ -21,8 +21,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import git4idea.changes.GitCommitShaWithPatches
-import git4idea.changes.GitParsedChangesBundle
-import git4idea.changes.GitParsedChangesBundleImpl
+import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.GitBranchComparisonResultImpl
 import git4idea.fetch.GitFetchSupport
 import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.api.GHGQLRequests
@@ -102,7 +102,7 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
                                      baseRef: String,
                                      mergeBaseRef: String,
                                      headRef: String,
-                                     commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GitParsedChangesBundle> {
+                                     commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GitBranchComparisonResult> {
 
     return progressManager.submitIOTask(ProgressWrapper.wrap(progressIndicator)) {
       val prPatchesRequest = patchesCache.get(baseRef to headRef)
@@ -120,8 +120,8 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       val prPatches = prPatchesRequest.joinCancellable()
       it.checkCanceled()
 
-      GitParsedChangesBundleImpl(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsList,
-                                 prPatches) as GitParsedChangesBundle
+      GitBranchComparisonResultImpl(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsList,
+                                    prPatches) as GitBranchComparisonResult
     }.logError(LOG, "Error occurred while building changes from commits")
   }
 

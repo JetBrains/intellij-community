@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
@@ -44,7 +43,9 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       if (editor instanceof ConfigurationSettingsEditorWrapper && !((ConfigurationSettingsEditorWrapper)editor).supportsSnapshots()) {
         return super.isModified();
       }
-
+      if (!getEditor().isReadyForApply()) {
+        return true;
+      }
       RunnerAndConfigurationSettings snapshot = getSnapshot();
       Element originalXml = ((SerializableScheme)original).writeScheme();
       Element snapshotXml = ((SerializableScheme)snapshot).writeScheme();
@@ -56,23 +57,12 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
     return super.isModified();
   }
 
-  @NotNull
-  protected RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+  protected @NotNull RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     return getEditor().getSnapshot();
   }
 
   boolean isSpecificallyModified() {
-    SettingsEditor<RunnerAndConfigurationSettings> editor = getEditor();
-
-    if (editor instanceof ConfigurationSettingsEditorWrapper) {
-      return ((ConfigurationSettingsEditorWrapper)editor).isSpecificallyModified();
-    }
-
-    if (editor instanceof RunnerAndConfigurationSettingsEditor) {
-      return ((RunnerAndConfigurationSettingsEditor)editor).isSpecificallyModified();
-    }
-
-    return false;
+    return getEditor().isSpecificallyModified();
   }
 
   @Override
@@ -80,8 +70,7 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
     return wrapWithScrollPane(super.createComponent());
   }
 
-  @NotNull
-  protected static JBScrollPane wrapWithScrollPane(@Nullable JComponent component) {
+  protected static @NotNull JBScrollPane wrapWithScrollPane(@Nullable JComponent component) {
     JBScrollPane scrollPane =
       new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
         @Override

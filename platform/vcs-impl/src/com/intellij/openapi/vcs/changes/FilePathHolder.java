@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -9,7 +10,7 @@ import java.util.Collection;
 public interface FilePathHolder extends FileHolder {
   void addFile(@NotNull FilePath file);
 
-  boolean containsFile(@NotNull FilePath file);
+  boolean containsFile(@NotNull FilePath file, @NotNull VirtualFile vcsRoot);
 
   @NotNull
   Collection<FilePath> values();

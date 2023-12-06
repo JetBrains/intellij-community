@@ -4,6 +4,7 @@ package com.intellij.internal.ui.uiDslTestAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JCheckBox
@@ -20,7 +21,7 @@ internal class ValidationPanel(parentDisposable: Disposable) {
 
       row {
         cbValidationEnabled = checkBox("Validation enabled")
-          .applyToComponent { isSelected = true }
+          .selected(true)
           .component
       }
 
@@ -34,7 +35,7 @@ internal class ValidationPanel(parentDisposable: Disposable) {
       }
 
       row("Segmented Button:") {
-        val segmentedButton = segmentedButton((1..4).toList()) { "Item $it" }
+        val segmentedButton = segmentedButton((1..4).toList()) { text = "Item $it" }
           .validation {
             enabledIf(cbValidationEnabled.selected)
             addApplyRule("Cannot be empty") { it.selectedItem == null }

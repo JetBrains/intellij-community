@@ -10,6 +10,71 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-core:3.0.5" type="repository">
         <properties maven-id="org.apache.maven:maven-core:3.0.5">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/3.0.5/maven-core-3.0.5.jar">
+              <sha256sum>ac8e617f951ecde3c4f6bca4922fdd7861500fe7d58289f26ad5adac443075bc</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.0.5/maven-model-3.0.5.jar">
+              <sha256sum>876a76b663db6c7326ad234afe430c473d3261a06b3284f31d5eb4889d1c3084</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/3.0.5/maven-settings-3.0.5.jar">
+              <sha256sum>d8f9f237afc21d8202eedffa29cbf6e9d46c78b3c22b217d16267216988221b9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/3.0.5/maven-settings-builder-3.0.5.jar">
+              <sha256sum>ac0e62e26b7f690e265ba75667531973b8a2da12b3b0ff102a612f05b42b6faf</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.0.5/maven-repository-metadata-3.0.5.jar">
+              <sha256sum>c867b4e075a4548bf27422542f96b159f94c4e7ffaaf6427b10433afd6a3a38c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.0.5/maven-artifact-3.0.5.jar">
+              <sha256sum>c6d5e244dd2329971f91b8df666ffe9e0b00a7dd014d6ee073b6f6cb82877f5c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/3.0.5/maven-plugin-api-3.0.5.jar">
+              <sha256sum>469505f75b8526a338cfd7e0ec841655ae52ddbcc1b36482e97d72f52ce7d890</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.0.5/maven-model-builder-3.0.5.jar">
+              <sha256sum>45a2c6ff76e12678eaf576bd7a68d028c5a5ba85fdc216a381ea86e9187e1b51</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-aether-provider/3.0.5/maven-aether-provider-3.0.5.jar">
+              <sha256sum>c74327cd5d7b137c8be3591c766271ac8ace1a617518f0410b8a95579f9839b0</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-spi/1.13.1/aether-spi-1.13.1.jar">
+              <sha256sum>d5de4e299be5a79feb1dbe8ff3814034c6e44314b4c00b92ffa8d97576ded5b3</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-impl/1.13.1/aether-impl-1.13.1.jar">
+              <sha256sum>865511994805827e88f327944a089142bb7f3d88cde271ba3dceb732cb137a93</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-api/1.13.1/aether-api-1.13.1.jar">
+              <sha256sum>ae8dc80232771f8913febfa410c5719e9ba8ded81fb99788e214fd676dbbe13f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-util/1.13.1/aether-util-1.13.1.jar">
+              <sha256sum>687799a0ce988bee9e8eb9ae0ba870300adc0114248ad4a4327bdb625d27e010</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-plexus/2.3.0/sisu-inject-plexus-2.3.0.jar">
+              <sha256sum>bf9083fb846993689409b2bdbc735048e53bac6cc32707cde7ef84817b6e9365</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-bean/2.3.0/sisu-inject-bean-2.3.0.jar">
+              <sha256sum>75819b29737c2bee1bfbda1011d455c7036738e0ef32ffbf85ba1d8fa157ceb2</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.14/plexus-interpolation-1.14.jar">
+              <sha256sum>7fc63378d3e84663619b9bedace9f9fe78b276c2be3c62ca2245449294c84176</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/2.0.6/plexus-utils-2.0.6.jar">
+              <sha256sum>8b909f4ca9788647942f883d4e559bcc642123f7c6bcd3846983a2e465469c33</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2.4/plexus-classworlds-2.4.jar">
+              <sha256sum>259d528a29722cab6349d7e7d432e3fd4877c087ffcb04985a6612e97023bba8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/1.5.5/plexus-component-annotations-1.5.5.jar">
+              <sha256sum>4df7a6a7be64b35bbccf60b5c115697f9ea3421d22674ae67135dde375fcca1f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-sec-dispatcher/1.3/plexus-sec-dispatcher-1.3.jar">
+              <sha256sum>3b0559bb8432f28937efe6ca193ef54a8506d0075d73fd7406b9b116c6a11063</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4.jar">
+              <sha256sum>5a15fdba22669e0fdd06e10dcce6320879e1f7398fbc910cd0677b50672a78c4</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.sonatype.sisu:sisu-guice" />
           </exclude>
@@ -38,12 +103,45 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/3.0.5/maven-core-3.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.0.5/maven-model-3.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/3.0.5/maven-settings-3.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/3.0.5/maven-settings-builder-3.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.0.5/maven-repository-metadata-3.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.0.5/maven-artifact-3.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/3.0.5/maven-plugin-api-3.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.0.5/maven-model-builder-3.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-aether-provider/3.0.5/maven-aether-provider-3.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-spi/1.13.1/aether-spi-1.13.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-impl/1.13.1/aether-impl-1.13.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-api/1.13.1/aether-api-1.13.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-util/1.13.1/aether-util-1.13.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-plexus/2.3.0/sisu-inject-plexus-2.3.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-bean/2.3.0/sisu-inject-bean-2.3.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.14/plexus-interpolation-1.14-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/2.0.6/plexus-utils-2.0.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2.4/plexus-classworlds-2.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/1.5.5/plexus-component-annotations-1.5.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-sec-dispatcher/1.3/plexus-sec-dispatcher-1.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.sonatype.sisu:sisu-guice-no_aop:3.1.0" type="repository">
         <properties maven-id="org.sonatype.sisu:sisu-guice:3.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-3.1.0.jar">
+              <sha256sum>a263933f43e9c273161e0b99f553c33a80a0416ec0bd5dca17d54cf38ae5956f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar">
+              <sha256sum>91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-guava/0.9.9/sisu-guava-0.9.9.jar">
+              <sha256sum>9897e80ff6c08fc45b5b5ebd81d9e943a1087bdf0ad50cda457d616abbdaacd9</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="aopalliance:aopalliance" />
           </exclude>
@@ -54,27 +152,47 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-guava/0.9.9/sisu-guava-0.9.9.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-3.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-guava/0.9.9/sisu-guava-0.9.9-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.codehaus.plexus:plexus-component-annotations:1.5.5" type="repository">
-        <properties maven-id="org.codehaus.plexus:plexus-component-annotations:1.5.5" />
+        <properties maven-id="org.codehaus.plexus:plexus-component-annotations:1.5.5">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/1.5.5/plexus-component-annotations-1.5.5.jar">
+              <sha256sum>4df7a6a7be64b35bbccf60b5c115697f9ea3421d22674ae67135dde375fcca1f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/1.5.5/plexus-component-annotations-1.5.5.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/1.5.5/plexus-component-annotations-1.5.5-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.eclipse.aether:aether-api:0.9.0.M2" type="repository">
-        <properties maven-id="org.eclipse.aether:aether-api:0.9.0.M2" />
+        <properties maven-id="org.eclipse.aether:aether-api:0.9.0.M2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/0.9.0.M2/aether-api-0.9.0.M2.jar">
+              <sha256sum>e220097cffad96c2963ab12652ff8833ec6f40143d509f0a2ea59d22209b6ecd</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/0.9.0.M2/aether-api-0.9.0.M2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/0.9.0.M2/aether-api-0.9.0.M2-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.maven.artifactResolver.common" exported="" />

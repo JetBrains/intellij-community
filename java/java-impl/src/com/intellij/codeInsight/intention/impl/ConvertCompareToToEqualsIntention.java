@@ -1,15 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +17,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntentionAction {
+public class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction<PsiBinaryExpression> {
+  public ConvertCompareToToEqualsIntention() {
+    super(PsiBinaryExpression.class);
+  }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiBinaryExpression element, @NotNull ModPsiUpdater updater) {
     final CompareToResult compareToResult = CompareToResult.findCompareTo(element);
     assert compareToResult != null;
     final PsiExpression qualifier = compareToResult.getQualifier();
@@ -34,15 +36,15 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
       text.append(qualifier.getText()).append('.');
     }
     text.append("equals(").append(argument.getText()).append(')');
-    final PsiExpression newExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text.toString(), null);
+    final PsiExpression newExpression = JavaPsiFacade.getElementFactory(context.project()).createExpressionFromText(text.toString(), null);
     final PsiElement result = compareToResult.getBinaryExpression().replace(newExpression);
-
-    editor.getCaretModel().moveToOffset(result.getTextOffset() + result.getTextLength());
+    updater.moveTo(result.getTextOffset() + result.getTextLength());
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    return CompareToResult.findCompareTo(element) != null;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiBinaryExpression element) {
+    if (CompareToResult.findCompareTo(element) == null) return null;
+    return Presentation.of(JavaBundle.message("convert.compareto.expression.to.equals.call.may.change.semantics"));
   }
 
   private static final class CompareToResult {
@@ -72,8 +74,7 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
     }
 
     @Nullable
-    static CompareToResult findCompareTo(PsiElement element) {
-      final PsiBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PsiBinaryExpression.class);
+    static CompareToResult findCompareTo(PsiBinaryExpression binaryExpression) {
       if (binaryExpression == null) {
         return null;
       }
@@ -105,11 +106,5 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
   @Override
   public String getFamilyName() {
     return JavaBundle.message("convert.compareto.expression.to.equals.call");
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return JavaBundle.message("convert.compareto.expression.to.equals.call.may.change.semantics");
   }
 }

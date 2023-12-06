@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.Map;
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduceIndex<Key, Value, FileContent>
   implements UpdatableIndex<Key, Value, FileContent, FileCache> {
   private final boolean mySingleEntryIndex;
@@ -51,9 +50,8 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
     );
   }
 
-  @NotNull
   @Override
-  public Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
+  public @NotNull Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
     return ConcurrencyUtil.withLock(getLock().readLock(), () -> {
       try {
         // TODO remove Collections.unmodifiableMap when ContainerUtil started to return unmodifiable map in all cases
@@ -66,8 +64,7 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
     });
   }
 
-  @Nullable
-  protected Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
+  protected @Nullable Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
     if (isDisposed()) {
       return null;
     }
@@ -105,7 +102,7 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       super.updateWithMap(updateData);
     }
     catch (ProcessCanceledException e) {
-      getLogger().error("ProcessCancelledException is not expected here!", e);
+      getLogger().error("ProcessCanceledException is not expected here!", e);
       throw e;
     }
   }

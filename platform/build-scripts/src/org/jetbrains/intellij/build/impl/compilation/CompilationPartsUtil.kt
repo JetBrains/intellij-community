@@ -1,18 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "UnstableApiUsage")
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.diagnostic.telemetry.forkJoinTask
-import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.util.containers.ContainerUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.context.Context
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.VisibleForTesting
@@ -40,15 +40,17 @@ class CompilationCacheUploadConfiguration(
   val uploadOnly: Boolean = false,
   branch: String? = null,
 ) {
-  val serverUrl: String = serverUrl ?: normalizeServerUrl()
-  val branch: String = branch ?: System.getProperty(branchPropertyName).also {
-    check(!it.isNullOrBlank()) {
-      "Git branch is not defined. Please set $branchPropertyName system property."
+  val serverUrl: String by lazy { serverUrl ?: normalizeServerUrl() }
+  val branch: String by lazy {
+    branch ?: System.getProperty(BRANCH_PROPERTY_NAME).also {
+      check(!it.isNullOrBlank()) {
+        "Git branch is not defined. Please set $BRANCH_PROPERTY_NAME system property."
+      }
     }
   }
 
   companion object {
-    private const val branchPropertyName = "intellij.build.compiled.classes.branch"
+    private const val BRANCH_PROPERTY_NAME = "intellij.build.compiled.classes.branch"
 
     private fun normalizeServerUrl(): String {
       val serverUrlPropertyName = "intellij.build.compiled.classes.server.url"
@@ -76,7 +78,7 @@ fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: Com
     }
   }
   else {
-    spanBuilder("pack classes").useWithScope {
+    spanBuilder("pack classes").useWithScopeBlocking {
       packCompilationResult(context, zipDir)
     }
   }
@@ -144,7 +146,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
     }
   }
 
-  spanBuilder("build zip archives").useWithScope {
+  spanBuilder("build zip archives").useWithScopeBlocking {
     val traceContext = Context.current()
     ForkJoinTask.invokeAll(items.map { item ->
       ForkJoinTask.adapt(Callable {
@@ -179,7 +181,7 @@ private fun isModuleOutputDirEmpty(moduleOutDir: Path): Boolean {
 }
 
 // TODO: Remove hardcoded constant
-internal const val uploadPrefix = "intellij-compile/v2"
+internal const val UPLOAD_PREFIX = "intellij-compile/v2"
 
 private fun upload(config: CompilationCacheUploadConfiguration,
                    zipDir: Path,
@@ -190,7 +192,7 @@ private fun upload(config: CompilationCacheUploadConfiguration,
   val metadataJson = Json.encodeToString(CompilationPartsMetadata(
     serverUrl = config.serverUrl,
     branch = config.branch,
-    prefix = uploadPrefix,
+    prefix = UPLOAD_PREFIX,
     files = items.associateTo(TreeMap()) { item ->
       item.name to item.hash!!
     },
@@ -212,7 +214,7 @@ private fun upload(config: CompilationCacheUploadConfiguration,
   }
 
   spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"),
-                                              items.map(PackAndUploadItem::name)).useWithScope {
+                                              items.map(PackAndUploadItem::name)).useWithScopeBlocking {
     uploadArchives(reportStatisticValue = messages::reportStatisticValue,
                    config = config,
                    metadataJson = metadataJson,
@@ -242,8 +244,8 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
     items.sortBy { it.name }
 
     var verifyTime = 0L
-    val upToDate = Collections.newSetFromMap<String>(ConcurrentHashMap())
-    spanBuilder("check previously unpacked directories").useWithScope { span ->
+    val upToDate = ContainerUtil.newConcurrentSet<String>()
+    spanBuilder("check previously unpacked directories").useWithScopeBlocking { span ->
       verifyTime += checkPreviouslyUnpackedDirectories(items = items,
                                                        span = span,
                                                        upToDate = upToDate,
@@ -253,7 +255,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
     reportStatisticValue("compile-parts:up-to-date:count", upToDate.size.toString())
 
     val toUnpack = LinkedHashSet<FetchAndUnpackItem>(items.size)
-    val toDownload = spanBuilder("check previously downloaded archives").useWithScope { span ->
+    val toDownload = spanBuilder("check previously downloaded archives").useWithScopeBlocking { span ->
       val start = System.nanoTime()
       val result = ForkJoinTask.invokeAll(items.mapNotNull { item ->
         if (upToDate.contains(item.name)) {
@@ -517,3 +519,28 @@ private data class CompilationPartsMetadata(
    */
   val files: Map<String, String>,
 )
+
+@PublishedApi
+internal val THREAD_NAME: AttributeKey<String> = AttributeKey.stringKey("thread.name")
+@PublishedApi
+internal val THREAD_ID: AttributeKey<Long> = AttributeKey.longKey("thread.id")
+
+/**
+ * Returns a new [ForkJoinTask] that performs the given function as its action within a trace, and returns
+ * a null result upon [ForkJoinTask.join].
+ *
+ * See [Span](https://opentelemetry.io/docs/reference/specification).
+ */
+inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () -> T): ForkJoinTask<T> {
+  val context = Context.current()
+  return ForkJoinTask.adapt(Callable {
+    val thread = Thread.currentThread()
+    spanBuilder
+      .setParent(context)
+      .setAttribute(THREAD_NAME, thread.name)
+      .setAttribute(THREAD_ID, thread.id)
+      .useWithScopeBlocking {
+        operation()
+      }
+  })
+}

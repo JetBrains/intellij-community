@@ -21,10 +21,10 @@ import com.intellij.diff.util.Side;
 import com.intellij.diff.util.TextDiffType;
 import org.jetbrains.annotations.NotNull;
 
-public class SimpleDiffChange {
+public class SimpleDiffChange implements AlignedDiffModel.AlignableChange {
   private final int myIndex;
 
-  @NotNull private final LineFragment myFragment;
+  private final @NotNull LineFragment myFragment;
   private final boolean myIsExcluded;
   private final boolean myIsSkipped;
 
@@ -53,16 +53,18 @@ public class SimpleDiffChange {
     return myIndex;
   }
 
+  @Override
   public int getStartLine(@NotNull Side side) {
     return side.getStartLine(myFragment) + side.select(myLineStartShifts);
   }
 
+  @Override
   public int getEndLine(@NotNull Side side) {
     return side.getEndLine(myFragment) + side.select(myLineEndShifts);
   }
 
-  @NotNull
-  public TextDiffType getDiffType() {
+  @Override
+  public @NotNull TextDiffType getDiffType() {
     return DiffUtil.getLineDiffType(myFragment);
   }
 
@@ -82,8 +84,7 @@ public class SimpleDiffChange {
     return myIsDestroyed;
   }
 
-  @NotNull
-  public LineFragment getFragment() {
+  public @NotNull LineFragment getFragment() {
     return myFragment;
   }
 

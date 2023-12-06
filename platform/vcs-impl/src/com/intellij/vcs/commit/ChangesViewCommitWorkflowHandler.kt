@@ -10,8 +10,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.concurrency.await
@@ -45,7 +46,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
-  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project) { getIncludedChanges() }
+  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi) { getIncludedChanges() }
   private var currentChangeList: LocalChangeList
 
   init {
@@ -77,17 +78,21 @@ internal class ChangesViewCommitWorkflowHandler(
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(ProjectCloseListener.TOPIC, this)
 
-    val initialCommitMessage = commitMessagePolicy.init(currentChangeList)
-    setCommitMessage(initialCommitMessage)
-    DelayedCommitMessageProvider.init(project, ui, initialCommitMessage)
+    commitMessagePolicy.init(currentChangeList, this)
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
     private val superProvider = super@ChangesViewCommitWorkflowHandler.createDataProvider()
 
-    override fun getData(dataId: String): Any? =
-      if (COMMIT_WORKFLOW_HANDLER.`is`(dataId)) this@ChangesViewCommitWorkflowHandler.takeIf { it.isActive }
-      else superProvider.getData(dataId)
+    override fun getData(dataId: String): Any? {
+      if (VcsDataKeys.COMMIT_WORKFLOW_HANDLER.`is`(dataId)) {
+        return if (isActive) this@ChangesViewCommitWorkflowHandler else null
+      }
+      if (VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId)) {
+        return if (isActive) ui else null
+      }
+      return superProvider.getData(dataId)
+    }
   }
 
   override fun commitOptionsCreated() {
@@ -159,11 +164,14 @@ internal class ChangesViewCommitWorkflowHandler(
 
   val isActive: Boolean get() = ui.isActive
   fun activate(): Boolean = fireActivityStateChanged { ui.activate() }
-  fun deactivate(isRestoreState: Boolean) {
-    fireActivityStateChanged { ui.deactivate(isRestoreState) }
+  fun deactivate(isOnCommit: Boolean) {
+    fireActivityStateChanged { ui.deactivate(isOnCommit) }
     if (isToggleMode()) {
       resetCommitChecksResult()
       ui.commitProgressUi.clearCommitCheckFailures()
+      if (!isOnCommit) {
+        LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+      }
     }
   }
 
@@ -189,7 +197,7 @@ internal class ChangesViewCommitWorkflowHandler(
     currentChangeList = newChangeList
 
     if (oldChangeList.id != newChangeList.id) {
-      commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList, ui.commitMessageUi)
+      commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList)
 
       commitOptions.changeListChanged(newChangeList)
     }
@@ -273,7 +281,7 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   override fun saveCommitMessageBeforeCommit() {
-    commitMessagePolicy.onBeforeCommit(currentChangeList, getCommitMessage())
+    commitMessagePolicy.onBeforeCommit(currentChangeList)
   }
 
   // save state on project close
@@ -292,7 +300,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private fun saveStateBeforeDispose() {
     commitOptions.saveState()
-    commitMessagePolicy.onDispose(currentChangeList, getCommitMessage())
+    commitMessagePolicy.onDispose(currentChangeList)
   }
 
   interface ActivityListener : EventListener {
@@ -302,7 +310,7 @@ internal class ChangesViewCommitWorkflowHandler(
   private inner class GitCommitStateCleaner : CommitStateCleaner() {
 
     override fun onSuccess() {
-      commitMessagePolicy.onAfterCommit(currentChangeList, ui.commitMessageUi)
+      commitMessagePolicy.onAfterCommit(currentChangeList)
       super.onSuccess()
     }
   }

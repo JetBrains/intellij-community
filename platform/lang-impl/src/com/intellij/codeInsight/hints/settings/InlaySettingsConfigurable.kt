@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import java.util.function.Predicate
 import javax.swing.JComponent
 
-const val INLAY_ID = "inlay.hints"
+const val INLAY_ID: String = "inlay.hints"
 
 class InlaySettingsConfigurable(val project: Project) : Configurable, SearchableConfigurable, Configurable.NoScroll {
 

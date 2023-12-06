@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.psi.impl;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -23,7 +23,7 @@ public class DebuggerPositionResolverImpl implements DebuggerPositionResolver {
 
     int offset = position.getOffset();
     final VirtualFile file = position.getFile();
-    if (0 <= offset && offset < file.getLength()) {
+    if (file.isValid() && 0 <= offset && offset < file.getLength()) {
       return DebuggerUtilsEx.findElementAt(PsiManager.getInstance(session.getProject()).findFile(file), offset);
     }
 

@@ -2,9 +2,12 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.LiteAnalyzer;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ArrayUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -14,8 +17,8 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Interpreter;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -27,13 +30,14 @@ public final class PurityAnalysis {
   static final int UN_ANALYZABLE_FLAG = Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE | Opcodes.ACC_INTERFACE;
 
   /**
-   * @param method a method descriptor
+   * @param method     a method descriptor
    * @param methodNode an ASM MethodNode
-   * @param stable whether a method is stable (e.g. final or declared in final class)
+   * @param stable     whether a method is stable (e.g. final or declared in final class)
+   * @param jsr        whether jsr is possible in a current method
    * @return a purity equation or null for top result (either impure or unknown, impurity assumed)
    */
   @Nullable
-  public static Equation analyze(Member method, MethodNode methodNode, boolean stable) {
+  static Equation analyze(Member method, MethodNode methodNode, boolean stable, boolean jsr) {
     EKey key = new EKey(method, Direction.Pure, stable);
     Effects hardCodedSolution = HardCodedPurity.getInstance().getHardCodedSolution(method);
     if (hardCodedSolution != null) {
@@ -41,10 +45,19 @@ public final class PurityAnalysis {
     }
 
     if ((methodNode.access & UN_ANALYZABLE_FLAG) != 0) return null;
+    if (methodNode.instructions.size() > 1000) {
+      // Skip purity analysis for very long methods, as it's rarely useful
+      return null;
+    }
 
     DataInterpreter dataInterpreter = new DataInterpreter(methodNode);
     try {
-      new Analyzer<>(dataInterpreter).analyze("this", methodNode);
+      if (jsr) {
+        new Analyzer<>(dataInterpreter).analyze("this", methodNode);
+      }
+      else {
+        new LiteAnalyzer<>(dataInterpreter).analyze("this", methodNode);
+      }
     }
     catch (AnalyzerException e) {
       return null;
@@ -81,6 +94,10 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
 
   Stream<EKey> dependencies() {
     return Stream.empty();
+  }
+
+  void processDependencies(Consumer<EKey> consumer) {
+    
   }
 
   public ContractReturnValue asContractReturnValue() {
@@ -192,6 +209,11 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
     }
 
     @Override
+    void processDependencies(Consumer<EKey> consumer) {
+      consumer.accept(key);
+    }
+
+    @Override
     public String toString() {
       return "Return of: " + key;
     }
@@ -243,6 +265,10 @@ abstract class EffectQuantum {
     return Stream.empty();
   }
 
+  void processDependencies(Consumer<EKey> consumer) {
+    
+  }
+
   @Override
   public final int hashCode() {
     return myHash;
@@ -262,8 +288,8 @@ abstract class EffectQuantum {
   };
 
   static final class FieldReadQuantum extends EffectQuantum {
-    final EKey key;
-    FieldReadQuantum(EKey key) {
+    final @NotNull EKey key;
+    FieldReadQuantum(@NotNull EKey key) {
       super(key.hashCode());
       this.key = key;
     }
@@ -274,9 +300,14 @@ abstract class EffectQuantum {
     }
 
     @Override
+    void processDependencies(Consumer<EKey> consumer) {
+      consumer.accept(key);
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      return o != null && getClass() == o.getClass() && key == ((FieldReadQuantum)o).key;
+      return o != null && getClass() == o.getClass() && key.equals(((FieldReadQuantum)o).key);
     }
 
     @Override
@@ -286,8 +317,8 @@ abstract class EffectQuantum {
   }
 
   static final class ReturnChangeQuantum extends EffectQuantum {
-    final EKey key;
-    ReturnChangeQuantum(EKey key) {
+    final @NotNull EKey key;
+    ReturnChangeQuantum(@NotNull EKey key) {
       super(key.hashCode());
       this.key = key;
     }
@@ -298,9 +329,14 @@ abstract class EffectQuantum {
     }
 
     @Override
+    void processDependencies(Consumer<EKey> consumer) {
+      consumer.accept(key);
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      return o != null && getClass() == o.getClass() && key == ((ReturnChangeQuantum)o).key;
+      return o != null && getClass() == o.getClass() && key.equals(((ReturnChangeQuantum)o).key);
     }
 
     @Override
@@ -357,6 +393,14 @@ abstract class EffectQuantum {
     @Override
     Stream<EKey> dependencies() {
       return StreamEx.of(data).flatMap(DataValue::dependencies).prepend(key);
+    }
+
+    @Override
+    void processDependencies(Consumer<EKey> consumer) {
+      consumer.accept(key);
+      for (DataValue datum : data) {
+        datum.processDependencies(consumer);
+      }
     }
 
     @Override
@@ -593,22 +637,22 @@ class DataInterpreter extends Interpreter<DataValue> {
 }
 
 final class PuritySolver {
-  private final HashMap<EKey, Effects> solved = new HashMap<>();
+  final HashMap<EKey, Effects> solved = new HashMap<>();
   private final HashMap<EKey, Set<EKey>> dependencies = new HashMap<>();
   private final ArrayDeque<EKey> moving = new ArrayDeque<>();
   final HashMap<EKey, Effects> pending = new HashMap<>();
 
   void addEquation(EKey key, Effects effects) {
-    Set<EKey> depKeys = effects.dependencies().collect(Collectors.toSet());
-    if (depKeys.isEmpty()) {
+    boolean[] hasDeps = {false};
+    effects.processDependencies(depKey -> {
+      hasDeps[0] = true;
+      dependencies.computeIfAbsent(depKey, k -> new HashSet<>()).add(key);
+    });
+    if (hasDeps[0]) {
+      pending.put(key, effects);
+    } else {
       solved.put(key, effects);
       moving.add(key);
-    }
-    else {
-      pending.put(key, effects);
-      for (EKey depKey : depKeys) {
-        dependencies.computeIfAbsent(depKey, k -> new HashSet<>()).add(key);
-      }
     }
   }
 
@@ -629,6 +673,7 @@ final class PuritySolver {
         propagateEffects = new Effects[]{effects, new Effects(DataValue.UnknownDataValue1, Effects.TOP_EFFECTS)};
       }
       for (int i = 0; i < propagateKeys.length; i++) {
+        ProgressManager.checkCanceled();
         EKey pKey = propagateKeys[i];
         Effects pEffects = propagateEffects[i];
         Set<EKey> dKeys = dependencies.remove(pKey);

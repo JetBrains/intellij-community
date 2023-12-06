@@ -19,6 +19,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.DocumentUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitActionsPanel
@@ -152,7 +153,9 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     task {
       val analyzeOptionText = VcsBundle.message("before.checkin.standard.options.check.smells").dropMnemonic()
-      text(GitLessonsBundle.message("git.commit.analyze.code.explanation", strong(analyzeOptionText)))
+      if (!PlatformUtils.isRider()) {
+        text(GitLessonsBundle.message("git.commit.analyze.code.explanation", strong(analyzeOptionText)))
+      }
       text(GitLessonsBundle.message("git.commit.enable.reformat.code", strong(reformatCodeButtonText)))
       triggerUI().component { ui: JBCheckBox ->
         ui.text?.contains(reformatCodeButtonText) == true && ui.isSelected

@@ -2,6 +2,7 @@
 package com.intellij.webSymbols.inspections.impl
 
 import com.intellij.lang.Language
+import com.intellij.lang.MetaLanguage
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointUtil
 import com.intellij.openapi.extensions.RequiredElement
@@ -19,12 +20,19 @@ internal class WebSymbolsHighlightInLanguageEP {
 
     private val EP_NAME = ExtensionPointName<WebSymbolsHighlightInLanguageEP>("com.intellij.webSymbols.highlightInLanguage")
 
-    fun shouldHighlight(language: Language): Boolean =
-      language.isKindOf(language.id)
+    fun shouldHighlight(fileLanguage: Language): Boolean =
+      supportedLanguages.get().any { supportedLang ->
+        if (supportedLang is MetaLanguage) {
+          supportedLang.matchesLanguage(fileLanguage)
+        }
+        else {
+          fileLanguage.isKindOf(supportedLang)
+        }
+      }
 
-    private val languages: ClearableLazyValue<Set<String>> = ExtensionPointUtil.dropLazyValueOnChange(
+    private val supportedLanguages: ClearableLazyValue<Set<Language>> = ExtensionPointUtil.dropLazyValueOnChange(
       ClearableLazyValue.create {
-        EP_NAME.extensionList.mapNotNull { it.language }.toSet()
+        EP_NAME.extensionList.mapNotNull { Language.findLanguageByID(it.language) }.toSet()
       }, EP_NAME, null
     )
   }

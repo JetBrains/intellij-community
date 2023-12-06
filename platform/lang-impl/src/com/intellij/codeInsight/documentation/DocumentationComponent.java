@@ -16,7 +16,6 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ide.DocumentationUtil;
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
 import com.intellij.model.Pointer;
-import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -43,6 +42,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest;
 import com.intellij.platform.backend.documentation.impl.ImplKt;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -73,15 +73,13 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
-
 /**
  * @see com.intellij.lang.documentation.ide.ui.DocumentationUI
  * @see com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
  * @see com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   static final DataProvider HELP_DATA_PROVIDER =
@@ -137,18 +135,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @NotNull PsiElement element,
     @NotNull Disposable disposable
   ) {
-    if (isDocumentationV2Enabled()) {
-      DocumentationRequest request;
-      try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
-        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
-      }
-      return DocumentationUtil.documentationComponent(project, request, disposable);
+    DocumentationRequest request;
+    try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
+      request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
     }
-    DocumentationManager manager = DocumentationManager.getInstance(project);
-    DocumentationComponent component = new DocumentationComponent(manager);
-    Disposer.register(disposable, component);
-    manager.fetchDocInfo(element, component);
-    return component;
+    return DocumentationUtil.documentationComponent(project, request, disposable);
   }
 
   public DocumentationComponent(DocumentationManager manager) {
@@ -486,10 +477,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     showHint(viewRect, ref);
-
-    if (myManager != null) {
-      myManager.getProject().getMessageBus().syncPublisher(DocumentationComponentListener.TOPIC).onComponentDataChanged();
-    }
   }
 
   protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {
@@ -694,14 +681,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return element == null ? null : DocumentationManager.getElementImage(element, imageSpec);
   }
 
-  private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
+  private static final class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     MyGearActionGroup(AnAction @NotNull ... actions) {
       super(actions);
       setPopup(true);
     }
   }
 
-  protected class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.back"), AllIcons.Actions.Back);
     }
@@ -726,7 +713,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.forward"), AllIcons.Actions.Forward);
     }
@@ -853,7 +840,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class MyShowSettingsAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  private final class MyShowSettingsAction extends AnAction implements HintManagerImpl.ActionToIgnore {
 
     MyShowSettingsAction() {
       super(CodeInsightBundle.message("javadoc.adjust.font.size"));
@@ -869,7 +856,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+  protected final class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.toolbar"));
     }
@@ -892,7 +879,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected static class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+  protected static final class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowPopupAutomaticallyAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.popup.automatically"));
     }
@@ -920,7 +907,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ShowAsToolwindowAction() {
       super(CodeInsightBundle.messagePointer("javadoc.open.as.tool.window"));
     }
@@ -948,7 +935,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     RestoreDefaultSizeAction() {
       super(CodeInsightBundle.messagePointer("javadoc.restore.size"));
     }

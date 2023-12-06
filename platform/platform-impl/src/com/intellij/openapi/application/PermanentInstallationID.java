@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -23,11 +23,10 @@ public final class PermanentInstallationID {
   private static final Logger LOG = Logger.getInstance("#PermanentInstallationID");
 
   private static final String OLD_USER_ON_MACHINE_ID_KEY = "JetBrains.UserIdOnMachine";
-  @NonNls private static final String INSTALLATION_ID_KEY = "user_id_on_machine";
+  private static final @NonNls String INSTALLATION_ID_KEY = "user_id_on_machine";
   private static final String INSTALLATION_ID = calculateInstallationId();
 
-  @NotNull
-  public static String get() {
+  public static @NotNull String get() {
     return INSTALLATION_ID;
   }
 
@@ -69,8 +68,7 @@ public final class PermanentInstallationID {
     return installationId == null? UUID.randomUUID().toString() : installationId;
   }
 
-  @NotNull
-  public static String syncWithSharedFile(@NotNull String fileName, @NotNull String installationId, @NotNull Preferences prefs, @NotNull String prefsKey) {
+  public static @NotNull String syncWithSharedFile(@NotNull String fileName, @NotNull String installationId, @NotNull Preferences prefs, @NotNull String prefsKey) {
     try {
       final String appdata = System.getenv("APPDATA");
       if (appdata != null) {
@@ -99,8 +97,7 @@ public final class PermanentInstallationID {
     return installationId;
   }
 
-  @NotNull
-  private static String loadFromFile(@NotNull File file) throws IOException {
+  private static @NotNull String loadFromFile(@NotNull File file) throws IOException {
     try (FileInputStream is = new FileInputStream(file)) {
       final byte[] bytes = FileUtilRt.loadBytes(is);
       final int offset = CharsetToolkit.hasUTF8Bom(bytes) ? CharsetToolkit.UTF8_BOM.length : 0;

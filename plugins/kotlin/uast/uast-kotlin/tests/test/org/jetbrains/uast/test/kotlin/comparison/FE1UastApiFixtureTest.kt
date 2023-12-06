@@ -19,6 +19,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkAssigningArrayElementType(myFixture)
     }
 
+    fun testArgumentForParameter_smartcast() {
+        checkArgumentForParameter_smartcast(myFixture)
+    }
+
     fun testDivByZero() {
         checkDivByZero(myFixture)
     }
@@ -31,8 +35,36 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkTypesOfDeprecatedHidden(myFixture)
     }
 
+    fun testTypesOfDeprecatedHiddenSuspend() {
+        checkTypesOfDeprecatedHiddenSuspend(myFixture)
+    }
+
+    fun testTypesOfDeprecatedHiddenProperty_noAccessor() {
+        checkTypesOfDeprecatedHiddenProperty_noAccessor(myFixture)
+    }
+
+    fun testTypesOfDeprecatedHiddenProperty_getter() {
+        checkTypesOfDeprecatedHiddenProperty_getter(myFixture)
+    }
+
+    fun testTypesOfDeprecatedHiddenProperty_setter() {
+        checkTypesOfDeprecatedHiddenProperty_setter(myFixture)
+    }
+
+    fun testTypesOfDeprecatedHiddenProperty_accessors() {
+        checkTypesOfDeprecatedHiddenProperty_accessors(myFixture)
+    }
+
     fun testReifiedTypeNullability() {
         checkReifiedTypeNullability(myFixture)
+    }
+
+    fun testInheritedGenericTypeNullability() {
+        checkInheritedGenericTypeNullability(myFixture)
+    }
+
+    fun testInheritedGenericTypeNullability_propertyAndAccessor() {
+        checkInheritedGenericTypeNullability_propertyAndAccessor(myFixture)
     }
 
     fun testImplicitReceiverType() {
@@ -49,6 +81,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
 
     fun testCallKindOfSamConstructor() {
         checkCallKindOfSamConstructor(myFixture)
+    }
+
+    fun testExpressionTypeOfForEach() {
+        checkExpressionTypeOfForEach(myFixture)
     }
 
     fun testExpressionTypeFromIncorrectObject() {
@@ -71,4 +107,15 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkLambdaImplicitParameters(myFixture)
     }
 
+    fun testLambdaBodyAsParentOfDestructuringDeclaration() {
+        checkLambdaBodyAsParentOfDestructuringDeclaration(myFixture)
+    }
+
+    fun testIdentifierOfNullableExtensionReceiver() {
+        checkIdentifierOfNullableExtensionReceiver(myFixture)
+    }
+
+    fun testReceiverTypeOfExtensionFunction() {
+        checkReceiverTypeOfExtensionFunction(myFixture)
+    }
 }

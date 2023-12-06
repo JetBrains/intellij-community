@@ -10,7 +10,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class FilePromptMacro extends PromptingMacro implements SecondQueueExpandMacro, PathMacro {
@@ -27,15 +29,14 @@ public class FilePromptMacro extends PromptingMacro implements SecondQueueExpand
   }
 
   @Override
-  protected String promptUser(DataContext dataContext) {
+  protected String promptUser(@NotNull DataContext dataContext,
+                              @Nls @Nullable String label, @Nullable String defaultValue) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+    if (label != null) {
+      descriptor.setTitle(label);
+    }
     final VirtualFile[] result = IdeUiService.getInstance().chooseFiles(descriptor, project, null);
     return result.length == 1? FileUtil.toSystemDependentName(result[0].getPath()) : null;
-  }
-
-  @Override
-  public void cachePreview(@NotNull DataContext dataContext) {
-    myCachedPreview = "<filename>";
   }
 }

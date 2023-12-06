@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -44,14 +45,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
-import org.jetbrains.kotlin.idea.refactoring.move.OuterInstanceReferenceUsageInfo
-import org.jetbrains.kotlin.idea.refactoring.move.collectOuterInstanceReferences
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
-import org.jetbrains.kotlin.idea.refactoring.move.traverseOuterInstanceReferences
+import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
@@ -295,11 +293,12 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
                 progressIndicator.fraction = index * 1.0 / totalCount
                 when (usage) {
                     is OuterInstanceReferenceUsageInfo.ExplicitThis -> {
-                        usage.expression?.replace(newOuterInstanceRef)
+                        usage.expression.replace(newOuterInstanceRef)
                     }
 
                     is OuterInstanceReferenceUsageInfo.ImplicitReceiver -> {
-                        usage.callElement?.let { it.replace(ktPsiFactory.createExpressionByPattern("$0.$1", newOuterInstanceRef, it)) }
+                        val newElem = ktPsiFactory.createExpressionByPattern("$0.$1", newOuterInstanceRef, usage.callElement)
+                        usage.callElement.replace(newElem)
                     }
                 }
             }
@@ -309,9 +308,9 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
 
         val hasInstanceArg = nameSuggestions.isNotEmpty()
 
-        removeModifiers(element)
+        Factory.removeModifiers(element)
 
-        val newDeclaration = Mover.Default(element, companionObject)
+        val newDeclaration = KotlinMover.Default(element, companionObject)
         progressIndicator.checkCanceled()
         for ((index, usage) in externalUsages.withIndex()) {
             progressIndicator.checkCanceled()
@@ -370,21 +369,22 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         val project = element.project
         val containingClass = element.containingClassOrObject as KtClass
         if (element is KtClassOrObject) {
-            val nameSuggestions =
-                if (traverseOuterInstanceReferences(element, true)) getNameSuggestionsForOuterInstance(element) else emptyList()
+            val nameSuggestions = if (traverseOuterInstanceReferences(element, true)) {
+                getNameSuggestionsForOuterInstance(element)
+            } else emptyList()
             val outerInstanceName = nameSuggestions.firstOrNull()
             var movedClass: KtClassOrObject? = null
-            val mover = object : Mover {
+            val mover = object : KotlinMover {
                 override fun invoke(originalElement: KtNamedDeclaration, targetContainer: KtElement): KtNamedDeclaration {
-                    return Mover.Default(originalElement, targetContainer).apply { movedClass = this as KtClassOrObject }
+                    return KotlinMover.Default(originalElement, targetContainer).apply { movedClass = this as KtClassOrObject }
                 }
             }
             val moveDescriptor = MoveDeclarationsDescriptor(
-                project,
-                MoveSource(element),
-                KotlinMoveTargetForCompanion(containingClass),
-                MoveDeclarationsDelegate.NestedClass(null, outerInstanceName),
-                moveCallback = MoveCallback { runTemplateForInstanceParam(movedClass!!, nameSuggestions, editor) }
+              project,
+              KotlinMoveSource(element),
+              KotlinMoveTarget.Companion(containingClass),
+              KotlinMoveDeclarationDelegate.NestedClass(null, outerInstanceName),
+              moveCallback = MoveCallback { runTemplateForInstanceParam(movedClass!!, nameSuggestions, editor) }
             )
             MoveKotlinDeclarationsProcessor(moveDescriptor, mover).run()
             return
@@ -412,7 +412,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         }
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
+    object Factory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction = MoveMemberToCompanionObjectIntention()
 
         fun removeModifiers(element: KtModifierListOwner) {

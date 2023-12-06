@@ -8,15 +8,12 @@ import org.intellij.plugins.markdown.lang.stubs.MarkdownStubBasedPsiElementBase
 import org.intellij.plugins.markdown.lang.stubs.MarkdownStubElement
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElement
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType
+import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Please use {@link MarkdownHeader} instead.", ReplaceWith("MarkdownHeader"))
 abstract class MarkdownHeaderImpl: MarkdownStubBasedPsiElementBase<MarkdownStubElement<*>>, PsiExternalReferenceHost {
   constructor(node: ASTNode) : super(node)
   constructor(stub: MarkdownHeaderStubElement, type: MarkdownHeaderStubElementType) : super(stub, type)
-
-  @Deprecated("Use level instead.", ReplaceWith("level"))
-  val headerNumber
-    get() = calculateHeaderLevel()
 
   protected fun calculateHeaderLevel(): Int {
     val type = node.elementType

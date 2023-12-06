@@ -1,16 +1,15 @@
-<idea-plugin package="org.jetbrains.kotlin" xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="https://kotlinlang.org" allow-bundled-update="true">
+<idea-plugin package="org.jetbrains.kotlin" xmlns:xi="http://www.w3.org/2001/XInclude"
+             allow-bundled-update="true">
   <id>org.jetbrains.kotlin</id>
-
   <name>Kotlin</name>
   <category>Languages</category>
   <description><![CDATA[
-The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
-<br>
-<a href="https://kotlinlang.org/docs/tutorials/getting-started.html">Getting Started in IntelliJ IDEA</a><br>
-<a href="https://kotlinlang.org/docs/tutorials/kotlin-android.html">Getting Started in Android Studio</a><br>
-<a href="https://slack.kotlinlang.org/">Public Slack</a><br>
-<a href="https://youtrack.jetbrains.com/issues/KT">Issue tracker</a><br>
-]]></description>
+    Provides language support for Kotlin, a modern programming language designed to make developers happier.
+    <br><br>
+    <a href="https://kotlinlang.org/docs/tutorials/getting-started.html">Getting Started</a><br>
+    <a href="https://slack.kotlinlang.org/">Public Slack</a><br>
+    <a href="https://youtrack.jetbrains.com/issues/KTIJ">Issue tracker</a><br>
+  ]]></description>
   <!--suppress PluginXmlValidity -->
   <version>@snapshot@</version>
 
@@ -19,6 +18,48 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
+    <h3>1.9.20</h3>
+    <ul>
+      <li>K2: Kotlin K2 compiler in Beta for all targets, support for Kotlin/Wasm, preview kapt compiler plugin</li>
+      <li>Kotlin/JVM: support for Java 21 bytecode</li>
+      <li>Kotlin/Native: custom allocator enabled by default, full parallel mark available in the GC, deprecated targets disabled, obligatory opt-in for all cinterop declarations (except for platform libraries), the GC scheduler tracking objects in big chunks, legacy memory manager disabled</li>
+      <li>Kotlin Multiplatform: hierarchy template available by default, full support for Gradle Configuration cache, the default support for third-party cinterop libraries, reworked configuration of compiler settings in multiplatform projects</li>
+      <li>Kotlin/Wasm: support for WASI, new `wasm-wasi` target and rename `wasm` target to `wasm-js`, compatible with recent updates in Wasm GC</li>
+      <li>Kotlin/JS: using open-addressing hash map in the JS stdlib, ability to generate one JS file for each Kotlin source file</li>
+      <li>Libraries: experimental support for `enumEntries()` function, further stabilization of Kotlin/Native standard library</li>
+      <li>Gradle: support for Gradle versions 8.0 and 8.1, new build metrics for Kotlin/Native tasks, support for test fixtures to access internal declarations, new property to configure custom path to Konan and its dependencies</li>
+     </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases">changelog</a>.
+    <br><br>
+    <h3>1.9.0</h3>
+    <ul>
+      <li>Language: stable `rangeUntil` operator, stable data objects feature, stable `Enum.entries` replacement for `Enum.values()`, stable `@Volatile` annotation</li>
+      <li>K2: JVM promoted to beta, basic support for Kotlin/Native and multiplatform projects, support for Kotlin/JS since 1.8.20</li>
+      <li>Kotlin/JVM: `@JvmDefault` and old `-Xjvm-default` modes deprecated with error, support for Java 20 bytecode</li>
+      <li>Kotlin/Native: new custom memory allocator, no object initialization when accessing `const val`, partial linkage enabled by default</li>
+      <li>Kotlin Multiplatform: new name for the `android` block, new Android source set layout enabled by default, support for Gradle configuration caching in multiplatform libraries, ability to disable sources publication in the Kotlin Multiplatform Gradle plugin, ability to add dependencies between Pods when using the CocoaPods Gradle plugin</li>
+      <li>Kotlin/Wasm: runtime footprint reduced and performance improved, set system default browser as default for `wasmBrowserRun` task, improved JS interop, more compiler and IDE diagnostics for JS interop</li>
+      <li>Kotlin/JS: deprecated legacy backend with error, deprecated external Enum class, extracted DOM API from standard library to module automatically added to builds, partial linkage enabled by default, IR compiler used by default, changed default destination of production distributions, deprecated `kotlin-js` Gradle plugin that is replaced by `kotlin-multiplatform` Gradle plugin, experimental support for ES6 classes and modules, reduced memory consumption for production builds</li>
+      <li>Libraries: stable standard library functions for open-ended ranges, new common function to get regex capture group by name, new `HexFormat` to format and parse hexadecimals, stable time API, new path utility to create parent directories, reviewed and stabilized Kotlin/Native standard library</li>
+      <li>Gradle: build scans show whether K1 or K2 compiler is used, new Gradle property `kotlin.experimental.tryK2` to try the K2 compiler, new project-level compiler options for Kotlin/JVM plugin, removed `KotlinCompile` task’s `classpath` property, exposed `jvmTargetValidationMode` property in `KotlinCompile` task, configurable standalone mode for Kotlin/Native iOS simulator tests, removed support for `org.gradle.api.internal.HasConvention` Gradle element, added `optIn` and `progressiveMode` compiler options, compiler plugins are published separately and Gradle plugins add them as compiler arguments, kapt tasks don’t trigger eager task creation, minimum supported Android Gradle plugin version is 4.2.2</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases">changelog</a>.
+    <br><br>
+    <h3>1.8.20</h3>
+    <ul>
+      <li>Language: experimental replacement of the Enum class `values()` function with the `entries` property, experimental lifting restrictions on secondary constructor bodies in value (inline) classes, experimental data objects</li>
+      <li>Kotlin/JVM: JVM IR for the kapt stub generation enabled by default</li>
+      <li>Kotlin/Native: bug fix for stack overflow when using regex with large input, improved output for Gradle errors in Xcode, new API for garbage collection statistics, dynamic framework linking without generating C-interop bindings</li>
+      <li>Kotlin Multiplatform: preview support for Gradle composite builds, experimental DSL for the new source set hierarchy</li>
+      <li>Kotlin/Wasm: experimental version of the new Kotlin/Wasm compiler backend</li>
+      <li>Kotlin/JS IR: alpha version of the K2 support, fully-qualified method name in source maps, declarations with non-minified names, the `dukat` integration removed, TypeScript definitions generated only on explicit Gradle action</li>
+      <li>Libraries: experimental support for the `AutoCloseable` interface and the `use()` extension function in the common standard library, experimental support for the Base64 encoding in the standard library, experimental support for the `@Volatile` annotation that works for both JVM and Kotlin/Native</li>
+      <li>Gradle: the new approach to incremental compilation enabled by default, new Gradle plugins alignment platform, compatibility with the Gradle 7.4, 7.5, and 7.6 releases, experimental ability to back up only updated files during incremental compilation, new property for adding a Git branch name to HTTP build reports</li>
+      <li>Maven: new `components.xml` to automatically compile Kotlin Maven projects, ability to set up kapt’s `aptMode`</li>
+      <li>Serialization: prototype of serialization plugin that works with the K2 compiler, prohibited implicit serializer customization via companion object</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.8.20">changelog</a>.
+    <br><br>
     <h3>1.8.0</h3>
     <ul>
       <li>Kotlin/JVM: removed old backend, the `-Xuse-old-backend` compiler option is no longer supported, support for Java 19 bytecode</li>

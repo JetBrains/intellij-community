@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
@@ -17,7 +17,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -26,12 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -40,9 +37,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiAwareObject;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.render.RenderingUtil;
-import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
@@ -58,7 +52,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
@@ -68,7 +61,6 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
@@ -247,23 +239,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   public JComponent getComponentToFocus() {
     return myTree;
-  }
-
-  public void expand(final Object @Nullable [] path, final boolean requestFocus){
-    if (getTreeBuilder() == null || path == null) return;
-    AbstractTreeUi ui = getTreeBuilder().getUi();
-    if (ui != null) ui.buildNodeForPath(path);
-
-    DefaultMutableTreeNode node = ui == null ? null : ui.getNodeForPath(path);
-    if (node == null) {
-      return;
-    }
-    TreePath treePath = new TreePath(node.getPath());
-    myTree.expandPath(treePath);
-    if (requestFocus) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
-    }
-    TreeUtil.selectPath(myTree, treePath);
   }
 
   @Override
@@ -1024,6 +999,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
+  @ApiStatus.Internal
+  public boolean supportsSortByTime() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  public final boolean supportsSortKey(@NotNull NodeSortKey sortKey) {
+    return switch (sortKey) {
+      case BY_NAME -> true;
+      case BY_TYPE -> supportsSortByType();
+      case BY_TIME_DESCENDING, BY_TIME_ASCENDING -> supportsSortByTime();
+    };
+  }
+
   @NotNull
    private static Color getFileForegroundColor(@NotNull Project project, @NotNull VirtualFile file) {
     FileEditorManager manager = FileEditorManager.getInstance(project);
@@ -1037,10 +1026,18 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Override
     public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       if ((action.getActionId() & DnDConstants.ACTION_COPY_OR_MOVE) == 0) return false;
-      final Object[] elements = getSelectedElements();
-      final PsiElement[] psiElements = getSelectedPSIElements();
+      var selectedObjects = getSelectedUserObjects();
+      for (Object object : selectedObjects) {
+        if (object instanceof AbstractPsiBasedNode<?> || object instanceof AbstractModuleNode) {
+          return true;
+        }
+      }
       DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-      return psiElements.length > 0 || canDragElements(elements, dataContext, action.getActionId());
+      return canDrag(dataContext, action.getActionId());
+    }
+
+    private static boolean canDrag(@NotNull DataContext dataContext, int dragAction) {
+      return dragAction == DnDConstants.ACTION_MOVE && MoveHandler.canMove(dataContext);
     }
 
     @Override
@@ -1070,91 +1067,129 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       });
     }
 
-    // copy/paste from com.intellij.ide.dnd.aware.DnDAwareTree.createDragImage
     @Nullable
     @Override
     public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
-      final TreePath[] paths = getSelectionPaths();
-      if (paths == null) return null;
-
-      record LabelData(@Nls String text, Icon icon, @Nullable VirtualFile file) { }
-      List<LabelData> toRender = new ArrayList<>();
-      for (TreePath path : paths) {
-        Pair<Icon, @Nls String> iconAndText = getIconAndText(path);
-        toRender.add(new LabelData(iconAndText.second, iconAndText.first,
-                                   PsiCopyPasteManager.asVirtualFile(getFirstElementFromNode(path.getLastPathComponent()))));
+      try {
+        ProjectViewRendererKt.setGrayedTextPaintingEnabled(false);
+        final TreePath[] paths = getSelectionPaths();
+        var tree = getTree();
+        if (tree == null || paths == null || paths.length == 0) return null;
+        var dragImageRows = createDragImageRows(tree, paths);
+        BufferedImage image = paintDragImageRows(tree, dragImageRows);
+        return new Pair<>(image, new Point());
       }
-
-      int count = 0;
-      JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
-      int maxItemsToShow = toRender.size() < 20 ? toRender.size() : 10;
-      for (LabelData data : toRender) {
-        JLabel fileLabel = new DragImageLabel(data.text(), data.icon(), data.file());
-        panel.add(fileLabel);
-        count++;
-        if (count > maxItemsToShow) {
-          panel.add(new DragImageLabel(IdeBundle.message("label.more.files", paths.length - maxItemsToShow), EmptyIcon.ICON_16, null));
-          break;
-        }
+      finally {
+        ProjectViewRendererKt.setGrayedTextPaintingEnabled(true);
       }
-      panel.setSize(panel.getPreferredSize());
-      panel.doLayout();
-
-      BufferedImage image = ImageUtil.createImage(panel.getWidth(), panel.getHeight(), BufferedImage.TYPE_INT_ARGB);
-      Graphics2D g2 = (Graphics2D)image.getGraphics();
-      panel.paint(g2);
-      g2.dispose();
-
-      return new Pair<>(image, new Point());
     }
 
     @NotNull
-    private Pair<Icon, @Nls String> getIconAndText(TreePath path) {
-      Object object = TreeUtil.getLastUserObject(path);
-      Component component = getTree().getCellRenderer()
-        .getTreeCellRendererComponent(getTree(), object, false, false, true, getTree().getRowForPath(path), false);
-      Icon[] icon = new Icon[1];
-      String[] text = new String[1];
-      if (component instanceof ProjectViewRenderer renderer) {
-        icon[0] = renderer.getIcon();
+    private static ArrayList<DragImageRow> createDragImageRows(@NotNull JTree tree, @Nullable TreePath @NotNull [] paths) {
+      var count = 0;
+      int maxItemsToShow = paths.length < 20 ? paths.length : 10;
+      var dragImageRows = new ArrayList<DragImageRow>();
+      for (TreePath path : paths) {
+        dragImageRows.add(new NodeRow(tree, path));
+        count++;
+        if (count > maxItemsToShow) {
+          dragImageRows.add(new MoreFilesRow(tree, paths.length - maxItemsToShow));
+          break;
+        }
       }
-      if (component instanceof SimpleColoredComponent colored) {
-        text[0] = colored.getCharSequence(true).toString();
-      }
-      return new Pair<>(icon[0], text[0]);
-    }
-  }
-
-  private class DragImageLabel extends JLabel {
-    private DragImageLabel(@Nls String text, Icon icon, @Nullable VirtualFile file) {
-      super(text, icon, SwingConstants.LEADING);
-      setFont(UIUtil.getTreeFont());
-      setOpaque(true);
-      if (file != null) {
-        setBackground(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file));
-        setForeground(getFileForegroundColor(myProject, file));
-      } else {
-        setForeground(RenderingUtil.getForeground(getTree(), true));
-        setBackground(RenderingUtil.getBackground(getTree(), true));
-      }
-      setBorder(new EmptyBorder(JBUI.CurrentTheme.EditorTabs.tabInsets()));
+      return dragImageRows;
     }
 
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      size.height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT);
-      return size;
+    @NotNull
+    private static BufferedImage paintDragImageRows(@NotNull JTree tree, @NotNull ArrayList<DragImageRow> dragImageRows) {
+      var totalHeight = 0;
+      var maxWidth = 0;
+      for (var row : dragImageRows) {
+        var size = row.getSize();
+        maxWidth = Math.max(maxWidth, size.width);
+        totalHeight += size.height;
+      }
+      var gc = tree.getGraphicsConfiguration();
+      BufferedImage image = ImageUtil.createImage(gc, maxWidth, totalHeight, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g = (Graphics2D)image.getGraphics();
+      try {
+        for (var row : dragImageRows) {
+          row.paint(g);
+          g.translate(0, row.getSize().height);
+        }
+      }
+      finally {
+        g.dispose();
+      }
+      return image;
     }
-  }
 
-  private static boolean canDragElements(Object @NotNull [] elements, @NotNull DataContext dataContext, int dragAction) {
-    for (Object element : elements) {
-      if (element instanceof Module) {
-        return true;
+    private abstract static class DragImageRow {
+      abstract @NotNull Dimension getSize();
+      abstract void paint(@NotNull Graphics2D g);
+    }
+
+    private static final class NodeRow extends DragImageRow {
+      private final @NotNull JTree tree;
+      private final @Nullable TreePath path;
+      private @Nullable Dimension size;
+
+      NodeRow(@NotNull JTree tree, @Nullable TreePath path) {
+        this.tree = tree;
+        this.path = path;
+      }
+
+      @Override
+      @NotNull
+      Dimension getSize() {
+        var size = this.size;
+        if (size == null) {
+          size = getRenderer(tree, path).getPreferredSize();
+          this.size = size;
+        }
+        return size;
+      }
+
+      @Override
+      void paint(@NotNull Graphics2D g) {
+        var renderer = getRenderer(tree, path);
+        renderer.setSize(getSize());
+        renderer.paint(g);
+      }
+
+      private static @NotNull Component getRenderer(@NotNull JTree tree, @Nullable TreePath path) {
+        return tree.getCellRenderer().getTreeCellRendererComponent(
+          tree,
+          TreeUtil.getLastUserObject(path),
+          false,
+          false,
+          true,
+          tree.getRowForPath(path),
+          false
+        );
       }
     }
-    return dragAction == DnDConstants.ACTION_MOVE && MoveHandler.canMove(dataContext);
+
+    private static final class MoreFilesRow extends MyDragSource.DragImageRow {
+      private final @NotNull JLabel moreLabel;
+
+      MoreFilesRow(JTree tree, int moreItemsCount) {
+        moreLabel = new JLabel(IdeBundle.message("label.more.files", moreItemsCount), EmptyIcon.ICON_16, SwingConstants.LEADING);
+        moreLabel.setFont(tree.getFont());
+        moreLabel.setSize(moreLabel.getPreferredSize());
+      }
+
+      @Override
+      @NotNull
+      Dimension getSize() {
+        return moreLabel.getSize();
+      }
+
+      @Override
+      void paint(@NotNull Graphics2D g) {
+        moreLabel.paint(g);
+      }
+    }
   }
 
   @NotNull
@@ -1185,16 +1220,21 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @ApiStatus.Internal
   public boolean isVisibleAndSelected(Object element) {
-    JTree tree = getTree();
-    if (tree == null) return false;
-    TreePath path = TreeUtil.getSelectedPathIfOne(tree);
-    if (path == null) return false;
-    Rectangle bounds = tree.getPathBounds(path);
-    if (bounds == null) return false;
-    Rectangle visible = tree.getVisibleRect();
-    if (bounds.y < visible.y || bounds.y > visible.y + visible.height - bounds.height) return false;
-    AbstractTreeNode<?> node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
+    AbstractTreeNode<?> node = getVisibleAndSelectedUserObject();
     return node != null && node.canRepresent(element);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable AbstractTreeNode<?> getVisibleAndSelectedUserObject() {
+    JTree tree = getTree();
+    if (tree == null) return null;
+    TreePath path = TreeUtil.getSelectedPathIfOne(tree);
+    if (path == null) return null;
+    Rectangle bounds = tree.getPathBounds(path);
+    if (bounds == null) return null;
+    Rectangle visible = tree.getVisibleRect();
+    if (bounds.y < visible.y || bounds.y > visible.y + visible.height - bounds.height) return null;
+    return TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
   }
 
   AsyncProjectViewSupport getAsyncSupport() {
@@ -1224,13 +1264,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Nullable
   public static TreeVisitor createVisitor(@NotNull Object object) {
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
+    if (object instanceof AbstractTreeNode<?> node) {
+      if (node.getEqualityObject() instanceof SmartPsiElementPointer<?> ptr) {
+        return new ProjectViewNodeVisitor(ptr);
+      }
       object = node.getValue();
     }
-    if (object instanceof ProjectFileNode) {
+    else if (object instanceof ProjectFileNode) {
       ProjectFileNode node = (ProjectFileNode)object;
-      object = node.getVirtualFile();
+      return createVisitor(node.getVirtualFile());
     }
     if (object instanceof VirtualFile) return createVisitor((VirtualFile)object);
     if (object instanceof PsiElement) return createVisitor((PsiElement)object);
@@ -1262,6 +1304,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (element != null && element.isValid()) return new ProjectViewNodeVisitor(element, file, predicate);
     if (file != null) return new ProjectViewFileVisitor(file, predicate);
     LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");
+    return null;
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public static TreeVisitor createVisitorByPointer(@Nullable SmartPsiElementPointer<PsiElement> pointer, @Nullable VirtualFile file) {
+    if (pointer != null) return new ProjectViewNodeVisitor(pointer, file, null);
+    if (file != null) return new ProjectViewFileVisitor(file, null);
+    LOG.warn("cannot create visitor without element and/or file");
     return null;
   }
 }

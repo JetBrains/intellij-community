@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -10,7 +10,7 @@ public final class Patches {
    * See <a href="https://bugs.openjdk.org/browse/JDK-6322854">JDK-6322854</a>.
    * java.lang.NullPointerException: Failed to retrieve atom name.
    */
-  public static final boolean SUN_BUG_ID_6322854 = SystemInfoRt.isXWindow;
+  public static final boolean SUN_BUG_ID_6322854 = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
 
   /**
    * IBM JVM 1.4.2 crashes if debugger uses ObjectReference.disableCollection() and ObjectReference.enableCollection().
@@ -23,12 +23,6 @@ public final class Patches {
    * for up to 10 seconds if clipboard owner is not responding.
    */
   public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfoRt.isUnix;
-
-  /**
-   * Desktop API support on X Window is limited to GNOME (and even there it may work incorrectly).
-   * See <a href="https://bugs.openjdk.org/browse/JDK-6486393">JDK-6486393</a>.
-   */
-  public static final boolean SUN_BUG_ID_6486393 = SystemInfoRt.isXWindow;
 
   /**
    * Debugger hangs in trace mode with TRACE_SEND when method argument is a {@link com.sun.jdi.StringReference}

@@ -11,10 +11,16 @@
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.javaFX" />
-    <orderEntry type="library" name="NanoXML" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="SceneBuilderKit11" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:scenebuilderkit:11.0.5" />
+        <properties maven-id="org.jetbrains.intellij.deps:scenebuilderkit:11.0.5">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/scenebuilderkit/11.0.5/scenebuilderkit-11.0.5.jar">
+              <sha256sum>36cd8f5bc933bcf726fadfc5276f0efcc7873d3a532e4e164674d2e8919f4781</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/scenebuilderkit/11.0.5/scenebuilderkit-11.0.5.jar!/" />
         </CLASSES>

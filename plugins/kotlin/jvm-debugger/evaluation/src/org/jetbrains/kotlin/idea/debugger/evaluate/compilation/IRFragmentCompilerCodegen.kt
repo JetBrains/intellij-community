@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.idea.MainFunctionDetector
-import org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldPropertyDescriptor
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldPropertyDescriptor
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
@@ -45,7 +45,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
     override fun initCodegen(
         classDescriptor: ClassDescriptor,
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo
+        parameterInfo: K1CodeFragmentParameterInfo
     ) {
         // NO-OP
     }
@@ -67,7 +67,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         compilerConfiguration: CompilerConfiguration,
         classDescriptor: ClassDescriptor,
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo
+        parameterInfo: K1CodeFragmentParameterInfo
     ) {
         builder.isIrBackend(true)
         builder.codegenFactory(
@@ -86,13 +86,13 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         compilerConfiguration: CompilerConfiguration,
         classDescriptor: ClassDescriptor,
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo
+        parameterInfo: K1CodeFragmentParameterInfo
     ): CodegenFactory {
         val mangler = JvmDescriptorMangler(MainFunctionDetector(bindingContext, compilerConfiguration.languageVersionSettings))
         val evaluatorFragmentInfo = EvaluatorFragmentInfo(
             classDescriptor,
             methodDescriptor,
-            parameterInfo.parameters.map { EvaluatorFragmentParameterInfo(it.targetDescriptor, it.isLValue) }
+            parameterInfo.smartParameters.map { EvaluatorFragmentParameterInfo(it.targetDescriptor, it.isLValue) }
         )
         return JvmIrCodegenFactory(
             configuration = compilerConfiguration,
@@ -151,7 +151,10 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
                 }
             },
             evaluatorFragmentInfoForPsi2Ir = evaluatorFragmentInfo,
-            ideCodegenSettings = JvmIrCodegenFactory.IdeCodegenSettings(shouldStubAndNotLinkUnboundSymbols = true),
+            ideCodegenSettings = JvmIrCodegenFactory.IdeCodegenSettings(
+                shouldStubAndNotLinkUnboundSymbols = true,
+                doNotLoadDependencyModuleHeaders = true,
+            ),
         )
     }
 
@@ -159,11 +162,11 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         executionContext: ExecutionContext,
         codeFragment: KtCodeFragment,
         bindingContext: BindingContext
-    ): CodeFragmentParameterInfo {
+    ): K1CodeFragmentParameterInfo {
         return CodeFragmentParameterAnalyzer(executionContext, codeFragment, bindingContext).analyze().let { analysis ->
             // Local functions do not exist as run-time values on the IR backend: they are static functions.
-            CodeFragmentParameterInfo(
-                analysis.parameters.filter { it.kind != CodeFragmentParameter.Kind.LOCAL_FUNCTION },
+            K1CodeFragmentParameterInfo(
+                analysis.smartParameters.filter { it.kind != CodeFragmentParameter.Kind.LOCAL_FUNCTION },
                 analysis.crossingBounds
             )
         }
@@ -171,7 +174,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
 
     override fun extractResult(
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo,
+        parameterInfo: K1CodeFragmentParameterInfo,
         generationState: GenerationState
     ): CodeFragmentCompiler.CompilationResult {
         val classes: List<ClassToLoad> = collectGeneratedClasses(generationState)
@@ -188,7 +191,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
             CodeFragmentParameter.Smart(dumb, type, target)
         }
 
-        val processedOldCaptures: List<CodeFragmentParameter.Smart> = parameterInfo.parameters.map {
+        val processedOldCaptures: List<CodeFragmentParameter.Smart> = parameterInfo.smartParameters.map {
             val target = it.targetDescriptor
             val (newName, newDebugName) = when {
                 target is LocalVariableDescriptor && target.isDelegated -> {
@@ -205,7 +208,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         }
 
         val newParameterInfo =
-            CodeFragmentParameterInfo(
+            K1CodeFragmentParameterInfo(
                 processedOldCaptures + newCaptures,
                 parameterInfo.crossingBounds
             )
@@ -220,30 +223,30 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
                 ClassToLoad(it.internalClassName, it.relativePath, it.asByteArray())
             }
     }
+}
 
-    private fun getMethodSignature(
-        fragmentClass: ClassToLoad,
-    ): CompiledCodeFragmentData.MethodSignature {
-        val parameters: MutableList<Type> = mutableListOf()
-        var returnType: Type? = null
+fun getMethodSignature(
+    fragmentClass: ClassToLoad,
+): CompiledCodeFragmentData.MethodSignature {
+    val parameters: MutableList<Type> = mutableListOf()
+    var returnType: Type? = null
 
-        ClassReader(fragmentClass.bytes).accept(object : ClassVisitor(Opcodes.ASM7) {
-            override fun visitMethod(
-                access: Int,
-                name: String?,
-                descriptor: String?,
-                signature: String?,
-                exceptions: Array<out String>?
-            ): MethodVisitor? {
-                if (name != null && isEvaluationEntryPoint(name)) {
-                    Type.getArgumentTypes(descriptor).forEach { parameters.add(it) }
-                    returnType = Type.getReturnType(descriptor)
-                }
-                return null
+    ClassReader(fragmentClass.bytes).accept(object : ClassVisitor(Opcodes.ASM7) {
+        override fun visitMethod(
+            access: Int,
+            name: String?,
+            descriptor: String?,
+            signature: String?,
+            exceptions: Array<out String>?
+        ): MethodVisitor? {
+            if (name != null && isEvaluationEntryPoint(name)) {
+                Type.getArgumentTypes(descriptor).forEach { parameters.add(it) }
+                returnType = Type.getReturnType(descriptor)
             }
-        }, SKIP_CODE)
+            return null
+        }
+    }, SKIP_CODE)
 
-        return CompiledCodeFragmentData.MethodSignature(parameters, returnType!!)
-    }
+    return CompiledCodeFragmentData.MethodSignature(parameters, returnType!!)
 }
 

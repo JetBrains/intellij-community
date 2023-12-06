@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
-import com.intellij.navigation.*;
+import com.intellij.navigation.ColoredItemPresentation;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -22,6 +22,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.presentation.TargetPresentation;
+import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -31,7 +33,10 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.list.TargetPopup;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.*;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.TextWithIcon;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
@@ -93,7 +98,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       : null;
   }
 
-  private class MyAccessibleContext extends JPanel.AccessibleJPanel {
+  private final class MyAccessibleContext extends JPanel.AccessibleJPanel {
     @Override
     public String getAccessibleName() {
       LayoutManager lm = getLayout();
@@ -118,7 +123,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     }
   }
 
-  public static class ItemMatchers {
+  public static final class ItemMatchers {
     @Nullable public final Matcher nameMatcher;
     @Nullable public final Matcher locationMatcher;
 
@@ -141,7 +146,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       Color bgColor = UIUtil.getListBackground();
       Color color = list.getForeground();
 
-      PsiElement target = NavigationItemListCellRenderer.getPsiElement(value);
+      PsiElement target = PSIRenderingUtils.getPsiElement(value);
       VirtualFile vFile = PsiUtilCore.getVirtualFile(target);
       boolean isProblemFile = false;
       if (vFile != null) {
@@ -217,22 +222,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @Nullable
   protected TextAttributes getNavigationItemAttributes(Object value) {
-    return getNavigationItemAttributesStatic(value);
-  }
-
-  private static @Nullable TextAttributes getNavigationItemAttributesStatic(Object value) {
-    TextAttributes attributes = null;
-
-    if (value instanceof NavigationItem) {
-      TextAttributesKey attributesKey = null;
-      final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
-      if (presentation instanceof ColoredItemPresentation) attributesKey = ((ColoredItemPresentation) presentation).getTextAttributesKey();
-
-      if (attributesKey != null) {
-        attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
-      }
-    }
-    return attributes;
+    return PSIRenderingUtils.getNavigationItemAttributesStatic(value);
   }
 
   @Override
@@ -249,10 +239,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     removeAll();
     myRightComponentWidth = 0;
 
-    final TextWithIcon itemLocation;
-    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
-      itemLocation = getItemLocation(value);
-    }
+    TextWithIcon itemLocation = getItemLocation(value);
     final JLabel locationComponent;
     final JPanel spacer;
     if (itemLocation == null) {
@@ -274,10 +261,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     }
 
     ListCellRenderer<Object> leftRenderer = createLeftRenderer(list, value);
-    Component result;
-    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
-      result = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    }
+    Component result = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Component leftCellRendererComponent = result;
     add(leftCellRendererComponent, LEFT);
     final Color bg = isSelected ? UIUtil.getListSelectionBackground(true) : leftCellRendererComponent.getBackground();
@@ -454,7 +438,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return targetPresentation(
       element,
       renderingInfo,
-      PsiElementListCellRenderer::getNavigationItemAttributesStatic,
+      PSIRenderingUtils::getNavigationItemAttributesStatic,
       PsiElementListCellRenderer::getModuleTextWithIcon,
       () -> DEFAULT_ERROR_ATTRIBUTES
     );

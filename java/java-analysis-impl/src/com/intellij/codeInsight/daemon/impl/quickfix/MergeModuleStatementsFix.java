@@ -1,9 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
@@ -16,48 +19,40 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends LocalQuickFixAndIntentionActionOnPsiElement {
+public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends PsiUpdateModCommandAction<PsiJavaModule> {
+  protected static final Logger LOG = Logger.getInstance(MergeModuleStatementsFix.class);
   protected MergeModuleStatementsFix(@NotNull PsiJavaModule javaModule) {
     super(javaModule);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    return PsiUtil.isLanguageLevel9OrHigher(file);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaModule element) {
+    return PsiUtil.isLanguageLevel9OrHigher(element) ? Presentation.of(getText()) : null;
   }
 
+  @IntentionName
+  abstract @NotNull String getText();
+
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    if (startElement instanceof PsiJavaModule javaModule) {
-      final List<T> statementsToMerge = getStatementsToMerge(javaModule);
-      LOG.assertTrue(!statementsToMerge.isEmpty());
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaModule javaModule, @NotNull ModPsiUpdater updater) {
+    final List<T> statementsToMerge = getStatementsToMerge(javaModule);
+    LOG.assertTrue(!statementsToMerge.isEmpty());
 
-      final String text = getReplacementText(statementsToMerge);
-      final PsiStatement replacement = JavaPsiFacade.getElementFactory(project).createModuleStatementFromText(text, null);
+    final String text = getReplacementText(statementsToMerge);
+    final PsiStatement replacement = JavaPsiFacade.getElementFactory(context.project()).createModuleStatementFromText(text, null);
 
-      final T firstStatement = statementsToMerge.get(0);
-      final CommentTracker commentTracker = new CommentTracker();
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-      final PsiElement resultingStatement = codeStyleManager.reformat(commentTracker.replace(firstStatement, replacement));
+    final T firstStatement = statementsToMerge.get(0);
+    final CommentTracker commentTracker = new CommentTracker();
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(context.project());
+    final PsiElement resultingStatement = codeStyleManager.reformat(commentTracker.replace(firstStatement, replacement));
 
-      for (int i = 1; i < statementsToMerge.size(); i++) {
-        T statement = statementsToMerge.get(i);
-        commentTracker.delete(statement);
-      }
-      commentTracker.insertCommentsBefore(resultingStatement);
-
-      if (editor != null) {
-        final int offset = resultingStatement.getTextRange().getEndOffset();
-        editor.getCaretModel().moveToOffset(offset);
-      }
+    for (int i = 1; i < statementsToMerge.size(); i++) {
+      T statement = statementsToMerge.get(i);
+      commentTracker.delete(statement);
     }
+    commentTracker.insertCommentsBefore(resultingStatement);
+
+    updater.moveTo(resultingStatement.getTextRange().getEndOffset());
   }
 
   @NotNull

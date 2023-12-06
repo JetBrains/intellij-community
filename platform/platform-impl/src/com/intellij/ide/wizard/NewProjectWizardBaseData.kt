@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.toNioPath
 import java.nio.file.Path
 
 interface NewProjectWizardBaseData {
@@ -22,11 +21,11 @@ interface NewProjectWizardBaseData {
     level = DeprecationLevel.ERROR
   )
   val projectPath: Path
-    get() = path.toNioPath().resolve(name)
+    get() = Path.of(path).resolve(name)
 
   companion object {
 
-    val KEY = Key.create<NewProjectWizardBaseData>(NewProjectWizardBaseData::class.java.name)
+    val KEY: Key<NewProjectWizardBaseData> = Key.create(NewProjectWizardBaseData::class.java.name)
 
     @JvmStatic
     val NewProjectWizardStep.baseData: NewProjectWizardBaseData?

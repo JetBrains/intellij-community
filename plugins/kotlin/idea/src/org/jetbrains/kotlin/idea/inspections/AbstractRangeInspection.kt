@@ -2,9 +2,12 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.DeprecationCollectingInspection
+import org.jetbrains.kotlin.idea.statistics.LanguageFeatureDeprecationCollector
+import org.jetbrains.kotlin.idea.statistics.NewAndDeprecatedFeaturesInspectionData
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.util.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -17,23 +20,32 @@ import org.jetbrains.kotlin.resolve.constants.ConstantValue
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-abstract class AbstractRangeInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
+abstract class AbstractRangeInspection(
+  collector: LanguageFeatureDeprecationCollector<NewAndDeprecatedFeaturesInspectionData>? = null,
+  defaultDeprecationData: NewAndDeprecatedFeaturesInspectionData? = null
+) : DeprecationCollectingInspection<NewAndDeprecatedFeaturesInspectionData>(collector, defaultDeprecationData) {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) = object : KtVisitorVoid() {
         override fun visitBinaryExpression(binaryExpression: KtBinaryExpression) {
-            visitRange(binaryExpression, holder)
+            visitRange(binaryExpression, holder, session)
         }
 
         override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
-            visitRange(expression, holder)
+            visitRange(expression, holder, session)
         }
     }
 
-    private fun visitRange(expression: KtExpression, holder: ProblemsHolder) {
+    private fun visitRange(expression: KtExpression, holder: ProblemsHolder, session: LocalInspectionToolSession) {
         val context = lazy { expression.analyze(BodyResolveMode.PARTIAL) }
-        visitRange(expression, context, expression.getRangeBinaryExpressionType(context) ?: return, holder)
+        visitRange(expression, context, expression.getRangeBinaryExpressionType(context) ?: return, holder, session)
     }
 
-    abstract fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder)
+    abstract fun visitRange(
+        range: KtExpression,
+        context: Lazy<BindingContext>,
+        type: RangeKtExpressionType,
+        holder: ProblemsHolder,
+        session: LocalInspectionToolSession
+    )
 
     companion object {
         fun KtExpression.constantValueOrNull(context: BindingContext? = null): ConstantValue<Any?>? {

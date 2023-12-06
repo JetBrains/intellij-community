@@ -31,7 +31,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import kotlin.math.min
 
@@ -143,13 +142,6 @@ object GrazieReplaceTypoQuickFix {
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "use getReplacementFixes(problem, underlineRanges)")
-  @Suppress("UNUSED_PARAMETER", "DeprecatedCallableAddReplaceWith")
-  fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>, file: PsiFile): List<LocalQuickFix> {
-    return getReplacementFixes(problem, underlineRanges)
-  }
-
   @JvmStatic
   fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
     val file = problem.text.containingFile
@@ -157,7 +149,8 @@ object GrazieReplaceTypoQuickFix {
     val spm = SmartPointerManager.getInstance(file.project)
     val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
-    problem.suggestions.forEachIndexed { index, suggestion ->
+    val suggestions = problem.suggestions.asSequence().take(15)
+    suggestions.forEachIndexed { index, suggestion ->
       val changes = suggestion.changes
       val replacements = changes.flatMap { toFileReplacements(it.range, it.replacement, problem.text) }
       val presentable = suggestion.presentableText
@@ -183,7 +176,7 @@ object GrazieReplaceTypoQuickFix {
     if (shreds.isEmpty()) return emptyList()
 
     if (replacement.isEmpty() && removalWouldGlueUnrelatedTokens(localRange, text)) {
-      replacement = " ";
+      replacement = " "
     }
 
     val best = if (isWordMiddle(text, localRange.endOffset)) shreds.last() else shreds.first()

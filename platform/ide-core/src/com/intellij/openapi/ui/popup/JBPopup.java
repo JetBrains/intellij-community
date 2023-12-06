@@ -164,6 +164,13 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   void setCaption(@NotNull @NlsContexts.PopupTitle String title);
 
+  void setCaptionIcon(@Nullable Icon icon);
+
+  /**
+   * Icon horizontal position relative to the title (left or right)
+   */
+  void setCaptionIconPosition(boolean left);
+
   boolean isPersistent();
 
   boolean isModalContext();
@@ -219,16 +226,4 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * Whether it's OK to invoke one of the 'show' methods. Some implementation might prohibit it e.g. if the popup is shown already.
    */
   default boolean canShow() { return !isDisposed(); }
-
-
-  /**
-   * Pass a component which shows the popup on click. The second click on the component will hide the popup without re-appearing
-   *
-   * @param clickSource a component showing the popup on click
-   */
-  default void setClickSource(@Nullable JComponent clickSource) { }
-
-  default @Nullable JComponent getClickSource() {
-    return null;
-  }
 }

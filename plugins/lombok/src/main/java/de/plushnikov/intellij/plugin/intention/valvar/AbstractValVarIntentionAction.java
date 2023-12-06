@@ -1,37 +1,43 @@
 package de.plushnikov.intellij.plugin.intention.valvar;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.intention.AbstractLombokIntentionAction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractValVarIntentionAction extends AbstractLombokIntentionAction implements LowPriorityAction {
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!super.isAvailable(project, editor, element)) {
-      return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (super.getPresentation(context, element) == null) {
+      return null;
     }
-    if (element instanceof PsiCompiledElement || !canModify(element) || !element.getLanguage().is(JavaLanguage.INSTANCE)) {
-      return false;
+    if (element instanceof PsiCompiledElement || !BaseIntentionAction.canModify(element) || !element.getLanguage().is(JavaLanguage.INSTANCE)) {
+      return null;
     }
-
-    setText(getFamilyName());
 
     PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false, PsiClass.class, PsiCodeBlock.class);
+    boolean available;
     if (parameter != null) {
-      return isAvailableOnVariable(parameter);
+      available = isAvailableOnVariable(parameter);
+    } else {
+      PsiDeclarationStatement decl =
+        PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, false, PsiClass.class, PsiCodeBlock.class);
+      available = decl != null && isAvailableOnDeclarationStatement(decl);
     }
-    PsiDeclarationStatement context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, false, PsiClass.class, PsiCodeBlock.class);
-    return context != null && isAvailableOnDeclarationStatement(context);
+    if (!available) return null;
+    return Presentation.of(getFamilyName());
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class);
 
     if (declarationStatement != null) {

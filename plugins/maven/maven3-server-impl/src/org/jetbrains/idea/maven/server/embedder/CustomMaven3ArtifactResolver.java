@@ -51,8 +51,7 @@ import org.eclipse.aether.repository.LocalRepositoryManager;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
-import org.jetbrains.idea.maven.server.MavenModelConverter;
-import org.jetbrains.idea.maven.server.UnresolvedArtifactsCollector;
+import org.jetbrains.idea.maven.server.Maven3ModelConverter;
 
 import java.io.File;
 import java.util.*;
@@ -95,7 +94,6 @@ public class CustomMaven3ArtifactResolver
   private final Executor executor;
 
   private volatile MavenWorkspaceMap myWorkspaceMap;
-  private volatile UnresolvedArtifactsCollector myUnresolvedCollector;
 
   public CustomMaven3ArtifactResolver()
   {
@@ -124,7 +122,7 @@ public class CustomMaven3ArtifactResolver
     return LegacyLocalRepositoryManager.overlay( localRepository, legacySupport.getRepositorySession(), repoSystem );
   }
 
-  private void injectSession1( RepositoryRequest request, MavenSession session )
+  private static void injectSession1(RepositoryRequest request, MavenSession session)
   {
     if ( session != null )
     {
@@ -133,7 +131,7 @@ public class CustomMaven3ArtifactResolver
     }
   }
 
-  private void injectSession2( ArtifactResolutionRequest request, MavenSession session )
+  private static void injectSession2(ArtifactResolutionRequest request, MavenSession session)
   {
     injectSession1( request, session );
 
@@ -168,7 +166,7 @@ public class CustomMaven3ArtifactResolver
       resolveOld(artifact, remoteRepositories, session);
     }
     catch (AbstractArtifactResolutionException e) {
-      myUnresolvedCollector.collectAndSetResolved(artifact);
+      artifact.setResolved(true);
     }
   }
 
@@ -568,18 +566,12 @@ public class CustomMaven3ArtifactResolver
     resolve( artifact, remoteRepositories, localRepository, null );
   }
 
-  public void customize(MavenWorkspaceMap workspaceMap, boolean failOnUnresolved) {
+  public void customize(MavenWorkspaceMap workspaceMap) {
     myWorkspaceMap = workspaceMap;
-    myUnresolvedCollector = new UnresolvedArtifactsCollector(failOnUnresolved);
   }
 
   public void reset() {
     myWorkspaceMap = null;
-    myUnresolvedCollector = null;
-  }
-
-  public UnresolvedArtifactsCollector getUnresolvedCollector() {
-    return myUnresolvedCollector;
   }
 
   private boolean resolveAsModule(Artifact a) {
@@ -587,7 +579,7 @@ public class CustomMaven3ArtifactResolver
     MavenWorkspaceMap map = myWorkspaceMap;
     if (map == null) return false;
 
-    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(MavenModelConverter.createMavenId(a));
+    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(Maven3ModelConverter.createMavenId(a));
     if (resolved == null) return false;
 
     a.setResolved(true);

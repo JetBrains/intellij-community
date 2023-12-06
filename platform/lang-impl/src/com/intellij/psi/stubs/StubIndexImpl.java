@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.google.common.util.concurrent.Futures;
@@ -16,12 +16,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
@@ -37,9 +37,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
 
 public final class StubIndexImpl extends StubIndexEx {
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
@@ -178,6 +176,7 @@ public final class StubIndexImpl extends StubIndexEx {
                                                         int version,
                                                         @NotNull Path indexRootDir,
                                                         @NotNull Exception e) throws IOException {
+    IndexStatisticGroup.reportIndexRebuild(indexKey, e, true);
     LOG.info(e);
     FileUtil.deleteWithRenaming(indexRootDir.toFile());
     IndexVersion.rewriteVersion(indexKey, version); // todo snapshots indices
@@ -196,8 +195,7 @@ public final class StubIndexImpl extends StubIndexEx {
    * @implNote obtaining modification stamps might be expensive due to execution of StubIndex update on each invocation
    */
   @ApiStatus.Experimental
-  @NotNull
-  public ModificationTracker getIndexModificationTracker(@NotNull StubIndexKey<?, ?> indexId, @NotNull Project project) {
+  public @NotNull ModificationTracker getIndexModificationTracker(@NotNull StubIndexKey<?, ?> indexId, @NotNull Project project) {
     return () -> getIndexModificationStamp(indexId, project);
   }
 
@@ -219,7 +217,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   @Override
   public void forceRebuild(@NotNull Throwable e) {
-    FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID, e);
   }
 
   @Override
@@ -312,7 +310,7 @@ public final class StubIndexImpl extends StubIndexEx {
     return LOG;
   }
 
-  private static class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
+  private static final class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
     private final FileBasedIndexExtension<K, Void> myWrappedExtension;
     private final StubIndexKey<K, ?> myIndexKey;
 
@@ -367,7 +365,7 @@ public final class StubIndexImpl extends StubIndexEx {
       if (indicesRegistrationSink.hasChangedIndexes()) {
         final Throwable e = new Throwable(indicesRegistrationSink.changedIndices());
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
-        AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().submit(() -> forceRebuild(e));
+        AppUIExecutor.onWriteThread(ModalityState.nonModal()).later().submit(() -> forceRebuild(e));
       }
 
       myInitialized = true;
@@ -375,9 +373,8 @@ public final class StubIndexImpl extends StubIndexEx {
       return state;
     }
 
-    @NotNull
     @Override
-    protected Collection<ThrowableRunnable<?>> prepareTasks() {
+    protected @NotNull Collection<ThrowableRunnable<?>> prepareTasks() {
       Iterator<StubIndexExtension<?, ?>> extensionsIterator;
       if (IndexInfrastructure.hasIndices()) {
         extensionsIterator = StubIndexExtension.EP_NAME.getIterable().iterator();
@@ -401,9 +398,8 @@ public final class StubIndexImpl extends StubIndexEx {
       return tasks;
     }
 
-    @NotNull
     @Override
-    protected String getInitializationFinishedMessage(AsyncState initializationResult) {
+    protected @NotNull String getInitializationFinishedMessage(AsyncState initializationResult) {
       return "Initialized stub indexes: " + initializationResult.myIndices.keySet() + ".";
     }
   }

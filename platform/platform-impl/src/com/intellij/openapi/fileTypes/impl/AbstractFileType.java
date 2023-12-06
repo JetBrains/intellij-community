@@ -28,38 +28,37 @@ import java.util.Set;
 public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme,
                                                                                 CustomSyntaxTableFileType, PlainTextLikeFileType, AbstractFileTypeBase {
   private static final String SEMICOLON = ";";
-  @NotNull
-  private SyntaxTable mySyntaxTable;
+  private @NotNull SyntaxTable mySyntaxTable;
   private SyntaxTable myDefaultSyntaxTable;
   private Commenter myCommenter;
-  @NonNls static final String ELEMENT_HIGHLIGHTING = "highlighting";
-  @NonNls private static final String ELEMENT_OPTIONS = "options";
-  @NonNls private static final String ELEMENT_OPTION = "option";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
-  @NonNls private static final String VALUE_LINE_COMMENT = "LINE_COMMENT";
-  @NonNls private static final String VALUE_COMMENT_START = "COMMENT_START";
-  @NonNls private static final String VALUE_COMMENT_END = "COMMENT_END";
-  @NonNls private static final String VALUE_HEX_PREFIX = "HEX_PREFIX";
-  @NonNls private static final String VALUE_NUM_POSTFIXES = "NUM_POSTFIXES";
-  @NonNls private static final String VALUE_HAS_BRACES = "HAS_BRACES";
-  @NonNls private static final String VALUE_HAS_BRACKETS = "HAS_BRACKETS";
-  @NonNls private static final String VALUE_HAS_PARENS = "HAS_PARENS";
-  @NonNls private static final String VALUE_HAS_STRING_ESCAPES = "HAS_STRING_ESCAPES";
-  @NonNls private static final String VALUE_LINE_COMMENT_AT_START = "LINE_COMMENT_AT_START";
-  @NonNls private static final String ELEMENT_KEYWORDS = "keywords";
-  @NonNls private static final String ATTRIBUTE_IGNORE_CASE = "ignore_case";
-  @NonNls private static final String ELEMENT_KEYWORD = "keyword";
-  @NonNls private static final String ELEMENT_KEYWORDS2 = "keywords2";
-  @NonNls private static final String ELEMENT_KEYWORDS3 = "keywords3";
-  @NonNls private static final String ELEMENT_KEYWORDS4 = "keywords4";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  static final @NonNls String ELEMENT_HIGHLIGHTING = "highlighting";
+  private static final @NonNls String ELEMENT_OPTIONS = "options";
+  private static final @NonNls String ELEMENT_OPTION = "option";
+  private static final @NonNls String ATTRIBUTE_VALUE = "value";
+  private static final @NonNls String VALUE_LINE_COMMENT = "LINE_COMMENT";
+  private static final @NonNls String VALUE_COMMENT_START = "COMMENT_START";
+  private static final @NonNls String VALUE_COMMENT_END = "COMMENT_END";
+  private static final @NonNls String VALUE_HEX_PREFIX = "HEX_PREFIX";
+  private static final @NonNls String VALUE_NUM_POSTFIXES = "NUM_POSTFIXES";
+  private static final @NonNls String VALUE_HAS_BRACES = "HAS_BRACES";
+  private static final @NonNls String VALUE_HAS_BRACKETS = "HAS_BRACKETS";
+  private static final @NonNls String VALUE_HAS_PARENS = "HAS_PARENS";
+  private static final @NonNls String VALUE_HAS_STRING_ESCAPES = "HAS_STRING_ESCAPES";
+  private static final @NonNls String VALUE_LINE_COMMENT_AT_START = "LINE_COMMENT_AT_START";
+  private static final @NonNls String ELEMENT_KEYWORDS = "keywords";
+  private static final @NonNls String ATTRIBUTE_IGNORE_CASE = "ignore_case";
+  private static final @NonNls String ELEMENT_KEYWORD = "keyword";
+  private static final @NonNls String ELEMENT_KEYWORDS2 = "keywords2";
+  private static final @NonNls String ELEMENT_KEYWORDS3 = "keywords3";
+  private static final @NonNls String ELEMENT_KEYWORDS4 = "keywords4";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
 
   public AbstractFileType(@NotNull SyntaxTable syntaxTable) {
     mySyntaxTable = syntaxTable;
   }
 
   void initSupport() {
-    for (FileTypeRegistrar registrar : FileTypeRegistrar.EP_NAME.getExtensions()) {
+    for (FileTypeRegistrar registrar : FileTypeRegistrar.EP_NAME.getExtensionList()) {
       registrar.initFileType(this);
     }
   }
@@ -86,8 +85,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   public void copyFrom(@NotNull UserFileType<AbstractFileType> newType) {
     super.copyFrom(newType);
 
-    if (newType instanceof AbstractFileType) {
-      mySyntaxTable = ((CustomSyntaxTableFileType)newType).getSyntaxTable();
+    if (newType instanceof AbstractFileType aft) {
+      mySyntaxTable = aft.getSyntaxTable();
     }
   }
 
@@ -104,8 +103,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     }
   }
 
-  @NotNull
-  static SyntaxTable readSyntaxTable(@NotNull Element root) {
+  static @NotNull SyntaxTable readSyntaxTable(@NotNull Element root) {
     SyntaxTable table = new SyntaxTable();
 
     for (Element element : root.getChildren()) {
@@ -290,13 +288,12 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return !Comparing.equal(myDefaultSyntaxTable, getSyntaxTable());
   }
 
-  @NonNls static final String ELEMENT_MAPPING = "mapping";
-  @NonNls static final String ATTRIBUTE_EXT = "ext";
-  @NonNls static final String ATTRIBUTE_PATTERN = "pattern";
-  @NonNls static final String ATTRIBUTE_TYPE = "type";
+  static final @NonNls String ELEMENT_MAPPING = "mapping";
+  static final @NonNls String ATTRIBUTE_EXT = "ext";
+  static final @NonNls String ATTRIBUTE_PATTERN = "pattern";
+  static final @NonNls String ATTRIBUTE_TYPE = "type";
 
-  @NotNull
-  static List<Pair<FileNameMatcher, String>> readAssociations(@NotNull Element element) {
+  static @NotNull List<Pair<FileNameMatcher, String>> readAssociations(@NotNull Element element) {
     List<Element> children = element.getChildren(ELEMENT_MAPPING);
     if (children.isEmpty()) {
       return Collections.emptyList();
@@ -313,8 +310,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return result;
   }
 
-  @Nullable
-  static Element writeMapping(@NotNull String typeName, @NotNull FileNameMatcher matcher, boolean specifyTypeName) {
+  static @Nullable Element writeMapping(@NotNull String typeName, @NotNull FileNameMatcher matcher, boolean specifyTypeName) {
     Element mapping = new Element(ELEMENT_MAPPING);
     if (!writePattern(matcher, mapping)) {
       return null;

@@ -2,13 +2,15 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
@@ -27,8 +29,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAction {
+public class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(AddOnDemandStaticImportAction.class);
+  
+  public AddOnDemandStaticImportAction() {
+    super(PsiIdentifier.class);
+  }
 
   @Override
   @NotNull
@@ -106,16 +112,30 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
     PsiClass classToImport = getClassToPerformStaticImport(element);
     if (classToImport != null) {
-      String text = JavaBundle.message("intention.add.on.demand.static.import.text", classToImport.getQualifiedName());
-      setText(text);
+      return Presentation.of(JavaBundle.message("intention.add.on.demand.static.import.text", classToImport.getQualifiedName()));
     }
-    return classToImport != null;
+    return null;
   }
 
   public static boolean invoke(final Project project, PsiFile file, final Editor editor, @NotNull PsiElement element) {
+    List<PsiJavaCodeReferenceElement> dequalifiedElements = new ArrayList<>();
+    boolean conflicts = addStaticImports(file, element, dequalifiedElements);
+    if (editor != null) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (collectChangedPlaces(project, editor, dequalifiedElements)) {
+          WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        }
+      }, project.getDisposed());
+    }
+    return conflicts;
+  }
+
+  private static boolean addStaticImports(@NotNull PsiFile file,
+                                          @NotNull PsiElement element,
+                                          @NotNull List<@NotNull PsiJavaCodeReferenceElement> dequalifiedElements) {
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
     if (aClass == null) {
@@ -198,13 +218,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       for (PsiJavaCodeReferenceElement expression : expressionsToDequalify) {
         new CommentTracker().deleteAndRestoreComments(Objects.requireNonNull(expression.getQualifier()));
       }
-      if (editor != null && !(editor instanceof ImaginaryEditor)) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (collectChangedPlaces(project, editor, expressionsToDequalify)) {
-            WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-          }
-        }, project.getDisposed());
-      }
+      dequalifiedElements.addAll(expressionsToDequalify);
     }
     return conflict.get();
   }
@@ -235,8 +249,12 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    invoke(project, element.getContainingFile(), editor, element);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull ModPsiUpdater updater) {
+    List<PsiJavaCodeReferenceElement> dequalifiedElements = new ArrayList<>();
+    addStaticImports(element.getContainingFile(), element, dequalifiedElements);
+    for (PsiJavaCodeReferenceElement ref : dequalifiedElements) {
+      updater.highlight(ref);
+    }
   }
 
   private static boolean isParameterizedReference(final PsiJavaCodeReferenceElement expression) {

@@ -15,7 +15,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.FacetProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -46,14 +45,6 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @Override
   protected String getComponentStateKey() {
     return "FacetStructureConfigurable.UI";
-  }
-
-  /**
-   * @deprecated use {@link ProjectStructureConfigurable#getFacetStructureConfigurable()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static FacetStructureConfigurable getInstance(final @NotNull Project project) {
-    return ProjectStructureConfigurable.getInstance(project).getFacetStructureConfigurable();
   }
 
   public boolean isVisible() {
@@ -195,7 +186,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   public FacetTypeEditor getOrCreateFacetTypeEditor(@NotNull FacetType<?, ?> facetType) {
     FacetTypeEditor editor = myFacetTypeEditors.get(facetType);
     if (editor == null) {
-      editor = new FacetTypeEditor(myProject, myContext, facetType);
+      editor = new FacetTypeEditor(myProject, facetType);
       editor.reset();
       myFacetTypeEditors.put(facetType, editor);
     }
@@ -235,7 +226,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @Override
   public void disposeUIResources() {
     super.disposeUIResources();
-
+    disposeMultipleSettingsEditor();
+    
     for (FacetTypeEditor editor : myFacetTypeEditors.values()) {
       editor.disposeUIResources();
     }
@@ -317,7 +309,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   @Nullable
-  protected AbstractAddGroup createAddAction() {
+  protected AbstractAddGroup createAddAction(boolean fromPopup) {
     return null;
   }
 

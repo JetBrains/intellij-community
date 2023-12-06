@@ -457,7 +457,7 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
     if(myBuilder.getTokenType() == XML_TAG_END) addToken();
   }
 
-  private boolean isAnotherDeclStart(IElementType type) {
+  private static boolean isAnotherDeclStart(IElementType type) {
     return type == XML_ATTLIST_DECL_START || type == XML_ELEMENT_DECL_START;
   }
 

@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
@@ -10,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -54,7 +54,7 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
   );
 
   private final ConcurrentMap<String, WrapperDescription> myWrappers = new ConcurrentHashMap<>();
-  private final ConcurrentMap<String, InvocationsInfo> myDurationsByFqn = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, InvocationInfo> myDurationsByFqn = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<InvocationDescription> myRunnables = new ConcurrentLinkedQueue<>();
   private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<InvocationDescription>> myEventsByClass =
     new ConcurrentHashMap<>();
@@ -68,10 +68,9 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
 
 
   DetailedEventWatcher() {
-    Application app = ApplicationManager.getApplication();
-    app.getMessageBus().connect(this).subscribe(TOPIC, myLogFileWriter);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, myLogFileWriter);
 
-    myThreshold = app.getService(RegistryManager.class).get("ide.event.queue.dispatch.threshold");
+    myThreshold = RegistryManager.getInstance().get("ide.event.queue.dispatch.threshold");
 
     myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Events Logger", 1);
     myFuture = scheduleDumping();
@@ -101,7 +100,7 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
 
     myRunnables.offer(description);
     myDurationsByFqn.compute(description.getProcessId(),
-                             (fqn, info) -> InvocationsInfo.computeNext(fqn, description.getDuration(), info));
+                             (fqn, info) -> InvocationInfo.computeNext(fqn, description.getDuration(), info));
 
     logTimeMillis(description, runnableOrCallableClass);
   }
@@ -249,7 +248,7 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
     private final File myLogDir = new File(new File(PathManager.getLogPath(), "edt-log"),
                                            new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(System.currentTimeMillis())));
 
-    private final ArrayList<InvocationsInfo> myInfos = new ArrayList<>();
+    private final ArrayList<InvocationInfo> myInfos = new ArrayList<>();
     private final ArrayList<WrapperDescription> myWrappers = new ArrayList<>();
 
     @Override
@@ -260,7 +259,7 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
 
     @Override
     public void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations,
-                                   @NotNull Collection<InvocationsInfo> infos,
+                                   @NotNull Collection<InvocationInfo> infos,
                                    @NotNull Collection<WrapperDescription> wrappers) {
       appendToFile("Runnables", invocations);
       myInfos.addAll(infos);

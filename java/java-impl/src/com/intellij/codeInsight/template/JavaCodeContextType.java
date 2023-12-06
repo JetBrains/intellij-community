@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.completion.JavaKeywordCompletion;
@@ -178,13 +164,19 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       if (((PsiJavaCodeReferenceElement)parent).isQualified()) {
         return false;
       }
-      PsiElement grandpa = parent.getParent();
-      if (grandpa instanceof PsiMethodCallExpression || grandpa instanceof PsiReferenceList) {
+      PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiMethodCallExpression || grandParent instanceof PsiReferenceList) {
         return false;
       }
 
-      if (grandpa instanceof PsiTypeElement && (grandpa.getParent() instanceof PsiMember || grandpa.getParent() instanceof PsiReferenceParameterList)) {
-        return false;
+      if (grandParent instanceof PsiTypeElement) {
+        PsiElement greatGrandParent = grandParent.getParent();
+        if (greatGrandParent instanceof PsiMember ||
+            greatGrandParent instanceof PsiReferenceParameterList ||
+            greatGrandParent instanceof PsiRecordHeader ||
+            greatGrandParent instanceof PsiJavaFile) {
+          return false;
+        }
       }
 
       if (JavaKeywordCompletion.isInsideParameterList(element)) {
@@ -219,6 +211,13 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement) {
+        PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiTypeElement && grandParent.getParent() instanceof PsiRecordHeader) {
+          return true;
+        }
+      }
       return JavaKeywordCompletion.isSuitableForClass(element) ||
              JavaKeywordCompletion.isInsideParameterList(element) ||
              PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class) != null;

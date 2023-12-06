@@ -27,7 +27,7 @@ internal class PushLogChangesBrowser(project: Project,
   init {
     init()
 
-    updateBusySpinner = false
+    viewer.shouldShowBusyIconIfNeeded = false
     val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
     viewer.scope.launch(edtContext) {
       viewer.busy.collectLatest { isLoading ->

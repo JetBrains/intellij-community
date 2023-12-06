@@ -13,4 +13,4 @@ fun main() {
     val c = Foo()
 }
 
-// IGNORE_FIR
+// IGNORE_K2

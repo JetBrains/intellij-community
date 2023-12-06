@@ -12,12 +12,13 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageSearchPresentation;
 import com.intellij.usages.UsageSearcher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-interface ShowUsagesActionHandler {
+public interface ShowUsagesActionHandler {
 
   boolean isValid();
 
@@ -29,7 +30,9 @@ interface ShowUsagesActionHandler {
 
   @Nullable ShowUsagesActionHandler showDialog();
 
-  @NotNull ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope);
+  @Nullable ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope);
+
+  @Nullable ShowUsagesParameters moreUsages(@NotNull ShowUsagesParameters parameters);
 
   @NotNull SearchScope getSelectedScope();
 
@@ -40,6 +43,8 @@ interface ShowUsagesActionHandler {
   @NotNull Class<?> getTargetClass();
 
   @NotNull List<EventPair<?>> getEventData();
+
+  void beforeClose(@NonNls String reason);
 
   @NotNull List<EventPair<?>> buildFinishEventData(@Nullable UsageInfo selectedUsage);
 

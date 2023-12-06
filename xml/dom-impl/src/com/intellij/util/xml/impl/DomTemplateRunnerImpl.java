@@ -1,33 +1,19 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlTag;
-import java.util.HashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.actions.generate.DomTemplateRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class DomTemplateRunnerImpl extends DomTemplateRunner {
@@ -49,11 +35,11 @@ public class DomTemplateRunnerImpl extends DomTemplateRunner {
     runTemplate(t, editor, template, predefinedVars);
   }
 
-  public <T extends DomElement> void runTemplate(final T t, final Editor editor, @Nullable final Template template) {
+  public <T extends DomElement> void runTemplate(final T t, final Editor editor, final @Nullable Template template) {
      runTemplate(t, editor, template, new HashMap<>());
   }
 
-  public <T extends DomElement> void runTemplate(final T t, final Editor editor, @Nullable final Template template, Map<String, String> predefinedVars) {
+  public <T extends DomElement> void runTemplate(final T t, final Editor editor, final @Nullable Template template, Map<String, String> predefinedVars) {
     if (template != null && t != null) {
       DomElement copy = t.createStableCopy();
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(editor.getDocument());
@@ -69,8 +55,7 @@ public class DomTemplateRunnerImpl extends DomTemplateRunner {
     }
   }
 
-  @Nullable
-  protected static Template getTemplate(final String mappingId) {
+  protected static @Nullable Template getTemplate(final String mappingId) {
     return mappingId != null ? TemplateSettings.getInstance().getTemplateById(mappingId) : null;
   }
 }

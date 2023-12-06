@@ -5,13 +5,14 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -62,11 +63,11 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
         val nameValidator = CollectingNameValidator(
             filter = Fe10KotlinNewDeclarationNameValidator(functionLiteral, null, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER)
         )
-        val indexParameterName = Fe10KotlinNameSuggester.suggestNameByName("index", nameValidator)
+        val indexParameterName = KotlinNameSuggester.suggestNameByName("index", nameValidator)
         val indexParameter = psiFactory.createParameter(indexParameterName)
         if (parameters.isEmpty()) {
             parameterList.addParameter(indexParameter)
-            parameterList.addParameter(psiFactory.createParameter("it"))
+            parameterList.addParameter(psiFactory.createParameter(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier))
         } else {
             parameterList.addParameterBefore(indexParameter, parameters.first())
         }
@@ -78,30 +79,29 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
         )
         CodeStyleManager.getInstance(element.project).reformat(result)
     }
+}
 
-    companion object {
-        private const val indexed = "Indexed"
-        private val functions = listOf(
-            Pair("filter", "filter$indexed"),
-            Pair("filterTo", "filter${indexed}To"),
-            Pair("fold", "fold$indexed"),
-            Pair("foldRight", "foldRight$indexed"),
-            Pair("forEach", "forEach$indexed"),
-            Pair("map", "map$indexed"),
-            Pair("mapNotNull", "map${indexed}NotNull"),
-            Pair("mapNotNullTo", "map${indexed}NotNullTo"),
-            Pair("mapTo", "map${indexed}To"),
-            Pair("onEach", "onEach$indexed"),
-            Pair("reduce", "reduce$indexed"),
-            Pair("reduceOrNull", "reduce${indexed}OrNull"),
-            Pair("reduceRight", "reduceRight$indexed"),
-            Pair("reduceRightOrNull", "reduceRight${indexed}OrNull"),
-            Pair("runningFold", "runningFold$indexed"),
-            Pair("runningReduce", "runningReduce$indexed"),
-            Pair("scan", "scan$indexed"),
-            Pair("scanReduce", "scanReduce$indexed"),
-        ).associate { (functionName, indexedFunctionName) ->
-            functionName to (FqName("kotlin.collections.$functionName") to indexedFunctionName)
-        }
-    }
+private const val indexed: String = "Indexed"
+
+private val functions: Map<String, Pair<FqName, String>> = listOf(
+    Pair("filter", "filter$indexed"),
+    Pair("filterTo", "filter${indexed}To"),
+    Pair("fold", "fold$indexed"),
+    Pair("foldRight", "foldRight$indexed"),
+    Pair("forEach", "forEach$indexed"),
+    Pair("map", "map$indexed"),
+    Pair("mapNotNull", "map${indexed}NotNull"),
+    Pair("mapNotNullTo", "map${indexed}NotNullTo"),
+    Pair("mapTo", "map${indexed}To"),
+    Pair("onEach", "onEach$indexed"),
+    Pair("reduce", "reduce$indexed"),
+    Pair("reduceOrNull", "reduce${indexed}OrNull"),
+    Pair("reduceRight", "reduceRight$indexed"),
+    Pair("reduceRightOrNull", "reduceRight${indexed}OrNull"),
+    Pair("runningFold", "runningFold$indexed"),
+    Pair("runningReduce", "runningReduce$indexed"),
+    Pair("scan", "scan$indexed"),
+    Pair("scanReduce", "scanReduce$indexed"),
+).associate { (functionName, indexedFunctionName) ->
+    functionName to (FqName("kotlin.collections.$functionName") to indexedFunctionName)
 }

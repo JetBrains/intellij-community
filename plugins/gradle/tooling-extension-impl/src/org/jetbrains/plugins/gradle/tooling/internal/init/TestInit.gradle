@@ -1,22 +1,5 @@
 //file:noinspection GrPackage
 
-import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter
-
-//noinspection GrUnresolvedAccess
-IMPORT_GRADLE_TASKS_UTIL
-
-//noinspection GrUnresolvedAccess
-Map<String, List<String>> testTasksWithPatterns = TEST_TASKS_WITH_PATTERNS
-Set<String> testTasks = testTasksWithPatterns.keySet()
-//noinspection GrUnresolvedAccess
-boolean forceTestExecution = FORCE_TEST_EXECUTION
-
-
-Project getCurrentProject() {
-  def currentPath = gradle.startParameter.currentDir.path
-  return rootProject.allprojects.find { it.projectDir.path == currentPath }
-}
-
 static boolean isTestTask(Task task) {
   return task instanceof Test || isAbstractTestTask(task)
 }
@@ -32,34 +15,10 @@ static boolean isAbstractTestTask(Task task) {
   return abstractTestTaskClass != null && abstractTestTaskClass.isAssignableFrom(task.class)
 }
 
-static void setCommandLineIncludePatterns(Task task, List<String> patterns) {
-  //noinspection GrUnresolvedAccess
-  TestFilter filter = task.getFilter()
-  if (filter instanceof DefaultTestFilter) {
-    if (filter.respondsTo("setCommandLineIncludePatterns")) {
-      filter.setCommandLineIncludePatterns(patterns)
-      return
-    }
-  }
-  filter.setIncludePatterns(*patterns)
-}
-
 gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
-  Project project = getCurrentProject()
-
   for (Task task : taskGraph.allTasks) {
     if (isTestTask(task)) {
-      //noinspection GrUnresolvedAccess
-      String name = GradleTasksUtil.findTestMatcher(project, task, testTasks)
-      if (name != null) {
-        if (forceTestExecution) {
-          task.outputs.upToDateWhen { false }
-        }
-        def patterns = testTasksWithPatterns[name] ?: []
-        if (!patterns.isEmpty()) {
-          setCommandLineIncludePatterns(task, patterns)
-        }
-      }
+      task.outputs.upToDateWhen { false }
     }
   }
 }

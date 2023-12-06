@@ -6,6 +6,7 @@ import com.intellij.formatting.service.CoreFormattingService
 import com.intellij.formatting.service.FormattingServiceUtil
 import com.intellij.lang.LanguageFormatting
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -14,21 +15,23 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory
 
+private val LOG = logger<FormattingChanges>()
+
 data class FormattingChanges(val preFormatText: CharSequence, val postFormatText: CharSequence, val mismatches: List<WhitespaceMismatch>) {
   data class WhitespaceMismatch(val preFormatRange: TextRange, val postFormatRange: TextRange)
 }
 
 /**
- * Detects whitespace which is not in agreement with formatting rules for given [file]. Ranges of the returned
+ * Detects whitespace which is not in agreement with code style for given [file]. Ranges of the returned
  * [FormattingChanges.mismatches] always encompass the entirety of the whitespace between tokens for each detected change in both the
  * original and formatted text.
  *
  * Uses code style settings associated with [file]. To detect changes using different [CodeStyleSettings], use
- * [CodeStyle.doWithTemporarySettings].
+ * [CodeStyle.runWithLocalSettings].
  *
  * @param file
- * @return [FormattingChanges] object describing the changes. `null` if detection could not be performed. Empty list if no changes were
- * detected.
+ * @return [FormattingChanges] object describing the changes. [FormattingChanges.mismatches] will be empty if no changes were detected.
+ * `null` if detection could not be performed.
  */
 fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
   if (!LanguageFormatting.INSTANCE.isAutoFormatAllowed(file)) {
@@ -56,7 +59,7 @@ fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
   }
   val copyService = FormattingServiceUtil.findService(psiCopy, true, true)
   if (formattingService != copyService) {
-    logger<FormattingChanges>().warn("${formattingService::class} cannot format an in-memory copy.")
+    LOG.warn("${formattingService::class} cannot format an in-memory copy.")
     return null
   }
 
@@ -65,19 +68,30 @@ fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
   //  psiCopy.viewProvider.document.putUserData(AsyncDocumentFormattingService.FORMAT_DOCUMENT_SYNCHRONOUSLY, true)
   //}
 
-  CodeStyleManager.getInstance(psiCopy.project).reformat(psiCopy, true)
+  try {
+    CodeStyleManager.getInstance(psiCopy.project).reformat(psiCopy, true)
 
-  val preFormat = fileDoc.text
-  val postFormat = copyDoc.text
-  val changes = try {
-    diffWhitespace(preFormat,
-                   postFormat,
-                   WhiteSpaceFormattingStrategyFactory.getStrategy(baseLanguage))
-  } catch (e: NonWhitespaceChangeException) {
-    throw IllegalArgumentException("Non-whitespace change: pre-format=%#04x, post-format=%#04x, lang=%s, filetype=%s"
-                                     .format(e.pre.code, e.post.code, file.language.id, file.fileType.name))
+    val preFormat = fileDoc.text
+    val postFormat = copyDoc.text
+    val changes = diffWhitespace(preFormat,
+                                 postFormat,
+                                 WhiteSpaceFormattingStrategyFactory.getStrategy(baseLanguage))
+    return FormattingChanges(preFormat, postFormat, changes)
+
   }
-  return FormattingChanges(preFormat, postFormat, changes)
+  catch (pce: ProcessCanceledException) {
+    throw pce
+  }
+  catch (e: NonWhitespaceChangeException) {
+    LOG.error("Non-whitespace change: pre-format=%#04x @ %d, post-format=%#04x @ %d, lang=%s, filetype=%s, path=%s"
+                .format(e.pre[e.locPre].code, e.locPre,
+                        e.post[e.locPost].code, e.locPost,
+                        file.language.id, file.fileType.name, file.viewProvider.virtualFile))
+  }
+  catch (e: Exception) {
+    LOG.error(e)
+  }
+  return null
 }
 
 /**
@@ -116,7 +130,7 @@ private fun diffWhitespace(pre: CharSequence,
       j = jWsEnd
     }
     else if (pre[i] != post[j]) {
-      throw NonWhitespaceChangeException(pre[i], post[j])
+      throw NonWhitespaceChangeException(pre, post, i, j)
     }
     else {
       ++i
@@ -126,4 +140,7 @@ private fun diffWhitespace(pre: CharSequence,
   return mismatches
 }
 
-private data class NonWhitespaceChangeException(val pre: Char, val post: Char): Exception()
+private data class NonWhitespaceChangeException(val pre: CharSequence,
+                                                val post: CharSequence,
+                                                val locPre: Int,
+                                                val locPost: Int) : Exception()

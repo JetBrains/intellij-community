@@ -388,7 +388,7 @@ public final class ResolveImportUtil {
     // VFS may be case insensitive on Windows, but resolve is always case sensitive (PEP 235, PY-18958), so we check name here
     if (subdir != null && subdir.getName().equals(referencedName) &&
         (!checkForPackage || PyUtil.isPackage(subdir, containingFile)) &&
-        (!withoutStubs || !PyiUtil.isPyiFileOfPackage(subdir))) {
+        (!withoutStubs || PyUtil.isOrdinaryPackage(subdir) || !PyiUtil.isPyiFileOfPackage(subdir))) {
       result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, subdir)));
     }
 

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceAfter
 import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceBefore
@@ -161,6 +162,10 @@ private fun getTopmostParentInside(element: PsiElement, parent: PsiElement): Psi
 
 private fun findExpression(element: KtElement): KtExpression? {
     var expression = element
+    if (expression is KtScript) {
+        expression = expression.descendantsOfType<KtScriptInitializer>().singleOrNull() ?: return null
+    }
+
     if (expression is KtScriptInitializer) {
         expression = expression.body ?: return null
     }

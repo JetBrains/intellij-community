@@ -16,3 +16,4 @@ open class ABase {
             prop = value
         }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceProtectedToPublishedApiCallFix

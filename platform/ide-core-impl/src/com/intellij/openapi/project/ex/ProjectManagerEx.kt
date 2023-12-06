@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.ex
 
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -26,30 +25,27 @@ abstract class ProjectManagerEx : ProjectManager() {
     @Experimental
     val IS_PER_PROJECT_INSTANCE_READY: Boolean = System.getProperty(PER_PROJECT_OPTION_NAME)?.let {
       (SystemInfoRt.isMac || SystemInfoRt.isLinux) && PerProjectState.valueOf(it) != PerProjectState.DISABLED
-    } ?: false
+    } == true
 
     @JvmField
     @Experimental
     val IS_PER_PROJECT_INSTANCE_ENABLED: Boolean = System.getProperty(PER_PROJECT_OPTION_NAME)?.let {
       IS_PER_PROJECT_INSTANCE_READY && PerProjectState.valueOf(it) == PerProjectState.ENABLED
-    } ?: false
+    } == true
 
     val IS_CHILD_PROCESS: Boolean by lazy { isChildProcessPath(PathManager.getSystemDir()) }
 
     @Experimental
-    const val PER_PROJECT_SUFFIX = "INTERNAL_perProject"
+    const val PER_PROJECT_SUFFIX: String = "INTERNAL_perProject"
 
     @JvmStatic
-    fun getInstanceEx(): ProjectManagerEx = ApplicationManager.getApplication().getService(ProjectManager::class.java) as ProjectManagerEx
+    fun getInstanceEx(): ProjectManagerEx = getInstance() as ProjectManagerEx
 
     @JvmStatic
     fun getInstanceExIfCreated(): ProjectManagerEx? = getInstanceIfCreated() as ProjectManagerEx?
 
     @Internal
-    fun getOpenProjects(): List<Project> {
-      val projectManager = getInstanceIfCreated()
-      return projectManager?.openProjects?.toList() ?: emptyList()
-    }
+    fun getOpenProjects(): List<Project> = getInstanceIfCreated()?.openProjects?.toList() ?: emptyList()
 
     @Experimental
     fun isChildProcessPath(path: Path): Boolean = path.toString().contains(PER_PROJECT_SUFFIX)
@@ -66,7 +62,7 @@ abstract class ProjectManagerEx : ProjectManager() {
   }
 
   /**
-   * Creates project but not open it. Use this method only in a test mode or special cases like new project wizard.
+   * Creates a project but does not open it. Use this method only in a test mode or special cases like the new project wizard.
    */
   abstract fun newProject(file: Path, options: OpenProjectTask): Project?
 
@@ -90,18 +86,21 @@ abstract class ProjectManagerEx : ProjectManager() {
   /**
    * The project and the app settings will be not saved.
    */
-  @TestOnly
-  fun forceCloseProject(project: Project): Boolean = forceCloseProject(project, save = false)
+  @Internal
+  fun forceCloseProject(project: Project): Boolean =
+    @Suppress("TestOnlyProblems")
+    forceCloseProject(project, save = false)
 
   @TestOnly
   abstract fun forceCloseProject(project: Project, save: Boolean): Boolean
 
   @Internal
-  @TestOnly
   abstract suspend fun forceCloseProjectAsync(project: Project, save: Boolean = false): Boolean
 
   @Internal
-  fun saveAndForceCloseProject(project: Project): Boolean = forceCloseProject(project, save = true)
+  fun saveAndForceCloseProject(project: Project): Boolean =
+    @Suppress("TestOnlyProblems")
+    forceCloseProject(project, save = true)
 
   // return true if successful
   abstract fun closeAndDisposeAllProjects(checkCanClose: Boolean): Boolean

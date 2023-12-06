@@ -72,8 +72,7 @@ public final class Paths {
     return ContainerUtil.concat(Collections.singletonList(root), tail);
   }
 
-  @NotNull
-  private static List<String> splitInner(String path) {
+  private static @NotNull List<String> splitInner(String path) {
     if (path.isEmpty()) return Collections.emptyList();
     int s = 0;
     int e = path.length();
@@ -114,16 +113,14 @@ public final class Paths {
     myIsCaseSensitive = SystemInfo.isFileSystemCaseSensitive;
   }
 
-  @NotNull
-  public static FilePath createDvcsFilePath(@NotNull String path, boolean isDirectory) {
+  public static @NotNull FilePath createDvcsFilePath(@NotNull String path, boolean isDirectory) {
     return path.contains(URLUtil.SCHEME_SEPARATOR)
            ? new UrlFilePath(path, isDirectory)
            : new LocalFilePath(path, isDirectory);
   }
 
-  @NotNull
-  public static FilePath createDvcsFilePath(@NotNull VirtualFile file) {
-    if (VersionManagingFileSystem.isFsSupported(file)) {
+  public static @NotNull FilePath createDvcsFilePath(@NotNull VirtualFile file) {
+    if (VersionManagingFileSystem.isEnforcedNonLocal(file)) {
       return new UrlFilePath(file.getUrl(), file.isDirectory());
     }
     else {

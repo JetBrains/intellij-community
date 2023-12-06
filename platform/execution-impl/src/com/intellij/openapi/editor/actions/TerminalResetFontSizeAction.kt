@@ -2,13 +2,12 @@
 package com.intellij.openapi.editor.actions
 
 import com.intellij.ide.lightEdit.LightEditCompatible
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction.Companion.getTerminalWidget
 import com.intellij.openapi.project.DumbAwareAction
 
-class TerminalResetFontSizeAction : DumbAwareAction(ActionsBundle.messagePointer("action.EditorResetFontSize.text")), LightEditCompatible {
+class TerminalResetFontSizeAction : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
     getTerminalWidget(e)?.resetFontSize()
   }

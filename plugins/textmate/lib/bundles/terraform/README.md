@@ -21,7 +21,7 @@ Read the [Troubleshooting Guide](#troubleshooting) for answers to common questio
 ## Features
 
 - [IntelliSense](#intellisense-and-autocomplete) Edit your code with auto-completion of providers, resource names, data sources, attributes and more
-- [Syntax validation](#syntax-validation) Diagnostics using `terraform validate` provide inline error checking
+- [Syntax validation](#syntax-validation) Provides inline diagnostics for invalid configuration as you type
 - [Syntax highlighting](#syntax-highlighting) Highlighting syntax from Terraform 0.12 to 1.X
 - [Code Navigation](#code-navigation) Navigate through your codebase with Go to Definition and Symbol support
 - [Code Formatting](#code-formatting) Format your code with `terraform fmt` automatically
@@ -55,7 +55,29 @@ Completing the snippet allows you to tab complete through each attribute and blo
 
 ### Syntax Validation
 
-The extension provides validation through [`terraform validate`](https://www.terraform.io/cli/commands/validate). This verifies whether a configuration is syntactically valid and internally consistent, regardless of any provided variables or existing state. It is thus primarily useful for general verification of reusable modules, including correctness of attribute names and value types.
+Terraform configuration files are validated when opened and on change, and invalid code is marked with diagnostics.
+
+HCL syntax is checked for e.g. missing control characters like `}`, `"` or others in the wrong place.
+
+![](docs/validation-rule-hcl.png)
+
+Enhanced validation of selected Terraform language constructs in both `*.tf` and `*.tfvars` files based on detected Terraform version and provider versions is also provided. This can highlight deprecations, missing required attributes or blocks, references to undeclared variables and more, [as documented](https://github.com/hashicorp/terraform-ls/blob/main/docs/validation.md#enhanced-validation).
+
+![](docs/validation-rule-missing-attribute.png)
+
+![](docs/validation-rule-invalid-ref.png)
+
+The enhanced validation feature is enabled by default but can be disabled using the following setting:
+
+```json
+"terraform.validation.enableEnhancedValidation": false
+```
+
+The extension also provides validation through [`terraform validate`](https://www.terraform.io/cli/commands/validate). This can be triggered via command palette. Unlike the other validation methods, this one requires the Terraform CLI installed and a previous successful run of `terraform init` (i.e. local installation of all providers and modules) to function correctly. It is the slowest method, but the most thorough - i.e. it will catch the most mistakes.
+
+![](docs/validation-cli-command.png)
+
+![](docs/validation-cli-diagnostic.png)
 
 ### Syntax Highlighting
 
@@ -123,7 +145,7 @@ The Terraform VS Code extension bundles the [Terraform Language Server](https://
 
 The extension does require the following to be installed before use:
 
-- VS Code v1.65 or greater
+- VS Code v1.75 or greater
 - Terraform v0.12 or greater
 
 ## Platform Support
@@ -216,7 +238,7 @@ To enable automatic formatting, it is recommended that the following be added to
   "editor.defaultFormatter": "hashicorp.terraform",
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file"
-}
+},
 "[terraform-vars]": {
   "editor.defaultFormatter": "hashicorp.terraform",
   "editor.formatOnSave": true,

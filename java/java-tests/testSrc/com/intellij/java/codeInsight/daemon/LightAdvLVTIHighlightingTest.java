@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -83,6 +83,10 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
     PsiElement element = elements[0];
     assertInstanceOf(element, PsiClass.class);
     assertEquals(CommonClassNames.JAVA_LANG_STRING, ((PsiClass)element).getQualifiedName());
+  }
+  
+  public void testIntersectionTypeMethodRef() {
+    doTest();
   }
 
   @Override

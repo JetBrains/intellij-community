@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.configurationStore.serialize
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
@@ -10,18 +11,16 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.impl.artifacts.ArtifactUtil
+import com.intellij.packaging.impl.artifacts.workspacemodel.getArtifactProperties
 import com.intellij.packaging.impl.elements.ArchivePackagingElement
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import kotlin.collections.set
 
@@ -35,6 +34,13 @@ internal class ImporterModifiableArtifact(private val project: Project,
   private val artifactProperties: MutableMap<String, ArtifactProperties<*>> = mutableMapOf()
   private var includeInProjectBuild = false
   private val contextData = UserDataHolderBase()
+
+  init {
+    val existingArtifact = WorkspaceModel.getInstance(project).currentSnapshot.resolve(ArtifactId(name))
+    if (null != existingArtifact) {
+      includeInProjectBuild = existingArtifact.includeInProjectBuild
+    }
+  }
 
   override fun <T : Any?> getUserData(key: Key<T>): T? = contextData.getUserData(key)
   override fun <T : Any?> putUserData(key: Key<T>, value: T?) = contextData.putUserData(key, value)
@@ -77,7 +83,14 @@ internal class ImporterModifiableArtifact(private val project: Project,
     val providerId = propertiesProvider.id
     if (!artifactProperties.containsKey(providerId)) {
       if (propertiesProvider.isAvailableFor(this.artifactType)) {
-        artifactProperties[providerId] = propertiesProvider.createProperties(this.artifactType)
+        val existingArtifact = WorkspaceModel.getInstance(project).currentSnapshot.resolve(ArtifactId(name))
+
+        val existingProperties =
+          if (null != existingArtifact) getArtifactProperties(existingArtifact, artifactType, propertiesProvider) else null
+
+        val properties = existingProperties ?: propertiesProvider.createProperties(artifactType)
+
+        artifactProperties[providerId] = properties
       }
     }
     return artifactProperties[providerId]
@@ -161,10 +174,11 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
       val rootElement = artifact.rootElement
       val rootElementEntity = rootElement.getOrAddEntity(storage, source, project) as CompositePackagingElementEntity
 
-      val artifactEntity = storage.addArtifactEntity(
-        artifact.name, artifact.artifactType.id, false,
-        artifact.getOutputUrl(), rootElementEntity, source
-      )
+      val artifactEntity = storage addEntity ArtifactEntity(artifact.name, artifact.artifactType.id, false, source) {
+        this.outputUrl = artifact.getOutputUrl()
+        this.rootElement = rootElementEntity
+        this.includeInProjectBuild = artifact.isBuildOnMake
+      }
 
       for (provider in artifact.propertiesProviders) {
         val properties = artifact.getProperties(provider)
@@ -184,7 +198,10 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
           val existingProperty = artifactEntity.customProperties.find { it.providerType == provider.id }
 
           if (existingProperty == null) {
-            storage.addArtifactPropertiesEntity(artifactEntity, provider.id, tag, artifactEntity.entitySource)
+            storage addEntity ArtifactPropertiesEntity(provider.id, artifactEntity.entitySource) {
+              this.artifact = artifactEntity
+              this.propertiesXmlTag = tag
+            }
           }
           else {
             storage.modifyEntity(existingProperty) {

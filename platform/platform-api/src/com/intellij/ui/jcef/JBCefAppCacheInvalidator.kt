@@ -8,9 +8,9 @@ import com.intellij.openapi.components.service
 
 private class JBCefAppCacheInvalidator : CachesInvalidator() {
 
-  override fun getComment(): String = IdeBundle.message("jcef.local.cache.invalidate.action.description")
+  override fun getComment(): String = IdeBundle.message("jcef.local.cache.invalidate.comment")
 
-  override fun getDescription(): String = IdeBundle.message("jcef.local.cache.invalidate.checkbox.description")
+  override fun getDescription(): String = IdeBundle.message("jcef.local.cache.invalidate.description")
 
   override fun optionalCheckboxDefaultValue(): Boolean = false
 

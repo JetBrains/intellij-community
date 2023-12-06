@@ -19,29 +19,21 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.AncestorListenerAdapter;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.GradientViewport;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
-import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,11 +52,8 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance(GeneralCodeStylePanel.class);
   private List<GeneralCodeStyleOptionsProvider> myAdditionalOptions;
 
-  private IntegerField myRightMarginField;
 
-  private ComboBox myLineSeparatorCombo;
   private JPanel myPanel;
-  private JBCheckBox myCbWrapWhenTypingReachesRightMargin;
   private JCheckBox myEnableFormatterTags;
   private JTextField myFormatterOnTagField;
   private JTextField myFormatterOffTagField;
@@ -72,60 +61,36 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JBLabel myFormatterOffLabel;
   private JBLabel myFormatterOnLabel;
   private JPanel myMarkerOptionsPanel;
-  private JPanel myAdditionalSettingsPanel;
-  private JCheckBox myAutodetectIndentsBox;
-  private CommaSeparatedIntegersField myVisualGuides;
-  private JBLabel myVisualGuidesHint;
-  private JBLabel myLineSeparatorHint;
-  private JBLabel myVisualGuidesLabel;
   private JBTabbedPane myTabbedPane;
   private ExcludedGlobPatternsPanel myExcludedPatternsPanel;
   private ExcludedScopesPanel       myExcludedScopesPanel;
   private JPanel myGeneralTab;
   private JPanel myFormatterTab;
-  private JBCheckBox myEnableSecondReformat;
   private final JScrollPane         myScrollPane;
   private static int ourSelectedTabIndex = -1;
+  private final GeneralCodeStyleGeneralTab generalTab;
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
     super(settings);
 
-    //noinspection unchecked
-    myLineSeparatorCombo.addItem(getSystemDependantString());
-    //noinspection unchecked
-    myLineSeparatorCombo.addItem(getUnixString());
-    //noinspection unchecked
-    myLineSeparatorCombo.addItem(getWindowsString());
-    //noinspection unchecked
-    myLineSeparatorCombo.addItem(getMacintoshString());
+    generalTab = new GeneralCodeStyleGeneralTab(settings);
     addPanelToWatch(myPanel);
-
-    myRightMarginField.setDefaultValue(settings.getDefaultRightMargin());
 
     myEnableFormatterTags.addActionListener(__ -> {
       boolean tagsEnabled = myEnableFormatterTags.isSelected();
       setFormatterTagControlsEnabled(tagsEnabled);
     });
 
-    myAutodetectIndentsBox.setBorder(JBUI.Borders.emptyTop(10));
-
     myPanel.setBorder(JBUI.Borders.empty());
     myScrollPane = ScrollPaneFactory.createScrollPane(null, true);
     myScrollPane.setViewport(new GradientViewport(myPanel, JBUI.insetsTop(5), true));
 
-    myAdditionalSettingsPanel.setLayout(new VerticalFlowLayout(true, true));
     updateGeneralOptionsPanel();
 
-    myVisualGuidesLabel.setText(ApplicationBundle.message("settings.code.style.visual.guides") + ":");
-    myVisualGuidesHint.setForeground(JBColor.GRAY);
-    myVisualGuidesHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-    myLineSeparatorHint.setForeground(JBColor.GRAY);
-    myLineSeparatorHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-
     myGeneralTab.setBorder(JBUI.Borders.empty(15, 15, 0, 0));
+    myGeneralTab.add(generalTab.panel, BorderLayout.CENTER);
     myFormatterTab.setBorder(JBUI.Borders.empty(15, 15, 0, 0));
     myMarkerOptionsPanel.setBorder(JBUI.Borders.emptyTop(10));
-    myEnableSecondReformat.setBorder(JBUI.Borders.emptyTop(10));
     if (ourSelectedTabIndex >= 0) {
       myTabbedPane.setSelectedIndex(ourSelectedTabIndex);
     }
@@ -160,21 +125,14 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   private void updateGeneralOptionsPanel() {
-    myAdditionalSettingsPanel.removeAll();
     myAdditionalOptions = ConfigurableWrapper.createConfigurables(EP_NAME);
-    for (GeneralCodeStyleOptionsProvider provider : myAdditionalOptions) {
-      JComponent generalSettingsComponent = provider.createComponent();
-      if (generalSettingsComponent != null) {
-        myAdditionalSettingsPanel.add(Box.createRigidArea(JBUI.size(0, 5)));
-        myAdditionalSettingsPanel.add(generalSettingsComponent);
-      }
-    }
+    generalTab.updateGeneralOptions(myAdditionalOptions);
   }
 
 
   @Override
   protected int getRightMargin() {
-    return myRightMarginField.getValue();
+    return generalTab.myRightMarginField.getValue();
   }
 
   @Override
@@ -191,16 +149,16 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
-    myVisualGuides.validateContent();
-    myRightMarginField.validateContent();
-    settings.setDefaultSoftMargins(myVisualGuides.getValue());
+    generalTab.myVisualGuides.validateContent();
+    generalTab.myRightMarginField.validateContent();
+    settings.setDefaultSoftMargins(generalTab.myVisualGuides.getValue());
     myExcludedScopesPanel.apply(settings);
     myExcludedPatternsPanel.apply(settings);
 
-    settings.LINE_SEPARATOR = getSelectedLineSeparator();
+    settings.LINE_SEPARATOR = generalTab.getLineSeparator();
 
     settings.setDefaultRightMargin(getRightMargin());
-    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myCbWrapWhenTypingReachesRightMargin.isSelected();
+    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = generalTab.myCbWrapWhenTypingReachesRightMargin.isSelected();
 
     settings.FORMATTER_TAGS_ENABLED = myEnableFormatterTags.isSelected();
     settings.FORMATTER_TAGS_ACCEPT_REGEXP = myAcceptRegularExpressionsCheckBox.isSelected();
@@ -211,8 +169,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     settings.FORMATTER_ON_TAG = getTagText(myFormatterOnTagField, settings.FORMATTER_ON_TAG);
     settings.setFormatterOnPattern(compilePattern(settings, myFormatterOnTagField, settings.FORMATTER_ON_TAG));
 
-    settings.AUTODETECT_INDENTS = myAutodetectIndentsBox.isSelected();
-    settings.ENABLE_SECOND_REFORMAT = myEnableSecondReformat.isSelected();
+    settings.AUTODETECT_INDENTS = generalTab.myAutodetectIndentsBox.isSelected();
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.apply(settings);
@@ -220,10 +177,6 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   private void createUIComponents() {
-    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, CodeStyleConstraints.MAX_RIGHT_MARGIN);
-    myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"),
-                                                     0, CodeStyleConstraints.MAX_RIGHT_MARGIN,
-                                                     ApplicationBundle.message("settings.code.style.visual.guides.optional"));
     myExcludedPatternsPanel = new ExcludedGlobPatternsPanel();
     myExcludedPatternsPanel.setBorder(JBUI.Borders.emptyTop(5));
     myExcludedScopesPanel = new ExcludedScopesPanel();
@@ -249,33 +202,18 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     return fieldText;
   }
 
-  @Nullable
-  private String getSelectedLineSeparator() {
-    if (getUnixString().equals(myLineSeparatorCombo.getSelectedItem())) {
-      return "\n";
-    }
-    if (getMacintoshString().equals(myLineSeparatorCombo.getSelectedItem())) {
-      return "\r";
-    }
-    if (getWindowsString().equals(myLineSeparatorCombo.getSelectedItem())) {
-      return "\r\n";
-    }
-    return null;
-  }
-
-
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    if (!myVisualGuides.getValue().equals(settings.getDefaultSoftMargins())) return true;
+    if (!generalTab.myVisualGuides.getValue().equals(settings.getDefaultSoftMargins())) return true;
 
     if (myExcludedScopesPanel.isModified(settings)) return true;
     if (myExcludedPatternsPanel.isModified(settings)) return true;
 
-    if (!Objects.equals(getSelectedLineSeparator(), settings.LINE_SEPARATOR)) {
+    if (!Objects.equals(generalTab.getLineSeparator(), settings.LINE_SEPARATOR)) {
       return true;
     }
 
-    if (settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN ^ myCbWrapWhenTypingReachesRightMargin.isSelected()) {
+    if (settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN ^ generalTab.myCbWrapWhenTypingReachesRightMargin.isSelected()) {
       return true;
     }
 
@@ -296,8 +234,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       if (option.isModified(settings)) return true;
     }
 
-    return settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected() ||
-           settings.ENABLE_SECOND_REFORMAT != myEnableSecondReformat.isSelected();
+    return settings.AUTODETECT_INDENTS != generalTab.myAutodetectIndentsBox.isSelected();
   }
 
   @Override
@@ -307,27 +244,14 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected void resetImpl(final @NotNull CodeStyleSettings settings) {
-    myVisualGuides.setValue(settings.getDefaultSoftMargins());
+    generalTab.myVisualGuides.setValue(settings.getDefaultSoftMargins());
 
     myExcludedScopesPanel.reset(settings);
     myExcludedPatternsPanel.reset(settings);
 
-    String lineSeparator = settings.LINE_SEPARATOR;
-    if ("\n".equals(lineSeparator)) {
-      myLineSeparatorCombo.setSelectedItem(getUnixString());
-    }
-    else if ("\r\n".equals(lineSeparator)) {
-      myLineSeparatorCombo.setSelectedItem(getWindowsString());
-    }
-    else if ("\r".equals(lineSeparator)) {
-      myLineSeparatorCombo.setSelectedItem(getMacintoshString());
-    }
-    else {
-      myLineSeparatorCombo.setSelectedItem(getSystemDependantString());
-    }
-
-    myRightMarginField.setValue(settings.getDefaultRightMargin());
-    myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
+    generalTab.setLineSeparator(settings.LINE_SEPARATOR);
+    generalTab.myRightMarginField.setValue(settings.getDefaultRightMargin());
+    generalTab.myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
 
     myAcceptRegularExpressionsCheckBox.setSelected(settings.FORMATTER_TAGS_ACCEPT_REGEXP);
     myEnableFormatterTags.setSelected(settings.FORMATTER_TAGS_ENABLED);
@@ -337,8 +261,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
 
-    myAutodetectIndentsBox.setSelected(settings.AUTODETECT_INDENTS);
-    myEnableSecondReformat.setSelected(settings.ENABLE_SECOND_REFORMAT);
+    generalTab.myAutodetectIndentsBox.setSelected(settings.AUTODETECT_INDENTS);
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.reset(settings);
@@ -391,21 +314,6 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     super.dispose();
   }
 
-  private static @NlsContexts.ListItem String getSystemDependantString() {
-    return ApplicationBundle.message("combobox.crlf.system.dependent");
-  }
-
-  private static @NlsContexts.ListItem String getUnixString() {
-    return ApplicationBundle.message("combobox.crlf.unix");
-  }
-
-  private static @NlsContexts.ListItem String getWindowsString() {
-    return ApplicationBundle.message("combobox.crlf.windows");
-  }
-
-  private static @NlsContexts.ListItem String getMacintoshString() {
-    return ApplicationBundle.message("combobox.crlf.mac");
-  }
 
   public static void selectFormatterTab(@NotNull Settings settings) {
     ourSelectedTabIndex = 1;

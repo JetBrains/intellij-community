@@ -35,7 +35,7 @@ abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProces
                                   @Volatile var activeVm: Vm)
   : XSuspendContext() {
 
-  private val stacks: MutableMap<Vm, ScriptExecutionStack> = Collections.synchronizedMap(LinkedHashMap<Vm, ScriptExecutionStack>())
+  private val stacks: MutableMap<Vm, ScriptExecutionStack> = Collections.synchronizedMap(LinkedHashMap())
 
   init {
     val mainVm = debugProcess.mainVm
@@ -43,18 +43,17 @@ abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProces
     if (mainVm != null && !vmList.isEmpty()) {
       // main vm should go first
       vmList.forEach {
-        val context = it.suspendContextManager.context
-
-        val stack: ScriptExecutionStack =
-          if (context == null) {
-            RunningThreadExecutionStackView(it)
-          }
-          else if (context == activeStack.suspendContext) {
-            activeStack
-          }
-          else {
-            logger<SuspendContextView>().error("Paused VM was lost.")
-            InactiveAtBreakpointExecutionStackView(it)
+        val stack: ScriptExecutionStack = when (it.suspendContextManager.context) {
+            null -> {
+              RunningThreadExecutionStackView(it)
+            }
+            activeStack.suspendContext -> {
+              activeStack
+            }
+            else -> {
+              logger<SuspendContextView>().error("Paused VM was lost.")
+              InactiveAtBreakpointExecutionStackView(it)
+            }
           }
         stacks[it] = stack
       }

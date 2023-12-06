@@ -204,7 +204,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   @Contract(pure = true)
   @NotNull
   private static HtmlChunk getErrorDescription(final int index, @NotNull final ConfigurationError error) {
-    //todo[nik] pass ProjectStructureProblemDescription directly and get rid of ConfigurationError at all
+    //todo pass ProjectStructureProblemDescription directly and get rid of ConfigurationError at all
     if (!(error instanceof ProjectConfigurationProblem)) return error.getDescription();
 
     final ProjectStructureProblemDescription problemDescription = ((ProjectConfigurationProblem)error).getProblemDescription();
@@ -299,7 +299,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     }
 
     @Override
-    public boolean canEat(Update update) {
+    public boolean canEat(@NotNull Update update) {
       return update instanceof ShowErrorsUpdate && myCurrentStamp > ((ShowErrorsUpdate)update).myCurrentStamp;
     }
   }

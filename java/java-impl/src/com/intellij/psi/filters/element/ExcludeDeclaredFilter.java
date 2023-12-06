@@ -8,7 +8,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.PositionElementFilter;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.reference.SoftReference;
+
+import java.lang.ref.SoftReference;
 
 public class ExcludeDeclaredFilter extends PositionElementFilter{
   public ExcludeDeclaredFilter(ElementFilter filter){

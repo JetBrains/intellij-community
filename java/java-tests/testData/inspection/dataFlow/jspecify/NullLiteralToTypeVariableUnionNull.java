@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
-import org.jspecify.nullness.NullnessUnspecified;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullnessUnspecified;
 
 @NullMarked
 class NullLiteralToTypeVariableUnionNull<
@@ -41,83 +40,67 @@ class NullLiteralToTypeVariableUnionNull<
     NullChildOfParametricT extends @Nullable ParametricT,
     //
     UnusedT> {
-  @Nullable
-  Never1T x0() {
+  @Nullable Never1T x0() {
     return null;
   }
 
-  @Nullable
-  ChildOfNever1T x1() {
+  @Nullable ChildOfNever1T x1() {
     return null;
   }
 
-  @Nullable
-  UnspecChildOfNever1T x2() {
+  @Nullable UnspecChildOfNever1T x2() {
     return null;
   }
 
-  @Nullable
-  NullChildOfNever1T x3() {
+  @Nullable NullChildOfNever1T x3() {
     return null;
   }
 
-  @Nullable
-  Never2T x4() {
+  @Nullable Never2T x4() {
     return null;
   }
 
-  @Nullable
-  ChildOfNever2T x5() {
+  @Nullable ChildOfNever2T x5() {
     return null;
   }
 
-  @Nullable
-  UnspecChildOfNever2T x6() {
+  @Nullable UnspecChildOfNever2T x6() {
     return null;
   }
 
-  @Nullable
-  NullChildOfNever2T x7() {
+  @Nullable NullChildOfNever2T x7() {
     return null;
   }
 
-  @Nullable
-  UnspecT x8() {
+  @Nullable UnspecT x8() {
     return null;
   }
 
-  @Nullable
-  ChildOfUnspecT x9() {
+  @Nullable ChildOfUnspecT x9() {
     return null;
   }
 
-  @Nullable
-  UnspecChildOfUnspecT x10() {
+  @Nullable UnspecChildOfUnspecT x10() {
     return null;
   }
 
-  @Nullable
-  NullChildOfUnspecT x11() {
+  @Nullable NullChildOfUnspecT x11() {
     return null;
   }
 
-  @Nullable
-  ParametricT x12() {
+  @Nullable ParametricT x12() {
     return null;
   }
 
-  @Nullable
-  ChildOfParametricT x13() {
+  @Nullable ChildOfParametricT x13() {
     return null;
   }
 
-  @Nullable
-  UnspecChildOfParametricT x14() {
+  @Nullable UnspecChildOfParametricT x14() {
     return null;
   }
 
-  @Nullable
-  NullChildOfParametricT x15() {
+  @Nullable NullChildOfParametricT x15() {
     return null;
   }
 }

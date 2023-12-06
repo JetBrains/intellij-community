@@ -62,13 +62,18 @@ public final class HighlightNamesUtil {
       if (!isDeclaration) {
         attributes = mergeWithVisibilityAttributes(methodOrClass, attributes, colorsScheme);
       }
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(elementToHighlight.getTextRange());
+      HighlightInfo.Builder builder = nameBuilder(type).range(elementToHighlight);
       if (attributes != null) {
         builder.textAttributes(attributes);
       }
       return builder.createUnconditionally();
     }
     return null;
+  }
+
+  @NotNull
+  private static HighlightInfo.Builder nameBuilder(@NotNull HighlightInfoType type) {
+    return HighlightInfo.newHighlightInfo(type)/*.toolId(JavaNamesHighlightVisitor.class)*/;
   }
 
   private static boolean isCalledOnThis(@NotNull PsiElement elementToHighlight) {
@@ -140,7 +145,7 @@ public final class HighlightNamesUtil {
     if (aClass != null && elementToHighlight instanceof PsiJavaCodeReferenceElement) {
       attributes = mergeWithVisibilityAttributes(aClass, attributes, colorsScheme);
     }
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
+    HighlightInfo.Builder builder = nameBuilder(type).range(range);
     if (attributes != null) {
       builder.textAttributes(attributes);
     }
@@ -160,14 +165,14 @@ public final class HighlightNamesUtil {
       if (elementToHighlight.getParent() instanceof PsiReferenceExpression) {
         attributes = mergeWithVisibilityAttributes(variable, attributes, colorsScheme);
       }
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
+      HighlightInfo.Builder builder = nameBuilder(varType).range(elementToHighlight);
       if (attributes != null) {
         builder.textAttributes(attributes);
       }
       return builder.createUnconditionally();
     }
 
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
+    HighlightInfo.Builder builder = nameBuilder(varType).range(elementToHighlight);
     return RainbowHighlighter.isRainbowEnabledWithInheritance(colorsScheme, JavaLanguage.INSTANCE)
            ? builder.createUnconditionally()
            : builder.create();
@@ -337,10 +342,22 @@ public final class HighlightNamesUtil {
     }
     HighlightInfoType type = JavaHighlightInfoTypes.CLASS_NAME;
     TextAttributes attributes = mergeWithScopeAttributes(resolved, type, scheme);
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
+    HighlightInfo.Builder builder = nameBuilder(type).range(range);
     if (attributes != null) {
       builder.textAttributes(attributes);
     }
     return builder.createUnconditionally();
+  }
+
+  static HighlightInfo highlightImplicitAnonymousClassParameter(@NotNull PsiJavaCodeReferenceElement ref) {
+    return nameBuilder(JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER).range(ref).create();
+  }
+
+  static HighlightInfo highlightAnnotationAttributeName(@NotNull PsiIdentifier nameId) {
+    return nameBuilder(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId).create();
+  }
+
+  static HighlightInfo highlightKeyword(@NotNull PsiKeyword keyword) {
+    return nameBuilder(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create();
   }
 }

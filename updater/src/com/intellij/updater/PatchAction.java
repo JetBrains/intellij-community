@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -69,6 +69,11 @@ public abstract class PatchAction {
     return myChecksum;
   }
 
+  /**
+   * See javadoc for {@link Runner#printUsage()} for details of this flag
+   * <p>
+   * If the file is critical, we store the full file in the patch instead of calculating the diff.
+   */
   public boolean isCritical() {
     return (myFlags & CRITICAL) != 0;
   }
@@ -77,6 +82,7 @@ public abstract class PatchAction {
     if (critical) myFlags |= CRITICAL; else myFlags &= ~CRITICAL;
   }
 
+  /** See javadoc for {@link Runner#printUsage()} for details of this flag */
   public boolean isOptional() {
     return (myFlags & OPTIONAL) != 0;
   }
@@ -85,6 +91,7 @@ public abstract class PatchAction {
     if (optional) myFlags |= OPTIONAL; else myFlags &= ~OPTIONAL;
   }
 
+  /** See javadoc for {@link Runner#printUsage()} for details of this flag */
   public boolean isStrict() {
     return (myFlags & STRICT) != 0;
   }
@@ -108,14 +115,6 @@ public abstract class PatchAction {
     FileType[] types = FileType.values();
     if (value < 0 || value >= types.length) throw new IOException("Stream format error");
     return types[value];
-  }
-
-  public boolean calculate(File olderDir, File newerDir) throws IOException {
-    return doCalculate(getFile(olderDir), getFile(newerDir));
-  }
-
-  protected boolean doCalculate(File olderFile, File newerFile) throws IOException {
-    return true;
   }
 
   public void buildPatchFile(File olderDir, File newerDir, ZipOutputStream patchOutput) throws IOException {
@@ -148,7 +147,7 @@ public abstract class PatchAction {
       String problem = isWritable(toFile.toPath());
       if (problem != null) {
         ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
-        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ACCESS_DENIED_MESSAGE, problem, options);
+        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, UpdaterUI.message("access.denied"), problem, options);
       }
     }
     return null;
@@ -176,44 +175,51 @@ public abstract class PatchAction {
   private ValidationResult validateProcessLock(File toFile, ValidationResult.Action action) {
     List<NativeFileManager.Process> processes = NativeFileManager.getProcessesUsing(toFile);
     if (processes.isEmpty()) return null;
-    String message = "Locked by: " + processes.stream().map(p -> "[" + p.pid + "] " + p.name).collect(Collectors.joining(", "));
+    var message = UpdaterUI.message("file.locked", processes.stream().map(p -> "[" + p.pid + "] " + p.name).collect(Collectors.joining(", ")));
     return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, message, ValidationResult.Option.KILL_PROCESS);
   }
 
   protected ValidationResult doValidateNotChanged(File toFile, ValidationResult.Action action) throws IOException {
     if (toFile.exists()) {
       if (isModified(toFile)) {
-        ValidationResult.Option[] options;
-        if (myPatch.isStrict() || isStrict()) {
-          if (isCritical()) {
-            options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE};
-          }
-          else {
-            options = new ValidationResult.Option[]{ValidationResult.Option.NONE};
-          }
-        }
-        else {
-          if (isCritical()) {
-            options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE};
-          }
-          else {
-            options = new ValidationResult.Option[]{ValidationResult.Option.IGNORE};
-          }
-        }
-        String details = "expected 0x" + Long.toHexString(myChecksum) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile, myPatch.isNormalized()));
-        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.MODIFIED_MESSAGE, details, options);
+        ValidationResult.Option[] options = calculateOptions();
+        String details = "expected 0x" + Long.toHexString(myChecksum) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile));
+        ValidationResult.Kind kind = isCritical() ? ValidationResult.Kind.CONFLICT : ValidationResult.Kind.ERROR;
+        return new ValidationResult(kind, getReportPath(), action, UpdaterUI.message("file.modified"), details, options);
       }
     }
     else if (!isOptional()) {
-      ValidationResult.Option[] options = {myPatch.isStrict() || isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
-      return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ABSENT_MESSAGE, options);
+      ValidationResult.Option[] options = calculateOptions();
+      ValidationResult.Kind kind = isCritical() ? ValidationResult.Kind.CONFLICT : ValidationResult.Kind.ERROR;
+      return new ValidationResult(kind, getReportPath(), action, UpdaterUI.message("file.absent"), options);
     }
 
     return null;
   }
 
+  private ValidationResult.Option[] calculateOptions() {
+    ValidationResult.Option[] options;
+    if (myPatch.isStrict() || isStrict()) {
+      if (isCritical()) {
+        options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE};
+      }
+      else {
+        options = new ValidationResult.Option[]{ValidationResult.Option.NONE};
+      }
+    }
+    else {
+      if (isCritical()) {
+        options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
+      }
+      else {
+        options = new ValidationResult.Option[]{ValidationResult.Option.IGNORE};
+      }
+    }
+    return options;
+  }
+
   protected boolean isModified(File toFile) throws IOException {
-    return myChecksum == Digester.INVALID || myChecksum != myPatch.digestFile(toFile, myPatch.isNormalized());
+    return myChecksum == Digester.INVALID || myChecksum != myPatch.digestFile(toFile);
   }
 
   public boolean mandatoryBackup() {
@@ -257,7 +263,7 @@ public abstract class PatchAction {
   @Override
   public int hashCode() {
     int result = Objects.hashCode(myPath);
-    result = 31 * result + (int)(myChecksum ^ (myChecksum >>> 32));
+    result = 31 * result + Long.hashCode(myChecksum);
     return result;
   }
 }

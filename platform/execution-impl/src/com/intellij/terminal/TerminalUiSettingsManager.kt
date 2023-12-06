@@ -2,7 +2,6 @@
 package com.intellij.terminal
 
 import com.intellij.application.options.editor.EditorOptionsListener
-import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -14,9 +13,7 @@ import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.util.Disposer
-import com.jediterm.terminal.emulator.ColorPalette
 import org.jetbrains.annotations.Nls
-import java.awt.Color
 import java.util.concurrent.CopyOnWriteArrayList
 
 @State(name = "TerminalUiSettingsManager", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
@@ -46,23 +43,13 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
     })
   }
 
-  fun getTerminalColorPalette(): ColorPalette {
+  fun getTerminalColorPalette(): TerminalColorPalette {
     var palette = cachedColorPalette
     if (palette == null) {
       palette = JBTerminalSchemeColorPalette(editorColorsScheme)
       cachedColorPalette = palette
     }
     return palette
-  }
-
-  fun getDefaultForeground(): Color {
-    val foregroundColor = editorColorsScheme.getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).foregroundColor
-    return foregroundColor ?: editorColorsScheme.defaultForeground
-  }
-
-  fun getDefaultBackground(): Color {
-    val backgroundColor = editorColorsScheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY)
-    return backgroundColor ?: editorColorsScheme.defaultBackground
   }
 
   @JvmName("addListener")
@@ -84,6 +71,18 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
       panel.repaint()
     }
   }
+
+  var maxVisibleCompletionItemsCount: Int
+    get() = state.maxVisibleCompletionItemsCount
+    set(value) {
+      state.maxVisibleCompletionItemsCount = value
+    }
+
+  var autoShowDocumentationPopup: Boolean
+    get() = state.autoShowDocumentationPopup
+    set(value) {
+      state.autoShowDocumentationPopup = value
+    }
 
   private fun fireFontChanged() {
     for (panel in terminalPanels) {
@@ -116,9 +115,9 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
 
   private fun detectFontSize(): Float {
     return if (UISettings.getInstance().presentationMode) {
-      UISettingsUtils.instance.presentationModeFontSize
+      UISettingsUtils.getInstance().presentationModeFontSize
     }
-    else UISettingsUtils.instance.scaledConsoleFontSize
+    else UISettingsUtils.getInstance().scaledConsoleFontSize
   }
 
   fun resetFontSize() {
@@ -140,6 +139,8 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
 
   class State {
     var cursorShape: CursorShape = CursorShape.BLOCK
+    var maxVisibleCompletionItemsCount: Int = 6
+    var autoShowDocumentationPopup: Boolean = true
   }
 
   override fun getState(): State = state

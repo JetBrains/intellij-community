@@ -4,13 +4,9 @@ package com.intellij.ui.scale;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.RestoreScaleRule;
-import com.intellij.ui.scale.CompositeIconPaintTestHelper;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.ExternalResource;
+import com.intellij.ui.RestoreScaleExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.swing.*;
 
@@ -22,8 +18,8 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
  * @author tav
  */
 public class LayeredIconPaintTest extends CompositeIconPaintTestHelper {
-  @ClassRule
-  public static final ExternalResource manageState = new RestoreScaleRule();
+  @RegisterExtension
+  public static final RestoreScaleExtension manageState = new RestoreScaleExtension();
 
   @Test
   @Override

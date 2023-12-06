@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -6,7 +6,6 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
@@ -39,8 +38,7 @@ class RangeMarkerWindow implements RangeMarkerEx {
   }
 
   @Override
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocumentWindow;
   }
 
@@ -86,16 +84,11 @@ class RangeMarkerWindow implements RangeMarkerEx {
   }
 
   @Override
-  public void documentChanged(@NotNull DocumentEvent e) {
-    myHostMarker.documentChanged(e);
-  }
-  @Override
   public long getId() {
     return myHostMarker.getId();
   }
 
-  @NotNull
-  public RangeMarkerEx getDelegate() {
+  public @NotNull RangeMarkerEx getDelegate() {
     return myHostMarker;
   }
 
@@ -118,6 +111,6 @@ class RangeMarkerWindow implements RangeMarkerEx {
   public String toString() {
     return "RangeMarkerWindow" + (isGreedyToLeft() ? "[" : "(") + (isValid() ? "valid" : "invalid") + "," +
            getStartOffset() + "," + getEndOffset() + 
-           (isGreedyToRight() ? "]" : ")") + " " + getId();
+           (isGreedyToRight() ? "]" : ")") + " " + (isValid() ? getId() : "");
   }
 }

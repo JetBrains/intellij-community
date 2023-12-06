@@ -5,28 +5,30 @@
   <version>1.0</version>
 
   <properties>
-    <gradle.version>7.6</gradle.version>
+    <gradle.version>8.2</gradle.version>
     <maven.version>3.8.5</maven.version>
     <maven.wrapper.version>3.1.0</maven.wrapper.version>
-    <junit.version>5.9.1</junit.version>
-    <kotlin.version>1.7.20</kotlin.version>
+    <junit.version>5.10.0</junit.version>
+    <kotlin.version>1.8.22</kotlin.version>
     <javamodularity.version>1.8.12</javamodularity.version>
 
     <!-- OpenJFX release trains -->
-    <fx.default.version>17.0.2</fx.default.version>
-    <fx11.version>17.0.2</fx11.version>
-    <fx12.version>17.0.2</fx12.version>
-    <fx13.version>17.0.2</fx13.version>
-    <fx14.version>17.0.2</fx14.version>
-    <fx15.version>17.0.2</fx15.version>
-    <fx16.version>17.0.2</fx16.version>
-    <fx17.version>17.0.2</fx17.version>
+    <fx.default.version>17.0.6</fx.default.version>
+    <fx11.version>17.0.6</fx11.version>
+    <fx12.version>17.0.6</fx12.version>
+    <fx13.version>17.0.6</fx13.version>
+    <fx14.version>17.0.6</fx14.version>
+    <fx15.version>17.0.6</fx15.version>
+    <fx16.version>17.0.6</fx16.version>
+    <fx17.version>17.0.6</fx17.version>
     <fx18.version>18.0.2</fx18.version>
-    <fx19.version>19</fx19.version>
-    <fx20.version>20-ea+4</fx20.version>
+    <fx19.version>19.0.2</fx19.version>
+    <fx20.version>20.0.1</fx20.version>
+    <fx21.version>21</fx21.version>
+    <fx22.version>22-ea+11</fx22.version>
 
     <fxgl11.version>11.17</fxgl11.version>
-    <fxgl17.version>17.2</fxgl17.version>
+    <fxgl17.version>17.3</fxgl17.version>
   </properties>
 
   <dependencyManagement>
@@ -44,7 +46,7 @@
       <dependency>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.10.1</version>
+        <version>3.11.0</version>
       </dependency>
       <dependency>
         <groupId>org.beryx</groupId>
@@ -60,7 +62,7 @@
       <dependency>
         <groupId>com.dlsc.formsfx</groupId>
         <artifactId>formsfx-core</artifactId>
-        <version>11.5.0</version>
+        <version>11.6.0</version>
       </dependency>
       <dependency>
         <groupId>net.synedra</groupId>
@@ -80,7 +82,7 @@
       <dependency>
         <groupId>eu.hansolo</groupId>
         <artifactId>tilesfx</artifactId>
-        <version>17.1.15</version>
+        <version>11.48</version>
       </dependency>
       <dependency>
         <groupId>com.github.almasb</groupId>
@@ -101,7 +103,7 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>7.6</version>
+        <version>7.8.0</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
@@ -116,12 +118,12 @@
       <dependency>
         <groupId>org.apache.groovy</groupId>
         <artifactId>groovy</artifactId>
-        <version>4.0.7</version>
+        <version>4.0.10</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
-        <version>2.1.0</version>
+        <version>3.0.2</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

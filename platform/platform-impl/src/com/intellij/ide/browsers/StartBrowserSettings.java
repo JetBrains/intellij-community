@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.google.common.base.CharMatcher;
@@ -27,9 +27,8 @@ public class StartBrowserSettings {
     mySelected = selected;
   }
 
-  @Nullable
   @Attribute(value = "name", converter = WebBrowserReferenceConverter.class)
-  public WebBrowser getBrowser() {
+  public @Nullable WebBrowser getBrowser() {
     return myBrowser;
   }
 
@@ -37,9 +36,8 @@ public class StartBrowserSettings {
     myBrowser = value;
   }
 
-  @Nullable
   @Attribute
-  public String getUrl() {
+  public @Nullable String getUrl() {
     return myUrl;
   }
 
@@ -60,8 +58,7 @@ public class StartBrowserSettings {
     myStartJavaScriptDebugger = value;
   }
 
-  @NotNull
-  public static StartBrowserSettings readExternal(@NotNull Element parent) {
+  public static @NotNull StartBrowserSettings readExternal(@NotNull Element parent) {
     Element state = parent.getChild("browser");
     StartBrowserSettings settings = new StartBrowserSettings();
     if (state != null) {

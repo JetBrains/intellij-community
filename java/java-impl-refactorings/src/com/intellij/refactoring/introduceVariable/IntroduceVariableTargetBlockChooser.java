@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 final class IntroduceVariableTargetBlockChooser {
@@ -26,13 +27,13 @@ final class IntroduceVariableTargetBlockChooser {
    * @param expr     variable initializer
    * @param callback extraction job
    */
-  static void chooseTargetAndPerform(Editor editor, PsiElement anchor, PsiExpression expr, Pass<PsiElement> callback) {
+  static void chooseTargetAndPerform(Editor editor, PsiElement anchor, PsiExpression expr, Consumer<? super PsiElement> callback) {
     List<? extends PsiElement> containers = getContainers(anchor, expr);
     if (containers.size() == 1 ) {
       callback.accept(anchor);
     }
     else {
-      IntroduceTargetChooser.showChooser(editor, containers, callback,
+      IntroduceTargetChooser.showChooser(editor, containers, Pass.create(callback),
                                          element -> {
                                            PsiElement container = takeNextContainer(containers, element);
                                            if (container instanceof PsiLambdaExpression) {

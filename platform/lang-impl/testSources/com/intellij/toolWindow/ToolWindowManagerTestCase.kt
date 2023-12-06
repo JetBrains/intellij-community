@@ -1,6 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("RAW_RUN_BLOCKING")
+
 package com.intellij.toolWindow
 
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
@@ -9,13 +13,8 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEve
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.SkipInHeadlessEnvironment
-import com.intellij.testFramework.replaceService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import com.intellij.testFramework.*
+import kotlinx.coroutines.*
 
 @SkipInHeadlessEnvironment
 abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
@@ -26,6 +25,10 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
 
   public override fun setUp() {
     super.setUp()
+
+    runInEdtAndWait {
+      LafManager.getInstance() // Maybe we need this in a superclass, but for now only tool window manager tests break if it's not available.
+    }
 
     runBlocking {
       val project = project
@@ -41,7 +44,7 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
       }
 
       val reopeningEditorJob = Job().also { it.complete() }
-      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), reopeningEditorJob, taskListDeferred = null)
+      manager!!.doInit(CompletableDeferred(value = frame), project.messageBus.connect(testRootDisposable), reopeningEditorJob, taskListDeferred = null)
     }
   }
 

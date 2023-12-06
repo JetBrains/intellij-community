@@ -11,7 +11,10 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.actionsButton
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Font
@@ -94,11 +97,16 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
       row {
         val separator = TitledSeparator(language.getRuntimeType().configurableDescription)
         separator.titleFont = separator.titleFont.deriveFont(Font.BOLD)
-        separator(CCFlags.growX, CCFlags.pushX)
-        gearButton(DuplicateRuntimeAction(language), RemoveRuntimeAction(language))
+        cell(separator)
+          .gap(RightGap.SMALL)
+          .align(AlignX.FILL)
+          .resizableColumn()
+        actionsButton(DuplicateRuntimeAction(language), RemoveRuntimeAction(language))
+      }
+      indent {
         row {
           val languageUI = configurable.createComponent() ?: throw IllegalStateException("for runtime: $language")
-          languageUI(CCFlags.growX)
+          cell(languageUI).align(AlignX.FILL)
         }
       }
     }

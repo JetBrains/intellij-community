@@ -16,11 +16,17 @@
       id="web-types"
       implementation="com.intellij.webSymbols.webTypes.WebTypesDocumentationCustomizer"/>
 
+    <platform.backend.documentation.targetProvider
+      implementation="com.intellij.webSymbols.documentation.WebSymbolDocumentationTargetProvider"/>
     <psi.declarationProvider implementation="com.intellij.webSymbols.declarations.impl.WebSymbolDeclarationProviderDelegate"/>
 
     <referencesSearch implementation="com.intellij.webSymbols.search.PsiSourcedWebSymbolReferenceSearcher"/>
     <refactoring.helper implementation="com.intellij.webSymbols.refactoring.PsiSourcedWebSymbolRefactoringHelper"/>
     <renameHandler implementation="com.intellij.webSymbols.refactoring.PsiSourcedWebSymbolRenameHandler"/>
+
+    <rename.symbolRenameTargetFactory implementation="com.intellij.webSymbols.refactoring.WebSymbolRenameTargetFactory"/>
+    <lang.symbolSearchTarget forClass="com.intellij.webSymbols.WebSymbol"
+                             implementationClass="com.intellij.webSymbols.search.WebSymbolSearchTargetFactory"/>
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="com.intellij.webSymbols.search.WebSymbolsUsageSearcher"/>

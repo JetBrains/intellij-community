@@ -11,6 +11,11 @@ open class <caret>Server {
     open fun work() {
         println("Server")
     }
+
+    class Inner
+
+    object InnerObject
+
 }
 
 

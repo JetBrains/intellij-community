@@ -18,16 +18,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.bugs.NullArgumentToVariableArgMethodInspection;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -586,6 +584,18 @@ public final class RedundantCastUtil {
             return  (PsiCall)PsiTreeUtil.releaseMark(callCopy, marker);
           }
           else {
+            //it is possible that in several cases there is not enough context, let's add more
+            ParentPathContext contextParent = getContextParent(expression);
+            if (contextParent != null && contextParent.hasPath()) {
+              RecaptureTypeMapper.encode(encoded = contextParent.parent());
+              PsiElement copy = contextParent.getElementCopy();
+              if (copy instanceof PsiCall psiCall) {
+                return psiCall;
+              }
+              else {
+                return null;
+              }
+            }
             RecaptureTypeMapper.encode(encoded = expression);
             return (PsiCall)expression.copy();
           }
@@ -598,6 +608,51 @@ public final class RedundantCastUtil {
         if (encoded != null) {
           RecaptureTypeMapper.clean(encoded);
         }
+      }
+    }
+
+    @Nullable
+    private static RedundantCastUtil.MyIsRedundantVisitor.ParentPathContext getContextParent(@NotNull PsiCall expression) {
+      PsiElement parent = expression.getParent();
+      List<Integer> indexes = new ArrayList<>();
+      PsiElement currentChild = expression;
+      while (parent instanceof PsiIfStatement || parent instanceof PsiConditionalExpression || parent instanceof PsiLoopStatement) {
+        PsiElement[] children = parent.getChildren();
+        PsiElement finalCurrentChild = currentChild;
+        int index = ContainerUtil.indexOf(Arrays.asList(children), child -> child == finalCurrentChild);
+        if (index != -1) {
+          indexes.add(index);
+        }
+        else {
+          return null;
+        }
+        currentChild = parent;
+        parent = parent.getParent();
+      }
+      return new ParentPathContext(currentChild, indexes);
+    }
+
+    /**
+     * represent a path to certain child
+     * @param parent - first parent in a path
+     * @param childrenIndexes - indexes of children, which should be applied to parent to get the certain child
+     */
+    private record ParentPathContext(PsiElement parent, List<Integer> childrenIndexes) {
+      public PsiElement getElementCopy() {
+        PsiElement result = parent.copy();
+        for (Integer nextIndex : childrenIndexes) {
+          if (result != null && result.getChildren().length > nextIndex) {
+            result = result.getChildren()[nextIndex];
+          }
+          else {
+            return null;
+          }
+        }
+        return result;
+      }
+
+      public boolean hasPath() {
+        return !childrenIndexes.isEmpty();
       }
     }
 
@@ -763,12 +818,9 @@ public final class RedundantCastUtil {
                 // 14.11.1 A null case element is switch compatible with T if T is a reference type (JEP 427)
                 if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
                 // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
-                // applicable at another reference type T if T is downcast convertible to U (JEP 427)
+                // applicable at another reference type T if T is checkcast convertible to U (JEP 427)
                 // There is no rule that says that a reference type applies to a primitive type
-                // There is no restriction on primitive types in JEP 406 and JEP 420:
-                // 14.30.1 An expression e is compatible with a pattern if the pattern is of type T
-                // and e is downcast compatible with T
-                if (branch instanceof PsiPattern || branch instanceof PsiPatternGuard) return;
+                if (branch instanceof PsiPattern) return;
               }
             }
             else if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchBlock)) {

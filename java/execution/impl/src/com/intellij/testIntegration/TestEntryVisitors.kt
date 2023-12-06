@@ -16,7 +16,7 @@
 package com.intellij.testIntegration
 
 class UrlsCollector : TestEntryVisitor() {
-  val urls: MutableList<String> = mutableListOf<String>()
+  val urls: MutableList<String> = mutableListOf()
 
   override fun visitSuite(suite: SuiteEntry) {
     urls.add(suite.suiteUrl)
@@ -30,7 +30,7 @@ class UrlsCollector : TestEntryVisitor() {
 
 
 class SingleTestCollector : TestEntryVisitor() {
-  val tests: MutableList<SingleTestEntry> = mutableListOf<SingleTestEntry>()
+  val tests: MutableList<SingleTestEntry> = mutableListOf()
 
   override fun visitTest(test: SingleTestEntry) {
     tests.add(test)
@@ -47,7 +47,7 @@ class SingleTestCollector : TestEntryVisitor() {
 
 
 class ConfigurationsCollector : TestEntryVisitor() {
-  val entries: MutableList<RecentTestsPopupEntry> = mutableListOf<RecentTestsPopupEntry>()
+  val entries: MutableList<RecentTestsPopupEntry> = mutableListOf()
 
   override fun visitRunConfiguration(configuration: RunConfigurationEntry) {
     entries.add(configuration)

@@ -15,46 +15,61 @@
  */
 package org.jetbrains.plugins.groovy.intentions.other;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 
 /**
  * @author Max Medvedev
  */
-public class GrCopyStringConcatenationContentIntention extends Intention {
+public class GrCopyStringConcatenationContentIntention extends PsiBasedModCommandAction<GrExpression> {
+  public GrCopyStringConcatenationContentIntention() {
+    super(GrExpression.class);
+  }
+
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected boolean isElementApplicable(@NotNull GrExpression element, @NotNull ActionContext context) {
+    if (element instanceof GrLiteral literal && literal.getValue() instanceof String) return true;
+    if (!(element instanceof GrBinaryExpression binOp)) return false;
+    if (binOp.getOperationTokenType() != GroovyTokenTypes.mPLUS) return false;
+    var left = binOp.getLeftOperand();
+    var right = binOp.getRightOperand();
+    return right != null && isElementApplicable(left, context) && isElementApplicable(right, context);
+  }
+
+  @Override
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull GrExpression element) {
     final StringBuilder buffer = new StringBuilder();
     getValue(element, buffer);
+    return ModCommand.copyToClipboard(buffer.toString());
+  }
 
-    final Transferable contents = new StringSelection(buffer.toString());
-    CopyPasteManager.getInstance().setContents(contents);
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull GrExpression element) {
+    if (element instanceof GrLiteral) {
+      return Presentation.of(GroovyIntentionsBundle.message("gr.copy.string.literal.content.intention.text"));
+    }
+    return super.getPresentation(context, element);
+  }
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return GroovyIntentionsBundle.message("gr.copy.string.concatenation.content.intention.family.name");
   }
 
   private static void getValue(PsiElement element, StringBuilder buffer) {
-    if (element instanceof GrLiteral) {
-      buffer.append(((GrLiteral)element).getValue());
+    if (element instanceof GrLiteral literal) {
+      buffer.append(literal.getValue());
     }
-    else if (element instanceof GrBinaryExpression) {
-      getValue(((GrBinaryExpression)element).getLeftOperand(), buffer);
-      getValue(((GrBinaryExpression)element).getRightOperand(), buffer);
+    else if (element instanceof GrBinaryExpression binOp) {
+      getValue(binOp.getLeftOperand(), buffer);
+      getValue(binOp.getRightOperand(), buffer);
     }
-  }
-
-  @NotNull
-  @Override
-  protected PsiElementPredicate getElementPredicate() {
-    return GrCopyStringConcatenationPredicate.INSTANCE;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.application.options.CodeStyle;
@@ -117,11 +117,10 @@ public class GenerationNode extends UserDataHolderBase {
     return false;
   }
 
-  @NotNull
-  public TemplateImpl generate(@NotNull CustomTemplateCallback callback,
-                               @Nullable ZenCodingGenerator generator,
-                               @NotNull Collection<ZenCodingFilter> filters,
-                               boolean insertSurroundedText, int segmentsLimit) {
+  public @NotNull TemplateImpl generate(@NotNull CustomTemplateCallback callback,
+                                        @Nullable ZenCodingGenerator generator,
+                                        @NotNull Collection<ZenCodingFilter> filters,
+                                        boolean insertSurroundedText, int segmentsLimit) {
     myContainsSurroundedTextMarker = !(insertSurroundedText && myInsertSurroundedTextAtTheEnd);
 
     GenerationNode generationNode = this;
@@ -277,7 +276,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
       XmlTag tag1 = hasChildren ? expandEmptyTagIfNecessary(tag) : tag;
       setAttributeValues(tag1, attributes, callback, zenCodingGenerator.isHtml(callback));
-      token.setTemplateText(tag1.getContainingFile().getText(), callback);
+      token.setTemplateText(tag1.getContainingFile().getText(), callback.getFile());
     }
     template = zenCodingGenerator.generateTemplate(token, hasChildren, callback.getContext());
     removeVariablesWhichHasNoSegment(template);
@@ -304,11 +303,10 @@ public class GenerationNode extends UserDataHolderBase {
     return builder.toString();
   }
 
-  @NotNull
-  private static TemplateImpl expandTemplate(@NotNull TemplateImpl template,
-                                             Map<String, String> predefinedVarValues,
-                                             String surroundedText,
-                                             int segmentsLimit) {
+  private static @NotNull TemplateImpl expandTemplate(@NotNull TemplateImpl template,
+                                                      Map<String, String> predefinedVarValues,
+                                                      String surroundedText,
+                                                      int segmentsLimit) {
     LiveTemplateBuilder builder = new LiveTemplateBuilder(EmmetOptions.getInstance().isAddEditPointAtTheEndOfTemplate(), segmentsLimit);
     if (predefinedVarValues == null && surroundedText == null) {
       return template;
@@ -321,8 +319,7 @@ public class GenerationNode extends UserDataHolderBase {
     return builder.buildTemplate();
   }
 
-  @NotNull
-  private static XmlTag expandEmptyTagIfNecessary(@NotNull XmlTag tag) {
+  private static @NotNull XmlTag expandEmptyTagIfNecessary(@NotNull XmlTag tag) {
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
 
@@ -383,10 +380,9 @@ public class GenerationNode extends UserDataHolderBase {
     }
   }
 
-  @Nullable
-  private Map<String, String> buildPredefinedValues(@NotNull Map<String, String> attributes,
-                                                    @Nullable XmlZenCodingGenerator generator,
-                                                    boolean hasChildren) {
+  private @Nullable Map<String, String> buildPredefinedValues(@NotNull Map<String, String> attributes,
+                                                              @Nullable XmlZenCodingGenerator generator,
+                                                              boolean hasChildren) {
     if (generator == null) {
       return Collections.emptyMap();
     }
@@ -409,7 +405,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private void setAttributeValues(@NotNull XmlTag tag,
-                                  @NotNull final Map<String, String> attributes,
+                                  final @NotNull Map<String, String> attributes,
                                   @NotNull CustomTemplateCallback callback,
                                   boolean isHtml) {
     // default and implied attributes
@@ -512,8 +508,7 @@ public class GenerationNode extends UserDataHolderBase {
     return attributeValue != null && (attributeValue.isEmpty() || ATTRIBUTE_VARIABLE_PATTERN.matcher(attributeValue).matches());
   }
 
-  @Nullable
-  private static XmlAttribute findImpliedAttribute(@NotNull List<? extends XmlAttribute> attributes) {
+  private static @Nullable XmlAttribute findImpliedAttribute(@NotNull List<? extends XmlAttribute> attributes) {
     for (XmlAttribute attribute : attributes) {
       if (attribute.getValueElement() != null && isImpliedAttribute(attribute.getLocalName())) {
         return attribute;
@@ -522,8 +517,7 @@ public class GenerationNode extends UserDataHolderBase {
     return null;
   }
 
-  @Nullable
-  private static XmlAttribute findEmptyAttribute(@NotNull List<? extends XmlAttribute> attributes) {
+  private static @Nullable XmlAttribute findEmptyAttribute(@NotNull List<? extends XmlAttribute> attributes) {
     for (XmlAttribute attribute : attributes) {
       final String attributeValue = attribute.getValue();
       if (isEmptyValue(attributeValue)) {

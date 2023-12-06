@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.intellij.util.lang.Xxh3
 import org.jetbrains.intellij.build.impl.compilation.CompilationOutput
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.builders.java.ResourcesTargetType
 import org.jetbrains.jps.cache.model.BuildTargetState
-import org.jetbrains.xxh3.Xxh3
 import java.nio.file.Files
 import java.nio.file.Path
 

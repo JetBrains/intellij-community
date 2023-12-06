@@ -93,13 +93,20 @@ class JBNavigateCommandTest : NavigationTestBase() {
   @Test
   fun compareOrigins() {
     val equalOrigins = listOf(
+      "https://github.com/JetBrains/intellij.git/",
       "https://github.com/JetBrains/intellij.git",
       "https://github.com/JetBrains/intellij",
+      "https://github.com/JetBrains/intellij/",
       "http://github.com/JetBrains/intellij",
+      "http://github.com/JetBrains/intellij/",
       "ssh://git@github.com:JetBrains/intellij.git",
+      "ssh://git@github.com:JetBrains/intellij.git/",
       "ssh://user@github.com:JetBrains/intellij.git",
+      "ssh://user@github.com:JetBrains/intellij.git/",
       "git@github.com:JetBrains/intellij.git",
+      "git@github.com:JetBrains/intellij.git/",
       "user@github.com:JetBrains/intellij.git",
+      "user@github.com:JetBrains/intellij.git/",
     )
 
     for (first in equalOrigins) {
@@ -132,6 +139,6 @@ class JBNavigateCommandTest : NavigationTestBase() {
 
   private suspend fun navigate(parameters: Map<String, String>): String? {
     val query = parameters.asSequence().fold("project=${projectName}") { acc, e -> acc + "&${e.key}=${e.value}" }
-    return JBProtocolCommand.execute("idea/navigate/reference?${query}")
+    return JBProtocolCommand.execute("idea/navigate/reference?${query}").message
   }
 }

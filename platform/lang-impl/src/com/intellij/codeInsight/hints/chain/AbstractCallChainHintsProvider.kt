@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -13,7 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
@@ -29,7 +28,7 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
     if (file.project.isDefault) return null
     return object : FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-        if (file.project.service<DumbService>().isDumb) return true
+        if (DumbService.getInstance(file.project).isDumb) return true
 
         processInlayElements(element, settings, sink, factory)
         return true
@@ -87,7 +86,6 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
     get() = CodeInsightBundle.message("inlay.hints.chain.call.chain")
 
   final override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
-    val uniqueTypeCountName = CodeInsightBundle.message("inlay.hints.chain.minimal.unique.type.count.to.show.hints")
 
     private val uniqueTypeCount by lazy { JBIntSpinner(1, 1, 10) }
 
@@ -100,9 +98,8 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
         handleChange(listener)
       }
       val panel = panel {
-        row {
-          label(uniqueTypeCountName)
-          uniqueTypeCount(pushX)
+        row(CodeInsightBundle.message("inlay.hints.chain.minimal.unique.type.count.to.show.hints")) {
+          cell(uniqueTypeCount)
         }
       }
       panel.border = JBUI.Borders.empty(5)
@@ -170,7 +167,7 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
 
   private fun <T> Any.safeCastUsing(clazz: Class<T>) = if (clazz.isInstance(this)) clazz.cast(this) else null
 
-  final override fun createSettings() = Settings()
+  final override fun createSettings(): Settings = Settings()
 
   data class Settings(var uniqueTypeCount: Int) {
     constructor() : this(2)

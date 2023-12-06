@@ -23,7 +23,6 @@ com.intellij.lang.javascript.inspections.JSSuspiciousNameCombinationInspection
 com.intellij.lang.javascript.inspections.UnterminatedStatementJSInspection
 com.intellij.psi.css.inspections.CssUnknownPropertyInspection
 com.intellij.spellchecker.inspections.SpellCheckingInspection
-com.intellij.spring.model.highlighting.config.SpringFacetInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedClassInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedVariableInspection
 com.jetbrains.php.lang.inspections.PhpUnusedParameterInspection
@@ -128,7 +127,6 @@ com.siyeh.ig.j2me.OverlyLargePrimitiveArrayInitializerInspection
 com.siyeh.ig.javabeans.ClassWithoutNoArgConstructorInspection
 com.siyeh.ig.javadoc.UnnecessaryJavaDocLinkInspection
 com.siyeh.ig.jdk.AutoBoxingInspection
-com.siyeh.ig.junit.TestCaseWithNoTestMethodsInspection
 com.siyeh.ig.logging.ClassWithMultipleLoggersInspection
 com.siyeh.ig.logging.ClassWithoutLoggerInspection
 com.siyeh.ig.logging.LoggerInitializedWithForeignClassInspection

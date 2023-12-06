@@ -11,15 +11,19 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider
-import com.intellij.xdebugger.impl.dfaassist.DfaHint
 import com.intellij.debugger.jdi.StackFrameProxyEx
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
+import com.intellij.xdebugger.impl.dfaassist.DfaHint
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -40,8 +44,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
         val file = element.containingFile
         if (file !is KtFile) return false
         val classNames = ClassNameCalculator.getClassNames(file)
-        val psiClassName = element.parentsWithSelf.firstNotNullOfOrNull { e -> classNames[e] }
-        return psiClassName == jdiClassName
+        return element.parentsWithSelf.any { e -> classNames[e] == jdiClassName }
     }
 
     override fun getAnchor(element: PsiElement): KtExpression? {
@@ -119,86 +122,121 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
     }
 
     override fun createListener(): DebuggerDfaListener {
-        return object : DebuggerDfaListener {
-            val hints = hashMapOf<PsiElement, DfaHint>()
-
-            override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
-                val dfType = state.getDfType(value)
-                var psi = when (anchor) {
-                    is KotlinAnchor.KotlinExpressionAnchor -> {
-                        if (shouldTrackExpressionValue(anchor.expression) &&
-                            !KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression) &&
-                            dfType.tryNegate()?.let { negated -> KotlinConstantConditionsInspection.shouldSuppress(negated, anchor.expression) } == false
-                        ) anchor.expression
-                        else return
-                    }
-                    is KotlinAnchor.KotlinWhenConditionAnchor -> anchor.condition
-                    else -> return
-                }
-                var hint = DfaHint.ANY_VALUE
-                if (dfType === DfTypes.TRUE) {
-                    hint = DfaHint.TRUE
-                } else if (dfType === DfTypes.FALSE) {
-                    hint = DfaHint.FALSE
-                } else if (dfType === DfTypes.NULL) {
-                    val parent = psi.parent
-                    if (parent is KtPostfixExpression && parent.operationToken == KtTokens.EXCLEXCL) {
-                        hint = DfaHint.NPE
-                    } else if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.textMatches("as")) {
-                        val typeReference = parent.right
-                        val type =
-                            typeReference?.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
-                        if (type != null && !type.isMarkedNullable) {
-                            hint = DfaHint.NPE
-                            psi = parent.operationReference
-                        }
-                    } else if (parent is KtBinaryExpression && parent.operationToken == KtTokens.ELVIS) {
-                        hint = DfaHint.NULL
-                    } else if (psi is KtBinaryExpressionWithTypeRHS && psi.operationReference.textMatches("as?")) {
-                        hint = DfaHint.NULL
-                    }
-                }
-                hints.merge(psi, hint, DfaHint::merge)
-            }
-
-            override fun onCondition(problem: UnsatisfiedConditionProblem, value: DfaValue, failed: ThreeState, state: DfaMemoryState) {
-                if (problem is KotlinProblem.KotlinCastProblem) {
-                    hints.merge(
-                        problem.cast.operationReference,
-                        if (failed == ThreeState.YES) DfaHint.CCE else DfaHint.NONE,
-                        DfaHint::merge
-                    )
-                }
-            }
-
-            private fun shouldTrackExpressionValue(expr: KtExpression): Boolean {
-                if (expr is KtBinaryExpression) {
-                    val token = expr.operationToken
-                    // Report right hand of assignment only
-                    if (token == KtTokens.EQ) return false
-                    // For boolean expression, report individual operands only, to avoid clutter
-                    if (token == KtTokens.ANDAND || token == KtTokens.OROR) return false
-                }
-                var parent = expr.parent
-                while (parent is KtParenthesizedExpression) {
-                    parent = parent.parent
-                }
-                if ((parent as? KtPrefixExpression)?.operationToken == KtTokens.EXCL) {
-                    // It's enough to report for parent only
-                    return false
-                }
-                return true
-            }
-
-            override fun computeHints(): Map<PsiElement, DfaHint> {
-                hints.values.removeIf { h -> h.title == null }
-                return hints
-            }
-       }
+        return KotlinDebuggerDfaListener()
     }
 
     override fun constraintFromJvmClassName(anchor: PsiElement, jvmClassName: String): TypeConstraint {
         val classDef = KtClassDef.fromJvmClassName(anchor as KtElement, jvmClassName) ?: return TypeConstraints.TOP
-        return TypeConstraints.exactClass(classDef)
+        return if (classDef.cls.kind == ClassKind.OBJECT) TypeConstraints.singleton(classDef) else TypeConstraints.exactClass(classDef)
+    }
+
+    class KotlinDebuggerDfaListener : DebuggerDfaListener {
+        val hints = hashMapOf<PsiElement, DfaHint>()
+
+        override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
+            val dfType = state.getDfType(value)
+            var psi = when (anchor) {
+                is KotlinAnchor.KotlinExpressionAnchor -> {
+                    if (!shouldTrackExpressionValue(anchor.expression)) return
+                    if (KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression) && 
+                        dfType.tryNegate()?.let { negated -> KotlinConstantConditionsInspection.shouldSuppress(negated, anchor.expression) } != false) {
+                        return
+                    }
+                    anchor.expression
+                }
+
+                is KotlinAnchor.KotlinWhenConditionAnchor -> anchor.condition
+                else -> return
+            }
+            var hint = DfaHint.ANY_VALUE
+            if (dfType === DfTypes.TRUE) {
+                hint = DfaHint.TRUE
+            } else if (dfType === DfTypes.FALSE) {
+                hint = DfaHint.FALSE
+            } else if (dfType === DfTypes.NULL) {
+                val parent = psi.parent
+                if (parent is KtPostfixExpression && parent.operationToken == KtTokens.EXCLEXCL) {
+                    hint = DfaHint.NPE
+                } else if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.textMatches("as")) {
+                    val typeReference = parent.right
+                    val type =
+                        typeReference?.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
+                    if (type != null && !type.isMarkedNullable) {
+                        hint = DfaHint.NPE
+                        psi = parent.operationReference
+                    }
+                } else if (parent is KtBinaryExpression && parent.operationToken == KtTokens.ELVIS) {
+                    hint = DfaHint.NULL
+                } else if (psi is KtBinaryExpressionWithTypeRHS && psi.operationReference.textMatches("as?")) {
+                    hint = DfaHint.NULL
+                }
+            }
+            hints.merge(psi, hint, DfaHint::merge)
+        }
+
+        override fun onCondition(problem: UnsatisfiedConditionProblem, value: DfaValue, failed: ThreeState, state: DfaMemoryState) {
+            if (problem is KotlinProblem.KotlinCastProblem) {
+                hints.merge(
+                    problem.cast.operationReference,
+                    if (failed == ThreeState.YES) DfaHint.CCE else DfaHint.NONE,
+                    DfaHint::merge
+                )
+            }
+        }
+
+        override fun unreachableSegments(startAnchor: PsiElement, unreachableElements: Set<PsiElement>): Collection<TextRange> =
+            unreachableElements.mapNotNullTo(HashSet()) { element -> createRange(element, startAnchor, unreachableElements) }
+        
+        private val SHORT_CIRCUITING_TOKENS = TokenSet.create(KtTokens.ANDAND, KtTokens.OROR, KtTokens.ELVIS)
+
+        private fun createRange(element: PsiElement, startAnchor: PsiElement, unreachableElements: Set<PsiElement>): TextRange? {
+            val parent = element.parent
+            val gParent = parent?.parent
+            return when {
+                parent is KtContainerNode &&
+                        (gParent is KtIfExpression || gParent is KtWhileExpression || gParent is KtForExpression) 
+                        || parent is KtWhenEntry -> element.textRange
+                parent is KtBinaryExpression && parent.right == element &&
+                        SHORT_CIRCUITING_TOKENS.contains(parent.operationToken) ->
+                                    parent.operationReference.textRange.union(element.textRange)
+                parent is KtSafeQualifiedExpression && parent.selectorExpression == element ->
+                    parent.operationTokenNode.textRange.union(element.textRange)
+                parent is KtBlockExpression -> {
+                    val prevExpression = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element) as? KtExpression
+                    if (prevExpression != null && unreachableElements.contains(prevExpression)) null
+                    else {
+                        val lastExpression = parent.statements.last()
+                        if (lastExpression == null || prevExpression == null) null
+                        else {
+                            if (prevExpression is KtLoopExpression && PsiTreeUtil.isAncestor(prevExpression, startAnchor, false)) {
+                                null
+                            } else element.textRange.union(lastExpression.textRange)
+                        }
+                    }
+                }
+                else -> null
+            }
+        }
+
+        private fun shouldTrackExpressionValue(expr: KtExpression): Boolean {
+            if (expr is KtBinaryExpression) {
+                val token = expr.operationToken
+                // Report right hand of assignment only
+                if (token == KtTokens.EQ) return false
+                // For boolean expression, report individual operands only, to avoid clutter
+                if (token == KtTokens.ANDAND || token == KtTokens.OROR) return false
+            }
+            var parent = expr.parent
+            while (parent is KtParenthesizedExpression) {
+                parent = parent.parent
+            }
+            // It's enough to report for parent only
+            return (parent as? KtPrefixExpression)?.operationToken != KtTokens.EXCL
+        }
+
+        override fun computeHints(): Map<PsiElement, DfaHint> {
+            hints.values.removeIf { h -> h.title == null }
+            return hints
+        }
     }
 }

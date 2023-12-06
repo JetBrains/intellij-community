@@ -5,7 +5,11 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 
 @GraphQLFragment("/graphql/fragment/pullRequestMergeability.graphql")
-class GHPullRequestMergeabilityData(val mergeable: GHPullRequestMergeableState,
-                                    val canBeRebased: Boolean,
-                                    val mergeStateStatus: GHPullRequestMergeStateStatus,
-                                    val commits: GraphQLNodesDTO<GHPullRequestCommitWithCheckStatuses>)
+class GHPullRequestMergeabilityData(
+  val mergeable: GHPullRequestMergeableState,
+  val canBeRebased: Boolean,
+  val mergeStateStatus: GHPullRequestMergeStateStatus,
+  commits: GraphQLNodesDTO<GHPullRequestCommitWithCheckStatuses>
+) {
+  val commits: List<GHPullRequestCommitWithCheckStatuses> = commits.nodes
+}

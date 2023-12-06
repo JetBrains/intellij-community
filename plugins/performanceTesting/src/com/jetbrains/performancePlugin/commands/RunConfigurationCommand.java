@@ -22,6 +22,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+/**
+ * Command runs specified configuration.
+ * If configuration is absent prints all available for the project.
+ * There are two modes: TILL_STARTED and TILL_TERMINATED
+ * <p>
+ * Syntax: %runConfiguration [mode] <configurationName>
+ * Example: %runConfiguration TILL_STARTED IDEA
+ */
 public final class RunConfigurationCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "runConfiguration";
   private static final String WAIT_FOR_PROCESS_STARTED = "TILL_STARTED";
@@ -115,7 +123,7 @@ public final class RunConfigurationCommand extends AbstractCommand {
     return Promises.toPromise(actionCallback);
   }
 
-  private static RunConfiguration getConfigurationByName(RunManager runManager, String configurationName) {
+  public static RunConfiguration getConfigurationByName(RunManager runManager, String configurationName) {
     return ContainerUtil.find(runManager.getAllConfigurationsList(), configuration -> configurationName.equals(configuration.getName()));
   }
 

@@ -14,3 +14,4 @@ private var C.old: String
 private fun use(c: C) {
     val x = c.m
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

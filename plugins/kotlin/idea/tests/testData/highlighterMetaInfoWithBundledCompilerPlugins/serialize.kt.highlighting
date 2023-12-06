@@ -1,14 +1,16 @@
-// COMPILER_ARGUMENTS: -Xplugin=non_existent_location/kotlin-serialization-dev.jar
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR/serialize_fake_plugin.jar
 // FILE: main.kt
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 package test
 
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>import<!> kotlinx.serialization.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>Serializable<!>
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> kotlinx.serialization.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>Serializable<!>
 
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Serializable<!>
-class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>BaseClass<!>
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@Serializable<!>
+class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>BaseClass<!>
 
-val <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>companionRef<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>BaseClass<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Companion<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>BaseClass<!>
+val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>companionRef<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>BaseClass<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>Companion<!> = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>BaseClass<!>
 
-fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>() {
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>BaseClass<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>serializer<!>()
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>() {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>BaseClass<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_CALL'")!>serializer<!>()
 }

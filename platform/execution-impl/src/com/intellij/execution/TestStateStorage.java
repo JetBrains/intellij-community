@@ -25,7 +25,7 @@ import java.util.concurrent.ScheduledFuture;
 /**
  * @author Dmitry Avdeev
  */
-public class TestStateStorage implements Disposable {
+public final class TestStateStorage implements Disposable {
 
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
 
@@ -37,7 +37,7 @@ public class TestStateStorage implements Disposable {
     return new File(TEST_HISTORY_PATH, project.getLocationHash());
   }
 
-  public static class Record {
+  public static final class Record {
     public final int magnitude;
     public final long configurationHash;
     public final Date date;
@@ -58,8 +58,7 @@ public class TestStateStorage implements Disposable {
   }
 
   private static final Logger LOG = Logger.getInstance(TestStateStorage.class);
-  @Nullable
-  private PersistentHashMap<String, Record> myMap;
+  private @Nullable PersistentHashMap<String, Record> myMap;
   private volatile ScheduledFuture<?> myMapFlusher;
 
   public static TestStateStorage getInstance(@NotNull Project project) {
@@ -77,7 +76,7 @@ public class TestStateStorage implements Disposable {
     } catch (IOException e) {
       LOG.error(e);
     }
-    myMapFlusher = FlushingDaemon.everyFiveSeconds(this::flushMap);
+    myMapFlusher = FlushingDaemon.runPeriodically(this::flushMap);
   }
 
   private PersistentHashMap<String, Record> initializeMap() throws IOException {
@@ -89,8 +88,7 @@ public class TestStateStorage implements Disposable {
     if (myMap != null && myMap.isDirty()) myMap.force();
   }
 
-  @NotNull
-  private static ThrowableComputable<PersistentHashMap<String, Record>, IOException> getComputable(final File file) {
+  private static @NotNull ThrowableComputable<PersistentHashMap<String, Record>, IOException> getComputable(final File file) {
     return () -> new PersistentHashMap<>(file.toPath(), EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<Record>() {
       @Override
       public void save(@NotNull DataOutput out, Record value) throws IOException {
@@ -110,8 +108,7 @@ public class TestStateStorage implements Disposable {
     }, 4096, CURRENT_VERSION);
   }
 
-  @NotNull
-  public synchronized Collection<String> getKeys() {
+  public synchronized @NotNull Collection<String> getKeys() {
     try {
       if (myMap == null) {
         return Collections.emptyList();
@@ -128,8 +125,7 @@ public class TestStateStorage implements Disposable {
     }
   }
 
-  @Nullable
-  public synchronized Record getState(String testUrl) {
+  public synchronized @Nullable Record getState(String testUrl) {
     try {
       return myMap == null ? null : myMap.get(testUrl);
     }
@@ -150,8 +146,7 @@ public class TestStateStorage implements Disposable {
     }
   }
 
-  @Nullable
-  public synchronized Map<String, Record> getRecentTests(int limit, Date since) {
+  public synchronized @Nullable Map<String, Record> getRecentTests(int limit, Date since) {
     if (myMap == null) return null;
 
     Map<String, Record> result = new HashMap<>();

@@ -2,7 +2,6 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -24,8 +23,6 @@ import java.util.function.IntConsumer;
 
 @State(name = "PropertiesSeparatorManager")
 public final class PropertiesSeparatorManager implements PersistentStateComponent<PropertiesSeparatorManager.PropertiesSeparatorManagerState> {
-  private final Project myProject;
-
   public static PropertiesSeparatorManager getInstance(final Project project) {
     return project.getService(PropertiesSeparatorManager.class);
   }
@@ -37,10 +34,6 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
       return guessSeparator(resourceBundle);
     }
   };
-
-  public PropertiesSeparatorManager(final Project project) {
-    myProject = project;
-  }
 
   @NotNull
   public String getSeparator(final ResourceBundle resourceBundle) {
@@ -95,7 +88,7 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
 
   @Override
   public void loadState(@NotNull final PropertiesSeparatorManagerState state) {
-    myUserDefinedSeparators = state.decode(myProject);
+    myUserDefinedSeparators = state.decode();
   }
 
   @Nullable
@@ -132,7 +125,7 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
       return encodedState;
     }
 
-    public PropertiesSeparatorManagerState decode(final Project project) {
+    public PropertiesSeparatorManagerState decode() {
       PropertiesSeparatorManagerState decoded = new PropertiesSeparatorManagerState();
       for (final Map.Entry<String, String> entry : mySeparators.entrySet()) {
         String separator = entry.getValue();
@@ -141,10 +134,7 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
           continue;
         }
         final String url = entry.getKey();
-        ResourceBundle resourceBundle = PropertiesImplUtil.createByUrl(url, project);
-        if (resourceBundle != null) {
-          decoded.getSeparators().put(url, separator);
-        }
+        decoded.getSeparators().put(url, separator);
       }
       return decoded;
     }

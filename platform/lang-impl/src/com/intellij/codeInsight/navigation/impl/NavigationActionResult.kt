@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -19,7 +19,7 @@ sealed class NavigationActionResult {
    *
    * Might be obtained from direct navigation, in this case requiring [TargetPresentation] doesn't make sense.
    */
-  class SingleTarget internal constructor(val request: NavigationRequest, val navigationProvider: Any?) : NavigationActionResult()
+  class SingleTarget internal constructor(val requestor: NavigationRequestor, val navigationProvider: Any?) : NavigationActionResult()
 
   class MultipleTargets internal constructor(val targets: List<LazyTargetWithPresentation>) : NavigationActionResult() {
     init {

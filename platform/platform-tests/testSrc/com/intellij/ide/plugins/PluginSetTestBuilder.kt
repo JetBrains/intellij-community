@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.util.BuildNumber
@@ -8,11 +8,9 @@ import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 
 class PluginSetTestBuilder(private val path: Path) {
-
   private var disabledPluginIds = mutableSetOf<String>()
   private var expiredPluginIds = mutableSetOf<String>()
-  private var enabledOnDemandPluginIds = mutableSetOf<String>()
-  private var productBuildNumber = PluginManagerCore.getBuildNumber()
+  private var productBuildNumber = PluginManagerCore.buildNumber
 
   private var context: DescriptorListLoadingContext? = null
   private var result: PluginLoadingResult? = null
@@ -25,39 +23,38 @@ class PluginSetTestBuilder(private val path: Path) {
     this.expiredPluginIds += expiredPluginIds
   }
 
-  fun withEnabledOnDemandPlugins(vararg enabledOnDemandPluginIds: String) = apply {
-    this.enabledOnDemandPluginIds += enabledOnDemandPluginIds
-  }
-
   fun withProductBuildNumber(productBuildNumber: BuildNumber) = apply {
     this.productBuildNumber = productBuildNumber
   }
 
-  fun withLoadingContext() = apply {
-    context = DescriptorListLoadingContext(
-      disabledPlugins = PluginManagerCore.toPluginIds(disabledPluginIds),
-      expiredPlugins = PluginManagerCore.toPluginIds(expiredPluginIds),
-      enabledOnDemandPlugins = PluginManagerCore.toPluginIds(enabledOnDemandPluginIds),
-      brokenPluginVersions = emptyMap(),
-      productBuildNumber = { productBuildNumber },
-    )
+  fun withLoadingContext(): PluginSetTestBuilder {
+    return apply {
+      context = DescriptorListLoadingContext(
+        customDisabledPlugins = PluginManagerCore.toPluginIds(disabledPluginIds),
+        customExpiredPlugins = PluginManagerCore.toPluginIds(expiredPluginIds),
+        customBrokenPluginVersions = emptyMap(),
+        productBuildNumber = { productBuildNumber },
+      )
+    }
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
   val loadingContext: DescriptorListLoadingContext
     get() = context ?: withLoadingContext().context!!
 
-  fun withLoadingResult() = apply {
-    result = PluginLoadingResult(checkModuleDependencies = false)
-    // constant order in tests
-    val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
-    loadingContext.use {
-      runBlocking {
-        result!!.addAll(
-          descriptors = paths.map { loadDescriptor(it, loadingContext) },
-          overrideUseIfCompatible = false,
-          productBuildNumber = loadingContext.productBuildNumber(),
-        )
+  fun withLoadingResult(): PluginSetTestBuilder {
+    return apply {
+      result = PluginLoadingResult(checkModuleDependencies = false)
+      // constant order in tests
+      val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
+      loadingContext.use {
+        runBlocking {
+          result!!.addAll(
+            descriptors = paths.asSequence().mapNotNull { loadDescriptor(it, loadingContext) },
+            overrideUseIfCompatible = false,
+            productBuildNumber = loadingContext.productBuildNumber(),
+          )
+        }
       }
     }
   }

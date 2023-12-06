@@ -58,6 +58,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   private final PsiExpression[] defaultValues;
 
   private final boolean isGenerateDelegate;
+  private boolean isFixFieldConflicts = true;
   final Set<PsiMethod> propagateParametersMethods;
   final Set<PsiMethod> propagateExceptionsMethods;
 
@@ -65,8 +66,8 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   
   public static JavaChangeInfo generateChangeInfo(PsiMethod method,
                                                   boolean generateDelegate,
-                                                  @Nullable // null means unchanged
-                                                  @PsiModifier.ModifierConstant String newVisibility,
+                                                  boolean fixFieldConflicts,
+                                                  @Nullable("Null means unchanged") @PsiModifier.ModifierConstant String newVisibility,
                                                   String newName,
                                                   CanonicalTypes.Type newType,
                                                   ParameterInfoImpl @NotNull [] parameterInfo,
@@ -91,6 +92,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
       new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
                              propagateParametersMethods, propagateExceptionsMethods);
     javaChangeInfo.setCheckUnusedParameter();
+    javaChangeInfo.setFixFieldConflicts(fixFieldConflicts);
     return javaChangeInfo;
   }
   
@@ -158,6 +160,11 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
       isParameterSetOrOrderChanged = true;
     }
     else {
+      boolean isVararg = newParms.length > 0 && newParms[newParms.length - 1].isVarargType();
+      if (wasVararg != isVararg) {
+        // Need to trigger possible argument changes
+        isParameterSetOrOrderChanged = true;
+      }
       for(int i = 0; i < newParms.length; i++){
         ParameterInfoImpl parmInfo = newParms[i];
 
@@ -229,6 +236,15 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
 
   public void setCheckUnusedParameter() {
     myCheckUnusedParameter = true;
+  }
+
+  @Override
+  public boolean isFixFieldConflicts() {
+    return isFixFieldConflicts;
+  }
+
+  public void setFixFieldConflicts(boolean fixFieldConflicts) {
+    isFixFieldConflicts = fixFieldConflicts;
   }
 
   protected void fillOldParams(PsiMethod method) {

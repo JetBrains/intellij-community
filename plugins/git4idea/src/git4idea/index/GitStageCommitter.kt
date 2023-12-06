@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -14,11 +14,12 @@ import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil
 import git4idea.GitUtil.getRepositoryForFile
 import git4idea.checkin.*
+import git4idea.index.ui.stagingAreaActionInvoked
 import git4idea.repo.GitRepository
 import git4idea.repo.isSubmodule
 import git4idea.util.GitFileUtils.addPaths
 
-internal class GitStageCommitState(val roots: Set<VirtualFile>, val commitMessage: String)
+internal class GitStageCommitState(val roots: Set<VirtualFile>, val isCommitAll: Boolean, val commitMessage: String)
 
 internal class GitStageCommitter(
   project: Project,
@@ -62,6 +63,7 @@ internal class GitStageCommitter(
     }
     finally {
       refreshChanges()
+      stagingAreaActionInvoked()
     }
   }
 

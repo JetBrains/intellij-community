@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import java.io.IOException;
  * @see CaseInsensitiveEnumeratorStringDescriptor
  */
 public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
-  private static class EnumeratorStringDescriptorImpl
+  private static final class EnumeratorStringDescriptorImpl
     extends EnumeratorStringDescriptor
     implements DifferentSerializableBytesImplyNonEqualityPolicy {
   }
@@ -31,12 +31,12 @@ public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
   }
 
   @Override
-  public void save(@NotNull final DataOutput storage, @NotNull final String value) throws IOException {
+  public void save(final @NotNull DataOutput storage, final @NotNull String value) throws IOException {
     IOUtil.writeUTF(storage, value);
   }
 
   @Override
-  public String read(@NotNull final DataInput storage) throws IOException {
+  public String read(final @NotNull DataInput storage) throws IOException {
     return IOUtil.readUTF(storage);
   }
 }

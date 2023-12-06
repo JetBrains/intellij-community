@@ -50,7 +50,7 @@ final class RefCountHolder {
       return null;
     }
     return storedHolder == null || wholeFile ?
-           new RefCountHolder(file, MultiMap.createConcurrentSet(), ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.canonical()), ConcurrentCollectionFactory.createConcurrentMap())
+           new RefCountHolder(file, MultiMap.createConcurrentSet(), ConcurrentCollectionFactory.createConcurrentSet(), ConcurrentCollectionFactory.createConcurrentMap())
            : storedHolder.removeInvalidRefs();
   }
 
@@ -169,7 +169,7 @@ final class RefCountHolder {
         }
       }
     }
-    Set<PsiAnchor> newDclsUsedMap = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.canonical());
+    Set<PsiAnchor> newDclsUsedMap = ConcurrentCollectionFactory.createConcurrentSet();
     for (PsiAnchor element : myDclsUsedMap) {
       if (element.retrieve() != null) {
         newDclsUsedMap.add(element);

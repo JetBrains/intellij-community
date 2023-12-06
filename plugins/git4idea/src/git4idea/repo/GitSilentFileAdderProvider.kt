@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsFileListenerContextHelper
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
@@ -79,6 +80,7 @@ class GitSilentFileAdderImpl(private val project: Project) : GitSilentFileAdder 
     for ((root, rootPaths) in map) {
       try {
         GitFileUtils.addPaths(project, root, rootPaths)
+        VcsDirtyScopeManager.getInstance(project).filePathsDirty(rootPaths, null)
       }
       catch (e: VcsException) {
         logger<GitSilentFileAdderImpl>().warn(e)

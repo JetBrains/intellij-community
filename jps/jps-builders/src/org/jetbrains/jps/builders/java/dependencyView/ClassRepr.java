@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -16,7 +16,7 @@ import java.util.function.Predicate;
 
 public final class ClassRepr extends ClassFileRepr {
   private final TypeRepr.ClassType mySuperClass;
-  private final Set<TypeRepr.AbstractType> myInterfaces;
+  private final Set<TypeRepr.ClassType> myInterfaces;
   private final Set<ElemType> myAnnotationTargets;
   private final RetentionPolicy myRetentionPolicy;
 
@@ -88,7 +88,7 @@ public final class ClassRepr extends ClassFileRepr {
       super(delegate);
     }
 
-    public abstract Specifier<TypeRepr.AbstractType, Difference> interfaces();
+    public abstract Specifier<TypeRepr.ClassType, Difference> interfaces();
 
     public abstract Specifier<FieldRepr, Difference> fields();
 
@@ -142,7 +142,7 @@ public final class ClassRepr extends ClassFileRepr {
       }
 
       @Override
-      public Difference.Specifier<TypeRepr.AbstractType, Difference> interfaces() {
+      public Difference.Specifier<TypeRepr.ClassType, Difference> interfaces() {
         return Difference.make(pastClass.myInterfaces, myInterfaces);
       }
 
@@ -194,8 +194,7 @@ public final class ClassRepr extends ClassFileRepr {
   }
 
   public Iterable<TypeRepr.ClassType> getSuperTypes() {
-    final Iterable<TypeRepr.ClassType> supers = Iterators.map(myInterfaces, t -> (TypeRepr.ClassType)t);
-    return mySuperClass != null? Iterators.flat(Iterators.asIterable(mySuperClass), supers) : supers;
+    return Iterators.flat(Iterators.asIterable(mySuperClass), myInterfaces);
   }
 
   @Override
@@ -229,7 +228,7 @@ public final class ClassRepr extends ClassFileRepr {
                    final Set<UsageRepr.Usage> usages, boolean isGenerated) {
     super(access, sig, name, annotations, fileName, context, usages);
     mySuperClass = TypeRepr.createClassType(context, superClass);
-    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new HashSet<>(1));
+    myInterfaces = TypeRepr.createClassType(context, interfaces, new HashSet<>(1));
     myFields = fields;
     myMethods = methods;
     myAnnotationTargets = annotationTargets;
@@ -244,7 +243,7 @@ public final class ClassRepr extends ClassFileRepr {
   public ClassRepr(final DependencyContext context, final DataInput in) {
     super(context, in);
     try {
-      mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
+      mySuperClass = TypeRepr.<TypeRepr.ClassType>externalizer(context).read(in);
       myInterfaces = RW.read(TypeRepr.externalizer(context), new HashSet<>(1), in);
       myFields = RW.read(FieldRepr.externalizer(context), new HashSet<>(), in);
       myMethods = RW.read(MethodRepr.externalizer(context), new HashSet<>(), in);
@@ -252,7 +251,7 @@ public final class ClassRepr extends ClassFileRepr {
 
       final String s = RW.readUTF(in);
 
-      myRetentionPolicy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
+      myRetentionPolicy = s.isEmpty()? null : RetentionPolicy.valueOf(s);
 
       myOuterClassName = DataInputOutputUtil.readINT(in);
       int flags = DataInputOutputUtil.readINT(in);
@@ -305,8 +304,7 @@ public final class ClassRepr extends ClassFileRepr {
     return strValue != null? getShortName(strValue) : null;
   }
 
-  @NotNull
-  public static String getPackageName(@NotNull final String raw) {
+  public static @NotNull String getPackageName(final @NotNull String raw) {
     final int index = raw.lastIndexOf('/');
 
     if (index == -1) {
@@ -316,8 +314,7 @@ public final class ClassRepr extends ClassFileRepr {
     return raw.substring(0, index);
   }
 
-  @NotNull
-  public static String getShortName(@NotNull final String fqName) {
+  public static @NotNull String getShortName(final @NotNull String fqName) {
     final int index = fqName.lastIndexOf('/');
 
     if (index == -1) {
@@ -327,8 +324,7 @@ public final class ClassRepr extends ClassFileRepr {
     return fqName.substring(index + 1);
   }
 
-  @Nullable
-  public FieldRepr findField(final int name) {
+  public @Nullable FieldRepr findField(final int name) {
     for (FieldRepr f : myFields) {
       if (f.name == name) {
         return f;
@@ -338,8 +334,7 @@ public final class ClassRepr extends ClassFileRepr {
     return null;
   }
 
-  @NotNull
-  public Collection<MethodRepr> findMethods(final Predicate<? super MethodRepr> p) {
+  public @NotNull Collection<MethodRepr> findMethods(final Predicate<? super MethodRepr> p) {
     final Collection<MethodRepr> result = new LinkedList<>();
 
     for (MethodRepr mm : myMethods) {
@@ -352,14 +347,14 @@ public final class ClassRepr extends ClassFileRepr {
   }
 
   public static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
-    return new DataExternalizer<ClassRepr>() {
+    return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final ClassRepr value) throws IOException {
+      public void save(final @NotNull DataOutput out, final ClassRepr value) {
         value.save(out);
       }
 
       @Override
-      public ClassRepr read(@NotNull final DataInput in) throws IOException {
+      public ClassRepr read(final @NotNull DataInput in) {
         return new ClassRepr(context, in);
       }
     };
@@ -370,7 +365,7 @@ public final class ClassRepr extends ClassFileRepr {
     super.toStream(context, stream);
 
     stream.print("      Superclass : ");
-    stream.println(mySuperClass == null ? "<null>" : mySuperClass.getDescr(context));
+    stream.println(mySuperClass.getDescr(context));
 
     stream.print("      Interfaces : ");
     final TypeRepr.AbstractType[] is = myInterfaces.toArray(TypeRepr.AbstractType.EMPTY_TYPE_ARRAY);
@@ -412,7 +407,7 @@ public final class ClassRepr extends ClassFileRepr {
         return o1.myType.getDescr(context).compareTo(o2.myType.getDescr(context));
       }
 
-      return context.getValue(o1.name).compareTo(context.getValue(o2.name));
+      return Objects.requireNonNull(context.getValue(o1.name)).compareTo(Objects.requireNonNull(context.getValue(o2.name)));
     });
     for (final FieldRepr f : fs) {
       f.toStream(context, stream);
@@ -453,7 +448,7 @@ public final class ClassRepr extends ClassFileRepr {
         return c;
       }
 
-      return context.getValue(o1.name).compareTo(context.getValue(o2.name));
+      return Objects.requireNonNull(context.getValue(o1.name)).compareTo(Objects.requireNonNull(context.getValue(o2.name)));
     });
     for (final MethodRepr m : ms) {
       m.toStream(context, stream);

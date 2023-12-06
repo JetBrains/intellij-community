@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ThreeStateCheckboxAction;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
@@ -18,6 +19,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -26,9 +28,11 @@ import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
@@ -46,6 +50,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
@@ -59,6 +64,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull private final MergingUpdateQueue myUpdateQueue =
     new MergingUpdateQueue("MultipleLocalChangeListsBrowser", 300, true, ANY_COMPONENT, this);
 
+  private final Collection<AbstractVcs> myAffectedVcses;
   private final boolean myEnableUnversioned;
   private final boolean myEnablePartialCommit;
   @Nullable private Supplier<? extends JComponent> myBottomDiffComponent;
@@ -75,11 +81,13 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private final RollbackDialogAction myRollbackDialogAction;
 
   MultipleLocalChangeListsBrowser(@NotNull Project project,
+                                  @NotNull Collection<AbstractVcs> affectedVcses,
                                   boolean showCheckboxes,
                                   boolean highlightProblems,
                                   boolean enableUnversioned,
                                   boolean enablePartialCommit) {
     super(project, showCheckboxes, highlightProblems);
+    myAffectedVcses = affectedVcses;
     myEnableUnversioned = enableUnversioned;
     myEnablePartialCommit = enablePartialCommit;
 
@@ -149,8 +157,14 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     return group;
   }
 
-  protected List<? extends AnAction> createAdditionalRollbackActions() {
-    return Collections.emptyList();
+  private List<? extends AnAction> createAdditionalRollbackActions() {
+    List<AnAction> result = new ArrayList<>();
+    for (AbstractVcs vcs : myAffectedVcses) {
+      RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+      if (rollbackEnvironment == null) continue;
+      result.addAll(rollbackEnvironment.createCustomRollbackActions());
+    }
+    return result;
   }
 
   @NotNull
@@ -168,7 +182,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       result.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
     }
 
-    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
+    ActionUtil.wrap(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
 
     result.add(createRollbackGroup(false));
 
@@ -255,16 +269,18 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull
   @Override
   protected DefaultTreeModel buildTreeModel() {
-    PartialCommitChangeNodeDecorator decorator =
-      new PartialCommitChangeNodeDecorator(myProject, RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator());
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
-    builder.setChanges(myChanges, decorator);
-    builder.setUnversioned(myUnversioned);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307313, EA-736680")) {
+      PartialCommitChangeNodeDecorator decorator =
+        new PartialCommitChangeNodeDecorator(myProject, RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator());
+      TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
+      builder.setChanges(myChanges, decorator);
+      builder.setUnversioned(myUnversioned);
 
-    myViewer.getEmptyText()
-      .setText(DiffBundle.message("diff.count.differences.status.text", 0));
+      myViewer.getEmptyText()
+        .setText(DiffBundle.message("diff.count.differences.status.text", 0));
 
-    return builder.build();
+      return builder.build();
+    }
   }
 
   @Nullable
@@ -454,7 +470,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     }
 
     @Nullable
-    private Object getUserObject(@NotNull AnActionEvent e) {
+    private static Object getUserObject(@NotNull AnActionEvent e) {
       Object object = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (object == null) object = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
       return object;

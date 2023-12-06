@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,6 +15,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -34,8 +34,8 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 @Tag("SchemaInfo")
-public class UserDefinedJsonSchemaConfiguration {
-  private final static Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {
+public final class UserDefinedJsonSchemaConfiguration {
+  private static final Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {
     if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
     if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
     return o1.path.compareToIgnoreCase(o2.path);
@@ -49,14 +49,8 @@ public class UserDefinedJsonSchemaConfiguration {
   public List<Item> patterns = new SmartList<>();
   public boolean isIgnoredFile = false;
   @Transient
-  private final AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns =
-    new AtomicClearableLazyValue<>() {
-      @NotNull
-      @Override
-      protected List<PairProcessor<Project, VirtualFile>> compute() {
-        return recalculatePatterns();
-      }
-    };
+  private final SynchronizedClearableLazy<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns = new SynchronizedClearableLazy<>(
+    this::recalculatePatterns);
 
   public UserDefinedJsonSchemaConfiguration() {
   }
@@ -136,8 +130,7 @@ public class UserDefinedJsonSchemaConfiguration {
     myCalculatedPatterns.drop();
   }
 
-  @NotNull
-  public List<PairProcessor<Project, VirtualFile>> getCalculatedPatterns() {
+  public @NotNull List<PairProcessor<Project, VirtualFile>> getCalculatedPatterns() {
     return myCalculatedPatterns.getValue();
   }
 
@@ -169,8 +162,7 @@ public class UserDefinedJsonSchemaConfiguration {
     return result;
   }
 
-  @Nullable
-  private static VirtualFile getRelativeFile(@NotNull final Project project, @NotNull final Item pattern) {
+  private static @Nullable VirtualFile getRelativeFile(final @NotNull Project project, final @NotNull Item pattern) {
     if (project.getBasePath() == null) {
       return null;
     }
@@ -185,8 +177,7 @@ public class UserDefinedJsonSchemaConfiguration {
     }
   }
 
-  @NotNull
-  private static List<String> pathToPartsList(@NotNull String path) {
+  private static @NotNull List<String> pathToPartsList(@NotNull String path) {
     return ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
   }
 
@@ -220,7 +211,7 @@ public class UserDefinedJsonSchemaConfiguration {
   }
 
 
-  public static class Item {
+  public static final class Item {
     public String path;
     public JsonMappingKind mappingKind = JsonMappingKind.File;
 
@@ -237,8 +228,7 @@ public class UserDefinedJsonSchemaConfiguration {
       this.mappingKind = isPattern ? JsonMappingKind.Pattern : isDirectory ? JsonMappingKind.Directory : JsonMappingKind.File;
     }
 
-    @NotNull
-    private static String normalizePath(@NotNull String path) {
+    private static @NotNull String normalizePath(@NotNull String path) {
       if (preserveSlashes(path)) return path;
       return StringUtil.trimEnd(FileUtilRt.toSystemDependentName(path), File.separatorChar);
     }
@@ -251,8 +241,7 @@ public class UserDefinedJsonSchemaConfiguration {
              || JsonFileResolver.isTempOrMockUrl(path);
     }
 
-    @NotNull
-    public static String neutralizePath(@NotNull String path) {
+    public static @NotNull String neutralizePath(@NotNull String path) {
       if (preserveSlashes(path)) return path;
       return StringUtil.trimEnd(FileUtilRt.toSystemIndependentName(path), '/');
     }

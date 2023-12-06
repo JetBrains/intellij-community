@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -104,11 +105,20 @@ open class NewToolbarRootPaneManager(private val project: Project) : SimpleModif
   private fun correctedToolbarActions(): Map<String, ActionGroup?> {
     val toolbarGroup = getToolbarGroup() ?: return emptyMap()
 
-    val children = toolbarGroup.getChildren(null)
+    val leftGroup = object: ActionGroup(), DumbAware {
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+        toolbarGroup.getChildren(e).firstOrNull(::isLeftSideAction)?.let { arrayOf(it) } ?: AnAction.EMPTY_ARRAY
+    }
 
-    val leftGroup = children.firstOrNull(::isLeftSideAction)
-    val rightGroup = children.firstOrNull(::isRightSideAction)
-    val restGroup = DefaultActionGroup(children.filter { it != leftGroup && it != rightGroup })
+    val rightGroup = object: ActionGroup(), DumbAware {
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+        toolbarGroup.getChildren(e).firstOrNull(::isRightSideAction)?.let { arrayOf(it) } ?: AnAction.EMPTY_ARRAY
+    }
+
+    val restGroup = object : ActionGroup(), DumbAware {
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+        toolbarGroup.getChildren(e).filter { !isLeftSideAction(it) && !isRightSideAction(it) }.toTypedArray()
+    }
 
     val map = mutableMapOf<String, ActionGroup?>()
     map[BorderLayout.WEST] = leftGroup as? ActionGroup
@@ -131,8 +141,10 @@ open class NewToolbarRootPaneManager(private val project: Project) : SimpleModif
                                     actionGroup: ActionGroup,
                                     horizontal: Boolean, decorateButtons: Boolean,
                                     popupActionGroup: ActionGroup?,
-                                    popupActionId: String?) : ActionToolbarImpl(place, actionGroup, horizontal, decorateButtons,
-                                                                                popupActionGroup, popupActionId) {
+                                    popupActionId: String?) : ActionToolbarImpl(place, actionGroup, horizontal, decorateButtons, false) {
+    init {
+      installPopupHandler(true, popupActionGroup, popupActionId)
+    }
 
     override fun addNotify() {
       super.addNotify()
@@ -144,11 +156,7 @@ open class NewToolbarRootPaneManager(private val project: Project) : SimpleModif
   private fun applyTo(actions: Map<String, ActionGroup?>, component: JComponent, layout: BorderLayout) {
     actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {
-        val toolbar = MyActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(),
-                                          mainGroupName())
-        ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC).toolbarCreated(ActionPlaces.MAIN_TOOLBAR,
-                                                                                                                 actionGroup, true, toolbar)
-        toolbar
+        MyActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(), mainGroupName())
       }
       else {
         null

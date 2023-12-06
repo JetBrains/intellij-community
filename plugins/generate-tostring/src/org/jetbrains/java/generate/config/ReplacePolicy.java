@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * This policy is to replace the existing {@code toString} method.
  */
 public final class ReplacePolicy implements ConflictResolutionPolicy {
-
     private static final ReplacePolicy instance = new ReplacePolicy();
 
     private ReplacePolicy() {
@@ -52,5 +51,4 @@ public final class ReplacePolicy implements ConflictResolutionPolicy {
     public String toString() {
         return "Replace existing";
     }
-
 }

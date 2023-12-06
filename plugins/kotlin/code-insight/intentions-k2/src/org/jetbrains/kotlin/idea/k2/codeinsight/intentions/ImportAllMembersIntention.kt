@@ -10,9 +10,10 @@ import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
@@ -42,7 +43,8 @@ internal class ImportAllMembersIntention :
     override fun getActionName(element: KtExpression, context: Context): String =
         KotlinBundle.message("import.members.from.0", context.fqName.asString())
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> =
+        ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtExpression): Boolean =
         element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()
@@ -60,30 +62,28 @@ internal class ImportAllMembersIntention :
             return null
         }
         if (element.getQualifiedExpressionForReceiver()?.isEnumSyntheticMethodCall(target) == true) return null
-        with (this@KtAnalysisSession) {
-            if (element.containingKtFile.hasImportedEnumSyntheticMethodCall()) return null
-        }
+        if (element.containingKtFile.hasImportedEnumSyntheticMethodCall()) return null
 
         val shortenCommand = collectPossibleReferenceShortenings(
             element.containingKtFile,
-            classShortenOption = {
+            classShortenStrategy = {
                 if (it.classIdIfNonLocal?.isNestedClassIn(classId) == true) {
-                    ShortenOption.SHORTEN_AND_STAR_IMPORT
+                    ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
-                    ShortenOption.DO_NOT_SHORTEN
+                    ShortenStrategy.DO_NOT_SHORTEN
                 }
             },
-            callableShortenOption = {
-                if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenOption.DO_NOT_SHORTEN
+            callableShortenStrategy = {
+                if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenStrategy.DO_NOT_SHORTEN
                 val containingClassId = if (it is KtConstructorSymbol) {
                     it.containingClassIdIfNonLocal?.outerClassId
                 } else {
                     it.callableIdIfNonLocal?.classId
                 }
                 if (containingClassId == classId) {
-                    ShortenOption.SHORTEN_AND_STAR_IMPORT
+                    ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
-                    ShortenOption.DO_NOT_SHORTEN
+                    ShortenStrategy.DO_NOT_SHORTEN
                 }
             }
         )
@@ -92,7 +92,25 @@ internal class ImportAllMembersIntention :
     }
 
     override fun apply(element: KtExpression, context: Context, project: Project, editor: Editor?) {
-        context.shortenCommand.invokeShortening()
+        val shortenCommand = context.shortenCommand
+        val file = shortenCommand.targetFile.element ?: return
+        removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(shortenCommand.starImportsToAdd, file)
+        shortenCommand.invokeShortening()
+    }
+
+    private fun removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(
+        starImportsToAdd: Set<FqName>,
+        ktFile: KtFile
+    ) {
+        for (starImportFqName in starImportsToAdd) {
+            for (existingImportFromFile in ktFile.importDirectives) {
+                if (existingImportFromFile.alias == null
+                    && existingImportFromFile.importPath?.fqName?.parent() == starImportFqName
+                ) {
+                    existingImportFromFile.delete()
+                }
+            }
+        }
     }
 }
 
@@ -118,10 +136,11 @@ private val KtExpression.actualReference: KtReference?
         else -> mainReference
     }
 
-private fun KtAnalysisSession.isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression): Boolean {
+context(KtAnalysisSession)
+private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression): Boolean {
     val selectorExpression: KtExpression? = qualifiedAccess.getQualifiedExpressionForReceiver()?.selectorExpression
     val referencedSymbol = when (selectorExpression) {
-        is KtCallExpression -> selectorExpression.resolveCall().successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
+        is KtCallExpression -> selectorExpression.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
         is KtNameReferenceExpression -> selectorExpression.mainReference.resolveToSymbol()
         else -> return false
     } as? KtSymbolWithKind ?: return true
@@ -147,7 +166,7 @@ private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = importDirecti
         if (getQualifiedExpressionForSelector() != null) return false
         if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
         val referencedSymbol = when (this) {
-            is KtCallExpression -> resolveCall().successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
+            is KtCallExpression -> resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
             is KtNameReferenceExpression -> mainReference.resolveToSymbol()
             else -> return false
         } ?: return false

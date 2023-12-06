@@ -77,13 +77,15 @@ public final class NativeIconProvider extends IconProvider implements DumbAware 
       }
     }
 
-    return DeferredIconImpl.withoutReadAction(AllIcons.Nodes.NodePlaceholder, ioFile, file -> {
+    return DeferredIconImpl.Companion.withoutReadAction(AllIcons.Nodes.NodePlaceholder, ioFile, file -> {
       if (!Files.exists(file)) {
         return null;
       }
 
       // we should have no read access here, to avoid deadlock with EDT needed to init component
-      if (ApplicationManager.getApplication().isReadAccessAllowed()) return null;
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        return null;
+      }
 
       Icon icon;
       try {

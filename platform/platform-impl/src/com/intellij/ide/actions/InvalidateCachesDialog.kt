@@ -4,12 +4,14 @@ package com.intellij.ide.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Link
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.swing.Action
@@ -37,7 +39,7 @@ class InvalidateCachesDialog(
     }
   }
 
-  override fun getHelpId() = "invalidate-cache-restart"
+  override fun getHelpId(): String = "invalidate-cache-restart"
 
   init {
     title = IdeBundle.message("dialog.title.invalidate.caches")
@@ -52,7 +54,7 @@ class InvalidateCachesDialog(
     cancelAction.text = IdeBundle.message("button.cancel.without.mnemonic")
   }
 
-  fun isRestartOnly() = canRestart && exitCode == JUST_RESTART_CODE
+  fun isRestartOnly(): Boolean = canRestart && exitCode == JUST_RESTART_CODE
 
   override fun createSouthAdditionalPanel(): JPanel? {
     if (!canRestart) return null
@@ -67,7 +69,7 @@ class InvalidateCachesDialog(
     return panel
   }
 
-  override fun createCenterPanel() = panel {
+  override fun createCenterPanel(): DialogPanel = panel {
     row {
       text(IdeBundle.message("dialog.message.caches.will.be.invalidated"), maxLineLength = DEFAULT_COMMENT_WIDTH)
     }
@@ -81,10 +83,9 @@ class InvalidateCachesDialog(
           row {
             val defaultValue = descr.optionalCheckboxDefaultValue()
             val checkbox = checkBox(text)
+              .comment(descr.comment)
               .enabled(defaultValue != null)
-              .applyToComponent {
-                isSelected = defaultValue ?: true
-              }
+              .selected(defaultValue ?: true)
               .component
             invalidatorsOptions[checkbox] = descr
           }

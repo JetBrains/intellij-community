@@ -48,6 +48,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
@@ -361,12 +362,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
     content.setDescription(JavaDebuggerBundle.message("thread.dump"));
+    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
     ui.addContent(content);
     ui.selectAndFocus(content, true, true);
     myThreadDumpsCount++;
     Disposer.register(content, consoleView);
     ui.selectAndFocus(content, true, false);
-    if (threads.size() > 0) {
+    if (!threads.isEmpty()) {
       panel.selectStackFrame(0);
     }
   }
@@ -638,6 +640,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static int getCodeIndex(Location location) {
+    try {
+      return Math.toIntExact(location.codeIndex());
+    }
+    catch (InternalError | IllegalArgumentException e) {
+      return -1;
+    }
+  }
+
   public static String getSourceName(Location location, Function<? super Throwable, String> defaultName) {
     try {
       return location.sourceName();
@@ -854,7 +865,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
       PsiFile psiFile = getPsiFile(position, project);
       if (psiFile != null) {
-        return SourcePosition.createFromLine(psiFile, position.getLine());
+        return SourcePosition.createFromOffset(psiFile, position.getOffset());
       }
     }
     return null;
@@ -894,26 +905,36 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      TextRange range = SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
-      PsiFile file = mySourcePosition.getFile();
-      if (range != null) {
-        Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-        if (document != null) {
-          TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
-          TextRange res = range.intersection(lineRange);
-          return lineRange.equals(res) ? null : res; // highlight the whole line for multiline lambdas
-        }
-      }
-      return range;
+      return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
     }
   }
 
   @Nullable
   public static TextRange intersectWithLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
     if (range != null && file != null) {
-      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      Document document = file.getViewProvider().getDocument();
       if (document != null) {
         range = range.intersection(DocumentUtil.getLineTextRange(document, line));
+      }
+    }
+    return range;
+  }
+
+  /**
+   * Extract text range suitable for highlighting.
+   * <p>
+   * The passed text range is cut to fit the line range.
+   * Also, whole line highlighting is represented by <code>null</code> return value.
+   * @return highlighting range inside the line or null if the whole line should be highlighted
+   */
+  @Nullable
+  public static TextRange getHighlightingRangeInsideLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
+    if (range != null && file != null) {
+      Document document = file.getViewProvider().getDocument();
+      if (document != null) {
+        TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
+        TextRange res = range.intersection(lineRange);
+        return lineRange.equals(res) ? null : res;
       }
     }
     return range;
@@ -967,7 +988,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @Nullable
   public static String getLambdaBaseClassName(String typeName) {
-    return StringUtil.substringBefore(typeName, "$$Lambda$");
+    return StringUtil.substringBefore(typeName, "$$Lambda");
   }
 
   public static boolean isLambdaName(@Nullable String name) {
@@ -997,7 +1018,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();
     final int line = position.getLine();
-    final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    final Document document = file.getViewProvider().getDocument();
     if (document == null || line < 0 || line >= document.getLineCount()) {
       return Collections.emptyList();
     }
@@ -1065,7 +1086,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
-  public static PsiElement getFirstElementOnTheLine(PsiLambdaExpression lambda, Document document, int line) {
+  public static PsiElement getFirstElementOnTheLine(@NotNull PsiLambdaExpression lambda, Document document, int line) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     if (!intersects(lineRange, lambda)) return null;

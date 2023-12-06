@@ -5,9 +5,10 @@ class Foo {
     }
 
     fun f2(x: Int, y: Int): Boolean {
-        return if (false) {
-            false
-        } else (x
+        if (false) {
+            return false
+        }
+        return (x
                 < y)
     }
 }

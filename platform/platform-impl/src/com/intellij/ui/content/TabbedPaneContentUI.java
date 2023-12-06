@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content;
 
 import com.intellij.ide.IdeBundle;
@@ -9,8 +9,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -27,7 +29,7 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
-  @NonNls public static final String POPUP_PLACE = "TabbedPanePopup";
+  public static final @NonNls String POPUP_PLACE = "TabbedPanePopup";
 
   private ContentManager myManager;
   private final TabbedPaneWrapper myTabbedPaneWrapper;
@@ -63,6 +65,11 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     }
     myManager = manager;
     myManager.addContentManagerListener(new MyContentManagerListener());
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ContentManager getManager() {
+    return myManager;
   }
 
   @Override
@@ -107,7 +114,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     return selectedComponent == null ? null : myManager.getContent(selectedComponent);
   }
 
-  public class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
+  public final class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
     MyTabbedPaneWrapper(int tabPlacement) {
       super(tabPlacement);
     }
@@ -126,7 +133,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
       return myManager;
     }
 
-    private class MyTabbedPane extends TabbedPaneImpl {
+    private final class MyTabbedPane extends TabbedPaneImpl {
       MyTabbedPane(int tabPlacement) {
         super(tabPlacement);
         addMouseListener(new MyPopupHandler());
@@ -148,7 +155,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
       /**
        * Hides selected menu.
        */
-      private void hideMenu() {
+      private static void hideMenu() {
         MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
         menuSelectionManager.clearSelectedPath();
       }
@@ -197,7 +204,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
         return new MyModelListener();
       }
 
-      private class MyModelListener extends ModelListener {
+      private final class MyModelListener extends ModelListener {
         @Override
         public void stateChanged(ChangeEvent e) {
           Content content = getSelectedContent();
@@ -222,7 +229,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
         return myManager.getContent(index);
       }
 
-      protected class MyPopupHandler extends PopupHandler {
+      protected final class MyPopupHandler extends PopupHandler {
         @Override
         public void invokePopup(Component comp, int x, int y) {
           if (myManager.isEmpty()) return;
@@ -279,7 +286,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     }
   }
 
-  private class MyContentManagerListener implements ContentManagerListener {
+  private final class MyContentManagerListener implements ContentManagerListener {
     @Override
     public void contentAdded(@NotNull ContentManagerEvent event) {
       Content content = event.getContent();
@@ -326,27 +333,23 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     return true;
   }
 
-  @NotNull
   @Override
-  public String getCloseActionName() {
+  public @NotNull String getCloseActionName() {
     return UIBundle.message("tabbed.pane.close.tab.action.name");
   }
 
-  @NotNull
   @Override
-  public String getCloseAllButThisActionName() {
+  public @NotNull String getCloseAllButThisActionName() {
     return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
   }
 
-  @NotNull
   @Override
-  public String getPreviousContentActionName() {
+  public @NotNull String getPreviousContentActionName() {
     return IdeBundle.message("action.text.select.previous.tab");
   }
 
-  @NotNull
   @Override
-  public String getNextContentActionName() {
+  public @NotNull String getNextContentActionName() {
     return IdeBundle.message("action.text.select.next.tab");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -34,7 +34,7 @@ public abstract class PrimaryModuleManager {
    * otherwise use content roots of module to check if it's a main module.
    */
   public static Module findPrimaryModule(@NotNull Project project) {
-    for (PrimaryModuleManager primaryModuleManager : EP_NAME.getExtensions()) {
+    for (PrimaryModuleManager primaryModuleManager : EP_NAME.getExtensionList()) {
       Module primaryModule = primaryModuleManager.getPrimaryModule(project);
       if (primaryModule != null) {
         return primaryModule;

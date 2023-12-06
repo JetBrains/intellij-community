@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard;
 
 import com.intellij.CommonBundle;
@@ -40,7 +40,7 @@ import java.util.*;
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
 
-  public final static Key<AbstractWizard<?>> KEY = Key.create("AbstractWizard");
+  public static final Key<AbstractWizard<?>> KEY = Key.create("AbstractWizard");
 
   protected int myCurrentStep;
   protected final ArrayList<T> mySteps;
@@ -66,7 +66,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     initWizard(title);
   }
 
-  public AbstractWizard(@NlsContexts.DialogTitle String title, @Nullable final Project project) {
+  public AbstractWizard(@NlsContexts.DialogTitle String title, final @Nullable Project project) {
     super(project, true);
     mySteps = new ArrayList<>();
     initWizard(title);
@@ -237,9 +237,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
       catch (CommitStepException exc) {
         String message = exc.getMessage();
-        if (message != null) {
-          Messages.showErrorDialog(myContentPanel, message);
-        }
+        Messages.showErrorDialog(myContentPanel, message);
       }
     }
     else {
@@ -253,7 +251,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   private static void add(final GroupLayout.Group hGroup,
                           final GroupLayout.Group vGroup,
-                          @Nullable final Collection<? super Component> collection,
+                          final @Nullable Collection<? super Component> collection,
                           final Component... components) {
     for (Component component : components) {
       hGroup.addComponent(component);
@@ -335,11 +333,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return mySteps.get(myCurrentStep);
   }
 
-  public void addStep(@NotNull final T step) {
+  public void addStep(final @NotNull T step) {
     addStep(step, mySteps.size());
   }
 
-  public void addStep(@NotNull final T step, int index) {
+  public void addStep(final @NotNull T step, int index) {
     mySteps.add(index, step);
 
     if (step instanceof StepAdapter) {
@@ -499,8 +497,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   @Override
   public @Nullable JComponent getPreferredFocusedComponent() {
-    var step = getCurrentStepObject();
-    var component = ObjectUtils.doIfNotNull(step, it -> it.getPreferredFocusedComponent());
+    T step = getCurrentStepObject();
+    var component = step == null ? null : step.getPreferredFocusedComponent();
     return ObjectUtils.chooseNotNull(component, myNextButton);
   }
 
@@ -585,14 +583,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return myCancelButton;
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  protected JButton getFinishButton() {
-    return new JButton();
-  }
-
   public Component getCurrentStepComponent() {
     return myCurrentStepComponent;
   }
@@ -618,7 +608,5 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return mySteps.size();
   }
 
-  @Nullable
-  @NonNls
-  protected abstract String getHelpID();
+  protected abstract @Nullable @NonNls String getHelpID();
 }

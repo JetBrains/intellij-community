@@ -17,7 +17,6 @@ abstract class GHSimpleLoadingModel<T> : GHEventDispatcherLoadingModel() {
     protected set
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal fun <T> GHSimpleLoadingModel<T>.getResultFlow(): Flow<T?> =
   callbackFlow {
     val emit = { trySend(result.takeIf { resultAvailable }) }

@@ -49,6 +49,15 @@ abstract class ExtensionRegisteredAsServiceOrComponentInspectionTestBase : Plugi
         public interface BaseComponent { }
       """.trimIndent()
     )
+
+    myFixture.addClass(
+      //language=java
+      """
+        package com.intellij.util.xmlb.annotations;
+        
+        public @interface Attribute { }
+      """.trimIndent()
+    )
   }
 
   protected open fun doTest() {

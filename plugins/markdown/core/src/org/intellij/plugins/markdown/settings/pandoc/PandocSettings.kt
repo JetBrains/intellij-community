@@ -6,8 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.currentOrDefaultProject
 import org.jetbrains.annotations.ApiStatus
 
+@Service(Service.Level.PROJECT)
 @State(name = "Pandoc.Settings", storages = [Storage(value = "pandoc.xml", roamingType = RoamingType.PER_OS)])
-class PandocSettings: SimplePersistentStateComponent<PandocSettings.State>(State()) {
+internal class PandocSettings: SimplePersistentStateComponent<PandocSettings.State>(State()) {
   @ApiStatus.Internal
   class State: BaseState() {
     var pathToPandoc by string()

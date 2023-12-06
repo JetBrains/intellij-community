@@ -1,0 +1,19 @@
+<idea-plugin package="org.jetbrains.kotlin.onboarding">
+  <projectListeners>
+    <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
+              class="org.jetbrains.kotlin.onboarding.KotlinNewUserTrackerFileListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.KotlinNewUserTracker"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.OnboardingFeedbackSurvey"/>
+  </extensions>
+  <actions resource-bundle="messages.FeedbackBundle">
+    <group id="OnboardingKotlin" internal="true">
+      <action id="org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction"
+              class="org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction" internal="true"/>
+      <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
+    </group>
+  </actions>
+
+</idea-plugin>

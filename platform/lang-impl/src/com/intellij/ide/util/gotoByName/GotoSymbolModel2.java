@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
@@ -24,8 +24,11 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
   private String[] mySeparators;
   private final boolean myAllContributors;
 
-  public GotoSymbolModel2(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors, @NotNull Disposable parentDisposable) {
+  public GotoSymbolModel2(@NotNull Project project,
+                          @NotNull List<ChooseByNameContributor> contributors,
+                          @NotNull Disposable parentDisposable) {
     super(project, contributors);
+
     myAllContributors = false;
     addEpListener(parentDisposable);
   }
@@ -39,14 +42,13 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
   }
 
   public GotoSymbolModel2(@NotNull Project project, @NotNull Disposable parentDisposable) {
-    super(project, new ChooseByNameContributor[0]);
+    super(project, List.of());
     myAllContributors = true;
     addEpListener(parentDisposable);
   }
 
   private void addEpListener(@NotNull Disposable parentDisposable) {
-    ChooseByNameContributor.CLASS_EP_NAME.addChangeListener(
-      () -> mySeparators = null, parentDisposable);
+    ChooseByNameContributor.CLASS_EP_NAME.addChangeListener(() -> mySeparators = null, parentDisposable);
   }
 
   @Override
@@ -62,9 +64,8 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
     return LanguageRef.forNavigationitem(item);
   }
 
-  @Nullable
   @Override
-  protected synchronized Collection<LanguageRef> getFilterItems() {
+  protected synchronized @Nullable Collection<LanguageRef> getFilterItems() {
     final Collection<LanguageRef> result = super.getFilterItems();
     if (result == null) {
       return null;
@@ -84,15 +85,13 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
     return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.symbols");
   }
 
-  @NotNull
   @Override
-  public String getNotInMessage() {
+  public @NotNull String getNotInMessage() {
     return IdeUICustomization.getInstance().projectMessage("label.no.matches.found.in.project");
   }
 
-  @NotNull
   @Override
-  public String getNotFoundMessage() {
+  public @NotNull String getNotFoundMessage() {
     return IdeBundle.message("label.no.matches.found");
   }
 
@@ -113,7 +112,7 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
   }
 
   @Override
-  public String getFullName(@NotNull final Object element) {
+  public String getFullName(final @NotNull Object element) {
     for (ChooseByNameContributor c : getContributorList()) {
       if (c instanceof GotoClassContributor) {
         String result = ((GotoClassContributor)c).getQualifiedName((NavigationItem)element);

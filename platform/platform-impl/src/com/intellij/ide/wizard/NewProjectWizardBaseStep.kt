@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
@@ -6,24 +6,27 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLocation
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logNameChanged
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.ui.shortenTextWithEllipsis
 import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.ui.UIBundle
@@ -34,11 +37,11 @@ import java.nio.file.Path
 import kotlin.io.path.name
 
 class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
-  override val nameProperty = propertyGraph.lazyProperty(::suggestName)
-  override val pathProperty = propertyGraph.lazyProperty { suggestLocation().toCanonicalPath() }
+  override val nameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
+  override val pathProperty: GraphProperty<String> = propertyGraph.lazyProperty { suggestLocation().toCanonicalPath() }
 
-  override var name by nameProperty
-  override var path by pathProperty
+  override var name: String by nameProperty
+  override var path: String by pathProperty
 
   internal var bottomGap: Boolean = true
 
@@ -117,22 +120,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
           .align(AlignX.FILL)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
           .whenTextChangedFromUi { logLocationChanged() }
-          .comment("", MAX_LINE_LENGTH_NO_WRAP)
-          .also { textField ->
-            val comment = textField.comment!!
-            val widthProperty = textField.component.widthProperty
-            val commentProperty = operation(locationProperty, widthProperty) { path, width ->
-              val emptyText = UIBundle.message("label.project.wizard.new.project.path.description", context.isCreatingNewProjectInt, "")
-              val maxPathWidth = ((LOCATION_COMMENT_RATIO * width).toInt() - comment.getTextWidth(emptyText))
-              val shortPath = shortenTextWithEllipsis(
-                text = getPresentablePath(path),
-                maxTextWidth = maxPathWidth,
-                getTextWidth = comment::getTextWidth,
-              )
-              UIBundle.message("label.project.wizard.new.project.path.description", context.isCreatingNewProjectInt, shortPath)
-            }
-            comment.bind(commentProperty)
-          }
+          .locationComment(context, locationProperty)
       }
 
       if (bottomGap) {
@@ -141,7 +129,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
 
       onApply {
         context.projectName = name
-        context.setProjectFileDirectory(path.toNioPath().resolve(name), false)
+        context.setProjectFileDirectory(Path.of(path).resolve(name), false)
       }
     }
   }
@@ -176,10 +164,30 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
      * Cannot be 1.0 or more because:
      *  1. Comment width is dependent on location text field width;
      *  2. Minimum location text field width cannot be less comment width.
-     * So this ratio makes gap between minimum widths of comment and location.
-     * It allows to smooth resize components (location and comment) when NPW dialog is resized.
+     * So this ratio makes a gap between minimum widths of comment and location.
+     * It allows smoothly resizing components (location and comment) when NPW dialog is resized.
      */
     private const val LOCATION_COMMENT_RATIO = 0.9f
+
+    private fun Cell<TextFieldWithBrowseButton>.locationComment(context: WizardContext, locationProperty: ObservableProperty<String>) {
+      comment("", MAX_LINE_LENGTH_NO_WRAP)
+      val comment = comment!!
+      val widthProperty = component.widthProperty
+      val commentProperty = operation(locationProperty, widthProperty) { path, width ->
+        val isCreatingNewProjectInt = context.isCreatingNewProjectInt
+        val commentWithEmptyPath = UIBundle.message("label.project.wizard.new.project.path.description", isCreatingNewProjectInt, "")
+        val commentWidthWithEmptyPath = comment.getTextWidth(commentWithEmptyPath)
+        val maxPathWidth = (LOCATION_COMMENT_RATIO * width).toInt() - commentWidthWithEmptyPath
+        val presentablePath = getPresentablePath(path)
+        val shortPresentablePath = shortenTextWithEllipsis(
+          text = presentablePath,
+          maxTextWidth = maxPathWidth,
+          getTextWidth = comment::getTextWidth,
+        )
+        UIBundle.message("label.project.wizard.new.project.path.description", isCreatingNewProjectInt, shortPresentablePath)
+      }
+      comment.bind(commentProperty)
+    }
   }
 }
 

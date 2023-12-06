@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public class MoveJavaFileHandler extends MoveFileHandler {
   private static final Logger LOG = Logger.getInstance(MoveJavaFileHandler.class);
 
@@ -54,7 +56,7 @@ public class MoveJavaFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public void detectConflicts(MultiMap<PsiElement, String> conflicts,
+  public void detectConflicts(MultiMap<PsiElement, @DialogMessage String> conflicts,
                               PsiElement[] elementsToMove,
                               UsageInfo[] usages,
                               PsiDirectory targetDirectory) {

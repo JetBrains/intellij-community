@@ -18,7 +18,6 @@ package org.jetbrains.jps.model.ex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsEventDispatcher;
 import org.jetbrains.jps.model.JpsModel;
 
 public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implements JpsElement, JpsElement.BulkModificationSupport<Self> {
@@ -34,23 +33,15 @@ public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implemen
     myParent = parent;
   }
 
+  /**
+   * @deprecated does nothing, all calls must be removed
+   */
+  @Deprecated
   protected void fireElementChanged() {
-    final JpsEventDispatcher eventDispatcher = getEventDispatcher();
-    if (eventDispatcher != null) {
-      eventDispatcher.fireElementChanged(this);
-    }
   }
 
   protected static void setParent(@NotNull JpsElement element, @Nullable JpsElementBase<?> parent) {
     ((JpsElementBase<?>)element).setParent(parent);
-  }
-
-  @Nullable
-  protected JpsEventDispatcher getEventDispatcher() {
-    if (myParent != null) {
-      return myParent.getEventDispatcher();
-    }
-    return null;
   }
 
   @Nullable

@@ -86,6 +86,32 @@ class ThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestBas
     }
   }
 
+  fun testWithCheckUnannotatedMethodsNotInOverridingMethod() {
+    myFixture.addClass("""
+      public class Parent {
+        public void method() {}
+      }
+    """.trimIndent())
+
+    runWithCheckUnannotatedMethodsEnabled {
+      myFixture.configureByText("Subclass.java", """
+        import com.intellij.util.concurrency.annotations.*;
+
+        public class Subclass extends Parent {
+          @Override
+          public void method() {
+            edt();
+          }
+          
+          @RequiresEdt 
+          public void edt() {}
+        }
+      """.trimIndent())
+
+      myFixture.checkHighlighting()
+    }
+  }
+
   fun testWithCheckUnannotatedMethodCallsAnnotatedMethodFix() {
     runWithCheckUnannotatedMethodsEnabled {
       doTestHighlighting("""    
@@ -99,17 +125,21 @@ class ThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestBas
 
       val intention = myFixture.findSingleIntention("Annotate method 'checkUnannotated()' as '@RequiresEdt'")
       myFixture.checkPreviewAndLaunchAction(intention)
-      myFixture.checkResult("""    import com.intellij.util.concurrency.annotations.*;
+      myFixture.checkResult("""
+        import com.intellij.util.concurrency.annotations.*;
 
-    public class A {
-        @RequiresEdt
-        public void checkUnannotated() {
-    edt();
-}
+        public class A {
 
-@RequiresEdt
-public void edt() {}
-    }""".trimIndent(), true)
+            @RequiresEdt
+            public void checkUnannotated() {
+                edt();
+            }
+
+            @RequiresEdt
+            public void edt() {}
+
+        }
+      """.trimIndent(), true)
     }
   }
 
@@ -189,6 +219,29 @@ public void edt() {}
       
       @RequiresBackgroundThread
       public void bgt() {}
+    """.trimIndent())
+  }
+
+  fun testDoNotCheckEventDispatcherMulticaster() {
+    addEventDispatcherClass()
+
+    doTestHighlighting("""
+      @RequiresBackgroundThread
+      public void testEventDispatcher() {
+        com.intellij.util.EventDispatcher<MyListener> dispatcher = new com.intellij.util.EventDispatcher<>();
+        dispatcher.getMulticaster().myCallback();
+        
+        MyListener listener = new MyListener() {
+          public void myCallback() {};
+        };
+        listener.<error descr="Method annotated with '@RequiresEdt' must not be called from method annotated with '@RequiresBackgroundThread'">myCallback</error>();
+      }
+      
+      public interface MyListener extends java.util.EventListener {
+        
+        @RequiresEdt
+        void myCallback();
+      }
     """.trimIndent())
   }
 
@@ -310,11 +363,11 @@ public void edt() {}
     import com.intellij.util.concurrency.annotations.*;
       
     public class A {
-      ${classBody.trimIndent()}
+      ${classBody}
     }
     """.trimIndent())
 
-    myFixture.checkHighlighting(false,false,false)
+    myFixture.checkHighlighting(false, false, false)
   }
 
 }

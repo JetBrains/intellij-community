@@ -5,7 +5,7 @@ import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.MultipleRunLocationsProvider
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.KotlinModuleKind
@@ -31,8 +31,8 @@ class KotlinMultiplatformRunLocationsProvider : MultipleRunLocationsProvider() {
         }
 
         val virtualFile = originalLocation.virtualFile ?: return emptyList()
-        val fileIndex = ModuleRootManager.getInstance(originalModule).fileIndex
-        val sourceType = fileIndex.getKotlinSourceRootType(virtualFile) ?: return emptyList()
+        val projectFileIndex = ProjectFileIndex.getInstance(originalModule.project)
+        val sourceType = projectFileIndex.getKotlinSourceRootType(virtualFile) ?: return emptyList()
         return modulesToRunFrom(originalModule, sourceType).map { PsiLocation(originalLocation.project, it, originalLocation.psiElement) }
     }
 }

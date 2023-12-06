@@ -1,12 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.NameUtilCore;
@@ -14,10 +11,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 
 final class TypoTolerantMatcher extends MinusculeMatcher {
+
+  //heuristics: 15 can take 10-20 ms in some cases, while 10 works in 1-5 ms
+  private static final int TYPO_AWARE_PATTERN_LIMIT = 13;
+
   private final char[] myPattern;
   private final String myHardSeparators;
   private final NameUtil.MatchingCaseSensitivity myOptions;
@@ -74,9 +76,12 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
     return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':' || c == '+' || c == '.';
   }
 
-  private static int nextWord(@NotNull String name, int start) {
+  private static int nextWord(@NotNull String name, int start, boolean isAsciiName) {
     if (start < name.length() && Character.isDigit(name.charAt(start))) {
       return start + 1; //treat each digit as a separate hump
+    }
+    if (isAsciiName) {
+      return AsciiUtils.nextWordAscii(name, start);
     }
     return NameUtilCore.nextWord(name, start);
   }
@@ -144,7 +149,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
           else if (afterGap) {
             skippedHumps++;
           }
-          nextHumpStart = nextWord(name, nextHumpStart);
+          nextHumpStart = nextWord(name, nextHumpStart, false);
         }
 
         char c = name.charAt(i);
@@ -225,9 +230,17 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
 
   @Override
   public @Nullable FList<TextRange> matchingFragments(@NotNull String name) {
-    FList<TextRange> ranges = new Session(name, false).matchingFragments();
+    if (name.length() < myMinNameLength) {
+      return null;
+    }
+    boolean ascii = AsciiUtils.isAscii(name);
+    FList<TextRange> ranges = new Session(name, false, ascii).matchingFragments();
     if (ranges != null) return ranges;
-    return new Session(name, true).matchingFragments();
+
+    //do not apply typo aware matching for long patterns, it can take too much time
+    if (myPattern.length > TYPO_AWARE_PATTERN_LIMIT) return null;
+
+    return new Session(name, true, ascii).matchingFragments();
   }
 
   private class Session {
@@ -237,42 +250,32 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
     private final boolean myTypoAware;
     private final boolean myAllowTypos;
 
-    Session(@NotNull String name, boolean typoAware) {
+    Session(@NotNull String name, boolean typoAware, boolean ascii) {
       myName = name;
-
-      int length = name.length();
-      boolean isAscii = true;
-      for (int i = 0; i < length; ++i) {
-        char c = name.charAt(i);
-        if (c >= 128) {
-          isAscii = false;
-          break;
-        }
-      }
-
-      isAsciiName = isAscii;
+      isAsciiName = ascii;
       myTypoAware = typoAware;
-      myAllowTypos = typoAware && isAscii;
+      myAllowTypos = typoAware && ascii;
     }
 
     private char charAt(int i, @NotNull ErrorState errorState) {
       return errorState.affects(i) ? errorState.getChar(myPattern, i) : myPattern[i];
     }
 
-    private char toLowerCase(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? toLowerAscii(errorState.getChar(myPattern, i)) : toLowerCase[i];
-    }
-
-    private char toUpperCase(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? toUpperAscii(errorState.getChar(myPattern, i)) : toUpperCase[i];
+    private boolean equalsIgnoreCase(int patternIndex, @NotNull ErrorState errorState, char nameChar) {
+      if (errorState.affects(patternIndex)) {
+        char patternChar = errorState.getChar(myPattern, patternIndex);
+        return AsciiUtils.toLowerAscii(patternChar) == nameChar ||
+               AsciiUtils.toUpperAscii(patternChar) == nameChar;
+      }
+      return toLowerCase[patternIndex] == nameChar || toUpperCase[patternIndex] == nameChar;
     }
 
     private boolean isLowerCase(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? isLowerAscii(errorState.getChar(myPattern, i)) : isLowerCase[i];
+      return errorState.affects(i) ? AsciiUtils.isLowerAscii(errorState.getChar(myPattern, i)) : isLowerCase[i];
     }
 
     private boolean isUpperCase(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? isUpperAscii(errorState.getChar(myPattern, i)) : isUpperCase[i];
+      return errorState.affects(i) ? AsciiUtils.isUpperAscii(errorState.getChar(myPattern, i)) : isUpperCase[i];
     }
 
     private boolean isWordSeparator(int i, @NotNull ErrorState errorState) {
@@ -284,7 +287,8 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     public @Nullable FList<TextRange> matchingFragments() {
-      if (myName.length() < myMinNameLength) {
+      int length = myName.length();
+      if (length < myMinNameLength) {
         return null;
       }
 
@@ -292,13 +296,16 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       if (myTypoAware && !isAsciiName) return null;
 
       if (!myTypoAware) {
-        int length = myName.length();
         int patternIndex = 0;
-        for (int i = 0; i < length; ++i) {
-          char c = myName.charAt(i);
-          if (patternIndex < myMeaningfulCharacters.length &&
-              (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1])) {
-            patternIndex += 2;
+        if (myMeaningfulCharacters.length > 0) {
+          for (int i = 0; i < length; ++i) {
+            char c = myName.charAt(i);
+            if (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1]) {
+              patternIndex += 2;
+              if (patternIndex >= myMeaningfulCharacters.length) {
+                break;
+              }
+            }
           }
         }
         if (patternIndex < myMinNameLength * 2) {
@@ -336,7 +343,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
           patternIndex - 2, errorState)))) {
           int spaceIndex = myName.indexOf(' ', nameIndex);
           if (spaceIndex >= 0) {
-            return FList.<TextRange>emptyList().prepend(new Range(spaceIndex, spaceIndex + 1, 0));
+            return FList.singleton(new Range(spaceIndex, spaceIndex + 1, 0));
           }
           return null;
         }
@@ -355,7 +362,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       return isPatternChar(patternLength(errorState) - 1, ' ', errorState);
     }
 
-    private boolean isUpperCaseOrDigit(char p) {
+    private static boolean isUpperCaseOrDigit(char p) {
       return Character.isUpperCase(p) || Character.isDigit(p);
     }
 
@@ -428,9 +435,9 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
     private boolean charEquals(int patternIndex, int nameIndex, boolean isIgnoreCase, boolean allowTypos, @NotNull ErrorState errorState) {
       char patternChar = charAt(patternIndex, errorState);
       char nameChar = myName.charAt(nameIndex);
+      int length = myName.length();
 
-      if (patternChar == nameChar ||
-          isIgnoreCase && (toLowerCase(patternIndex, errorState) == nameChar || toUpperCase(patternIndex, errorState) == nameChar)) {
+      if (patternChar == nameChar || isIgnoreCase && equalsIgnoreCase(patternIndex, errorState, nameChar)) {
         return true;
       }
 
@@ -445,7 +452,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       char leftMiss = leftMiss(patternChar);
       if (leftMiss != 0) {
         if (leftMiss == nameChar ||
-            isIgnoreCase && (toLowerAscii(leftMiss) == nameChar || toUpperAscii(leftMiss) == nameChar)) {
+            isIgnoreCase && (AsciiUtils.toLowerAscii(leftMiss) == nameChar || AsciiUtils.toUpperAscii(leftMiss) == nameChar)) {
           errorState.addError(patternIndex, new TypoError(leftMiss));
           return true;
         }
@@ -454,27 +461,27 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       char rightMiss = rightMiss(patternChar);
       if (rightMiss != 0) {
         if (rightMiss == nameChar ||
-            isIgnoreCase && (toLowerAscii(rightMiss) == nameChar || toUpperAscii(rightMiss) == nameChar)) {
+            isIgnoreCase && (AsciiUtils.toLowerAscii(rightMiss) == nameChar || AsciiUtils.toUpperAscii(rightMiss) == nameChar)) {
           errorState.addError(patternIndex, new TypoError(rightMiss));
           return true;
         }
       }
 
-      if (patternLength(errorState) > patternIndex + 1 && myName.length() > nameIndex + 1) {
+      if (patternLength(errorState) > patternIndex + 1 && length > nameIndex + 1) {
         char nextNameChar = myName.charAt(nameIndex + 1);
         char nextPatternChar = charAt(patternIndex + 1, errorState);
 
-        if ((patternChar == nextNameChar || isIgnoreCase && (toLowerCase(patternIndex, errorState) == nextNameChar || toUpperCase(patternIndex, errorState) == nextNameChar)) &&
-            (nextPatternChar == nameChar || isIgnoreCase && (toLowerCase(patternIndex + 1, errorState) == nameChar || toUpperCase(patternIndex + 1, errorState) == nameChar))) {
+        if ((patternChar == nextNameChar || isIgnoreCase && equalsIgnoreCase(patternIndex, errorState, nextNameChar)) &&
+            (nextPatternChar == nameChar || isIgnoreCase && equalsIgnoreCase(patternIndex + 1, errorState, nameChar))) {
           errorState.addError(patternIndex, SwapError.instance);
           return true;
         }
       }
 
-      if (myName.length() > nameIndex + 1) {
+      if (length > nameIndex + 1) {
         char nextNameChar = myName.charAt(nameIndex + 1);
 
-        if (patternChar == nextNameChar || isIgnoreCase && (toLowerCase(patternIndex, errorState) == nextNameChar || toUpperCase(patternIndex, errorState) == nextNameChar)) {
+        if (patternChar == nextNameChar || isIgnoreCase && equalsIgnoreCase(patternIndex, errorState, nextNameChar)) {
           errorState.addError(patternIndex, new MissError(nameChar));
           return true;
         }
@@ -539,7 +546,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       if (patternIndex + fragmentLength >= patternLength(errorState)) {
         int errors = errorState.countErrors(patternIndex, patternIndex + fragmentLength);
         if (errors == fragmentLength) return null;
-        return FList.<TextRange>emptyList().prepend(new Range(nameIndex, nameIndex + fragmentLength, errors));
+        return FList.singleton(new Range(nameIndex, nameIndex + fragmentLength, errors));
       }
 
       // try to match the remainder of pattern with the remainder of name
@@ -608,7 +615,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       return true;
     }
 
-    private boolean hasCase(char patternChar) {
+    private static boolean hasCase(char patternChar) {
       return Character.isUpperCase(patternChar) || Character.isLowerCase(patternChar);
     }
 
@@ -623,7 +630,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       }
       int nextWordStart = startFrom;
       while (true) {
-        nextWordStart = nextWord(myName, nextWordStart);
+        nextWordStart = nextWord(myName, nextWordStart, isAsciiName);
         if (nextWordStart >= myName.length()) {
           return -1;
         }
@@ -636,14 +643,14 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
     private int indexOfIgnoreCase(int fromIndex, int patternIndex, @NotNull ErrorState errorState) {
       char p = charAt(patternIndex, errorState);
       if (isAsciiName && Strings.isAscii(p)) {
-        int i = indexIgnoringCaseAscii(fromIndex, patternIndex, p);
+        int i = indexIgnoringCaseAscii(fromIndex, p);
         if (i != -1) return i;
 
         if (myAllowTypos) {
-          int leftMiss = indexIgnoringCaseAscii(fromIndex, patternIndex, leftMiss(p));
+          int leftMiss = indexIgnoringCaseAscii(fromIndex, leftMiss(p));
           if (leftMiss != -1) return leftMiss;
 
-          int rightMiss = indexIgnoringCaseAscii(fromIndex, patternIndex, rightMiss(p));
+          int rightMiss = indexIgnoringCaseAscii(fromIndex, rightMiss(p));
           if (rightMiss != -1) return rightMiss;
         }
 
@@ -652,12 +659,12 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       return Strings.indexOfIgnoreCase(myName, p, fromIndex);
     }
 
-    private int indexIgnoringCaseAscii(int fromIndex, int patternIndex, char p) {
-      char pUpper = toUpperAscii(p);
-      char pLower = toLowerAscii(p);
+    private int indexIgnoringCaseAscii(int fromIndex, char p) {
+      char pUpper = AsciiUtils.toUpperAscii(p);
+      char pLower = AsciiUtils.toLowerAscii(p);
       for (int i = fromIndex; i < myName.length(); i++) {
         char c = myName.charAt(i);
-        if (c == p || toUpperAscii(c) == pUpper || toLowerAscii(c) == pLower) {
+        if (c == p || AsciiUtils.toUpperAscii(c) == pUpper || AsciiUtils.toLowerAscii(c) == pLower) {
           return i;
         }
       }
@@ -673,39 +680,20 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
     return false;
   }
 
-  private static char toUpperAscii(char c) {
-    if (c >= 'a' && c <= 'z') {
-      return (char)(c + ('A' - 'a'));
-    }
-    return c;
-  }
-
-  private static char toLowerAscii(char c) {
-    if (c >= 'A' && c <= 'Z') {
-      return (char)(c - ('A' - 'a'));
-    }
-    return c;
-  }
-
-  private static boolean isUpperAscii(char c) {
-    return 'A' <= c && c <= 'Z';
-  }
-
-  private static boolean isLowerAscii(char c) {
-    return 'a' <= c && c <= 'z';
-  }
-
   @Override
   public @NonNls String toString() {
     return "TypoTolerantMatcher{myPattern=" + new String(myPattern) + ", myOptions=" + myOptions + '}';
   }
-
+  
+  private record ErrorWithIndex(int index, Error error) {}
 
   private static class ErrorState {
     private final @Nullable ErrorState myBase;
     private final int myDeriveIndex;
-
-    private List<Pair<Integer, Error>> myErrors;
+    
+    private BitSet myAffected;
+    private int myAllAffectedAfter = Integer.MAX_VALUE;
+    private List<ErrorWithIndex> myErrors;
 
     private char[] myPattern;
 
@@ -724,12 +712,26 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     void addError(int index, @NotNull Error error) {
-      if (myErrors == null) myErrors = new SmartList<>();
-      Pair<Integer, Error> pair = Pair.create(index, error);
-      myErrors.add(pair);
+      if (myErrors == null) {
+        myErrors = new SmartList<>();
+        myAffected = new BitSet();
+      }
+      ErrorWithIndex errorWithIndex = new ErrorWithIndex(index, error);
+      myErrors.add(errorWithIndex);
+      updateAffected(index, error);
 
       if (myPattern != null) {
-        myPattern = applyError(myPattern, pair);
+        myPattern = applyError(myPattern, errorWithIndex);
+      }
+    }
+
+    private void updateAffected(int index, @NotNull Error error) {
+      myAffected.set(index);
+      if (error instanceof SwapError) {
+        myAffected.set(index + 1);
+      }
+      else if (error instanceof MissError) {
+        myAllAffectedAfter = Math.min(index, myAllAffectedAfter);
       }
     }
 
@@ -740,34 +742,14 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       }
 
       if (myErrors != null) {
-        for (Pair<Integer, Error> error : myErrors) {
-          if (start <= error.first && error.first < end) {
+        for (ErrorWithIndex error : myErrors) {
+          if (start <= error.index && error.index < end) {
             errors++;
           }
         }
       }
 
       return errors;
-    }
-
-    private boolean processErrors(int start, int end, Processor<? super Pair<Integer, Error>> processor) {
-      if (myBase != null && start < myDeriveIndex) {
-        if (!myBase.processErrors(start, myDeriveIndex, processor)) {
-          return false;
-        }
-      }
-
-      if (myErrors != null) {
-        for (Pair<Integer, Error> error : myErrors) {
-          if (start <= error.first && error.first < end) {
-            if (!processor.process(error)) {
-              return false;
-            }
-          }
-        }
-      }
-
-      return true;
     }
 
     public char getChar(char[] pattern, int index) {
@@ -784,8 +766,8 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       }
 
       if (myErrors != null) {
-        for (Pair<Integer, Error> error : myErrors) {
-          if (error.first < upToIndex) {
+        for (ErrorWithIndex error : myErrors) {
+          if (error.index < upToIndex) {
             pattern = applyError(pattern, error);
           }
         }
@@ -794,40 +776,37 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       return pattern;
     }
 
-    private static char[] applyError(char[] pattern, Pair<Integer, Error> error) {
-      if (error.second instanceof TypoError) {
-        pattern[error.first] = ((TypoError)error.second).myCorrectChar;
+    private static char[] applyError(char[] pattern, ErrorWithIndex error) {
+      if (error.error instanceof TypoError typoError) {
+        pattern[error.index] = typoError.correctChar;
         return pattern;
       }
-      else if (error.second instanceof SwapError) {
-        char c = pattern[error.first];
-        pattern[error.first] = pattern[error.first + 1];
-        pattern[error.first + 1] = c;
+      else if (error.error instanceof SwapError) {
+        int index = error.index;
+        char c = pattern[index];
+        pattern[index] = pattern[index + 1];
+        pattern[index + 1] = c;
         return pattern;
       }
-      else if (error.second instanceof MissError) {
-        return ArrayUtil.insert(pattern, error.first, ((MissError)error.second).myMissedChar);
+      else if (error.error instanceof MissError missError) {
+        return ArrayUtil.insert(pattern, error.index, missError.missedChar);
       }
 
       return pattern;
     }
 
     public boolean affects(final int index) {
-      return !processErrors(0, index + 1, error -> {
-        if (error.first == index) return false;
-        if (error.first == index - 1 && error.second == SwapError.instance) return false;
-        if (error.first < index) {
-          if (error.second instanceof MissError) return false;
-          //todo support extra
-        }
-        return true;
-      });
+      return localAffects(index) || (myBase != null && myBase.affects(index));
+    }
+
+    private boolean localAffects(int index) {
+      return index >= myAllAffectedAfter || myAffected != null && myAffected.get(index);
     }
 
     public Error getError(int i) {
-      if (myErrors != null) {
-        for (Pair<Integer, Error> error : myErrors) {
-          if (error.first == i) return error.second;
+      if (myErrors != null && myAffected.get(i)) {
+        for (ErrorWithIndex error : myErrors) {
+          if (error.index == i) return error.error;
         }
       }
 
@@ -837,40 +816,34 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
 
       return null;
     }
+    
+    private int numMisses(int end) {
+      int numMisses = 0;
+      if (myErrors != null && end > 0) {
+        for (ErrorWithIndex error : myErrors) {
+          if (error.index < end && error.error instanceof MissError) {
+            numMisses++;
+          }
+        }
+      }
+      return numMisses + (myBase == null ? 0 : myBase.numMisses(myDeriveIndex));
+    }
 
     public int length(char[] pattern) {
-      final Ref<Integer> ref = new Ref<>(pattern.length);
-      processErrors(0, Integer.MAX_VALUE, error -> {
-        if (error.second instanceof MissError) {
-          ref.set(ref.get() + 1);
-        }
-        return true;
-      });
-      return ref.get();
+      if (myPattern != null) {
+        return myPattern.length;
+      }
+      return pattern.length + numMisses(Integer.MAX_VALUE);
     }
   }
 
-  private interface Error { }
+  private sealed interface Error { }
 
-  private static class TypoError implements Error {
-    private final char myCorrectChar;
-
-    TypoError(char correctChar) {
-      myCorrectChar = correctChar;
-    }
-  }
-
-  private static class SwapError implements Error {
+  private record TypoError(char correctChar) implements Error {}
+  private record SwapError() implements Error {
     public static final SwapError instance = new SwapError();
   }
-
-  private static class MissError implements Error {
-    private final char myMissedChar;
-
-    MissError(char missedChar) {
-      myMissedChar = missedChar;
-    }
-  }
+  private record MissError(char missedChar) implements Error {}
 
   private static class Fragment {
     private final int myLength;
@@ -904,10 +877,6 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       if (delta == 0) return this;
       return new Range(getStartOffset() + delta, getEndOffset() + delta, getErrorCount());
     }
-
-    public static Range from(int from, int length) {
-      return new Range(from, from + length, 0);
-    }
   }
 
 
@@ -918,15 +887,15 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
   };
 
   private static char leftMiss(char aChar) {
-    boolean isUpperCase = isUpperAscii(aChar);
-    char lc = isUpperCase ? toLowerAscii(aChar) : aChar;
+    boolean isUpperCase = AsciiUtils.isUpperAscii(aChar);
+    char lc = isUpperCase ? AsciiUtils.toLowerAscii(aChar) : aChar;
 
     for (char[] line : keyboard) {
       for (int j = 0; j < line.length; j++) {
         char c = line[j];
         if (c == lc) {
           if (j > 0) {
-            return isUpperCase ? toUpperAscii(line[j - 1]) : line[j - 1];
+            return isUpperCase ? AsciiUtils.toUpperAscii(line[j - 1]) : line[j - 1];
           }
           else {
             return 0;
@@ -938,15 +907,15 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
   }
 
   private static char rightMiss(char aChar) {
-    boolean isUpperCase = isUpperAscii(aChar);
-    char lc = isUpperCase ? toLowerAscii(aChar) : aChar;
+    boolean isUpperCase = AsciiUtils.isUpperAscii(aChar);
+    char lc = isUpperCase ? AsciiUtils.toLowerAscii(aChar) : aChar;
 
     for (char[] line : keyboard) {
       for (int j = 0; j < line.length; j++) {
         char c = line[j];
         if (c == lc) {
           if (j + 1 < line.length) {
-            return isUpperCase ? toUpperAscii(line[j + 1]) : line[j + 1];
+            return isUpperCase ? AsciiUtils.toUpperAscii(line[j + 1]) : line[j + 1];
           }
           else {
             return 0;

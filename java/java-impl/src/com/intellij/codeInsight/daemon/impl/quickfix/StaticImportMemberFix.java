@@ -54,8 +54,8 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
     }
     else {
       // search for suitable candidates here, in the background thread
-      List<T> applicableCandidates = getMembersToImport(true, 100);
-      List<T> candidatesToImport = applicableCandidates.isEmpty() ? getMembersToImport(false, 2) : applicableCandidates;
+      StaticMembersProcessor.MembersToImport<T> membersToImport = getMembersToImport(100);
+      List<T> candidatesToImport = membersToImport.applicable().isEmpty() ? membersToImport.all() : membersToImport.applicable();
       candidates = ContainerUtil.filter(candidatesToImport, candidate -> isValidCandidate(file, candidate));
     }
     myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
@@ -87,6 +87,9 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
   @NotNull
   protected abstract @NlsSafe String getMemberPresentableText(@NotNull T t);
 
+  @NotNull
+  protected abstract @NlsSafe String getMemberKindPresentableText();
+
   @Override
   @NotNull
   public String getText() {
@@ -110,7 +113,7 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
   }
 
   @NotNull
-  abstract List<T> getMembersToImport(boolean applicableOnly, int maxResults);
+  abstract StaticMembersProcessor.MembersToImport<T> getMembersToImport(int maxResults);
 
   abstract boolean toAddStaticImports();
 
@@ -172,7 +175,8 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
         && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
       TextRange textRange = callExpression.getTextRange();
       QuestionAction action = createQuestionAction(candidates, containingFile.getProject(), editor);
-      String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(firstCandidate));
+      String hintText =
+        ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberKindPresentableText(), getMemberPresentableText(firstCandidate));
       HintManager.getInstance().showQuestionHint(editor, hintText,
                                                  textRange.getStartOffset(),
                                                  textRange.getEndOffset(), action);

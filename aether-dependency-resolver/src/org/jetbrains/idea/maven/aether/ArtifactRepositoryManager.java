@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
+import com.intellij.openapi.application.ClassPathUtil;
+import com.intellij.util.ArrayUtil;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.eclipse.aether.DefaultRepositorySystemSession;
-import org.eclipse.aether.DefaultSessionData;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.*;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
@@ -37,11 +36,9 @@ import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.eclipse.aether.util.repository.SimpleResolutionErrorPolicy;
 import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.io.File;
 import java.util.*;
@@ -51,12 +48,12 @@ import java.util.stream.Collectors;
  * Aether-based repository manager and dependency resolver using maven implementation of this functionality.
  * <p>
  * instance of this component should be managed by the code which requires dependency resolution functionality
- * all necessary params like path to local repo should be passed in constructor
+ * all necessary params like a path to local repo should be passed in constructor
  */
 public final class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
-  private static final Logger LOG = LoggerFactory.getLogger(ArtifactRepositoryManager.class);
+  private static final Logger LOG = Logger.getInstance(ArtifactRepositoryManager.class);
   private final RepositorySystemSessionFactory mySessionFactory;
 
   private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
@@ -113,11 +110,6 @@ public final class ArtifactRepositoryManager {
     mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline, retry);
   }
 
-  @ApiStatus.Internal
-  public boolean isValidArchive(File archive) {
-    var localRepositoryManager = mySessionFactory.sessionTemplate.getLocalRepositoryManager();
-    return ((StrictLocalRepositoryManager) localRepositoryManager).isValidArchive(archive);
-  }
 
   private static final class RepositorySystemSessionFactory {
     private final RepositorySystemSession sessionTemplate;
@@ -163,7 +155,7 @@ public final class ArtifactRepositoryManager {
         });
       }
       // setup session here
-      session.setLocalRepositoryManager(new StrictLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath))));
+      session.setLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
       session.setProxySelector(ourProxySelector);
       session.setOffline(offline);
 
@@ -173,6 +165,8 @@ public final class ArtifactRepositoryManager {
       var artifactCachePolicy = ResolutionErrorPolicy.CACHE_NOT_FOUND;
       var metadataCachePolicy = ResolutionErrorPolicy.CACHE_NOT_FOUND;
       session.setResolutionErrorPolicy(new SimpleResolutionErrorPolicy(artifactCachePolicy, metadataCachePolicy));
+
+      session.setCache(new DefaultRepositoryCache());
 
       session.setReadOnly();
       sessionTemplate = session;
@@ -262,7 +256,7 @@ public final class ArtifactRepositoryManager {
    */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
   public static Class<?>[] getClassesFromDependencies() {
-    return new Class<?>[]{
+    var result = new ArrayList<>(List.of(
       org.jetbrains.idea.maven.aether.ArtifactRepositoryManager.class, //this module
       org.apache.maven.repository.internal.VersionsMetadataGeneratorFactory.class, //maven-aether-provider
       org.apache.maven.artifact.Artifact.class, //maven-artifact
@@ -283,9 +277,13 @@ public final class ArtifactRepositoryManager {
       org.apache.http.HttpConnection.class, //http-core
       org.apache.http.client.HttpClient.class, //http-client
       org.apache.commons.logging.LogFactory.class, // commons-logging
-      org.slf4j.Marker.class, // slf4j
+      org.slf4j.Marker.class, // slf4j, - required for aether resolver at runtime
+      org.slf4j.jul.JDK14LoggerFactory.class, // slf4j-jdk14 - required for aether resolver at runtime
       org.apache.commons.codec.binary.Base64.class // commons-codec
-    };
+    ));
+    result.addAll(List.of(ClassPathUtil.getUtilClasses())); // intellij.platform.util module
+
+    return result.toArray(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 
   public @NotNull Collection<File> resolveDependency(String groupId,
@@ -332,7 +330,7 @@ public final class ArtifactRepositoryManager {
     VersionConstraint originalConstraints = asVersionConstraint(versionConstraint);
     for (ArtifactKind kind : artifactKinds) {
       // RepositorySystem.resolveDependencies() ignores classifiers, so we need to set classifiers explicitly for discovered dependencies.
-      // Because of that we have to first discover deps and then resolve corresponding artifacts
+      // Because of that, we have to first discover deps and then resolve corresponding artifacts
       try {
         List<ArtifactRequest> requests = new ArrayList<>();
         Set<VersionConstraint> constraints;
@@ -342,6 +340,14 @@ public final class ArtifactRepositoryManager {
           constraints = Collections.singleton(originalConstraints);
         }
         RepositorySystemSession session = prepareRequests(groupId, artifactId, constraints, kind, includeTransitiveDependencies, excludedDependencies, requests);
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Resolving " + groupId + ":" + artifactId + ":" + versionConstraint +
+                    " transitiveDependencies=" + includeTransitiveDependencies +
+                    " excludedDependencies=" + excludedDependencies +
+                    " kind=" + kind +
+                    " requests=" + requests);
+        }
 
         if (!requests.isEmpty()) {
           try {
@@ -356,7 +362,7 @@ public final class ArtifactRepositoryManager {
           }
           catch (ArtifactResolutionException e) {
             if (kind != ArtifactKind.ARTIFACT) {
-              // for sources and javadocs try to process requests one-by-one and fetch at least something
+              // for sources and javadocs, try to process requests one-by-one and fetch at least something
               if (requests.size() > 1) {
                 for (ArtifactRequest request : requests) {
                   try {
@@ -457,7 +463,7 @@ public final class ArtifactRepositoryManager {
    * Modify version constraint to look for applicable "annotations" artifact.
    * <p>
    * "Annotations" artifact for a given library is matched by Group ID, Artifact ID, and classifier "annotations".
-   * "Annotations" version is selected using following rules:
+   * "Annotations" version is selected using the following rules:
    * <ul>
    *   <li>it is larger or equal to major component of library version (or lower constraint bound).
    *   E.g., annotations artifact ver 3.1 is applicable to library ver 3.6.5 (3.1 > 3.0)</li>
@@ -465,7 +471,7 @@ public final class ArtifactRepositoryManager {
    *   E.g., annotations artifact ver 3.2-an3 is applicable to library ver 3.2</li>
    * </ul>
    * This allows to re-use existing annotations artifacts across different library versions
-   * @param constraint - version or range constraint of original library
+   * @param constraint - version or range constraint of an original library
    * @return resulting relaxed constraint to select "annotations" artifact.
    */
   private static Set<VersionConstraint> relaxForAnnotations(VersionConstraint constraint) {

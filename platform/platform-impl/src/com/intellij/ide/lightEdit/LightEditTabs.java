@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.icons.AllIcons;
@@ -19,10 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -35,6 +32,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.BitUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +86,8 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void addEditorTab(@NotNull LightEditorInfo editorInfo, int index) {
-    EditorComposite editorContainer = ((LightEditFileEditorManagerImpl)FileEditorManager.getInstance(myProject)).createEditorComposite(editorInfo);
+    LightEditFileEditorManagerImpl fileEditorManager = (LightEditFileEditorManagerImpl)FileEditorManager.getInstance(myProject);
+    EditorComposite editorContainer = fileEditorManager.createEditorComposite(editorInfo);
     TabInfo tabInfo = new TabInfo(editorContainer.getComponent())
       .setText(editorInfo.getFile().getPresentableName())
       .setIcon(getFileTypeIcon(editorInfo));
@@ -103,6 +102,9 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     select(tabInfo, true);
     asyncUpdateTab(tabInfo);
     myEditorManager.fireEditorSelected(editorInfo);
+    myProject.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(
+      fileEditorManager, editorInfo.getFile()
+    );
   }
 
   @Override
@@ -288,9 +290,8 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   private record TabEditorData(@NotNull LightEditorInfo editorInfo, @NotNull EditorComposite editorComposite) {
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
@@ -308,7 +309,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void asyncUpdateTab(@NotNull TabInfo tabInfo) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LightEditorInfo editorInfo = getEditorInfo(tabInfo);
     if (editorInfo == null) return;
     EditorNotifications.getInstance(myProject).updateNotifications(editorInfo.getFile());
@@ -333,8 +334,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     tabInfo.setTabColor(tabInfo == getSelectedInfo() ? attributes.getBackgroundColor() : null);
   }
 
-  @NotNull
-  private static TextAttributes calcAttributes(@NotNull LightEditorInfo editorInfo) {
+  private static @NotNull TextAttributes calcAttributes(@NotNull LightEditorInfo editorInfo) {
     TextAttributes attributes = new TextAttributes();
     attributes.setBackgroundColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     LightEditTabAttributesProvider.EP_NAME.getExtensionList().forEach(
@@ -367,14 +367,12 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     });
   }
 
-  @Nullable
-  private static LightEditorInfo getEditorInfo(@NotNull TabInfo tabInfo) {
+  private static @Nullable LightEditorInfo getEditorInfo(@NotNull TabInfo tabInfo) {
     Object data = tabInfo.getObject();
     return data instanceof TabEditorData ? ((TabEditorData)data).editorInfo : null;
   }
 
-  @Nullable
-  private TabInfo findTabInfo(@NotNull LightEditorInfo editorInfo) {
+  private @Nullable TabInfo findTabInfo(@NotNull LightEditorInfo editorInfo) {
     for (TabInfo tabInfo : getTabs()) {
       final Object data = tabInfo.getObject();
       if (data instanceof TabEditorData && ((TabEditorData)data).editorInfo.equals(editorInfo)) {
@@ -384,8 +382,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     return null;
   }
 
-  @Nullable
-  public EditorComposite findEditorComposite(@NotNull FileEditor fileEditor) {
+  public @Nullable EditorComposite findEditorComposite(@NotNull FileEditor fileEditor) {
     VirtualFile virtualFile = fileEditor.getFile();
     if (virtualFile != null) {
       for (TabInfo tabInfo : getTabs()) {

@@ -24,25 +24,25 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
 
-const val fileNameMarkerPrefix = "TestFoo"
+const val fileNameMarkerPrefix: String = "TestFoo"
 
 @RunsInEdt
 class MultiProjectIndexTest {
   @Rule
   @JvmField
-  val tempDir = TempDirectory()
+  val tempDir: TempDirectory = TempDirectory()
 
   @Rule
   @JvmField
-  val disposable = DisposableRule()
+  val disposable: DisposableRule = DisposableRule()
 
   @Rule
   @JvmField
-  val appRule = ApplicationRule()
+  val appRule: ApplicationRule = ApplicationRule()
 
   @Rule
   @JvmField
-  val runInEdt = EdtRule()
+  val runInEdt: EdtRule = EdtRule()
 
   @Test
   fun `test index extension process files intersection`() {
@@ -92,9 +92,9 @@ class MultiProjectIndexTest {
 
 @InternalIgnoreDependencyViolation
 internal class CountingTestExtension : FileBasedIndexInfrastructureExtension {
-  val stubCounter = AtomicInteger()
-  val trigramCounter = AtomicInteger()
-  val commonBundledFileCounter = AtomicInteger()
+  val stubCounter: AtomicInteger = AtomicInteger()
+  val trigramCounter: AtomicInteger = AtomicInteger()
+  val commonBundledFileCounter: AtomicInteger = AtomicInteger()
 
   override fun createFileIndexingStatusProcessor(project: Project): FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor {
     return object : FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor {
@@ -126,18 +126,20 @@ internal class CountingTestExtension : FileBasedIndexInfrastructureExtension {
     return baseIndex
   }
 
-  override fun onFileBasedIndexVersionChanged(indexId: ID<*, *>) = Unit
+  override fun onFileBasedIndexVersionChanged(indexId: ID<*, *>) {}
 
-  override fun onStubIndexVersionChanged(indexId: StubIndexKey<*, *>) = Unit
+  override fun onStubIndexVersionChanged(indexId: StubIndexKey<*, *>) {}
 
   override fun initialize(indexLayoutId: String?): FileBasedIndexInfrastructureExtension.InitializationResult =
     FileBasedIndexInfrastructureExtension.InitializationResult.SUCCESSFULLY
 
-  override fun resetPersistentState() = Unit
+  override fun attachData(project: Project) {}
 
-  override fun resetPersistentState(indexId: ID<*, *>) = Unit
+  override fun resetPersistentState() {}
 
-  override fun shutdown() = Unit
+  override fun resetPersistentState(indexId: ID<*, *>) {}
+
+  override fun shutdown() {}
 
   override fun getVersion(): Int = 0
 

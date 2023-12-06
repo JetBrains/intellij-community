@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -204,9 +204,8 @@ final class UndoableGroup implements Dumpable {
     }
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return "UndoableGroup[project=" + myProject + ", name=" + myCommandName + ", global=" + myGlobal + ", transparent=" + myTransparent +
            ", stamp=" + myCommandTimestamp + ", policy=" + myConfirmationPolicy + ", temporary=" + myTemporary + ", valid=" + myValid +
            ", actions=" + myActions + ", documents=" + getAffectedDocuments() + "]";
@@ -339,16 +338,14 @@ final class UndoableGroup implements Dumpable {
     return myConfirmationPolicy;
   }
 
-  @Nullable
-  private StartMarkAction getStartMark() {
+  private @Nullable StartMarkAction getStartMark() {
     for (UndoableAction action : myActions) {
       if (action instanceof StartMarkAction) return (StartMarkAction)action;
     }
     return null;
   }
 
-  @Nullable
-  private FinishMarkAction getFinishMark() {
+  private @Nullable FinishMarkAction getFinishMark() {
     for (UndoableAction action : myActions) {
       if (action instanceof FinishMarkAction) return (FinishMarkAction)action;
     }
@@ -393,7 +390,7 @@ final class UndoableGroup implements Dumpable {
     return result.toString();
   }
 
-  static class UndoableGroupOriginalContext {
+  static final class UndoableGroupOriginalContext {
     private final UndoableGroup myOriginalGroup;
     private final UndoableGroup myCurrentStackGroup;
 

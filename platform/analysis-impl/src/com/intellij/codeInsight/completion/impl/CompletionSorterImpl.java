@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.CompletionSorter;
@@ -31,7 +31,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     };
   }
 
-  @Override public CompletionSorterImpl weighBefore(@NotNull final String beforeId, LookupElementWeigher... weighers) {
+  @Override public CompletionSorterImpl weighBefore(final @NotNull String beforeId, LookupElementWeigher... weighers) {
     if (weighers.length == 0) return this;
 
     CompletionSorterImpl result = this;
@@ -41,7 +41,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     return result;
   }
 
-  @Override public CompletionSorterImpl weighAfter(@NotNull final String afterId, LookupElementWeigher... weighers) {
+  @Override public CompletionSorterImpl weighAfter(final @NotNull String afterId, LookupElementWeigher... weighers) {
     if (weighers.length == 0) return this;
 
     CompletionSorterImpl result = this;

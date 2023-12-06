@@ -3,16 +3,16 @@
 <p>Reports calls to the <code>set</code> function that can be replaced with
   the <code>set</code> literal.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 def do_mult(a, b):
     c = a * b
     return set([c, a, b])
-</pre>
+</code></pre>
 <p>When the quick-fix is applied, the code changes to:</p>
-<pre style="font-family: monospace">
+<pre><code>
 def do_mult(a, b):
     c = a * b
     return {c, a, b}
-</pre>
+</code></pre>
 </body>
 </html>

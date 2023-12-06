@@ -13,5 +13,5 @@ public final class TomlIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, TomlIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon TomlFile = load("icons/toml-file.svg", 508258598, 2);
+  /** 16x16 */ public static final @NotNull Icon TomlFile = load("icons/toml-file.svg", -1826996194, 2);
 }

@@ -15,3 +15,5 @@ fun test() {
     val t = Test()
     t.foo(<caret>ArrayList)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+/* IGNORE_K2 */

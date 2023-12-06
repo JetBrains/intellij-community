@@ -2,13 +2,16 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
-import org.jetbrains.kotlin.asJava.classes.*
+import org.jetbrains.kotlin.asJava.classes.KtUltraLightSupport
+import org.jetbrains.kotlin.asJava.classes.cleanFromAnonymousTypes
+import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.asJava.classes.tryGetPredefinedName
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
@@ -49,12 +52,15 @@ class IDELightClassGenerationSupport : LightClassGenerationSupport() {
         override fun possiblyHasAlias(file: KtFile, shortName: Name): Boolean =
             allAliases(file)[shortName.asString()] == true
 
-        private fun allAliases(file: KtFile): ConcurrentMap<String, Boolean> = CachedValuesManager.getCachedValue(file) {
-            val importAliases = file.importDirectives.mapNotNull { it.aliasName }.toSet()
-            val map = ConcurrentFactoryMap.createMap<String, Boolean> { s ->
-                s in importAliases || KotlinTypeAliasShortNameIndex.get(s, file.project, file.resolveScope).isNotEmpty()
+        private fun allAliases(file: KtFile): ConcurrentMap<String, Boolean> {
+            val project = file.project
+            return CachedValuesManager.getCachedValue(file) {
+                val importAliases = file.importDirectives.mapNotNull { it.aliasName }.toSet()
+                val map = ConcurrentFactoryMap.createMap<String, Boolean> { s ->
+                    s in importAliases || KotlinTypeAliasShortNameIndex.get(s, project, file.resolveScope).isNotEmpty()
+                }
+                Result.create<ConcurrentMap<String, Boolean>>(map, OuterModelsModificationTrackerManager.getTracker(project))
             }
-            CachedValueProvider.Result.create<ConcurrentMap<String, Boolean>>(map, PsiModificationTracker.MODIFICATION_COUNT)
         }
 
         @OptIn(FrontendInternals::class)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.Disposable;
@@ -14,8 +14,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 public final class ModalityStateEx extends ModalityState {
@@ -32,13 +34,11 @@ public final class ModalityStateEx extends ModalityState {
     myModalEntities.addAll(modalEntities);
   }
 
-  @NotNull
-  private List<@NotNull Object> getModalEntities() {
+  private @NotNull List<@NotNull Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 
-  @NotNull
-  public ModalityState appendProgress(@NotNull ProgressIndicator progress){
+  public @NotNull ModalityState appendProgress(@NotNull ProgressIndicator progress){
     return appendEntity(progress);
   }
 
@@ -87,8 +87,8 @@ public final class ModalityStateEx extends ModalityState {
     }
   }
 
-  @NonNls
-  public String toString() {
+  @SuppressWarnings("deprecation")
+  public @NonNls String toString() {
     return this == NON_MODAL
            ? "ModalityState.NON_MODAL"
            : "ModalityState:{" + StringUtil.join(getModalEntities(), it -> "[" + it + "]", ", ") + "}";

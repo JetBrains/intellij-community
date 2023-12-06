@@ -19,14 +19,13 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertSdk
-import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm.GradleJvmResolver
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
-import org.jetbrains.plugins.gradle.util.isSupported
-import org.jetbrains.plugins.gradle.util.waitForProjectReload
+import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleProjectReload
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
@@ -52,30 +51,22 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
   }
 
   fun loadProject() {
-    waitForProjectReload {
+    waitForAnyGradleProjectReload {
       linkAndRefreshGradleProject(projectPath, myProject)
     }
   }
 
   fun reloadProject() {
-    waitForProjectReload {
+    waitForAnyGradleProjectReload {
       val importSpec = ImportSpecBuilder(myProject, externalSystemId)
       ExternalSystemUtil.refreshProject(projectPath, importSpec)
     }
   }
 
-  fun findRealTestSdk(): TestSdk? {
-    val jdkType = JavaSdk.getInstance()
-    val jdkInfo = jdkType.suggestHomePaths().asSequence()
-      .map { createSdkInfo(jdkType, it) }
-      .filter { ExternalSystemJdkUtil.isValidJdk(it.homePath) }
-      .filter { isSupported(currentGradleVersion, it.versionString) }
-      .firstOrNull()
-    if (jdkInfo == null) {
-      LOG.warn("Cannot find test JDK for Gradle $currentGradleVersion")
-      return null
-    }
-    return TestSdkGenerator.createTestSdk(jdkInfo)
+  fun resolveRealTestSdk(): Sdk {
+    val homePath = GradleJvmResolver.resolveGradleJvmHomePath(currentGradleVersion)
+    val sdkInfo = createSdkInfo(JavaSdk.getInstance(), homePath)
+    return TestSdkGenerator.createTestSdk(sdkInfo)
   }
 
   private fun createSdkInfo(sdkType: SdkType, homePath: String): TestSdkGenerator.SdkInfo {
@@ -84,19 +75,19 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     return TestSdkGenerator.SdkInfo(name, versionString, homePath)
   }
 
-  fun assertSdks(sdk: TestSdk?, vararg moduleNames: String, isAssertSdkName: Boolean = true) {
+  fun assertSdks(sdk: Sdk?, vararg moduleNames: String, isAssertSdkName: Boolean = true) {
     assertProjectSdk(sdk, isAssertSdkName)
     for (moduleName in moduleNames) {
       assertModuleSdk(moduleName, sdk, isAssertSdkName)
     }
   }
 
-  private fun assertProjectSdk(sdk: TestSdk?, isAssertSdkName: Boolean) {
+  private fun assertProjectSdk(sdk: Sdk?, isAssertSdkName: Boolean) {
     val projectSdk = getSdkForProject()
     assertSdk(sdk, projectSdk, isAssertSdkName)
   }
 
-  private fun assertModuleSdk(moduleName: String, sdk: TestSdk?, isAssertSdkName: Boolean) {
+  private fun assertModuleSdk(moduleName: String, sdk: Sdk?, isAssertSdkName: Boolean) {
     val moduleSdk = getSdkForModule(moduleName)
     assertSdk(sdk, moduleSdk, isAssertSdkName)
   }
@@ -118,7 +109,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     }
   }
 
-  fun withProjectSdk(sdk: TestSdk, action: () -> Unit) {
+  fun withProjectSdk(sdk: Sdk, action: () -> Unit) {
     val projectRootManager = ProjectRootManager.getInstance(myProject)
     val projectSdk = projectRootManager.projectSdk
     setProjectSdk(sdk)

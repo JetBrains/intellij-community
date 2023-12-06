@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -29,12 +28,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-final class WolfListeners implements Disposable {
+final class WolfListeners {
   private final Project myProject;
   private final WolfTheProblemSolverImpl myWolfTheProblemSolver;
-  private final MergingUpdateQueue invalidateFileQueue = new MergingUpdateQueue("WolfListeners.invalidateFileQueue", 0, true, null, this, null, false);
+  private final MergingUpdateQueue invalidateFileQueue;
 
   WolfListeners(@NotNull Project project, @NotNull WolfTheProblemSolverImpl wolfTheProblemSolver) {
+    invalidateFileQueue = new MergingUpdateQueue("WolfListeners.invalidateFileQueue", 0, true, null, wolfTheProblemSolver, null, false);
+
     myProject = project;
     myWolfTheProblemSolver = wolfTheProblemSolver;
     PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
@@ -67,7 +68,7 @@ final class WolfListeners implements Disposable {
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         myWolfTheProblemSolver.clearSyntaxErrorFlag(event);
       }
-    }, this);
+    }, wolfTheProblemSolver);
     var busConnection = project.getMessageBus().simpleConnect();
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -129,10 +130,6 @@ final class WolfListeners implements Disposable {
       }));
       return true;
     });
-  }
-
-  @Override
-  public void dispose() {
   }
 
   @TestOnly

@@ -8,12 +8,13 @@ import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.ui.split.SplitTextEditorProvider
+import org.jdom.Attribute
 import org.jdom.DataConversionException
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class MarkdownSplitEditorProvider: SplitTextEditorProvider(PsiAwareTextEditorProvider(), MarkdownPreviewFileEditorProvider()) {
+class MarkdownSplitEditorProvider : SplitTextEditorProvider(PsiAwareTextEditorProvider(), MarkdownPreviewFileEditorProvider()) {
   override fun createSplitEditor(firstEditor: FileEditor, secondEditor: FileEditor): FileEditor {
     require(firstEditor is TextEditor) { "Main editor should be TextEditor" }
     require(secondEditor is MarkdownPreviewFileEditor) { "Secondary editor should be MarkdownPreviewFileEditor" }
@@ -22,15 +23,16 @@ class MarkdownSplitEditorProvider: SplitTextEditorProvider(PsiAwareTextEditorPro
 
   override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
     val underlyingState = readUnderlyingState(sourceElement, project, file)
-    val isVerticalSplit = sourceElement.getAttribute(VERTICAL_SPLIT)?.let {
-      try {
-        it.booleanValue
-      }
-      catch (ignored: DataConversionException) {
-        false
-      }
-    } ?: false
+    val isVerticalSplit = sourceElement.getAttribute(VERTICAL_SPLIT)?.booleanValue(false) ?: false
     return MarkdownEditorWithPreviewState(underlyingState, isVerticalSplit)
+  }
+
+  private fun Attribute.booleanValue(default: Boolean): Boolean {
+    try {
+      return booleanValue
+    } catch (ignored: DataConversionException) {
+      return default
+    }
   }
 
   override fun writeState(state: FileEditorState, project: Project, targetElement: Element) {
@@ -42,14 +44,7 @@ class MarkdownSplitEditorProvider: SplitTextEditorProvider(PsiAwareTextEditorPro
 
   private fun readLayoutState(sourceElement: Element, project: Project, file: VirtualFile): TextEditorWithPreview.Layout? {
     val value = readSplitLayoutState(sourceElement, project, file)
-    if (value != null) {
-      try {
-        return TextEditorWithPreview.Layout.valueOf(value)
-      }
-      catch (ignored: IllegalArgumentException) {
-      }
-    }
-    return null
+    return TextEditorWithPreview.Layout.entries.find { it.name == value }
   }
 
   private fun readUnderlyingState(sourceElement: Element, project: Project, file: VirtualFile): TextEditorWithPreview.MyFileEditorState {
@@ -61,7 +56,7 @@ class MarkdownSplitEditorProvider: SplitTextEditorProvider(PsiAwareTextEditorPro
 
   private fun writeSplitLayoutState(layout: TextEditorWithPreview.Layout?, project: Project, targetElement: Element) {
     val value = layout?.name ?: return
-    writeSplitLayoutState(value, project, targetElement)
+    writeSplitLayoutState(value, targetElement)
   }
 
   private fun writeUnderlyingState(state: FileEditorState, project: Project, targetElement: Element) {

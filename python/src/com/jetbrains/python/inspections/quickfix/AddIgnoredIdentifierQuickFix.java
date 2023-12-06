@@ -2,9 +2,9 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -14,7 +14,7 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import org.jetbrains.annotations.NotNull;
 
 
-public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityAction {
+public class AddIgnoredIdentifierQuickFix extends ModCommandQuickFix implements LowPriorityAction {
 
   @NotNull private final QualifiedName myIdentifier;
   private final boolean myIgnoreAllAttributes;
@@ -42,21 +42,13 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement context = descriptor.getPsiElement();
-    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
-      PyUnresolvedReferencesInspection inspection =
-        (PyUnresolvedReferencesInspection)model.getUnwrappedTool(PyUnresolvedReferencesInspection.class.getSimpleName(), context);
+    return ModCommand.updateInspectionOption(context, new PyUnresolvedReferencesInspection(), inspection -> {
       String name = myIdentifier.toString();
       if (myIgnoreAllAttributes) {
         name += PyNames.END_WILDCARD;
       }
-      assert inspection != null;
       if (!inspection.ignoredIdentifiers.contains(name)) {
         inspection.ignoredIdentifiers.add(name);
       }

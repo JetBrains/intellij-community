@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +14,8 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
@@ -22,7 +24,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 
-public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
+public final class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private static final Logger LOG = Logger.getInstance(FileBasedArtifactRootDescriptor.class);
   private final FileCopyingHandler myCopyingHandler;
 
@@ -80,7 +82,15 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
       if (logger.isEnabled()) {
         logger.logCompiledFiles(Collections.singletonList(file), IncArtifactBuilder.BUILDER_ID, "Copying file:");
       }
-      myCopyingHandler.copyFile(file, targetFile, context);
+
+      try {
+        myCopyingHandler.copyFile(file, targetFile, context);
+      }
+      catch (IOException e) {
+        context.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
+        return;
+      }
+
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(filePath));
     }
     else if (LOG.isDebugEnabled()) {
@@ -89,7 +99,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     outSrcMapping.appendData(targetPath, rootIndex, filePath);
   }
 
-  private static class CompositeSourceFileFilter extends SourceFileFilter {
+  private static final class CompositeSourceFileFilter extends SourceFileFilter {
     private final SourceFileFilter myBaseFilter;
     private final FileFilter myFilter;
 

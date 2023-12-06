@@ -1,42 +1,32 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 
-@ApiStatus.Experimental
-abstract class SerializablePersistentStateComponent<T : Any> protected constructor(private var state: T)
-  : PersistentStateComponentWithModificationTracker<T> {
-
+/**
+ * Use the updateState() method to atomically change the persistent state
+ */
+abstract class SerializablePersistentStateComponent<T : Any>(private var state: T) : PersistentStateComponentWithModificationTracker<T> {
   companion object {
-
     private val STATE_HANDLE: VarHandle
     private val TIMESTAMP_HANDLE: VarHandle
 
     init {
-      try {
-        val lookup = MethodHandles.privateLookupIn(
-          /* targetClass = */ SerializablePersistentStateComponent::class.java,
-          /* caller = */ MethodHandles.lookup(),
-        )
-        STATE_HANDLE = lookup.findVarHandle(
-          /* recv = */ SerializablePersistentStateComponent::class.java,
-          /* name = */ "state",
-          /* type = */ Any::class.java,
-        )
-        TIMESTAMP_HANDLE = lookup.findVarHandle(
-          /* recv = */ SerializablePersistentStateComponent::class.java,
-          /* name = */ "timestamp",
-          /* type = */ Long::class.javaPrimitiveType,
-        )
-      }
-      catch (e: ReflectiveOperationException) {
-        Logger.getInstance(SerializablePersistentStateComponent::class.java).error(e)
-        throw ExtensionNotApplicableException.create()
-      }
+      val lookup = MethodHandles.privateLookupIn(
+        /* targetClass = */ SerializablePersistentStateComponent::class.java,
+        /* caller = */ MethodHandles.lookup(),
+      )
+      STATE_HANDLE = lookup.findVarHandle(
+        /* recv = */ SerializablePersistentStateComponent::class.java,
+        /* name = */ "state",
+        /* type = */ Any::class.java,
+      )
+      TIMESTAMP_HANDLE = lookup.findVarHandle(
+        /* recv = */ SerializablePersistentStateComponent::class.java,
+        /* name = */ "timestamp",
+        /* type = */ Long::class.javaPrimitiveType,
+      )
     }
 
     @PublishedApi
@@ -58,7 +48,7 @@ abstract class SerializablePersistentStateComponent<T : Any> protected construct
     STATE_HANDLE.setVolatile(this, newState)
   }
 
-  final override fun loadState(state: T) {
+  override fun loadState(state: T) {
     setState(state)
   }
 

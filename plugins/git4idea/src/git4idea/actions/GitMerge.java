@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.repo.Repository;
@@ -40,14 +26,12 @@ import static git4idea.GitNotificationIdsHolder.MERGE_FAILED;
 public class GitMerge extends GitMergeAction {
 
   @Override
-  @NotNull
-  protected String getActionName() {
+  protected @NotNull String getActionName() {
     return GitBundle.message("merge.action.name");
   }
 
-  @Nullable
   @Override
-  protected DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
+  protected @Nullable DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
     final GitMergeDialog dialog = new GitMergeDialog(project, defaultRoot, gitRoots);
     if (!dialog.showAndGet()) {
       return null;
@@ -65,8 +49,7 @@ public class GitMerge extends GitMergeAction {
     return MERGE_FAILED;
   }
 
-  @NotNull
-  protected Supplier<GitLineHandler> getHandlerProvider(Project project, GitMergeDialog dialog) {
+  protected @NotNull Supplier<GitLineHandler> getHandlerProvider(Project project, GitMergeDialog dialog) {
     VirtualFile root = dialog.getSelectedRoot();
     Set<GitMergeOption> selectedOptions = dialog.getSelectedOptions();
     String commitMsg = dialog.getCommitMessage().trim();

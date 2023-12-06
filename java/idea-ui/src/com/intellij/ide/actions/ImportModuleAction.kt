@@ -5,7 +5,6 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.impl.ProjectUtil.findAndFocusExistingProjectForPath
 import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard
@@ -26,6 +25,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport
 import com.intellij.projectImport.ProjectImportProvider
 import java.awt.Component
@@ -204,8 +205,9 @@ open class ImportModuleAction : AnAction(), NewProjectOrModuleAction {
         LOG.warn(String.format("Cannot find project file in vfs `%s`", projectPath))
         return null
       }
+
       val openProcessor = builder.getProjectOpenProcessor()
-      return runBlockingUnderModalProgress {
+      return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         // openProjectAsync must be implemented
         openProcessor.openProjectAsync(virtualFile = file, projectToClose = null, forceOpenInNewFrame = false)!!
       }

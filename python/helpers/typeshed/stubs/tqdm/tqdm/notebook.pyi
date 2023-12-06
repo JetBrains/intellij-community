@@ -8,19 +8,19 @@ __all__ = ["tqdm_notebook", "tnrange", "tqdm", "trange"]
 
 _T = TypeVar("_T")
 
-class tqdm_notebook(Generic[_T], std_tqdm[_T]):
+class tqdm_notebook(std_tqdm[_T], Generic[_T]):
     @staticmethod
     def status_printer(
-        _: SupportsWrite[str] | None, total: float | None = ..., desc: str | None = ..., ncols: int | None = ...
+        _: SupportsWrite[str] | None, total: float | None = None, desc: str | None = None, ncols: int | None = None
     ): ...
     displayed: bool
     def display(
         self,
-        msg: str | None = ...,
-        pos: int | None = ...,
-        close: bool = ...,
-        bar_style: str | None = ...,
-        check_delay: bool = ...,
+        msg: str | None = None,
+        pos: int | None = None,
+        close: bool = False,
+        bar_style: str | None = None,
+        check_delay: bool = True,
     ) -> None: ...
     @property
     def colour(self): ...
@@ -35,7 +35,7 @@ class tqdm_notebook(Generic[_T], std_tqdm[_T]):
         iterable: Iterable[_T],
         desc: str | None = ...,
         total: float | None = ...,
-        leave: bool = ...,
+        leave: bool | None = ...,
         file: SupportsWrite[str] | None = ...,
         ncols: int | None = ...,
         mininterval: float = ...,
@@ -63,10 +63,10 @@ class tqdm_notebook(Generic[_T], std_tqdm[_T]):
     @overload
     def __init__(
         self: tqdm_notebook[NoReturn],
-        iterable: None = ...,
+        iterable: None = None,
         desc: str | None = ...,
         total: float | None = ...,
-        leave: bool = ...,
+        leave: bool | None = ...,
         file: SupportsWrite[str] | None = ...,
         ncols: int | None = ...,
         mininterval: float = ...,
@@ -92,10 +92,10 @@ class tqdm_notebook(Generic[_T], std_tqdm[_T]):
         **kwargs,
     ) -> None: ...
     def __iter__(self) -> Iterator[_T]: ...
-    def update(self, n: int = ...): ...  # type: ignore[override]
+    def update(self, n: int = 1): ...  # type: ignore[override]
     def close(self) -> None: ...
     def clear(self, *_, **__) -> None: ...
-    def reset(self, total: float | None = ...): ...
+    def reset(self, total: float | None = None): ...
 
 tqdm = tqdm_notebook
 tnrange = trange

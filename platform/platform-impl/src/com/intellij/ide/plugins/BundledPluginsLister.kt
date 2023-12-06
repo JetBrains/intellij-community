@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -9,6 +9,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.OutputStreamWriter
 import java.io.Writer
 import java.nio.charset.StandardCharsets
@@ -25,8 +27,10 @@ private class BundledPluginsLister : ModernApplicationStarter() {
     try {
       val out: Writer = if (args.size == 2) {
         val outFile = Path.of(args[1])
-        Files.createDirectories(outFile.parent)
-        Files.newBufferedWriter(outFile)
+        withContext(Dispatchers.IO) {
+          Files.createDirectories(outFile.parent)
+          Files.newBufferedWriter(outFile)
+        }
       }
       else {
         // noinspection UseOfSystemOutOrSystemErr
@@ -52,6 +56,7 @@ private class BundledPluginsLister : ModernApplicationStarter() {
           }
         }
         extensions.sort()
+
         writer.obj {
           writeList(writer, "modules", modules.sorted())
           writeList(writer, "plugins", pluginIds)
@@ -67,6 +72,7 @@ private class BundledPluginsLister : ModernApplicationStarter() {
       e.printStackTrace(System.err)
       exitProcess(1)
     }
+
     exitProcess(0)
   }
 }

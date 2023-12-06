@@ -1,28 +1,26 @@
 package com.intellij.settingsSync.plugins
 
-import com.intellij.ide.plugins.DisabledPluginsState
-import com.intellij.ide.plugins.PluginEnabler
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
 
-class CorePluginManagerProxy : PluginManagerProxy {
+class CorePluginManagerProxy : AbstractPluginManagerProxy() {
 
-  override fun getPlugins() = PluginManagerCore.getPlugins()
+  override val pluginEnabler: PluginEnabler
+    get() = PluginEnabler.getInstance()
 
-  override fun enablePlugins(plugins: Set<PluginId>) {
-    PluginEnabler.getInstance().enableById(plugins)
+  override fun isDescriptorEssential(pluginId: PluginId): Boolean {
+    return (ApplicationInfo.getInstance()).isEssentialPlugin(pluginId)
   }
 
-  override fun disablePlugins(plugins: Set<PluginId>) {
-    PluginEnabler.getInstance().disableById(plugins)
-  }
+  override fun getPlugins() = PluginManagerCore.plugins
 
-  override fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable) {
-    DisabledPluginsState.addDisablePluginListener(disabledListener)
+  override fun addPluginStateChangedListener(listener: PluginEnableStateChangedListener, parentDisposable: Disposable) {
+    DynamicPluginEnabler.addPluginStateChangedListener(listener)
     Disposer.register(parentDisposable, Disposable {
-      DisabledPluginsState.removeDisablePluginListener(disabledListener)
+      DynamicPluginEnabler.removePluginStateChangedListener(listener)
     })
   }
 
@@ -35,4 +33,6 @@ class CorePluginManagerProxy : PluginManagerProxy {
   override fun createInstaller(notifyErrors: Boolean): SettingsSyncPluginInstaller {
     return SettingsSyncPluginInstallerImpl(notifyErrors)
   }
+
+  override fun isIncompatible(plugin: IdeaPluginDescriptor) = PluginManagerCore.isIncompatible(plugin)
 }

@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManager
@@ -18,6 +19,8 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.wm.WelcomeScreenTab
 import com.intellij.openapi.wm.WelcomeTabFactory
@@ -29,14 +32,13 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory.createComponent
 import com.intellij.openapi.wm.impl.welcomeScreen.statistics.WelcomeScreenCounterUsageCollector
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.JBGaps
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
@@ -52,13 +54,13 @@ import javax.swing.ScrollPaneConstants
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ProjectsTabFactory : WelcomeTabFactory {
   companion object {
-    const val PRIMARY_BUTTONS_NUM = 3
+    const val PRIMARY_BUTTONS_NUM: Int = 3
   }
 
   override fun createWelcomeTab(parentDisposable: Disposable): WelcomeScreenTab = ProjectsTab(parentDisposable)
 }
 
-class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScreenTab(
+internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScreenTab(
   IdeBundle.message("welcome.screen.projects.title"),
   WelcomeScreenEventCollector.TabType.TabNavProject
 ) {
@@ -106,16 +108,16 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
           cell(notificationPanel)
             .align(AlignX.RIGHT)
             .applyToComponent {
-              putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+              putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
             }
         }
         if (promo != null) {
           row {
             cell(promo)
-              .customize(JBGaps(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET))
+              .customize(UnscaledGaps(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET))
               .align(AlignX.FILL)
               .applyToComponent {
-                putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+                putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
               }
           }
         }
@@ -144,6 +146,16 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
     projectsPanelWrapper.repaint()
   }
 
+  override fun updateComponent() {
+    // balloonLayout is not initialized at this point
+    invokeLater {
+      val balloonLayout = WelcomeFrame.getInstance()?.balloonLayout
+      if (balloonLayout is WelcomeBalloonLayoutImpl) {
+        balloonLayout.locationComponent = notificationPanel
+      }
+    }
+  }
+
   private fun createRecentProjectsPanel(): JComponent {
     val recentProjectsPanel: JPanel = JBUI.Panels.simplePanel()
       .withBorder(JBUI.Borders.empty(13, 12))
@@ -163,7 +175,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
 
     val projectSearch = recentProjectTree.installSearchField()
     if (ExperimentalUI.isNewUI()) {
-      projectSearch.textEditor.putClientProperty("JTextField.Search.Icon", ExperimentalUI.Icons.General.Search)
+      projectSearch.textEditor.putClientProperty("JTextField.Search.Icon", ExpUiIcons.General.Search)
     }
     val northPanel: JPanel = JBUI.Panels.simplePanel()
       .andTransparent()
@@ -231,10 +243,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
 
   private fun createButtonWrapper(action: AnAction): ToolbarTextButtonWrapper {
     if (action is ActionGroup) {
-      val actions = ContainerUtil.map(action.getChildren(null)) { a: AnAction? ->
-        ActionGroupPanelWrapper.wrapGroups(
-          a!!, parentDisposable)
-      }
+      val actions = action.getChildren(null).map { ActionGroupPanelWrapper.wrapGroups(it, parentDisposable) }
       return ToolbarTextButtonWrapper.wrapAsOptionButton(actions)
     }
     return ToolbarTextButtonWrapper.wrapAsTextButton(action)
@@ -273,7 +282,7 @@ private fun createDropFileTarget(): DnDNativeTarget {
     override fun drop(event: DnDEvent) {
       val files = FileCopyPasteUtil.getFileListFromAttachedObject(event.attachedObject)
       if (!files.isEmpty()) {
-        ApplicationManager.getApplication().coroutineScope.launch {
+        service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
           openOrImportFilesAsync(list = files.map(File::toPath), location = "WelcomeFrame")
         }
       }

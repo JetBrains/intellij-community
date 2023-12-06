@@ -7,3 +7,5 @@ class B : A() {
     class Number
     <caret>override fun <T : kotlin.Number> f(a: T) {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix

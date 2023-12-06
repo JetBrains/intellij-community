@@ -2,57 +2,34 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
 @TestDataPath("/inspections/companionObjectInExtension")
-class KtCompanionObjectInExtensionInspectionTest : PluginModuleTestCase() {
+class KtCompanionObjectInExtensionInspectionTest : KtCompanionObjectInExtensionInspectionTestBase() {
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/companionObjectInExtension"
 
-  override fun setUp() {
-    super.setUp()
-    myFixture.addClass(
-      //language=java
-      """
-        package com.intellij.openapi.extensions; 
-        
-        public class ExtensionPointName<T> { 
-          public ExtensionPointName(String name) { }
-        }
-      """.trimIndent()
-    )
-
-    myFixture.addClass(
-      //language=java
-      """
-        import com.intellij.openapi.extensions.ExtensionPointName;
-        
-        public interface MyExtension {
-          ExtensionPointName<MyExtension> EP_NAME = new ExtensionPointName<>("com.intellij.example.myExtension");
-        }
-      """.trimIndent()
-    )
-
-    myFixture.addClass(
-      //language=java
-      """
-        package com.intellij.openapi.components;
-        
-        public @interface Service { }
-      """.trimIndent()
-    )
-    myFixture.enableInspections(CompanionObjectInExtensionInspection::class.java)
-  }
-
   fun testNoHighlighting() {
-    setPluginXml("plugin.xml")
-    myFixture.testHighlighting("ClassWithCompanionObject.kt")
+    doTest()
   }
 
-  fun testExtensionWithCompanionObjects() {
-    setPluginXml("plugin.xml")
-    myFixture.testHighlighting("ExtensionWithCompanionObject.kt")
+  fun testEmptyBlockCompanionObject() {
+    doTest()
   }
 
+  fun testEmptyCompanionObject() {
+    doTest()
+  }
+
+  fun testExtensionWithCompanionObject() {
+    doTest()
+  }
+
+  fun testExtensionWithLoggerAndConstVal() {
+    doTest()
+  }
+
+  fun testExtensionWithInitBlocks() {
+    doTest()
+  }
 }

@@ -80,13 +80,12 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
 
         val data = values.single() as CopiedJavaCode
 
-        val document = editor.document
-        val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(document) as? KtFile ?: return
+        val (targetFile, targetBounds, document) = getTargetData(project, editor, caretOffset, bounds) ?: return
         val useNewJ2k = checkUseNewJ2k(targetFile)
 
         val targetModule = targetFile.module
 
-        if (isNoConversionPosition(targetFile, bounds.startOffset)) return
+        if (isNoConversionPosition(targetFile, targetBounds.startOffset)) return
 
         data class Result(
             val text: String?,
@@ -139,7 +138,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             if (conversionResult!!.text != null) return false
 
             insertImports(
-                bounds.range ?: return true,
+                targetBounds.range ?: return true,
                 conversionResult!!.referenceData,
                 conversionResult!!.explicitImports
             )
@@ -156,8 +155,8 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             text!! // otherwise we should get true from doConversionAndInsertImportsIfUnchanged and return above
 
             val boundsAfterReplace = runWriteAction {
-                val startOffset = bounds.startOffset
-                document.replaceString(startOffset, bounds.endOffset, text)
+                val startOffset = targetBounds.startOffset
+                document.replaceString(startOffset, targetBounds.endOffset, text)
 
                 val endOffsetAfterCopy = startOffset + text.length
                 editor.caretModel.moveToOffset(endOffsetAfterCopy)
@@ -254,10 +253,10 @@ internal fun ElementAndTextList.convertCodeToKotlin(project: Project, targetModu
     val inputElements = toList().filterIsInstance<PsiElement>()
     val (results, _, converterContext) =
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            ThrowableComputable<Result, Exception> {
+            ThrowableComputable {
                 runReadAction { converter.elementsToKotlin(inputElements) }
             },
-            JavaToKotlinAction.title,
+            JavaToKotlinAction.Handler.title,
             true,
             project
         )
@@ -276,7 +275,7 @@ internal fun ElementAndTextList.convertCodeToKotlin(project: Project, targetModu
 
             val result = results[resultIndex++]
             if (result != null) {
-                convertedCodeBuilder.append(result.text)
+                convertedCodeBuilder.append(result.text.trimEnd('\n'))
                 if (parseContext == null) { // use parse context of the first converted element as parse context for the whole text
                     parseContext = result.parseContext
                 }

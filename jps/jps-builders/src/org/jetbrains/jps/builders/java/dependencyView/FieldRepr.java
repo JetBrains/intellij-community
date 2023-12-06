@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -14,12 +14,11 @@ final class FieldRepr extends ProtoMember implements ProtoFieldEntity {
   }
 
   FieldRepr(final DependencyContext context,
-                   final int access,
-                   final int name,
-                   final int descriptor,
-                   final int signature,
-                   @NotNull
-                   final Set<TypeRepr.ClassType> annotations, final Object value) {
+            final int access,
+            final int name,
+            final int descriptor,
+            final int signature,
+            final @NotNull Set<TypeRepr.ClassType> annotations, final Object value) {
     super(access, signature, name, TypeRepr.getType(context, descriptor), annotations, value);
   }
 
@@ -45,12 +44,12 @@ final class FieldRepr extends ProtoMember implements ProtoFieldEntity {
   public static DataExternalizer<FieldRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<FieldRepr>() {
       @Override
-      public void save(@NotNull final DataOutput out, final FieldRepr value) {
+      public void save(final @NotNull DataOutput out, final FieldRepr value) {
         value.save(out);
       }
 
       @Override
-      public FieldRepr read(@NotNull final DataInput in) {
+      public FieldRepr read(final @NotNull DataInput in) {
         return new FieldRepr(context, in);
       }
     };

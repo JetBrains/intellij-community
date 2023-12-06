@@ -38,13 +38,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 
 public class JavaIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor> {
 
   @Override
-  public  List<ParameterInfoImpl> getAllMethodParameters(@NotNull PsiMethod sourceMethod) {
+  public List<ParameterInfoImpl> getAllMethodParameters(@NotNull PsiMethod sourceMethod) {
     return new JavaMethodDescriptor(sourceMethod).getParameters();
   }
 
@@ -285,7 +286,7 @@ public class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public void collectConflicts(MultiMap<PsiElement, String> conflicts,
+  public void collectConflicts(MultiMap<PsiElement, @DialogMessage String> conflicts,
                                UsageInfo[] infos,
                                PsiMethod method,
                                JavaIntroduceParameterObjectClassDescriptor classDescriptor) {

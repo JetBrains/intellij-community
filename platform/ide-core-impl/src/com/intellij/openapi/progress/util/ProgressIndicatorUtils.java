@@ -4,10 +4,7 @@ package com.intellij.openapi.progress.util;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +39,11 @@ import java.util.concurrent.locks.Lock;
 public final class ProgressIndicatorUtils {
   private static final Logger LOG = Logger.getInstance(ProgressIndicatorUtils.class);
 
-  public static @NotNull ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
+  private static final int MAX_REJECTED_EXECUTIONS_BEFORE_CANCELLATION = 16;
+
+
+  public static @NotNull ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress,
+                                                                    @NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
@@ -121,12 +122,15 @@ public final class ProgressIndicatorUtils {
   }
 
   @ApiStatus.Internal
-  public static boolean runActionAndCancelBeforeWrite(
-    @NotNull ApplicationEx application,
-    @NotNull Runnable cancellation,
-    @NotNull Runnable action
-  ) {
+  public static boolean runActionAndCancelBeforeWrite(@NotNull ApplicationEx application,
+                                                      @NotNull Runnable cancellation,
+                                                      @NotNull Runnable action) {
     return ProgressIndicatorUtilService.getInstance(application).runActionAndCancelBeforeWrite(cancellation, action);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull AccessToken prohibitWriteActionsInside(@NotNull Application application) {
+    return ProgressIndicatorUtilService.getInstance(application).prohibitWriteActionsInside();
   }
 
   private static @NotNull Runnable indicatorCancellation(@NotNull ProgressIndicator progressIndicator) {
@@ -207,7 +211,6 @@ public final class ProgressIndicatorUtils {
                 }
               }, continuation.getModalityState());
             }
-
           }
 
           @Override
@@ -250,7 +253,7 @@ public final class ProgressIndicatorUtils {
     awaitWithCheckCanceled(semaphore, indicator);
   }
 
-    /** @see ProgressIndicatorUtils#yieldToPendingWriteActions(ProgressIndicator) */
+  /** @see ProgressIndicatorUtils#yieldToPendingWriteActions(ProgressIndicator) */
   public static void yieldToPendingWriteActions() {
     yieldToPendingWriteActions(ProgressIndicatorProvider.getGlobalProgressIndicator());
   }
@@ -325,12 +328,27 @@ public final class ProgressIndicatorUtils {
   }
 
   public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future, @Nullable ProgressIndicator indicator) {
+    int rejectedExecutions = 0;
     while (true) {
       checkCancelledEvenWithPCEDisabled(indicator);
       try {
         return future.get(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException | RejectedExecutionException ignore) {
+      catch (TimeoutException ignore) {
+      }
+      catch (RejectedExecutionException ree) {
+        //EA-225412: FJP throws REE (which propagates through futures) e.g. when FJP reaches max
+        // threads while compensating for too many managedBlockers -- or when it is shutdown.
+
+        //This branch creates a risk of infinite loop -- i.e. if the current thread itself is somehow
+        // responsible for FJP resource exhaustion, hence can't release anything, each consequent
+        // future.get() will throw the same REE again and again. So let's limit retries:
+        rejectedExecutions++;
+        if (rejectedExecutions > MAX_REJECTED_EXECUTIONS_BEFORE_CANCELLATION) {
+          //RC: It would be clearer to rethrow ree itself -- but I doubt many callers are ready for it,
+          //    while all callers are ready for PCE, hence...
+          throw new ProcessCanceledException(ree);
+        }
       }
       catch (InterruptedException e) {
         throw new ProcessCanceledException(e);
@@ -375,11 +393,11 @@ public final class ProgressIndicatorUtils {
 
   /** Use when a deadlock is possible otherwise. */
   public static void checkCancelledEvenWithPCEDisabled(@Nullable ProgressIndicator indicator) {
-    if (Cancellation.isInNonCancelableSection()) {
-      // just run the hooks, don't check for cancellation in non-cancellable section
+    boolean isNonCancelable = Cancellation.isInNonCancelableSection();
+    if (isNonCancelable || indicator == null) {
       ((CoreProgressManager)ProgressManager.getInstance()).runCheckCanceledHooks(indicator);
-      return;
     }
+    if (isNonCancelable) return;
     Cancellation.checkCancelled();
     if (indicator == null) return;
     indicator.checkCanceled();              // check for cancellation as usual and run the hooks

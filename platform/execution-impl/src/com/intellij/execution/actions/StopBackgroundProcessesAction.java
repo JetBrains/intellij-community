@@ -55,15 +55,13 @@ final class StopBackgroundProcessesAction extends DumbAwareAction {
 
     final JBList<StopAction.HandlerItem> list = new JBList<>(handlerItems);
     list.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
-      @Nullable
       @Override
-      public String getTextFor(StopAction.HandlerItem item) {
+      public @Nullable String getTextFor(StopAction.HandlerItem item) {
         return item.displayName;
       }
 
-      @Nullable
       @Override
-      public Icon getIconFor(StopAction.HandlerItem item) {
+      public @Nullable Icon getIconFor(StopAction.HandlerItem item) {
         return item.icon;
       }
 
@@ -78,7 +76,7 @@ final class StopBackgroundProcessesAction extends DumbAwareAction {
       .setTitle(handlerItems.size() == 1 ? ExecutionBundle.message("confirm.background.process.stop")
                                          : ExecutionBundle.message("stop.background.process"))
       .setNamerForFiltering(o -> o.displayName)
-      .setItemChoosenCallback(() -> {
+      .setItemChosenCallback(() -> {
         List valuesList = list.getSelectedValuesList();
         for (Object o : valuesList) {
           if (o instanceof StopAction.HandlerItem) ((StopAction.HandlerItem)o).stop();
@@ -102,8 +100,7 @@ final class StopBackgroundProcessesAction extends DumbAwareAction {
 
   }
 
-  @NotNull
-  private static List<Pair<TaskInfo, ProgressIndicator>>  getCancellableProcesses(@Nullable Project project) {
+  private static @NotNull List<Pair<TaskInfo, ProgressIndicator>>  getCancellableProcesses(@Nullable Project project) {
     IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
     StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
     if (statusBar == null) return Collections.emptyList();
@@ -112,8 +109,7 @@ final class StopBackgroundProcessesAction extends DumbAwareAction {
                                  pair -> pair.first.isCancellable() && !pair.second.isCanceled());
   }
 
-  @NotNull
-  private static List<StopAction.HandlerItem> getItemsList(@NotNull List<? extends Pair<TaskInfo, ProgressIndicator>> tasks) {
+  private static @NotNull List<StopAction.HandlerItem> getItemsList(@NotNull List<? extends Pair<TaskInfo, ProgressIndicator>> tasks) {
     List<StopAction.HandlerItem> items = new ArrayList<>(tasks.size());
     for (final Pair<TaskInfo, ProgressIndicator> eachPair : tasks) {
       items.add(new StopAction.HandlerItem(eachPair.first.getTitle(), AllIcons.Process.Step_passive, false) {

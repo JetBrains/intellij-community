@@ -1,15 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.MessageBus;
@@ -196,8 +199,11 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     application.assertWriteIntentLockAcquired();
 
     if (CommandLog.LOG.isDebugEnabled()) {
+      String currentCommandName;
+      if (myCurrentCommand != null) currentCommandName = myCurrentCommand.myName;
+      else currentCommandName = "<null>";
       CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId +
-                           ", in command = " + (myCurrentCommand != null) +
+                           ", in command = " + currentCommandName +
                            ", in transparent action = " + isUndoTransparentActionInProgress());
     }
 
@@ -222,7 +228,13 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       throwable = th;
     }
     finally {
-      finishCommand(descriptor, throwable);
+      Throwable finalThrowable = throwable;
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        finishCommand(descriptor, finalThrowable);
+      });
+      if (finalThrowable instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)finalThrowable;
+      }
     }
   }
 
@@ -277,11 +289,13 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       myCurrentCommand = null;
       publisher.commandFinished(event);
     }
+
+    CommandLog.LOG.debug("finishCommand: name = " + event.getCommandName() + ", groupId = " + event.getCommandGroupId());
   }
 
   @Override
   public void enterModal() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertWriteIntentReadAccess();
     CommandDescriptor currentCommand = myCurrentCommand;
     myInterruptedCommands.push(currentCommand);
     if (currentCommand != null) {
@@ -291,7 +305,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void leaveModal() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertWriteIntentReadAccess();
     CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + myCurrentCommand);
 
     myCurrentCommand = myInterruptedCommands.pop();
@@ -302,7 +316,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandName(String name) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertWriteIntentReadAccess();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandLog.LOG.assertTrue(currentCommand != null);
     currentCommand.myName = name;
@@ -310,7 +324,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandGroupId(Object groupId) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertWriteIntentReadAccess();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandLog.LOG.assertTrue(currentCommand != null);
     currentCommand.myGroupId = groupId;

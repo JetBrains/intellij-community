@@ -4,8 +4,10 @@ package com.intellij.ui.tree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
@@ -13,6 +15,8 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -62,7 +67,7 @@ public final class AsyncTreeModelTest {
       assert !model.isProcessing() : "created model should not update content";
     }
     finally {
-      Disposer.dispose(disposable);
+      EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(disposable));
     }
   }
 
@@ -370,6 +375,8 @@ public final class AsyncTreeModelTest {
     testEventDispatchThread(root, consumer, showLoadingNode);
     testBackgroundThread(root, consumer, showLoadingNode);
     testBackgroundPool(root, consumer, showLoadingNode);
+    testBackgroundImmediateAsyncThread(root, consumer, showLoadingNode);
+    testBackgroundAsyncThread(root, consumer, showLoadingNode);
   }
 
   private static void testEventDispatchThread(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode) {
@@ -388,6 +395,24 @@ public final class AsyncTreeModelTest {
 
   private static void testBackgroundThread(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode, int delay) {
     if (consumer != null) new AsyncTest(showLoadingNode, new BackgroundThreadModel(delay, root)).start(consumer, getSecondsToWait(delay));
+  }
+
+  private static void testBackgroundImmediateAsyncThread(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode) {
+    testBackgroundImmediateAsyncThread(root, consumer, showLoadingNode, TreeTest.FAST);
+    testBackgroundImmediateAsyncThread(root, consumer, showLoadingNode, TreeTest.SLOW);
+  }
+
+  private static void testBackgroundImmediateAsyncThread(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode, int delay) {
+    if (consumer != null) new AsyncTest(showLoadingNode, new BackgroundThreadImmediateAsyncModel(delay, root)).start(consumer, getSecondsToWait(delay));
+  }
+
+  private static void testBackgroundAsyncThread(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode) {
+    testBackgroundAsyncThread(root, consumer, showLoadingNode, TreeTest.FAST);
+    testBackgroundAsyncThread(root, consumer, showLoadingNode, TreeTest.SLOW);
+  }
+
+  private static void testBackgroundAsyncThread(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode, int delay) {
+    if (consumer != null) new AsyncTest(showLoadingNode, new BackgroundThreadAsyncModel(delay, root)).start(consumer, getSecondsToWait(delay));
   }
 
   private static void testBackgroundPool(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode) {
@@ -464,7 +489,7 @@ public final class AsyncTreeModelTest {
         fail(seconds + " seconds is not enough for " + toString());
       }
       finally {
-        Disposer.dispose(disposable);
+        EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(disposable));
         printTime("done in ", time);
         if (PRINT) System.out.println();
       }
@@ -645,6 +670,17 @@ public final class AsyncTreeModelTest {
       return super.getIndexOfChild(parent, child);
     }
 
+    public List<Object> getChildren(Object parent) {
+      pause();
+      int count = super.getChildCount(parent);
+      List<Object> res = new ArrayList<>(count);
+      for (int i = 0; i < count; ++i) {
+        res.add(super.getChild(parent, i));
+      }
+      return res;
+    }
+
+
     @Override
     public final void dispose() {
     }
@@ -669,7 +705,7 @@ public final class AsyncTreeModelTest {
     }
   }
 
-  private static final class BackgroundThreadModel extends SlowModel implements InvokerSupplier {
+  private static class BackgroundThreadModel extends SlowModel implements InvokerSupplier {
     private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
 
     private BackgroundThreadModel(long delay, Supplier<? extends TreeNode> root) {
@@ -680,6 +716,39 @@ public final class AsyncTreeModelTest {
     @Override
     public Invoker getInvoker() {
       return invoker;
+    }
+  }
+
+  private static final class BackgroundThreadImmediateAsyncModel extends BackgroundThreadModel implements AsyncTreeModel.AsyncChildrenProvider<Object> {
+    private BackgroundThreadImmediateAsyncModel(long delay, Supplier<? extends TreeNode> root) {
+      super(delay, root);
+    }
+
+    @Override
+    public Promise<? extends List<?>> getChildrenAsync(Object parent) {
+      return Promises.resolvedPromise(getChildren(parent));
+    }
+  }
+
+  private static final class BackgroundThreadAsyncModel extends BackgroundThreadModel implements AsyncTreeModel.AsyncChildrenProvider<Object> {
+    private final long scheduledDelay;
+    private BackgroundThreadAsyncModel(long delay, Supplier<? extends TreeNode> root) {
+      super(0, root);
+      scheduledDelay = delay;
+    }
+
+    @Override
+    public Promise<? extends List<?>> getChildrenAsync(Object parent) {
+      AsyncPromise<List<Object>> res = new AsyncPromise<>();
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+        try {
+          res.setResult(getChildren(parent));
+        }
+        catch (Throwable th) {
+          res.setError(th);
+        }
+      }, scheduledDelay, TimeUnit.MILLISECONDS);
+      return res;
     }
   }
 

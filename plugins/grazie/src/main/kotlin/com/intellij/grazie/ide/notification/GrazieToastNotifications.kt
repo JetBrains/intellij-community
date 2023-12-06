@@ -4,10 +4,7 @@ package com.intellij.grazie.ide.notification
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.remote.GrazieRemote
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
+import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.MultiMap
@@ -20,15 +17,15 @@ object GrazieToastNotifications {
 
   private val shownNotifications = MultiMap.createConcurrent<Group, WeakReference<Notification>>()
 
-  internal val MISSED_LANGUAGES_GROUP = NotificationGroupManager.getInstance()
-    .getNotificationGroup("Proofreading missing languages information")
+  private val MISSING_LANGUAGES_GROUP
+    get() = obtainGroup("Proofreading missing languages information")
 
   internal val GENERAL_GROUP
-    get() = NotificationGroupManager.getInstance().getNotificationGroup("Grazie notifications")
+    get() = obtainGroup("Grazie notifications")
 
   fun showMissedLanguages(project: Project) {
     val langs = GrazieConfig.get().missedLanguages
-    MISSED_LANGUAGES_GROUP
+    MISSING_LANGUAGES_GROUP
       .createNotification(msg("grazie.notification.missing-languages.title"),
                           msg("grazie.notification.missing-languages.body", langs.joinToString()),
                           NotificationType.WARNING)
@@ -47,6 +44,7 @@ object GrazieToastNotifications {
         }
       })
       .setSuggestionType(true)
+      .setDisplayId("grazie.missing.language")
       .expireAll(Group.LANGUAGES)
       .notify(project)
   }
@@ -57,5 +55,9 @@ object GrazieToastNotifications {
     }
     shownNotifications.putValue(group, WeakReference(this))
     return this
+  }
+
+  private fun obtainGroup(id: String): NotificationGroup {
+    return NotificationGroupManager.getInstance().getNotificationGroup(id)
   }
 }

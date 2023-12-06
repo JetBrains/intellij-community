@@ -1,4 +1,2 @@
-version = "5.4.*"
-
-[tool.stubtest]
-ignore_missing_stub = false
+version = "5.8.*"
+upstream_repository = "https://github.com/ultrajson/ultrajson"

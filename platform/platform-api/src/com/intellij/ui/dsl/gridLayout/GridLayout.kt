@@ -72,7 +72,7 @@ class GridLayout : LayoutManager2 {
     return preferredLayoutSize(parent)
   }
 
-  override fun maximumLayoutSize(target: Container?) =
+  override fun maximumLayoutSize(target: Container?): Dimension =
     Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE)
 
   override fun layoutContainer(parent: Container?) {
@@ -85,11 +85,11 @@ class GridLayout : LayoutManager2 {
     }
   }
 
-  override fun getLayoutAlignmentX(target: Container?) =
+  override fun getLayoutAlignmentX(target: Container?): Float =
     // Just like other layout managers, no special meaning here
     0.5f
 
-  override fun getLayoutAlignmentY(target: Container?) =
+  override fun getLayoutAlignmentY(target: Container?): Float =
     // Just like other layout managers, no special meaning here
     0.5f
 
@@ -99,6 +99,10 @@ class GridLayout : LayoutManager2 {
 
   fun getConstraints(component: JComponent): Constraints? {
     return _rootGrid.getConstraints(component)
+  }
+
+  fun getConstraints(grid: Grid): Constraints? {
+    return _rootGrid.getConstraints(grid)
   }
 
   @ApiStatus.Internal

@@ -148,5 +148,5 @@ class DevicePoint {
                  (screenOrigin.y + (point.y - screenOrigin.y) * factor).roundToInt())
   }
 
-  override fun toString() = javaClass.name + "[x=" + point.x + ",y=" + point.y + "]"
+  override fun toString(): String = javaClass.name + "[x=" + point.x + ",y=" + point.y + "]"
 }

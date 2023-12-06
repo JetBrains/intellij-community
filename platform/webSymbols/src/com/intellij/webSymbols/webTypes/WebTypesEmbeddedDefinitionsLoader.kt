@@ -13,8 +13,6 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.text.SemVer
 import com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP
 import com.intellij.webSymbols.webTypes.json.WebTypes
-import java.util.*
-import kotlin.collections.HashMap
 
 @Service(Service.Level.PROJECT)
 class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposable {
@@ -31,7 +29,7 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
 
     fun getPackagesEnabledByDefault(project: Project): Map<String, SemVer?> = getInstance(project).packagesEnabledByDefault
 
-    fun getDefaultWebTypesScope(project: Project): WebTypesSymbolsScopeBase = getInstance(project).defaultWebTypesScope
+    fun getDefaultWebTypesScope(project: Project): WebTypesScopeBase = getInstance(project).defaultWebTypesScope
 
     private val LOG = logger<WebTypesEmbeddedDefinitionsLoader>()
   }
@@ -43,7 +41,7 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
 
   private val webTypesEnabledPackages: Set<String> get() = state.value.versionsRegistry.packages
   private val packagesEnabledByDefault: Map<String, SemVer> get() = state.value.packagesEnabledByDefault
-  private val defaultWebTypesScope: WebTypesSymbolsScopeBase get() = state.value.defaultWebTypesScope
+  private val defaultWebTypesScope: WebTypesScopeBase get() = state.value.defaultWebTypesScope
 
   private fun getWebTypes(packageName: String, packageVersion: SemVer?): Pair<PluginDescriptor, WebTypes>? {
     return state.value.versionsRegistry.get(packageName, packageVersion)
@@ -55,7 +53,7 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
   private class State(val project: Project) {
     val versionsRegistry = WebTypesVersionsRegistry<Pair<PluginDescriptor, WebTypes>>()
     val packagesEnabledByDefault: Map<String, SemVer>
-    val defaultWebTypesScope: WebTypesSymbolsScopeBase
+    val defaultWebTypesScope: WebTypesScopeBase
 
     init {
       val packagesEnabledByDefault = HashMap<String, SemVer>()
@@ -95,13 +93,13 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
 
   }
 
-  private class DefaultWebTypesScope(private val state: State) : WebTypesSymbolsScopeBase() {
+  private class DefaultWebTypesScope(private val state: State) : WebTypesScopeBase() {
     init {
       for (entry in state.packagesEnabledByDefault) {
         state.versionsRegistry.get(entry.key, entry.value)?.let { (pluginDescriptor, webTypes) ->
           addWebTypes(webTypes, WebTypesJsonOriginImpl(
             webTypes = webTypes,
-            typeSupport = WebTypesSymbolTypeSupport.get(webTypes),
+            typeSupport = WebTypesSymbolTypeSupportFactory.get(webTypes),
             iconLoader = WebTypesEmbeddedIconLoader(pluginDescriptor)::loadIcon,
             version = null
           ))
@@ -118,9 +116,9 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
       return state.hashCode()
     }
 
-    override fun createPointer(): Pointer<out WebTypesSymbolsScopeBase> {
+    override fun createPointer(): Pointer<out WebTypesScopeBase> {
       val project = state.project
-      return Pointer<WebTypesSymbolsScopeBase> {
+      return Pointer<WebTypesScopeBase> {
         if (project.isDisposed) {
           return@Pointer null
         }

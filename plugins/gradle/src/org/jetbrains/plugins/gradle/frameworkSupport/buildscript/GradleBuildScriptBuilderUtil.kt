@@ -28,34 +28,34 @@ fun getJunit4Version(): String {
 }
 
 fun getJunit5Version(): String {
-  return "5.9.1"
+  return "5.10.0"
 }
 
-fun isSupportedJavaLibraryPlugin(gradleVersion: GradleVersion): Boolean {
+fun isJavaLibraryPluginSupported(gradleVersion: GradleVersion): Boolean {
   return gradleVersion.isGradleAtLeast("3.4")
 }
 
-fun isSupportedImplementationScope(gradleVersion: GradleVersion): Boolean {
-  return isSupportedJavaLibraryPlugin(gradleVersion)
+fun isImplementationScopeSupported(gradleVersion: GradleVersion): Boolean {
+  return gradleVersion.isGradleAtLeast("3.4")
 }
 
-fun isSupportedRuntimeOnlyScope(gradleVersion: GradleVersion): Boolean {
-  return isSupportedJavaLibraryPlugin(gradleVersion)
+fun isRuntimeOnlyScopeSupported(gradleVersion: GradleVersion): Boolean {
+  return gradleVersion.isGradleAtLeast("3.4")
 }
 
-fun isSupportedTaskConfigurationAvoidance(gradleVersion: GradleVersion): Boolean {
+fun isTaskConfigurationAvoidanceSupported(gradleVersion: GradleVersion): Boolean {
   return gradleVersion.isGradleAtLeast("4.9")
 }
 
-fun isSupportedJUnit5(gradleVersion: GradleVersion): Boolean {
+fun isJunit5Supported(gradleVersion: GradleVersion): Boolean {
   return gradleVersion.isGradleAtLeast("4.7")
 }
 
-fun isSupportedPlatformDependency(gradleVersion: GradleVersion): Boolean {
+fun isPlatformDependencySupported(gradleVersion: GradleVersion): Boolean {
   return gradleVersion.isGradleAtLeast("5.0")
 }
 
-fun isSupportedGroovyApache(groovyVersion: String): Boolean {
+fun isGroovyApacheSupported(groovyVersion: String): Boolean {
   val majorVersion = groovyVersion.split(".").firstOrNull()?.let(Integer::valueOf) ?: 0
   return majorVersion >= 4
 }

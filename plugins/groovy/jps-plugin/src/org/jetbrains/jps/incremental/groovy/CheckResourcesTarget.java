@@ -43,13 +43,13 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
   }
 
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myModule.getName();
   }
 
   @Nullable
   @Override
-  public GroovyResourceRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
+  public GroovyResourceRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
     List<GroovyResourceRootDescriptor> descriptors = rootIndex.getRootDescriptors(new File(rootId),
                                                                                   Collections.singletonList((Type)getTargetType()),
                                                                                   null);
@@ -68,7 +68,7 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     List<BuildTarget<?>> result = new ArrayList<>();
 
     ModuleBuildTarget compileTarget = new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.getInstance(isTests()));
@@ -84,10 +84,10 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
 
   @NotNull
   @Override
-  public List<GroovyResourceRootDescriptor> computeRootDescriptors(JpsModel model,
-                                                             ModuleExcludeIndex index,
-                                                             IgnoredFileIndex ignoredFileIndex,
-                                                             BuildDataPaths dataPaths) {
+  public List<GroovyResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                                   @NotNull ModuleExcludeIndex index,
+                                                                   @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                                   @NotNull BuildDataPaths dataPaths) {
     ResourcesTarget target = new ResourcesTarget(myModule, ResourcesTargetType.getInstance(isTests()));
     List<ResourceRootDescriptor> resources = target.computeRootDescriptors(model, index, ignoredFileIndex, dataPaths);
     return ContainerUtil.map(resources, descriptor -> new GroovyResourceRootDescriptor(descriptor, this));
@@ -95,7 +95,7 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
 
   @NotNull
   @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
     return Collections.singletonList(getOutputRoot(context));
   }
 

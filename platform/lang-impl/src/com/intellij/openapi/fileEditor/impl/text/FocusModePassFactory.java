@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.*;
@@ -6,11 +6,11 @@ import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FocusModeModel;
-import com.intellij.openapi.editor.impl.FocusRegion;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 final class FocusModePassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-  private static final Key<Set<FocusRegion>> FOCUS_REGIONS_FROM_PASS = Key.create("editor.focus.mode.segmentsFromPass");
+  private static final Key<Set<RangeMarker>> FOCUS_REGIONS_FROM_PASS = Key.create("editor.focus.mode.segmentsFromPass");
   private static final LanguageExtension<FocusModeProvider> EP_NAME = new LanguageExtension<>("com.intellij.focusModeProvider");
   private static final long MAX_ALLOWED_TIME = 100;
   private static final Logger LOG = Logger.getInstance(FocusModePassFactory.class);
@@ -41,37 +41,38 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
   }
 
   @Override
-  @Nullable
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     return isEnabled() && EditorUtil.isRealFileEditor(editor) && editor instanceof EditorImpl
            ? new FocusModePass(editor, file)
            : null;
   }
 
-  private static boolean isEnabled() {
+  static boolean isEnabled() {
     return EditorSettingsExternalizable.getInstance().isFocusMode();
   }
 
-  @Nullable
-  static List<? extends Segment> calcFocusZones(@Nullable PsiFile file) {
-    if (file == null || !isEnabled()) return null;
+  static @Nullable List<? extends Segment> calcFocusZones(@Nullable PsiFile file) {
+    if (file == null || !isEnabled()) {
+      return null;
+    }
+
     return CachedValuesManager.getCachedValue(file, () -> {
       FileViewProvider provider = file.getViewProvider();
 
-      List<Segment> segments = EP_NAME.allForLanguageOrAny(provider.getBaseLanguage()).stream()
-        .map(p -> calcFocusZones(p, file))
-        .map(l -> ContainerUtil.append(l, file.getTextRange()))
-        .findFirst().orElse(null);
+      List<Segment> segments = null;
+      for (FocusModeProvider p : EP_NAME.allForLanguageOrAny(provider.getBaseLanguage())) {
+        segments = ContainerUtil.append(calcFocusZones(p, file), file.getTextRange());
+        break;
+      }
       return CachedValueProvider.Result.create(segments, file);
     });
   }
 
   /**
-   * Computes focus zones for the {@code psiFile} using {@code focusModeProvider}. Additionally warns, if zones building took too long
+   * Computes focus zones for the {@code psiFile} using {@code focusModeProvider}. Additionally, warns if zones building took too long
    * (longer than {@link #MAX_ALLOWED_TIME} ms.
    */
-  @NotNull
-  private static List<? extends Segment> calcFocusZones(@NotNull FocusModeProvider focusModeProvider, @NotNull PsiFile psiFile) {
+  private static @NotNull List<? extends Segment> calcFocusZones(@NotNull FocusModeProvider focusModeProvider, @NotNull PsiFile psiFile) {
     Ref<List<? extends Segment>> resultRef = Ref.create();
     long executionTime = TimeoutUtil.measureExecutionTime(() -> resultRef.set(focusModeProvider.calcFocusZones(psiFile)));
     if (executionTime > MAX_ALLOWED_TIME) {
@@ -91,17 +92,17 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
     if (!(editor instanceof EditorImpl)) return;
     FocusModeModel focusModeModel = ((EditorImpl)editor).getFocusModeModel();
 
-    Set<FocusRegion> focusRegions = ((EditorImpl)editor).putUserDataIfAbsent(FOCUS_REGIONS_FROM_PASS, new HashSet<>());
-    Set<FocusRegion> invalidFocusRegions = new HashSet<>(focusRegions);
+    Set<RangeMarker> focusRegions = ((EditorImpl)editor).putUserDataIfAbsent(FOCUS_REGIONS_FROM_PASS, new HashSet<>());
+    Set<RangeMarker> invalidFocusRegions = new HashSet<>(focusRegions);
     for (Segment zone : zones) {
-      FocusRegion foundRegion = focusModeModel.findFocusRegion(zone.getStartOffset(), zone.getEndOffset());
+      RangeMarker foundRegion = focusModeModel.findFocusRegion(zone.getStartOffset(), zone.getEndOffset());
       if (foundRegion == null) {
-        FocusRegion newRegion = focusModeModel.createFocusRegion(zone.getStartOffset(), zone.getEndOffset());
+        RangeMarker newRegion = focusModeModel.createFocusRegion(zone.getStartOffset(), zone.getEndOffset());
         focusRegions.add(newRegion);
       }
       else {
         if (focusRegions.contains(foundRegion)) {
-          // Region exists and belongs to this provider. Leave in focusRegions
+          // The region exists and belongs to this provider. Leave in focusRegions.
           invalidFocusRegions.remove(foundRegion);
         }
         else {
@@ -109,7 +110,7 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
         }
       }
     }
-    for (FocusRegion invalidFocusRegion : invalidFocusRegions) {
+    for (RangeMarker invalidFocusRegion : invalidFocusRegions) {
       // Dispose and delete invalid and removed focus markers
       focusModeModel.removeFocusRegion(invalidFocusRegion);
       focusRegions.remove(invalidFocusRegion);

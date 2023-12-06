@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public class ListModelEditor<T> extends ListModelEditorBase<T> {
+public final class ListModelEditor<T> extends ListModelEditorBase<T> {
   private final ToolbarDecorator toolbarDecorator;
 
   private final JBList<T> list = new JBList<>(model);
@@ -22,7 +22,7 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
     super(itemEditor);
 
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(SimpleListCellRenderer.create("", o -> itemEditor.getName(o)));
+    list.setCellRenderer(BuilderKt.textListCellRenderer(o -> itemEditor.getName(o)));
 
     toolbarDecorator = ToolbarDecorator.createDecorator(list, model)
       .setAddAction(button -> {
@@ -41,24 +41,20 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
     .setRemoveActionUpdater(e -> areSelectedItemsRemovable(list.getSelectionModel()));
   }
 
-  @NotNull
-  public ListModelEditor<T> disableUpDownActions() {
+  public @NotNull ListModelEditor<T> disableUpDownActions() {
     toolbarDecorator.disableUpDownActions();
     return this;
   }
 
-  @NotNull
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     return toolbarDecorator.createPanel();
   }
 
-  @NotNull
-  public JBList getList() {
+  public @NotNull JBList getList() {
     return list;
   }
 
-  @Nullable
-  public T getSelected() {
+  public @Nullable T getSelected() {
     return list.getSelectedValue();
   }
 

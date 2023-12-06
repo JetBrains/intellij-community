@@ -3,7 +3,6 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
@@ -37,16 +36,15 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
     return "LargeFileEditor";
   }
 
-  public static class LargeTextFileEditor extends TextEditorImpl {
+  public static final class LargeTextFileEditor extends TextEditorImpl {
     LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
-      super(project, file, provider);
-      if (getEditor() instanceof EditorEx editor) {
-        editor.setViewer(true);
-      }
+      super(project, file, provider, TextEditorImpl.Companion.createTextEditor(project, file));
+
+      getEditor().setViewer(true);
     }
   }
 
-  private static class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {
+  private static final class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {
     private final VirtualFile myFile;
 
     LargeBinaryFileEditor(VirtualFile file) {

@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.smRunner
 
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.min
 
 /**
  * External test runner sends plain text along with service messages ([ServiceMessage]) to [process].
@@ -39,7 +40,7 @@ abstract class OutputEventSplitterBase<T>(private val serviceMessagePrefix: Stri
 
   private data class Output<T>(val text: String, val outputType: OutputType<T>)
 
-  private var newLinePending = false
+  private var newLinePending: String? = null
 
   private val prevRefs = OutputStreamType.values().associateWith { AtomicReference<Output<T>>() }
 
@@ -84,7 +85,7 @@ abstract class OutputEventSplitterBase<T>(private val serviceMessagePrefix: Stri
     var teamcityMessageStartInd = if (processServiceMessages) text.indexOf(serviceMessagePrefix) else -1
     var serviceMessageStarted = false
     while (from < text.length) {
-      val nextFrom = Math.min(if (newLineInd != -1) newLineInd + 1 else Integer.MAX_VALUE,
+      val nextFrom = min(if (newLineInd != -1) newLineInd + 1 else Integer.MAX_VALUE,
                               if (teamcityMessageStartInd != -1) teamcityMessageStartInd else Integer.MAX_VALUE)
       if (nextFrom == Integer.MAX_VALUE) {
         break
@@ -144,14 +145,14 @@ abstract class OutputEventSplitterBase<T>(private val serviceMessagePrefix: Stri
 
   private fun flushInternal(text: String, outputType: OutputType<T>, lastFlush: Boolean = false) {
     if (cutNewLineBeforeServiceMessage && outputType.streamType == OutputStreamType.STDOUT) {
-      if (newLinePending) { //Prev. flush was "\n".
+      newLinePending?.let { newLine -> //Prev. flush was "\n" or "\r\n".
         if (!text.startsWith(serviceMessagePrefix) || (lastFlush)) {
-          onTextAvailable("\n", outputType)
+          onTextAvailable(newLine, outputType)
         }
-        newLinePending = false
+        newLinePending = null
       }
-      if (text == "\n" && !lastFlush) {
-        newLinePending = true
+      if ((text == "\n" || text == "\r\n") && !lastFlush) {
+        newLinePending = text
         return
       }
     }

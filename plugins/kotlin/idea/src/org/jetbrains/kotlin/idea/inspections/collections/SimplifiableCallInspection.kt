@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns.isArray
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns.isPrimitiveArray
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -143,7 +144,7 @@ private fun KtLambdaExpression.singleStatement(): KtExpression? = bodyExpression
 
 private fun KtLambdaExpression.singleLambdaParameterName(): String? {
     val lambdaParameters = valueParameters
-    return if (lambdaParameters.isNotEmpty()) lambdaParameters.singleOrNull()?.name else "it"
+    return if (lambdaParameters.isNotEmpty()) lambdaParameters.singleOrNull()?.name else StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
 }
 
 private fun KtExpression.isNameReferenceTo(name: String): Boolean =

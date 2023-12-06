@@ -1,31 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
-import com.intellij.application.options.schemes.SimpleSchemesPanel;
+import com.intellij.application.options.schemes.EditableSchemesCombo;
 import com.intellij.application.options.schemes.SchemesModel;
+import com.intellij.application.options.schemes.SimpleSchemesPanel;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ContextHelpLabel;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
+import java.awt.*;
+
+public final class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
@@ -45,6 +37,12 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
     return myListLoaded;
   }
 
+  @Override
+  protected @Nullable Component createSchemesContextHelpLabel() {
+    return ContextHelpLabel.create(
+      ApplicationBundle.message("editor.colors.schemes.context.help", ColorUtil.toHtmlColor(EditableSchemesCombo.MODIFIED_ITEM_FOREGROUND))
+    );
+  }
 
   void resetSchemesCombo(final Object source) {
     if (this != source) {
@@ -66,13 +64,11 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
     myDispatcher.addListener(listener);
   }
 
-  @NotNull
   @Override
-  protected AbstractSchemeActions<EditorColorsScheme> createSchemeActions() {
+  protected @NotNull AbstractSchemeActions<EditorColorsScheme> createSchemeActions() {
     return new ColorSchemeActions(this) {
-        @NotNull
         @Override
-        protected ColorAndFontOptions getOptions() {
+        protected @NotNull ColorAndFontOptions getOptions() {
           return myOptions;
         }
 
@@ -96,9 +92,8 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
       };
   }
 
-  @NotNull
   @Override
-  public SchemesModel<EditorColorsScheme> getModel() {
+  public @NotNull SchemesModel<EditorColorsScheme> getModel() {
     return myOptions;
   }
 

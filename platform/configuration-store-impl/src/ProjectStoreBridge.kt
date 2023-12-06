@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -15,20 +17,30 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
+import com.intellij.platform.workspace.jps.serialization.impl.isExternalModuleFile
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.HashingStrategy
-import com.intellij.util.io.systemIndependentPath
-import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
+import com.intellij.workspaceModel.ide.impl.jpsMetrics
+import io.opentelemetry.api.metrics.Meter
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Supplier
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal class ProjectStoreBridge(private val project: Project) : ModuleSavingCustomizer {
   override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
@@ -52,17 +64,18 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
                                       private val project: Project) : JpsFileContentWriter {
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
-    if (FileUtil.extensionEquals(filePath, "iml")) {
+    if (FileUtilRt.extensionEquals(filePath, "iml")) {
       session.setModuleComponentState(filePath, componentName, componentTag)
     }
     else if (isExternalModuleFile(filePath)) {
-      session.setExternalModuleComponentState(FileUtil.getNameWithoutExtension(PathUtil.getFileName(filePath)), componentName, componentTag)
+      session.setExternalModuleComponentState(FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(filePath)), componentName,
+                                              componentTag)
     }
     else {
       val stateStorage = getProjectStateStorage(filePath, store, project)
       val producer = session.getProducer(stateStorage)
       if (producer is DirectoryBasedSaveSessionProducer) {
-        producer.setFileState(PathUtil.getFileName(filePath), componentName, componentTag?.children?.first())
+        producer.setFileState(PathUtilRt.getFileName(filePath), componentName, componentTag?.children?.first())
       }
       else {
         producer?.setState(null, componentName, componentTag)
@@ -72,7 +85,7 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
 
   override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
-    return if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
+    return if (FileUtilRt.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
       ModulePathMacroManager.createInstance(project::getProjectFilePath, Supplier { filePath }).replacePathMap
     }
     else {
@@ -82,13 +95,12 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
 }
 
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
+private val NULL_ELEMENT = Element("null")
 
 private class ProjectWithModulesSaveSessionProducerManager(project: Project) : ProjectSaveSessionProducerManager(project) {
-  companion object {
-    private val NULL_ELEMENT = Element("null")
-  }
   private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element>> = if (!SystemInfoRt.isFileSystemCaseSensitive)
-    ConcurrentCollectionFactory.createConcurrentMap(HashingStrategy.caseInsensitive()) else ConcurrentCollectionFactory.createConcurrentMap()
+    ConcurrentCollectionFactory.createConcurrentMap(HashingStrategy.caseInsensitive())
+  else ConcurrentCollectionFactory.createConcurrentMap()
   private val externalModuleComponents = ConcurrentHashMap<String, ConcurrentHashMap<String, Element>>()
 
   fun setModuleComponentState(imlFilePath: String, componentName: String, componentTag: Element?) {
@@ -106,20 +118,22 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
       val storage = moduleStore.storageManager.getStateStorage(storageSpec)
       val producer = moduleSaveSessionManager.getProducer(storage)
       if (producer != null) {
-        componentToElement.forEach { (componentName, componentTag) ->
-          producer.setState(null, componentName, if (componentTag === NULL_ELEMENT) null else componentTag)
+        for ((componentName, componentTag) in componentToElement) {
+          producer.setState(component = null,
+                            componentName = componentName,
+                            state = if (componentTag === NULL_ELEMENT) null else componentTag)
         }
       }
     }
 
     val moduleFilePath = moduleStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
-    val internalComponents = internalModuleComponents[moduleFilePath.systemIndependentPath]
+    val internalComponents = internalModuleComponents.get(moduleFilePath.invariantSeparatorsPathString)
     if (internalComponents != null) {
       commitToStorage(MODULE_FILE_STORAGE_ANNOTATION, internalComponents)
     }
 
-    val moduleFileName = FileUtil.getNameWithoutExtension(moduleFilePath.fileName.toString())
-    val externalComponents = externalModuleComponents[moduleFileName]
+    val moduleFileName = FileUtilRt.getNameWithoutExtension(moduleFilePath.fileName.toString())
+    val externalComponents = externalModuleComponents.get(moduleFileName)
     if (externalComponents != null) {
       StreamProviderFactory.EP_NAME.computeSafeIfAny(project) {
         it.getOrCreateStorageSpec(StoragePathMacros.MODULE_FILE)
@@ -135,29 +149,39 @@ internal class StorageJpsConfigurationReader(private val project: Project,
   private val externalConfigurationDir = lazy { project.getExternalConfigurationDir() }
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
+    val start = System.currentTimeMillis()
+
+    fun stopMeasure() = loadComponentTimeMs.addElapsedTimeMillis(start)
+
     val filePath = JpsPathUtil.urlToPath(fileUrl)
-    if (ProjectUtil.isRemotePath(FileUtil.toSystemDependentName(filePath)) && !project.isTrusted()) {
+    if (ProjectUtil.isRemotePath(FileUtilRt.toSystemDependentName(filePath)) && !project.isTrusted()) {
       throw IOException(ConfigurationStoreBundle.message("error.message.details.configuration.files.from.remote.locations.in.safe.mode"))
     }
     if (componentName == "") {
       //this is currently used for loading Eclipse project configuration from .classpath file
       val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl)
-      return file?.inputStream?.use { JDOMUtil.load(it) }
+      val component = file?.inputStream?.use { JDOMUtil.load(it) }
+      stopMeasure()
+      return component
     }
     if (isExternalMiscFile(filePath)) {
-      // this is a workaround to make working scenario when the whole .idea is moved to external configuration dir
+      // this is a workaround to make a working scenario when the whole .idea is moved to external configuration dir
       // see com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isExternalStorageEnabled
-      return getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
+      val component = getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
+      stopMeasure()
+      return component
     }
-    if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
+    if (FileUtilRt.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
       //todo fetch data from ModuleStore (https://jetbrains.team/p/wm/issues/51)
-      return getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
+      val component = getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
+      stopMeasure()
+      return component
     }
     else {
       val storage = getProjectStateStorage(filePath, project.stateStore, project)
       val stateMap = storage.getStorageData()
-      return if (storage is DirectoryBasedStorageBase) {
-        val elementContent = stateMap.getElement(PathUtil.getFileName(filePath))
+      val component = if (storage is DirectoryBasedStorageBase) {
+        val elementContent = stateMap.getElement(PathUtilRt.getFileName(filePath))
         if (elementContent != null) {
           Element(FileStorageCoreUtil.COMPONENT).setAttribute(FileStorageCoreUtil.NAME, componentName).addContent(elementContent)
         }
@@ -168,12 +192,13 @@ internal class StorageJpsConfigurationReader(private val project: Project,
       else {
         stateMap.getElement(componentName)
       }
+      stopMeasure()
+      return component
     }
   }
 
   private fun isExternalMiscFile(filePath: String): Boolean {
-    return PathUtil.getFileName(filePath) == "misc.xml" &&
-           FileUtil.isAncestor(externalConfigurationDir.value, Path.of(filePath), false)
+    return PathUtilRt.getFileName(filePath) == "misc.xml" && FileUtil.isAncestor(externalConfigurationDir.value, Path.of(filePath), false)
   }
 
   private fun getCachingReader(): CachingJpsFileContentReader {
@@ -196,6 +221,21 @@ internal class StorageJpsConfigurationReader(private val project: Project,
 
   override fun clearCache() {
     fileContentCachingReader = null
+  }
+
+  companion object {
+    private val loadComponentTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val loadComponentTimeGauge = meter.gaugeBuilder("jps.storage.jps.conf.reader.load.component.ms")
+        .ofLongs().buildObserver()
+
+      meter.batchCallback({ loadComponentTimeGauge.record(loadComponentTimeMs.get()) }, loadComponentTimeGauge)
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.IdeBundle;
@@ -14,24 +14,20 @@ import java.util.function.Supplier;
 /**
  * Represents a separator.
  */
-@SuppressWarnings("ComponentNotRegistered")
 public final class Separator extends DecorativeElement implements DumbAware, LightEditCompatible, SeparatorAction {
 
   private static final Separator ourInstance = new Separator();
   private final Supplier<@NlsContexts.Separator String> myDynamicText;
 
-  @NotNull
-  public static Separator getInstance() {
+  public static @NotNull Separator getInstance() {
     return ourInstance;
   }
 
-  @NotNull
-  public static Separator create() {
+  public static @NotNull Separator create() {
     return create(null);
   }
 
-  @NotNull
-  public static Separator create(@Nullable @NlsContexts.Separator String text) {
+  public static @NotNull Separator create(@Nullable @NlsContexts.Separator String text) {
     return StringUtil.isEmptyOrSpaces(text)? ourInstance : new Separator(text);
   }
 

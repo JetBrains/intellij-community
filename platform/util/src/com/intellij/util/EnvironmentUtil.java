@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.process.UnixProcessManager;
@@ -26,6 +26,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance(EnvironmentUtil.class);
@@ -161,7 +163,7 @@ public final class EnvironmentUtil {
     if (SystemInfoRt.isWindows) {
       return Collections.unmodifiableMap(CollectionFactory.createCaseInsensitiveStringMap(System.getenv()));
     }
-    else if (SystemInfoRt.isXWindow) {
+    else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       // DESKTOP_STARTUP_ID variable can be set by an application launcher in X Window environment.
       // It shouldn't be passed to child processes as per 'Startup notification protocol'
       // (https://specifications.freedesktop.org/startup-notification-spec/startup-notification-latest.txt).
@@ -535,15 +537,25 @@ public final class EnvironmentUtil {
     inlineParentOccurrences(envs, getEnvironmentMap());
   }
 
+  private static final Pattern pattern = Pattern.compile("\\$(.*?)\\$");
+
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv) {
+    LinkedHashMap<String, String> lookup = new LinkedHashMap<>(envs);
+    lookup.putAll(parentEnv);
     for (Map.Entry<String, String> entry : envs.entrySet()) {
       String key = entry.getKey();
       String value = entry.getValue();
       if (value != null) {
-        String parentVal = parentEnv.get(key);
-        if (parentVal != null && containsEnvKeySubstitution(key, value)) {
-          envs.put(key, value.replace("$" + key + "$", parentVal));
+        Matcher matcher = pattern.matcher(value);
+        while (matcher.find()) {
+          String group = matcher.group(1);
+          String expanded = lookup.get(group);
+          if (expanded != null) {
+            value = value.replace("$" + group + "$", expanded);
+          }
         }
+        envs.put(key, value);
+        lookup.put(key, value);
       }
     }
   }
@@ -567,7 +579,7 @@ public final class EnvironmentUtil {
     }
   }
 
-  private static class EnvironmentReaderException extends IOException implements ExceptionWithAttachments {
+  private static final class EnvironmentReaderException extends IOException implements ExceptionWithAttachments {
     private final Attachment[] myAttachments;
 
     private EnvironmentReaderException(String message, String data, String log) {

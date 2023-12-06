@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
 abstract class CatBoostJarCompletionModelProvider(@Nls(capitalization = Nls.Capitalization.Title) private val displayName: String,
-                                                  @NonNls private val resourceDirectory: String,
-                                                  @NonNls private val modelDirectory: String) : RankingModelProvider {
+                                                  @NonNls val resourceDirectory: String,
+                                                  @NonNls val modelDirectory: String) : RankingModelProvider {
   private val lazyModel: DecisionFunction by lazy {
     val metadataReader = CatBoostResourcesModelMetadataReader(this::class.java, resourceDirectory, modelDirectory)
     val metadata = FeaturesInfo.buildInfo(metadataReader)

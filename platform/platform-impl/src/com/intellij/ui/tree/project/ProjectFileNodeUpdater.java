@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.ProjectTopics.PROJECT_ROOTS;
 import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
 
@@ -38,7 +37,7 @@ public abstract class ProjectFileNodeUpdater {
   public ProjectFileNodeUpdater(@NotNull Project project, @NotNull Invoker invoker) {
     this.invoker = invoker;
     MessageBusConnection connection = project.getMessageBus().connect(invoker);
-    connection.subscribe(PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         updateFromRoot();

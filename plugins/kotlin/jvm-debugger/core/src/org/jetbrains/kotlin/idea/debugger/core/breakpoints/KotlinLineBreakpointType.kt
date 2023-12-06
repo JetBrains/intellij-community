@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger.breakpoints
@@ -25,12 +25,14 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
+import org.jetbrains.kotlin.idea.debugger.getContainingMethod
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -46,19 +48,13 @@ class KotlinLineBreakpointType :
     inner class LineKotlinBreakpointVariant(
         position: XSourcePosition,
         element: PsiElement?,
-        lambdaOrdinal: Int?
-    ) : LineJavaBreakpointVariant(position, element, lambdaOrdinal) {
-        override fun getText(): String =
-            KotlinDebuggerCoreBundle.message("line.breakpoint")
-    }
+        lambdaOrdinal: Int
+    ) : LineJavaBreakpointVariant(position, element, lambdaOrdinal)
 
     inner class KotlinBreakpointVariant(
         position: XSourcePosition,
-        private val lambdaCount: Int
-    ) : JavaBreakpointVariant(position) {
-        override fun getText(): String =
-            KotlinDebuggerCoreBundle.message("line.and.lambda.breakpoint", lambdaCount)
-    }
+        lambdaCount: Int
+    ) : JavaBreakpointVariant(position, lambdaCount)
 
     override fun createJavaBreakpoint(
         project: Project, breakpoint:
@@ -82,16 +78,8 @@ class KotlinLineBreakpointType :
         return true
     }
 
-    override fun getContainingMethod(breakpoint: LineBreakpoint<*>): PsiElement? {
-        val position = breakpoint.sourcePosition ?: return null
-        val properties = breakpoint.javaBreakpointProperties
-        if (properties is JavaLineBreakpointProperties) {
-            val lambda = getLambdaByOrdinal(position, properties.lambdaOrdinal)
-            if (lambda != null) return lambda
-        }
-
-        return position.elementAt.getContainingMethod()
-    }
+    override fun getContainingMethod(breakpoint: LineBreakpoint<*>): PsiElement? =
+        breakpoint.sourcePosition?.elementAt?.getContainingMethod()
 
     override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
         return isBreakpointApplicable(file, line, project) { element: PsiElement ->
@@ -121,25 +109,26 @@ class KotlinLineBreakpointType :
 
         val pos = SourcePosition.createFromLine(file, position.line)
         val lambdas = getLambdasAtLineIfAny(pos)
-        if (lambdas.isEmpty()) return emptyList()
+        val condRet = if (canStopOnConditionalReturn(file)) findSingleConditionalReturn(file, position.line) else null
+
+        if (lambdas.isEmpty() && condRet == null) return emptyList()
 
         val result = LinkedList<JavaLineBreakpointType.JavaBreakpointVariant>()
-        val elementAt = pos.elementAt.parentsWithSelf.firstIsInstance<KtElement>()
-        val mainMethod = PsiTreeUtil.getParentOfType(elementAt, KtFunction::class.java, false)
+        val elementAt = pos.elementAt?.parentsWithSelf?.firstIsInstance<KtElement>() ?: return emptyList()
+        val mainMethod = elementAt.getContainingMethod(excludingElement = false)
         var mainMethodAdded = false
         if (mainMethod != null) {
-            val bodyExpression = mainMethod.bodyExpression
+            val bodyExpression = if (mainMethod is KtDeclarationWithBody) mainMethod.bodyExpression else null
             val isLambdaResult = bodyExpression is KtLambdaExpression && bodyExpression.functionLiteral in lambdas
 
             if (!isLambdaResult) {
-                val variantElement = getTopmostElementAtOffset(elementAt, pos.offset)
-                result.add(LineKotlinBreakpointVariant(position, variantElement, -1))
+                result.add(LineKotlinBreakpointVariant(position, mainMethod, -1))
                 mainMethodAdded = true
             }
         }
 
         lambdas.forEachIndexed { ordinal, lambda ->
-            val positionImpl = XSourcePositionImpl.createByElement(lambda.bodyExpression)
+            val positionImpl = XSourcePositionImpl.createByElement(lambda)
             if (positionImpl != null) {
                 result.add(LambdaJavaBreakpointVariant(positionImpl, lambda, ordinal))
             }
@@ -149,20 +138,29 @@ class KotlinLineBreakpointType :
             result.add(KotlinBreakpointVariant(position, lambdas.size))
         }
 
+        if (condRet != null) {
+            val method = condRet.getContainingMethod()
+            val ordinal = lambdas.indexOf(method)
+            result.add(ConditionalReturnJavaBreakpointVariant(position, condRet, ordinal))
+        }
+
         return result
     }
 
     override fun getHighlightRange(breakpoint: XLineBreakpoint<JavaLineBreakpointProperties>): TextRange? {
         val properties = breakpoint.properties ?: return null
-        val ordinal = properties.lambdaOrdinal ?: return null
-        val javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint) as? LineBreakpoint<*> ?: return null
-        val position = javaBreakpoint.sourcePosition ?: return null
+        val position = (BreakpointManager.getJavaBreakpoint(breakpoint) as? LineBreakpoint<*>)?.sourcePosition ?: return null
 
+        if (properties.isConditionalReturn) {
+            return findSingleConditionalReturn(position)?.textRange
+        }
+
+        val lambdaOrdinal = properties.lambdaOrdinal ?: return null
         // Since lambda breakpoints are placed on the first lambda statement,
         // we should find the function parent to highlight lambda breakpoints properly
-        val function = position.elementAt.parentOfType<KtFunction>() ?: return null
+        val function = position.elementAt?.parentOfType<KtFunction>() ?: return null
         val updatedPosition = SourcePosition.createFromElement(function) ?: return null
-        return getLambdaByOrdinal(updatedPosition, ordinal)?.textRange
+        return getLambdaByOrdinal(updatedPosition, lambdaOrdinal)?.textRange
     }
 
     override fun getSourcePosition(breakpoint: XBreakpoint<JavaLineBreakpointProperties>): XSourcePosition? =
@@ -171,13 +169,22 @@ class KotlinLineBreakpointType :
     private fun calculateSourcePosition(breakpoint: XBreakpoint<JavaLineBreakpointProperties>): XSourcePosition? {
         val javaBreakpointProperties = breakpoint.properties ?: return null
         val sourcePosition = createLineSourcePosition(breakpoint as XLineBreakpointImpl<*>) ?: return null
-        val ordinal = javaBreakpointProperties.lambdaOrdinal
-        val function = getLambdaByOrdinal(sourcePosition, ordinal) ?: return null
-        val firstStatement = function.bodyBlockExpression?.statements?.firstOrNull() ?: return null
+
+        if (javaBreakpointProperties.isConditionalReturn) {
+            runReadAction {
+                findSingleConditionalReturn(sourcePosition)?.let {
+                    XSourcePositionImpl.createByElement(it)
+                }
+            }?.let { return it }
+        }
+
+        val lambdaOrdinal = javaBreakpointProperties.lambdaOrdinal ?: return null
+        val function = getLambdaByOrdinal(sourcePosition, lambdaOrdinal) ?: return null
+        val firstStatement = function.bodyBlockExpression?.statements?.firstOrNull() ?: function.bodyExpression ?: return null
         return runReadAction {
             val linePosition = SourcePosition.createFromElement(firstStatement) ?: return@runReadAction null
             DebuggerUtilsEx.toXSourcePosition(
-                PositionManagerImpl.JavaSourcePosition(linePosition, ordinal)
+                PositionManagerImpl.JavaSourcePosition(linePosition, lambdaOrdinal)
             )
         }
     }
@@ -185,9 +192,6 @@ class KotlinLineBreakpointType :
 
 private val LineBreakpoint<*>.javaBreakpointProperties
     get() = xBreakpoint?.properties as? JavaBreakpointProperties<*>
-
-private fun PsiElement.getContainingMethod(): PsiElement? =
-    PsiTreeUtil.getParentOfType(this, KtFunction::class.java, KtClassInitializer::class.java)
 
 private fun PsiElement?.isInlineOnlyDeclaration(): Boolean =
     this is KtCallableDeclaration && isInlineOnly()

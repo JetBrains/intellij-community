@@ -9,18 +9,21 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class VisitingTest extends IntegrationTestCase {
   @Test
-  public void testSimpleVisit() {
+  public void testSimpleVisit() throws IOException {
     createFile("f.txt");
     createFile("dir");
     assertVisitorLog("begin create end begin create end begin create end begin create end finished ");
   }
 
   @Test
-  public void testVisitChangeSet() {
+  public void testVisitChangeSet() throws IOException {
     getVcs().beginChangeSet();
     createFile("f.txt");
     createFile("dir");
@@ -30,7 +33,7 @@ public class VisitingTest extends IntegrationTestCase {
   }
 
   @Test
-  public void testVisitingChangesInNotFinishedChangeSet() {
+  public void testVisitingChangesInNotFinishedChangeSet() throws IOException {
     getVcs().beginChangeSet();
     createFile("f.txt");
     createFile("dir");
@@ -39,7 +42,7 @@ public class VisitingTest extends IntegrationTestCase {
   }
 
   @Test
-  public void testVisitingAllChanges() {
+  public void testVisitingAllChanges() throws IOException {
     createFile("f.txt");
     getVcs().beginChangeSet();
     VirtualFile dir = createFile("dir");
@@ -51,7 +54,7 @@ public class VisitingTest extends IntegrationTestCase {
   }
 
   @Test
-  public void testStop() {
+  public void testStop() throws IOException {
     createFile("f.txt");
     createFile("dir");
 
@@ -69,7 +72,7 @@ public class VisitingTest extends IntegrationTestCase {
   }
 
   @Test
-  public void testAddingChangesWhileVisiting() {
+  public void testAddingChangesWhileVisiting() throws IOException {
     getVcs().beginChangeSet();
     createFile("f.txt");
     createFile("dir");
@@ -81,7 +84,12 @@ public class VisitingTest extends IntegrationTestCase {
       public void visit(CreateEntryChange c) throws StopVisitingException {
         super.visit(c);
         count[0]++;
-        createFile("f" + count[0]);
+        try {
+          createFile("f" + count[0]);
+        }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
       }
     };
 
@@ -90,7 +98,7 @@ public class VisitingTest extends IntegrationTestCase {
   }
 
   @Test
-  public void testPurgingDuringVisit() {
+  public void testPurgingDuringVisit() throws IOException {
     Clock.setTime(10);
     getVcs().beginChangeSet();
     createFile("f.txt");

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -24,29 +24,24 @@ public final class FunctionUtil {
 
   private FunctionUtil() { }
 
-  @NotNull
-  public static <T> Function<T, T> id() {
+  public static @NotNull <T> Function<T, T> id() {
     return Functions.identity();
   }
 
-  @NotNull
-  public static <A, B> NullableFunction<A, B> nullConstant() {
+  public static @NotNull <A, B> NullableFunction<A, B> nullConstant() {
     //noinspection unchecked
     return (NullableFunction<A, B>)NULL;
   }
 
-  @NotNull
-  public static <T> Function<T, String> string() {
+  public static @NotNull <T> Function<T, String> string() {
     return Functions.TO_STRING();
   }
 
-  @NotNull
-  public static <A, B> Function<A, B> constant(final B b) {
+  public static @NotNull <A, B> Function<A, B> constant(final B b) {
     return a -> b;
   }
 
-  @NotNull
-  public static <A, B, C> NotNullFunction<A, C> composition(@NotNull final NotNullFunction<? super B, ? extends C> f, @NotNull final NotNullFunction<? super A, ? extends B> g) {
+  public static @NotNull <A, B, C> NotNullFunction<A, C> composition(final @NotNull NotNullFunction<? super B, ? extends C> f, final @NotNull NotNullFunction<? super A, ? extends B> g) {
     return a -> f.fun(g.fun(a));
   }
 

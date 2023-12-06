@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.openapi.util.Pair;
 import icons.MavenIcons;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 
 import java.util.ArrayList;
@@ -44,6 +46,13 @@ class ProfilesNode extends GroupNode {
     myProfileNodes.addAll(newNodes);
     sort(myProfileNodes);
     childrenChanged();
+  }
+
+  @Override
+  @Nullable
+  @NonNls
+  String getMenuId() {
+    return "Maven.ProfilesMenu";
   }
 
   private ProfileNode findOrCreateNodeFor(String profileName) {

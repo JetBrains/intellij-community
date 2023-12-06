@@ -20,19 +20,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class HgBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "messages.HgBundle";
-  private static final HgBundle INSTANCE = new HgBundle();
+public final class HgBundle {
+  public static final @NonNls String BUNDLE = "messages.HgBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(HgBundle.class, BUNDLE);
 
-  private HgBundle() { super(BUNDLE); }
+  private HgBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

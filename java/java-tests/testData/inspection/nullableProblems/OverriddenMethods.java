@@ -2,8 +2,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class P2 {
-    <warning descr="Overridden methods are not annotated">@NotNull</warning>
-    String foo(<warning descr="Overridden method parameters are not annotated">@NotNull</warning> <error descr="Cannot resolve symbol 'P'">P</error> p) {
+    <warning descr="Overriding methods are not annotated">@NotNull</warning>
+    String foo(<warning descr="Overriding method parameters are not annotated">@NotNull</warning> <error descr="Cannot resolve symbol 'P'">P</error> p) {
         return "";
     }
 }
@@ -49,7 +49,7 @@ class B extends A implements <warning descr="Non-annotated method 'foo' from 'A'
 
 interface InheritorMethodOverriddenButParameterNot {
   @NotNull
-  Integer get(<warning descr="Overridden method parameters are not annotated">@NotNull</warning> String param);
+  Integer get(<warning descr="Overriding method parameters are not annotated">@NotNull</warning> String param);
 }
 
 class InheritorMethodOverriddenButParameterNot_Impl implements InheritorMethodOverriddenButParameterNot {

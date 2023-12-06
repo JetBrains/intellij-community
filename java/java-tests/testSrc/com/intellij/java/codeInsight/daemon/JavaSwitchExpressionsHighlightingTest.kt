@@ -17,13 +17,17 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
   fun testSwitchExpressionsEnumResolve() = doTest()
   fun testSwitchNumericPromotion() = doTest()
   fun testSimpleInferenceCases() = doTest()
-  fun testEnhancedSwitchDefinitelyAssigned() = doTest()
-  fun testEnhancedSwitchUnreachable() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
+  fun testEnhancedSwitchDefinitelyAssigned() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testEnhancedSwitchUnreachable() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
   fun testSwitchExpressionHasResult() = doTest()
   fun testYieldStatements() = doTest()
   fun testAssignToFinalInSwitchExpression() = doTest()
   fun testDeadCode() = doTest()
   fun testComplexTernaryInSwitch() = doTest()
+  fun testQualifiedEnumInSwitch() =  IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testConstantAssignment() =  IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testEnumDuplicates() =  IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testDuplicatedWithCast() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
   fun testRedundantCastInSwitchBranch() {
     myFixture.enableInspections(RedundantCastInspection())
     doTest()

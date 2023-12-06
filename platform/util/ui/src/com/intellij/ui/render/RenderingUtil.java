@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.render;
 
 import com.intellij.openapi.util.IconLoader;
@@ -59,36 +59,30 @@ public final class RenderingUtil {
   }
 
 
-  @NotNull
-  public static Color getBackground(@NotNull JList<?> list, boolean selected) {
+  public static @NotNull Color getBackground(@NotNull JList<?> list, boolean selected) {
     return selected ? getSelectionBackground(list) : getBackground(list);
   }
 
-  @NotNull
-  public static Color getBackground(@NotNull JTable table, boolean selected) {
+  public static @NotNull Color getBackground(@NotNull JTable table, boolean selected) {
     return selected ? getSelectionBackground(table) : getBackground(table);
   }
 
-  @NotNull
-  public static Color getBackground(@NotNull JTree tree, boolean selected) {
+  public static @NotNull Color getBackground(@NotNull JTree tree, boolean selected) {
     return selected ? getSelectionBackground(tree) : getBackground(tree);
   }
 
 
-  @NotNull
-  public static Color getBackground(@NotNull JList<?> list) {
+  public static @NotNull Color getBackground(@NotNull JList<?> list) {
     Color background = list.getBackground();
     return background != null ? background : CurrentTheme.List.BACKGROUND;
   }
 
-  @NotNull
-  public static Color getBackground(@NotNull JTable table) {
+  public static @NotNull Color getBackground(@NotNull JTable table) {
     Color background = table.getBackground();
     return background != null ? background : CurrentTheme.Table.BACKGROUND;
   }
 
-  @NotNull
-  public static Color getBackground(@NotNull JTree tree) {
+  public static @NotNull Color getBackground(@NotNull JTree tree) {
     JTable table = getTableFor(tree);
     if (table != null) return getBackground(table); // tree table
     Color background = tree.getBackground();
@@ -96,20 +90,17 @@ public final class RenderingUtil {
   }
 
 
-  @NotNull
-  public static Color getSelectionBackground(@NotNull JList<?> list) {
+  public static @NotNull Color getSelectionBackground(@NotNull JList<?> list) {
     Color background = getCustomColor(list, CUSTOM_SELECTION_BACKGROUND);
     return background != null ? background : CurrentTheme.List.Selection.background(isFocused(list));
   }
 
-  @NotNull
-  public static Color getSelectionBackground(@NotNull JTable table) {
+  public static @NotNull Color getSelectionBackground(@NotNull JTable table) {
     Color background = getCustomColor(table, CUSTOM_SELECTION_BACKGROUND);
     return background != null ? background : CurrentTheme.Table.Selection.background(isFocused(table));
   }
 
-  @NotNull
-  public static Color getSelectionBackground(@NotNull JTree tree) {
+  public static @NotNull Color getSelectionBackground(@NotNull JTree tree) {
     JTable table = getTableFor(tree);
     if (table != null) return getSelectionBackground(table); // tree table
     Color background = getCustomColor(tree, CUSTOM_SELECTION_BACKGROUND);
@@ -117,36 +108,30 @@ public final class RenderingUtil {
   }
 
 
-  @NotNull
-  public static Color getForeground(@NotNull JList<?> list, boolean selected) {
+  public static @NotNull Color getForeground(@NotNull JList<?> list, boolean selected) {
     return selected ? getSelectionForeground(list) : getForeground(list);
   }
 
-  @NotNull
-  public static Color getForeground(@NotNull JTable table, boolean selected) {
+  public static @NotNull Color getForeground(@NotNull JTable table, boolean selected) {
     return selected ? getSelectionForeground(table) : getForeground(table);
   }
 
-  @NotNull
-  public static Color getForeground(@NotNull JTree tree, boolean selected) {
+  public static @NotNull Color getForeground(@NotNull JTree tree, boolean selected) {
     return selected ? getSelectionForeground(tree) : getForeground(tree);
   }
 
 
-  @NotNull
-  public static Color getForeground(@NotNull JList<?> list) {
+  public static @NotNull Color getForeground(@NotNull JList<?> list) {
     Color foreground = list.getForeground();
     return foreground != null ? foreground : CurrentTheme.List.FOREGROUND;
   }
 
-  @NotNull
-  public static Color getForeground(@NotNull JTable table) {
+  public static @NotNull Color getForeground(@NotNull JTable table) {
     Color foreground = table.getForeground();
     return foreground != null ? foreground : CurrentTheme.Table.FOREGROUND;
   }
 
-  @NotNull
-  public static Color getForeground(@NotNull JTree tree) {
+  public static @NotNull Color getForeground(@NotNull JTree tree) {
     JTable table = getTableFor(tree);
     if (table != null) return getForeground(table); // tree table
     Color foreground = tree.getForeground();
@@ -154,20 +139,17 @@ public final class RenderingUtil {
   }
 
 
-  @NotNull
-  public static Color getSelectionForeground(@NotNull JList<?> list) {
+  public static @NotNull Color getSelectionForeground(@NotNull JList<?> list) {
     Color foreground = getCustomColor(list, CUSTOM_SELECTION_FOREGROUND);
     return foreground != null ? foreground : CurrentTheme.List.Selection.foreground(isFocused(list));
   }
 
-  @NotNull
-  public static Color getSelectionForeground(@NotNull JTable table) {
+  public static @NotNull Color getSelectionForeground(@NotNull JTable table) {
     Color foreground = getCustomColor(table, CUSTOM_SELECTION_FOREGROUND);
     return foreground != null ? foreground : CurrentTheme.Table.Selection.foreground(isFocused(table));
   }
 
-  @NotNull
-  public static Color getSelectionForeground(@NotNull JTree tree) {
+  public static @NotNull Color getSelectionForeground(@NotNull JTree tree) {
     JTable table = getTableFor(tree);
     if (table != null) return getSelectionForeground(table); // tree table
     Color foreground = getCustomColor(tree, CUSTOM_SELECTION_FOREGROUND);

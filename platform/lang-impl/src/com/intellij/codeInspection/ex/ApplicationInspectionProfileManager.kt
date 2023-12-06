@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.InspectionProfileConvertor
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
+import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -13,9 +14,8 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -26,24 +26,27 @@ import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
-import java.nio.file.Paths
+import java.nio.file.Path
 
 @State(name = "InspectionProfileManager",
        storages = [Storage("editor.xml")],
        additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
 open class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory)
   : ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
+
   open val converter: InspectionProfileConvertor
     get() = InspectionProfileConvertor(this)
 
   val rootProfileName: String
-    get() = schemeManager.currentSchemeName ?: DEFAULT_PROFILE_NAME
+    get() = schemeManager.currentSchemeName ?: InspectionProfile.DEFAULT_PROFILE_NAME
 
+  @Suppress("TestOnlyProblems")
   constructor() : this(SchemeManagerFactory.getInstance())
 
   companion object {
     @JvmStatic
-    fun getInstanceImpl() = service<InspectionProfileManager>() as ApplicationInspectionProfileManager
+    fun getInstanceImpl(): ApplicationInspectionProfileManager =
+      InspectionProfileManager.getInstance() as ApplicationInspectionProfileManager
 
     private fun registerProvidedSeverities() {
       val map = HashMap<String, HighlightInfoType>()
@@ -56,7 +59,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
             }
             else -> null
           }
-          map.put(highlightSeverity.name, t)
+          map[highlightSeverity.name] = t
           HighlightDisplayLevel.registerSeverity(highlightSeverity, t.attributesKey, icon)
         }
       }
@@ -90,7 +93,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
   }
 
   override fun fireProfileChanged(profile: InspectionProfileImpl) {
-    processOpenedProjects { project ->
+    for (project in getOpenedProjects()) {
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged(profile)
     }
   }
@@ -100,19 +103,13 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
     try {
       return super.loadProfile(path)
     }
-    catch (e: IOException) {
-      throw e
-    }
-    catch (e: JDOMException) {
-      throw e
-    }
+    catch (e: IOException) { throw e }
+    catch (e: JDOMException) { throw e }
     catch (ignored: Exception) {
-      val file = Paths.get(path)
-      ApplicationManager.getApplication().invokeLater({
-                                                        Messages.showErrorDialog(
-                                                          InspectionsBundle.message("inspection.error.loading.message", 0, file),
-                                                          InspectionsBundle.message("inspection.errors.occurred.dialog.title"))
-                                                      }, ModalityState.NON_MODAL)
+      val message = InspectionsBundle.message("inspection.error.loading.message", 0, Path.of(path))
+      ApplicationManager.getApplication().invokeLater(
+        { Messages.showErrorDialog(message, InspectionsBundle.message("inspection.errors.occurred.dialog.title")) },
+        ModalityState.nonModal())
     }
 
     return getProfile(path, false)

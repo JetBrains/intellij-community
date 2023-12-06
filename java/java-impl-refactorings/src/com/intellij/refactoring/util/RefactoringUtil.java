@@ -487,18 +487,10 @@ public final class RefactoringUtil {
   /**
    * @deprecated use CommonJavaRefactoringUtil.convertInitializerToNormalExpression instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Contract("null, _ -> null")
   public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression, PsiType forcedReturnType) throws IncorrectOperationException {
     return CommonJavaRefactoringUtil.convertInitializerToNormalExpression(expression, forcedReturnType);
-  }
-
-  /**
-   * @deprecated use CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static PsiCodeBlock expandExpressionLambdaToCodeBlock(@NotNull PsiLambdaExpression lambdaExpression) {
-    return CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
   }
 
   /**

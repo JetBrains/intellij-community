@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.pagecache.Page;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -28,7 +27,7 @@ import static java.util.stream.Collectors.joining;
  * @see com.intellij.util.io.FilePageCacheLockFree
  */
 @ApiStatus.Internal
-public class PagesTable {
+public final class PagesTable {
   private static final double GROWTH_FACTOR = 1.5;
   private static final double SHRINK_FACTOR = 2;
 
@@ -45,10 +44,9 @@ public class PagesTable {
   /**
    * Reads are non-blocking, writes must be guarded by .pagesLock
    */
-  @NotNull
-  private volatile AtomicReferenceArray<PageImpl> pages;
+  private volatile @NotNull AtomicReferenceArray<PageImpl> pages;
 
-  private transient final ReentrantLock pagesLock = new ReentrantLock();
+  private final transient ReentrantLock pagesLock = new ReentrantLock();
 
 
   public PagesTable(final int initialSize) {
@@ -62,20 +60,17 @@ public class PagesTable {
     pages = new AtomicReferenceArray<>(size);
   }
 
-  @Nullable
-  public Page lookupIfExist(final int pageIndex) {
+  public @Nullable Page lookupIfExist(final int pageIndex) {
     return findPageOrInsertionIndex(this.pages, pageIndex, /*insertionIndexRef: */ null);
   }
 
-  @NotNull
-  public PageImpl lookupOrCreate(final int pageIndex,
-                                 final @NotNull IntFunction<PageImpl> uninitializedPageFactory,
-                                 final @NotNull PageContentLoader pageContentLoader) throws IOException {
+  public @NotNull PageImpl lookupOrCreate(final int pageIndex,
+                                          final @NotNull IntFunction<PageImpl> uninitializedPageFactory) throws IOException {
     final PageImpl page = findPageOrInsertionIndex(this.pages, pageIndex, /*insertionIndexRef: */null);
     if (page != null) {
       return page;
     }
-    return insertNewPage(pageIndex, uninitializedPageFactory, pageContentLoader);
+    return insertNewPage(pageIndex, uninitializedPageFactory);
   }
 
   public void flushAll() throws IOException {
@@ -86,15 +81,22 @@ public class PagesTable {
     //    dirty again even before the loop is finished.
     //    But I see no simple way to fix it, apart from returning to global lock protecting all
     //    writes -- which is exactly what we're escaping from by moving to concurrent implementation.
-    for (int i = 0; i < pages.length(); i++) {
-      final Page page = pages.get(i);
+    AtomicReferenceArray<PageImpl> pagesLocal = pages;
+    for (int i = 0; i < pagesLocal.length(); i++) {
+      final PageImpl page = pagesLocal.get(i);
       if (page != null && page.isDirty()) {
         page.flush();
       }
     }
   }
 
-  /** Shrink table if alivePagesCount is too small for current size. */
+  /**
+   * Shrink table if alivePagesCount is too small for current size.
+   *
+   * @return true if actually shrunk, false if there are too many entries (due to concurrent modifications),
+   * to shrink
+   */
+  @SuppressWarnings("UnusedReturnValue")
   public boolean shrinkIfNeeded(final int alivePagesCount) {
     final int expectedTableSize = (int)Math.ceil(alivePagesCount / loadFactor);
     if (expectedTableSize >= MIN_TABLE_SIZE
@@ -108,7 +110,7 @@ public class PagesTable {
           //RC: table content could change between alivePagesCount calculation, and actual rehash under
           //    the lock: more pages could be inserted into a table, so alivePagesCount is an underestimation.
           //    It could be so huge an underestimation that shrinking is not appropriate at all -- e.g.
-          //    there will be not enough slots in a table, if shrinked. We deal with it speculatively: try
+          //    there will be not enough slots in a table, if shrunk. We deal with it speculatively: try
           //    to rehashToSize(), and cancel resize if NoFreeSpaceException is thrown:
           return false;
         }
@@ -130,10 +132,8 @@ public class PagesTable {
   }
 
 
-  @NotNull
-  private PageImpl insertNewPage(final int pageIndex,
-                                 final IntFunction<PageImpl> uninitializedPageFactory,
-                                 final PageContentLoader pageContentLoader) throws IOException {
+  private @NotNull PageImpl insertNewPage(final int pageIndex,
+                                          final IntFunction<PageImpl> uninitializedPageFactory) {
 
     //Don't try to be lock-free on updates, just avoid holding the _global_ lock during IO:
     // 1) put blankPage under the pagesLock,
@@ -191,31 +191,35 @@ public class PagesTable {
       pagesLock.unlock();
     }
 
-    blankPage.pageLock().writeLock().lock();
-    try {
-      if (blankPage.isTombstone()) {
-        throw new ClosedStorageException("Storage is already closed");
-      }
-      if (!blankPage.isNotReadyYet()) {
-        throw new AssertionError("Page must be {NOT_READY_YET, TOMBSTONE}, but " + blankPage);
-      }
-      blankPage.prepareForUse(pageContentLoader);
-      if (blankPage.isNotReadyYet()) {
-        //RC: Page state could be any of {USABLE, ABOUT_TO_UNMAP, TOMBSTONE} here. USABLE is the
-        //    obvious case, but {ABOUT_TO_UNMAP, TOMBSTONE} could happen if new page allocation
-        //    races with storage closing: in such scenario page could be entombed async immediately
-        //    after .prepareForUse() made it USABLE -- nothing prevents it, since page has
-        //    usageCount=0 still.
-        throw new AssertionError("Page must be {USABLE, ABOUT_TO_UNMAP, TOMBSTONE}, but " + blankPage);
-      }
-      if (blankPage.isDirty()) {
-        throw new AssertionError("Page must NOT be dirty just after .pageLoader: " + blankPage);
-      }
-      return blankPage;
-    }
-    finally {
-      blankPage.pageLock().writeLock().unlock();
-    }
+    return blankPage;
+
+
+    //blankPage.pageLock().writeLock().lock();
+    //try {
+    //  if (blankPage.isTombstone()) {
+    //    throw new ClosedStorageException("Storage is already closed");
+    //  }
+    //  if (!blankPage.isNotReadyYet()) {
+    //    //possible if short-circuit (NOT_READY_YET->TOMBSTONE) transition of storage close happens
+    //    throw new AssertionError("Page must be {NOT_READY_YET, TOMBSTONE}, but " + blankPage);
+    //  }
+    //  blankPage.prepareForUse(pageContentLoader);
+    //  if (blankPage.isNotReadyYet()) {
+    //    //RC: Page state could be any of {USABLE, ABOUT_TO_UNMAP, TOMBSTONE} here -- but not NOT_READY_YET.
+    //    //    USABLE is the obvious case, but {ABOUT_TO_UNMAP, TOMBSTONE} could happen if new page
+    //    //    allocation races with storage closing: in such a scenario the page could be entombed async-ly
+    //    //    immediately after .prepareForUse() made it USABLE -- nothing prevents it, since page
+    //    //    has usageCount=0 still.
+    //    throw new AssertionError("Page must be {USABLE, ABOUT_TO_UNMAP, TOMBSTONE}, but " + blankPage);
+    //  }
+    //  if (blankPage.isDirty()) {
+    //    throw new AssertionError("Page must NOT be dirty just after .pageLoader: " + blankPage);
+    //  }
+    //  return blankPage;
+    //}
+    //finally {
+    //  blankPage.pageLock().writeLock().unlock();
+    //}
   }
 
   //@GuardedBy(pagesLock)
@@ -261,7 +265,7 @@ public class PagesTable {
       if (insertionIndex < 0) {
         if (pagesCopied == targetPages.length()) {
           //either targetPages is too small to fit, or code bug in hashing logic
-          throw new NoFreeSpaceException("Not enought space in targetPages(length: " + targetPages.length() + "): " +
+          throw new NoFreeSpaceException("Not enough space in targetPages(length: " + targetPages.length() + "): " +
                                          "sourcePages(length: " + sourcePages.length() + ") contains > " + pagesCopied +
                                          " !tombstone pages. \nsource: " + sourcePages + "\ntarget: " + targetPages);
         }
@@ -279,10 +283,9 @@ public class PagesTable {
     return pagesCopied;
   }
 
-  @Nullable
-  private static PageImpl findPageOrInsertionIndex(final @NotNull AtomicReferenceArray<PageImpl> pages,
-                                                   final int pageIndex,
-                                                   final @Nullable IntRef insertionIndexRef) {
+  private static @Nullable PageImpl findPageOrInsertionIndex(final @NotNull AtomicReferenceArray<PageImpl> pages,
+                                                             final int pageIndex,
+                                                             final @Nullable IntRef insertionIndexRef) {
     final int length = pages.length();
     final int initialSlotIndex = hash(pageIndex) % length;
     final int probeStep = 1; // = linear probing
@@ -373,7 +376,7 @@ public class PagesTable {
       }
 
       if (page.isTombstone()) {
-        //Tombstone: page was removed -> look up further, but remember the position
+        //Tombstone: page was removed -> look up further
       }
       else if (page.pageIndex() == pageIndex) {
         return probeNo;
@@ -386,7 +389,7 @@ public class PagesTable {
     return pages.length();
   }
 
-  private static class NoFreeSpaceException extends IllegalStateException {
-    public NoFreeSpaceException(final String message) { }
+  private static final class NoFreeSpaceException extends IllegalStateException {
+    private NoFreeSpaceException(final String message) { super(message); }
   }
 }

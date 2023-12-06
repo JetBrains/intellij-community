@@ -18,12 +18,12 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.JsPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import java.io.File
@@ -75,10 +74,10 @@ var Module.refinesFragmentIds: Collection<String>
 val Module.isTestModule: Boolean
     get() = facetSettings?.isTestModule ?: false
 
-val KotlinFacetSettings.isMultiPlatformModule: Boolean
+val IKotlinFacetSettings.isMultiPlatformModule: Boolean
     get() = mppVersion != null
 
-private val Module.facetSettings: KotlinFacetSettings?
+private val Module.facetSettings: IKotlinFacetSettings?
     get() = KotlinFacet.get(this)?.configuration?.settings
 
 @Service(Service.Level.PROJECT)
@@ -219,12 +218,6 @@ val Module.implementingModules: List<Module>
                 val result = mutableSetOf<Module>()
                 moduleManager.modules.filterTo(result) { it.facetSettings?.dependsOnModuleNames?.contains(thisModuleStableName) == true }
 
-                // HACK: we do not import proper dependsOn for android source-sets in M3,
-                // so add all Android modules that M2-implemention would've added,
-                // to at least not make things worse.
-                // See KT-33809 for details
-                implementingModulesM2(moduleManager).forEach { if (it !in result && it.isAndroidModule()) result += it }
-
                 result.toList()
             }
 
@@ -249,7 +242,7 @@ val Module.stableName: Name
         val settingsProvider = KotlinFacetSettingsProvider.getInstance(project)
         val explicitNameFromArguments = when (val arguments = settingsProvider?.getInitializedSettings(this)?.mergedCompilerArguments) {
             is K2JVMCompilerArguments -> arguments.moduleName
-            is K2JSCompilerArguments -> arguments.outputFile?.let { FileUtil.getNameWithoutExtension(File(it)) }
+            is K2JSCompilerArguments -> arguments.moduleName ?: arguments.outputFile?.let { FileUtil.getNameWithoutExtension(File(it)) }
             is K2MetadataCompilerArguments -> arguments.moduleName
             else -> null // Actually, only 'null' possible here
         }

@@ -1,113 +1,182 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
-import com.intellij.util.ui.UIUtil
-import com.intellij.util.xmlb.Accessor
-import com.intellij.util.xmlb.SerializationFilter
+import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import java.awt.Font
 
+@Service(Service.Level.APP)
 @State(name = "NotRoamableUiSettings", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
-class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
-  private var state = NotRoamableUiOptions()
+class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
+  private var initialConfigurationLoaded = false
+  
+  companion object {
+    fun getInstance(): NotRoamableUiSettings = ApplicationManager.getApplication().service<NotRoamableUiSettings>()
+  }
 
-  override fun getState() = state
+  var ideScale: Float
+    get() = state.ideScale
+    set(value) {
+      updateState { it.copy(ideScale = value) }
+    }
+
+  var ideAAType: AntialiasingType
+    get() = state.ideAAType
+    set(value) {
+      updateState { it.copy(ideAAType = value) }
+    }
+
+  var fontFace: String?
+    get() = state.fontFace ?: JBUIScale.getSystemFontDataIfInitialized()?.first
+    set(value) {
+      updateState { it.copy(fontFace = value) }
+    }
+
+  var fontSize: Float
+    get() = state.fontSize
+    set(value) {
+      updateState { it.copy(fontSize = value) }
+    }
+
+  var fontScale: Float
+    get() = state.fontScale
+    set(value) {
+      updateState { it.copy(fontScale = value) }
+    }
+
+  var editorAAType: AntialiasingType
+    get() = state.editorAAType
+    set(value) {
+      updateState { it.copy(editorAAType = value) }
+    }
+
+  var presentationModeIdeScale: Float
+    get() = state.presentationModeIdeScale
+    set(value) {
+      updateState { it.copy(presentationModeIdeScale = value) }
+    }
+
+  var overrideLafFonts: Boolean
+    get() = state.overrideLafFonts
+    set(value) {
+      updateState { it.copy(overrideLafFonts = value) }
+    }
+
+  var experimentalSingleStripe: Boolean
+    get() = state.experimentalSingleStripe
+    set(value) {
+      updateState { it.copy(experimentalSingleStripe = value) }
+    }
 
   override fun loadState(state: NotRoamableUiOptions) {
-    this.state = state
+    var fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
+    if (fontSize <= 0) {
+      fontSize = getDefaultFontSize()
+    }
+    var ideScale = state.ideScale
+    if (ideScale <= 0) {
+      ideScale = getDefaultFontSize()
+    }
 
-    state.fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
-    state.fontScale = UISettings.defFontScale
+    super.loadState(state.copy(
+      fontSize = fontSize,
+      ideScale = ideScale,
+    ))
+
     fixFontSettings()
+    if (initialConfigurationLoaded) {
+      UISettings.getInstance().fireUISettingsChanged()
+    }
+    initialConfigurationLoaded = true
   }
 
-  internal fun migratePresentationModeFontSize(presentationModeFontSize: Int) {
-    if (state.presentationModeIdeScale != 0f) return
-    if (presentationModeFontSize == 24) state.presentationModeIdeScale = UISettingsUtils.defaultScale(true)
-    else state.presentationModeIdeScale = presentationModeFontSize.toFloat() / state.fontSize
-  }
-
-  internal fun migrateOverrideLafFonts(overrideLafFonts: Boolean) {
-    if (state.overrideLafFontsWasMigrated) return
-    state.overrideLafFontsWasMigrated = true
-    state.overrideLafFonts = overrideLafFonts
+  override fun noStateLoaded() {
+    initialConfigurationLoaded = true
   }
 
   internal fun fixFontSettings() {
     val state = state
 
-    // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
-    // find any other suitable font withing "preferred" fonts first.
-    var fontIsValid = FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, 1).deriveFont(state.fontSize))
+    // 1. Sometimes system font cannot display standard ASCII symbols.
+    // If so, we have to find any other suitable font withing "preferred" fonts first.
+    if (state.fontFace == null || FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, 1).deriveFont(state.fontSize))) {
+      return
+    }
+
+    var fontIsValid = false
+    for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
+      if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, 1).deriveFont(state.fontSize))) {
+        updateState { it.copy(fontFace = preferredFont) }
+        fontIsValid = true
+        break
+      }
+    }
+
+    // 2. If all preferred fonts are not valid in the current environment,
+    // we have to find the first valid font (if any)
     if (!fontIsValid) {
-      for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-        if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, 1).deriveFont(state.fontSize))) {
-          state.fontFace = preferredFont
-          fontIsValid = true
-          break
-        }
-      }
-
-      // 2. If all preferred fonts are not valid in current environment
-      // we have to find first valid font (if any)
-      if (!fontIsValid) {
-        val fontNames = UIUtil.getValidFontNames(false)
-        if (fontNames.isNotEmpty()) {
-          state.fontFace = fontNames[0]
-        }
+      val fontNames = FontUtil.getValidFontNames(false)
+      if (fontNames.isNotEmpty()) {
+        updateState { it.copy(fontFace = fontNames[0]) }
       }
     }
   }
-}
 
-class NotRoamableUiOptions : BaseState() {
-  var ideAAType by enum(
-    if (AntialiasingType.canUseSubpixelAAForIDE())
-      AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE)
-
-  var editorAAType by enum(
-    if (AntialiasingType.canUseSubpixelAAForEditor())
-      AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE)
-
-  @get:Property(filter = FontFilter::class)
-  var fontFace by string()
-
-  @get:Property(filter = FontFilter::class)
-  var fontSize by property(0f)
-
-  @get:Property(filter = FontFilter::class)
-  var fontScale by property(0f)
-
-  @get:ReportValue
-  var ideScale by property(1f)
-
-  @get:ReportValue
-  var presentationModeIdeScale by property(0f)
-
-  var overrideLafFonts by property(false)
-  var overrideLafFontsWasMigrated by property(false)
-
-  init {
-    val fontData = JBUIScale.getSystemFontData(null)
-    fontFace = fontData.first
-    fontSize = fontData.second.toFloat()
-    fontScale = UISettings.defFontScale
-    ideScale = UISettingsUtils.defaultScale(false)
-  }
-}
-
-private class FontFilter : SerializationFilter {
-  override fun accepts(accessor: Accessor, bean: Any): Boolean {
-    val settings = bean as NotRoamableUiOptions
-    val fontData = JBUIScale.getSystemFontData(null)
-    if ("fontFace" == accessor.name) {
-      return fontData.first != settings.fontFace
+  internal fun migratePresentationModeIdeScale(presentationModeFontSize: Int) {
+    if (presentationModeIdeScale != 0f) {
+      return
     }
-    // fontSize/fontScale should either be stored in pair or not stored at all
-    // otherwise the fontSize restore logic gets broken (see loadState)
-    return !(fontData.second.toFloat() == settings.fontSize && 1f == settings.fontScale)
+    presentationModeIdeScale = if (presentationModeFontSize == 24 || fontSize == 0f)
+      UISettingsUtils.defaultScale(isPresentation = true)
+    else
+      presentationModeFontSize.toFloat() / fontSize
   }
 }
+
+data class NotRoamableUiOptions(
+  @JvmField @OptionTag val ideAAType: AntialiasingType = if (AntialiasingType.canUseSubpixelAAForIDE()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE,
+  @JvmField @OptionTag val editorAAType: AntialiasingType = if (AntialiasingType.canUseSubpixelAAForEditor()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE,
+
+  @JvmField
+  @field:Property
+  val fontFace: String? = null,
+
+  @JvmField
+  @field:Property
+  val fontSize: Float = 0f,
+
+  @JvmField
+  @field:Property
+  val fontScale: Float = UISettings.defFontScale,
+
+  @JvmField
+  @OptionTag
+  @field:ReportValue
+  val ideScale: Float = 1f,
+
+  @JvmField
+  @OptionTag
+  @field:ReportValue
+  val presentationModeIdeScale: Float = 0f,
+
+  @JvmField
+  @OptionTag
+  val overrideLafFonts: Boolean = false,
+  @JvmField
+  @OptionTag
+  val overrideLafFontsWasMigrated: Boolean = false,
+  @JvmField
+  @OptionTag
+  val experimentalSingleStripe: Boolean = false,
+)
+
+/**
+ * Returns the default font size scaled by #defFontScale
+ *
+ * @return the default scaled font size
+ */
+internal fun getDefaultFontSize(): Float = JBUIScale.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale

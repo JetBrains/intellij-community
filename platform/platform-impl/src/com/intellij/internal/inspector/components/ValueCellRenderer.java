@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
 import com.intellij.icons.AllIcons;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.border.NamedBorder;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -63,8 +64,7 @@ final class ValueCellRenderer implements TableCellRenderer {
     return renderer;
   }
 
-  @Nullable
-  private static Renderer<Object> getRenderer(Class<?> clazz) {
+  private static @Nullable Renderer<Object> getRenderer(Class<?> clazz) {
     if (clazz == null) return null;
 
     @SuppressWarnings("unchecked")
@@ -85,46 +85,45 @@ final class ValueCellRenderer implements TableCellRenderer {
     return null;
   }
 
-  private static abstract class Renderer<T> extends JLabel {
+  private abstract static class Renderer<T> extends JLabel {
     abstract void setValue(@NotNull T value);
   }
 
-  private static class PointRenderer extends Renderer<Point> {
+  private static final class PointRenderer extends Renderer<Point> {
     @Override
-    public void setValue(@NotNull final Point value) {
+    public void setValue(final @NotNull Point value) {
       setText(String.valueOf(value.x) + ':' + value.y);
     }
   }
 
-  private static class DimensionRenderer extends Renderer<Dimension> {
+  private static final class DimensionRenderer extends Renderer<Dimension> {
     @Override
-    public void setValue(@NotNull final Dimension value) {
+    public void setValue(final @NotNull Dimension value) {
       setText(value.width + "x" + value.height);
     }
   }
 
-  private static class InsetsRenderer extends Renderer<Insets> {
+  private static final class InsetsRenderer extends Renderer<Insets> {
     @Override
-    public void setValue(@NotNull final Insets value) {
+    public void setValue(final @NotNull Insets value) {
       setText("top: " + value.top + " left:" + value.left + " bottom:" + value.bottom + " right:" + value.right);
     }
   }
 
-  static class RectangleRenderer extends Renderer<Rectangle> {
+  static final class RectangleRenderer extends Renderer<Rectangle> {
     @Override
-    public void setValue(@NotNull final Rectangle value) {
+    public void setValue(final @NotNull Rectangle value) {
       setText(toString(value));
     }
 
-    @NotNull
-    public static String toString(@NotNull Rectangle r) {
+    public static @NotNull String toString(@NotNull Rectangle r) {
       return r.width + "x" + r.height + " @ " + r.x + ":" + r.y;
     }
   }
 
-  private static class ColorRenderer extends Renderer<Color> {
+  private static final class ColorRenderer extends Renderer<Color> {
     @Override
-    public void setValue(@NotNull final Color value) {
+    public void setValue(final @NotNull Color value) {
       StringBuilder sb = new StringBuilder();
       sb.append(" r:").append(value.getRed());
       sb.append(" g:").append(value.getGreen());
@@ -148,9 +147,9 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static class FontRenderer extends Renderer<Font> {
+  private static final class FontRenderer extends Renderer<Font> {
     @Override
-    public void setValue(@NotNull final Font value) {
+    public void setValue(final @NotNull Font value) {
       StringBuilder sb = new StringBuilder();
       sb.append(value.getFontName()).append(" (").append(value.getFamily()).append("), ").append(value.getSize()).append("px");
       if (Font.BOLD == (Font.BOLD & value.getStyle())) sb.append(" bold");
@@ -173,16 +172,16 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static class BooleanRenderer extends Renderer<Boolean> {
+  private static final class BooleanRenderer extends Renderer<Boolean> {
     @Override
-    public void setValue(@NotNull final Boolean value) {
+    public void setValue(final @NotNull Boolean value) {
       setText(value ? "Yes" : "No");
     }
   }
 
-  private static class IconRenderer extends Renderer<Icon> {
+  private static final class IconRenderer extends Renderer<Icon> {
     @Override
-    public void setValue(@NotNull final Icon value) {
+    public void setValue(final @NotNull Icon value) {
       setIcon(value);
       setText(getPathToIcon(value));
     }
@@ -206,9 +205,9 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static class BorderRenderer extends Renderer<Border> {
+  private static final class BorderRenderer extends Renderer<Border> {
     @Override
-    public void setValue(@NotNull final Border value) {
+    public void setValue(final @NotNull Border value) {
       setText(getTextDescription(value));
 
       if (value instanceof CompoundBorder) {
@@ -233,8 +232,7 @@ final class ValueCellRenderer implements TableCellRenderer {
       }
     }
 
-    @Nullable
-    private static Color getBorderColor(@Nullable Border value) {
+    private static @Nullable Color getBorderColor(@Nullable Border value) {
       if (value instanceof LineBorder) {
         return ((LineBorder)value).getLineColor();
       }
@@ -249,8 +247,7 @@ final class ValueCellRenderer implements TableCellRenderer {
       return null;
     }
 
-    @NotNull
-    private static String getTextDescription(@Nullable Border value) {
+    private static @NotNull String getTextDescription(@Nullable Border value) {
       if (value == null) {
         return "null";
       }
@@ -279,6 +276,9 @@ final class ValueCellRenderer implements TableCellRenderer {
           .append(" right=").append(insets.right)
           .append("}");
       }
+      if (value instanceof NamedBorder namedBorder) {
+        sb.append(" '").append(namedBorder.getName()).append("' ").append(getTextDescription(namedBorder.getOriginal()));
+      }
 
       if (value instanceof UIResource) sb.append(" UIResource");
       sb.append(" (").append(getToStringValue(value)).append(")");
@@ -287,13 +287,13 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static class ObjectRenderer extends Renderer<Object> {
+  private static final class ObjectRenderer extends Renderer<Object> {
     {
       putClientProperty("html.disable", Boolean.TRUE);
     }
 
     @Override
-    public void setValue(@NotNull final Object value) {
+    public void setValue(final @NotNull Object value) {
       setText(getToStringValue(value));
       setIcon(getText().contains("$$$setupUI$$$") ? AllIcons.FileTypes.UiForm : null);
       if (!getText().equals(getText().trim())) {
@@ -302,8 +302,7 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
   }
 
-  @NotNull
-  public static String getToStringValue(@NotNull Object value) {
+  public static @NotNull String getToStringValue(@NotNull Object value) {
     StringBuilder sb = new StringBuilder();
     if (value.getClass().getName().equals("javax.swing.ArrayTable")) {
       Map<Object, Object> properties = parseClientProperties(value);
@@ -332,8 +331,7 @@ final class ValueCellRenderer implements TableCellRenderer {
     return toString.replace('\n', ' ');
   }
 
-  @Nullable
-  public static Map<Object, Object> parseClientProperties(@NotNull Object value) {
+  public static @Nullable Map<Object, Object> parseClientProperties(@NotNull Object value) {
     Object table = ReflectionUtil.getField(value.getClass(), value, Object.class, "table");
     if (table instanceof Map) {
       //noinspection unchecked

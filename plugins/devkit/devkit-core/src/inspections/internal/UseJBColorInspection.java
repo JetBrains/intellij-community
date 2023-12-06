@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
@@ -27,10 +28,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.awt.*;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class UseJBColorInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
+final class UseJBColorInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
 
   private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
   private static final String JB_COLOR_CLASS_NAME = JBColor.class.getName();
@@ -46,7 +44,7 @@ public class UseJBColorInspection extends DevKitUastInspectionBase implements Cl
 
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
-        if (isAwtColorConstructor(expression) && isJBColorClassAccessible(expression) && !isUsedAsJBColorConstructorParameter(expression)) {
+        if (isAwtColorConstructor(expression) && isJBColorClassAccessible(holder) && !isUsedAsJBColorConstructorParameter(expression)) {
           PsiElement sourcePsi = expression.getSourcePsi();
           if (sourcePsi != null) {
             LocalQuickFix[] fixes = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
@@ -70,12 +68,8 @@ public class UseJBColorInspection extends DevKitUastInspectionBase implements Cl
         return colorClassName.equals(constructorClass.getQualifiedName());
       }
 
-      private static boolean isJBColorClassAccessible(@NotNull UElement uElement) {
-        PsiElement checkedPlace = uElement.getSourcePsi();
-        if (checkedPlace == null) return false;
-        Project project = checkedPlace.getProject();
-        PsiClass jbColorClass = JavaPsiFacade.getInstance(project).findClass(JB_COLOR_CLASS_NAME, checkedPlace.getResolveScope());
-        return jbColorClass != null;
+      private static boolean isJBColorClassAccessible(@NotNull ProblemsHolder holder) {
+        return DevKitInspectionUtil.isClassAvailable(holder, JB_COLOR_CLASS_NAME);
       }
 
       private static boolean isUsedAsJBColorConstructorParameter(@NotNull UExpression expression) {
@@ -103,7 +97,7 @@ public class UseJBColorInspection extends DevKitUastInspectionBase implements Cl
 
       private void inspectExpression(@NotNull UReferenceExpression expression) {
         if (isAwtColorConstantReference(expression) &&
-            isJBColorClassAccessible(expression) &&
+            isJBColorClassAccessible(holder) &&
             !isUsedAsJBColorConstructorParameter(expression)) {
           PsiElement sourcePsi = expression.getSourcePsi();
           if (sourcePsi != null) {

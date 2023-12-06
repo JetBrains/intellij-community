@@ -12,3 +12,5 @@ fun foo(a: A) {
 interface A
 interface C
 class B : C
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.LetImplementInterfaceFix
+/* IGNORE_K2 */

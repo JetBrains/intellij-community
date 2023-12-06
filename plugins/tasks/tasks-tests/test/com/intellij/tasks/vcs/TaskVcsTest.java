@@ -28,6 +28,7 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.ChangeListCommitState;
 import com.intellij.vcs.commit.CheckinHandlersNotifier;
@@ -313,6 +314,20 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertTrue(ContainerUtil.exists(myTaskManager.getLocalTasks(), task -> task.getSummary().equals("New Changelist")));
   }
 
+  public void testDoNotOverrideRealTasksOnCommit() {
+    myTaskManager.getState().saveContextOnCommit = true;
+    myTaskManager.getState().taskHistoryLength = 2;
+    LocalTaskImpl first = myTaskManager.createLocalTask("First");
+    myTaskManager.addTask(first);
+    assertEquals(2, myTaskManager.getLocalTasks().size());
+
+    LocalChangeList changeList = addChangeList("New Changelist");
+    List<Change> changes = addChanges(changeList);
+    commitChanges(changeList, changes);
+    assertEquals(2, myTaskManager.getLocalTasks().size());
+    assertTrue(ContainerUtil.exists(myTaskManager.getLocalTasks(), task -> task.getSummary().equals("First")));
+  }
+
   private void commitChanges(LocalChangeList changeList, List<Change> changes) {
     String commitMessage = changeList.getName();
 
@@ -328,6 +343,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     committer.addResultHandler(new CheckinHandlersNotifier(committer, singletonList(checkinHandler)));
     committer.runCommit("Commit", true);
+
+    EDT.dispatchAllInvocationEvents(); // wait com.intellij.vcs.commit.Committer.finishCommit
   }
 
   private LocalChangeList addChangeList(String title) {
@@ -498,6 +515,11 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     UIUtil.dispatchAllInvocationEvents();
   }
 
+  public void testChangelistNameWithoutId() {
+    LocalTaskImpl task = new LocalTaskImpl("", "foo");
+    assertEquals("foo", myTaskManager.getChangelistName(task));
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -527,7 +549,10 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   protected void tearDown() {
     new RunAll(
       () -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed(),
-      () -> myTaskManager.setRepositories(Collections.emptyList()),
+      () -> {
+        myTaskManager.setRepositories(Collections.emptyList());
+        myTaskManager.getState().taskHistoryLength = 50;
+      },
       () -> AllVcses.getInstance(getProject()).unregisterManually(myVcs),
       () -> {
         myTaskManager = null;

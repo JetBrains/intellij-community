@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.config.StatisticsStringUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 
@@ -9,6 +10,7 @@ import java.nio.file.Path
  * @deprecated Use {@link EventLogInternalSendConfig} because it contains both information about recorder and device
  * Kept for compatibility with TBE.
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message="Use EventLogSendConfig")
 interface EventLogRecorderConfig {
   fun getRecorderId(): String
@@ -28,6 +30,8 @@ interface EventLogSendConfig {
   fun getMachineId(): MachineId
 
   fun isSendEnabled(): Boolean
+
+  fun isEscapingEnabled(): Boolean = true
 
   fun getFilesToSendProvider(): FilesToSendProvider
 }

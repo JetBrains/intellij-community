@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.filter.impl
 
 import com.google.gson.JsonArray
@@ -28,8 +29,15 @@ class TypeFilterConfiguration : EvaluationFilterConfiguration {
   override val description: String = "Filter out tokens by statement type"
   override val hasUI: Boolean = true
 
-  override fun isLanguageSupported(languageName: String): Boolean =
-    listOf(Language.JAVA, Language.KOTLIN, Language.PYTHON).any { it.displayName == languageName }
+  override fun isLanguageSupported(languageName: String): Boolean = listOf(
+    Language.JAVA,
+    Language.KOTLIN,
+    Language.PYTHON,
+    Language.JS,
+    Language.TYPESCRIPT,
+    Language.RUBY,
+    Language.GO,
+  ).any { it.displayName == languageName }
 
   override fun buildFromJson(json: Any?): EvaluationFilter =
     if (json == null) EvaluationFilter.ACCEPT_ALL

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,10 +34,10 @@ import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -60,14 +60,12 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     myTargetType = targetType;
   }
 
-  @Nullable
-  public File getOutputDir() {
+  public @Nullable File getOutputDir() {
     return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, myTargetType.isTests());
   }
 
-  @NotNull
   @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
+  public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
     Collection<File> result = new SmartList<>();
     final File outputDir = getOutputDir();
     if (outputDir != null) {
@@ -91,7 +89,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     JpsJavaDependenciesEnumeratorImpl enumerator = (JpsJavaDependenciesEnumeratorImpl)JpsJavaExtensionService.dependencies(myModule).compileOnly();
     if (!isTests()) {
       enumerator.productionOnly();
@@ -128,9 +126,8 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     return dependencies;
   }
 
-  @NotNull
   @Override
-  public List<JavaSourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
+  public @NotNull List<JavaSourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
     List<JavaSourceRootDescriptor> roots = new ArrayList<>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
@@ -164,14 +161,13 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     return roots;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return "Module '" + getModule().getName() + "' " + (myTargetType.isTests() ? "tests" : "production");
   }
 
   @Override
-  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
     final JpsModule module = getModule();
     final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
 
@@ -260,12 +256,45 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     for (File file : enumerator.classes().getRoots()) {
       String path = relativizer.toRelative(file.getAbsolutePath());
 
+      Integer contentHash = getContentHash(file);
       if (logBuilder != null) {
-        logBuilder.append(path).append("\n");
+        logBuilder.append(path);
+        if (contentHash != 0) logBuilder.append(": ").append(contentHash);
+        logBuilder.append("\n");
       }
-      fingerprint = 31 * fingerprint + pathHashCode(path);
+      fingerprint = 31 * fingerprint + pathHashCode(path) + contentHash;
     }
     return fingerprint;
+  }
+
+  private static Integer getContentHash(File file) {
+    if (ProjectStamps.TRACK_LIBRARY_CONTENT) {
+      try {
+        if (!file.isFile() || !file.getName().endsWith(".jar")) return 0;
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        FileInputStream inputStream = new FileInputStream(file);
+
+        byte[] bytesBuffer = new byte[1024];
+        int bytesRead;
+
+        while ((bytesRead = inputStream.read(bytesBuffer)) != -1) {
+          digest.update(bytesBuffer, 0, bytesRead);
+        }
+
+        byte[] hashBytes = digest.digest();
+        inputStream.close();
+
+        ByteBuffer buffer = ByteBuffer.wrap(hashBytes);
+        return buffer.getInt();
+      }
+      catch (NoSuchAlgorithmException | IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    else {
+      return 0;
+    }
   }
 
   private static int pathHashCode(@NotNull String path) {

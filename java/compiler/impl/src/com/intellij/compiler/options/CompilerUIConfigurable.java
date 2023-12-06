@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
@@ -101,13 +101,13 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myVMOptionsField.getDocument().addDocumentListener(updateStateListener);
     myHeapSizeField.getDocument().addDocumentListener(updateStateListener);
     myConfigureAnnotations.addActionListener(e -> {
-      NullableNotNullDialog.showDialogWithInstrumentationOptions(myPanel);
+      NullableNotNullDialog.showDialogWithInstrumentationOptions(myProject);
       myCbAssertNotNull.setSelected(!NullableNotNullManager.getInstance(myProject).getInstrumentedNotNulls().isEmpty());
     });
   }
 
   private void tweakControls(@NotNull Project project) {
-    CompilerOptionsFilter[] managers = CompilerOptionsFilter.EP_NAME.getExtensions();
+    List<CompilerOptionsFilter> managers = CompilerOptionsFilter.EP_NAME.getExtensionList();
     boolean showExternalBuildSetting = true;
     for (CompilerOptionsFilter manager : managers) {
       showExternalBuildSetting = manager.isAvailable(Setting.EXTERNAL_BUILD, project);

@@ -1,21 +1,22 @@
+import java.util.ArrayList;
 import org.jetbrains.annotations.*;
 
 class Test {
   void nullableWithUnconditionalPatternLabel(@Nullable Integer i) {
-    switch (i) {
+    switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case (Integer ii && true):
+      case Integer ii when true:
         break;
     }
   }
 
   void nullableSetNullWithUnconditionalPatternLabel(@Nullable Integer i) {
     i = null;
-    switch (i) {
+    switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case <warning descr="Switch label '((Integer ii && true))' is the only reachable in the whole switch">((Integer ii && true))</warning>:
+      case Integer ii when true:
         break;
     }
   }
@@ -25,7 +26,7 @@ class Test {
     switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning>:
         break;
-      case Integer ii && true:
+      case Integer ii when true:
         break;
     }
   }
@@ -34,17 +35,17 @@ class Test {
     switch (i) {
       case 1:
         break;
-      case Integer ii && true:
+      case Integer ii when true:
         break;
     }
   }
 
   void unknownSetNullWithUnconditionalPatternLabel(Integer i) {
     i = null;
-    switch (i) {
+    switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case <warning descr="Switch label '(Integer ii && true)' is the only reachable in the whole switch">(Integer ii && true)</warning>:
+      case Integer ii when true:
         break;
     }
   }
@@ -54,7 +55,7 @@ class Test {
     switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning>:
         break;
-      case (Integer ii):
+      case Integer ii:
         break;
     }
   }
@@ -63,19 +64,19 @@ class Test {
     switch (i) {
       case 1:
         break;
-      case Integer ii && true:
+      case Integer ii when true:
         break;
     }
   }
 
   void notNullSetNullWithUnconditionalPatternLabel(@NotNull Integer i) {
     i = null;
-    switch (i) {
+    switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case Integer ii && false:
+      case Integer ii when Math.random() > 0.5:
         break;
-      case <warning descr="Switch label '(Integer ii && true)' is the only reachable in the whole switch">(Integer ii && true)</warning>:
+      case Integer ii when true:
         break;
     }
   }
@@ -94,18 +95,18 @@ class Test {
     switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
       case 1:
         break;
-      case <warning descr="Switch label '((Object o && false))' is unreachable">((Object o && false))</warning>:
+      case Object o when <warning descr="Condition '!new ArrayList<String>().isEmpty()' is always 'false'">!new ArrayList<String>().isEmpty()</warning>:
         break;
-      case default:
+      default:
         break;
     }
   }
 
   void nullableCallWithUnconditionalPatternLabel() {
-    switch (createNullValue()) {
+    switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
       case 1:
         break;
-      case ((Object o)):
+      case Object o:
         break;
     }
   }
@@ -114,7 +115,7 @@ class Test {
     switch (createValue()) {
       case 1:
         break;
-      case Integer ii && true:
+      case Integer ii when true:
         break;
     }
   }
@@ -123,7 +124,7 @@ class Test {
     switch (createNotNullValue()) {
       case 1, 2:
         break;
-      case Object o && true:
+      case Object o when true:
         break;
     }
   }
@@ -131,17 +132,17 @@ class Test {
   // expressions
 
   int nullableWithUnconditionalPatternLabelExpr(@Nullable Integer i) {
-    return switch (i) {
+    return switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1 -> 1;
-      case (Integer ii && true) -> 2;
+      case Integer ii when true -> 2;
     };
   }
 
   int nullableSetNullWithUnconditionalPatternLabelExpr(@Nullable Integer i) {
     i = null;
-    return switch (i) {
+    return switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1 -> 1;
-      case <warning descr="Switch label '((Integer ii && true))' is the only reachable in the whole switch">((Integer ii && true))</warning> -> 2;
+      case Integer ii when true -> 2;
     };
   }
 
@@ -149,22 +150,22 @@ class Test {
     i = 1;
     return switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning> -> 1;
-      case Integer ii && true -> 2;
+      case Integer ii when true -> 2;
     };
   }
 
   int unknownWithUnconditionalPatternLabelExpr(Integer i) {
     return switch (i) {
       case 1 -> 1;
-      case Integer ii && true -> 2;
+      case Integer ii when true -> 2;
     };
   }
 
   int unknownSetNullWithUnconditionalPatternLabelExpr(Integer i) {
     i = null;
-    return switch (i) {
+    return switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1 -> 1;
-      case <warning descr="Switch label '(Integer ii && true)' is the only reachable in the whole switch">(Integer ii && true)</warning> -> 2;
+      case Integer ii when true -> 2;
     };
   }
 
@@ -172,23 +173,23 @@ class Test {
     i = 1;
     return switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning> -> 1;
-      case (Integer ii) -> 2;
+      case Integer ii -> 2;
     };
   }
 
   int notNullWithUnconditionalPatternLabelExpr(@NotNull Integer i) {
     return switch (i) {
       case 1 -> 1;
-      case Integer ii && true -> 2;
+      case Integer ii when true -> 2;
     };
   }
 
   int notNullSetNullWithUnconditionalPatternLabelExpr(@NotNull Integer i) {
     i = null;
-    return switch (i) {
+    return switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1 -> 1;
-      case Integer ii && false -> 2;
-      case <warning descr="Switch label '(Integer ii && true)' is the only reachable in the whole switch">(Integer ii && true)</warning> -> 3;
+      case Integer ii when Math.random() > 0.5 -> 2;
+      case Integer ii when true -> 3;
     };
   }
 
@@ -203,29 +204,29 @@ class Test {
   int nullableCallWithGuardedNotUnconditionalPatternLabelExpr() {
     return switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
       case 1 -> 1;
-      case <warning descr="Switch label '((Object o && false))' is unreachable">((Object o && false))</warning> -> 2;
-      case default -> 3;
+      case Object o when Math.random() > 0.5 -> 2;
+      default -> 3;
     };
   }
 
   int nullableCallWithUnconditionalPatternLabelExpr() {
-    return switch (createNullValue()) {
+    return switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
       case 1 -> 1;
-      case ((Object o)) -> 2;
+      case Object o -> 2;
     };
   }
 
   int unknownCallWithUnconditionalPatternLabelExpr() {
     return switch (createValue()) {
       case 1 -> 1;
-      case Integer ii && true -> 2;
+      case Integer ii when true -> 2;
     };
   }
 
   int notNullCallWithUnconditionalPatternLabelExpr() {
     return switch (createNotNullValue()) {
       case 1, 2 -> 1;
-      case Object o && true -> 2;
+      case Object o when true -> 2;
     };
   }
 

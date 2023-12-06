@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class Breakpoint
@@ -22,6 +22,7 @@ import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.icons.AllIcons;
@@ -67,6 +68,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -252,8 +254,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
-    if (debugProcess.getVirtualMachineProxy().canBeModified()) {
-      processClassesPrepare(debugProcess, debugProcess.getPositionManager().getAllClasses(classPosition).stream().distinct());
+    if (debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
+      long startTimeNs = System.nanoTime();
+      List<ReferenceType> classes = debugProcess.getPositionManager().getAllClasses(classPosition);
+      long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNs);
+      DebuggerStatistics.logBreakpointInstallSearchOverhead(this, timeMs);
+
+      processClassesPrepare(debugProcess, classes.stream().distinct());
     }
   }
 
@@ -350,7 +357,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         }
         buf.append("\n");
       }
-      if (buf.length() > 0) {
+      if (!buf.isEmpty()) {
         debugProcess.printToConsole(buf.toString());
       }
     }

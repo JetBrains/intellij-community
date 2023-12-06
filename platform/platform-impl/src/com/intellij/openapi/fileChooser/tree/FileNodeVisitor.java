@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 
-public class FileNodeVisitor extends TreeVisitor.ByComponent<VirtualFile, VirtualFile> {
+public final class FileNodeVisitor extends TreeVisitor.ByComponent<VirtualFile, VirtualFile> {
 
   public FileNodeVisitor(@NotNull VirtualFile file) {
     super(file, object -> {
@@ -16,9 +16,8 @@ public class FileNodeVisitor extends TreeVisitor.ByComponent<VirtualFile, Virtua
     });
   }
 
-  @NotNull
   @Override
-  protected Action visit(VirtualFile file) {
+  protected @NotNull Action visit(VirtualFile file) {
     return file == null ? Action.CONTINUE : super.visit(file);
   }
 

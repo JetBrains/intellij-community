@@ -1,15 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.SmartList;
@@ -57,7 +61,7 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
     TABS
   }
 
-  private static class MakeIndentConsistentFix implements LocalQuickFix {
+  private static class MakeIndentConsistentFix extends PsiUpdateModCommandQuickFix {
 
     private final int myTabSize;
     private final @NotNull IndentType myDesiredIndentType;
@@ -88,8 +92,8 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLiteralExpression literalExpression = tryCast(descriptor.getPsiElement(), PsiLiteralExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiLiteralExpression literalExpression = tryCast(element, PsiLiteralExpression.class);
       if (literalExpression == null || !literalExpression.isTextBlock()) return;
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, literalExpression)) return;
       String[] lines = PsiLiteralUtil.getTextBlockLines(literalExpression);
@@ -98,13 +102,7 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
       if (indentModel == null) return;
       String newTextBlock = indentModel.indentWith(myDesiredIndentType, myTabSize);
       if (newTextBlock == null) return;
-      TrailingWhitespacesInTextBlockInspection.replaceTextBlock(project, literalExpression, "\"\"\"\n" + newTextBlock + "\"\"\"");
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      applyFix(project, previewDescriptor);
-      return IntentionPreviewInfo.DIFF_NO_TRIM;
+      TrailingWhitespacesInTextBlockInspection.replaceTextBlock(literalExpression, "\"\"\"\n" + newTextBlock + "\"\"\"");
     }
   }
 

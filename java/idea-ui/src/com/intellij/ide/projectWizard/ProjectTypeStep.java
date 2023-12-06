@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
@@ -59,6 +60,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -143,9 +145,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       layout.setHGap(0);
       myPanel.setLayout(layout);
 
+      myProjectTypePanel.setMinimumSize(new Dimension(240, 100));
+
       JBSplitter splitter = new OnePixelSplitter(false, 0.25f);
+      splitter.setHonorComponentsMinimumSize(true);
       splitter.setFirstComponent(myProjectTypePanel);
       splitter.setSecondComponent(mySettingsPanel);
+
       myPanel.removeAll();
       myPanel.add(splitter, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
                                                 GridConstraints.FILL_BOTH,
@@ -550,8 +556,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
       myContext.setProjectBuilder(builder);
       step.updateStep();
+
       JComponent component = step.getComponent();
-      if (isNewWizard()) {
+      if (isNewWizard() && !(builder instanceof PromoModuleBuilder)) {
         component = new JBScrollPane(component);
         component.setBorder(JBUI.Borders.empty());
       }
@@ -696,7 +703,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       URL url = classLoader.getResource(StringUtil.trimStart(ep.templatePath, "/"));
       if (url == null) {
         LOG.error(new PluginException("Can't find resource for project template: " + ep.templatePath, pluginDescriptor.getPluginId()));
-        return;
+        return Unit.INSTANCE;
       }
 
       try {
@@ -712,6 +719,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       catch (Exception e) {
         LOG.error(new PluginException("Error loading template from URL: " + ep.templatePath, e, pluginDescriptor.getPluginId()));
       }
+      return Unit.INSTANCE;
     });
     return map;
   }
@@ -863,7 +871,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     TemplatesGroup group = myProjectTypeList.getSelectedValue();
     if (group == null) return;
 
-    FeatureUsageData data = new FeatureUsageData();
+    FeatureUsageData data = new FeatureUsageData("FUS");
     data.addData("projectType", group.getId());
     data.addPluginInfo(group.getPluginInfo());
     if (myCurrentCard.equals(FRAMEWORKS_CARD)) {
@@ -926,6 +934,17 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
                  !Objects.equals(upper.getName(), value.getParentGroup());
         }
       });
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList<? extends TemplatesGroup> list,
+                                                  TemplatesGroup value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
+      Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      myNextStepLabel.setIcon(value.isPromo() ? AllIcons.Ultimate.Lock : null);
+      return component;
     }
 
     @Override

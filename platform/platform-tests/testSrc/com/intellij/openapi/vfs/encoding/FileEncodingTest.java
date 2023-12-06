@@ -46,6 +46,7 @@ import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.util.ui.UIUtil;
@@ -735,6 +736,30 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     Objects.requireNonNull(document.getText());
   }
 
+  public void testMustBeAbleForFileAccidentallyLoadedInUTF16ToReloadBackToUtf8() throws IOException {
+    VirtualFile file = createTempFile("txt", NO_BOM, "xxx", StandardCharsets.UTF_8);
+    file.setCharset(StandardCharsets.UTF_8);
+    UIUtil.dispatchAllInvocationEvents();
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    String oldText = document.getText();
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
+
+    // yeah, it was not safe to reload in utf16
+    assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToReloadIn(file, document.getText(), file.contentsToByteArray(), StandardCharsets.UTF_16BE));
+    // but it happened
+    EncodingUtil.reloadIn(file, StandardCharsets.UTF_16BE, getProject());
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals(StandardCharsets.UTF_16BE, file.getCharset());
+    assertEquals(CharsetToolkit.UTF16BE_BOM, file.getBOM());
+
+    // and back
+    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToReloadIn(file, document.getText(), file.contentsToByteArray(), StandardCharsets.UTF_8));
+    EncodingUtil.reloadIn(file, StandardCharsets.UTF_8, getProject());
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
+    assertEquals(oldText,  document.getText());
+  }
+
   private void globalUndo() {
     UndoManager myManager = UndoManager.getInstance(getProject());
     assertTrue("undo is not available", myManager.isUndoAvailable(null));
@@ -1050,7 +1075,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     UIUtil.dispatchAllInvocationEvents();
 
     FileEditorManager.getInstance(getProject()).closeFile(file);
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (exception.get() != null) {
       throw exception.get();
@@ -1106,7 +1131,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   public void testFileEncodingProviderOverridesMapping() throws IOException {
     FileEncodingProvider encodingProvider = new FileEncodingProvider() {
       @Override
-      public Charset getEncoding(@NotNull VirtualFile virtualFile) {
+      public Charset getEncoding(@NotNull VirtualFile virtualFile, Project project) {
         return StandardCharsets.UTF_16;
       }
     };
@@ -1134,7 +1159,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       @Override public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) { return StandardCharsets.ISO_8859_1.name(); }
     }
     MyForcedFileType fileType = new MyForcedFileType();
-    FileEncodingProvider encodingProvider = __ -> StandardCharsets.UTF_16;
+    FileEncodingProvider encodingProvider = (__, project) -> StandardCharsets.UTF_16;
     FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
     FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
     fileTypeManager.registerFileType(fileType, List.of(new ExtensionFileNameMatcher(ext)), getTestRootDisposable(),
@@ -1145,7 +1170,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testDetectedCharsetOverridesFileEncodingProvider() throws IOException {
-    FileEncodingProvider encodingProvider = __ -> WINDOWS_1251;
+    FileEncodingProvider encodingProvider = (__, project) -> WINDOWS_1251;
     FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
     VirtualFile file = createTempFile("yyy", NO_BOM, "Some text" + THREE_RUSSIAN_LETTERS, StandardCharsets.UTF_8);
     assertEquals(StandardCharsets.UTF_8, file.getCharset());

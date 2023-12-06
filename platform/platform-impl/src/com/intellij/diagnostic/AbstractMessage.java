@@ -27,7 +27,7 @@ public abstract class AbstractMessage {
   public abstract @NotNull Throwable getThrowable();
   public abstract @NotNull String getThrowableText();
 
-  /** Returns a user message (see {@link LogMessage#createEvent}), if present. */
+  /** Returns a user message (see {@link LogMessage#eventOf}), if present. */
   public abstract @Nullable String getMessage();
 
   /** Returns a (possibly empty) list of all attachments. */

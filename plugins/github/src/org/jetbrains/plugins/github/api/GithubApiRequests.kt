@@ -5,10 +5,10 @@ import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.request.*
-import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
+import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import java.awt.image.BufferedImage
 
 /**
@@ -16,6 +16,16 @@ import java.awt.image.BufferedImage
  * TODO: improve url building (DSL?)
  */
 object GithubApiRequests {
+
+  @JvmStatic
+  fun getBytes(url: String): GithubApiRequest<ByteArray> = object : Get<ByteArray>(url) {
+    override fun extractResult(response: GithubApiResponse): ByteArray {
+      return response.handleBody(ThrowableConvertor {
+        it.readAllBytes()
+      })
+    }
+  }
+
   object CurrentUser : Entity("/user") {
     @JvmStatic
     fun get(server: GithubServerPath) = get(getUrl(server, urlSuffix))
@@ -24,7 +34,7 @@ object GithubApiRequests {
     fun get(url: String) = Get.json<GithubAuthenticatedUser>(url).withOperationName("get profile information")
 
     @JvmStatic
-    fun getAvatar(url: String) = object : Get<BufferedImage>(url) {
+    fun getAvatar(url: String): GithubApiRequest<BufferedImage> = object : Get<BufferedImage>(url) {
       override fun extractResult(response: GithubApiResponse): BufferedImage {
         return response.handleBody(ThrowableConvertor {
           GithubApiContentHelper.loadImage(it)
@@ -131,10 +141,6 @@ object GithubApiRequests {
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GithubBranch>(url).withOperationName("get branches")
-
-      @JvmStatic
-      fun getProtection(repository: GHRepositoryCoordinates, branchName: String): GithubApiRequest<GHBranchProtectionRules> =
-        Get.json(getUrl(repository, urlSuffix, "/$branchName", "/protection"), GHSchemaPreview.BRANCH_PROTECTION.mimeType)
     }
 
     object Commits : Entity("/commits") {
@@ -412,9 +418,9 @@ object GithubApiRequests {
         get(getUrl(server, Search.urlSuffix, urlSuffix,
                    GithubApiUrlQueryBuilder.urlQuery {
                      param("q", GithubApiSearchQueryBuilder.searchQuery {
-                       qualifier("repo", repoPath?.toString().orEmpty())
-                       qualifier("state", state)
-                       qualifier("assignee", assignee)
+                       term(GHPRSearchQuery.QualifierName.repo.createTerm(repoPath?.toString().orEmpty()))
+                       term(GHPRSearchQuery.QualifierName.state.createTerm(state.orEmpty()))
+                       term(GHPRSearchQuery.QualifierName.assignee.createTerm(assignee.orEmpty()))
                        query(query)
                      })
                      param(pagination)

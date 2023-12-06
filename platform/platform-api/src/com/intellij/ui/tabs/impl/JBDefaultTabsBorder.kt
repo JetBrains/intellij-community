@@ -10,7 +10,7 @@ open class JBDefaultTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     g as Graphics2D
 
     val rect = Rectangle(x, y, width, height)
-    val firstLabel = tabs.myInfo2Label[tabs.visibleInfos[0]] ?: return
+    val firstLabel = tabs.infoToLabel[tabs.getVisibleInfos()[0]] ?: return
     val maxY = firstLabel.bounds.maxY.toInt() - thickness
     tabs.tabPainter.paintBorderLine(g, thickness, Point(rect.x, maxY), Point(rect.maxX.toInt(), maxY))
   }

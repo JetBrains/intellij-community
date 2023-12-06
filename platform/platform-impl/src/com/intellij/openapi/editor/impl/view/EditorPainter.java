@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -53,7 +54,7 @@ import java.util.function.Consumer;
 public final class EditorPainter implements TextDrawingCallback {
   private static final Color CARET_LIGHT = Gray._255;
   private static final Color CARET_DARK = Gray._0;
-  private static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0,
+  public static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0,
                                                                                    new float[]{0, 2, 0, 2}, 0);
   private static final int CARET_DIRECTION_MARK_SIZE = 3;
   private static final char IDEOGRAPHIC_SPACE = '\u3000';
@@ -75,15 +76,15 @@ public final class EditorPainter implements TextDrawingCallback {
     EditorImpl editor = myView.getEditor();
     EditorImpl.CaretRectangle[] locations = editor.getCaretLocations(false);
     if (locations == null) return;
-    int nominalLineHeight = myView.getNominalLineHeight();
-    int topOverhang = myView.getTopOverhang();
+    int caretHeight = myView.getCaretHeight();
+    int topOverhang = editor.getSettings().isFullLineHeightCursor() ? 0 : myView.getTopOverhang();
     for (EditorImpl.CaretRectangle location : locations) {
       float x = (float)location.myPoint.getX();
       int y = (int)location.myPoint.getY() - topOverhang;
       float width = location.myWidth + CARET_DIRECTION_MARK_SIZE;
       int xStart = (int)Math.floor(x - width);
       int xEnd = (int)Math.ceil(x + width);
-      editor.getContentComponent().repaint(xStart, y, xEnd - xStart, nominalLineHeight);
+      editor.getContentComponent().repaint(xStart, y, xEnd - xStart, caretHeight);
     }
   }
 
@@ -134,6 +135,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final Color myBackgroundColor;
     private final int myMarginColumns;
     private final List<Consumer<Graphics2D>> myTextDrawingTasks = new ArrayList<>();
+    private final List<RangeHighlighter> myAfterBackgroundCustomHighlighters = new SmartList<>();
     private final List<RangeHighlighter> myForegroundCustomHighlighters = new SmartList<>();
     private final ScaleContext myScaleContext;
     private MarginPositions myMarginPositions;
@@ -183,10 +185,11 @@ public final class EditorPainter implements TextDrawingCallback {
         return;
       }
 
-      paintBackground();
-      paintRightMargin();
       paintCustomRenderers(myDocMarkup);
       paintCustomRenderers(myEditorMarkup);
+      paintBackground();
+      paintRightMargin();
+      paintCustomRenderers(myAfterBackgroundCustomHighlighters);
       paintLineMarkersSeparators(myDocMarkup);
       paintLineMarkersSeparators(myEditorMarkup);
       paintTextWithEffects();
@@ -195,7 +198,7 @@ public final class EditorPainter implements TextDrawingCallback {
       paintBorderEffect(myEditor.getHighlighter());
       paintBorderEffect(myDocMarkup);
       paintBorderEffect(myEditorMarkup);
-      paintForegroundCustomRenderers();
+      paintCustomRenderers(myForegroundCustomHighlighters);
       paintBlockInlays();
       paintCaret();
       paintComposedTextDecoration();
@@ -585,11 +588,10 @@ public final class EditorPainter implements TextDrawingCallback {
         CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
         if (customRenderer != null) {
           if (myClipDetector.rangeCanBeVisible(highlighter.getStartOffset(), highlighter.getEndOffset())) {
-            if (customRenderer.isForeground()) {
-              myForegroundCustomHighlighters.add(highlighter);
-            }
-            else {
-              customRenderer.paint(myEditor, highlighter, myGraphics);
+            switch (customRenderer.getOrder()) {
+              case BEFORE_BACKGROUND -> customRenderer.paint(myEditor, highlighter, myGraphics);
+              case AFTER_BACKGROUND -> myAfterBackgroundCustomHighlighters.add(highlighter);
+              case AFTER_TEXT -> myForegroundCustomHighlighters.add(highlighter);
             }
           }
         }
@@ -598,12 +600,13 @@ public final class EditorPainter implements TextDrawingCallback {
       myGraphics.translate(0, -myYShift);
     }
 
-    private void paintForegroundCustomRenderers() {
-      if (!myForegroundCustomHighlighters.isEmpty()) {
+    private void paintCustomRenderers(List<RangeHighlighter> highlighters) {
+      if (!highlighters.isEmpty()) {
         myGraphics.translate(0, myYShift);
-        for (RangeHighlighter highlighter : myForegroundCustomHighlighters) {
+        for (RangeHighlighter highlighter : highlighters) {
           CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
-          if (customRenderer != null) {
+          if (customRenderer == null) continue;
+          try (AccessToken ignore = SlowOperations.reportOnceIfViolatedFor(customRenderer)) {
             customRenderer.paint(myEditor, highlighter, myGraphics);
           }
         }
@@ -648,8 +651,7 @@ public final class EditorPainter implements TextDrawingCallback {
       ComplexTextFragment.flushDrawingCache(myGraphics);
     }
 
-    @Nullable
-    private TextAttributes getInnerHighlighterAttributes(@NotNull FoldRegion region) {
+    private @Nullable TextAttributes getInnerHighlighterAttributes(@NotNull FoldRegion region) {
       if (region.areInnerHighlightersMuted()) return null;
       List<RangeHighlighterEx> innerHighlighters = new ArrayList<>();
       collectVisibleInnerHighlighters(region, myEditorMarkup, innerHighlighters);
@@ -942,8 +944,7 @@ public final class EditorPainter implements TextDrawingCallback {
      *         null otherwise
      */
     @Contract("null -> null")
-    @Nullable
-    private static EffectDescriptor getBorderDescriptor(@Nullable TextAttributes attributes) {
+    private static @Nullable EffectDescriptor getBorderDescriptor(@Nullable TextAttributes attributes) {
       return attributes == null || !attributes.hasEffects()
              ? null
              : TextAttributesEffectsBuilder.create(attributes).getEffectDescriptor(TextAttributesEffectsBuilder.EffectSlot.FRAME_SLOT);
@@ -1244,10 +1245,9 @@ public final class EditorPainter implements TextDrawingCallback {
       return new TextAttributes();
     }
 
-    @NotNull
-    private TextAttributes getBetweenLinesAttributes(int bottomVisualLine,
-                                                     int bottomVisualLineStartOffset,
-                                                     PeekableIterator<? extends Caret> caretIterator) {
+    private @NotNull TextAttributes getBetweenLinesAttributes(int bottomVisualLine,
+                                                              int bottomVisualLineStartOffset,
+                                                              PeekableIterator<? extends Caret> caretIterator) {
       boolean selection = false;
       while (caretIterator.hasNext() && caretIterator.peek().getSelectionEnd() < bottomVisualLineStartOffset) caretIterator.next();
       if (caretIterator.hasNext()) {
@@ -1296,9 +1296,9 @@ public final class EditorPainter implements TextDrawingCallback {
       if (locations == null) return;
 
       Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(myGraphics);
-      int nominalLineHeight = myView.getNominalLineHeight();
-      int topOverhang = myView.getTopOverhang();
+      int caretHeight = myView.getCaretHeight();
       EditorSettings settings = myEditor.getSettings();
+      int topOverhang = settings.isFullLineHeightCursor() ? 0 : myView.getTopOverhang();
       Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
       if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
       int minX = myInsets.left;
@@ -1320,15 +1320,15 @@ public final class EditorPainter implements TextDrawingCallback {
               // fully cover extra character's pixel which can appear due to antialiasing
               // see IDEA-148843 for more details
               if (x > minX && lineWidth > 1) x -= 1 / JBUIScale.sysScale(g);
-              paintCaretBar(g, caret, x, y, lineWidth, nominalLineHeight, isRtl);
+              paintCaretBar(g, caret, x, y, lineWidth, caretHeight, isRtl);
             }
             else {
-              paintCaretBlock(g, startX, y, width, nominalLineHeight);
+              paintCaretBlock(g, startX, y, width, caretHeight);
               paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
             }
           }
           case BLOCK -> {
-            paintCaretBlock(g, startX, y, width, nominalLineHeight);
+            paintCaretBlock(g, startX, y, width, caretHeight);
             paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
           }
           case BAR -> {
@@ -1337,24 +1337,24 @@ public final class EditorPainter implements TextDrawingCallback {
             if (attr.getThickness() > 0) {
               int barWidth = Math.max((int)(width * attr.getThickness()), JBUIScale.scale(settings.getLineCursorWidth()));
               if (!isRtl && x > minX && barWidth > 1 && barWidth < (width / 2)) x -= 1 / JBUIScale.sysScale(g);
-              paintCaretBar(g, caret, isRtl ? x - barWidth : x, y, barWidth, nominalLineHeight, isRtl);
+              paintCaretBar(g, caret, isRtl ? x - barWidth : x, y, barWidth, caretHeight, isRtl);
               Shape savedClip = g.getClip();
-              g.setClip(new Rectangle2D.Float(isRtl ? x - barWidth : x, y, barWidth, nominalLineHeight));
+              g.setClip(new Rectangle2D.Float(isRtl ? x - barWidth : x, y, barWidth, caretHeight));
               paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
               g.setClip(savedClip);
             }
           }
           case UNDERSCORE -> {
             if (attr.getThickness() > 0) {
-              int underscoreHeight = Math.max((int)(nominalLineHeight * attr.getThickness()), 1);
-              paintCaretUnderscore(g, startX, y + nominalLineHeight - underscoreHeight, width, underscoreHeight);
+              int underscoreHeight = Math.max((int)(caretHeight * attr.getThickness()), 1);
+              paintCaretUnderscore(g, startX, y + caretHeight - underscoreHeight, width, underscoreHeight);
               Shape oldClip = g.getClip();
-              g.setClip(new Rectangle2D.Float(startX, y + nominalLineHeight - underscoreHeight, width, underscoreHeight));
+              g.setClip(new Rectangle2D.Float(startX, y + caretHeight - underscoreHeight, width, underscoreHeight));
               paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
               g.setClip(oldClip);
             }
           }
-          case BOX -> paintCaretBox(g, startX, y, width, nominalLineHeight);
+          case BOX -> paintCaretBox(g, startX, y, width, caretHeight);
         }
       }
     }
@@ -1607,7 +1607,7 @@ public final class EditorPainter implements TextDrawingCallback {
     void paintAfterLineEnd(IterationState iterationState, int columnStart, float x, int y);
   }
 
-  private static class LineWhitespacePaintingStrategy {
+  private static final class LineWhitespacePaintingStrategy {
     private final boolean myWhitespaceShown;
     private final boolean myLeadingWhitespaceShown;
     private final boolean myInnerWhitespaceShown;
@@ -1662,8 +1662,7 @@ public final class EditorPainter implements TextDrawingCallback {
     int marginX(float marginWidth);
     List<Integer> softMarginsX();
 
-    @NotNull
-    static XCorrector create(@NotNull EditorView view, @NotNull Insets insets) {
+    static @NotNull XCorrector create(@NotNull EditorView view, @NotNull Insets insets) {
       return view.getEditor().isRightAligned() ? new RightAligned(view) : new LeftAligned(view, insets);
     }
 
@@ -1819,7 +1818,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private static class CaretDataInView {
+  private static final class CaretDataInView {
     private final int[] selectionStarts;
     private final int[] selectionEnds;
     private final int caretCount;

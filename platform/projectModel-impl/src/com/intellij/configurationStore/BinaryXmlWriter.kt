@@ -97,7 +97,7 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
       }
       v < 0x40000000 -> {
         out.write(v shr 22 and 0x7F or 0x80)
-        out.write (v shr 15 and 0x7F or 0x80)
+        out.write(v shr 15 and 0x7F or 0x80)
         out.write(v shr 8 and 0x7F or 0x80)
         out.write(v and 0xFF)
       }

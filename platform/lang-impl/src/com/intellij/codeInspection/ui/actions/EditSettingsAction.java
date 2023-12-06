@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -6,8 +6,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.OptionPaneRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -24,7 +24,7 @@ import java.util.Objects;
 /**
  * @author Dmitry Batkovich
  */
-public class EditSettingsAction extends InspectionViewActionBase {
+public final class EditSettingsAction extends InspectionViewActionBase {
   private static final Logger LOG = Logger.getInstance(EditSettingsAction.class);
 
   public EditSettingsAction() {
@@ -51,7 +51,7 @@ public class EditSettingsAction extends InspectionViewActionBase {
       InspectionToolWrapper tool = getSingleTool(view);
       final DialogBuilder builder = new DialogBuilder()
         .title(InspectionsBundle.message("inspection.tool.window.inspection.dialog.title", tool.getDisplayName()));
-      JComponent panel = InspectionOptionPaneRenderer.createOptionsPanel(tool.getTool(), builder, e.getProject());
+      JComponent panel = OptionPaneRenderer.createOptionsPanel(tool.getTool(), builder, e.getProject());
       LOG.assertTrue(panel != null, "Unexpectedly inspection '" + tool.getShortName() + "' didn't create an options panel");
       builder.centerPanel(panel);
       builder.removeAllActions();

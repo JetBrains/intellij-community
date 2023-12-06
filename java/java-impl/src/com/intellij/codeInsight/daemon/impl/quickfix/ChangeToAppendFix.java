@@ -1,43 +1,25 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ChangeToAppendFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionAction {
-  @SafeFieldForPreview
+public class ChangeToAppendFix extends PsiUpdateModCommandAction<PsiAssignmentExpression> {
   private final IElementType myTokenType;
-  @SafeFieldForPreview
   private final PsiType myLhsType;
-  @SafeFieldForPreview
   private volatile TypeInfo myTypeInfo;
 
   public ChangeToAppendFix(@NotNull IElementType eqOpSign, @NotNull PsiType lType, @NotNull PsiAssignmentExpression assignmentExpression) {
@@ -47,21 +29,12 @@ public class ChangeToAppendFix extends LocalQuickFixAndIntentionActionOnPsiEleme
   }
 
   @Override
-  public @Nullable PsiAssignmentExpression getStartElement() {
-    return ObjectUtils.tryCast(super.getStartElement(), PsiAssignmentExpression.class);
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    PsiAssignmentExpression assignmentExpression = getStartElement();
-    if (assignmentExpression == null) {
-      return getFamilyName();
-    }
-    return QuickFixBundle.message("change.to.append.text",
-                                  ChangeToAppendUtil.buildAppendExpression(assignmentExpression.getRExpression(),
-                                                                           getTypeInfo().useStringValueOf,
-                                                                           new StringBuilder(assignmentExpression.getLExpression().getText())));
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiAssignmentExpression assignmentExpression) {
+    if (JavaTokenType.PLUSEQ != myTokenType || !getTypeInfo().appendable) return null;
+    String text = QuickFixBundle.message("change.to.append.text", ChangeToAppendUtil.buildAppendExpression(
+      assignmentExpression.getRExpression(), getTypeInfo().useStringValueOf,
+      new StringBuilder(assignmentExpression.getLExpression().getText())));
+    return Presentation.of(text);
   }
 
   @NotNull
@@ -71,21 +44,7 @@ public class ChangeToAppendFix extends LocalQuickFixAndIntentionActionOnPsiEleme
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    return JavaTokenType.PLUSEQ == myTokenType && getTypeInfo().appendable;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiAssignmentExpression assignmentExpression = getStartElement();
-    if (assignmentExpression == null) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiAssignmentExpression assignmentExpression, @NotNull ModPsiUpdater updater) {
     final PsiExpression appendExpression =
       ChangeToAppendUtil.buildAppendExpression(assignmentExpression.getLExpression(), assignmentExpression.getRExpression());
     if (appendExpression == null) return;

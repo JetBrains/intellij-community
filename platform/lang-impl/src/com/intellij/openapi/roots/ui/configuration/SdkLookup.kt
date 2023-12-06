@@ -30,7 +30,7 @@ interface SdkLookup {
     fun newLookupBuilder(): SdkLookupBuilder = getInstance().createBuilder()
 
     @JvmStatic
-    fun getInstance() = service<SdkLookup>()
+    fun getInstance(): SdkLookup = service<SdkLookup>()
   }
 }
 

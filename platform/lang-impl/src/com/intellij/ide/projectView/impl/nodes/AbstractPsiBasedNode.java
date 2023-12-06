@@ -1,15 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.bookmark.Bookmark;
 import com.intellij.ide.bookmark.BookmarkType;
 import com.intellij.ide.bookmark.BookmarksManager;
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.ProjectViewSettings;
-import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
 import com.intellij.ide.projectView.impl.ProjectViewInplaceCommentProducerImplKt;
 import com.intellij.ide.tags.TagManager;
@@ -30,6 +26,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.pom.StatePreservingNavigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -40,6 +37,9 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,15 +49,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileAttributes;
+import static com.intellij.ide.projectView.impl.nodes.ProjectViewNodeExtensionsKt.getVirtualFileForNodeOrItsPSI;
 import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttributes;
 
 /**
- * Class for node descriptors based on PsiElements. Subclasses should define
- * method that extract PsiElement from Value.
+ * Class for node descriptors based on PsiElements. Subclasses should define a method that extracts PsiElement from Value.
  * @param <Value> Value of node descriptor
  */
 public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> implements ValidateableNode, StatePreservingNavigatable {
   private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
+  private volatile long timestamp;
 
   protected AbstractPsiBasedNode(final Project project,
                                  @NotNull Value value,
@@ -65,22 +67,18 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     super(project, value, viewSettings);
   }
 
-  @Nullable
-  protected abstract PsiElement extractPsiFromValue();
+  protected abstract @Nullable PsiElement extractPsiFromValue();
 
-  @Nullable
-  protected abstract Collection<AbstractTreeNode<?>> getChildrenImpl();
+  protected abstract @Nullable Collection<AbstractTreeNode<?>> getChildrenImpl();
 
   protected abstract void updateImpl(@NotNull PresentationData data);
 
   @Override
-  @NotNull
-  public final Collection<? extends AbstractTreeNode<?>> getChildren() {
+  public final @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     return AstLoadingFilter.disallowTreeLoading(this::doGetChildren);
   }
 
-  @NotNull
-  private Collection<? extends AbstractTreeNode<?>> doGetChildren() {
+  private @NotNull Collection<? extends AbstractTreeNode<?>> doGetChildren() {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement == null) {
       return new ArrayList<>();
@@ -130,13 +128,18 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   @Nullable
-  private VirtualFile getVirtualFileForValue() {
+  VirtualFile getVirtualFileForValue() {
     Object value = getEqualityObject();
     if (value instanceof SmartPsiElementPointer<?> pointer) {
       return pointer.getVirtualFile(); // do not retrieve PSI element
     }
     PsiElement psiElement = extractPsiFromValue();
     return PsiUtilCore.getVirtualFile(psiElement);
+  }
+
+  @Override
+  public @Nullable Comparable<?> getTimeSortKey() {
+    return timestamp == 0 ? null : timestamp;
   }
 
   @Override
@@ -149,7 +152,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   // Should be called in atomic action
 
   @Override
-  public void update(@NotNull final PresentationData data) {
+  public void update(final @NotNull PresentationData data) {
     AstLoadingFilter.disallowTreeLoading(() -> doUpdate(data));
   }
 
@@ -184,8 +187,8 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       }
       else {
         var tagIconAndText = TagManager.getTagIconAndText(value);
-        tagIcon = tagIconAndText.first;
-        tagText = tagIconAndText.second;
+        tagIcon = tagIconAndText.icon();
+        tagText = tagIconAndText.coloredText();
       }
       data.setIcon(withIconMarker(icon, tagIcon));
       data.setPresentableText(myName);
@@ -204,7 +207,21 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       updateImpl(data);
       data.setIcon(patchIcon(myProject, data.getIcon(true), getVirtualFile()));
       CompoundProjectViewNodeDecorator.get(myProject).decorate(this, data);
+      updateTimestamp();
     });
+  }
+
+  private void updateTimestamp() {
+    if (
+      getSettings() instanceof ProjectViewSettings projectViewSettings &&
+      projectViewSettings.getSortKey() != NodeSortKey.BY_TIME_DESCENDING &&
+      projectViewSettings.getSortKey() != NodeSortKey.BY_TIME_ASCENDING
+    ) {
+      timestamp = 0; // skip for performance reasons
+      return;
+    }
+    var attributes = getFileAttributes(getVirtualFileForNodeOrItsPSI(this));
+    timestamp = attributes == null ? 0 : attributes.lastModifiedTime().toMillis();
   }
 
   @Iconable.IconFlags
@@ -220,8 +237,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     return flags;
   }
 
-  @Nullable
-  public static Icon patchIcon(@NotNull Project project, @Nullable Icon original, @Nullable VirtualFile file) {
+  public static @Nullable Icon patchIcon(@NotNull Project project, @Nullable Icon original, @Nullable VirtualFile file) {
     if (file == null || original == null) return original;
 
     Icon icon = original;
@@ -260,14 +276,27 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   @Override
-  public boolean contains(@NotNull final VirtualFile file) {
+  public boolean contains(final @NotNull VirtualFile file) {
     return file.equals(getVirtualFileForValue());
   }
 
-  @Nullable
-  public NavigationItem getNavigationItem() {
+  public @Nullable NavigationItem getNavigationItem() {
     final PsiElement psiElement = extractPsiFromValue();
     return psiElement instanceof NavigationItem ? (NavigationItem) psiElement : null;
+  }
+
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @Override
+  public @Nullable NavigationRequest navigationRequest() {
+    if (ReflectionUtil.getMethodDeclaringClass(getClass(), "navigate", boolean.class) != AbstractPsiBasedNode.class) {
+      return super.navigationRequest(); // raw
+    }
+    PsiElement element = extractPsiFromValue();
+    if (element == null) {
+      return null;
+    }
+    return ((NavigationItem)element).navigationRequest();
   }
 
   @Override
@@ -299,8 +328,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     return item != null && item.canNavigateToSource();
   }
 
-  @Nullable
-  protected String calcTooltip() {
+  protected @Nullable String calcTooltip() {
     return null;
   }
 

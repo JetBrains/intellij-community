@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
@@ -8,10 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeListChange;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -161,6 +158,26 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
+   * Allows to disable 'Commit' action
+   * Takes effect for project that have configured mappings for this VCS only
+   *
+   * @return true if 'Commit' action should be disabled.
+   */
+  public boolean isCommitActionDisabled() {
+    return false;
+  }
+
+  /**
+   * Allows to disable 'Update' action
+   * Takes effect for project that have configured mappings for this VCS only
+   *
+   * @return true if 'Update' action should be disabled.
+   */
+  public boolean isUpdateActionDisabled() {
+    return false;
+  }
+
+  /**
    * Allows to hide 'Shelf' toolwindow tab.
    * Takes effect for projects that have configured mappings for this VCS only.
    *
@@ -196,6 +213,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * so that {@link ChangeProvider} could be called again for these files.
    *
    * @see #needsCaseSensitiveDirtyScope
+   * @see #createDirtyScope
    */
   @Nullable
   public ChangeProvider getChangeProvider() {
@@ -214,14 +232,6 @@ public abstract class AbstractVcs extends StartedActivated {
   @Nullable
   public EditFileProvider getEditFileProvider() {
     return null;
-  }
-
-  /**
-   * @deprecated dead code
-   */
-  @Deprecated(forRemoval = true)
-  public boolean markExternalChangesAsUpToDate() {
-    return false;
   }
 
   /**
@@ -793,9 +803,17 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * @return whether {@link com.intellij.openapi.vcs.changes.VcsDirtyScopeManager} should preserve file path cases on case-insensitive systems.
+   * @see #createDirtyScope
    */
   public boolean needsCaseSensitiveDirtyScope() {
     return false;
+  }
+
+  /**
+   * If not specified, the {@link com.intellij.openapi.vcs.changes.VcsDirtyScopeImpl} will be used.
+   */
+  public @Nullable VcsDirtyScopeBuilder createDirtyScope() {
+    return null;
   }
 
   /**

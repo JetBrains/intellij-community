@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar
 
 import com.intellij.ide.structureView.StructureViewModel
@@ -17,10 +17,10 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.reference.SoftReference
 import com.intellij.util.Processor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import java.lang.ref.SoftReference
 
 
 abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension() {
@@ -53,7 +53,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     return null
   }
 
-  protected open fun isAcceptableLanguage(psiElement: @Nullable PsiElement?) = psiElement?.language == language
+  protected open fun isAcceptableLanguage(psiElement: @Nullable PsiElement?): Boolean = psiElement?.language == language
 
   override fun processChildren(`object`: Any,
                                rootElement: Any?,
@@ -143,7 +143,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     return children + applicableNodeProviders.flatMap { it.provideNodes(parent) }
   }
 
-  override fun normalizeChildren() = false
+  override fun normalizeChildren(): Boolean = false
 
   protected open val applicableNodeProviders: List<NodeProvider<*>> = emptyList()
 

@@ -3,7 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ModuleStore
-import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.ProjectStoreOwner
@@ -31,10 +31,14 @@ internal open class ModuleStoreImpl(module: Module) : ModuleStoreBase() {
     }
 
     for (provider in StreamProviderFactory.EP_NAME.getExtensions(project)) {
-      LOG.runAndLogException {
-        provider.customizeStorageSpecs(component, storageManager, stateSpec, result, operation)?.let {
-          return it
-        }
+      runCatching {
+        provider.customizeStorageSpecs(component = component,
+                                       storageManager = storageManager,
+                                       stateSpec = stateSpec,
+                                       storages = result,
+                                       operation = operation)
+      }.getOrLogException(LOG)?.let {
+        return it
       }
     }
     return result
@@ -61,13 +65,14 @@ private class TestModuleStore(module: Module) : ModuleStoreImpl(module) {
     get() = moduleComponentLoadPolicy ?: ((project as ProjectStoreOwner).componentStore as ComponentStoreImpl).loadPolicy
 }
 
-// used in upsource
 abstract class ModuleStoreBase : ChildlessComponentStore(), ModuleStore {
   final override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage) = false
 
   abstract override val storageManager: StateStorageManagerImpl
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>,
+                                   stateSpec: State,
+                                   operation: StateStorageOperation): List<Storage> {
     if (stateSpec.storages.isEmpty()) {
       return listOf(MODULE_FILE_STORAGE_ANNOTATION)
     }

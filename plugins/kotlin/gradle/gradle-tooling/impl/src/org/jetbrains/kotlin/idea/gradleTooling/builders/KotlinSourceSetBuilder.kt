@@ -2,8 +2,6 @@
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.gradle.api.Named
-import org.gradle.api.Project
-import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinAndroidSourceSetInfoBuilder.buildKotlinAndroidSourceSetInfo
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSourceSetReflection
@@ -11,17 +9,12 @@ import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.tooling.core.withClosure
-import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
-import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency
-import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency
-import java.io.File
 
 internal class KotlinSourceSetBuilder(
     private val context: MultiplatformModelImportingContext
 ) {
     private val sourceSetsWithoutNeedOfBuildingDependenciesMetadata: Set<Named> by lazy {
-        val isHMPPEnabled = context.getProperty(GradleImportProperties.IS_HMPP_ENABLED)
-        if (!isHMPPEnabled) return@lazy emptySet()
+        if (!context.isHMPPEnabled) return@lazy emptySet()
 
         val sourceSetPlatforms = mutableMapOf<Named, MutableSet<KotlinPlatform>>()
         val targets = context.kotlinExtensionReflection.targets
@@ -40,21 +33,6 @@ internal class KotlinSourceSetBuilder(
             .keys
     }
 
-    private val androidDependencies: Map<String, List<Any>>? by lazy {
-        if (!context.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)) return@lazy null
-        try {
-            val resolverClass = context.kotlinExtensionReflection.kotlinExtension.javaClass
-                .classLoader.loadClass("org.jetbrains.kotlin.gradle.targets.android.internal.AndroidDependencyResolver")
-            val getAndroidSourceSetDependencies = resolverClass.getMethodOrNull("getAndroidSourceSetDependencies", Project::class.java)
-            val resolver = resolverClass.getField("INSTANCE").get(null)
-            @Suppress("UNCHECKED_CAST")
-            getAndroidSourceSetDependencies?.let { it(resolver, context.project) } as Map<String, List<Any>>?
-        } catch (e: Exception) {
-            KotlinMPPGradleModelBuilder.logger.info("Unexpected exception", e)
-            null
-        }
-    }
-
     fun buildKotlinSourceSet(sourceSetReflection: KotlinSourceSetReflection): KotlinSourceSetImpl? {
         val languageSettings = sourceSetReflection.languageSettings
             ?.let { KotlinLanguageSettingsBuilder.buildComponent(it) }
@@ -69,12 +47,9 @@ internal class KotlinSourceSetBuilder(
             /* Eagerly return empty, if dependencies are resolved using KGP */
             if (context.useKgpDependencyResolution()) return@dependencies emptyArray()
 
-            val androidDependenciesForSourceSet = buildAndroidSourceSetDependencies(androidDependencies, sourceSetReflection.instance)
-            val includeAndroidDependencies = context.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)
-
-            val dependencies = when {
-                !includeAndroidDependencies && sourceSetReflection.instance in sourceSetsWithoutNeedOfBuildingDependenciesMetadata -> emptyList()
-                else -> buildMetadataDependencies(sourceSetReflection.instance, context) + androidDependenciesForSourceSet
+            val dependencies = when (sourceSetReflection.instance) {
+              in sourceSetsWithoutNeedOfBuildingDependenciesMetadata -> emptyList()
+              else -> buildMetadataDependencies(sourceSetReflection.instance, context)
             }
 
             dependencies
@@ -118,8 +93,6 @@ internal class KotlinSourceSetBuilder(
     }
 
     companion object {
-        private val logger = Logging.getLogger(KotlinSourceSetBuilder::class.java)
-
         private val apiMetadataDependenciesBuilder = object : KotlinMultiplatformDependenciesBuilder() {
             override val configurationNameAccessor: String = "getApiMetadataConfigurationName"
             override val scope: String = "COMPILE"
@@ -157,32 +130,6 @@ internal class KotlinSourceSetBuilder(
             }
         }
 
-        private fun buildAndroidSourceSetDependencies(
-            androidDeps: Map<String, List<Any>>?,
-            gradleSourceSet: Named
-        ): Collection<KotlinDependency> {
-            return androidDeps?.get(gradleSourceSet.name)?.mapNotNull { it ->
-                @Suppress("UNCHECKED_CAST")
-                val collection = it["getCollection"] as Set<File>?
-                if (collection == null) {
-                    DefaultExternalLibraryDependency().apply {
-                        (id as? DefaultExternalDependencyId)?.apply {
-                            name = it["getName"] as String?
-                            group = it["getGroup"] as String?
-                            version = it["getVersion"] as String?
-                        }
-                        file = it["getJar"] as File? ?: return@mapNotNull null.also {
-                            logger.warn("[sync warning] ${gradleSourceSet.name}: $id does not resolve to a jar")
-                        }
-                        source = it["getSource"] as File?
-                    }
-                } else {
-                    DefaultFileCollectionDependency(collection)
-                }
-            } ?: emptyList()
-        }
-
-
         private fun buildIntransitiveSourceSetDependencies(
             gradleSourceSet: Named,
             importingContext: MultiplatformModelImportingContext
@@ -193,3 +140,4 @@ internal class KotlinSourceSetBuilder(
 
 
 internal const val INTRANSITIVE_METADATA_CONFIGURATION_NAME_ACCESSOR = "getIntransitiveMetadataConfigurationName"
+internal const val NATIVE_TARGET_PLATFORM_TYPE_NAME = "native"

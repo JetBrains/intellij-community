@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -13,7 +13,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
@@ -36,20 +35,26 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
-import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
+import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import kotlinx.coroutines.flow.FlowKt;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +71,9 @@ public final class XDebugSessionImpl implements XDebugSession {
   private static final Logger PERFORMANCE_LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl.performance");
   private static final NotificationGroup BP_NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Breakpoint hit");
 
+  // TODO[eldar] needed to workaround nullable myAlternativeSourceHandler.
+  private static final StateFlow<Boolean> ALWAYS_FALSE_STATE = FlowKt.asStateFlow(StateFlowKt.MutableStateFlow(false));
+
   private XDebugProcess myDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints = new HashMap<>();
   private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new HashSet<>());
@@ -76,7 +84,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private XSuspendContext mySuspendContext;
   private XExecutionStack myCurrentExecutionStack;
   private XStackFrame myCurrentStackFrame;
-  private @NotNull XSourceKind myCurrentSourceKind = XSourceKind.MAIN;
+  private @Nullable XAlternativeSourceHandler myAlternativeSourceHandler;
   private boolean myIsTopFrame;
   private volatile XStackFrame myTopStackFrame;
   private final AtomicBoolean myPaused = new AtomicBoolean();
@@ -273,35 +281,31 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   public @Nullable XSourcePosition getFrameSourcePosition(@Nullable XStackFrame frame) {
-    return getFrameSourcePosition(frame, myCurrentSourceKind);
+    return getFrameSourcePosition(frame, getCurrentSourceKind());
   }
 
   public @Nullable XSourcePosition getFrameSourcePosition(@Nullable XStackFrame frame, @NotNull XSourceKind sourceKind) {
     if (frame == null) return null;
     return switch (sourceKind) {
       case MAIN -> frame.getSourcePosition();
-      case ALTERNATIVE -> {
-        XAlternativeSourceHandler handler = myDebugProcess.getAlternativeSourceHandler();
-        yield handler != null ? handler.getAlternativePosition(frame) : null;
-      }
+      case ALTERNATIVE -> myAlternativeSourceHandler != null ? myAlternativeSourceHandler.getAlternativePosition(frame) : null;
     };
   }
 
   public @NotNull XSourceKind getCurrentSourceKind() {
-    return myCurrentSourceKind;
+    StateFlow<@NotNull Boolean> state = getAlternativeSourceKindState();
+    return state.getValue() ? XSourceKind.ALTERNATIVE : XSourceKind.MAIN;
   }
 
-  public void setCurrentSourceKind(@NotNull XSourceKind currentSourceKind) {
-    if (myCurrentSourceKind == currentSourceKind) return;
-    myCurrentSourceKind = currentSourceKind;
-    if (myDebuggerManager.getCurrentSession() == this) {
-      myExecutionPointManager.setActiveSourceKind(myCurrentSourceKind);
-    }
+  @NotNull StateFlow<@NotNull Boolean> getAlternativeSourceKindState() {
+    return myAlternativeSourceHandler != null ? myAlternativeSourceHandler.getAlternativeSourceKindState() : ALWAYS_FALSE_STATE;
   }
 
   void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
     LOG.assertTrue(myDebugProcess == null);
     myDebugProcess = process;
+    myAlternativeSourceHandler = myDebugProcess.getAlternativeSourceHandler();
+    myExecutionPointManager.setAlternativeSourceKindFlow(getAlternativeSourceKindState());
 
     if (myDebugProcess.checkCanInitBreakpoints()) {
       initBreakpoints();
@@ -314,7 +318,7 @@ public final class XDebugSessionImpl implements XDebugSession {
         myDebugProcess.getProcessHandler().removeProcessListener(this);
       }
     });
-    //todo[nik] make 'createConsole()' method return ConsoleView
+    //todo make 'createConsole()' method return ConsoleView
     myConsoleView = (ConsoleView)myDebugProcess.createConsole();
     if (!myShowTabOnSuspend.get()) {
       initSessionTab(contentToReuse);
@@ -648,16 +652,17 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void updateExecutionPosition() {
+    updateExecutionPosition(getCurrentSourceKind());
+  }
+
+  private void updateExecutionPosition(@NotNull XSourceKind navigationSourceKind) {
     // allowed only for the active session
     if (myDebuggerManager.getCurrentSession() == this) {
       boolean isTopFrame = isTopFrameSelected();
       XSourcePosition mainSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.MAIN);
       XSourcePosition alternativeSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.ALTERNATIVE);
-      ExecutionPoint executionPoint = ExecutionPoint.create(mainSourcePosition, alternativeSourcePosition, isTopFrame);
-      myExecutionPointManager.setExecutionPoint(executionPoint);
-      myExecutionPointManager.setActiveSourceKind(myCurrentSourceKind);
+      myExecutionPointManager.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame, navigationSourceKind);
       updateExecutionPointGutterIconRenderer();
-      myExecutionPointManager.showExecutionPosition();
     }
   }
 
@@ -915,7 +920,9 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     myPaused.set(true);
 
-    updateExecutionPosition();
+    boolean isAlternative = myAlternativeSourceHandler != null &&
+                            myAlternativeSourceHandler.isAlternativeSourceKindPreferred(suspendContext);
+    updateExecutionPosition(isAlternative ? XSourceKind.ALTERNATIVE : XSourceKind.MAIN);
 
     logPositionReached(topFramePosition);
 
@@ -1017,7 +1024,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().sessionStopped();
     myDispatcher.getListeners().clear();
 
-    myProject.putUserData(XDebuggerEditorLinePainter.CACHE, null);
+    myProject.putUserData(InlineDebugRenderer.LinePainter.CACHE, null);
 
     synchronized (myRegisteredBreakpoints) {
       myRegisteredBreakpoints.clear();
@@ -1152,19 +1159,17 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void logPositionReached(@Nullable XSourcePosition topFramePosition) {
-    if (myUserRequestStart > 0 && myUserRequestAction != null) {
+    FileType fileType = topFramePosition != null ? topFramePosition.getFile().getFileType() : null;
+    if (myUserRequestAction != null) {
       long durationMs = System.currentTimeMillis() - myUserRequestStart;
       if (PERFORMANCE_LOG.isDebugEnabled()) {
         PERFORMANCE_LOG.debug("Position reached in " + durationMs + "ms");
       }
-      FileType fileType = topFramePosition != null ? topFramePosition.getFile().getFileType() : null;
-      XDebuggerPerformanceCollector.EXECUTION_POINT_REACHED.log(
-        myProject,
-        EventFields.FileType.with(fileType),
-        XDebuggerPerformanceCollector.ACTION_ID.with(myUserRequestAction),
-        EventFields.DurationMs.with(durationMs)
-      );
+      XDebuggerPerformanceCollector.logExecutionPointReached(myProject, fileType, myUserRequestAction, durationMs);
       myUserRequestAction = null;
+    }
+    else {
+      XDebuggerPerformanceCollector.logBreakpointReached(myProject, fileType);
     }
   }
 }

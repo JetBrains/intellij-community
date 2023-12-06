@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.binding;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.ElementType;
@@ -24,9 +25,13 @@ import java.lang.annotation.Target;
 
 /**
  * @author Dmitry Avdeev
+ *
+ * @deprecated Use Kotlin UI DSL with bindings
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD})
+@Target(ElementType.FIELD)
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public @interface BindControl {
   @NonNls String value() default "";
   boolean instant() default false;

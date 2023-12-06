@@ -24,6 +24,15 @@ class IntBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCoun
     batch[batchPosition + 2] = v3
   }
 
+  internal fun ensureCapacity(count: Int) {
+    val expectedSize = count * paramCount
+    if (expectedSize > batch.size) {
+      val newBatch = IntArray(expectedSize)
+      batch.copyInto(newBatch)
+      this.batch = newBatch
+    }
+  }
+
   override fun bindParams(pointer: Long, db: SqliteDb) {
     assert(batchQueryCount == 0)
     for ((index, value) in batch.withIndex()) {
@@ -46,23 +55,13 @@ class IntBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCoun
     }
   }
 
-  override fun executeBatch(pointer: Long, db: SqliteDb) {
-    for (batchIndex in 0 until batchQueryCount) {
-      db.reset(pointer)
-      for (index in 0 until paramCount) {
-        val status = db.bind_int(pointer, index + 1, batch[batchIndex * paramCount + index]) and 0xFF
-        if (status != SqliteCodes.SQLITE_OK) {
-          throw db.newException(status)
-        }
-      }
-
-      stepInBatch(statementPointer = pointer, db = db, batchIndex = batchIndex)
-    }
+  override fun executeBatch(pointer: Long, db: NativeDB) {
+    db.executeBatch(statementPointer = pointer, queryCount = batchQueryCount, paramCount = paramCount, data = batch)
   }
 }
 
 class LongBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCount) {
-  private var batch: LongArray = LongArray(paramCount * batchCountHint)
+  private var batch = LongArray(paramCount * batchCountHint)
 
   fun bind(v1: Long) {
     assert(paramCount == 1)
@@ -112,7 +111,7 @@ class LongBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCou
     }
   }
 
-  override fun executeBatch(pointer: Long, db: SqliteDb) {
+  override fun executeBatch(pointer: Long, db: NativeDB) {
     for (batchIndex in 0 until batchQueryCount) {
       db.reset(pointer)
       for (index in 0 until paramCount) {
@@ -124,5 +123,6 @@ class LongBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCou
 
       stepInBatch(statementPointer = pointer, db = db, batchIndex = batchIndex)
     }
+    db.reset(pointer)
   }
 }

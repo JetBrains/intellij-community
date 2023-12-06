@@ -88,47 +88,13 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testFloatingPointRanges() { doTest(); }
   public void testFloatingPointCasts() { doTest(); }
   public void testFloatingPointMaxLoop() { doTest(); }
+  public void testFloatingPointConstantMath() { doTest(); }
   public void testStringIndexOfRelation() { doTest(); }
   public void testIncompleteLoop() { doTest(); }
   public void testTwoFlagsMixed() { doTest(); }
-  public void testChronoRange() {
-    myFixture.addClass("""
-                         package java.time.temporal;
-                         public interface TemporalField{}""");
-    myFixture.addClass("""
-                         package java.time.temporal;
-                         import java.time.temporal.TemporalField;
-                         public enum ChronoField implements TemporalField{
-                         INSTANT_SECONDS, OFFSET_SECONDS, MINUTE_OF_HOUR, ERA, EPOCH_DAY
-                         }""");
-    myFixture.addClass("""
-                         package java.time;
-                         import java.time.temporal.TemporalField;
-                         public interface OffsetTime{
-                              int get(TemporalField field);
-                              long getLong(TemporalField field);
-                             }""");
-    myFixture.addClass("""
-                         package java.time;
-                         import java.time.temporal.TemporalField;
-                         public interface LocalDateTime{
-                              int get(TemporalField field);
-                              long getLong(TemporalField field);
-                             }""");
-    myFixture.addClass("""
-                         package java.time;
-                         import java.time.temporal.TemporalField;
-                         public interface LocalDate{
-                              int get(TemporalField field);
-                              long getLong(TemporalField field);
-                             }""");
-    myFixture.addClass("""
-                         package java.time;
-                         import java.time.temporal.TemporalField;
-                         public interface LocalTime{
-                              int get(TemporalField field);
-                              long getLong(TemporalField field);
-                             }""");
+  
+  public void testJmhParamRange() {
+    myFixture.addClass("package org.openjdk.jmh.annotations;public @interface Param {String[] value();}");
     doTest();
   }
 }

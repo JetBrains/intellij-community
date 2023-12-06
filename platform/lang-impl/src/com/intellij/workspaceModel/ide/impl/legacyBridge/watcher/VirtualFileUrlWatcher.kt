@@ -1,26 +1,32 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlin.reflect.KClass
 
 open class VirtualFileUrlWatcher(val project: Project) {
   private val virtualFileManager = VirtualFileUrlManager.getInstance(project)
-  internal var isInsideFilePointersUpdate = false
+  internal var isInsideFilePointersUpdate: Boolean = false
     private set
 
   private val pointers = listOf(
     // Library roots
     LibraryRootFileWatcher(),
+    // Sdk roots
+    SdkRootFileWatcher(),
     // Library excluded roots
     EntityVirtualFileUrlWatcher(
       LibraryEntity::class, LibraryEntity.Builder::class,
@@ -213,6 +219,36 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
         diff.modifyEntity(entityWithVFU.entity) {
           roots.remove(oldLibraryRoot)
           roots.add(newLibraryRoot)
+        }
+      }
+    }
+  }
+}
+
+/**
+ * It's responsible for updating complex case than [VirtualFileUrl] contains not in the entity itself but in internal data class.
+ * This is about SdkMainEntity -> roots (SdkRoot) -> url (VirtualFileUrl).
+ */
+private class SdkRootFileWatcher : LegacyFileWatcher {
+  private val propertyName = SdkEntity::roots.name
+
+  override fun onVfsChange(oldUrl: String,
+                           newUrl: String,
+                           entitiesWithVFU: List<EntityWithVirtualFileUrl>,
+                           virtualFileManager: VirtualFileUrlManager,
+                           diff: MutableEntityStorage) {
+    entitiesWithVFU.filter { SdkEntity::class.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
+      val oldVFU = entityWithVFU.virtualFileUrl
+      val newVFU = virtualFileManager.fromUrl(newUrl + oldVFU.url.substring(oldUrl.length))
+
+      entityWithVFU.entity as SdkEntity
+      val oldSdkRoots = diff.resolve(entityWithVFU.entity.symbolicId)?.roots?.filter { it.url == oldVFU }
+                            ?: error("Incorrect state of the VFU index")
+      oldSdkRoots.forEach { oldSdkRoot ->
+        val newSdkRoot = SdkRoot(newVFU, oldSdkRoot.type)
+        diff.modifyEntity(entityWithVFU.entity) {
+          roots.remove(oldSdkRoot)
+          roots.add(newSdkRoot)
         }
       }
     }

@@ -14,4 +14,9 @@
     <listener class="com.intellij.internal.statistic.local.LanguageUsageUpdaterListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+
+  <extensionPoints>
+  <extensionPoint qualifiedName="com.intellij.platform.ml.impl.turboComplete.smartPipelineRunner"
+                  interface="com.intellij.platform.ml.impl.turboComplete.SmartPipelineRunner" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

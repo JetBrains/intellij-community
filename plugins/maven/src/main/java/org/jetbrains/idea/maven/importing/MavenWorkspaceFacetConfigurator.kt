@@ -11,8 +11,8 @@ import com.intellij.packaging.artifacts.ArtifactModel
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.packaging.elements.PackagingElementResolvingContext
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
 import org.jetbrains.idea.maven.importing.workspaceModel.ARTIFACT_MODEL_KEY
@@ -125,11 +125,7 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
 
   class FacetPackagingModel(private val myArtifactModel: ModifiableArtifactModel,
                             private val myResolvingContext: PackagingElementResolvingContext) : PackagingModel {
-    private val myDependenciesImporter: ArtifactExternalDependenciesImporter
-
-    init {
-      myDependenciesImporter = ArtifactExternalDependenciesImporterImpl()
-    }
+    private val myDependenciesImporter: ArtifactExternalDependenciesImporter = ArtifactExternalDependenciesImporterImpl()
 
     override fun getModifiableArtifactModel(): ModifiableArtifactModel {
       return myArtifactModel

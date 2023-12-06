@@ -3,12 +3,12 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,12 +17,8 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class IStubFileElementType<T extends PsiFileStub> extends StubFileElementType<T> {
-  private static final AtomicClearableLazyValue<Integer> TEMPLATE_STUB_BASE_VERSION = new AtomicClearableLazyValue<Integer>() {
-    @Override
-    protected @NotNull Integer compute() {
-      return calcTemplateStubBaseVersion();
-    }
-  };
+  private static final SynchronizedClearableLazy<Integer> TEMPLATE_STUB_BASE_VERSION =
+    new SynchronizedClearableLazy<>(IStubFileElementType::calcTemplateStubBaseVersion);
 
   public IStubFileElementType(Language language) {
     super(language);
@@ -70,10 +66,8 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
    * MUST NOT be calculated from any other non-static local variables as it can lead to race-conditions
    * (<a href="https://youtrack.jetbrains.com/issue/IDEA-306646">IDEA-306646</a>).
    */
-  @NonNls
-  @NotNull
   @Override
-  public String getExternalId() {
+  public @NonNls @NotNull String getExternalId() {
     return DEFAULT_EXTERNAL_ID;
   }
 
@@ -81,9 +75,8 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
   public void serialize(@NotNull T stub, @NotNull StubOutputStream dataStream) throws IOException {
   }
 
-  @NotNull
   @Override
-  public T deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull T deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return (T)new PsiFileStubImpl(null);
   }
 

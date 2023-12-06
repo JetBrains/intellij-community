@@ -4,14 +4,12 @@ package com.intellij.ide.ui.experimental.meetNewUi
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.LafManager.LafReference
-import com.intellij.ide.ui.LafManagerListener
-import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.*
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -24,9 +22,8 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.Gray
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.JBGaps
-import com.intellij.ui.dsl.gridLayout.JBVerticalGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
@@ -44,7 +41,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
   : SimpleToolWindowPanel(true, true), DataProvider {
 
   companion object {
-    internal val LOG = logger<MeetNewUiToolWindow>()
+    internal val LOG: Logger = logger<MeetNewUiToolWindow>()
 
     private const val CUSTOM_THEME_INDEX = 0
 
@@ -81,16 +78,17 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
             .applyToComponent {
               font = JBFont.regular().biggerOn(7f).deriveFont(Font.PLAIN)
             }
-        }.customize(JBVerticalGaps(bottom = 24))
+        }.customize(UnscaledGapsY(bottom = 24))
         row {
           label(IdeBundle.message("meetnewui.toolwindow.theme"))
-        }.customize(JBVerticalGaps(bottom = 8))
+        }.customize(UnscaledGapsY(bottom = 8))
         row {
           themes += Theme(null, false, null, null)
-          findLafReference("Light")?.let { lafReference ->
+          val appInfo = ApplicationInfoEx.getInstanceEx()
+          findLafReference(appInfo.defaultLightLaf ?: "Light")?.let { lafReference ->
             themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.LightTheme, ExpUiIcons.MeetNewUi.LightThemeSelected)
           }
-          findLafReference("Dark")?.let { lafReference ->
+          findLafReference(appInfo.defaultDarkLaf ?: "Dark")?.let { lafReference ->
             themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.DarkTheme, ExpUiIcons.MeetNewUi.DarkThemeSelected)
           }
           themes += Theme(null, true, ExpUiIcons.MeetNewUi.SystemTheme, ExpUiIcons.MeetNewUi.SystemThemeSelected)
@@ -98,48 +96,42 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           val gap = JBUI.scale(8)
           val themesPanel = JPanel(WrapLayout(FlowLayout.LEADING, gap, gap))
           // Remove gaps around of the panel
-          themesPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, JBGaps(gap, gap, gap, gap))
+          themesPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(gap))
           for (theme in themes) {
             themesPanel.add(theme.button)
           }
 
           cell(themesPanel)
             .align(AlignX.FILL)
-        }.customize(JBVerticalGaps(bottom = 20))
+        }.customize(UnscaledGapsY(bottom = 20))
         row {
           label(IdeBundle.message("meetnewui.toolwindow.density"))
-        }.customize(JBVerticalGaps(bottom = 8))
+        }.customize(UnscaledGapsY(bottom = 8))
         row {
-          cleanDensity = density(ExpUiIcons.MeetNewUi.DensityDefault, IdeBundle.message("meetnewui.toolwindow.clean"), JBGaps(right = 8),
+          cleanDensity = density(ExpUiIcons.MeetNewUi.DensityDefault, IdeBundle.message("meetnewui.toolwindow.clean"), UnscaledGaps(right = 8),
                                  false)
 
-          compactDensity = density(ExpUiIcons.MeetNewUi.DensityCompact, IdeBundle.message("meetnewui.toolwindow.compact"), Gaps.EMPTY, true)
+          compactDensity = density(ExpUiIcons.MeetNewUi.DensityCompact, IdeBundle.message("meetnewui.toolwindow.compact"), UnscaledGaps.EMPTY, true)
 
           cell() // Deny right component to shrink
-        }.customize(JBVerticalGaps(bottom = 20))
+        }.customize(UnscaledGapsY(bottom = 20))
         row {
           comment(IdeBundle.message("meetnewui.toolwindow.description"), maxLineLength = MAX_LINE_LENGTH_NO_WRAP) {
             ExperimentalUiCollector.logMeetNewUiAction(ExperimentalUiCollector.MeetNewUiAction.NEW_UI_LINK)
             ShowSettingsUtil.getInstance().showSettingsDialog(project, IdeBundle.message("configurable.new.ui.name"))
           }
-        }.customize(JBVerticalGaps(bottom = 20))
+        }.customize(UnscaledGapsY(bottom = 20))
         row {
-          /*
-          button(IdeBundle.message("meetnewui.toolwindow.button.startTour")) {
-            Not implemented yet
-          }.applyToComponent {
-            putClientProperty(DEFAULT_STYLE_KEY, true)
-          }.customize(JBGaps(right = 8))
-          */
-
           button(IdeBundle.message("meetnewui.toolwindow.button.finishSetup")) {
             val toolWindowManager = (ToolWindowManagerEx.getInstanceEx(project) as ToolWindowManagerImpl)
             toolWindowManager.hideToolWindow(toolWindow.id, hideSide = true, removeFromStripe = true)
           }
 
+          MeetNewUiCustomization.firstOrNull()?.addButtons(project, this)
+
           cell() // Deny right component to shrink
         }
-      }.customize(JBGaps(32, 32, 16, 32))
+      }.customize(UnscaledGaps(32, 32, 16, 32))
     }
   }
 
@@ -179,13 +171,13 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
 
   private fun findLafReference(name: String): LafReference? {
     val lafManager = LafManager.getInstance()
-    return lafManager.lafComboBoxModel.items.find { it.toString() == name }
+    return lafManager.lafComboBoxModel.items.find { it.name == name }
   }
 
-  private fun Row.density(icon: Icon, @Nls name: String, gaps: Gaps, compactMode: Boolean): Density {
+  private fun Row.density(icon: Icon, @Nls name: String, gaps: UnscaledGaps, compactMode: Boolean): Density {
     val button = MeetNewUiButton(null, icon, icon).apply {
       border = null
-      putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+      putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
       selectionArc = JBUI.scale(8)
       addClickListener {
         setDensity(compactMode)
@@ -196,7 +188,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
     this.panel {
       row {
         cell(button)
-          .customize(JBGaps(bottom = 8))
+          .customize(UnscaledGaps(bottom = 8))
       }
 
       row {
@@ -237,7 +229,7 @@ private class Theme(lafReference: LafReference?, val system: Boolean, icon: Icon
     set(value) {
       field = value
       button.isVisible = system || value != null
-      button.text = if (system) IdeBundle.message("meetnewui.toolwindow.system") else value?.toString()
+      button.text = if (system) IdeBundle.message("meetnewui.toolwindow.system") else value?.name
     }
 
   init {
@@ -266,8 +258,8 @@ private class Theme(lafReference: LafReference?, val system: Boolean, icon: Icon
       if (lafManager.autodetect) {
         lafManager.autodetect = false
       }
-      ExperimentalUiCollector.logMeetNewUiTheme(lafReference.toString())
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(lafReference), true)
+      ExperimentalUiCollector.logMeetNewUiTheme(lafReference.name)
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(lafReference.themeId), true)
     }
   }
 }

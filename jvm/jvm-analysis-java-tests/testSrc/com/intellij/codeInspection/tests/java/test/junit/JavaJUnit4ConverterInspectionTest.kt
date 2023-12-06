@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnit4ConverterInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnit4ConverterInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.refactoring.BaseRefactoringProcessor
 
 class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
@@ -134,7 +134,7 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
   }
 
   fun `test quickfix class expression suite converter`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
       import junit.framework.TestSuite;
       import junit.framework.Test;
@@ -164,11 +164,11 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
       @Suite.SuiteClasses({Foo.class, Bar.class})
       class JUnit3Test {
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 
   fun `test quickfix nested suite converter`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
       import junit.framework.TestSuite;
       import junit.framework.Test;
@@ -211,11 +211,11 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
       @Suite.SuiteClasses({Foo.class})
       class JUnit3Test {
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 
   fun `test quickfix assertion converter`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
       
       class JUnit3<caret>Test extends TestCase {
@@ -234,11 +234,11 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
               Assert.assertEquals(2, 1 + 1);
           }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 
   fun `test quickfix setup and teardown converter`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
       
       class JUnit3<caret>Test extends TestCase {
@@ -284,6 +284,6 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
               System.out.println("tearDown");
           }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 }

@@ -9,14 +9,13 @@ import com.intellij.openapi.editor.CaretVisualAttributes
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CheckBoxWithColorChooser
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.Cell
-import com.intellij.ui.layout.CellBuilder
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.*
 
 internal class SetCaretVisualAttributesAction : AnAction(), DumbAware {
 
@@ -35,7 +34,7 @@ internal class SetCaretVisualAttributesAction : AnAction(), DumbAware {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val presentation = e.presentation
@@ -60,25 +59,32 @@ class CaretVisualAttributesDialog(project: Project, attributes: CaretVisualAttri
   val attributes: CaretVisualAttributes
     get() = CaretVisualAttributes(colorChooser.color, weight, shape, thickness)
 
-  override fun createCenterPanel() = panel {
-    row("Colour:") { colorChooser() }
-    row("Weight:") { comboBox(EnumComboBoxModel(CaretVisualAttributes.Weight::class.java), { weight }, { weight = it!! }) }
-    row("Shape:") { comboBox(EnumComboBoxModel(CaretVisualAttributes.Shape::class.java), { shape }, { shape = it!! }) }
-    row("Thickness:") { floatTextField({ thickness }, { thickness = it }, 0f, 1.0f) }
+  override fun createCenterPanel(): DialogPanel = panel {
+    row("Colour:") { cell(colorChooser) }
+    row("Weight:") {
+      comboBox(EnumComboBoxModel(CaretVisualAttributes.Weight::class.java))
+        .bindItem(::weight.toNullableProperty())
+    }
+    row("Shape:") {
+      comboBox(EnumComboBoxModel(CaretVisualAttributes.Shape::class.java))
+        .bindItem(::shape.toNullableProperty())
+    }
+    row("Thickness:") {
+      floatTextField({ thickness }, { thickness = it }, 0f, 1.0f)
+        .align(AlignX.FILL)
+    }
   }
 
-  private fun Cell.floatTextField(getter: () -> Float, setter: (Float) -> Unit, min: Float, max: Float, columns: Int? = null): CellBuilder<JBTextField> {
-    return textField(
-      { getter().toString() },
-      { value -> value.toFloatOrNull()?.let { floatValue -> setter(floatValue.coerceIn(min, max)) } },
-      columns
-    ).withValidationOnInput {
-      val value = it.text.toFloatOrNull()
-      when {
-        value == null -> error(UIBundle.message("please.enter.a.number"))
-        value < min || value > max -> error(UIBundle.message("please.enter.a.number.from.0.to.1", min, max))
-        else -> null
+  private fun Row.floatTextField(getter: () -> Float, setter: (Float) -> Unit, min: Float, max: Float): Cell<JBTextField> {
+    return textField()
+      .bindText({ getter().toString() }, { value -> value.toFloatOrNull()?.let { floatValue -> setter(floatValue.coerceIn(min, max)) } })
+      .validationOnInput {
+        val value = it.text.toFloatOrNull()
+        when {
+          value == null -> error(UIBundle.message("please.enter.a.number"))
+          value < min || value > max -> error(UIBundle.message("please.enter.a.number.from.0.to.1", min, max))
+          else -> null
+        }
       }
-    }
   }
 }

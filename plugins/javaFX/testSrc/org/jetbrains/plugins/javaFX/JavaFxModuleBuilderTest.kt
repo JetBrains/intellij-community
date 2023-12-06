@@ -59,19 +59,19 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
           <properties>
               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-              <junit.version>5.9.1</junit.version>
+              <junit.version>5.10.0</junit.version>
           </properties>
 
           <dependencies>
               <dependency>
                   <groupId>org.openjfx</groupId>
                   <artifactId>javafx-controls</artifactId>
-                  <version>17.0.2</version>
+                  <version>17.0.6</version>
               </dependency>
               <dependency>
                   <groupId>org.openjfx</groupId>
                   <artifactId>javafx-fxml</artifactId>
-                  <version>17.0.2</version>
+                  <version>17.0.6</version>
               </dependency>
 
               <dependency>
@@ -93,7 +93,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                   <plugin>
                       <groupId>org.apache.maven.plugins</groupId>
                       <artifactId>maven-compiler-plugin</artifactId>
-                      <version>3.10.1</version>
+                      <version>3.11.0</version>
                       <configuration>
                           <source>11</source>
                           <target>11</target>
@@ -130,7 +130,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
     JavaFxModuleBuilder().setupTestModule(fixture.module) {
       language = JAVA_STARTER_LANGUAGE
       projectType = GRADLE_PROJECT
-      testFramework = TESTNG_TEST_RUNNER
+      testFramework = JUNIT_TEST_RUNNER
       isCreatingNewProject = true
     }
 
@@ -167,6 +167,10 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
           mavenCentral()
       }
 
+      ext {
+          junitVersion = '5.10.0'
+      }
+
       sourceCompatibility = '11'
       targetCompatibility = '11'
 
@@ -180,17 +184,18 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       }
 
       javafx {
-          version = '17.0.2'
+          version = '17.0.6'
           modules = ['javafx.controls', 'javafx.fxml']
       }
 
       dependencies {
 
-          testImplementation('org.testng:testng:7.6')
+          testImplementation("org.junit.jupiter:junit-jupiter-api:${dlr}{junitVersion}")
+          testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${dlr}{junitVersion}")
       }
 
       test {
-          useTestNG()
+          useJUnitPlatform()
       }
       
       jlink {

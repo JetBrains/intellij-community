@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -21,11 +21,10 @@ import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class UnwrapSwitchLabelFix implements LocalQuickFix {
+public class UnwrapSwitchLabelFix extends PsiUpdateModCommandQuickFix {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
@@ -34,8 +33,8 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiCaseLabelElement label = ObjectUtils.tryCast(descriptor.getStartElement(), PsiCaseLabelElement.class);
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PsiCaseLabelElement label = ObjectUtils.tryCast(element, PsiCaseLabelElement.class);
     if (label == null) return;
     PsiSwitchLabelStatementBase labelStatement = PsiImplUtil.getSwitchLabel(label);
     if (labelStatement == null) return;
@@ -45,9 +44,16 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     boolean shouldKeepDefault = block instanceof PsiSwitchExpression &&
                                 !(labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement &&
                                   ruleStatement.getBody() instanceof PsiExpressionStatement);
+    Set<PsiCaseLabelElement> removableUnreachableBranches = new HashSet<>(SwitchUtils.findRemovableUnreachableBranches(label, block));
     for (PsiSwitchLabelStatementBase otherLabel : labels) {
       if (otherLabel == labelStatement) continue;
-      if (!shouldKeepDefault || !SwitchUtils.isDefaultLabel(otherLabel)) {
+      boolean isDefault = SwitchUtils.isDefaultLabel(otherLabel);
+      PsiCaseLabelElementList otherElementList = otherLabel.getCaseLabelElementList();
+      if (otherElementList != null) {
+        PsiCaseLabelElement[] otherElements = otherElementList.getElements();
+        if(!removableUnreachableBranches.containsAll(Set.of(otherElements)) && !isDefault) continue;
+      }
+      if (!shouldKeepDefault || !isDefault) {
         DeleteSwitchLabelFix.deleteLabel(otherLabel);
       }
       else {
@@ -55,7 +61,9 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       }
     }
     for (PsiCaseLabelElement labelElement : Objects.requireNonNull(labelStatement.getCaseLabelElementList()).getElements()) {
-      if (labelElement != label && !(shouldKeepDefault && labelElement instanceof PsiDefaultCaseLabelElement)) {
+      boolean isDefault = labelElement instanceof PsiDefaultCaseLabelElement;
+      if(!removableUnreachableBranches.contains(labelElement) && !isDefault) continue;
+      if (labelElement != label && !(shouldKeepDefault && isDefault)) {
         new CommentTracker().deleteAndRestoreComments(labelElement);
       }
     }
@@ -81,7 +89,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       unwrapStatement(labelStatement, label, switchStatement);
     }
     else {
-      unwrapExpression((PsiSwitchExpression)block, label);
+      unwrapExpression((PsiSwitchExpression)block);
     }
   }
 
@@ -157,26 +165,13 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     }
   }
 
-  /**
-   * Unwraps switch expression if it consists of single expression-branch; does nothing otherwise
-   *
-   * @param switchExpression expression to unwrap
-   */
-  public static void unwrapExpression(@NotNull PsiSwitchExpression switchExpression) {
-    unwrapExpression(switchExpression, null);
-  }
-
-  private static void unwrapExpression(@NotNull PsiSwitchExpression switchExpression, @Nullable PsiCaseLabelElement label) {
+  private static void unwrapExpression(@NotNull PsiSwitchExpression switchExpression) {
     PsiCodeBlock body = switchExpression.getBody();
     if (body == null) return;
     PsiStatement[] statements = body.getStatements();
     if (statements.length != 1 || !(statements[0] instanceof PsiSwitchLabeledRuleStatement rule)) return;
     PsiStatement ruleBody = rule.getBody();
-    if (!(ruleBody instanceof PsiExpressionStatement expressionStatement)) return;
-    if (label == null) {
-      new CommentTracker().replaceAndRestoreComments(switchExpression, expressionStatement.getExpression());
-      return;
-    }
+    if (!(ruleBody instanceof PsiExpressionStatement)) return;
     CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(switchExpression);
     if (surrounder != null) {
       CodeBlockSurrounder.SurroundResult surroundResult = surrounder.surround();
@@ -184,7 +179,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       rule = (PsiSwitchLabeledRuleStatement)Objects.requireNonNull(switchExpression.getBody()).getStatements()[0];
       ruleBody = rule.getBody();
       if (ruleBody == null) return;
-      label = Objects.requireNonNull(rule.getCaseLabelElementList()).getElements()[0];
+      PsiCaseLabelElement label = Objects.requireNonNull(rule.getCaseLabelElementList()).getElements()[0];
       List<PsiLocalVariable> variables = collectVariables(label, switchExpression);
       if (variables.isEmpty()) {
         new CommentTracker().replaceAndRestoreComments(switchExpression, ((PsiExpressionStatement)ruleBody).getExpression());

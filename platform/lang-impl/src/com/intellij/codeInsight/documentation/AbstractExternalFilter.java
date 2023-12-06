@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
@@ -316,7 +316,7 @@ public abstract class AbstractExternalFilter {
     void buildFromStream(String url, Reader input, StringBuilder result) throws IOException;
   }
 
-  private static class MyJavadocFetcher implements Runnable {
+  private static final class MyJavadocFetcher implements Runnable {
     private static boolean ourFree = true;
     private final StringBuilder data = new StringBuilder();
     private final String url;
@@ -381,7 +381,7 @@ public abstract class AbstractExternalFilter {
     }
   }
 
-  protected static class MyReader extends InputStreamReader {
+  protected static final class MyReader extends InputStreamReader {
     private final ByteArrayInputStream myInputStream;
 
     public MyReader(ByteArrayInputStream in) {
@@ -404,7 +404,7 @@ public abstract class AbstractExternalFilter {
   /**
    * Settings used for parsing of external documentation
    */
-  protected static class ParseSettings {
+  protected static final class ParseSettings {
     /**
      * Pattern defining the start of target fragment.
      */

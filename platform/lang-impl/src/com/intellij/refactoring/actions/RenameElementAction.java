@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -91,7 +91,7 @@ public class RenameElementAction extends AnAction {
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(renamers)
         .setTitle(RefactoringBundle.message("what.would.you.like.to.do"))
-        .setRenderer(RenamerRenderer.INSTANCE)
+        .setRenderer(new RenamerRenderer())
         .setItemChosenCallback(Renamer::performRename)
         .createPopup()
         .showInBestPositionFor(dataContext);

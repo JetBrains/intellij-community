@@ -6,5 +6,6 @@ fun foo() {
     }
 }
 
-// IGNORE_FIR
+// IGNORE_K2
 // TOOL: org.jetbrains.kotlin.idea.inspections.ConstantConditionIfInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

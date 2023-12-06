@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
@@ -40,14 +41,13 @@ import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
-
-class CodeFragmentCodegenException(val reason: Exception) : Exception()
+import java.util.concurrent.Callable
 
 class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
     companion object {
         fun useIRFragmentCompiler(): Boolean =
-            Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend").asBoolean()
+            Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend").asBoolean()
     }
 
     data class CompilationResult(
@@ -59,31 +59,17 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
     fun compile(
         codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,
-        bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
+        compilingStrategy: CodeFragmentCompilingStrategy, bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
     ): CompilationResult {
-        val result = ReadAction.nonBlocking<Result<CompilationResult>> {
-            try {
-                Result.success(doCompile(codeFragment, filesToCompile, bindingContext, moduleDescriptor))
-            } catch (ex: ProcessCanceledException) {
-                throw ex
-            } catch (ex: Exception) {
-                Result.failure(ex)
-            }
-        }.executeSynchronously()
-        return result.getOrThrow()
-    }
-
-    private fun initBackend(codeFragment: KtCodeFragment): FragmentCompilerCodegen {
-        return if (useIRFragmentCompiler()) {
-            IRFragmentCompilerCodegen()
-        } else {
-            OldFragmentCompilerCodegen(codeFragment)
+        val result = compilingStrategy.stats.startAndMeasureCompilationUnderReadAction {
+            doCompile(codeFragment, filesToCompile, compilingStrategy, bindingContext, moduleDescriptor)
         }
+        return result.getOrThrow()
     }
 
     private fun doCompile(
         codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,
-        bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
+        compilingStrategy: CodeFragmentCompilingStrategy, bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
     ): CompilationResult {
         require(codeFragment is KtBlockCodeFragment || codeFragment is KtExpressionCodeFragment) {
             "Unsupported code fragment type: $codeFragment"
@@ -99,7 +85,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         val defaultReturnType = moduleDescriptor.builtIns.unitType
         val returnType = getReturnType(codeFragment, bindingContext, defaultReturnType)
 
-        val fragmentCompilerBackend = initBackend(codeFragment)
+        val fragmentCompilerBackend = compilingStrategy.compilerBackend
 
         val compilerConfiguration = CompilerConfiguration().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
@@ -176,7 +162,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         declaration: KtCodeFragment,
         className: Name,
         methodName: Name,
-        parameterInfo: CodeFragmentParameterInfo,
+        parameterInfo: K1CodeFragmentParameterInfo,
         returnType: KotlinType,
         packageFragmentDescriptor: PackageFragmentDescriptor
     ): Pair<ClassDescriptor, FunctionDescriptor> {
@@ -199,12 +185,30 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         fun upperBoundIfTypeParameter(type: KotlinType) =
             TypeUtils.getTypeParameterDescriptorOrNull(type)
                 ?.let { typeParameterUpperBoundEraser.getErasedUpperBound(it, erasureTypeAttributes) }
-                ?: type
 
-        val parameters = parameterInfo.parameters.mapIndexed { index, parameter ->
+        fun eraseTypeArguments(type: KotlinType): KotlinType {
+            val erasedArguments = type.arguments.mapNotNull {
+                val upperBound = upperBoundIfTypeParameter(it.type) ?: return@mapNotNull null
+                it.replaceType(upperBound)
+            }
+            if (erasedArguments.size == type.arguments.size) {
+                return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
+                    type.attributes,
+                    type.constructor,
+                    erasedArguments,
+                    type.isMarkedNullable,
+                    type.memberScope
+                )
+            }
+            return type
+        }
+
+        fun erase(type: KotlinType): KotlinType = upperBoundIfTypeParameter(type) ?: eraseTypeArguments(type)
+
+        val parameters = parameterInfo.smartParameters.mapIndexed { index, parameter ->
             ValueParameterDescriptorImpl(
                 methodDescriptor, null, index, Annotations.EMPTY, Name.identifier("p$index"),
-                upperBoundIfTypeParameter(parameter.targetType),
+                erase(parameter.targetType),
                 declaresDefaultValue = false,
                 isCrossinline = false,
                 isNoinline = false,
@@ -215,7 +219,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         methodDescriptor.initialize(
             null, classDescriptor.thisAsReceiverParameter, emptyList(), emptyList(),
-            parameters, upperBoundIfTypeParameter(returnType), Modality.FINAL, DescriptorVisibilities.PUBLIC
+            parameters, erase(returnType), Modality.FINAL, DescriptorVisibilities.PUBLIC
         )
 
         val memberScope = EvaluatorMemberScopeForMethod(methodDescriptor)
@@ -326,4 +330,51 @@ private class EvaluatorModuleDescriptor(
 }
 
 internal val OutputFile.internalClassName: String
-    get() = relativePath.removeSuffix(".class").replace('/', '.')
+    get() = computeInternalClassName(relativePath)
+
+internal val KtCompiledFile.internalClassName: String
+    get() = computeInternalClassName(path)
+
+private fun computeInternalClassName(path: String): String {
+    require(path.endsWith(".class", ignoreCase = true))
+    return path.dropLast(".class".length).replace('/', '.')
+}
+
+internal class CodeFragmentCompilationStats {
+    val startTimeMs: Long = System.currentTimeMillis()
+
+    var wrapTimeMs: Long = -1L
+        private set
+    var analysisTimeMs: Long = -1L
+        private set
+    var compilationTimeMs: Long = -1L
+        private set
+    var interruptions: Int = 0
+        private set
+
+    fun <R> startAndMeasureWrapAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { wrapTimeMs = it }
+    fun <R> startAndMeasureAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { analysisTimeMs = it }
+    fun <R> startAndMeasureCompilationUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { compilationTimeMs = it }
+
+    private fun <R> startAndMeasureUnderReadAction(block: () -> R, timeUpdater: (Long) -> Unit): Result<R> {
+        return try {
+            val startMs = System.currentTimeMillis()
+            val result = ReadAction.nonBlocking(Callable {
+                try {
+                    block()
+                } catch (e: ProcessCanceledException) {
+                    interruptions++
+                    throw e
+                }
+            }).executeSynchronously()
+            timeUpdater(System.currentTimeMillis() - startMs)
+            Result.success(result)
+        }
+        catch (e: ProcessCanceledException) {
+            throw e
+        }
+        catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+}

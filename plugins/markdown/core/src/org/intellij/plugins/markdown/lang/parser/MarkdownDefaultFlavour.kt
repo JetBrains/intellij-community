@@ -45,11 +45,15 @@ open class MarkdownDefaultFlavour: MarkdownFlavourDescriptor {
   }
 
   private fun addCustomProviders(providers: MutableMap<IElementType, GeneratingProvider>) {
+    addCustomHeaderProviders(providers)
     providers[DefinitionListMarkerProvider.DEFINITION_LIST] = SimpleInlineTagProvider("dl")
     providers[DefinitionListMarkerProvider.DEFINITION] = SimpleInlineTagProvider("dd")
     providers[DefinitionListMarkerProvider.TERM] = SimpleInlineTagProvider("dt")
     providers[DefinitionListMarkerProvider.DEFINITION_MARKER] = TransparentInlineHolderProvider()
-    providers[FrontMatterHeaderMarkerProvider.FRONT_MATTER_HEADER] = ExcludedElementProvider()
+    providers[FrontMatterHeaderMarkerProvider.FRONT_MATTER_HEADER] = FrontMatterGeneratingProvider()
+  }
+
+  private fun addCustomHeaderProviders(providers: MutableMap<IElementType, GeneratingProvider>) {
     providers[MarkdownElementTypes.ATX_1] = HeaderGeneratingProvider("h1")
     providers[MarkdownElementTypes.ATX_2] = HeaderGeneratingProvider("h2")
     providers[MarkdownElementTypes.ATX_3] = HeaderGeneratingProvider("h3")

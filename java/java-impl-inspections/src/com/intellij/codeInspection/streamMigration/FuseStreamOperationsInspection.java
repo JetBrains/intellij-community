@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
@@ -6,6 +6,8 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.streamMigration.CollectMigration.CollectTerminal;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -171,7 +173,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     return newTerminal;
   }
 
-  private static class FuseStreamOperationsFix implements LocalQuickFix {
+  private static class FuseStreamOperationsFix extends PsiUpdateModCommandQuickFix {
     private final String myFusedSteps;
     private final boolean myStrictMode;
 
@@ -195,8 +197,8 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression chain = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression chain = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (chain == null) return;
       CollectTerminal terminal = extractTerminal(chain);
       if (terminal == null) return;

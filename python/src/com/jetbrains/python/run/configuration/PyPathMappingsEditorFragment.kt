@@ -5,6 +5,7 @@ import com.intellij.execution.ui.CommandLinePanel
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.util.PathMappingsComponent
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.run.configuration.AbstractPythonConfigurationFragmentedEditor.Companion.MIN_FRAGMENT_WIDTH
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -17,7 +18,7 @@ class PyPathMappingsEditorFragment<T : AbstractPythonRunConfiguration<*>>(val no
 
   init {
     pathMappingsComponent.labelLocation = BorderLayout.WEST
-    CommandLinePanel.setMinimumWidth(component(), 500)
+    CommandLinePanel.setMinimumWidth(component(), MIN_FRAGMENT_WIDTH)
     val constrains = GridBagConstraints()
     constrains.fill = GridBagConstraints.HORIZONTAL
     constrains.weightx = 1.0

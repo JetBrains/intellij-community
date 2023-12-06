@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -15,13 +15,11 @@ public final class DefaultHighlightUtil {
    * @deprecated use {@link #checkUnicodeBadCharacter(PsiElement)} instead
    */
   @Deprecated
-  @Nullable
-  public static HighlightInfo checkBadCharacter(@NotNull PsiElement element) {
+  public static @Nullable HighlightInfo checkBadCharacter(@NotNull PsiElement element) {
     HighlightInfo.Builder builder = checkUnicodeBadCharacter(element);
     return builder == null ? null : builder.create();
   }
-  @Nullable
-  public static HighlightInfo.Builder checkUnicodeBadCharacter(@NotNull PsiElement element) {
+  public static @Nullable HighlightInfo.Builder checkUnicodeBadCharacter(@NotNull PsiElement element) {
     ASTNode node = element.getNode();
     if (node != null && node.getElementType() == TokenType.BAD_CHARACTER) {
       char c = element.textToCharArray()[0];

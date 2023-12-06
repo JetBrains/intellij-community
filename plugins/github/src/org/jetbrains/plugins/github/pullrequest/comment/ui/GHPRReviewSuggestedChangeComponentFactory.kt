@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.CommonBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.runWriteAction
@@ -21,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBOptionButton
@@ -34,7 +36,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -64,8 +65,9 @@ class GHPRReviewSuggestedChangeComponentFactory(
     val topPanel = JBUI.Panels.simplePanel().apply {
       border = JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
                                      JBUI.Borders.empty(EMPTY_GAP, 2 * EMPTY_GAP))
-      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      background = JBColor.lazy {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        scheme.defaultBackground
       }
 
       add(titleLabel, BorderLayout.WEST)
@@ -75,7 +77,7 @@ class GHPRReviewSuggestedChangeComponentFactory(
     }
 
     add(topPanel, BorderLayout.NORTH)
-    add(HtmlEditorPane(content), BorderLayout.CENTER)
+    add(SimpleHtmlPane(content), BorderLayout.CENTER)
 
     suggestedChangeHelper.isCorrectBranch.addAndInvokeListener { updateUI(optionButton, it, thread.isOutdated, thread.isResolved) }
   }

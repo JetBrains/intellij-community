@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2021 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.io.FileFilters;
@@ -28,15 +14,10 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Set;
 
-/**
-* @author Eugene Zhuravlev
-*/
 public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   private final FileFilter myFilterForExcludedPatterns;
-  @NotNull
-  public final File root;
-  @NotNull
-  public final ModuleBuildTarget target;
+  public final @NotNull File root;
+  public final @NotNull ModuleBuildTarget target;
   public final boolean isGeneratedSources;
   public final boolean isTemp;
   private final String myPackagePrefix;
@@ -81,38 +62,36 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
            '}';
   }
 
-  @NotNull
   @Override
-  public Set<File> getExcludedRoots() {
+  public @NotNull Set<File> getExcludedRoots() {
     return myExcludes;
   }
 
-  @NotNull
-  public String getPackagePrefix() {
+  public @NotNull String getPackagePrefix() {
     return myPackagePrefix;
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return FileUtil.toSystemIndependentName(root.getPath());
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return root;
   }
 
   @Override
-  public ModuleBuildTarget getTarget() {
+  public @NotNull ModuleBuildTarget getTarget() {
     return target;
   }
 
-  @NotNull
   @Override
-  public FileFilter createFileFilter() {
+  public @NotNull FileFilter createFileFilter() {
     final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(target.getModule().getProject()).getCompilerExcludes();
     final FileFilter baseFilter = BuilderRegistry.getInstance().getModuleBuilderFileFilter();
-    return file -> baseFilter.accept(file) && !excludes.isExcluded(file) && myFilterForExcludedPatterns.accept(file);
+    final JavadocSnippetsSkipFilter snippetsSkipFilter = new JavadocSnippetsSkipFilter(getRootFile());
+    return file -> baseFilter.accept(file) && !excludes.isExcluded(file) && snippetsSkipFilter.accept(file) && myFilterForExcludedPatterns.accept(file);
   }
 
   @Override

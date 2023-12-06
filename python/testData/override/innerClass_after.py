@@ -5,10 +5,10 @@ class X(object):
 class A:
     class Inner(X):
         def foo(self):
-            <selection>super(A.Inner, self).foo()</selection>
+            <selection>super().foo()</selection>
 
     def doStuff(self, foo=True): pass
 
 class B(A):
     def otherMethod(self, foo, bar):
-        print foo, bar
+        print(foo, bar)

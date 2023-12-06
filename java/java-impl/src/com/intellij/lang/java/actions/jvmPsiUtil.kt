@@ -3,7 +3,7 @@ package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.ExpectedTypeInfo
 import com.intellij.codeInsight.ExpectedTypesProvider.createInfo
-import com.intellij.codeInsight.TailType
+import com.intellij.codeInsight.TailTypes
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.request.ExpectedJavaType
 import com.intellij.lang.jvm.JvmClass
@@ -50,7 +50,7 @@ internal fun JvmClass.toJavaClassOrNull(): PsiClass? {
   return null
 }
 
-internal val visibilityModifiers = setOf(
+internal val visibilityModifiers: Set<JvmModifier> = setOf(
   JvmModifier.PUBLIC,
   JvmModifier.PROTECTED,
   JvmModifier.PACKAGE_LOCAL,
@@ -67,7 +67,7 @@ private fun toExpectedTypeInfo(project: Project, expectedType: ExpectedType): Ex
   if (expectedType is ExpectedJavaType) return expectedType.info
   val helper = JvmPsiConversionHelper.getInstance(project)
   val psiType = helper.convertType(expectedType.theType) ?: return null
-  return createInfo(psiType, expectedType.theKind.infoKind(), psiType, TailType.NONE)
+  return createInfo(psiType, expectedType.theKind.infoKind(), psiType, TailTypes.noneType())
 }
 
 @ExpectedTypeInfo.Type
@@ -83,7 +83,7 @@ internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
   return JvmPsiConversionHelper.getInstance(project).convertSubstitutor(this)
 }
 
-internal fun PsiType.toExpectedType() = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailType.NONE)
+internal fun PsiType.toExpectedType(): ExpectedTypeInfo = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailTypes.noneType())
 
 internal fun List<ExpectedTypeInfo>.orObject(context: PsiElement): List<ExpectedTypeInfo> {
   if (isEmpty() || get(0).type == PsiTypes.voidType()) {

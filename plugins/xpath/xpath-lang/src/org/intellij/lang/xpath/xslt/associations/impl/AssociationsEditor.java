@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.associations.impl;
 
+import com.intellij.ide.projectView.NodeSortKey;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.GroupByTypeComparator;
@@ -255,8 +256,8 @@ final class AssociationsEditor implements Disposable {
     }
 
     @Override
-    protected boolean isSortByType() {
-      return false;
+    protected @NotNull NodeSortKey getSortKey() {
+      return NodeSortKey.BY_NAME;
     }
   }
 
@@ -303,7 +304,7 @@ final class AssociationsEditor implements Disposable {
     }
   }
 
-  static class AssociationsModel extends AbstractListModel<PsiFile> implements TreeSelectionListener {
+  static final class AssociationsModel extends AbstractListModel<PsiFile> implements TreeSelectionListener {
     private final Tree myTree;
     private final FileAssociationsManager myManager;
     private PsiFile[] myFiles;
@@ -347,7 +348,7 @@ final class AssociationsEditor implements Disposable {
     }
   }
 
-  private static class MyNodeRenderer extends NodeRenderer {
+  private static final class MyNodeRenderer extends NodeRenderer {
     private final DefaultMutableTreeNode myTemp = new DefaultMutableTreeNode();
     private final FileAssociationsManager myManager;
 
@@ -376,7 +377,7 @@ final class AssociationsEditor implements Disposable {
       super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
     }
 
-    private static class MyNodeDescriptor extends NodeDescriptor<PsiFileNode> {
+    private static final class MyNodeDescriptor extends NodeDescriptor<PsiFileNode> {
       private final PsiFileNode myNode;
 
       MyNodeDescriptor(NodeDescriptor<PsiFileNode> nodeDescriptor) {
@@ -399,7 +400,7 @@ final class AssociationsEditor implements Disposable {
     }
   }
 
-  private static class MyCellRenderer extends PsiElementListCellRenderer<PsiFile> {
+  private static final class MyCellRenderer extends PsiElementListCellRenderer<PsiFile> {
     @Override
     public String getElementText(PsiFile file) {
       return file.getName();

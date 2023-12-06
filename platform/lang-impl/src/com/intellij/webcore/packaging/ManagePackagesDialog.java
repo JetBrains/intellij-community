@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webcore.packaging;
 
 import com.intellij.execution.ExecutionException;
@@ -348,7 +348,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     myOptionsField.setText(optionsText);
   }
 
-  private class MyPackageFilter extends FilterComponent {
+  private final class MyPackageFilter extends FilterComponent {
     MyPackageFilter() {
       super("PACKAGE_FILTER", 5);
       getTextEditor().addKeyListener(new KeyAdapter() {
@@ -372,9 +372,9 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
   }
 
-  private class PackagesModel extends CollectionListModel<RepoPackage> {
-    protected final List<RepoPackage> myFilteredOut = new ArrayList<>();
-    protected List<RepoPackage> myView = new ArrayList<>();
+  private final class PackagesModel extends CollectionListModel<RepoPackage> {
+    private final List<RepoPackage> myFilteredOut = new ArrayList<>();
+    private List<RepoPackage> myView = new ArrayList<>();
 
     PackagesModel(List<RepoPackage> packages) {
       super(packages);
@@ -385,7 +385,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       super.add(new RepoPackage(element, urlResource));
     }
 
-    protected void filter(final String filter) {
+    private void filter(final String filter) {
       final Collection<RepoPackage> toProcess = toProcess();
 
       toProcess.addAll(myFilteredOut);
@@ -422,7 +422,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       return myView.get(index);
     }
 
-    protected ArrayList<RepoPackage> toProcess() {
+    private ArrayList<RepoPackage> toProcess() {
       return new ArrayList<>(myView);
     }
 
@@ -438,7 +438,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     return ((FilterComponent)myFilter).getTextEditor();
   }
 
-  private class MyPackageSelectionListener implements ListSelectionListener {
+  private final class MyPackageSelectionListener implements ListSelectionListener {
     @Override
     public void valueChanged(ListSelectionEvent event) {
       myOptionsCheckBox.setEnabled(myPackages.getSelectedIndex() >= 0);

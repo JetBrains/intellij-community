@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.application.ReadAction;
@@ -38,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor {
   private final PsiDirectory[] myDirectories;
@@ -104,7 +105,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     return UsageViewUtil.removeDuplicatedUsages(usages.toArray(UsageInfo.EMPTY_ARRAY));
   }
 
-  private void collectConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
+  private void collectConflicts(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                 @NotNull Ref<UsageInfo[]> refUsages) {
     for (VirtualFile vFile : myFilesToMove.keySet()) {
       PsiFile file = myManager.findFile(vFile);
@@ -291,7 +292,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     return new TargetDirectoryWrapper(myTargetDirectory);
   }
 
-  public static class TargetDirectoryWrapper {
+  public static final class TargetDirectoryWrapper {
     private TargetDirectoryWrapper myParentDirectory;
     private PsiDirectory myTargetDirectory;
     private String myRelativePath;

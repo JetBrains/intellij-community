@@ -3,27 +3,22 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReuseVariableDeclarationFix implements IntentionAction {
-  private final PsiLocalVariable myVariable;
-
+public class ReuseVariableDeclarationFix extends PsiUpdateModCommandAction<PsiLocalVariable> {
   public ReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable) {
-    this.myVariable = variable;
+    super(variable);
   }
 
   @Override
@@ -33,46 +28,30 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return QuickFixBundle.message("reuse.variable.declaration.text", myVariable.getName());
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiLocalVariable variable) {
+    final PsiVariable previousVariable = findPreviousVariable(variable);
+    if (previousVariable == null || !Comparing.equal(previousVariable.getType(), variable.getType())) return null;
+    return Presentation.of(QuickFixBundle.message("reuse.variable.declaration.text", variable.getName()));
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!myVariable.isValid()) {
-      return false;
-    }
-    final PsiVariable previousVariable = findPreviousVariable(myVariable);
-    return previousVariable != null &&
-           Comparing.equal(previousVariable.getType(), myVariable.getType()) &&
-           BaseIntentionAction.canModify(myVariable);
-  }
-
-  @NotNull
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myVariable;
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiVariable refVariable = findPreviousVariable(myVariable);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiLocalVariable variable, @NotNull ModPsiUpdater updater) {
+    final PsiVariable refVariable = findPreviousVariable(variable);
     if (refVariable == null) return;
 
-    final PsiExpression initializer = myVariable.getInitializer();
+    final PsiExpression initializer = variable.getInitializer();
     if (initializer == null) {
-      myVariable.delete();
+      variable.delete();
       return;
     }
 
     boolean wasFinal = refVariable.hasModifierProperty(PsiModifier.FINAL);
     PsiUtil.setModifierProperty(refVariable, PsiModifier.FINAL, false);
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myVariable.getProject());
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
     final PsiElement statement = factory.createStatementFromText(
-      myVariable.getName() + " = " +
-      ExpressionUtils.convertInitializerToExpression(initializer, factory, myVariable.getType()).getText() + ";", null);
-    myVariable.getParent().replace(statement);
+      variable.getName() + " = " +
+      ExpressionUtils.convertInitializerToExpression(initializer, factory, variable.getType()).getText() + ";", null);
+    variable.getParent().replace(statement);
     if (wasFinal &&
         refVariable instanceof PsiLocalVariable &&
         HighlightControlFlowUtil.isEffectivelyFinal(refVariable, initializer, null)) {
@@ -97,15 +76,5 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     final VariablesNotProcessor processor = new VariablesNotProcessor(variable, false);
     PsiScopesUtil.treeWalkUp(processor, nameIdentifier, scope);
     return processor.size() > 0 ? processor.getResult(0) : null;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new ReuseVariableDeclarationFix(PsiTreeUtil.findSameElementInCopy(myVariable, target));
   }
 }

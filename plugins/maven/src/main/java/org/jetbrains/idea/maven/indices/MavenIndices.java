@@ -25,11 +25,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.model.IndexKind;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
@@ -49,6 +48,7 @@ public class MavenIndices implements Disposable {
 
   private final MavenIndexerWrapper myIndexer;
   private final File myIndicesDir;
+  private final Project myProject;
 
   private volatile @NotNull MavenIndexHolder myIndexHolder = new MavenIndexHolder(Collections.emptyList(), null);
   private volatile boolean indicesInit;
@@ -56,22 +56,23 @@ public class MavenIndices implements Disposable {
 
   private final ReentrantLock updateIndicesLock = new ReentrantLock();
 
-  public MavenIndices(MavenIndexerWrapper indexer, File indicesDir) {
+  public MavenIndices(MavenIndexerWrapper indexer, File indicesDir, Project project) {
     myIndexer = indexer;
     myIndicesDir = indicesDir;
+    myProject = project;
   }
 
-  void updateIndicesList(@NotNull Project project) {
+  void updateRepositoriesList() {
     if (isDisposed) return;
     updateIndicesLock.lock();
     try {
-      Map<String, Set<String>> remoteRepositoryIdsByUrl = MavenIndexUtils.getRemoteRepositoryIdsByUrl(project);
-      MavenIndexUtils.RepositoryInfo localRepository = MavenIndexUtils.getLocalRepository(project);
-      if (localRepository == null || project.isDisposed()) {
+      Map<String, Set<String>> remoteRepositoryIdsByUrl = MavenIndexUtils.getRemoteRepositoryIdsByUrl(myProject);
+      MavenRepositoryInfo localRepository = MavenIndexUtils.getLocalRepository(myProject);
+      if (localRepository == null || myProject.isDisposed()) {
         return;
       }
 
-      if (myIndexHolder.isEquals(remoteRepositoryIdsByUrl.keySet(), localRepository.url)) return;
+      if (myIndexHolder.isEquals(remoteRepositoryIdsByUrl.keySet(), localRepository.getUrl())) return;
 
       MavenLog.LOG.debug("start update indices " + myIndexHolder);
 
@@ -92,7 +93,7 @@ public class MavenIndices implements Disposable {
       indicesInit = true;
 
       closeIndices(getOldIndices(localDiff, remoteDiff));
-      clearDependencySearchCache(project);
+      clearDependencySearchCache(myProject);
     }
     catch (AlreadyDisposedException | IncorrectOperationException e) {
       myIndexHolder = new MavenIndexHolder(Collections.emptyList(), null);
@@ -145,6 +146,9 @@ public class MavenIndices implements Disposable {
 
   @NotNull
   public MavenIndexHolder getIndexHolder() {
+    if (isDisposed) {
+      throw new AlreadyDisposedException("Index was already disposed");
+    }
     return myIndexHolder;
   }
 
@@ -181,7 +185,7 @@ public class MavenIndices implements Disposable {
     return isDisposed;
   }
 
-  private void closeIndices(@NotNull List<MavenIndex> indices) {
+  private static void closeIndices(@NotNull List<MavenIndex> indices) {
     List<MavenIndex> list = new ArrayList<>(indices);
     for (MavenIndex each : list) {
       try {
@@ -193,36 +197,16 @@ public class MavenIndices implements Disposable {
     }
   }
 
-  public static void updateOrRepair(@NotNull MavenSearchIndex index, boolean fullUpdate,
-                                    @Nullable MavenGeneralSettings settings, MavenProgressIndicator progress)
-    throws MavenProcessCanceledException {
-    index.updateOrRepair(fullUpdate, settings, progress);
-  }
-
   @VisibleForTesting
   @NotNull
-  static RepositoryDiff<MavenIndex> getLocalDiff(@NotNull MavenIndexUtils.RepositoryInfo localRepo,
+  static RepositoryDiff<MavenIndex> getLocalDiff(@NotNull MavenRepositoryInfo localRepo,
                                                  @NotNull RepositoryDiffContext context,
                                                  @Nullable MavenIndex currentLocalIndex) {
-    if (currentLocalIndex != null && FileUtil.pathsEqual(localRepo.url, currentLocalIndex.getRepositoryPathOrUrl())) {
+    if (currentLocalIndex != null && FileUtil.pathsEqual(localRepo.getUrl(), currentLocalIndex.getRepositoryPathOrUrl())) {
       return new RepositoryDiff<>(currentLocalIndex, null);
     }
 
-    List<MavenIndexUtils.IndexPropertyHolder> indexPropertyHolders = readCurrentIndexFileProperty(context.indicesDir);
-    context.indexPropertyHolders = indexPropertyHolders;
-
-    MavenIndex index = indexPropertyHolders.stream()
-      .filter(iph -> iph.kind == MavenSearchIndex.Kind.LOCAL && FileUtil.pathsEqual(iph.repositoryPathOrUrl, localRepo.url))
-      .findFirst()
-      .map(iph -> createMavenIndex(iph, context))
-      .orElseGet(() -> {
-        MavenIndexUtils.IndexPropertyHolder propertyHolder = new MavenIndexUtils.IndexPropertyHolder(
-          createNewIndexDir(context.indicesDir), MavenSearchIndex.Kind.LOCAL, Collections.singleton(LOCAL_REPOSITORY_ID), localRepo.url
-        );
-        return createMavenIndex(propertyHolder, context);
-      });
-    if (index == null) return new RepositoryDiff<>(currentLocalIndex, null);
-
+    MavenIndex index = createMavenIndex(LOCAL_REPOSITORY_ID, localRepo.getUrl(), IndexKind.LOCAL);
     return new RepositoryDiff<>(index, currentLocalIndex);
   }
 
@@ -238,59 +222,34 @@ public class MavenIndices implements Disposable {
       return new RepositoryDiff<>(currentRemoteIndex, Collections.emptyList());
     }
 
-    List<MavenIndexUtils.IndexPropertyHolder> indexPropertyHolders = context.indexPropertyHolders;
-    indexPropertyHolders = indexPropertyHolders != null ? indexPropertyHolders : readCurrentIndexFileProperty(context.indicesDir);
-    Map<String, MavenIndexUtils.IndexPropertyHolder> propertyHolderMapByUrl = indexPropertyHolders.stream()
-      .filter(iph -> iph.kind == MavenSearchIndex.Kind.REMOTE)
-      .collect(Collectors.toMap(iph -> iph.repositoryPathOrUrl, Function.identity(), (i1, i2) -> i1));
-
     List<MavenIndex> oldIndices = ContainerUtil
       .filter(currentRemoteIndex, i -> !remoteRepositoryIdsByUrl.containsKey(i.getRepositoryPathOrUrl()));
 
-    List<MavenIndex> newMavenIndices = remoteRepositoryIdsByUrl
-      .entrySet()
-      .stream()
-      .map(e -> getOrCreateMavenIndex(currentRemoteIndicesByUrls.get(e.getKey()), propertyHolderMapByUrl.get(e.getKey()), e, context))
-      .filter(i -> i != null)
-      .collect(Collectors.toList());
+    List<MavenIndex> newMavenIndices = ContainerUtil.map(remoteRepositoryIdsByUrl
+                                                           .entrySet(), e -> {
+      MavenIndex oldIndex = currentRemoteIndicesByUrls.get(e.getKey());
+      if (oldIndex != null) return oldIndex;
+      String id = e.getValue().iterator().next();
+      return createMavenIndex(id, e.getKey(), IndexKind.REMOTE);
+    });
 
     return new RepositoryDiff<>(newMavenIndices, oldIndices);
   }
 
-  private static MavenIndex getOrCreateMavenIndex(@Nullable MavenIndex index,
-                                                  @Nullable MavenIndexUtils.IndexPropertyHolder propertyHolder,
-                                                  @NotNull Map.Entry<String, Set<String>> remoteEntry,
-                                                  @NotNull RepositoryDiffContext context) {
-    if (index != null) return index;
-    if (propertyHolder != null) {
-      index = createMavenIndex(propertyHolder, context);
-    }
-    if (index != null) return index;
-
-    propertyHolder = new MavenIndexUtils.IndexPropertyHolder(
-      createNewIndexDir(context.indicesDir), MavenSearchIndex.Kind.REMOTE, remoteEntry.getValue(), remoteEntry.getKey()
-    );
-    return createMavenIndex(propertyHolder, context);
-  }
 
   private static void clearDependencySearchCache(@NotNull Project project) {
     try {
       DependencySearchService.getInstance(project).clearCache();
     }
-    catch (AlreadyDisposedException ignored) {}
+    catch (AlreadyDisposedException ignored) {
+    }
   }
 
-  @Nullable
-  private static MavenIndex createMavenIndex(@NotNull MavenIndexUtils.IndexPropertyHolder propertyHolder,
-                                             @NotNull RepositoryDiffContext context) {
-    try {
-      return new MavenIndex(context.indexer, propertyHolder);
-    }
-    catch (Exception e) {
-      FileUtil.delete(propertyHolder.dir);
-      MavenLog.LOG.warn(e);
-    }
-    return null;
+
+  @NotNull
+  private static MavenIndex createMavenIndex(@NotNull String id, @NotNull String repositoryPathOrUrl, IndexKind indexKind) {
+    return MavenSystemIndicesManager.getInstance()
+      .getIndexForRepoSync(new MavenRepositoryInfo(id, id, repositoryPathOrUrl, indexKind));
   }
 
   static class RepositoryDiff<T> {

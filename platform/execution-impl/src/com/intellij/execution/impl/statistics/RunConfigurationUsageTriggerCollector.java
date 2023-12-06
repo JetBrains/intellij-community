@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
+import com.intellij.execution.EnvFilesOptions;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -32,11 +33,13 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 69);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 73);
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor",
                                                                                            RunConfigurationExecutorUtilValidator.class);
+  private static final BooleanEventField IS_RERUN = EventFields.Boolean("is_rerun");
+
   /**
    * The type of the target the run configuration is being executed with. {@code null} stands for the local machine target.
    * <p>
@@ -45,16 +48,22 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
    */
   private static final StringEventField TARGET =
     EventFields.StringValidatedByCustomRule("target", RunTargetValidator.class);
+  private static final IntEventField ENV_FILES_COUNT =
+    EventFields.Int("env_files_count");
   private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
     EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 
   private static final IdeActivityDefinition ACTIVITY_GROUP = GROUP.registerIdeActivity(null,
                                                                                         new EventField<?>[]{ADDITIONAL_FIELD, EXECUTOR,
+                                                                                          IS_RERUN,
                                                                                           TARGET,
                                                                                           RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
                                                                                           RunConfigurationTypeUsagesCollector.ID_FIELD,
-                                                                                          EventFields.PluginInfo},
-                                                                                        new EventField<?>[]{FINISH_TYPE});
+                                                                                          EventFields.PluginInfo,
+                                                                                          ENV_FILES_COUNT},
+                                                                                        new EventField<?>[]{FINISH_TYPE},
+                                                                                        null,
+                                                                                        true);
 
   public static final VarargEventId UI_SHOWN_STAGE = ACTIVITY_GROUP.registerStage("ui.shown");
 
@@ -63,13 +72,25 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     return GROUP;
   }
 
-  @NotNull
-  public static StructuredIdeActivity trigger(@NotNull Project project,
-                                              @NotNull ConfigurationFactory factory,
-                                              @NotNull Executor executor,
-                                              @Nullable RunConfiguration runConfiguration) {
+  public static @NotNull StructuredIdeActivity trigger(@NotNull Project project,
+                                                       @NotNull ConfigurationFactory factory,
+                                                       @NotNull Executor executor,
+                                                       @Nullable RunConfiguration runConfiguration,
+                                                       boolean isRerun) {
     return ACTIVITY_GROUP
-      .startedAsync(project, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration))
+      .startedAsync(project, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration, isRerun))
+        .expireWith(project)
+        .submit(NonUrgentExecutor.getInstance()));
+  }
+
+  public static @NotNull StructuredIdeActivity triggerWithParent(@NotNull StructuredIdeActivity parentActivity,
+                                                                 @NotNull Project project,
+                                                                 @NotNull ConfigurationFactory factory,
+                                                                 @NotNull Executor executor,
+                                                                 @Nullable RunConfiguration runConfiguration,
+                                                                 boolean isRerun) {
+    return ACTIVITY_GROUP
+      .startedAsyncWithParent(project, parentActivity, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration, isRerun))
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance()));
   }
@@ -77,11 +98,13 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   private static @NotNull List<EventPair<?>> buildContext(@NotNull Project project,
                                                           @NotNull ConfigurationFactory factory,
                                                           @NotNull Executor executor,
-                                                          @Nullable RunConfiguration runConfiguration) {
+                                                          @Nullable RunConfiguration runConfiguration,
+                                                          boolean isRerun) {
     final ConfigurationType configurationType = factory.getType();
     List<EventPair<?>> eventPairs = createFeatureUsageData(configurationType, factory);
     ExecutorGroup<?> group = ExecutorGroup.getGroupIfProxy(executor);
     eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
+    eventPairs.add(IS_RERUN.with(isRerun));
     if (runConfiguration instanceof FusAwareRunConfiguration) {
       List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
       ObjectEventData objectEventData = new ObjectEventData(additionalData);
@@ -90,6 +113,9 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     String targetTypeId = getTargetTypeId(project, runConfiguration);
     if (targetTypeId != null) {
       eventPairs.add(TARGET.with(targetTypeId));
+    }
+    if (runConfiguration instanceof EnvFilesOptions envFilesOptions) {
+      eventPairs.add(ENV_FILES_COUNT.with(envFilesOptions.getEnvFilePaths().size()));
     }
     return eventPairs;
   }
@@ -102,7 +128,8 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
       if (effectiveTargetConfiguration != null) {
         return effectiveTargetConfiguration.getTypeId();
       }
-    } else if (runConfiguration instanceof ImplicitTargetAwareRunProfile) {
+    }
+    else if (runConfiguration instanceof ImplicitTargetAwareRunProfile) {
       TargetEnvironmentType<?> targetType = ((ImplicitTargetAwareRunProfile)runConfiguration).getTargetType();
       if (targetType != null) {
         return targetType.getId();
@@ -118,16 +145,14 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
-  public static class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
-    @NotNull
+  public static final class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "run_config_executor";
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
         if (StringUtil.equals(executor.getId(), data)) {
           final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(executor.getClass());
@@ -138,18 +163,16 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
-  public static class RunTargetValidator extends CustomValidationRule {
+  public static final class RunTargetValidator extends CustomValidationRule {
     public static final String RULE_ID = "run_target";
 
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return RULE_ID;
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (LOCAL_TYPE_ID.equals(data)) {
         return ValidationResultType.ACCEPTED;
       }
@@ -163,5 +186,5 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
-  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN, TERMINATED}
+  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN, TERMINATED_BY_STOP, TERMINATED_DUE_TO_RERUN}
 }

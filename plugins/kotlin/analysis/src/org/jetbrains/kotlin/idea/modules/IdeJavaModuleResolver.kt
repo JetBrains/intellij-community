@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.load.java.structure.JavaAnnotation
 import org.jetbrains.kotlin.load.java.structure.impl.JavaAnnotationImpl
 import org.jetbrains.kotlin.load.java.structure.impl.convert
+import org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -32,7 +33,12 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
         }
 
         val virtualFile = virtualFileFinder.findVirtualFileWithHeader(classId) ?: return null
-        val moduleAnnotations = findJavaModule(virtualFile)?.annotations?.convert(::JavaAnnotationImpl)
+        val moduleAnnotations = findJavaModule(virtualFile)?.annotations?.convert { psiAnnotation ->
+            val sourceFactory = JavaElementSourceFactory.getInstance(project)
+            val psiJavaSource = sourceFactory.createPsiSource(psiAnnotation)
+
+            JavaAnnotationImpl(psiJavaSource)
+        }
 
         if (moduleAnnotations != null && moduleAnnotations.size < MODULE_ANNOTATIONS_CACHE_SIZE) {
             modulesAnnotationCache[classId] = moduleAnnotations

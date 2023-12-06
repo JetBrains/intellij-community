@@ -162,7 +162,4 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
     }
     return false;
   }
-
-  @Override
-  public void dispose() { }
 }

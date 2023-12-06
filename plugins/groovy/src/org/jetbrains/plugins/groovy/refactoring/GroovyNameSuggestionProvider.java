@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -20,7 +21,9 @@ import java.util.Set;
  */
 public class GroovyNameSuggestionProvider implements NameSuggestionProvider {
   @Override
-  public SuggestedNameInfo getSuggestedNames(final PsiElement element, @Nullable PsiElement nameSuggestionContext, Set<String> result) {
+  public SuggestedNameInfo getSuggestedNames(@NotNull PsiElement element,
+                                             @Nullable PsiElement nameSuggestionContext,
+                                             @NotNull Set<String> result) {
     if (nameSuggestionContext == null) nameSuggestionContext = element;
     if (element instanceof GrVariable && nameSuggestionContext instanceof GroovyPsiElement) {
       final PsiType type = ((GrVariable)element).getTypeGroovy();
@@ -28,11 +31,12 @@ public class GroovyNameSuggestionProvider implements NameSuggestionProvider {
         final String[] names = GroovyNameSuggestionUtil
           .suggestVariableNameByType(type, new DefaultGroovyVariableNameValidator((GroovyPsiElement)nameSuggestionContext));
         result.addAll(Arrays.asList(names));
-        VariableKind kind = JavaCodeStyleManager.getInstance(element.getProject()).getVariableKind((GrVariable)element);
+        final VariableKind kind = JavaCodeStyleManager.getInstance(element.getProject()).getVariableKind((GrVariable)element);
+        final String typeText = type.getCanonicalText();
         return new SuggestedNameInfo(names) {
           @Override
           public void nameChosen(String name) {
-            JavaStatisticsManager.incVariableNameUseCount(name, kind, ((GrVariable)element).getName(), type);
+            JavaStatisticsManager.incVariableNameUseCount(name, kind, ((GrVariable)element).getName(), typeText);
           }
         };
       }

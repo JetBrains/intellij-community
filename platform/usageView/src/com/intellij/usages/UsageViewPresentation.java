@@ -248,14 +248,6 @@ public class UsageViewPresentation {
     myReplaceString = replaceString;
   }
 
-  /**
-   * @deprecated Use {@link #getReplaceString()}
-   */
-  @Deprecated(forRemoval = true)
-  public Pattern getReplacePattern() {
-    return null;
-  }
-
   public String getReplaceString() {
     return myReplaceString;
   }

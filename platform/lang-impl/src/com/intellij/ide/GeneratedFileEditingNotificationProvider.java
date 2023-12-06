@@ -16,15 +16,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Function;
 
-public class GeneratedFileEditingNotificationProvider implements EditorNotificationProvider, DumbAware {
+final class GeneratedFileEditingNotificationProvider implements EditorNotificationProvider, DumbAware {
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                  @NotNull VirtualFile file) {
     if (!GeneratedSourceFileChangeTracker.getInstance(project).isEditedGeneratedFile(file)) return null;
 
+    String notificationText = getText(file, project);
+
     return fileEditor -> {
       EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning);
-      panel.setText(getText(file, project));
+      panel.setText(notificationText);
       return panel;
     };
   }

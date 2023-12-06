@@ -6,10 +6,10 @@ package com.intellij.ui
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.ui.svg.renderSvg
-import com.intellij.util.io.inputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
@@ -21,6 +21,7 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import javax.imageio.ImageIO
+import kotlin.io.path.inputStream
 
 internal object IntelliJIconsIconsVerifier {
   @JvmStatic
@@ -112,6 +113,214 @@ class SvgRenderingTest {
   }
 
   @Test
+  fun dos() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+    @Language("HTML")
+    val svg = """
+      <?xml version="1.0" standalone="no"?>
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <defs>
+              <g id="a0">
+                  <circle stroke="#000000" fill="#ffffff" fill-opacity="0.1" r="10"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a1">
+                  <use x="0" y="10" xlink:href="#a0"/>
+                  <use x="10" y="10" xlink:href="#a0"/>
+                  <use x="20" y="10" xlink:href="#a0"/>
+                  <use x="30" y="10" xlink:href="#a0"/>
+                  <use x="40" y="10" xlink:href="#a0"/>
+                  <use x="50" y="10" xlink:href="#a0"/>
+                  <use x="60" y="10" xlink:href="#a0"/>
+                  <use x="70" y="10" xlink:href="#a0"/>
+                  <use x="80" y="10" xlink:href="#a0"/>
+                  <use x="90" y="10" xlink:href="#a0"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a2">
+                  <use x="0" y="10" xlink:href="#a1"/>
+                  <use x="10" y="10" xlink:href="#a1"/>
+                  <use x="20" y="10" xlink:href="#a1"/>
+                  <use x="30" y="10" xlink:href="#a1"/>
+                  <use x="40" y="10" xlink:href="#a1"/>
+                  <use x="50" y="10" xlink:href="#a1"/>
+                  <use x="60" y="10" xlink:href="#a1"/>
+                  <use x="70" y="10" xlink:href="#a1"/>
+                  <use x="80" y="10" xlink:href="#a1"/>
+                  <use x="90" y="10" xlink:href="#a1"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a3">
+                  <use x="0" y="10" xlink:href="#a2"/>
+                  <use x="10" y="10" xlink:href="#a2"/>
+                  <use x="20" y="10" xlink:href="#a2"/>
+                  <use x="30" y="10" xlink:href="#a2"/>
+                  <use x="40" y="10" xlink:href="#a2"/>
+                  <use x="50" y="10" xlink:href="#a2"/>
+                  <use x="60" y="10" xlink:href="#a2"/>
+                  <use x="70" y="10" xlink:href="#a2"/>
+                  <use x="80" y="10" xlink:href="#a2"/>
+                  <use x="90" y="10" xlink:href="#a2"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a4">
+                  <use x="0" y="10" xlink:href="#a3"/>
+                  <use x="10" y="10" xlink:href="#a3"/>
+                  <use x="20" y="10" xlink:href="#a3"/>
+                  <use x="30" y="10" xlink:href="#a3"/>
+                  <use x="40" y="10" xlink:href="#a3"/>
+                  <use x="50" y="10" xlink:href="#a3"/>
+                  <use x="60" y="10" xlink:href="#a3"/>
+                  <use x="70" y="10" xlink:href="#a3"/>
+                  <use x="80" y="10" xlink:href="#a3"/>
+                  <use x="90" y="10" xlink:href="#a3"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a5">
+                  <use x="0" y="10" xlink:href="#a4"/>
+                  <use x="10" y="10" xlink:href="#a4"/>
+                  <use x="20" y="10" xlink:href="#a4"/>
+                  <use x="30" y="10" xlink:href="#a4"/>
+                  <use x="40" y="10" xlink:href="#a4"/>
+                  <use x="50" y="10" xlink:href="#a4"/>
+                  <use x="60" y="10" xlink:href="#a4"/>
+                  <use x="70" y="10" xlink:href="#a4"/>
+                  <use x="80" y="10" xlink:href="#a4"/>
+                  <use x="90" y="10" xlink:href="#a4"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a6">
+                  <use x="0" y="10" xlink:href="#a5"/>
+                  <use x="10" y="10" xlink:href="#a5"/>
+                  <use x="20" y="10" xlink:href="#a5"/>
+                  <use x="30" y="10" xlink:href="#a5"/>
+                  <use x="40" y="10" xlink:href="#a5"/>
+                  <use x="50" y="10" xlink:href="#a5"/>
+                  <use x="60" y="10" xlink:href="#a5"/>
+                  <use x="70" y="10" xlink:href="#a5"/>
+                  <use x="80" y="10" xlink:href="#a5"/>
+                  <use x="90" y="10" xlink:href="#a5"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a7">
+                  <use x="0" y="10" xlink:href="#a6"/>
+                  <use x="10" y="10" xlink:href="#a6"/>
+                  <use x="20" y="10" xlink:href="#a6"/>
+                  <use x="30" y="10" xlink:href="#a6"/>
+                  <use x="40" y="10" xlink:href="#a6"/>
+                  <use x="50" y="10" xlink:href="#a6"/>
+                  <use x="60" y="10" xlink:href="#a6"/>
+                  <use x="70" y="10" xlink:href="#a6"/>
+                  <use x="80" y="10" xlink:href="#a6"/>
+                  <use x="90" y="10" xlink:href="#a6"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a8">
+                  <use x="0" y="10" xlink:href="#a7"/>
+                  <use x="10" y="10" xlink:href="#a7"/>
+                  <use x="20" y="10" xlink:href="#a7"/>
+                  <use x="30" y="10" xlink:href="#a7"/>
+                  <use x="40" y="10" xlink:href="#a7"/>
+                  <use x="50" y="10" xlink:href="#a7"/>
+                  <use x="60" y="10" xlink:href="#a7"/>
+                  <use x="70" y="10" xlink:href="#a7"/>
+                  <use x="80" y="10" xlink:href="#a7"/>
+                  <use x="90" y="10" xlink:href="#a7"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a9">
+                  <use x="0" y="10" xlink:href="#a8"/>
+                  <use x="10" y="10" xlink:href="#a8"/>
+                  <use x="20" y="10" xlink:href="#a8"/>
+                  <use x="30" y="10" xlink:href="#a8"/>
+                  <use x="40" y="10" xlink:href="#a8"/>
+                  <use x="50" y="10" xlink:href="#a8"/>
+                  <use x="60" y="10" xlink:href="#a8"/>
+                  <use x="70" y="10" xlink:href="#a8"/>
+                  <use x="80" y="10" xlink:href="#a8"/>
+                  <use x="90" y="10" xlink:href="#a8"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a10">
+                  <use x="0" y="10" xlink:href="#a9"/>
+                  <use x="10" y="10" xlink:href="#a9"/>
+                  <use x="20" y="10" xlink:href="#a9"/>
+                  <use x="30" y="10" xlink:href="#a9"/>
+                  <use x="40" y="10" xlink:href="#a9"/>
+                  <use x="50" y="10" xlink:href="#a9"/>
+                  <use x="60" y="10" xlink:href="#a9"/>
+                  <use x="70" y="10" xlink:href="#a9"/>
+                  <use x="80" y="10" xlink:href="#a9"/>
+                  <use x="90" y="10" xlink:href="#a9"/>
+              </g>
+          </defs>
+          <use x="0" y="0" xlink:href="#a9"/>
+      </svg>
+    """.trimIndent()
+
+    assertThatThrownBy {
+      val image = renderSvg(svg.byteInputStream())
+    }.hasMessage("use is over-nested: 7")
+  }
+
+  @Test
+  fun dosShort() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+    @Language("HTML")
+    val svg = """
+      <?xml version="1.0" standalone="no"?>
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <defs>
+              <g id="a0">
+                  <circle stroke="#000000" fill="#ffffff" fill-opacity="0.1" r="10"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a1">
+                  <use x="0" y="10" xlink:href="#a0"/>
+                  <use x="10" y="10" xlink:href="#a0"/>
+                  <use x="20" y="10" xlink:href="#a0"/>
+                  <use x="30" y="10" xlink:href="#a0"/>
+                  <use x="40" y="10" xlink:href="#a0"/>
+                  <use x="50" y="10" xlink:href="#a0"/>
+                  <use x="60" y="10" xlink:href="#a0"/>
+                  <use x="70" y="10" xlink:href="#a0"/>
+                  <use x="80" y="10" xlink:href="#a0"/>
+                  <use x="90" y="10" xlink:href="#a0"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a2">
+                  <use x="0" y="10" xlink:href="#a1"/>
+                  <use x="10" y="10" xlink:href="#a1"/>
+                  <use x="20" y="10" xlink:href="#a1"/>
+                  <use x="30" y="10" xlink:href="#a1"/>
+                  <use x="40" y="10" xlink:href="#a1"/>
+                  <use x="50" y="10" xlink:href="#a1"/>
+                  <use x="60" y="10" xlink:href="#a1"/>
+                  <use x="70" y="10" xlink:href="#a1"/>
+                  <use x="80" y="10" xlink:href="#a1"/>
+                  <use x="90" y="10" xlink:href="#a1"/>
+              </g>
+          </defs>
+          <use x="0" y="0" xlink:href="#a2"/>
+      </svg>
+    """.trimIndent()
+
+    val image = renderSvg(svg.byteInputStream())
+  }
+
+  @Test
   fun css() {
     assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
 
@@ -159,6 +368,47 @@ class SvgRenderingTest {
   }
 
   @Test
+  fun filer3() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+
+    @Language("HTML")
+    val svg = """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16px" height="16px" viewBox="0 0 16 16" version="1.1">
+          <defs>
+              <filter id="alpha" filterUnits="objectBoundingBox" x="0%" y="0%" width="100%" height="100%">
+                  <feColorMatrix type="matrix" in="SourceGraphic" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/>
+              </filter>
+              <mask id="mask0">
+                  <g filter="url(#alpha)">
+                      <rect x="0" y="0" width="16" height="16" style="fill:rgb(0%,0%,0%);fill-opacity:0.2;stroke:none;"/>
+                  </g>
+              </mask>
+              <clipPath id="clip1">
+                  <rect x="0" y="0" width="16" height="16"/>
+              </clipPath>
+              <g id="surface5" clip-path="url(#clip1)">
+                  <path style=" stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 0.640625 1.28125 C 0.289062 1.28125 0 1.566406 0 1.921875 L 0 14.273438 C 0 14.625 0.289062 14.910156 0.640625 14.910156 L 1.34375 14.910156 L 13.953125 1.28125 Z M 0.640625 1.28125 "/>
+              </g>
+          </defs>
+          <g id="surface1">
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(62.7451%,63.137257%,63.529414%);fill-opacity:1;" d="M 0 14.335938 C 0 14.65625 0.257812 14.945312 0.574219 14.945312 L 15.390625 14.945312 C 15.710938 14.945312 16 14.6875 16 14.335938 L 16 3.742188 L 0 3.742188 Z M 0 14.335938 "/>
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(47.843137%,47.843137%,47.843137%);fill-opacity:1;" d="M 15.390625 1.28125 L 0.574219 1.28125 C 0.257812 1.28125 0 1.566406 0 1.886719 L 0 3.710938 L 16 3.710938 L 16 1.886719 C 16 1.566406 15.742188 1.28125 15.390625 1.28125 "/>
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,44.705883%,77.64706%);fill-opacity:1;" d="M 1.183594 4.832031 L 7.710938 4.832031 L 7.710938 8.992188 L 1.183594 8.992188 Z M 1.183594 4.832031 "/>
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,44.705883%,77.64706%);fill-opacity:1;" d="M 1.183594 9.566406 L 7.710938 9.566406 L 7.710938 13.726562 L 1.183594 13.726562 Z M 1.183594 9.566406 "/>
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 8.289062 4.832031 L 14.785156 4.832031 L 14.785156 8.992188 L 8.289062 8.992188 Z M 8.289062 4.832031 "/>
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,44.705883%,77.64706%);fill-opacity:1;" d="M 8.289062 9.566406 L 14.785156 9.566406 L 14.785156 13.726562 L 8.289062 13.726562 Z M 8.289062 9.566406 "/>
+              <use xlink:href="#surface5" mask="url(#mask0)"/>
+          </g>
+      </svg>
+    """.trimIndent()
+    val image = renderSvg(svg.byteInputStream(), scale = 2f)
+
+    val goldImage = loadOrSaveGoldSnapshot(image, "filter3")
+    ImageComparator.compareAndAssert(null, image, goldImage, null)
+  }
+
+  @Test
   fun base64EncodedPng() {
     assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
 
@@ -202,6 +452,168 @@ class SvgRenderingTest {
   }
 
   @Test
+  fun shadow() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+
+    @Language("HTML")
+    val svg = """
+<svg width="4" height="6" viewBox="0 0 4 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_5382_56966)">
+<g filter="url(#filter0_d_5382_56966)">
+<path d="M11 4.99023H-7C-7.55228 4.99023 -8 5.43794 -8 5.99023V24.9902C-8 25.5425 -7.55228 25.9902 -7 25.9902H11C11.5523 25.9902 12 25.5425 12 24.9902V5.99023C12 5.43795 11.5523 4.99023 11 4.99023Z" fill="white" fill-opacity="0.01"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_5382_56966" x="-20" y="-3.00977" width="44" height="45" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="4"/>
+<feGaussianBlur stdDeviation="6"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.16 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_5382_56966"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_5382_56966" result="shape"/>
+</filter>
+<clipPath id="clip0_5382_56966">
+<rect width="4" height="6" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+
+""".trimIndent()
+    val image = renderSvg(svg.byteInputStream())
+
+    val goldImage = loadOrSaveGoldSnapshot(image, "shadow")
+    ImageComparator.compareAndAssert(null, image, goldImage, null)
+  }
+  @Test
+  fun topLeftIcon() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+
+    @Language("HTML")
+    val svg = """
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="14" fill="none">
+  <g clip-path="url(#a)" filter="url(#b)">
+    <path fill="#fff" fill-opacity=".01" d="M30 5H10v21h20V5Z"/>
+  </g>
+  <defs>
+    <clipPath id="a">
+      <path fill="#fff" d="M0 0h18v14H0z"/>
+    </clipPath>
+    <filter id="b" width="44" height="45" x="-2" y="-3" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+      <feOffset dy="4"/>
+      <feGaussianBlur stdDeviation="6"/>
+      <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.16 0"/>
+      <feBlend in2="BackgroundImageFix" result="effect1_dropShadow_5382_56962"/>
+      <feBlend in="SourceGraphic" in2="effect1_dropShadow_5382_56962" result="shape"/>
+    </filter>
+  </defs>
+</svg>
+""".trimIndent()
+    val image = renderSvg(svg.byteInputStream())
+
+    val goldImage = loadOrSaveGoldSnapshot(image, "shadow")
+    ImageComparator.compareAndAssert(null, image, goldImage, null)
+  }
+
+  @Test
+  fun f1() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+
+    @Language("HTML")
+    val svg = """
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18" height="22" viewBox="0 0 18 22">
+  <defs>
+    <rect id="bottomleft-b" width="20" height="21"/>
+    <filter id="bottomleft-a" width="270%" height="261.9%" x="-85%" y="-61.9%" filterUnits="objectBoundingBox">
+      <feOffset dy="4" in="SourceAlpha" result="shadowOffsetOuter1"/>
+      <feGaussianBlur in="shadowOffsetOuter1" result="shadowBlurOuter1" stdDeviation="5"/>
+      <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"/>
+      <feColorMatrix in="shadowBlurOuter1" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.3 0"/>
+    </filter>
+  </defs>
+  <g fill="none" fill-rule="evenodd" transform="translate(10 -13)">
+    <use fill="#000" filter="url(#bottomleft-a)" xlink:href="#bottomleft-b"/>
+    <use fill="#FFF" fill-opacity="0" xlink:href="#bottomleft-b"/>
+  </g>
+</svg>
+""".trimIndent()
+    val image = renderSvg(svg.byteInputStream())
+
+    val goldImage = loadOrSaveGoldSnapshot(image, "f1")
+    ImageComparator.compareAndAssert(null, image, goldImage, null)
+  }
+
+  @Test
+  fun stdDev() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+
+    @Language("HTML")
+    val svg = """
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="16" viewBox="0 0 16 16">
+  <defs>
+    <linearGradient id="nwjs-a" x1="50%" x2="50%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#ABABAB"/>
+      <stop offset="100%" stop-color="#3E3E3E"/>
+    </linearGradient>
+    <linearGradient id="nwjs-b" x1="50%" x2="50%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#CACACC"/>
+      <stop offset="100%" stop-color="#6D6F79"/>
+    </linearGradient>
+    <radialGradient id="nwjs-c" cy="48.197%" r="59.046%" fx="50%" fy="48.197%" gradientTransform="matrix(0 .87734 -.99871 0 .981 .043)">
+      <stop offset="0%" stop-color="#5B6376"/>
+      <stop offset="100%" stop-color="#181C21"/>
+    </radialGradient>
+    <path id="nwjs-d" d="M7.5,2.28867513 L11.6961524,4.71132487 C12.0055535,4.88995766 12.1961524,5.22008468 12.1961524,5.57735027 L12.1961524,10.4226497 C12.1961524,10.7799153 12.0055535,11.1100423 11.6961524,11.2886751 L7.5,13.7113249 C7.19059892,13.8899577 6.80940108,13.8899577 6.5,13.7113249 L2.30384758,11.2886751 C1.9944465,11.1100423 1.80384758,10.7799153 1.80384758,10.4226497 L1.80384758,5.57735027 C1.80384758,5.22008468 1.9944465,4.88995766 2.30384758,4.71132487 L6.5,2.28867513 C6.80940108,2.11004234 7.19059892,2.11004234 7.5,2.28867513 Z"/>
+    <filter id="nwjs-e" width="138.5%" height="133.8%" x="-19.2%" y="-16.9%" filterUnits="objectBoundingBox">
+      <feGaussianBlur in="SourceAlpha" result="shadowBlurInner1" stdDeviation="1.5"/>
+      <feOffset dy="1" in="shadowBlurInner1" result="shadowOffsetInner1"/>
+      <feComposite in="shadowOffsetInner1" in2="SourceAlpha" k2="-1" k3="1" operator="arithmetic" result="shadowInnerInner1"/>
+      <feColorMatrix in="shadowInnerInner1" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0"/>
+    </filter>
+    <linearGradient id="nwjs-f" x1="50%" x2="50%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#676767" stop-opacity=".387"/>
+      <stop offset="100%" stop-opacity=".387"/>
+    </linearGradient>
+    <filter id="nwjs-g" width="100%" height="100%" x="0%" y="0%" filterUnits="objectBoundingBox">
+      <feGaussianBlur in="SourceGraphic"/>
+    </filter>
+    <polygon id="nwjs-h" points=".729 .922 1.458 5.908 0 5.908"/>
+    <polygon id="nwjs-j" points=".729 .922 1.458 5.908 0 5.908"/>
+  </defs>
+  <g fill="none" fill-rule="evenodd" transform="translate(1)">
+    <path fill="url(#nwjs-a)" fill-rule="nonzero" d="M7.46531337,1.06949476 L12.7439975,4.11714449 C13.0533986,4.29577728 13.2439975,4.6259043 13.2439975,4.98316989 L13.2439975,11.0784694 C13.2439975,11.4357349 13.0533986,11.765862 12.7439975,11.9444948 L7.46531337,14.9921445 C7.15591229,15.1707773 6.77471445,15.1707773 6.46531337,14.9921445 L1.18662919,11.9444948 C0.877228116,11.765862 0.686629193,11.4357349 0.686629193,11.0784694 L0.686629193,4.98316989 C0.686629193,4.6259043 0.877228116,4.29577728 1.18662919,4.11714449 L6.46531337,1.06949476 C6.77471445,0.890861964 7.15591229,0.890861964 7.46531337,1.06949476 Z"/>
+    <path fill="url(#nwjs-b)" fill-rule="nonzero" d="M7.5,1.28867513 L12.5621778,4.21132487 C12.8715789,4.38995766 13.0621778,4.72008468 13.0621778,5.07735027 L13.0621778,10.9226497 C13.0621778,11.2799153 12.8715789,11.6100423 12.5621778,11.7886751 L7.5,14.7113249 C7.19059892,14.8899577 6.80940108,14.8899577 6.5,14.7113249 L1.43782217,11.7886751 C1.1284211,11.6100423 0.937822174,11.2799153 0.937822174,10.9226497 L0.937822174,5.07735027 C0.937822174,4.72008468 1.1284211,4.38995766 1.43782217,4.21132487 L6.5,1.28867513 C6.80940108,1.11004234 7.19059892,1.11004234 7.5,1.28867513 Z"/>
+    <g fill-rule="nonzero">
+      <use fill="url(#nwjs-c)" xlink:href="#nwjs-d"/>
+      <use fill="#000" filter="url(#nwjs-e)" xlink:href="#nwjs-d"/>
+    </g>
+    <g transform="rotate(60 2.503 11.523)">
+      <path fill="url(#nwjs-f)" d="M2.51755318,5.95455977 L1.85598296,11.069148 L1.19441274,5.95455977 L1.85598296,0.839971505 L2.51755318,5.95455977 Z" filter="url(#nwjs-g)"/>
+      <g transform="translate(1)">
+        <mask id="nwjs-i" fill="#fff">
+          <use xlink:href="#nwjs-h"/>
+        </mask>
+        <use fill="#0082FE" xlink:href="#nwjs-h"/>
+        <rect width="2.662" height="10.229" x=".729" y=".664" fill="#000" fill-opacity=".25" mask="url(#nwjs-i)" opacity=".83" style="mix-blend-mode:multiply"/>
+      </g>
+      <g transform="rotate(-180 1.227 5.907)">
+        <mask id="nwjs-k" fill="#fff">
+          <use xlink:href="#nwjs-j"/>
+        </mask>
+        <use fill="#DCDCDC" xlink:href="#nwjs-j"/>
+        <rect width="2.662" height="10.229" x="-1.937" y="-2.206" fill="#000" fill-opacity=".25" mask="url(#nwjs-k)" opacity=".83" style="mix-blend-mode:multiply"/>
+      </g>
+    </g>
+  </g>
+</svg>
+""".trimIndent()
+    renderSvg(svg.byteInputStream())
+  }
+
+  @Test
   fun base64Encoded2() {
     assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
 
@@ -217,7 +629,7 @@ private val testDataDir: Path
 
 private fun loadOrSaveGoldSnapshot(image: BufferedImage, name: String): Image {
   val file = testDataDir.resolve("$name.png")
-  if (Files.exists(file)) {
+  if (false && Files.exists(file)) {
     return ImageIO.read(file.toFile())
   }
   else {

@@ -15,9 +15,11 @@
  */
 package com.intellij.lang.java.parser;
 
+import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
+import com.intellij.psi.impl.source.tree.JavaElementTypeFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaParser {
+public class JavaParser extends BasicJavaParser {
   public static final JavaParser INSTANCE = new JavaParser();
 
   private final FileParser myFileParser;
@@ -38,38 +40,50 @@ public class JavaParser {
     myPatternParser = new PatternParser(this);
   }
 
+  @Override
   @NotNull
   public FileParser getFileParser() {
     return myFileParser;
   }
 
+  @Override
   @NotNull
   public ModuleParser getModuleParser() {
     return myModuleParser;
   }
 
+  @Override
   @NotNull
   public DeclarationParser getDeclarationParser() {
     return myDeclarationParser;
   }
 
+  @Override
   @NotNull
   public StatementParser getStatementParser() {
     return myStatementParser;
   }
 
+  @Override
   @NotNull
   public ExpressionParser getExpressionParser() {
     return myExpressionParser;
   }
 
+  @Override
   @NotNull
   public ReferenceParser getReferenceParser() {
     return myReferenceParser;
   }
 
+  @Override
   @NotNull
   public PatternParser getPatternParser() {
     return myPatternParser;
+  }
+
+  @Override
+  public AbstractBasicJavaElementTypeFactory getJavaElementTypeFactory() {
+    return JavaElementTypeFactory.INSTANCE;
   }
 }

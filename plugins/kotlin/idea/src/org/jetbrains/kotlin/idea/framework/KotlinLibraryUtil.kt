@@ -3,13 +3,12 @@
 package org.jetbrains.kotlin.idea.framework
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.libraries.Library
-import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
+import org.jetbrains.annotations.ApiStatus
 
 val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
 
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated("Moved to the org.jetbrains.kotlin.idea.configuration package.")
 @Deprecated(
     "Moved to the org.jetbrains.kotlin.idea.configuration package.",
     level = DeprecationLevel.ERROR,
@@ -17,12 +16,3 @@ val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
 )
 val GRADLE_SYSTEM_ID: ProjectSystemId
     get() = org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
-
-@Deprecated(
-    "Moved to the 'org.jetbrains.kotlin.idea.base.util' package.",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("org.jetbrains.kotlin.idea.base.util.isGradleModule()")
-)
-fun Module.isGradleModule(): Boolean {
-    return ExternalSystemApiUtil.isExternalSystemAwareModule(GRADLE_SYSTEM_ID, this)
-}

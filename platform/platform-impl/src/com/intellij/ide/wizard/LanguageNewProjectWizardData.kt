@@ -12,7 +12,7 @@ interface LanguageNewProjectWizardData : NewProjectWizardBaseData {
 
   companion object {
 
-    val KEY = Key.create<LanguageNewProjectWizardData>(LanguageNewProjectWizardData::class.java.name)
+    val KEY: Key<LanguageNewProjectWizardData> = Key.create(LanguageNewProjectWizardData::class.java.name)
 
     @JvmStatic
     val NewProjectWizardStep.languageData: LanguageNewProjectWizardData?

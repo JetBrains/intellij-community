@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -33,9 +34,11 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.CommitSessionCollector;
 import com.intellij.vcsUtil.VcsUtil;
@@ -62,8 +65,15 @@ import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
 
+/**
+ * Consider implementing {@link AsyncChangesTree} instead.
+ */
 public abstract class ChangesTree extends Tree implements DataProvider {
+  private static final Logger LOG = Logger.getInstance(ChangesTree.class);
+
   @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
+
+  public static final int EXPAND_NODES_THRESHOLD = 30000;
 
   @NotNull public static final TreeStateStrategy<?> DO_NOTHING = new DoNothingTreeStateStrategy();
   @NotNull public static final TreeStateStrategy<?> ALWAYS_RESET = new AlwaysResetTreeStateStrategy();
@@ -102,6 +112,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private boolean myModelUpdateInProgress;
   private AWTEvent myEventProcessingInProgress;
 
+  private final UpdateScaleHelper scaleHelper = new UpdateScaleHelper();
+
   public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
     this(project, showCheckboxes, highlightProblems, true);
   }
@@ -119,7 +131,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setShowsRootHandles(true);
     setOpaque(false);
     if (withSpeedSearch) {
-      TreeSpeedSearch.installOn(this, false, ChangesBrowserNode.TO_TEXT_CONVERTER.asFunction());
+      TreeSpeedSearch.installOn(this, false, ChangesBrowserNode.TO_TEXT_CONVERTER);
     }
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
@@ -158,6 +170,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     ChangesBrowserNode<?> sampleNode = new FixedHeightSampleChangesBrowserNode();
     Component component = renderer.getTreeCellRendererComponent(this, sampleNode, true, true, true, 0, true);
+    scaleHelper.saveScaleAndRunIfChanged(() -> {
+      if (component instanceof JComponent) scaleHelper.updateUIForAll((JComponent)component);
+    });
     int rendererHeight = component.getPreferredSize().height;
     if (rendererHeight <= 0) return;
 
@@ -423,7 +438,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   protected void updateTreeModel(@NotNull DefaultTreeModel model,
                                  @SuppressWarnings("rawtypes") @NotNull TreeStateStrategy treeStateStrategy) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myModelUpdateInProgress = true;
     try {
@@ -447,7 +462,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   public void resetTreeState() {
     // expanding lots of nodes is a slow operation (and result is not very useful)
-    if (TreeUtil.hasManyNodes(this, 30000)) {
+    if (TreeUtil.hasManyNodes(this, EXPAND_NODES_THRESHOLD)) {
       TreeUtil.collapseAll(this, 1);
       return;
     }
@@ -530,6 +545,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull
   public InclusionModel getInclusionModel() {
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      LOG.error(new Throwable("Access is allowed from Event Dispatch Thread (EDT) only"));
+    }
     return myInclusionModel;
   }
 
@@ -626,18 +644,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myTreeExpander = expander;
   }
 
-  /**
-   * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
-   */
-  @Deprecated(forRemoval = true)
-  public AnAction[] getTreeActions() {
-    return new AnAction[]{
-      ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP),
-      createExpandAllAction(false),
-      createCollapseAllAction(false)
-    };
-  }
-
   @NotNull
   public AnAction createExpandAllAction(boolean headerAction) {
     if (headerAction) {
@@ -681,6 +687,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull
   protected State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
+    if (getInclusionModel().isInclusionEmpty()) return State.NOT_SELECTED;
+
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
@@ -697,6 +705,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         hasIncluded = true;
         hasExcluded = true;
       }
+      if (hasIncluded && hasExcluded) break;
     }
 
     if (hasIncluded && hasExcluded) return State.DONT_CARE;
@@ -818,8 +827,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Override
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
-    if (component instanceof ChangesBrowserNode<?>) {
-      return ((ChangesBrowserNode<?>)component).getBackgroundColorCached(myProject);
+    if (component instanceof ChangesBrowserNode<?> node) {
+      node.cacheBackgroundColor(myProject); // use AsyncChangesTree to move this on pooled thread
+      return node.getBackgroundColorCached();
     }
     return null;
   }

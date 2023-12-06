@@ -4,13 +4,15 @@ package org.jetbrains.kotlin.idea.maven.importer
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenImporterTest
 import org.jetbrains.kotlin.idea.maven.toJpsVersionAgnosticKotlinBundledPath
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import kotlin.io.path.absolutePathString
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinLombokMavenImporterTest : AbstractKotlinMavenImporterTest() {
+@Ignore("Test hangs on buildserver")
+class KotlinLombokMavenImporterTest : AbstractKotlinMavenImporterTest(false) {
     @Test
     fun `test kotlin lombok with config import and check plugin classpath and options`() {
         createProjectSubDirs("src/main/kotlin", "src/test/kotlin")

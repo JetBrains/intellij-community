@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ref;
 
 import com.intellij.openapi.util.EmptyRunnable;
@@ -39,33 +39,28 @@ public final class GCWatcher {
     }
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static GCWatcher tracking(Object o1) {
+  public static @NotNull GCWatcher tracking(Object o1) {
     return new GCWatcher(Collections.singletonList(o1));
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static GCWatcher tracking(Object o1, Object o2) {
+  public static @NotNull GCWatcher tracking(Object o1, Object o2) {
     return tracking(Arrays.asList(o1, o2));
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static GCWatcher tracking(Object o1, Object o2, Object o3) {
+  public static @NotNull GCWatcher tracking(Object o1, Object o2, Object o3) {
     return tracking(Arrays.asList(o1, o2, o3));
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static GCWatcher tracking(Object o1, Object o2, Object o3, Object o4) {
+  public static @NotNull GCWatcher tracking(Object o1, Object o2, Object o3, Object o4) {
     return tracking(Arrays.asList(o1, o2, o3, o4));
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static GCWatcher tracking(Object o1, Object o2, Object o3, Object o4, Object o5) {
+  public static @NotNull GCWatcher tracking(Object o1, Object o2, Object o3, Object o4, Object o5) {
     return tracking(Arrays.asList(o1, o2, o3, o4, o5));
   }
 
@@ -88,23 +83,20 @@ public final class GCWatcher {
    *
    * <p>Use methods with a fixed number of arguments instead.</p>
    */
-  @NotNull
   @Contract(pure = true)
-  public static GCWatcher tracking(Object... objects) {
+  public static @NotNull GCWatcher tracking(Object... objects) {
     throw new UnsupportedOperationException("Use a method with fixed number of arguments instead");
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static GCWatcher tracking(@NotNull Collection<?> objects) {
+  public static @NotNull GCWatcher tracking(@NotNull Collection<?> objects) {
     return new GCWatcher(objects);
   }
 
   /**
    * Create a GCWatcher from whatever is in the ref, then clear the ref.
    */
-  @NotNull
-  public static GCWatcher fromClearedRef(@NotNull Ref<?> ref) {
+  public static @NotNull GCWatcher fromClearedRef(@NotNull Ref<?> ref) {
     GCWatcher result = tracking(ref.get());
     ref.set(null);
     return result;
@@ -137,18 +129,18 @@ public final class GCWatcher {
 
   /**
    * Attempt to run garbage collector repeatedly until all the objects passed when creating this GCWatcher are GC-ed. If that's impossible,
-   * this method gives up after some time.
+   * this method gives up after some time and throws {@link IllegalStateException}.
    */
   @TestOnly
-  public void ensureCollected() {
+  public void ensureCollected() throws IllegalStateException {
     ensureCollected(EmptyRunnable.getInstance());
   }
   /**
    * Attempt to run garbage collector repeatedly until all the objects passed when creating this GCWatcher are GC-ed. If that's impossible,
-   * this method gives up after some time.
+   * this method gives up after some time and throws {@link IllegalStateException}.
    */
   @TestOnly
-  public void ensureCollected(@NotNull Runnable runWhileWaiting) {
+  public void ensureCollected(@NotNull Runnable runWhileWaiting) throws IllegalStateException {
     StringBuilder log = new StringBuilder();
     if (GCUtil.allocateTonsOfMemory(log, runWhileWaiting, this::isEverythingCollected)) {
       return;

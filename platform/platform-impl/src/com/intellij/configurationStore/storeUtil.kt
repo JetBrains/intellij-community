@@ -1,61 +1,57 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.intellij.CommonBundle
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.TransactionGuardImpl
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
+private val LOG: Logger
+  get() = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
 /**
  * Only for Java clients.
  * Clients in kotlin should use corresponding package-level suspending functions.
  */
+@ApiStatus.Obsolete
 object StoreUtil {
   /**
-   * Do not use this method in tests, instead directly save using state store.
+   * Don't use this method in tests, instead directly save using state store.
    */
   @JvmOverloads
   @JvmStatic
   @CalledInAny
   fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
-    saveComponentManagerSettings(componentManager, forceSavingAllSettings)
-  }
-
-  /**
-   * Do not use this method in tests, instead directly save using state store.
-   */
-  @JvmOverloads
-  @JvmStatic
-  @CalledInAny
-  fun saveComponentManagerSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean = runInAutoSaveDisabledMode {
-    runUnderModalProgressIfIsEdt {
-      com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
+    runInAutoSaveDisabledMode {
+      runUnderModalProgressIfIsEdt {
+        com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
+      }
     }
   }
 
@@ -68,7 +64,7 @@ object StoreUtil {
   fun saveDocumentsAndProjectSettings(project: Project) {
     runInAutoSaveDisabledMode {
       FileDocumentManager.getInstance().saveAllDocuments()
-      runBlockingUnderModalProgress {
+      runWithModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
         com.intellij.configurationStore.saveSettings(project)
       }
     }
@@ -86,28 +82,29 @@ object StoreUtil {
   fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
     runInAutoSaveDisabledMode {
       FileDocumentManager.getInstance().saveAllDocuments()
-      runBlockingUnderModalProgress {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         saveProjectsAndApp(forceSavingAllSettings)
       }
     }
   }
 }
 
-@CalledInAny
 suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean {
-  if (ApplicationManager.getApplication().isDispatchThread) {
-    (TransactionGuardImpl.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
-  }
-
+  val storeReloadManager = if (componentManager is Project) StoreReloadManager.getInstance(componentManager) else null
+  storeReloadManager?.reloadChangedStorageFiles()
+  storeReloadManager?.blockReloadingProjectOnExternalChanges()
   try {
     componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
     return true
   }
-  catch (e: CancellationException) {
-    return false
-  }
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: ProcessCanceledException) {
+    throw e
   }
   catch (e: Throwable) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -124,19 +121,22 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
 
     val pluginId = PluginUtil.getInstance().findPluginId(e)
     val group = NotificationGroupManager.getInstance().getNotificationGroup("Settings Error")
-    val notification = if (pluginId == null || (ApplicationInfo.getInstance() as ApplicationInfoEx).isEssentialPlugin(pluginId)) {
+    val notification = if (pluginId == null) {
       group.createNotification(IdeBundle.message("notification.title.unable.to.save.settings"),
                                IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix),
                                NotificationType.ERROR)
     }
     else {
-      PluginManagerCore.disablePlugin(pluginId)
       group.createNotification(IdeBundle.message("notification.title.unable.to.save.plugin.settings"),
-                               IdeBundle.message("notification.content.plugin.failed.to.save.settings.and.has.been.disabled",
-                                                 pluginId.idString, messagePostfix),
+                               IdeBundle.message("notification.content.plugin.failed.to.save.settings", pluginId.idString, messagePostfix),
                                NotificationType.ERROR)
     }
-    notification.notify(componentManager as? Project)
+    blockingContext {
+      notification.notify(componentManager as? Project)
+    }
+  }
+  finally {
+    storeReloadManager?.unblockReloadingProjectOnExternalChanges()
   }
   return false
 }
@@ -213,37 +213,39 @@ fun getPerOsSettingsStorageFolderName(): String {
 }
 
 /**
- * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
+ * Converts fileSpec passed to [StreamProvider]'s methods to a relative path from the root config directory.
  */
-@CalledInAny
-suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
-  val storeReloadManager = StoreReloadManager.getInstance()
-  storeReloadManager.reloadChangedStorageFiles()
-  storeReloadManager.blockReloadingProjectOnExternalChanges()
-  try {
-    val start = System.currentTimeMillis()
-    saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)
-    if (onlyProject == null) {
-      saveAllProjects(forceSavingAllSettings)
-    }
-    else {
-      saveSettings(onlyProject, forceSavingAllSettings = true)
-    }
-
-    val duration = System.currentTimeMillis() - start
-    if (duration > 1000 || LOG.isDebugEnabled) {
-      LOG.info("saveProjectsAndApp took $duration ms")
-    }
+@Internal
+fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
+  // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
+  // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/mykeymap.xml'
+  return if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
+    "${PathManager.OPTIONS_DIRECTORY}/$fileSpecPassedToProvider"
   }
-  finally {
-    storeReloadManager.unblockReloadingProjectOnExternalChanges()
+  else {
+    fileSpecPassedToProvider
   }
 }
 
-@CalledInAny
-private suspend fun saveAllProjects(forceSavingAllSettings: Boolean) {
-  processOpenedProjects { project ->
-    saveSettings(project, forceSavingAllSettings)
+
+/**
+ * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
+ */
+suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
+  val start = System.currentTimeMillis()
+  saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = forceSavingAllSettings)
+  if (onlyProject == null) {
+    for (project in getOpenedProjects()) {
+      saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
+    }
+  }
+  else {
+    saveSettings(onlyProject, forceSavingAllSettings = true)
+  }
+
+  val duration = System.currentTimeMillis() - start
+  if (duration > 1000 || LOG.isDebugEnabled) {
+    LOG.info("saveProjectsAndApp took $duration ms")
   }
 }
 
@@ -266,5 +268,15 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
   }
   finally {
     app.isSaveAllowed = !isSaveAllowed
+  }
+}
+
+@RequiresEdt
+@Internal
+fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, forceSavingAllSettings: Boolean = false) {
+  runInAutoSaveDisabledMode {
+    runWithModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
+      saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
+    }
   }
 }

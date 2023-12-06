@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast
 
-
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
@@ -13,11 +12,19 @@ import org.jetbrains.uast.visitor.UastVisitor
 /**
  * Represents a call expression (method/constructor call, array initializer).
  */
+@JvmDefaultWithCompatibility
 interface UCallExpression : UExpression, UResolvable {
   /**
    * Returns the call kind.
    */
   val kind: UastCallKind
+
+  /**
+   * Checks if kind corresponds to the expected kind possibly employing additional performance optimizations.
+   */
+  fun hasKind(expectedKind: UastCallKind): Boolean {
+    return kind == expectedKind
+  }
 
   /**
    * Returns the called method name, or null if the call is not a method call.

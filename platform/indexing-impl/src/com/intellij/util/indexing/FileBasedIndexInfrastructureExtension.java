@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.PathManager;
@@ -87,11 +87,15 @@ public interface FileBasedIndexInfrastructureExtension {
   InitializationResult initialize(@Nullable("null if default") String indexLayoutId);
 
   /**
+   * Attach data that was used with the passed project in the previous IDE session.
+   */
+  void attachData(@NotNull Project project);
+
+  /**
    * @return index persistent state root for given extension, namely a place where all cached data will be stored.
    * Every index extension persistent data should be stored in `{@link PathManager#getIndexRoot()}/getPersistentStateRoot()` dir.
    */
-  @Nullable
-  default String getPersistentStateRoot() {
+  default @Nullable String getPersistentStateRoot() {
     return null;
   }
 
@@ -123,5 +127,11 @@ public interface FileBasedIndexInfrastructureExtension {
 
   enum InitializationResult {
     SUCCESSFULLY, INDEX_REBUILD_REQUIRED
+  }
+
+  static void attachAllExtensionsData(@NotNull Project project) {
+    for (FileBasedIndexInfrastructureExtension extension : EP_NAME.getExtensionList()) {
+      extension.attachData(project);
+    }
   }
 }

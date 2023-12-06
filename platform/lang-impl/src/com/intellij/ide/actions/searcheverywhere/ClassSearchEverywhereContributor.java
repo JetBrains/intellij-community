@@ -14,7 +14,6 @@ import com.intellij.ide.util.gotoByName.LanguageRef;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
-import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -33,38 +32,34 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.LangFilterCollector;
+import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt.createPsiExtendedInfo;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor {
-
-  private static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
+public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor implements EssentialContributor,
+                                                                                           SearchEverywherePreviewProvider {
   private static final Pattern ourPatternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
-  private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
+  private final PersistentSearchEverywhereContributorFilter<LanguageRef> filter;
 
   public ClassSearchEverywhereContributor(@NotNull AnActionEvent event) {
     super(event);
-    myFilter = createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT));
+
+    filter = createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT));
   }
 
-  @NotNull
   @Override
-  @Nls
-  public String getGroupName() {
+  public @NotNull @Nls String getGroupName() {
     return GotoClassPresentationUpdater.getTabTitlePluralized();
   }
 
-  @NotNull
   @Override
-  public String getFullGroupName() {
+  public @NotNull String getFullGroupName() {
     //noinspection HardCodedStringLiteral
     @Nls String res = String.join("/", GotoClassPresentationUpdater.getActionTitlePluralized());
     return res;
@@ -75,25 +70,22 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     return 100;
   }
 
-  @NotNull
   @Override
-  protected FilteringGotoByModel<LanguageRef> createModel(@NotNull Project project) {
+  protected @NotNull FilteringGotoByModel<LanguageRef> createModel(@NotNull Project project) {
     GotoClassModel2 model = new GotoClassModel2(project);
-    if (myFilter != null) {
-      model.setFilterItems(myFilter.getSelectedElements());
+    if (filter != null) {
+      model.setFilterItems(filter.getSelectedElements());
     }
     return model;
   }
 
-  @NotNull
   @Override
-  public List<AnAction> getActions(@NotNull Runnable onChanged) {
-    return doGetActions(myFilter, new LangFilterCollector(), onChanged);
+  public @NotNull List<AnAction> getActions(@NotNull Runnable onChanged) {
+    return doGetActions(filter, new SearchEverywhereFiltersStatisticsCollector.LangFilterCollector(), onChanged);
   }
 
-  @NotNull
   @Override
-  public String filterControlSymbols(@NotNull String pattern) {
+  public @NotNull String filterControlSymbols(@NotNull String pattern) {
     if (pattern.indexOf('#') != -1) {
       pattern = applyPatternFilter(pattern, ourPatternToDetectMembers);
     }
@@ -106,22 +98,22 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   }
 
   @Override
+  public boolean isEmptyPatternSupported() {
+    return true;
+  }
+
+  @Override
   public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
     return super.getElementPriority(element, searchPattern) + 5;
   }
 
   @Override
-  protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
-    String path = pathToAnonymousClass(searchText);
-    if (path != null) {
-      psiElement = getElement(psiElement, path);
-    }
-    return super.preparePsi(psiElement, modifiers, searchText);
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    return createPsiExtendedInfo();
   }
 
-  @Nullable
   @Override
-  protected Navigatable createExtendedNavigatable(PsiElement psi, String searchText, int modifiers) {
+  protected @Nullable Navigatable createExtendedNavigatable(PsiElement psi, String searchText, int modifiers) {
     Navigatable res = super.createExtendedNavigatable(psi, searchText, modifiers);
     if (res != null) {
       return res;
@@ -156,12 +148,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     return null;
   }
 
-  private static String pathToAnonymousClass(String searchedText) {
-    return pathToAnonymousClass(ourPatternToDetectAnonymousClasses.matcher(searchedText));
-  }
-
-  @Nullable
-  public static String pathToAnonymousClass(Matcher matcher) {
+  public static @Nullable String pathToAnonymousClass(Matcher matcher) {
     if (matcher.matches()) {
       String path = matcher.group(2);
       if (path != null) {
@@ -186,8 +173,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     return StringUtil.isEmpty(name) ? null : name;
   }
 
-  @Nullable
-  public static Navigatable findMember(String memberPattern, String fullPattern, PsiElement psiElement, VirtualFile file) {
+  public static @Nullable Navigatable findMember(String memberPattern, String fullPattern, PsiElement psiElement, VirtualFile file) {
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
     final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
     final FileEditor[] editors = FileEditorManager.getInstance(psiElement.getProject()).getEditors(file);
@@ -230,15 +216,16 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     }
   }
 
-  @Nullable
-  private static StructureViewTreeElement findElement(StructureViewTreeElement node, PsiElement element, int hopes) {
-    final Object value = node.getValue();
+  private static @Nullable StructureViewTreeElement findElement(StructureViewTreeElement node, PsiElement element, int hopes) {
+    Object value = node.getValue();
     if (value instanceof PsiElement) {
-      if (((PsiElement)value).isEquivalentTo(element)) return node;
+      if (((PsiElement)value).isEquivalentTo(element)) {
+        return node;
+      }
       if (hopes != 0) {
         for (TreeElement child : node.getChildren()) {
           if (child instanceof StructureViewTreeElement) {
-            final StructureViewTreeElement e = findElement((StructureViewTreeElement)child, element, hopes - 1);
+            StructureViewTreeElement e = findElement((StructureViewTreeElement)child, element, hopes - 1);
             if (e != null) {
               return e;
             }
@@ -249,53 +236,14 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     return null;
   }
 
-  @NotNull
-  public static PsiElement getElement(@NotNull PsiElement element, @NotNull String path) {
-    final String[] classes = path.split("\\$");
-    List<Integer> indexes = new ArrayList<>();
-    for (String cls : classes) {
-      if (cls.isEmpty()) continue;
-      try {
-        indexes.add(Integer.parseInt(cls) - 1);
-      }
-      catch (Exception e) {
-        return element;
-      }
-    }
-    PsiElement current = element;
-    for (int index : indexes) {
-      final PsiElement[] anonymousClasses = getAnonymousClasses(current);
-      if (index >= 0 && index < anonymousClasses.length) {
-        current = anonymousClasses[index];
-      }
-      else {
-        return current;
-      }
-    }
-    return current;
-  }
-
-  private static PsiElement @NotNull [] getAnonymousClasses(@NotNull PsiElement element) {
-    for (AnonymousElementProvider provider : AnonymousElementProvider.EP_NAME.getExtensionList()) {
-      final PsiElement[] elements = provider.getAnonymousElements(element);
-      if (elements.length > 0) {
-        return elements;
-      }
-    }
-    return PsiElement.EMPTY_ARRAY;
-  }
-
-  public static class Factory implements SearchEverywhereContributorFactory<Object> {
-
-    @NotNull
+  public static final class Factory implements SearchEverywhereContributorFactory<Object> {
     @Override
-    public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
+    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
       return PSIPresentationBgRendererWrapper.wrapIfNecessary(new ClassSearchEverywhereContributor(initEvent));
     }
   }
 
-  @NotNull
-  static PersistentSearchEverywhereContributorFilter<LanguageRef> createLanguageFilter(@NotNull Project project) {
+  static @NotNull PersistentSearchEverywhereContributorFilter<LanguageRef> createLanguageFilter(@NotNull Project project) {
     List<LanguageRef> items = LanguageRef.forAllLanguages();
     GotoClassSymbolConfiguration persistentConfig = GotoClassSymbolConfiguration.getInstance(project);
     return new PersistentSearchEverywhereContributorFilter<>(items, persistentConfig, LanguageRef::getDisplayName, LanguageRef::getIcon);

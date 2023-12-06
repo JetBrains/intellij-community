@@ -27,12 +27,12 @@ public class MavenProjectImportContextProvider {
   @NotNull
   protected final MavenImportingSettings myImportingSettings;
   @NotNull
-  protected final HashMap<MavenProject, String> myMavenProjectToModuleName;
+  protected final Map<MavenProject, String> myMavenProjectToModuleName;
 
   public MavenProjectImportContextProvider(@NotNull Project project,
                                            @NotNull MavenProjectsTree projectsTree,
                                            @NotNull MavenImportingSettings importingSettings,
-                                           @NotNull HashMap<MavenProject, String> mavenProjectToModuleName) {
+                                           @NotNull Map<MavenProject, String> mavenProjectToModuleName) {
     myProject = project;
     myProjectsTree = projectsTree;
     myImportingSettings = importingSettings;

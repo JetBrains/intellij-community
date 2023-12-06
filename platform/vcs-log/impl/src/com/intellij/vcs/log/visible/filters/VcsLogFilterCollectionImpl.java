@@ -12,6 +12,9 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * @see VcsLogFilterObject#collection(VcsLogFilter...)
+ */
 class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
   private final @NotNull Map<FilterKey, VcsLogFilter> myFilters = new TreeMap<>(Comparator.comparing(key -> key.getName()));
 

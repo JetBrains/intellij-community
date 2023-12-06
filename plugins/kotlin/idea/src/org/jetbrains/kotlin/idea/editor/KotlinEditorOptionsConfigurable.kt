@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.application.options.editor.CheckboxDescriptor
-import com.intellij.openapi.options.ConfigurableBuilder
+import com.intellij.openapi.options.BeanConfigurable
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
 
-private val editorOptions = KotlinEditorOptions.getInstance()
+private val editorOptions get() = KotlinEditorOptions.getInstance()
 
 private val cbConvertPastedJavaToKotlin
     get() = CheckboxDescriptor(
@@ -36,7 +36,7 @@ internal val kotlinEditorOptionsDescriptors
         cbAutoAddValKeywordToCtorParameters
     ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
-class KotlinEditorOptionsConfigurable : ConfigurableBuilder(message(ID)) {
+class KotlinEditorOptionsConfigurable : BeanConfigurable<KotlinEditorOptions>(editorOptions, message(ID)) {
 
     init {
         checkBox(cbConvertPastedJavaToKotlin)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes.metadata
 
 import com.intellij.openapi.project.Project
@@ -11,7 +11,10 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.themes.DevKitThemesBundle
 import java.util.*
 
-class ThemeMetadataJsonSchemaProviderFactory : JsonSchemaProviderFactory {
+@NonNls
+internal const val THEME_METADATA_JSON_EXTENSION = "themeMetadata.json"
+
+internal class ThemeMetadataJsonSchemaProviderFactory : JsonSchemaProviderFactory {
 
   override fun getProviders(project: Project): MutableList<JsonSchemaFileProvider> {
     return Collections.singletonList(object : JsonSchemaFileProvider {
@@ -19,20 +22,16 @@ class ThemeMetadataJsonSchemaProviderFactory : JsonSchemaProviderFactory {
 
       override fun isAvailable(file: VirtualFile): Boolean = file.nameSequence.endsWith(DOT_EXTENSION)
 
-      override fun getSchemaFile(): VirtualFile? = VfsUtil.findFileByURL(javaClass.getResource(THEME_METADATA_SCHEMA))
+      override fun getSchemaFile(): VirtualFile? = VfsUtil.findFileByURL(javaClass.getResource(THEME_METADATA_SCHEMA)!!)
 
       override fun getSchemaType(): SchemaType = SchemaType.embeddedSchema
     })
   }
 
-  companion object {
-    @NonNls
-    const val EXTENSION = "themeMetadata.json"
+  @NonNls
+  private val DOT_EXTENSION = ".$THEME_METADATA_JSON_EXTENSION"
 
-    @NonNls
-    private const val DOT_EXTENSION = ".$EXTENSION"
+  @NonNls
+  private val THEME_METADATA_SCHEMA = "/schemes/themeMetadata.schema.json"
 
-    @NonNls
-    private const val THEME_METADATA_SCHEMA = "/schemes/themeMetadata.schema.json"
-  }
 }

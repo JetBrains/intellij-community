@@ -7,9 +7,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.util.onTerminationOrNow
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.isFile
-import com.intellij.util.io.size
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Signal
 import com.sun.net.httpserver.HttpHandler
@@ -28,6 +25,24 @@ import kotlin.io.path.*
 // .startServerAndServeClient(lifetime, clientDistribution, clientJdkBuildTxt)
 @ApiStatus.Experimental
 interface JetBrainsClientDownloaderConfigurationProvider {
+
+  companion object {
+    const val THIN_CLIENT_DOWNLOAD_URL_KEY = "THIN_CLIENT_DOWNLOAD_URL"
+    val thinClientDownloadUrlValue: String?
+      get() = System.getenv(THIN_CLIENT_DOWNLOAD_URL_KEY)
+
+    const val THIN_CLIENT_VERIFY_SIGNATURE_KEY = "THIN_CLIENT_VERIFY_SIGNATURE"
+    val thinClientVerifySignatureValue: Boolean?
+      get() = System.getenv(THIN_CLIENT_VERIFY_SIGNATURE_KEY)?.toBoolean()
+
+    const val THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY = "THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT"
+    val thinClientDownloadLatestBuildFromCDNForSnapshotValue: Boolean?
+      get() = System.getenv(THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY)?.toBoolean()
+
+    val customPropertiesAreSet
+      get() = thinClientDownloadUrlValue != null && thinClientDownloadLatestBuildFromCDNForSnapshotValue != null && thinClientVerifySignatureValue != null
+  }
+
   fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine)
 
   val clientDownloadUrl: URI
@@ -52,7 +67,10 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine) { }
 
   override val clientDownloadUrl: URI
-    get() = RemoteDevSystemSettings.getClientDownloadUrl().value
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientDownloadUrlValue
+      return envVar?.let { URI(it) } ?: RemoteDevSystemSettings.getClientDownloadUrl().value
+    }
   override val jreDownloadUrl: URI
     get() = RemoteDevSystemSettings.getJreDownloadUrl().value
 
@@ -69,7 +87,11 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled()
   override val modifiedDateInManifestIncluded: Boolean
     get() = IntellijClientDownloaderSystemSettings.isModifiedDateInManifestIncluded()
-  override val verifySignature: Boolean = true
+  override val verifySignature: Boolean
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientVerifySignatureValue
+      return envVar ?: true
+    }
 
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
 
@@ -77,7 +99,11 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val clientLaunched: Signal<Unit> = Signal()
 
-  override val downloadLatestBuildFromCDNForSnapshotHost = true
+  override val downloadLatestBuildFromCDNForSnapshotHost: Boolean
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientDownloadLatestBuildFromCDNForSnapshotValue
+      return envVar ?: true
+    }
 }
 
 @ApiStatus.Experimental
@@ -108,22 +134,24 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val clientLaunched: Signal<Unit> = Signal()
 
-  override val downloadLatestBuildFromCDNForSnapshotHost = false
+  override val downloadLatestBuildFromCDNForSnapshotHost: Boolean
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientDownloadLatestBuildFromCDNForSnapshotValue
+      return envVar ?: false
+    }
 
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
     thisLogger().info("Patching $vmOptionsFile")
 
     val traceCategories = listOf("#com.jetbrains.rdserver.joinLinks", "#com.jetbrains.rd.platform.codeWithMe.network")
 
-    val debugOptions = run {
-      if (isDebugEnabled) {
-        val suspendOnStart = if (debugSuspendOnStart) "y" else "n"
+    val debugOptions = if (isDebugEnabled) {
+      val suspendOnStart = if (debugSuspendOnStart) "y" else "n"
 
-        // changed in Java 9, now we have to use *: to listen on all interfaces
-          "-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$debugPort"
-      }
-      else ""
+      // changed in Java 9, now we have to use *: to listen on all interfaces
+      "-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=*:$debugPort"
     }
+    else ""
 
     val testVmOptions = listOf(
       "-Djb.consents.confirmation.enabled=false", // hz
@@ -144,7 +172,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
       "-Didea.log.trace.categories=${traceCategories.joinToString(",")}",
       debugOptions).joinToString(separator = "\n", prefix = "\n")
 
-    require(vmOptionsFile.isFile() && vmOptionsFile.exists())
+    require(vmOptionsFile.isRegularFile() && vmOptionsFile.exists())
 
     val originalContent = vmOptionsFile.readText(Charsets.UTF_8)
     thisLogger().info("Original .vmoptions=\n$originalContent")
@@ -189,13 +217,13 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   fun serveFile(file: Path) {
     require(file.exists())
-    require(file.isFile())
+    require(file.isRegularFile())
 
     val server = tarGzServer
     require(server != null)
 
     server.createContext("/${file.name}", HttpHandler { httpExchange ->
-      httpExchange.sendResponseHeaders(200, file.size())
+      httpExchange.sendResponseHeaders(200, file.fileSize())
       httpExchange.responseBody.use { responseBody ->
         file.inputStream().use {
           it.copyTo(responseBody, 1024 * 1024)

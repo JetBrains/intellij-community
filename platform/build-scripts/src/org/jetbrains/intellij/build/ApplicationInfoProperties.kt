@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 interface ApplicationInfoProperties {
@@ -9,6 +9,7 @@ interface ApplicationInfoProperties {
   val fullVersionFormat: String
   val isEAP: Boolean
   val versionSuffix: String?
+  val isRelease: Boolean get() = !isEAP && versionSuffix == null
   /**
    * The first number from 'minor' part of the version. This property is temporary added because some products specify composite number (like '1.3')
    * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
@@ -16,7 +17,7 @@ interface ApplicationInfoProperties {
   val minorVersionMainPart: String
   val shortProductName: String
   val productCode: String
-  val productName: String
+  val fullProductName: String
   val majorReleaseDate: String
   val releaseVersionForLicensing: String
   val edition: String?
@@ -25,11 +26,12 @@ interface ApplicationInfoProperties {
   val shortCompanyName: String
   val svgRelativePath: String?
   val svgProductIcons: List<String>
+  @Deprecated("Use ProductProperties::baseDownloadUrl instead")
   val patchesUrl: String?
-
-  val upperCaseProductName: String
   val fullVersion: String
   val productNameWithEdition: String
+
+  val launcherName: String
 
   val appInfoXml: String
 }

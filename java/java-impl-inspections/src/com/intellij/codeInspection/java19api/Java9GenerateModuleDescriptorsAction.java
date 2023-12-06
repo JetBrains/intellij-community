@@ -567,7 +567,7 @@ public final class Java9GenerateModuleDescriptorsAction extends AnAction {
       return builder.toString();
     }
 
-    static String @NotNull [] splitByDots(@NotNull String text) {
+    static @NotNull String @NotNull [] splitByDots(@NotNull String text) {
       return SINGLE_DOT.split(text);
     }
   }
@@ -583,7 +583,7 @@ public final class Java9GenerateModuleDescriptorsAction extends AnAction {
 
       List<PsiJavaModule> modules = new ArrayList<>();
       for (String key : index.getAllKeys(project)) {
-        modules.addAll(index.get(key, project, scope));
+        modules.addAll(index.getModules(key, project, scope));
       }
       myNameGenerator = new UniqueNameGenerator(modules, module -> ReadAction.compute(() -> module.getName()));
     }

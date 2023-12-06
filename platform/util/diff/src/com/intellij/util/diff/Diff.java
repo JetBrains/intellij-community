@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.containers.Enumerator;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,8 +17,7 @@ import java.util.BitSet;
 public final class Diff {
   private static final LoggerRt LOG = LoggerRt.getInstance(Diff.class);
 
-  @Nullable
-  public static Change buildChanges(@NotNull CharSequence before, @NotNull CharSequence after) throws FilesTooBigForDiffException {
+  public static @Nullable Change buildChanges(@NotNull CharSequence before, @NotNull CharSequence after) throws FilesTooBigForDiffException {
     return buildChanges(splitLines(before), splitLines(after));
   }
 
@@ -25,8 +25,13 @@ public final class Diff {
     return s.length() == 0 ? new String[]{""} : LineTokenizer.tokenize(s, false, false);
   }
 
-  @Nullable
-  public static <T> Change buildChanges(T @NotNull [] objects1, T @NotNull [] objects2) throws FilesTooBigForDiffException {
+  public static @Nullable <T> Change buildChanges(T @NotNull [] objects1, T @NotNull [] objects2) throws FilesTooBigForDiffException {
+    return buildChanges(objects1, objects2, HashingStrategy.canonical());
+  }
+
+  public static @Nullable <T> Change buildChanges(T @NotNull [] objects1,
+                                                  T @NotNull [] objects2,
+                                                  @NotNull HashingStrategy<? super T> strategy) throws FilesTooBigForDiffException {
     // Old variant of enumerator worked incorrectly with null values.
     // This check is to ensure that the corrected version does not introduce bugs.
     for (T anObjects1 : objects1) {
@@ -36,14 +41,14 @@ public final class Diff {
       assert anObjects2 != null;
     }
 
-    final int startShift = getStartShift(objects1, objects2);
-    final int endCut = getEndCut(objects1, objects2, startShift);
+    int startShift = getStartShift(objects1, objects2, strategy);
+    int endCut = getEndCut(objects1, objects2, startShift, strategy);
 
     Ref<Change> changeRef = doBuildChangesFast(objects1.length, objects2.length, startShift, endCut);
     if (changeRef != null) return changeRef.get();
 
     int trimmedLength = objects1.length + objects2.length - 2 * startShift - 2 * endCut;
-    Enumerator<T> enumerator = new Enumerator<>(trimmedLength);
+    Enumerator<T> enumerator = new Enumerator<>(trimmedLength, strategy);
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
     return doBuildChanges(ints1, ints2, new ChangeBuilder(startShift));
@@ -109,22 +114,22 @@ public final class Diff {
     return builder.getFirstChange();
   }
 
-  private static <T> int getStartShift(final T @NotNull [] o1, final T @NotNull [] o2) {
-    final int size = Math.min(o1.length, o2.length);
+  private static <T> int getStartShift(T @NotNull [] o1, T @NotNull [] o2, @NotNull HashingStrategy<? super T> strategy) {
+    int size = Math.min(o1.length, o2.length);
     int idx = 0;
     for (int i = 0; i < size; i++) {
-      if (!o1[i].equals(o2[i])) break;
+      if (!strategy.equals(o1[i], o2[i])) break;
       ++idx;
     }
     return idx;
   }
 
-  private static <T> int getEndCut(final T @NotNull [] o1, final T @NotNull [] o2, int startShift) {
-    final int size = Math.min(o1.length, o2.length) - startShift;
+  private static <T> int getEndCut(T @NotNull [] o1, T @NotNull [] o2, int startShift, @NotNull HashingStrategy<? super T> strategy) {
+    int size = Math.min(o1.length, o2.length) - startShift;
     int idx = 0;
 
     for (int i = 0; i < size; i++) {
-      if (!o1[o1.length - i - 1].equals(o2[o2.length - i - 1])) break;
+      if (!strategy.equals(o1[o1.length - i - 1], o2[o2.length - i - 1])) break;
       ++idx;
     }
     return idx;

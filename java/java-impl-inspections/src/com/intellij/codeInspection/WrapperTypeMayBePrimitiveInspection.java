@@ -6,6 +6,8 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -326,7 +328,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     }
   }
 
-  private static class ConvertWrapperTypeToPrimitive implements LocalQuickFix {
+  private static class ConvertWrapperTypeToPrimitive extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -342,8 +344,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiTypeElement typeElement = tryCast(element, PsiTypeElement.class);
       if (typeElement == null) return;
       PsiLocalVariable variable = tryCast(typeElement.getParent(), PsiLocalVariable.class);

@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -112,7 +114,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
     TRUE, FALSE, UNKNOWN
   }
 
-  private static class ConvertInstanceOfPatternToCastFix implements LocalQuickFix {
+  private static class ConvertInstanceOfPatternToCastFix extends PsiUpdateModCommandQuickFix {
 
     private final String myName;
     private final boolean tryToPreserveUnusedVariables;
@@ -137,8 +139,8 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!(descriptor.getPsiElement() instanceof PsiInstanceOfExpression expression)) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (!(element instanceof PsiInstanceOfExpression expression)) {
         return;
       }
       PsiPrimaryPattern pattern = expression.getPattern();

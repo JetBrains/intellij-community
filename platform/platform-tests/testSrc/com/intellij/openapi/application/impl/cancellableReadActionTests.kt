@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationListener
@@ -44,7 +44,6 @@ private inline fun <reified T : Throwable> testComputeCancellableRethrow(t: T) {
     }
   }
   assertSame(t, thrown)
-  assertFalse(Cancellation.isCancelled())
 }
 
 fun testThrowsIfPendingWrite() {
@@ -84,7 +83,7 @@ fun testDoesntThrowWhenAlmostFinished() {
   val result = computeCancellable {
     testNoExceptions()
     waitForPendingWrite().up()
-    assertThrows<JobCanceledException> { // cancelled
+    assertThrows<CeProcessCanceledException> { // cancelled
       testExceptions()
     }
     42 // but returning the result doesn't throw CannotReadException

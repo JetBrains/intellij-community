@@ -12,7 +12,6 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.lang.JavaVersion;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -26,7 +25,7 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   private static final String DEFAULT_JDK_CONFIGURED = "defaultJdkConfigured";
 
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {
-    return (JavaAwareProjectJdkTableImpl)ApplicationManager.getApplication().getService(ProjectJdkTable.class);
+    return (JavaAwareProjectJdkTableImpl)ProjectJdkTable.getInstance();
   }
 
   private Sdk myInternalJdk;
@@ -99,12 +98,6 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   @Override
   public SdkTypeId getDefaultSdkType() {
     return JavaSdk.getInstance();
-  }
-
-  @Override
-  public void loadState(@NotNull Element element) {
-    myInternalJdk = null;
-    super.loadState(element);
   }
 
   @TestOnly

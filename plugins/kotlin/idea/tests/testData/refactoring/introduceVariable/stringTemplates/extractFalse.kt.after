@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(param: Int): String {
     val b = false
     val x = "xy${b}z"

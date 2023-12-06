@@ -41,6 +41,8 @@
                         serviceImplementation="com.intellij.find.ngrams.TrigramTextSearchService"/>
     <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
                         serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.modcommand.ModCommandService"
+                        serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
                     serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
@@ -64,5 +66,6 @@
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.PlainTextFormatter"/>
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonInspectionsReportConverter"/>
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonSingleFileInspectionsReportConverter"/>
+    <optionController implementation="com.intellij.codeInspection.ex.CurrentProfileOptionControllerProvider"/>
   </extensions>
 </idea-plugin>

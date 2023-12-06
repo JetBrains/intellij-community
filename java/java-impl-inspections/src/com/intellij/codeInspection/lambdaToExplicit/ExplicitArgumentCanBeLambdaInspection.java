@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lambdaToExplicit;
 
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
@@ -37,7 +39,7 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
     };
   }
 
-  private static class ConvertExplicitCallToLambdaFix implements LocalQuickFix {
+  private static class ConvertExplicitCallToLambdaFix extends PsiUpdateModCommandQuickFix {
     private final LambdaAndExplicitMethodPair myInfo;
     private final String myName;
 
@@ -61,8 +63,8 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression arg = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiExpression arg = ObjectUtils.tryCast(element, PsiExpression.class);
       if (arg == null) return;
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(arg, PsiMethodCallExpression.class);
       if (call == null) return;

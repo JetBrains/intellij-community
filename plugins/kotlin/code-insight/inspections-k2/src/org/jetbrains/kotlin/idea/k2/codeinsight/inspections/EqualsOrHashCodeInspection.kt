@@ -12,16 +12,20 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.DeletePsiElementsFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.isNonNullableBooleanType
+import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.GenerateFunctionFix
-import org.jetbrains.kotlin.idea.core.AbstractKotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
@@ -34,15 +38,7 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
 import org.jetbrains.kotlin.util.OperatorNameConventions.HASH_CODE
 
-class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
-    /**
-     * A name suggester object for `hashCode()` result.
-     *
-     * TODO: Replace [HashCodeResultVariableNameSuggester] with [org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester].
-     *  At this moment, it causes a compile error "Class [org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester] is compiled by
-     *  a pre-release version of Kotlin and cannot be loaded by this version of the compiler"
-     */
-    private object HashCodeResultVariableNameSuggester : AbstractKotlinNameSuggester()
+internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
 
     private class Equals(function: String, body: String) : GenerateFunctionFix(function, body) {
         override fun getName() = KotlinBundle.message("equals.text")
@@ -52,7 +48,9 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         override fun getName() = KotlinBundle.message("hash.code.text")
     }
 
-    private fun KtAnalysisSession.matchesEqualsMethodSignature(function: KtFunctionSymbol): Boolean {
+    context(KtAnalysisSession)
+    private fun matchesEqualsMethodSignature(function: KtFunctionSymbol): Boolean {
+        if (function.modality == Modality.ABSTRACT) return false
         if (function.name != EQUALS) return false
         if (function.typeParameters.isNotEmpty()) return false
         val param = function.valueParameters.singleOrNull() ?: return false
@@ -63,7 +61,9 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         }
     }
 
-    private fun KtAnalysisSession.matchesHashCodeMethodSignature(function: KtFunctionSymbol): Boolean {
+    context(KtAnalysisSession)
+    private fun matchesHashCodeMethodSignature(function: KtFunctionSymbol): Boolean {
+        if (function.modality == Modality.ABSTRACT) return false
         if (function.name != HASH_CODE) return false
         if (function.typeParameters.isNotEmpty()) return false
         if (function.valueParameters.isNotEmpty()) return false
@@ -75,16 +75,19 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
      * Finds methods whose name is [methodName] not only from the class [classSymbol] but also its parent classes,
      * and returns method symbols after filtering them using [condition].
      */
-    private fun KtAnalysisSession.findMethod(
+    context(KtAnalysisSession)
+    private fun findMethod(
         classSymbol: KtClassOrObjectSymbol, methodName: Name, condition: (KtCallableSymbol) -> Boolean
-    ): KtCallableSymbol? = classSymbol.getMemberScope().getCallableSymbols { name -> name == methodName }.filter(condition).singleOrNull()
+    ): KtCallableSymbol? = classSymbol.getMemberScope().getCallableSymbols(methodName).filter(condition).singleOrNull()
 
-    private fun KtAnalysisSession.findEqualsMethodForClass(classSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
+    context(KtAnalysisSession)
+    private fun findEqualsMethodForClass(classSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
         findMethod(classSymbol, EQUALS) { callableSymbol ->
             (callableSymbol as? KtFunctionSymbol)?.let { matchesEqualsMethodSignature(it) } == true
         }
 
-    private fun KtAnalysisSession.findHashCodeMethodForClass(classSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
+    context(KtAnalysisSession)
+    private fun findHashCodeMethodForClass(classSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
         findMethod(classSymbol, HASH_CODE) { callableSymbol ->
             (callableSymbol as? KtFunctionSymbol)?.let { matchesHashCodeMethodSignature(it) } == true
         }
@@ -115,8 +118,9 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         }
     }
 
-    private fun KtAnalysisSession.getPropertiesToUseInGeneratedMember(classOrObject: KtClassOrObject): List<KtNamedDeclaration> =
-        buildList {
+    context(KtAnalysisSession)
+    private fun getPropertiesToUseInGeneratedMember(classOrObject: KtClassOrObject): List<KtNamedDeclaration> =
+        buildList<KtNamedDeclaration> {
             classOrObject.primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
             classOrObject.declarations.asSequence().filterIsInstance<KtProperty>().filterTo(this) {
                 it.getVariableSymbol() is KtPropertySymbol
@@ -127,7 +131,8 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
 
     private fun KtElement.canUseArrayContentFunctions() = languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_1_1
 
-    private fun KtAnalysisSession.generateArraysEqualsCall(
+    context(KtAnalysisSession)
+    private fun generateArraysEqualsCall(
         type: KtType, canUseContentFunctions: Boolean, arg1: String, arg2: String
     ): String {
         return if (canUseContentFunctions) {
@@ -139,7 +144,8 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         }
     }
 
-    private fun KtAnalysisSession.generateArrayHashCodeCall(
+    context(KtAnalysisSession)
+    private fun generateArrayHashCodeCall(
         variableType: KtType?, canUseContentFunctions: Boolean, argument: String
     ): String {
         return if (canUseContentFunctions) {
@@ -276,12 +282,12 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 val isNullable = type.isMarkedNullable
 
                 var text = when {
-                    type == builtinTypes.BYTE || type == builtinTypes.SHORT || type == builtinTypes.INT -> ref
+                    type isEqualTo builtinTypes.BYTE || type isEqualTo builtinTypes.SHORT || type isEqualTo builtinTypes.INT -> ref
 
                     type.isArrayOrPrimitiveArray() -> {
                         val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()
                         val shouldWrapInLet = isNullable && !canUseArrayContentFunctions
-                        val hashCodeArg = if (shouldWrapInLet) "it" else ref
+                        val hashCodeArg = if (shouldWrapInLet) StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier else ref
                         val hashCodeCall = generateArrayHashCodeCall(type, canUseArrayContentFunctions, hashCodeArg)
                         if (shouldWrapInLet) "$ref?.let { $hashCodeCall }" else hashCodeCall
                     }
@@ -319,7 +325,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
             bodyText =
                 if (propertyIterator.hasNext()) { // TODO: Confirm that `variablesForHashCode.map { it.name?.quoteIfNeeded()!! }` is safe here
                     val validator = CollectingNameValidator(variablesForHashCode.map { it.name?.quoteIfNeeded()!! })
-                    val resultVarName = HashCodeResultVariableNameSuggester.suggestNameByName("result", validator)
+                    val resultVarName = KotlinNameSuggester.suggestNameByName("result", validator)
                     buildString {
                         append("var $resultVarName = $initialValue\n")
                         propertyIterator.forEach { append("$resultVarName = 31 * $resultVarName + ${it.genVariableHashCode(true)}\n") }
@@ -339,12 +345,10 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 Pair(
                     classOrObjectMemberDeclarations.singleOrNull {
                         val function = it.getSymbol() as? KtFunctionSymbol ?: return@singleOrNull false
-                        if (function.name != EQUALS) return@singleOrNull false
                         matchesEqualsMethodSignature(function)
                     } as? KtNamedFunction,
                     classOrObjectMemberDeclarations.singleOrNull {
                         val function = it.getSymbol() as? KtFunctionSymbol ?: return@singleOrNull false
-                        if (function.name != HASH_CODE) return@singleOrNull false
                         matchesHashCodeMethodSignature(function)
                     } as? KtNamedFunction,
                 )

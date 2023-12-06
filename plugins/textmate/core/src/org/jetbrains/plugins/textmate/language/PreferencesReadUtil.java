@@ -46,8 +46,8 @@ public final class PreferencesReadUtil {
       if (chars.size() == 2) {
         String left = chars.get(0).getString();
         String right = chars.get(1).getString();
-        if (left.length() == 1 && right.length() == 1) {
-          result.add(new TextMateBracePair(left.charAt(0), right.charAt(0)));
+        if (!left.isEmpty() && !right.isEmpty()) {
+          result.add(new TextMateBracePair(left, right));
         }
       }
     }

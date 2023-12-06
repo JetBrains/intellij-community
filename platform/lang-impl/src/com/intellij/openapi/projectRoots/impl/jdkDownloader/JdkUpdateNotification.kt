@@ -58,7 +58,7 @@ class JdkUpdateNotification(val jdk: Sdk,
    */
   private var myRetryNotification : Notification? = null
 
-  val persistentId = "${jdk.name}-${oldItem.fullPresentationText}-${newItem.fullPresentationText}-${jdk.homePath}"
+  val persistentId: String = "${jdk.name}-${oldItem.fullPresentationText}-${newItem.fullPresentationText}-${jdk.homePath}"
 
   private fun Notification.bindNextNotificationAndShow() {
     bindNextNotification(this)
@@ -111,7 +111,7 @@ class JdkUpdateNotification(val jdk: Sdk,
     whenComplete(this)
   }
 
-  fun isTerminated() = lock.withLock { myIsTerminated }
+  fun isTerminated(): Boolean = lock.withLock { myIsTerminated }
 
   inner class InstallUpdateNotification : NotificationAction(ProjectBundle.message("notification.link.jdk.update.retry")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
@@ -120,12 +120,12 @@ class JdkUpdateNotification(val jdk: Sdk,
     }
   }
 
-  val updateAction = JdkUpdateSuggestionAction()
+  val updateAction: JdkUpdateSuggestionAction = JdkUpdateSuggestionAction()
 
-  val isUpdateActionVisible get() = !myIsUpdateRunning && !myIsTerminated
+  val isUpdateActionVisible: Boolean get() = !myIsUpdateRunning && !myIsTerminated
 
   inner class JdkUpdateSuggestionAction : SettingsEntryPointAction.UpdateAction() {
-    val jdkUpdateNotification = this@JdkUpdateNotification
+    val jdkUpdateNotification: JdkUpdateNotification = this@JdkUpdateNotification
 
     init {
       templatePresentation.text = ProjectBundle.message("action.title.jdk.update.found",
@@ -139,7 +139,7 @@ class JdkUpdateNotification(val jdk: Sdk,
       e.presentation.isEnabledAndVisible = isUpdateActionVisible
     }
 
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
       performUpdateAction(e)

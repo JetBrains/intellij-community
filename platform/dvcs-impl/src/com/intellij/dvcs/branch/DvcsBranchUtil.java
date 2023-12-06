@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -26,7 +25,7 @@ public final class DvcsBranchUtil {
   private static boolean repoAndSourceAreEqual(@Nullable Repository repository,
                                                @NotNull String sourceBranch,
                                                @NotNull DvcsBranchInfo targetInfo) {
-    return getPathFor(repository).equals(targetInfo.repoPath) && StringUtil.equals(targetInfo.sourceName, sourceBranch);
+    return StringUtil.equals(targetInfo.sourceName, sourceBranch) && getPathFor(repository).equals(targetInfo.repoPath);
   }
 
   @NotNull
@@ -45,8 +44,6 @@ public final class DvcsBranchUtil {
   }
 
   public static @Nls @NotNull String shortenBranchName(@Nls @NotNull String fullBranchName) {
-    // -1, because there are arrows indicating that it is a popup
-    int maxLength = DvcsBundle.message("branch.popup.maximum.branch.length.sample").length() - 1;
-    return StringUtil.shortenTextWithEllipsis(fullBranchName, maxLength, 5);
+    return StringUtil.shortenTextWithEllipsis(fullBranchName, 100, 5);
   }
 }

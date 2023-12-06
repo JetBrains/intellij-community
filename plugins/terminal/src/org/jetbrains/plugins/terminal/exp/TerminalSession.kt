@@ -2,83 +2,110 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.util.ConcurrencyUtil
+import com.intellij.terminal.TerminalColorPalette
+import com.intellij.terminal.TerminalExecutorServiceManagerImpl
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
-import com.jediterm.terminal.RequestOrigin
-import com.jediterm.terminal.TerminalStarter
-import com.jediterm.terminal.TtyBasedArrayDataStream
-import com.jediterm.terminal.TtyConnector
-import com.jediterm.terminal.model.JediTermDebouncerImpl
-import com.jediterm.terminal.model.JediTermTypeAheadModel
-import com.jediterm.terminal.model.StyleState
-import com.jediterm.terminal.model.TerminalTextBuffer
-import java.awt.event.KeyEvent
-import java.util.concurrent.ExecutorService
+import com.jediterm.terminal.*
+import com.jediterm.terminal.model.*
+import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.util.ShellIntegration
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
 
-private var sessionIndex = 1
-
-class TerminalSession(private val project: Project,
-                      private val settings: JBTerminalSystemSettingsProviderBase) : Disposable {
+class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
+                      val colorPalette: TerminalColorPalette,
+                      val shellIntegration: ShellIntegration?) : Disposable {
   val model: TerminalModel
-  lateinit var terminalStarter: TerminalStarter
-  val completionManager: TerminalCompletionManager
+  internal val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
 
-  private val terminalExecutor: ExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Terminal-${sessionIndex++}")
+  private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
   private val textBuffer: TerminalTextBuffer
-  private val controller: TerminalController
-  private val commandManager: ShellCommandManager
+  internal val controller: JediTerminal
+  internal val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
+  private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
 
   init {
     val styleState = StyleState()
-    styleState.setDefaultStyle(settings.defaultStyle)
-    textBuffer = TerminalTextBufferEx(80, 24, styleState)
-    model = TerminalModel(textBuffer, styleState)
-    controller = TerminalController(model, settings)
+    val defaultStyle = TextStyle(TerminalColor { colorPalette.defaultForeground },
+                                 TerminalColor { colorPalette.defaultBackground })
+    styleState.setDefaultStyle(defaultStyle)
+    textBuffer = TerminalTextBuffer(80, 24, styleState, AdvancedSettings.getInt("terminal.buffer.max.lines.count"), null)
+    model = TerminalModel(textBuffer)
+    controller = JediTerminal(ModelUpdatingTerminalDisplay(model, settings), textBuffer, styleState)
 
-    commandManager = ShellCommandManager(controller)
-    completionManager = TerminalCompletionManager(model) { terminalStarter }
+    commandManager = ShellCommandManager(this)
 
     val typeAheadTerminalModel = JediTermTypeAheadModel(controller, textBuffer, settings)
     typeAheadManager = TerminalTypeAheadManager(typeAheadTerminalModel)
-    val typeAheadDebouncer = JediTermDebouncerImpl(typeAheadManager::debounce, TerminalTypeAheadManager.MAX_TERMINAL_DELAY)
+    val typeAheadDebouncer = JediTermDebouncerImpl(typeAheadManager::debounce, TerminalTypeAheadManager.MAX_TERMINAL_DELAY, executorServiceManager)
     typeAheadManager.setClearPredictionsDebouncer(typeAheadDebouncer)
   }
 
   fun start(ttyConnector: TtyConnector) {
-    terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector), typeAheadManager)
-    terminalExecutor.submit {
-      terminalStarter.start()
+    val terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector),
+                                          typeAheadManager, executorServiceManager)
+    terminalStarterFuture.complete(terminalStarter)
+    executorServiceManager.unboundedExecutorService.submit {
+      try {
+        terminalStarter.start()
+      }
+      catch (t: Throwable) {
+        thisLogger().error(t)
+      }
+      finally {
+        try {
+          ttyConnector.close()
+        }
+        catch (t: Throwable) {
+          thisLogger().error(t)
+        }
+        finally {
+          for (terminationListener in terminationListeners) {
+            terminationListener.run()
+          }
+        }
+      }
     }
   }
 
-  fun executeCommand(command: String) {
-    val enterCode = terminalStarter.getCode(KeyEvent.VK_ENTER, 0)
-    terminalStarter.sendString(command, false)
-    terminalStarter.sendBytes(enterCode, false)
+  fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
+    TerminalUtil.addItem(terminationListeners, onTerminated, parentDisposable)
+  }
+
+  fun sendCommandToExecute(shellCommand: String) {
+    commandManager.sendCommandToExecute(shellCommand)
   }
 
   fun postResize(newSize: TermSize) {
-    // it can be executed right after component is shown,
-    // terminal starter can not be initialized at this point
-    if (this::terminalStarter.isInitialized) {
-      terminalStarter.postResize(newSize, RequestOrigin.User)
+    terminalStarterFuture.thenAccept {
+      if (it != null && (newSize.columns != model.width || newSize.rows != model.height)) {
+        typeAheadManager.onResize()
+        it.postResize(newSize, RequestOrigin.User)
+      }
     }
   }
 
-  fun addCommandListener(listener: ShellCommandListener, parentDisposable: Disposable) {
+  fun addCommandListener(listener: ShellCommandListener, parentDisposable: Disposable = this) {
     commandManager.addListener(listener, parentDisposable)
   }
 
   override fun dispose() {
-    terminalExecutor.shutdown()
-    // Can be disposed before session is started
-    if (this::terminalStarter.isInitialized) {
-      terminalStarter.close()
-    }
+    executorServiceManager.shutdownWhenAllExecuted()
+    // Complete to avoid memory leaks with hanging callbacks. If already completed, nothing will change.
+    terminalStarterFuture.complete(null)
+    terminalStarterFuture.getNow(null)?.close()
+  }
+
+  companion object {
+    val KEY: Key<TerminalSession> = Key.create("TerminalSession")
+    val DATA_KEY: DataKey<TerminalSession> = DataKey.create("TerminalSession")
   }
 }

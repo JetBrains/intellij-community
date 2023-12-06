@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.ide.JavaUiBundle
@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
@@ -34,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.TimeoutUtil
@@ -176,8 +176,8 @@ object NewProjectUtil {
               ApplicationManager.getApplication().invokeLater(
                 {
                   ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
-                }, ModalityState.NON_MODAL, newProject.disposed)
-            }, ModalityState.NON_MODAL, newProject.disposed)
+                }, ModalityState.nonModal(), newProject.disposed)
+            }, ModalityState.nonModal(), newProject.disposed)
         }
       }
 

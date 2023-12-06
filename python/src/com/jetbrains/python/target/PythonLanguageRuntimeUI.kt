@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.layout.panel
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkPanel
@@ -25,12 +27,14 @@ class PythonLanguageRuntimeUI(project: Project,
 
   private val panel: PyAddTargetBasedSdkPanel by lazy {
     PyAddTargetBasedSdkPanel(project = project, module = null, existingSdks = existingSdks, targetSupplier = targetSupplier,
-                             config = config, introspectable = introspectable)
+                             config = config, introspectable = introspectable).apply {
+                               disposable?.let { Disposer.register(it, this) }
+    }
   }
 
   override fun createPanel(): DialogPanel =
     panel {
-      row { panel.createCenterPanel()() }
+      row { cell(panel.createCenterPanel()).align(AlignX.FILL) }
     }
 
   override fun apply() {
@@ -43,8 +47,8 @@ class PythonLanguageRuntimeUI(project: Project,
     this.introspectable = introspectable
   }
 
-  override fun createCustomTool(savedConfiguration: TargetEnvironmentConfiguration): Sdk? {
-    return panel.getOrCreateSdk(savedConfiguration)
+  override fun createCustomTool(): Sdk? {
+    return panel.getOrCreateSdk()
   }
 
   override fun validate(): Collection<ValidationInfo> = panel.doValidateAll()

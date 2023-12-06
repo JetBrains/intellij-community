@@ -49,7 +49,7 @@ public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAc
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (InjectedLanguageManager.getInstance(editor.getProject()).isInjectedFragment(file)) {
+    if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
       PsiElement psiElement = getStartElement();
       if (psiElement == null || psiElement.getContainingFile() != file) return false;
     }

@@ -43,7 +43,6 @@ class ModuleSettingsComponent(
             }
         }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun updateModule(module: Module) {
         moduleDependenciesComponent.module = module
         val moduleSettingComponents = buildList {
@@ -122,7 +121,6 @@ private class ModuleTemplateComponent(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private val dropDown = DropDownComponent(
         context,
         initialValues = templates,

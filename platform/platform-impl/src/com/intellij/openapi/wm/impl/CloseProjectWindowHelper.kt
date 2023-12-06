@@ -29,7 +29,7 @@ open class CloseProjectWindowHelper {
   private val isShowWelcomeScreen: Boolean
     get() = isMacSystemMenu && isShowWelcomeScreenFromSettings
 
-  protected open val isShowWelcomeScreenFromSettings
+  protected open val isShowWelcomeScreenFromSettings: Boolean
     get() = GeneralSettings.getInstance().isShowWelcomeScreen
 
   @RequiresEdt

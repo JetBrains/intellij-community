@@ -12,6 +12,7 @@ import java.io.Reader
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 object GitLabRestJsonDataDeSerializer : JsonDataSerializer, JsonDataDeserializer {
 
   private val mapper: ObjectMapper = jacksonObjectMapper()
@@ -33,8 +34,16 @@ object GitLabRestJsonDataDeSerializer : JsonDataSerializer, JsonDataDeserializer
 
   override fun toJsonBytes(content: Any): ByteArray = mapper.writeValueAsBytes(content)
 
-  override fun <T> fromJson(bodyReader: Reader, clazz: Class<T>): T = mapper.readValue(bodyReader, clazz)
+  // this is required to handle empty reader/stream without an exception
+  override fun <T> fromJson(bodyReader: Reader, clazz: Class<T>): T? =
+    mapper.factory.createParser(bodyReader)
+      .readValueAsTree<JsonNode>()
+      ?.let { mapper.treeToValue(it, clazz) }
 
-  override fun <T> fromJson(bodyReader: Reader, clazz: Class<T>, vararg classArgs: Class<*>): T =
-    mapper.readValue(bodyReader, mapper.typeFactory.constructParametricType(clazz, *classArgs))
+  override fun <T> fromJson(bodyReader: Reader, clazz: Class<T>, vararg classArgs: Class<*>): T? {
+    val type = mapper.typeFactory.constructParametricType(clazz, *classArgs)
+    return mapper.factory.createParser(bodyReader)
+      .readValueAsTree<JsonNode>()
+      ?.let { mapper.treeToValue(it, type) }
+  }
 }

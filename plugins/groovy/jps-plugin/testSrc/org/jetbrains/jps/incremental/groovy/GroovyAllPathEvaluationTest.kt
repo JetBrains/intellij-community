@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy
 
 import org.junit.Assert.assertEquals
@@ -49,9 +49,9 @@ class GroovyAllPathEvaluationTest {
 
   @Test
   fun `groovy jar is OK since 2_5 because it does not need jars from other artifacts to compile`() {
-    assertEquals("/lib/groovy-2.5.17.jar", evalPathForParentClassloader(
-      "/lib/groovy-2.5.17.jar",
-      "/lib/groovy-test-2.5.17.jar"
+    assertEquals("/lib/groovy-2.5.23.jar", evalPathForParentClassloader(
+      "/lib/groovy-2.5.23.jar",
+      "/lib/groovy-test-2.5.23.jar"
     ))
   }
 

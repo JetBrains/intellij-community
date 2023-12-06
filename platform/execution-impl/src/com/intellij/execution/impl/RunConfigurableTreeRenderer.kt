@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ProgramRunnerUtil
@@ -25,8 +25,8 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
     var isShared: Boolean? = null
     val name = getUserObjectName(userObject)
     val isDumb = DumbService.isDumb(runManager.project)
-    when {
-      userObject is ConfigurationType -> {
+    when (userObject) {
+      is ConfigurationType -> {
         val simpleTextAttributes = when {
           (value.parent as DefaultMutableTreeNode).isRoot -> SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
           isDumb && !ConfigurationTypeUtil.isEditableInDumbMode(userObject) -> SimpleTextAttributes.GRAYED_ATTRIBUTES
@@ -35,12 +35,12 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
         append(name, simpleTextAttributes)
         icon = userObject.icon
       }
-      userObject is String -> {
+      is String -> {
         // folder
         append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         icon = AllIcons.Nodes.Folder
       }
-      userObject is ConfigurationFactory -> {
+      is ConfigurationFactory -> {
         append(name,
                if (isDumb && !userObject.isEditableInDumbMode) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
         icon = userObject.icon
@@ -73,7 +73,7 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
       iconTextGap = 2
     }
     else {
-      icon = LayeredIcon(icon, if (isShared) AllIcons.Nodes.Shared else EmptyIcon.ICON_16)
+      icon = LayeredIcon.layeredIcon(arrayOf(icon, if (isShared) AllIcons.Nodes.Shared else EmptyIcon.ICON_16))
       iconTextGap = 0
     }
   }

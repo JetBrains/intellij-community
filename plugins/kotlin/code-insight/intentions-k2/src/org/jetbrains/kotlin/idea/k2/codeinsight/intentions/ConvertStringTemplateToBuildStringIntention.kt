@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.base.psi.isAnnotationArgument
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
@@ -22,7 +22,7 @@ internal class ConvertStringTemplateToBuildStringIntention : AbstractKotlinAppli
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtStringTemplateExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean =
-        !element.text.startsWith("\"\"\"") && !element.isAnnotationArgument()
+        !element.text.startsWith("\"\"\"") && !element.isInsideAnnotationEntryArgumentList()
 
     override fun apply(element: KtStringTemplateExpression, project: Project, editor: Editor?) {
         val buildStringCall = convertStringTemplateToBuildStringCall(element)

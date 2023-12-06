@@ -1,13 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -279,7 +283,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
                   int i = ArrayUtil.find(parameters, info);
                   return expressions[i];
                 }).toArray(PsiExpression[]::new);
-            DefineParamsDefaultValueAction.startTemplate(project, editor, toBeDefault, delegate);
+            startTemplate(project, editor, toBeDefault, delegate);
           }
         });
       }
@@ -311,5 +315,25 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
         }
       };
     dialog.showAndGet();
+  }
+
+  private static void startTemplate(@NotNull Project project,
+                                    Editor editor,
+                                    PsiExpression[] argsToBeDelegated,
+                                    PsiMethod delegateMethod) {
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(delegateMethod);
+    RangeMarker rangeMarker = editor.getDocument().createRangeMarker(delegateMethod.getTextRange());
+    for (final PsiExpression exprToBeDefault  : argsToBeDelegated) {
+      builder.replaceElement(exprToBeDefault, new TextExpression(exprToBeDefault.getText()));
+    }
+    Template template = builder.buildTemplate();
+    editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+    editor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+
+    rangeMarker.dispose();
+
+    CreateFromUsageBaseFix.startTemplate(editor, template, project);
   }
 }

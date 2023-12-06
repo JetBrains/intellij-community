@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.SaveAndSyncHandler;
@@ -8,6 +9,7 @@ import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -40,6 +42,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -160,7 +163,17 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     registerTreeActionShortcut("FileChooser.Delete");
     registerTreeActionShortcut("FileChooser.Refresh");
 
-    return (DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserToolbar");
+    var group = new DefaultActionGroup();
+    for (var action : ((DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserToolbar")).getChildActionsOrStubs()) {
+      group.addAction(action);
+    }
+    for (var action : ((DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserSettings")).getChildActionsOrStubs()) {
+      if (action instanceof ActionStub stub && "FileChooser.ShowHidden".equals(stub.getId())) {
+        action.getTemplatePresentation().setIcon(AllIcons.Actions.ToggleVisibility);
+        group.addAction(action);
+      }
+    }
+    return group;
   }
 
   private void registerTreeActionShortcut(String actionId) {
@@ -216,8 +229,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myPath.setEditable(true);
     myPath.setRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
       label.setText(value);
-      VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
-      label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-338208, EA-831292")) {
+        VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
+        label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
+      }
     }));
 
     JTextField pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
@@ -465,7 +480,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         }
       }
 
-      private @Nullable String calculatePath() {
+      private static @Nullable String calculatePath() {
         final Transferable contents = CopyPasteManager.getInstance().getContents();
         if (contents != null) {
           final List<File> fileList = FileCopyPasteUtil.getFileList(contents);

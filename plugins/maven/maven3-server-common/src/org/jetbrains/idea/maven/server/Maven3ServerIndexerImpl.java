@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +35,7 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
+public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware implements MavenServerIndexer {
 
   private final Maven3ServerEmbedder myEmbedder;
   private final NexusIndexer myIndexer;
@@ -90,7 +90,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       return IndexReader.indexExists(dir);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     return false;
   }
@@ -107,7 +107,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public void updateIndex(MavenIndexId mavenIndexId, final MavenServerProgressIndicator indicator, MavenToken token)
+  public void updateIndex(MavenIndexId mavenIndexId, final MavenServerProgressIndicator indicator, boolean multithreaded, MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
     try {
@@ -128,12 +128,12 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
         else {
           final Maven3ServerEmbedder embedder = createEmbedder(new MavenServerSettings());
 
-          MavenExecutionRequest r = embedder.createRequest(null, null, null, null);
+          MavenExecutionRequest r = embedder.createRequest(null, null, null);
 
           final IndexUpdateRequest request = new IndexUpdateRequest(index);
 
           try {
-            embedder.executeWithMavenSession(r, (Runnable)() -> {
+            embedder.executeWithMavenSession(r, () -> {
               request.setResourceFetcher(
                 new Maven3ServerIndexFetcher(
                   index.getRepositoryId(), index.getRepositoryUrl(), embedder.getComponent(WagonManager.class),
@@ -195,7 +195,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   public abstract Maven3ServerEmbedder createEmbedder(MavenServerSettings settings) throws RemoteException;
 
   @Override
-  public List<IndexedMavenId> processArtifacts(MavenIndexId indexId, int startFrom, MavenToken token)
+  public ArrayList<IndexedMavenId> processArtifacts(MavenIndexId indexId, int startFrom, MavenToken token)
     throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
@@ -206,7 +206,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
         IndexReader r = context.getIndexReader();
         int total = r.numDocs();
 
-        List<IndexedMavenId> result = new ArrayList<IndexedMavenId>(Math.min(CHUNK_SIZE, total));
+        ArrayList<IndexedMavenId> result = new ArrayList<IndexedMavenId>(Math.min(CHUNK_SIZE, total));
         for (int i = startFrom; i < total; i++) {
           if (r.isDeleted(i)) continue;
 
@@ -243,26 +243,31 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public IndexedMavenId addArtifact(MavenIndexId indexId, File artifactFile, MavenToken token) throws MavenServerIndexerException {
+  public @NotNull ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId, @NotNull ArrayList<File> artifactFiles, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext index = getIndex(indexId);
+      ArrayList<AddArtifactResponse> results = new ArrayList<>();
       synchronized (index) {
-        ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
-        if (artifactContext == null) return null;
-
-        addArtifact(myIndexer, index, artifactContext);
-
-        ArtifactInfo a = artifactContext.getArtifactInfo();
-        return new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
+        for (File artifactFile : artifactFiles) {
+          ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
+          IndexedMavenId id = null;
+          if (artifactContext != null) {
+            addArtifact(myIndexer, index, artifactContext);
+            ArtifactInfo a = artifactContext.getArtifactInfo();
+            id = new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
+          }
+          results.add(new AddArtifactResponse(artifactFile, id));
+        }
       }
+      return results;
     }
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));
     }
   }
 
-  public static void addArtifact(NexusIndexer indexer, IndexingContext index, ArtifactContext artifactContext)
+  private static void addArtifact(NexusIndexer indexer, IndexingContext index, ArtifactContext artifactContext)
     throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     indexer.addArtifactToIndex(artifactContext, index);
     // this hack is necessary to invalidate searcher's and reader's cache (may not be required then lucene or nexus library change
@@ -273,7 +278,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
 
   @Override
-  public Set<MavenArtifactInfo> search(MavenIndexId indexId, String pattern, int maxResult, MavenToken token)
+  public HashSet<MavenArtifactInfo> search(MavenIndexId indexId, String pattern, int maxResult, MavenToken token)
     throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
@@ -288,9 +293,9 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
         // this exception occurs when too wide wildcard is used on too big data.
       }
 
-      if (docs == null || docs.scoreDocs.length == 0) return Collections.emptySet();
+      if (docs == null || docs.scoreDocs.length == 0) return new HashSet<>();
 
-      Set<MavenArtifactInfo> result = new HashSet<MavenArtifactInfo>();
+      HashSet<MavenArtifactInfo> result = new HashSet<MavenArtifactInfo>();
 
       for (int i = 0; i < docs.scoreDocs.length; i++) {
         int docIndex = docs.scoreDocs[i].doc;
@@ -299,7 +304,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
         if (a == null) continue;
 
         a.repository = getRepositoryPathOrUrl(index);
-        result.add(MavenModelConverter.convertArtifactInfo(a));
+        result.add(Maven3ModelConverter.convertArtifactInfo(a));
       }
       return result;
     }
@@ -314,9 +319,9 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public Collection<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException {
+  public HashSet<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-    Set<MavenArchetype> result = new HashSet<MavenArchetype>();
+    HashSet<MavenArchetype> result = new HashSet<MavenArchetype>();
     doCollectArchetypes("internal-catalog", result);
     return result;
   }
@@ -327,11 +332,11 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       ArchetypeCatalog archetypeCatalog = source.getArchetypeCatalog(new Properties());
 
       for (Archetype each : archetypeCatalog.getArchetypes()) {
-        result.add(MavenModelConverter.convertArchetype(each));
+        result.add(Maven3ModelConverter.convertArchetype(each));
       }
     }
     catch (ArchetypeDataSourceException e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
   }
 

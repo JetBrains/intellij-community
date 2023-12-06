@@ -6,17 +6,14 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.io.delete
-import com.intellij.util.io.isDirectory
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
@@ -30,6 +27,8 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
+import java.util.*
+import kotlin.io.path.isDirectory
 
 @ApiStatus.Internal
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
@@ -63,13 +62,6 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
       return storedName
     }
 
-    for (projectNameProvider in ProjectNameProvider.EP_NAME.lazySequence()) {
-      runCatching {
-        projectNameProvider.getDefaultName(project)
-      }
-        .getOrLogException(LOG)
-        ?.let { return it }
-    }
     return JpsPathUtil.getDefaultProjectName(projectDir)
   }
 
@@ -113,7 +105,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   final override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     coroutineScope {
       launch {
-        // save modules before project
+        // save modules before the project
         val saveSessionManager = createSaveSessionProducerManager()
         val moduleSaveSessions = saveModules(result, forceSavingAllSettings, saveSessionManager)
         saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
@@ -135,7 +127,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
 
   protected open suspend fun saveModules(result: SaveResult,
                                          isForceSavingAllSettings: Boolean,
-                                         projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
+                                         projectSaveSessionManager: SaveSessionProducerManager): Collection<SaveSession> {
     return emptyList()
   }
 
@@ -160,43 +152,33 @@ interface ModuleSavingCustomizer {
 }
 
 @ApiStatus.Internal
-open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
+open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
   final override suspend fun saveModules(result: SaveResult,
                                          isForceSavingAllSettings: Boolean,
-                                         projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
+                                         projectSaveSessionManager: SaveSessionProducerManager): Collection<SaveSession> {
     moduleSavingCustomizer.saveModules(projectSaveSessionManager, this)
     val modules = ModuleManager.getInstance(project).modules
     if (modules.isEmpty()) {
       return emptyList()
     }
 
-    return withContext(Dispatchers.EDT) {
-      // do not create with capacity because very rarely a lot of modules will be modified
-      val saveSessions = ArrayList<SaveSession>()
-      // commit components
-      for (module in modules) {
-        val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
-        // collectSaveSessions is very cheap, so, do it in EDT
-        val saveManager = moduleStore.createSaveSessionProducerManager()
-        commitModuleComponents(moduleStore, saveManager, projectSaveSessionManager, isForceSavingAllSettings, result)
-        saveManager.collectSaveSessions(saveSessions)
-      }
-      saveSessions
+    // do not create with capacity because very rarely a lot of modules will be modified
+    val saveSessions = Collections.synchronizedList(mutableListOf<SaveSession>())
+    // commit components
+    for (module in modules) {
+      val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
+      val saveManager = moduleStore.createSaveSessionProducerManager()
+      moduleStore.commitComponents(isForce = isForceSavingAllSettings, session = saveManager, saveResult = result)
+      moduleSavingCustomizer.commitModuleComponents(projectSaveSessionManager, moduleStore, saveManager)
+      saveManager.collectSaveSessions(saveSessions)
     }
+    return saveSessions
   }
 
   override fun createContentReader(): JpsFileContentReaderWithCache {
     return StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
   }
 
-  private fun commitModuleComponents(moduleStore: ComponentStoreImpl,
-                                     moduleSaveSessionManager: SaveSessionProducerManager,
-                                     projectSaveSessionManager: SaveSessionProducerManager,
-                                     isForceSavingAllSettings: Boolean,
-                                     saveResult: SaveResult) {
-    moduleStore.commitComponents(isForceSavingAllSettings, moduleSaveSessionManager, saveResult)
-    moduleSavingCustomizer.commitModuleComponents(projectSaveSessionManager, moduleStore, moduleSaveSessionManager)
-  }
 }
 
 abstract class ProjectStoreFactoryImpl : ProjectStoreFactory {
@@ -206,7 +188,7 @@ abstract class ProjectStoreFactoryImpl : ProjectStoreFactory {
 internal class PlatformLangProjectStoreFactory : ProjectStoreFactoryImpl() {
   override fun createStore(project: Project): IProjectStore {
     LOG.assertTrue(!project.isDefault)
-    return ProjectWithModulesStoreImpl(project)
+    return ProjectWithModuleStoreImpl(project)
   }
 }
 

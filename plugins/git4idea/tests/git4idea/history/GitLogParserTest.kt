@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.util.io.FileUtil
@@ -373,7 +373,7 @@ private fun generateRecords(newRefsFormat: Boolean): MutableList<GitTestLogRecor
 
                                           "Then comes a long long description.\n" +
                                           "Probably multilined."),
-                               Pair(REF_NAMES, Arrays.asList("HEAD", "refs/heads/master", "refs/heads/(ref1)", "refs/heads/ref2")),
+                               Pair(REF_NAMES, listOf("HEAD", "refs/heads/master", "refs/heads/(ref1)", "refs/heads/ref2")),
                                changes = listOf(moved("file2", "file3"),
                                                 added("readme.txt"),
                                                 modified("src/CClass.java"),
@@ -389,8 +389,7 @@ private fun generateRecords(newRefsFormat: Boolean): MutableList<GitTestLogRecor
   records.add(createTestRecord(Pair(SUBJECT, "Commit message"),
                                Pair(BODY, "Small description"),
                                Pair(PARENTS, arrayOf(records[0].hash, records[1].hash)),
-                               Pair(REF_NAMES, Arrays.asList("refs/heads/sly->name", "refs/remotes/origin/master",
-                                                             "refs/tags/v1.0")),
+                               Pair(REF_NAMES, listOf("refs/heads/sly->name", "refs/remotes/origin/master", "refs/tags/v1.0")),
                                changes = listOf(modified("src/CClass.java")),
                                newRefsFormat = newRefsFormat))
 

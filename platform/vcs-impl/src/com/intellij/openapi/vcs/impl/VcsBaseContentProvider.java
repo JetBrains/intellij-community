@@ -8,6 +8,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Can be used to provide "changed lines" in Editor gutter.
+ *
+ * @see LocalLineStatusTrackerProvider
+ * @see VcsBaseContentProviderListener
+ */
 public interface VcsBaseContentProvider {
 
   @ApiStatus.Internal

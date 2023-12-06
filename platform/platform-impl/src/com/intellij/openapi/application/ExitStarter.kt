@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ConstPropertyName")
 
 package com.intellij.openapi.application
@@ -32,7 +32,7 @@ class ExitStarter private constructor() : ApplicationStarterBase(0, 1, 2) {
       // We need to invoke the method in Modality.any() to execute the method even (especially) if the modality stack is not empty
       // The method pops elements from modality stack until it's empty
       application.invokeLater({ LaterInvocator.forceLeaveAllModals() }, ModalityState.any())
-      application.invokeLater({ application.exit(true, true, restart) }, ModalityState.NON_MODAL)
+      application.invokeLater({ application.exit(true, true, restart) }, ModalityState.nonModal())
     }
   }
 }

@@ -569,7 +569,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
       case PACKAGE_NAME_KIND:
         if (!(element instanceof PsiPackage)) {
-          throw cannotBindError(element, kind, element+ " is not a PsiPackage but "+element.getClass());
+          throw cannotBindError(element, kind, "I, " + this +" ("+getClass()+") contained in "+containingFile+" in "+containingFile.getVirtualFile()+
+                                               " am a package since my treeParent is " + getTreeParent()+" of "+getTreeParent().getElementType()+
+                                               ", but "+element+ " is not a PsiPackage but "+element.getClass());
         }
         return bindToPackage((PsiPackage)element);
 

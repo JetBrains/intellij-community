@@ -23,8 +23,8 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   val diffHunk: String
   val originalLocation: DiffLineLocation?
   val originalStartLocation: DiffLineLocation?
-  val line: Int?
-  val startLine: Int?
+  val location: DiffLineLocation?
+  val startLocation: DiffLineLocation?
 
   val collapsedState: MutableStateFlow<Boolean>
 
@@ -34,4 +34,5 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   fun addComment(comment: GHPullRequestReviewComment)
 
   fun addAndInvokeStateChangeListener(listener: () -> Unit)
+  val originalCommit: GHCommitHash?
 }

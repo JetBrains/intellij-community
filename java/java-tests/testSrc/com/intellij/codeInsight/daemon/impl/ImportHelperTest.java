@@ -13,6 +13,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +21,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -43,6 +45,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.naming.ClassNamingConvention;
@@ -65,6 +68,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     JavaCodeStyleSettings.getInstance(getProject()).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 100;
     DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(false);
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new UnusedDeclarationInspection());
   }
 
   @Override
@@ -108,7 +112,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public static void assertResolveNotCalledInEDTDuring(@NotNull BooleanSupplier isInsideResolve, @NotNull Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     AtomicBoolean resolveHappened = new AtomicBoolean();
     // we run the test in EDT under this fake progress which is needed for one thing only: to be able to assert that no resolve happens in EDT.
     // Since resolve calls checkCanceled() a lot, we intercept these calls and check is we are being called from outside of EDT
@@ -598,7 +602,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     doHighlighting();
     assertOneImportAdded("java.util.ArrayList");
   }
@@ -611,7 +615,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testImportHintsMustBeComputedForAllUnresolvedReferencesInVisibleAreaToBeAbleToShowPopups() throws Exception {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     @Language("JAVA")
     @NonNls final String text = "class S {{ \n" +
                                 "new ArrayList();\n".repeat(1000) +
@@ -625,7 +629,8 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     UIUtil.dispatchAllInvocationEvents();
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-    TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(getEditor());
+    @NotNull Editor editor = getEditor();
+    TextRange visibleRange = editor.calculateVisibleRange();
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 5000 && visibleRange.getEndOffset() < 10_000); // sanity check that visible range has been indeed changed
 
     List<HighlightInfo> errors = highlightErrors();

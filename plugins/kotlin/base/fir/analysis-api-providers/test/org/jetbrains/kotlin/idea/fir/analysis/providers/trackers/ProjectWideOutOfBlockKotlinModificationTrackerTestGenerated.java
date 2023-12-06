@@ -23,6 +23,31 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("contract.kt")
+    public void testContract() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contract.kt");
+    }
+
+    @TestMetadata("contractAddition.kt")
+    public void testContractAddition() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractAddition.kt");
+    }
+
+    @TestMetadata("contractRemoval.kt")
+    public void testContractRemoval() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractRemoval.kt");
+    }
+
+    @TestMetadata("contractUnwrapping.kt")
+    public void testContractUnwrapping() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractUnwrapping.kt");
+    }
+
+    @TestMetadata("contractWrapping.kt")
+    public void testContractWrapping() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractWrapping.kt");
+    }
+
     @TestMetadata("funInCompanionObject.kt")
     public void testFunInCompanionObject() throws Exception {
         runTest("testData/outOfBlockProjectWide/funInCompanionObject.kt");
@@ -38,14 +63,104 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
         runTest("testData/outOfBlockProjectWide/localFun.kt");
     }
 
-    @TestMetadata("memberFunWithType.kt")
-    public void testMemberFunWithType() throws Exception {
-        runTest("testData/outOfBlockProjectWide/memberFunWithType.kt");
+    @TestMetadata("memberFunWithBodyWithType.kt")
+    public void testMemberFunWithBodyWithType() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberFunWithBodyWithType.kt");
     }
 
-    @TestMetadata("memberPropertyWithType.kt")
-    public void testMemberPropertyWithType() throws Exception {
-        runTest("testData/outOfBlockProjectWide/memberPropertyWithType.kt");
+    @TestMetadata("memberFunWithBodyWithoutType.kt")
+    public void testMemberFunWithBodyWithoutType() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberFunWithBodyWithoutType.kt");
+    }
+
+    @TestMetadata("memberFunWithTypeInBodyExpression.kt")
+    public void testMemberFunWithTypeInBodyExpression() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberFunWithTypeInBodyExpression.kt");
+    }
+
+    @TestMetadata("memberFunWithoutTypeInBodyExpression.kt")
+    public void testMemberFunWithoutTypeInBodyExpression() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberFunWithoutTypeInBodyExpression.kt");
+    }
+
+    @TestMetadata("memberGetterWithTypeWithBody.kt")
+    public void testMemberGetterWithTypeWithBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberGetterWithTypeWithBody.kt");
+    }
+
+    @TestMetadata("memberGetterWithTypeWithoutBody.kt")
+    public void testMemberGetterWithTypeWithoutBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberGetterWithTypeWithoutBody.kt");
+    }
+
+    @TestMetadata("memberGetterWithoutTypeWithBody.kt")
+    public void testMemberGetterWithoutTypeWithBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberGetterWithoutTypeWithBody.kt");
+    }
+
+    @TestMetadata("memberGetterWithoutTypeWithoutBody.kt")
+    public void testMemberGetterWithoutTypeWithoutBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberGetterWithoutTypeWithoutBody.kt");
+    }
+
+    @TestMetadata("memberPropertyWithTypeInDelegate.kt")
+    public void testMemberPropertyWithTypeInDelegate() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberPropertyWithTypeInDelegate.kt");
+    }
+
+    @TestMetadata("memberPropertyWithTypeInInitializer.kt")
+    public void testMemberPropertyWithTypeInInitializer() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberPropertyWithTypeInInitializer.kt");
+    }
+
+    @TestMetadata("memberPropertyWithoutTypeInDelegate.kt")
+    public void testMemberPropertyWithoutTypeInDelegate() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberPropertyWithoutTypeInDelegate.kt");
+    }
+
+    @TestMetadata("memberPropertyWithoutTypeInInitializer.kt")
+    public void testMemberPropertyWithoutTypeInInitializer() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberPropertyWithoutTypeInInitializer.kt");
+    }
+
+    @TestMetadata("memberSetterWithTypeWithBody.kt")
+    public void testMemberSetterWithTypeWithBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberSetterWithTypeWithBody.kt");
+    }
+
+    @TestMetadata("memberSetterWithTypeWithoutBody.kt")
+    public void testMemberSetterWithTypeWithoutBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberSetterWithTypeWithoutBody.kt");
+    }
+
+    @TestMetadata("memberSetterWithoutTypeWithBody.kt")
+    public void testMemberSetterWithoutTypeWithBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberSetterWithoutTypeWithBody.kt");
+    }
+
+    @TestMetadata("memberSetterWithoutTypeWithoutBody.kt")
+    public void testMemberSetterWithoutTypeWithoutBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/memberSetterWithoutTypeWithoutBody.kt");
+    }
+
+    @TestMetadata("topGetterWithTypeWithBody.kt")
+    public void testTopGetterWithTypeWithBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topGetterWithTypeWithBody.kt");
+    }
+
+    @TestMetadata("topGetterWithTypeWithoutBody.kt")
+    public void testTopGetterWithTypeWithoutBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topGetterWithTypeWithoutBody.kt");
+    }
+
+    @TestMetadata("topGetterWithoutTypeWithBody.kt")
+    public void testTopGetterWithoutTypeWithBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topGetterWithoutTypeWithBody.kt");
+    }
+
+    @TestMetadata("topGetterWithoutTypeWithoutBody.kt")
+    public void testTopGetterWithoutTypeWithoutBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topGetterWithoutTypeWithoutBody.kt");
     }
 
     @TestMetadata("topLevelExpressionBodyFunWithType.kt")
@@ -53,24 +168,29 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
         runTest("testData/outOfBlockProjectWide/topLevelExpressionBodyFunWithType.kt");
     }
 
+    @TestMetadata("topLevelExpressionBodyFunWithTypeWithoutBody.kt")
+    public void testTopLevelExpressionBodyFunWithTypeWithoutBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topLevelExpressionBodyFunWithTypeWithoutBody.kt");
+    }
+
     @TestMetadata("topLevelExpressionBodyFunWithoutType.kt")
     public void testTopLevelExpressionBodyFunWithoutType() throws Exception {
         runTest("testData/outOfBlockProjectWide/topLevelExpressionBodyFunWithoutType.kt");
     }
 
-    @TestMetadata("topLevelFunWithType.kt")
-    public void testTopLevelFunWithType() throws Exception {
-        runTest("testData/outOfBlockProjectWide/topLevelFunWithType.kt");
+    @TestMetadata("topLevelFunWithBodyWithType.kt")
+    public void testTopLevelFunWithBodyWithType() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topLevelFunWithBodyWithType.kt");
     }
 
-    @TestMetadata("topLevelUnitFun.kt")
-    public void testTopLevelUnitFun() throws Exception {
-        runTest("testData/outOfBlockProjectWide/topLevelUnitFun.kt");
+    @TestMetadata("topLevelFunWithBodyWithoutType.kt")
+    public void testTopLevelFunWithBodyWithoutType() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topLevelFunWithBodyWithoutType.kt");
     }
 
-    @TestMetadata("topPropertyWithTypeInGetter.kt")
-    public void testTopPropertyWithTypeInGetter() throws Exception {
-        runTest("testData/outOfBlockProjectWide/topPropertyWithTypeInGetter.kt");
+    @TestMetadata("topPropertyWithTypeInDelegate.kt")
+    public void testTopPropertyWithTypeInDelegate() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topPropertyWithTypeInDelegate.kt");
     }
 
     @TestMetadata("topPropertyWithTypeInGetterOnNextLine.kt")
@@ -83,14 +203,9 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
         runTest("testData/outOfBlockProjectWide/topPropertyWithTypeInInititalzer.kt");
     }
 
-    @TestMetadata("topPropertyWithTypeInSetter.kt")
-    public void testTopPropertyWithTypeInSetter() throws Exception {
-        runTest("testData/outOfBlockProjectWide/topPropertyWithTypeInSetter.kt");
-    }
-
-    @TestMetadata("topPropertyWithoutTypeInGetter.kt")
-    public void testTopPropertyWithoutTypeInGetter() throws Exception {
-        runTest("testData/outOfBlockProjectWide/topPropertyWithoutTypeInGetter.kt");
+    @TestMetadata("topPropertyWithoutTypeInDelegate.kt")
+    public void testTopPropertyWithoutTypeInDelegate() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topPropertyWithoutTypeInDelegate.kt");
     }
 
     @TestMetadata("topPropertyWithoutTypeInInititalzer.kt")
@@ -98,9 +213,24 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
         runTest("testData/outOfBlockProjectWide/topPropertyWithoutTypeInInititalzer.kt");
     }
 
-    @TestMetadata("topPropertyWithoutTypeInSetter.kt")
-    public void testTopPropertyWithoutTypeInSetter() throws Exception {
-        runTest("testData/outOfBlockProjectWide/topPropertyWithoutTypeInSetter.kt");
+    @TestMetadata("topSetterWithTypeWithBody.kt")
+    public void testTopSetterWithTypeWithBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topSetterWithTypeWithBody.kt");
+    }
+
+    @TestMetadata("topSetterWithTypeWithoutBody.kt")
+    public void testTopSetterWithTypeWithoutBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topSetterWithTypeWithoutBody.kt");
+    }
+
+    @TestMetadata("topSetterWithoutTypeWithBody.kt")
+    public void testTopSetterWithoutTypeWithBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topSetterWithoutTypeWithBody.kt");
+    }
+
+    @TestMetadata("topSetterWithoutTypeWithoutBody.kt")
+    public void testTopSetterWithoutTypeWithoutBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topSetterWithoutTypeWithoutBody.kt");
     }
 
     @TestMetadata("typeInFunctionAnnotation.kt")

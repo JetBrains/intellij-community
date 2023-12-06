@@ -1,13 +1,24 @@
 [
  {
-  matchedName: "js/properties/propOne",
+  matchedName: "js/custom-properties/prop-one",
   origin: "vue@3.0.0 (vue)",
   complete: true,
   priority: NORMAL,
   segments: [
    {
-    name-part: "propOne",
-    symbol: <self>,
+    name-part: "prop-one",
+    symbol: {
+     matchedName: "js/custom-properties/propOne",
+     origin: "vue@3.0.0 (vue)",
+     complete: true,
+     priority: NORMAL,
+     segments: [
+      {
+       name-part: "propOne",
+       symbol: <self>,
+      },
+     ],
+    },
    },
   ],
  },

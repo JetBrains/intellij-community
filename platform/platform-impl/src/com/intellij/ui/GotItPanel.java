@@ -14,7 +14,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  * @deprecated use {@link GotItTooltip} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GotItPanel {
   private static final JBColor BODY_COLOR_1 = new JBColor(new Color(77, 143, 253), new Color(52, 74, 100));
   private static final JBColor BODY_COLOR_2 = new JBColor(new Color(71, 135, 237), new Color(38, 53, 73));

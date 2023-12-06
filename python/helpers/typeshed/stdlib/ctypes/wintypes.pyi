@@ -1,6 +1,8 @@
 from ctypes import (
     Array,
     Structure,
+    _CField,
+    _Pointer,
     _SimpleCData,
     c_byte,
     c_char,
@@ -18,8 +20,8 @@ from ctypes import (
     c_void_p,
     c_wchar,
     c_wchar_p,
-    pointer,
 )
+from typing import TypeVar
 from typing_extensions import TypeAlias
 
 BYTE = c_byte
@@ -101,39 +103,42 @@ HWND = HANDLE
 SC_HANDLE = HANDLE
 SERVICE_STATUS_HANDLE = HANDLE
 
+_CIntLikeT = TypeVar("_CIntLikeT", bound=_SimpleCData[int])
+_CIntLikeField: TypeAlias = _CField[_CIntLikeT, int, _CIntLikeT | int]
+
 class RECT(Structure):
-    left: LONG
-    top: LONG
-    right: LONG
-    bottom: LONG
+    left: _CIntLikeField[LONG]
+    top: _CIntLikeField[LONG]
+    right: _CIntLikeField[LONG]
+    bottom: _CIntLikeField[LONG]
 
 RECTL = RECT
 _RECTL = RECT
 tagRECT = RECT
 
 class _SMALL_RECT(Structure):
-    Left: SHORT
-    Top: SHORT
-    Right: SHORT
-    Bottom: SHORT
+    Left: _CIntLikeField[SHORT]
+    Top: _CIntLikeField[SHORT]
+    Right: _CIntLikeField[SHORT]
+    Bottom: _CIntLikeField[SHORT]
 
 SMALL_RECT = _SMALL_RECT
 
 class _COORD(Structure):
-    X: SHORT
-    Y: SHORT
+    X: _CIntLikeField[SHORT]
+    Y: _CIntLikeField[SHORT]
 
 class POINT(Structure):
-    x: LONG
-    y: LONG
+    x: _CIntLikeField[LONG]
+    y: _CIntLikeField[LONG]
 
 POINTL = POINT
 _POINTL = POINT
 tagPOINT = POINT
 
 class SIZE(Structure):
-    cx: LONG
-    cy: LONG
+    cx: _CIntLikeField[LONG]
+    cy: _CIntLikeField[LONG]
 
 SIZEL = SIZE
 tagSIZE = SIZE
@@ -141,95 +146,95 @@ tagSIZE = SIZE
 def RGB(red: int, green: int, blue: int) -> int: ...
 
 class FILETIME(Structure):
-    dwLowDateTime: DWORD
-    dwHighDateTime: DWORD
+    dwLowDateTime: _CIntLikeField[DWORD]
+    dwHighDateTime: _CIntLikeField[DWORD]
 
 _FILETIME = FILETIME
 
 class MSG(Structure):
-    hWnd: HWND
-    message: UINT
-    wParam: WPARAM
-    lParam: LPARAM
-    time: DWORD
-    pt: POINT
+    hWnd: _CField[HWND, int | None, HWND | int | None]
+    message: _CIntLikeField[UINT]
+    wParam: _CIntLikeField[WPARAM]
+    lParam: _CIntLikeField[LPARAM]
+    time: _CIntLikeField[DWORD]
+    pt: _CField[POINT, POINT, POINT]
 
 tagMSG = MSG
 MAX_PATH: int
 
 class WIN32_FIND_DATAA(Structure):
-    dwFileAttributes: DWORD
-    ftCreationTime: FILETIME
-    ftLastAccessTime: FILETIME
-    ftLastWriteTime: FILETIME
-    nFileSizeHigh: DWORD
-    nFileSizeLow: DWORD
-    dwReserved0: DWORD
-    dwReserved1: DWORD
-    cFileName: Array[CHAR]
-    cAlternateFileName: Array[CHAR]
+    dwFileAttributes: _CIntLikeField[DWORD]
+    ftCreationTime: _CField[FILETIME, FILETIME, FILETIME]
+    ftLastAccessTime: _CField[FILETIME, FILETIME, FILETIME]
+    ftLastWriteTime: _CField[FILETIME, FILETIME, FILETIME]
+    nFileSizeHigh: _CIntLikeField[DWORD]
+    nFileSizeLow: _CIntLikeField[DWORD]
+    dwReserved0: _CIntLikeField[DWORD]
+    dwReserved1: _CIntLikeField[DWORD]
+    cFileName: _CField[Array[CHAR], bytes, bytes]
+    cAlternateFileName: _CField[Array[CHAR], bytes, bytes]
 
 class WIN32_FIND_DATAW(Structure):
-    dwFileAttributes: DWORD
-    ftCreationTime: FILETIME
-    ftLastAccessTime: FILETIME
-    ftLastWriteTime: FILETIME
-    nFileSizeHigh: DWORD
-    nFileSizeLow: DWORD
-    dwReserved0: DWORD
-    dwReserved1: DWORD
-    cFileName: Array[WCHAR]
-    cAlternateFileName: Array[WCHAR]
+    dwFileAttributes: _CIntLikeField[DWORD]
+    ftCreationTime: _CField[FILETIME, FILETIME, FILETIME]
+    ftLastAccessTime: _CField[FILETIME, FILETIME, FILETIME]
+    ftLastWriteTime: _CField[FILETIME, FILETIME, FILETIME]
+    nFileSizeHigh: _CIntLikeField[DWORD]
+    nFileSizeLow: _CIntLikeField[DWORD]
+    dwReserved0: _CIntLikeField[DWORD]
+    dwReserved1: _CIntLikeField[DWORD]
+    cFileName: _CField[Array[WCHAR], str, str]
+    cAlternateFileName: _CField[Array[WCHAR], str, str]
 
-# These pointer type definitions use pointer[...] instead of POINTER(...), to allow them
+# These pointer type definitions use _Pointer[...] instead of POINTER(...), to allow them
 # to be used in type annotations.
-PBOOL: TypeAlias = pointer[BOOL]
-LPBOOL: TypeAlias = pointer[BOOL]
-PBOOLEAN: TypeAlias = pointer[BOOLEAN]
-PBYTE: TypeAlias = pointer[BYTE]
-LPBYTE: TypeAlias = pointer[BYTE]
-PCHAR: TypeAlias = pointer[CHAR]
-LPCOLORREF: TypeAlias = pointer[COLORREF]
-PDWORD: TypeAlias = pointer[DWORD]
-LPDWORD: TypeAlias = pointer[DWORD]
-PFILETIME: TypeAlias = pointer[FILETIME]
-LPFILETIME: TypeAlias = pointer[FILETIME]
-PFLOAT: TypeAlias = pointer[FLOAT]
-PHANDLE: TypeAlias = pointer[HANDLE]
-LPHANDLE: TypeAlias = pointer[HANDLE]
-PHKEY: TypeAlias = pointer[HKEY]
-LPHKL: TypeAlias = pointer[HKL]
-PINT: TypeAlias = pointer[INT]
-LPINT: TypeAlias = pointer[INT]
-PLARGE_INTEGER: TypeAlias = pointer[LARGE_INTEGER]
-PLCID: TypeAlias = pointer[LCID]
-PLONG: TypeAlias = pointer[LONG]
-LPLONG: TypeAlias = pointer[LONG]
-PMSG: TypeAlias = pointer[MSG]
-LPMSG: TypeAlias = pointer[MSG]
-PPOINT: TypeAlias = pointer[POINT]
-LPPOINT: TypeAlias = pointer[POINT]
-PPOINTL: TypeAlias = pointer[POINTL]
-PRECT: TypeAlias = pointer[RECT]
-LPRECT: TypeAlias = pointer[RECT]
-PRECTL: TypeAlias = pointer[RECTL]
-LPRECTL: TypeAlias = pointer[RECTL]
-LPSC_HANDLE: TypeAlias = pointer[SC_HANDLE]
-PSHORT: TypeAlias = pointer[SHORT]
-PSIZE: TypeAlias = pointer[SIZE]
-LPSIZE: TypeAlias = pointer[SIZE]
-PSIZEL: TypeAlias = pointer[SIZEL]
-LPSIZEL: TypeAlias = pointer[SIZEL]
-PSMALL_RECT: TypeAlias = pointer[SMALL_RECT]
-PUINT: TypeAlias = pointer[UINT]
-LPUINT: TypeAlias = pointer[UINT]
-PULARGE_INTEGER: TypeAlias = pointer[ULARGE_INTEGER]
-PULONG: TypeAlias = pointer[ULONG]
-PUSHORT: TypeAlias = pointer[USHORT]
-PWCHAR: TypeAlias = pointer[WCHAR]
-PWIN32_FIND_DATAA: TypeAlias = pointer[WIN32_FIND_DATAA]
-LPWIN32_FIND_DATAA: TypeAlias = pointer[WIN32_FIND_DATAA]
-PWIN32_FIND_DATAW: TypeAlias = pointer[WIN32_FIND_DATAW]
-LPWIN32_FIND_DATAW: TypeAlias = pointer[WIN32_FIND_DATAW]
-PWORD: TypeAlias = pointer[WORD]
-LPWORD: TypeAlias = pointer[WORD]
+PBOOL: TypeAlias = _Pointer[BOOL]
+LPBOOL: TypeAlias = _Pointer[BOOL]
+PBOOLEAN: TypeAlias = _Pointer[BOOLEAN]
+PBYTE: TypeAlias = _Pointer[BYTE]
+LPBYTE: TypeAlias = _Pointer[BYTE]
+PCHAR: TypeAlias = _Pointer[CHAR]
+LPCOLORREF: TypeAlias = _Pointer[COLORREF]
+PDWORD: TypeAlias = _Pointer[DWORD]
+LPDWORD: TypeAlias = _Pointer[DWORD]
+PFILETIME: TypeAlias = _Pointer[FILETIME]
+LPFILETIME: TypeAlias = _Pointer[FILETIME]
+PFLOAT: TypeAlias = _Pointer[FLOAT]
+PHANDLE: TypeAlias = _Pointer[HANDLE]
+LPHANDLE: TypeAlias = _Pointer[HANDLE]
+PHKEY: TypeAlias = _Pointer[HKEY]
+LPHKL: TypeAlias = _Pointer[HKL]
+PINT: TypeAlias = _Pointer[INT]
+LPINT: TypeAlias = _Pointer[INT]
+PLARGE_INTEGER: TypeAlias = _Pointer[LARGE_INTEGER]
+PLCID: TypeAlias = _Pointer[LCID]
+PLONG: TypeAlias = _Pointer[LONG]
+LPLONG: TypeAlias = _Pointer[LONG]
+PMSG: TypeAlias = _Pointer[MSG]
+LPMSG: TypeAlias = _Pointer[MSG]
+PPOINT: TypeAlias = _Pointer[POINT]
+LPPOINT: TypeAlias = _Pointer[POINT]
+PPOINTL: TypeAlias = _Pointer[POINTL]
+PRECT: TypeAlias = _Pointer[RECT]
+LPRECT: TypeAlias = _Pointer[RECT]
+PRECTL: TypeAlias = _Pointer[RECTL]
+LPRECTL: TypeAlias = _Pointer[RECTL]
+LPSC_HANDLE: TypeAlias = _Pointer[SC_HANDLE]
+PSHORT: TypeAlias = _Pointer[SHORT]
+PSIZE: TypeAlias = _Pointer[SIZE]
+LPSIZE: TypeAlias = _Pointer[SIZE]
+PSIZEL: TypeAlias = _Pointer[SIZEL]
+LPSIZEL: TypeAlias = _Pointer[SIZEL]
+PSMALL_RECT: TypeAlias = _Pointer[SMALL_RECT]
+PUINT: TypeAlias = _Pointer[UINT]
+LPUINT: TypeAlias = _Pointer[UINT]
+PULARGE_INTEGER: TypeAlias = _Pointer[ULARGE_INTEGER]
+PULONG: TypeAlias = _Pointer[ULONG]
+PUSHORT: TypeAlias = _Pointer[USHORT]
+PWCHAR: TypeAlias = _Pointer[WCHAR]
+PWIN32_FIND_DATAA: TypeAlias = _Pointer[WIN32_FIND_DATAA]
+LPWIN32_FIND_DATAA: TypeAlias = _Pointer[WIN32_FIND_DATAA]
+PWIN32_FIND_DATAW: TypeAlias = _Pointer[WIN32_FIND_DATAW]
+LPWIN32_FIND_DATAW: TypeAlias = _Pointer[WIN32_FIND_DATAW]
+PWORD: TypeAlias = _Pointer[WORD]
+LPWORD: TypeAlias = _Pointer[WORD]

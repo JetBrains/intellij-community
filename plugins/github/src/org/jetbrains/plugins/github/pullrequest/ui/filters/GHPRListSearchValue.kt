@@ -5,20 +5,21 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValu
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.jetbrains.plugins.github.api.data.GithubIssueState
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.QualifierName
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term.Qualifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term.QueryPart
 
+@ApiStatus.Experimental
 @Serializable
-internal data class GHPRListSearchValue(override val searchQuery: String? = null,
-                                        val state: State? = null,
-                                        val assignee: String? = null,
-                                        val reviewState: ReviewState? = null,
-                                        val author: String? = null,
-                                        val label: String? = null) : ReviewListSearchValue {
+data class GHPRListSearchValue(override val searchQuery: String? = null,
+                               val state: State? = null,
+                               val assignee: String? = null,
+                               val reviewState: ReviewState? = null,
+                               val author: String? = null,
+                               val label: String? = null) : ReviewListSearchValue {
 
   @Transient
   override val filterCount: Int = calcFilterCount()
@@ -43,36 +44,36 @@ internal data class GHPRListSearchValue(override val searchQuery: String? = null
 
     if (state != null) {
       val term = when (state) {
-        State.OPEN -> Qualifier.Enum(QualifierName.`is`, GithubIssueState.open)
-        State.CLOSED -> Qualifier.Enum(QualifierName.`is`, GithubIssueState.closed)
-        State.MERGED -> Qualifier.Simple(QualifierName.`is`, "merged")
+        State.OPEN -> QualifierName.`is`.createTerm("open")
+        State.CLOSED -> QualifierName.`is`.createTerm("closed")
+        State.MERGED -> QualifierName.`is`.createTerm("merged")
       }
       terms.add(term)
     }
 
     if (assignee != null) {
-      terms.add(Qualifier.Simple(QualifierName.assignee, assignee))
+      terms.add(QualifierName.assignee.createTerm(assignee))
     }
 
     if (reviewState != null) {
       val term = when (reviewState) {
-        ReviewState.NO_REVIEW -> Qualifier.Simple(QualifierName.review, "none")
-        ReviewState.REQUIRED -> Qualifier.Simple(QualifierName.review, "required")
-        ReviewState.APPROVED -> Qualifier.Simple(QualifierName.review, "approved")
-        ReviewState.CHANGES_REQUESTED -> Qualifier.Simple(QualifierName.review, "changes-requested")
-        ReviewState.REVIEWED_BY_ME -> Qualifier.Simple(QualifierName.reviewedBy, "@me")
-        ReviewState.NOT_REVIEWED_BY_ME -> Qualifier.Simple(QualifierName.reviewedBy, "@me").not()
-        ReviewState.AWAITING_REVIEW -> Qualifier.Simple(QualifierName.reviewRequested, "@me")
+        ReviewState.NO_REVIEW -> QualifierName.review.createTerm("none")
+        ReviewState.REQUIRED -> QualifierName.review.createTerm("required")
+        ReviewState.APPROVED -> QualifierName.review.createTerm("approved")
+        ReviewState.CHANGES_REQUESTED -> QualifierName.review.createTerm("changes-requested")
+        ReviewState.REVIEWED_BY_ME -> QualifierName.reviewedBy.createTerm("@me")
+        ReviewState.NOT_REVIEWED_BY_ME -> (QualifierName.reviewedBy.createTerm("@me") as Qualifier.Simple).not()
+        ReviewState.AWAITING_REVIEW -> QualifierName.reviewRequested.createTerm("@me")
       }
       terms.add(term)
     }
 
     if (author != null) {
-      terms.add(Qualifier.Simple(QualifierName.author, author))
+      terms.add(QualifierName.author.createTerm(author))
     }
 
     if (label != null) {
-      terms.add(Qualifier.Simple(QualifierName.label, StringUtil.wrapWithDoubleQuote(label)))
+      terms.add(QualifierName.label.createTerm(StringUtil.wrapWithDoubleQuote(label)))
     }
 
     if (terms.isEmpty()) return null

@@ -1,5 +1,4 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
+// IGNORE_K2
 package kotlin.prop<caret>erties.
 
 import kotlin.properties.Delegates

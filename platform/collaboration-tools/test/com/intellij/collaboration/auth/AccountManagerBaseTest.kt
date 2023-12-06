@@ -1,22 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth
 
-import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import org.mockito.kotlin.*
+import org.mockito.kotlin.mock
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class AccountManagerBaseTest {
 
@@ -32,6 +28,8 @@ class AccountManagerBaseTest {
     }
 
     override suspend fun retrieveCredentials(account: MockAccount): String? = map[account]
+
+    override val canPersistCredentials: StateFlow<Boolean> = MutableStateFlow(false)
   }
 
   private lateinit var manager: AccountManagerBase<MockAccount, String>

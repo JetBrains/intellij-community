@@ -8,6 +8,6 @@
   </description>
   <depends>com.intellij.modules.lang</depends>
   <extensions defaultExtensionNs="com.intellij">
-    <bundledColorScheme path="/colorSchemes/all_hallows_eve"/>
+    <bundledColorScheme id="All hallow's eve" path="/colorSchemes/all_hallows_eve"/>
   </extensions>
 </idea-plugin>

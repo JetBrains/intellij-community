@@ -6,7 +6,6 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -18,12 +17,12 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
+import java.util.*;
 
 public final class JavaFormatterUtil {
   /**
@@ -31,6 +30,8 @@ public final class JavaFormatterUtil {
    */
   private static final TokenSet ASSIGNMENT_ELEMENT_TYPES = TokenSet
     .create(JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD);
+
+  private static final int CALL_EXPRESSION_DEPTH = 2500;
 
   private JavaFormatterUtil() { }
 
@@ -258,7 +259,6 @@ public final class JavaFormatterUtil {
       if (role == ChildRole.CLOSING_SEMICOLON) return null;
       return suggestedWrap;
     }
-
     else if (nodeType == JavaElementType.REFERENCE_EXPRESSION) {
       if (role == ChildRole.DOT) {
         return reservedWrapsProvider.getReservedWrap(JavaElementType.REFERENCE_EXPRESSION);
@@ -287,8 +287,7 @@ public final class JavaFormatterUtil {
       if (prev != null && prev.getElementType() == JavaElementType.MODIFIER_LIST) {
         ASTNode last = prev.getLastChildNode();
         if (last != null && last.getElementType() == JavaElementType.ANNOTATION) {
-          if (isTypeAnnotationOrFalseIfDumb(last) ||
-              javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(prev, JavaElementType.FIELD) ||
+          if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(prev, JavaElementType.FIELD) ||
               javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER && isModifierListWithSingleAnnotation(prev, JavaElementType.PARAMETER) ||
               isAnnotationAfterKeyword(last)
           ) {
@@ -308,12 +307,6 @@ public final class JavaFormatterUtil {
         ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
         if (prev instanceof PsiKeyword) {
           return null;
-        }
-
-        if (isTypeAnnotationOrFalseIfDumb(child)) {
-          if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || isTypeAnnotationOrFalseIfDumb(prev)) {
-            return Wrap.createWrap(WrapType.NONE, false);
-          }
         }
 
         return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings)), true);
@@ -433,14 +426,6 @@ public final class JavaFormatterUtil {
     return prev != null && prev.getElementType() != JavaElementType.BLOCK_STATEMENT;
   }
 
-  private static boolean isTypeAnnotationOrFalseIfDumb(@NotNull ASTNode child) {
-    PsiElement node = child.getPsi();
-    if (node.getProject().isDefault()) return false;
-    PsiElement next = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class, PsiAnnotation.class);
-    if (next instanceof PsiKeyword) return false;
-    return !DumbService.isDumb(node.getProject()) && isTypeAnnotation(node);
-  }
-
   private static void putPreferredWrapInParentBlock(@NotNull AbstractJavaBlock block, @NotNull Wrap preferredWrap) {
     AbstractJavaBlock parentBlock = block.getParentBlock();
     if (parentBlock != null) {
@@ -513,5 +498,40 @@ public final class JavaFormatterUtil {
     }
 
     return CommonCodeStyleSettings.DO_NOT_WRAP;
+  }
+
+  /**
+   * Traverses the children of the node and collects nodes with type method calls or reference expressions to the list
+   * @param nodes List in which the method add nodes
+   * @param node Node to traverse
+   *
+   */
+  public static void collectCallExpressionNodes(@NotNull List<? super ASTNode> nodes, @NotNull ASTNode node) {
+    ArrayDeque<ASTNode> stack = new ArrayDeque<>(CALL_EXPRESSION_DEPTH);
+    stack.addLast(node.getFirstChildNode());
+    while (!stack.isEmpty()) {
+      if (stack.size() >= CALL_EXPRESSION_DEPTH) {
+        throw new IllegalStateException("Too long call chain! " + node);
+      }
+      ASTNode currentNode = stack.removeLast();
+        if (!FormatterUtil.containsWhiteSpacesOnly(currentNode)) {
+          IElementType type = currentNode.getElementType();
+          if (type == JavaElementType.METHOD_CALL_EXPRESSION ||
+              type == JavaElementType.REFERENCE_EXPRESSION) {
+            ASTNode firstChild = currentNode.getFirstChildNode();
+            currentNode = FormatterUtil.getNextNonWhitespaceSibling(currentNode);
+            ContainerUtil.addIfNotNull(stack, currentNode);
+            ContainerUtil.addIfNotNull(stack, firstChild);
+          }
+          else {
+            nodes.add(currentNode);
+            currentNode = FormatterUtil.getNextNonWhitespaceSibling(currentNode);
+            ContainerUtil.addIfNotNull(stack, currentNode);
+          }
+        } else {
+          currentNode = FormatterUtil.getNextNonWhitespaceSibling(currentNode);
+          ContainerUtil.addIfNotNull(stack, currentNode);
+        }
+    }
   }
 }

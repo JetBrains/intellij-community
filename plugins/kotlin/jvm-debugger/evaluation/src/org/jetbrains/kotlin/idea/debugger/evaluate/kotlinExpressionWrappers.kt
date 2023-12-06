@@ -1,21 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.isInlineClassType
 
 internal interface KotlinExpressionWrapper {
     fun createWrappedExpressionText(expressionText: String): String
 
+    @RequiresReadLock
     fun isApplicable(expression: KtExpression): Boolean
 }
 
-internal class KotlinToStringWrapper(val bindingContext: BindingContext) : KotlinExpressionWrapper {
+internal class KotlinToStringWrapper : KotlinExpressionWrapper {
     override fun createWrappedExpressionText(expressionText: String) = "($expressionText).toString()"
 
-    override fun isApplicable(expression: KtExpression): Boolean {
-        val expressionType = bindingContext[BindingContext.EXPRESSION_TYPE_INFO, expression]?.type ?: return false
-        return expressionType.isInlineClassType()
+    @RequiresReadLock
+    override fun isApplicable(expression: KtExpression) = analyze(expression) {
+        val ktUsualClassType = expression.getKtType() as? KtUsualClassType
+        val ktNamedClassOrObjectSymbol = ktUsualClassType?.classSymbol as? KtNamedClassOrObjectSymbol
+        ktNamedClassOrObjectSymbol?.isInline ?: false
     }
 }

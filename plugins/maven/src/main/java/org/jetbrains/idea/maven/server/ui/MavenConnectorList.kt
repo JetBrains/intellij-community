@@ -3,20 +3,14 @@ package org.jetbrains.idea.maven.server.ui
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
-import java.awt.event.ActionListener
-import javax.swing.Action
-import javax.swing.JButton
 import javax.swing.JComponent
 
 class MavenConnectorList {
-  private val myPanel: DialogPanel
+  private val myPanel: DialogPanel = createPanel()
   private lateinit var myTable: ConnectorTable
-
-  init {
-    myPanel = createPanel()
-  }
 
   private fun createPanel() = panel {
     row {
@@ -24,8 +18,8 @@ class MavenConnectorList {
     }
     row {
       myTable = ConnectorTable()
-      myTable.component(grow, push)
-    }
+      cell(myTable.component).align(Align.FILL)
+    }.resizableRow()
   }
 
   fun show() {

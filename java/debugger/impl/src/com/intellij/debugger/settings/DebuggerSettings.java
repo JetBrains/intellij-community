@@ -68,7 +68,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
-  public boolean HOTSWAP_IN_BACKGROUND = true;
   public volatile boolean ENABLE_MEMORY_AGENT =
     ApplicationManager.getApplication().isEAP() && !ApplicationManager.getApplication().isUnitTestMode();
   public boolean ALWAYS_SMART_STEP_INTO = true;
@@ -90,6 +89,9 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public String EVALUATE_FINALLY_ON_POP_FRAME = EVALUATE_FINALLY_ASK;
 
+  /**
+   * Whether we resume only current thread during the stepping.
+   */
   public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
   private ClassFilter[] mySteppingFilters = DEFAULT_STEPPING_FILTERS;
@@ -170,7 +172,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       SHOW_ALTERNATIVE_SOURCE == secondSettings.SHOW_ALTERNATIVE_SOURCE &&
       KILL_PROCESS_IMMEDIATELY == secondSettings.KILL_PROCESS_IMMEDIATELY &&
       ALWAYS_DEBUG == secondSettings.ALWAYS_DEBUG &&
-      HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
       ENABLE_MEMORY_AGENT == secondSettings.ENABLE_MEMORY_AGENT &&
       ALWAYS_SMART_STEP_INTO == secondSettings.ALWAYS_SMART_STEP_INTO &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&

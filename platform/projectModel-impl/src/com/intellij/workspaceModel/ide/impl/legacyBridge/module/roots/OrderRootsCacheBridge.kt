@@ -6,11 +6,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.OrderRootsCache
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
@@ -23,12 +25,12 @@ class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) 
 
   override fun getOrComputeRoots(rootType: OrderRootType, flags: Int, computer: Supplier<out Collection<String>>): Array<VirtualFile> {
     cacheRootsIfNeeded(rootType, flags, computer)
-    return myRootVirtualFiles.get()[CacheKey(rootType, flags)] ?: emptyArray()
+    return myRootVirtualFiles.get()[CacheKey(rootType, flags)] ?: VirtualFile.EMPTY_ARRAY
   }
 
   override fun getOrComputeUrls(rootType: OrderRootType, flags: Int, computer: Supplier<out Collection<String>>): Array<String> {
     cacheRootsIfNeeded(rootType, flags, computer)
-    return myRootUrls.get()[CacheKey(rootType, flags)] ?: emptyArray()
+    return myRootUrls.get()[CacheKey(rootType, flags)] ?: ArrayUtil.EMPTY_STRING_ARRAY
   }
 
   override fun clearCache() {
@@ -42,13 +44,15 @@ class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) 
     var virtualFileUrls: List<VirtualFileUrlBridge>? = null
     if (myRootUrls.get()?.get(key) == null) {
       virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.fromUrl(it) as VirtualFileUrlBridge }
-      ConcurrencyUtil.cacheOrGet(myRootUrls, ConcurrentHashMap()).computeIfAbsent(key) { virtualFileUrls!!.map { it.url }.toTypedArray() }
+      ConcurrencyUtil.cacheOrGet(myRootUrls, ConcurrentHashMap()).computeIfAbsent(key) { ArrayUtil.toStringArray(virtualFileUrls!!.map { it.url }) }
     }
     if (myRootVirtualFiles.get()?.get(key) == null) {
       if (virtualFileUrls == null) {
         virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.fromUrl(it) as VirtualFileUrlBridge }
       }
-      ConcurrencyUtil.cacheOrGet(myRootVirtualFiles, ConcurrentHashMap()).computeIfAbsent(key) { virtualFileUrls.mapNotNull { it.file }.toTypedArray() }
+      ConcurrencyUtil.cacheOrGet(myRootVirtualFiles, ConcurrentHashMap()).computeIfAbsent(key) {
+        VfsUtilCore.toVirtualFileArray(virtualFileUrls.mapNotNull { it.file })
+      }
     }
   }
 }

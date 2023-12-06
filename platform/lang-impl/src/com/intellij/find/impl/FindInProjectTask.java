@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
@@ -35,6 +36,10 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -55,14 +60,10 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.kind.ContentOrigin;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.EDT;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,7 +239,7 @@ final class FindInProjectTask {
     Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
     if (pair == null) return true;
 
-    Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ContainerUtil.newConcurrentSet());
+    Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ConcurrentCollectionFactory.createConcurrentSet());
     PsiFile psiFile = pair.first;
     VirtualFile sourceVirtualFile = pair.second;
 
@@ -246,7 +247,7 @@ final class FindInProjectTask {
       Document document = FileDocumentManager.getInstance().getCachedDocument(sourceVirtualFile);
       CharSequence s = document != null ? document.getCharsSequence() :
                        DiskQueryRelay.compute(() -> LoadTextUtil.loadText(sourceVirtualFile, -1));
-      if (s.length() == 0 || searcher.scan(s) < 0) {
+      if (s.isEmpty() || searcher.scan(s) < 0) {
         return true;
       }
     }
@@ -342,7 +343,7 @@ final class FindInProjectTask {
       ProgressManager.checkCanceled();
       if (obj instanceof IndexableFilesIterator) {
         IndexableSetOrigin origin = ((IndexableFilesIterator)obj).getOrigin();
-        if (!searchInLibs && !(origin instanceof ModuleRootOrigin)) return true;
+        if (!searchInLibs && !(origin instanceof ContentOrigin)) return true;
         ((IndexableFilesIterator)obj).iterateFiles(myProject, file -> {
           if (file.isDirectory()) return true;
           deque.add(file);

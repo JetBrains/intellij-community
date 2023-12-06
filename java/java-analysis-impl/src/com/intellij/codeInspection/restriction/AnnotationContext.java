@@ -25,6 +25,7 @@ public final class AnnotationContext {
 
   private final @Nullable PsiModifierListOwner myOwner;
   private final @Nullable PsiType myType;
+  private final @Nullable PsiElement myPlace;
   @Nullable
   private final Supplier<? extends Stream<PsiModifierListOwner>> myNext;
 
@@ -35,17 +36,34 @@ public final class AnnotationContext {
   private AnnotationContext(@Nullable PsiModifierListOwner owner,
                             @Nullable PsiType type,
                             @Nullable Supplier<? extends Stream<PsiModifierListOwner>> next) {
+    this(owner, type, next, null);
+  }
+
+  private AnnotationContext(@Nullable PsiModifierListOwner owner,
+                            @Nullable PsiType type,
+                            @Nullable Supplier<? extends Stream<PsiModifierListOwner>> next,
+                            @Nullable PsiElement place) {
     myOwner = owner;
     myType = type;
     myNext = next;
+    myPlace = place;
   }
 
   private AnnotationContext withType(PsiType type) {
     return new AnnotationContext(myOwner, type, myNext);
   }
 
+  private AnnotationContext withPlace(@Nullable PsiElement place) {
+    return new AnnotationContext(myOwner, myType, myNext, place);
+  }
+
   public @Nullable PsiModifierListOwner getOwner() {
     return myOwner;
+  }
+
+  @Nullable
+  public PsiElement getPlace() {
+    return myPlace;
   }
 
   public @NotNull Stream<PsiModifierListOwner> secondaryItems() {
@@ -220,9 +238,8 @@ public final class AnnotationContext {
       PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
       parameterType = substitutor.substitute(parameterType);
     }
-    return fromModifierListOwner(parameter).withType(parameterType);
+    return fromModifierListOwner(parameter).withType(parameterType).withPlace(callExpression.getSourcePsi());
   }
-
   private static @NotNull AnnotationContext fromInfixMethod(@NotNull UExpression expression) {
     UBinaryExpression parent = ObjectUtils.tryCast(expression.getUastParent(), UBinaryExpression.class);
     PsiMethod method = parent != null ? parent.resolveOperator() : null;

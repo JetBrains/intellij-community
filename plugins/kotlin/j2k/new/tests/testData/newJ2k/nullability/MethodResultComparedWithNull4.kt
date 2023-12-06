@@ -6,6 +6,8 @@ internal class C {
     fun foo(i: I, b: Boolean) {
         var result = i.string
         if (b) result = null
-        result?.let { print(it) }
+        if (result != null) {
+            println(result)
+        }
     }
 }

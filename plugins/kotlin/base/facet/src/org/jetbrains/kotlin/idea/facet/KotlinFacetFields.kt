@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinFacetFieldsUtils")
+
 package org.jetbrains.kotlin.idea.facet
 
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
@@ -51,10 +52,10 @@ internal val jvmFields = KotlinFacetFields(
     exposedFields = listOf(
         K2JVMCompilerArguments::jvmTarget.name,
         K2JVMCompilerArguments::destination.name,
-        K2JVMCompilerArguments::classpath.name
+        K2JVMCompilerArguments::classpath.name,
     ),
     hiddenFields = listOf(
-        K2JVMCompilerArguments::friendPaths.name
+        K2JVMCompilerArguments::friendPaths.name,
     )
 )
 
@@ -64,8 +65,6 @@ internal val jsFields = KotlinFacetFields(
         K2JSCompilerArguments::sourceMap.name,
         K2JSCompilerArguments::sourceMapPrefix.name,
         K2JSCompilerArguments::sourceMapEmbedSources.name,
-        K2JSCompilerArguments::outputPrefix.name,
-        K2JSCompilerArguments::outputPostfix.name,
         K2JSCompilerArguments::moduleKind.name
     ),
     hiddenFields = emptyList()
@@ -80,16 +79,10 @@ internal val metadataFields = KotlinFacetFields(
     hiddenFields = emptyList()
 )
 
-internal val CommonCompilerArguments.primaryFields: List<String>
+internal val CommonCompilerArguments.kotlinFacetFields: KotlinFacetFields
     get() = when (this) {
-        is K2JVMCompilerArguments -> jvmFields.allFields
-        is K2JSCompilerArguments -> jsFields.allFields
-        is K2MetadataCompilerArguments -> metadataFields.allFields
-        else -> commonFields.allFields
-    }
-
-internal val CommonCompilerArguments.ignoredFields: List<String>
-    get() = when (this) {
-        is K2JVMCompilerArguments -> listOf(K2JVMCompilerArguments::noJdk.name, K2JVMCompilerArguments::jdkHome.name)
-        else -> emptyList()
+        is K2JVMCompilerArguments -> jvmFields
+        is K2JSCompilerArguments -> jsFields
+        is K2MetadataCompilerArguments -> metadataFields
+        else -> commonFields
     }

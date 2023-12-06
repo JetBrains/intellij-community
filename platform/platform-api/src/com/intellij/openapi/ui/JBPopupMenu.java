@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -309,9 +309,8 @@ public class JBPopupMenu extends JPopupMenu {
       return screenRectangle.height;
     }
 
-    @NotNull
     @Override
-    public Dimension preferredLayoutSize(Container target) {
+    public @NotNull Dimension preferredLayoutSize(Container target) {
       Dimension dimension = super.preferredLayoutSize(target);
       int maxHeight = getMaxHeight();
       switchTimer(dimension.height > maxHeight);

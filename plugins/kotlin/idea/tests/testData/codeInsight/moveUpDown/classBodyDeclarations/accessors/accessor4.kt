@@ -6,3 +6,5 @@ var x: String
     <caret>set(v: String) {
         // test
     }
+
+// IGNORE_K2

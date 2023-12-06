@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.ide.SaveAndSyncHandler;
@@ -116,17 +116,9 @@ public abstract class WslDistributionManager implements Disposable {
     return d;
   }
 
-  /**
-   * @deprecated use {@link WslPath#isWslUncPath(String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isWslPath(@NotNull String path) {
-    return WslPath.isWslUncPath(path);
-  }
-
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
     if (!isWslExeSupported()) {
-      //noinspection deprecation
+      //noinspection removal
       return WSLUtil.getAvailableDistributions();
     }
 
@@ -171,7 +163,7 @@ public abstract class WslDistributionManager implements Disposable {
   public abstract @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions()
     throws IOException, IllegalStateException;
 
-  private static class CachedDistributions {
+  private static final class CachedDistributions {
     private final @NotNull List<WSLDistribution> myInstalledDistributions;
     private final long myExternalChangesCount;
 

@@ -88,6 +88,10 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
       values.add(value);
     }
 
+    public XDebuggerTree getTree() {
+      return myTree;
+    }
+
     public void add(@NotNull String value, int indent) {
       values.add(value);
       indents.put(values.size() - 1, indent);

@@ -98,7 +98,7 @@ private interface SdkPopupListener {
 internal class PlatformSdkPopupFactory : SdkPopupFactory {
   override fun createBuilder(): SdkPopupBuilder = SdkPopupBuilderImpl()
 
-  override fun createEditorNotificationPanelHandler(builder: SdkPopupBuilder) = object : ActionHandler {
+  override fun createEditorNotificationPanelHandler(builder: SdkPopupBuilder): ActionHandler = object : ActionHandler {
     override fun handlePanelActionClick(panel: EditorNotificationPanel,
                                         event: HyperlinkEvent) {
       //FileEditorManager#addTopComponent wraps the panel to implement borders, unwrapping
@@ -325,7 +325,7 @@ private class SdkListItemContext(
 ) : ComboBoxPopup.Context<SdkListItem> {
   var myModel = SdkListModel.emptyModel()
 
-  private val myRenderer = SdkListPresenter { myModel }
+  private val myRenderer = SdkListPresenter.create<SdkListItem>(null, { myModel }, { it })
 
   override fun getProject() = myProject
   override fun getMaximumRowCount() = 30

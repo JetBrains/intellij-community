@@ -9,6 +9,7 @@ public abstract class SimpleClass public constructor() : dependency.D<dependency
     public final var b: dependency.B /* compiled code */
 
     public final val kotlin.Int.g: kotlin.Int /* compiled code */
+        public final get
 
     public final fun <T, K, G> complexFun(a: T, b: K, c: G): G { /* compiled code */ }
 

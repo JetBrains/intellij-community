@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -120,7 +122,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
   private final ExecutionNode myBuildProgressRootNode;
   private final Set<Predicate<? super ExecutionNode>> myNodeFilters;
   private final ProblemOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
-  private final Set<BuildEvent> myDeferredEvents = ContainerUtil.newConcurrentSet();
+  private final Set<BuildEvent> myDeferredEvents = ConcurrentCollectionFactory.createConcurrentSet();
 
   /**
    * @deprecated BuildViewSettingsProvider is not used anymore.
@@ -140,7 +142,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor
                         ? (DefaultBuildDescriptor)buildDescriptor
                         : new DefaultBuildDescriptor(buildDescriptor);
-    myNodeFilters = ContainerUtil.newConcurrentSet();
+    myNodeFilters = ConcurrentCollectionFactory.createConcurrentSet();
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
     myNavigateToTheFirstErrorLocation = isNavigateToTheFirstErrorLocation(project, buildDescriptor);
 
@@ -381,7 +383,9 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         nodesMap.put(eventId, currentNode);
       }
       else {
-        LOG.warn("start event id collision found:" + eventId + ", was also in node: " + currentNode.getTitle());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("start event id collision found:" + eventId + ", was also in node: " + currentNode.getTitle());
+        }
         return;
       }
     }
@@ -947,7 +951,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       Disposer.register(this, myView);
       if (executionConsole != null) {
         String nodeConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
-        myView.addViewAndShowIfNeeded(executionConsole, nodeConsoleViewName, true);
+        myView.addViewAndShowIfNeeded(executionConsole, nodeConsoleViewName, true, false);
         myNodeConsoleViewName.set(nodeConsoleViewName);
       }
       ConsoleView emptyConsole = new ConsoleViewImpl(project, GlobalSearchScope.EMPTY_SCOPE, true, false);
@@ -1008,6 +1012,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         }
       });
       textConsoleToolbarActionGroup.add(new ScrollEditorToTheEndAction(this));
+      textConsoleToolbarActionGroup.add(new ClearConsoleAction());
       return textConsoleToolbarActionGroup;
     }
 
@@ -1143,7 +1148,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       myPanel.setVisible(false);
     }
 
-    private static class PresentableBuildEventExecutionConsole implements ExecutionConsole {
+    private static final class PresentableBuildEventExecutionConsole implements ExecutionConsole {
       private final ExecutionConsole myExecutionConsole;
       private final @Nullable ActionGroup myActions;
 
@@ -1170,7 +1175,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  private static class ProblemOccurrenceNavigatorSupport extends OccurenceNavigatorSupport {
+  private static final class ProblemOccurrenceNavigatorSupport extends OccurenceNavigatorSupport {
     ProblemOccurrenceNavigatorSupport(final Tree tree) {
       super(tree);
     }
@@ -1202,7 +1207,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  private static class ScrollEditorToTheEndAction extends ToggleAction implements DumbAware {
+  private static final class ScrollEditorToTheEndAction extends ToggleAction implements DumbAware {
     private final @NotNull ConsoleViewHandler myConsoleViewHandler;
 
     ScrollEditorToTheEndAction(@NotNull ConsoleViewHandler handler) {
@@ -1239,11 +1244,12 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  private static class MyNodeRenderer extends NodeRenderer {
+  private static final class MyNodeRenderer extends NodeRenderer {
     private String myDurationText;
     private Color myDurationColor;
     private int myDurationWidth;
-    private int myDurationOffset;
+    private int myDurationLeftInset;
+    private int myDurationRightInset;
 
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
@@ -1257,7 +1263,8 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       myDurationText = null;
       myDurationColor = null;
       myDurationWidth = 0;
-      myDurationOffset = 0;
+      myDurationLeftInset = 0;
+      myDurationRightInset = 0;
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       final Object userObj = node.getUserObject();
       if (userObj instanceof ExecutionNode) {
@@ -1265,7 +1272,8 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         if (myDurationText != null) {
           FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
           myDurationWidth = metrics.stringWidth(myDurationText);
-          myDurationOffset = metrics.getHeight() / 2; // an empty area before and after the text
+          myDurationLeftInset = metrics.getHeight() / 4;
+          myDurationRightInset = ExperimentalUI.isNewUI() ? tree.getInsets().right + JBUI.scale(4) : myDurationLeftInset;
           myDurationColor = selected ? getTreeSelectionForeground(hasFocus) : GRAYED_ATTRIBUTES.getFgColor();
         }
       }
@@ -1283,11 +1291,11 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         g.fillRect(0, 0, width, height);
       }
       if (myDurationWidth > 0) {
-        width -= myDurationWidth + myDurationOffset;
+        width -= myDurationWidth + myDurationLeftInset + myDurationRightInset;
         if (width > 0 && height > 0) {
           g.setColor(myDurationColor);
           g.setFont(RelativeFont.SMALL.derive(getFont()));
-          g.drawString(myDurationText, width + myDurationOffset / 2, getTextBaseLine(g.getFontMetrics(), height));
+          g.drawString(myDurationText, width + myDurationLeftInset, getTextBaseLine(g.getFontMetrics(), height));
           clip = g.getClip();
           g.clipRect(0, 0, width, height);
         }
@@ -1297,9 +1305,18 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       // restore clip area if needed
       if (clip != null) g.setClip(clip);
     }
+
+    @Override
+    public @NotNull Dimension getPreferredSize() {
+      Dimension preferredSize = super.getPreferredSize();
+      if (myDurationWidth > 0) {
+        preferredSize.width += myDurationWidth + myDurationLeftInset + myDurationRightInset;
+      }
+      return preferredSize;
+    }
   }
 
-  private class MyTreeStructure extends AbstractTreeStructure {
+  private final class MyTreeStructure extends AbstractTreeStructure {
     @Override
     public @NotNull Object getRootElement() {
       return myRootNode;
@@ -1336,7 +1353,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  private class ExecutionNodeAutoExpandingListener implements TreeModelListener {
+  private final class ExecutionNodeAutoExpandingListener implements TreeModelListener {
     @Override
     public void treeNodesInserted(TreeModelEvent e) {
       maybeExpand(e.getTreePath());

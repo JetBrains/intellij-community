@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTION_TOOLTIP
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
+import com.intellij.ui.util.width
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.scale
@@ -29,8 +30,7 @@ import java.awt.event.*
 import java.beans.PropertyChangeListener
 import java.util.function.Supplier
 import javax.swing.*
-import javax.swing.AbstractButton.MNEMONIC_CHANGED_PROPERTY
-import javax.swing.AbstractButton.TEXT_CHANGED_PROPERTY
+import javax.swing.AbstractButton.*
 import javax.swing.JComponent.TOOL_TIP_TEXT_KEY
 import javax.swing.SwingUtilities.replaceUIActionMap
 import javax.swing.SwingUtilities.replaceUIInputMap
@@ -180,8 +180,11 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     when (it.propertyName) {
       "action" -> mainButton.action = optionButton.action
       TEXT_CHANGED_PROPERTY -> mainButton.text = optionButton.text
+      ICON_CHANGED_PROPERTY -> mainButton.icon = optionButton.icon
+      "iconTextGap" -> mainButton.iconTextGap = optionButton.iconTextGap
       MNEMONIC_CHANGED_PROPERTY -> mainButton.mnemonic = optionButton.mnemonic
-      TOOL_TIP_TEXT_KEY, PROP_OPTION_TOOLTIP -> updateTooltip()
+      TOOL_TIP_TEXT_KEY -> mainButton.toolTipText = optionButton.toolTipText
+      PROP_OPTION_TOOLTIP -> updateTooltip()
       PROP_OPTIONS -> {
         closePopup()
         updateTooltip()
@@ -258,6 +261,11 @@ open class BasicOptionButtonUI : OptionButtonUI() {
             }
           }
         })
+        if (ExperimentalUI.isNewUI()) {
+          _optionButton?.let {
+            setMinimumSize(Dimension(it.width - it.insets.width, 0))
+          }
+        }
         show(showPopupBelowLocation)
       }
     }
@@ -310,7 +318,9 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   private fun updateTooltip() {
     val toolTip = if (!isSimpleButton) optionButton.optionTooltipText else optionButton.toolTipText
 
-    mainButton.toolTipText = toolTip
+    if (mainButton.toolTipText == null) {
+      mainButton.toolTipText = toolTip
+    }
     arrowButton.toolTipText = toolTip
   }
 
@@ -346,12 +356,13 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     override fun minimumLayoutSize(parent: Container): Dimension = parent.minimumSize
   }
 
-  open inner class OptionButtonPopup(step: ActionPopupStep,
+  inner class OptionButtonPopup(step: ActionPopupStep,
                                      dataContext: DataContext,
                                      private val ensureSelection: Boolean)
     : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, -1) {
     init {
       list.background = background
+      registerShortcuts()
     }
 
     override fun afterShow() {
@@ -404,7 +415,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.BGT
     }
 
     override fun actionPerformed(event: AnActionEvent) {
@@ -417,7 +428,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     @JvmStatic
     fun createUI(c: JComponent): BasicOptionButtonUI = BasicOptionButtonUI()
 
-    fun paintBackground(g: Graphics, c: JComponent) {
+    internal fun paintBackground(g: Graphics, c: JComponent) {
       if (c.isOpaque) {
         g.color = c.background
         g.fillRect(0, 0, c.width, c.height)

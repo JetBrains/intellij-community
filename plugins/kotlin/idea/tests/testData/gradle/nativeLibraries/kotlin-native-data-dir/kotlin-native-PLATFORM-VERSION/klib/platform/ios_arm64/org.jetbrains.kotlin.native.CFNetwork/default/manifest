@@ -1,5 +1,0 @@
-unique_name=org.jetbrains.kotlin.native.CFNetwork
-compiler_version=1.0.0
-builtins_platform=NATIVE
-short_name=CFNetwork
-native_targets=ios_arm64

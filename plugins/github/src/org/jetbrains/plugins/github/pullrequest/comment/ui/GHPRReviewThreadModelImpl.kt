@@ -29,7 +29,8 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     private set
   override var isOutdated: Boolean = thread.isOutdated
     private set
-  override val commit = thread.originalCommit
+  override val originalCommit = thread.originalCommit
+  override val commit = thread.commit
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
 
@@ -42,8 +43,11 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     }
     else null
 
-  override val line = thread.line
-  override val startLine = thread.startLine
+  override val location: DiffLineLocation? =
+    thread.line?.let { thread.side to it - 1 }
+
+  override val startLocation: DiffLineLocation? =
+    thread.startLine?.let { (thread.startSide ?: thread.side) to it - 1 }
 
   override val collapsedState = MutableStateFlow(isResolved || isOutdated)
 

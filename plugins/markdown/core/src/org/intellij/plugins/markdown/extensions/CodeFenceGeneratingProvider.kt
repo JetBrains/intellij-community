@@ -11,7 +11,8 @@ import org.jetbrains.annotations.ApiStatus
  * Implementors of this interface will be automatically added
  * to the list of extensions on the settings page.
  */
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
+@ApiStatus.Internal
 interface CodeFenceGeneratingProvider {
   /**
    * Check if plugin applicable for code fence language string

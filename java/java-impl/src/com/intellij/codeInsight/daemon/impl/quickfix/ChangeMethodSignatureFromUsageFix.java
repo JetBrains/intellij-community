@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -125,7 +125,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       for (ParameterInfoImpl info : infos) {
         PsiType type = info.createType(context);
         if (type == null) return null;
-        if (result.length() != 0) result.append(", ");
+        if (!result.isEmpty()) result.append(", ");
         result.append(type.getPresentableText());
       }
       return result.toString();
@@ -182,6 +182,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     HashSet<ParameterInfoImpl> newParams = new HashSet<>();
     HashSet<ParameterInfoImpl> removedParams = new HashSet<>();
     HashSet<ParameterInfoImpl> changedParams = new HashSet<>();
+    if (!(myTargetMethod.getContainingFile() instanceof PsiJavaFile)) return IntentionPreviewInfo.EMPTY;
     ParameterInfoImpl[] parameterInfos =
       getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor, new StringBuilder(), newParams, removedParams, changedParams);
     PsiParameterList parameterList = myTargetMethod.getParameterList();
@@ -206,6 +207,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       range = header.getTextRangeInParent();
       methodText = header.getParent().getText();
     } else {
+      if (myTargetMethod instanceof SyntheticElement) return IntentionPreviewInfo.EMPTY;
       range = parameterList.getTextRangeInParent();
       methodText = myTargetMethod.getText();
     }
@@ -317,7 +319,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         PsiParameter parameter = parameters[pi];
         PsiType bareParameterType = getValidParameterType(parameter, targetMethod);
         PsiType paramType = substitutor.substitute(bareParameterType);
-        if (buf.length() > 0) buf.append(", ");
+        if (!buf.isEmpty()) buf.append(", ");
         final PsiType parameterType = PsiUtil.convertAnonymousToBaseType(paramType);
         final String presentableText = escapePresentableType(parameterType);
         final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(pi).withName(parameter.getName()).withType(bareParameterType);
@@ -335,7 +337,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       }
       if (result.size() != expressions.length) return null;
       for(int i = pi; i < parameters.length; i++) {
-        if (buf.length() > 0) buf.append(", ");
+        if (!buf.isEmpty()) buf.append(", ");
         PsiType paramType = getValidParameterType(parameters[i], targetMethod);
         buf.append("<s>").append(escapePresentableType(paramType)).append("</s>");
         final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(pi)
@@ -350,7 +352,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     else {
       //parameter type changed
       for (int i = 0; i < parameters.length; i++) {
-        if (buf.length() > 0) buf.append(", ");
+        if (!buf.isEmpty()) buf.append(", ");
         PsiParameter parameter = parameters[i];
         PsiExpression expression = expressions[i];
         PsiType bareParamType = getValidParameterType(parameter, targetMethod);
@@ -432,7 +434,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     int pi = 0;
     PsiParameter varargParam = targetMethod.isVarArgs() ? parameters[parameters.length - 1] : null;
     while (ei < expressions.length || pi < parameters.length) {
-      if (buf.length() > 0) buf.append(", ");
+      if (!buf.isEmpty()) buf.append(", ");
       PsiExpression expression = ei < expressions.length ? expressions[ei] : null;
       PsiParameter parameter = pi < parameters.length ? parameters[pi] : null;
       PsiType paramType = parameter == null ? null : substitutor.substitute(parameter.getType());

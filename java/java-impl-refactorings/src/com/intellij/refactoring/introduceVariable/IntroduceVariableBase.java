@@ -203,16 +203,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  /**
-   * @deprecated use CommonJavaRefactoringUtil.collectExpressions
-   */
-  @Deprecated
-  public static List<PsiExpression> collectExpressions(final PsiFile file,
-                                                       final Editor editor,
-                                                       final int offset) {
-    return CommonJavaRefactoringUtil.collectExpressions(file, editor, offset);
-  }
-
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.REFACTORING_INTRODUCE_VARIABLE);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -409,11 +399,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = occurrencesInfo.buildOccurrencesMap(expr);
 
-    class IntroduceVariablePass extends Pass<JavaReplaceChoice> {
+    class IntroduceVariablePass implements Consumer<JavaReplaceChoice> {
       boolean wasSucceed = true;
 
       @Override
-      public void pass(final JavaReplaceChoice choice) {
+      public void accept(JavaReplaceChoice choice) {
         Consumer<JavaReplaceChoice> dialogIntroduce = c -> CommandProcessor.getInstance().executeCommand(project, () -> introduce(c), getRefactoringName(), null);
         if (choice == null) {
           dialogIntroduce.accept(null);
@@ -492,16 +482,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final IntroduceVariablePass callback = new IntroduceVariablePass();
 
     if (replaceChoice != null) {
-      callback.pass(findChoice(occurrencesMap, replaceChoice));
+      callback.accept(findChoice(occurrencesMap, replaceChoice));
     }
     else if (!isInplaceAvailableOnDataContext) {
-      callback.pass(null);
+      callback.accept(null);
     }
     else {
       String title = occurrencesInfo.myChainMethodName != null && occurrences.length == 1
                      ? JavaRefactoringBundle.message("replace.lambda.chain.detected")
                      : RefactoringBundle.message("replace.multiple.occurrences.found");
-      createOccurrencesChooser(editor).showChooser(callback, occurrencesMap, title);
+      createOccurrencesChooser(editor).showChooser(occurrencesMap, title, callback);
     }
     return callback.wasSucceed;
   }
@@ -556,9 +546,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final boolean cantChangeFinalModifier = hasWriteAccess ||
                                               inFinalContext && choice.isAll() ||
                                               chosenAnchor instanceof PsiSwitchLabelStatementBase;
-      Pass<PsiElement> callback = new Pass<>() {
-        @Override
-        public void pass(final PsiElement container) {
+      Consumer<? super PsiElement> callback = container-> {
           PsiElement anchor = container instanceof PsiLambdaExpression ? getAnchor(container) : container;
           if (checkAnchorStatement(project, editor, anchor) == null) {
             return;
@@ -569,10 +557,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           if (!myInplaceIntroducer.startInplaceIntroduceTemplate()) {
             dialogIntroduce.accept(choice);
           }
-        }
       };
       if (targetContainer != null) {
-        callback.pass(targetContainer);
+        callback.accept(targetContainer);
       }
       else {
         IntroduceVariableTargetBlockChooser.chooseTargetAndPerform(editor, chosenAnchor, expr, callback);

@@ -1,16 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.codeInspection.ex.InspectionProfileImpl
-import com.intellij.codeInspection.ex.InspectionToolRegistrar
-import com.intellij.codeInspection.ex.InspectionToolWrapper
-import com.intellij.codeInspection.ex.InspectionToolsSupplier
+import com.intellij.codeInspection.GlobalInspectionTool
+import com.intellij.codeInspection.ex.*
 import com.intellij.codeInspection.inspectionProfile.YamlProfileUtils.createProfileCopy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
@@ -18,11 +15,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.scope.packageSet.AbstractPackageSet
-import com.intellij.psi.search.scope.packageSet.NamedScope
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
-import com.intellij.psi.search.scope.packageSet.PackageSetFactory
-import com.intellij.psi.search.scope.packageSet.ParsingException
+import com.intellij.psi.search.scope.packageSet.*
 import org.jdom.Element
 import java.io.File
 import java.io.Reader
@@ -40,7 +33,7 @@ class YamlInspectionConfigImpl(override val inspection: String,
                                override val enabled: Boolean?,
                                override val severity: String?,
                                override val ignore: List<String>,
-                               override val options: Map<String, *>) : YamlInspectionConfig
+                               override val options: Map<String, String>) : YamlInspectionConfig
 
 class YamlGroupConfigImpl(override val group: String,
                           override val enabled: Boolean?,
@@ -130,7 +123,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
 
       val includeProvider: (Path) -> Reader = {
-        val includePath = configFile.parent.toNioPath().resolve(it)
+        val includePath = Path.of(configFile.parent).resolve(it)
         require(includePath.exists()) { "File does not exist: ${includePath.toCanonicalPath()}" }
         includePath.reader()
       }
@@ -167,7 +160,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       val inspectionId = config.inspection
       if (inspectionId != null) {
         return YamlInspectionConfigImpl(inspectionId, config.enabled, config.severity, config.ignore,
-                                        config.options ?: emptyMap<String, Any>())
+                                        config.options ?: emptyMap())
       }
       val groupId = config.group
       if (groupId != null) {
@@ -180,6 +173,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   fun buildEffectiveProfile(): InspectionProfileImpl {
     val effectiveProfile: InspectionProfileImpl = createProfileCopy(baseProfile, inspectionToolsSupplier, inspectionProfileManager)
     effectiveProfile.name = profileName ?: "Default"
+    val scopesToApply = mutableMapOf<String, MutableList<Pair<PackageSet, Boolean>>>()
     configurations.forEach { configuration ->
       val tools = findTools(configuration)
       val scopes = configuration.ignore.map { pattern ->
@@ -189,7 +183,9 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
         val enabled = configuration.enabled
         if (enabled != null) {
           inspectionTools.isEnabled = enabled
-          inspectionTools.defaultState.isEnabled = enabled
+          if (inspectionTools.tools.all { !it.isEnabled }) {
+            inspectionTools.defaultState.isEnabled = enabled
+          }
         }
         val severity = HighlightDisplayLevel.find(configuration.severity)
         if (severity != null) {
@@ -198,20 +194,56 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
           }
         }
         val options = (configuration as? YamlInspectionConfig)?.options
-        if (options != null) {
+        if (!options.isNullOrEmpty()) {
           val element = Element("tool")
           YamlProfileUtils.writeXmlOptions(element, options)
           inspectionTools.defaultState.tool.tool.readSettings(element)
         }
-        scopes.forEach { (scope, enabled) ->
-          inspectionTools.prependTool(scope, inspectionTools.defaultState.tool, enabled, inspectionTools.level)
-        }
+        val toApply = scopesToApply.getOrPut(inspectionTools.shortName) { mutableListOf() }
+        toApply.addAll(scopes)
       }
     }
+
+    effectiveProfile.tools.forEach { tool ->
+      val enabled = tool.isEnabled
+      val toApply = scopesToApply[tool.shortName]
+
+      if (toApply != null) {
+        if (tool.isGlobalTool()) { // for global inspections yaml profile are creating only one enabled scope, it doesn't support several scopes with different severities/params.
+          val oldScopes = collectOldScopes(tool)
+          tool.defaultState.isEnabled = false
+          tool.removeAllScopes()
+          val scope = HierarchyPackageSet(toApply.reversed() + oldScopes)
+          tool.prependTool(NamedScope.UnnamedScope(scope), tool.defaultState.tool, true, tool.level)
+        } else {
+          toApply.forEach { (packageSet, enabled) ->
+            tool.prependTool(NamedScope.UnnamedScope(packageSet), tool.defaultState.tool, enabled, tool.level)
+          }
+        }
+        tool.isEnabled = enabled // because prependTool is modifying isEnabled
+      }
+    }
+
     return effectiveProfile
   }
 
-  private fun createScope(pattern: String): Pair<NamedScope.UnnamedScope, Boolean> {
+  private fun collectOldScopes(tool: ToolsImpl): List<Pair<PackageSet, Boolean>> {
+    return tool.tools.mapNotNull {
+      val packageSet = it.getScope(null)?.value
+      if (packageSet is HierarchyPackageSet) {
+        packageSet.packages
+      } else if (packageSet != null) {
+        listOf( packageSet to it.isEnabled)
+      }
+      else null
+    }.flatten()
+  }
+
+  private fun ToolsImpl.isGlobalTool(): Boolean {
+    return this.tool.tool is GlobalInspectionTool
+  }
+
+  private fun createScope(pattern: String): Pair<PackageSet, Boolean> {
     return if (pattern.startsWith("!")) {
       Pair(parsePattern(pattern.drop(1)), true)
     }
@@ -220,11 +252,11 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     }
   }
 
-  private fun parsePattern(pattern: String): NamedScope.UnnamedScope {
+  private fun parsePattern(pattern: String): PackageSet {
     if (pattern.startsWith(SCOPE_PREFIX)) {
       val scope = pattern.drop(SCOPE_PREFIX.length)
       try {
-        return NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(scope))
+        return PackageSetFactory.getInstance().compile(scope)
       } catch (e: ParsingException) {
         LOG.warn("Unknown scope format: $scope", e)
       }
@@ -233,7 +265,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     return getGlobScope(pattern)
   }
 
-  private fun getGlobScope(pattern: String): NamedScope.UnnamedScope {
+  private fun getGlobScope(pattern: String): PackageSet {
     val matcher = FileSystems.getDefault().getPathMatcher("glob:$pattern")
 
     val packageSet = object : AbstractPackageSet("glob:$pattern") {
@@ -244,7 +276,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       }
     }
 
-    return NamedScope.UnnamedScope(packageSet)
+    return packageSet
   }
 
 
@@ -257,5 +289,27 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
 
   override fun findGroup(groupId: String): YamlInspectionGroup? {
     return groupProvider.findGroup(groupId)
+  }
+
+  private class HierarchyPackageSet(val packages: List<Pair<PackageSet, Boolean>>)
+    : AbstractPackageSet("Hierarchy:$packages") {
+    override fun contains(file: VirtualFile, project: Project, holder: NamedScopesHolder?): Boolean {
+      packages.forEach {(packageSet, enabled) ->
+        if (packageSet is PackageSetBase) {
+          if (packageSet.contains(file, project, holder)) return enabled
+        }
+        else {
+          val psiFile = getPsiFile(file, project)
+          if (psiFile != null && packageSet.contains(psiFile, holder)) return enabled
+        }
+      }
+      return false
+    }
+
+    override fun hashCode(): Int = packages.hashCode()
+
+    override fun equals(other: Any?): Boolean {
+      return packages == (other as? HierarchyPackageSet)?.packages
+    }
   }
 }

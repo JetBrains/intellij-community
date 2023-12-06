@@ -124,11 +124,11 @@ class ClassStore(private val classes: Long2ObjectMap<ClassDefinition>) {
 
   fun getClassIfExists(name: String): ClassDefinition? = stringToClassDefinition[name]
 
-  fun containsClass(name: String) = stringToClassDefinition.containsKey(name)
+  fun containsClass(name: String): Boolean = stringToClassDefinition.containsKey(name)
 
   fun getClassForPrimitiveArray(t: Type): ClassDefinition? = primitiveArrayToClassDefinition[t]
 
-  fun size() = classes.size
+  fun size(): Int = classes.size
 
   fun isSoftOrWeakReferenceClass(classDefinition: ClassDefinition): Boolean {
     return classDefinition == softReferenceClass || classDefinition == weakReferenceClass

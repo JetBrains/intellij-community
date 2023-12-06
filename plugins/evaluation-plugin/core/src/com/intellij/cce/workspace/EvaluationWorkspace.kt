@@ -1,6 +1,9 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.workspace
 
 import com.google.gson.Gson
+import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.workspace.storages.*
 import java.io.FileWriter
 import java.nio.file.Files
@@ -36,7 +39,7 @@ class EvaluationWorkspace private constructor(private val basePath: Path) {
   private val pathToConfig = path().resolve(ConfigFactory.DEFAULT_CONFIG_NAME)
   private val _reports: MutableMap<String, MutableMap<String, Path>> = mutableMapOf()
 
-  val sessionsStorage: SessionsStorage = SessionsStorage(sessionsDir.toString())
+  val sessionsStorage: CompositeSessionsStorage = CompositeSessionsStorage(sessionsDir.toString())
 
   val actionsStorage: ActionsStorage = ActionsStorage(actionsDir.toString())
 
@@ -60,7 +63,8 @@ class EvaluationWorkspace private constructor(private val basePath: Path) {
 
   fun path(): Path = basePath
 
-  fun readConfig(): Config = ConfigFactory.load(pathToConfig)
+  fun <T : EvaluationStrategy> readConfig(strategySerializer: StrategySerializer<T>): Config =
+    ConfigFactory.load(pathToConfig, strategySerializer)
 
   fun saveAdditionalStats(name: String, stats: Map<String, Any>) {
     FileWriter(basePath.resolve("$name.json").toString()).use { it.write(gson.toJson(stats)) }

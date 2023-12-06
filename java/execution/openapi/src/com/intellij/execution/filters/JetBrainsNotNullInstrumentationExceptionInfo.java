@@ -39,9 +39,9 @@ public final class JetBrainsNotNullInstrumentationExceptionInfo extends Exceptio
   }
 
   @Override
-  PsiElement matchSpecificExceptionElement(@NotNull PsiElement element) {
+  ExceptionLineRefiner.RefinerMatchResult matchSpecificExceptionElement(@NotNull PsiElement element) {
     if (myWantLines != 0) return null;
-    return getArgument(element);
+    return ExceptionLineRefiner.RefinerMatchResult.of(getArgument(element));
   }
 
   private PsiExpression getArgument(PsiElement element) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -17,8 +17,7 @@ import java.util.List;
 public final class GlobalInspectionUtil {
   private static final String LOC_MARKER = " #loc";
 
-  @NotNull
-  public static String createInspectionMessage(@NotNull String message) {
+  public static @NotNull String createInspectionMessage(@NotNull String message) {
     //TODO: FIXME!
     return message + LOC_MARKER;
   }

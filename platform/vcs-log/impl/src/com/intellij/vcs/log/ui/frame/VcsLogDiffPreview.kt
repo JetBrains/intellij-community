@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame
 
 import com.intellij.diff.chains.DiffRequestChain
@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.EditorTabPreviewBase.Companion.openPreview
 import com.intellij.openapi.vcs.changes.EditorTabPreviewBase.Companion.registerEscapeHandler
@@ -57,8 +56,7 @@ private fun onBooleanPropertyChange(uiProperties: VcsLogUiProperties,
       }
     }
   }
-  uiProperties.addChangeListener(propertiesChangeListener)
-  Disposer.register(parent, Disposable { uiProperties.removeChangeListener(propertiesChangeListener) })
+  uiProperties.addChangeListener(propertiesChangeListener, parent)
 }
 
 abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewDiff: D,
@@ -104,12 +102,6 @@ abstract class EditorDiffPreview(protected val project: Project,
   private val previewFileDelegate = lazy { PreviewDiffVirtualFile(this) }
   private val previewFile by previewFileDelegate
 
-  protected fun init() {
-    addSelectionListener {
-      updatePreview(true)
-    }
-  }
-
   override fun openPreview(requestFocus: Boolean): Boolean {
     val oldToolWindowFocus = getCurrentToolWindowFocus()
     registerEscapeHandler(file = previewFile, handler = MyEscapeHandler(oldToolWindowFocus))
@@ -126,8 +118,6 @@ abstract class EditorDiffPreview(protected val project: Project,
   override fun getOwner(): Disposable = owner
 
   abstract fun getOwnerComponent(): JComponent
-
-  abstract fun addSelectionListener(listener: () -> Unit)
 
   private fun getCurrentToolWindowFocus(): ToolWindowFocus? {
     val focusOwner = IdeFocusManager.getInstance(project).focusOwner ?: return null
@@ -161,10 +151,6 @@ abstract class EditorDiffPreview(protected val project: Project,
 class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsLogChangesBrowser) :
   EditorDiffPreview(project, changesBrowser), ChainBackedDiffPreviewProvider {
 
-  init {
-    init()
-  }
-
   override fun createDiffRequestProcessor(): DiffRequestProcessor {
     val preview = changesBrowser.createChangeProcessor(true)
     preview.updatePreview(true)
@@ -178,15 +164,6 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
   }
 
   override fun getOwnerComponent(): JComponent = changesBrowser.preferredFocusedComponent
-
-  override fun addSelectionListener(listener: () -> Unit) {
-    changesBrowser.viewer.addSelectionListener(Runnable {
-      if (changesBrowser.selectedChanges.isNotEmpty()) {
-        listener()
-      }
-    }, owner)
-    changesBrowser.addListener(VcsLogChangesBrowser.Listener { updatePreview(true) }, owner)
-  }
 
   override fun createDiffRequestChain(): DiffRequestChain? {
     val producers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer).map {

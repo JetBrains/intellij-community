@@ -47,6 +47,11 @@
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinBuiltInsMetadataIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinShortClassNameFileIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageIndex"/>
+
+    <indexedRootsProvider implementation="org.jetbrains.kotlin.idea.base.indices.contributors.BuiltInsIndexableSetContributor"/>
 
     <idIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinIdIndexer"/>
     <todoIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinTodoIndexer"/>
@@ -61,14 +66,40 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
             serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInStubVersionOffsetProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeKotlinBuiltInStubVersionOffsetProvider"
+    />
 
     <globalIndexFilter implementation="org.jetbrains.kotlin.idea.stubindex.KotlinNonSourceRootIndexFilter"/>
 
     <registryKey key="kotlin.indices.nested.access.enabled"
                  defaultValue="false"
                  description="Allows nested indices access" />
+    <registryKey key="kotlin.indices.timing.enabled"
+                 defaultValue="false"
+                 description="Allows indices access time tracking" />
+    <registryKey key="kotlin.indices.timing.threshold.single"
+                 defaultValue="2500"
+                 description="Time threshold in ms to report slow index single get access" />
+    <registryKey key="kotlin.indices.timing.threshold.batch"
+                 defaultValue="5000"
+                 description="Time threshold in ms to report slow index batch (processAll-like) access" />
     <registryKey key="kotlin.indices.short.names.filtering.enabled" defaultValue="true"
                  description="Filter irrelevant Kotlin FQNames by short name index"
                  restartRequired="true"/>
+
+    <notificationGroup
+            id="Recover Kotlin Indices"
+            displayType="STICKY_BALLOON"
+            bundle="messages.KotlinBaseAnalysisBundle"
+            key="kotlin.repair.indices.group.name"
+    />
   </extensions>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinRepairIdeAfterCorruptionNotification"
+              topic="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinCorruptedIndexListener"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"/>
+  </projectListeners>
 </idea-plugin>

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -46,7 +45,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
   public void testAddTwoModules() {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     final MyModuleListener moduleListener = new MyModuleListener();
-    connection.subscribe(ProjectTopics.MODULES, moduleListener);
+    connection.subscribe(ModuleListener.TOPIC, moduleListener);
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
 
     final Module moduleA;
@@ -87,7 +86,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     final MyModuleListener moduleListener = new MyModuleListener();
-    connection.subscribe(ProjectTopics.MODULES, moduleListener);
+    connection.subscribe(ModuleListener.TOPIC, moduleListener);
 
     Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();
 

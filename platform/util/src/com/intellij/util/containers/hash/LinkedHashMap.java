@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.hash;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -17,37 +18,27 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   private final EqualityPolicy<? super K> hashingStrategy;
   private final boolean accessOrder;
 
+  @TestOnly
   public LinkedHashMap() {
-    this(0);
+    //noinspection rawtypes,unchecked
+    this(0, 1, (EqualityPolicy)EqualityPolicy.CANONICAL, false);
   }
 
-  public LinkedHashMap(int capacity) {
-    this(capacity, HashUtil.DEFAULT_LOAD_FACTOR);
-  }
+  @TestOnly
   public LinkedHashMap(int capacity, boolean accessOrder) {
-    this(capacity, HashUtil.DEFAULT_LOAD_FACTOR, accessOrder);
-  }
-
-  public LinkedHashMap(int capacity, float loadFactor) {
-    this(capacity, loadFactor, (EqualityPolicy)EqualityPolicy.CANONICAL);
-  }
-
-  public LinkedHashMap(int capacity, float loadFactor, boolean accessOrder) {
-    this(capacity, loadFactor, (EqualityPolicy)EqualityPolicy.CANONICAL, accessOrder);
+    //noinspection rawtypes,unchecked
+    this(capacity, 1, (EqualityPolicy)EqualityPolicy.CANONICAL, accessOrder);
   }
 
   public LinkedHashMap(@NotNull EqualityPolicy<? super K> hashingStrategy) {
-    this(0, HashUtil.DEFAULT_LOAD_FACTOR, hashingStrategy);
+    this(0, 1, hashingStrategy, false);
   }
 
-  public LinkedHashMap(int capacity, float loadFactor, @NotNull EqualityPolicy<? super K> hashingStrategy) {
-    this(capacity, loadFactor, hashingStrategy, false);
-  }
   public LinkedHashMap(int capacity, float loadFactor, @NotNull EqualityPolicy<? super K> hashingStrategy, boolean accessOrder) {
     this.loadFactor = loadFactor;
     this.hashingStrategy = hashingStrategy;
-    clear(capacity);
     this.accessOrder = accessOrder;
+    clear(capacity);
   }
 
   @Override
@@ -68,10 +59,10 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   }
 
   @Override
-  public V get(final Object key) {
-    final Entry<K, V>[] table = this.table;
-    final int hash = HashUtil.hash((K)key, hashingStrategy);
-    final int index = hash % table.length;
+  public V get(Object key) {
+    Entry<K, V>[] table = this.table;
+    int hash = hashKey((K)key);
+    int index = hash % table.length;
 
     for (Entry<K, V> e = table[index]; e != null; e = e.hashNext) {
       final K entryKey;
@@ -84,10 +75,14 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     return null;
   }
 
+  private int hashKey(K key) {
+    return key == null ? 0 : hashingStrategy.getHashCode(key) & 0x7fffffff;
+  }
+
   @Override
-  public V put(final K key, @NotNull final V value) {
+  public V put(final K key, final @NotNull V value) {
     final Entry<K, V>[] table = this.table;
-    final int hash = HashUtil.hash(key, hashingStrategy);
+    final int hash = hashKey(key);
     final int index = hash % table.length;
     for (Entry<K, V> e = table[index]; e != null; e = e.hashNext) {
       final K entryKey;
@@ -96,7 +91,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
         return e.setValue(value);
       }
     }
-    final Entry<K, V> e = new Entry<K, V>(key, value, hash);
+    final Entry<K, V> e = new Entry<>(key, value, hash);
     e.hashNext = table[index];
     table[index] = e;
     final Entry<K, V> top = this.top;
@@ -131,7 +126,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   @Override
   public V remove(final Object key) {
     final Entry<K, V>[] table = this.table;
-    final int hash = HashUtil.hash((K)key, hashingStrategy);
+    final int hash = hashKey((K)key);
     final int index = hash % table.length;
     Entry<K, V> e = table[index];
     if (e == null) {
@@ -159,21 +154,18 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     return e.value;
   }
 
-  @NotNull
   @Override
-  public Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     return new KeySet();
   }
 
-  @NotNull
   @Override
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     return new Values();
   }
 
-  @NotNull
   @Override
-  public Set<Map.Entry<K, V>> entrySet() {
+  public @NotNull Set<Map.Entry<K, V>> entrySet() {
     return new EntrySet();
   }
 
@@ -199,18 +191,15 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     size = 0;
   }
 
-  @Nullable
-  public K getLastKey() {
+  public @Nullable K getLastKey() {
     return top != null ? top.key : null;
   }
 
-  @Nullable
-  public V getLastValue() {
+  public @Nullable V getLastValue() {
     return top != null ? top.value : null;
   }
 
-  @Nullable
-  public K getFirstKey() {
+  public @Nullable K getFirstKey() {
     return back != null ? back.key :  null;
   }
 
@@ -270,7 +259,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     }
   }
 
-  private static class Entry<K, V> implements Map.Entry<K, V> {
+  private static final class Entry<K, V> implements Map.Entry<K, V> {
 
     private final K key;
     private final int keyHash;
@@ -331,9 +320,8 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
   private final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
 
-    @NotNull
     @Override
-    public Iterator<Map.Entry<K, V>> iterator() {
+    public @NotNull Iterator<Map.Entry<K, V>> iterator() {
       return new LinkedHashIterator<Map.Entry<K, V>>() {
         @Override
         public Map.Entry<K, V> next() {
@@ -374,9 +362,8 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
   private final class KeySet extends AbstractSet<K> {
 
-    @NotNull
     @Override
-    public Iterator<K> iterator() {
+    public @NotNull Iterator<K> iterator() {
       return new LinkedHashIterator<K>() {
         @Override
         public K next() {
@@ -407,10 +394,8 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   }
 
   private final class Values extends AbstractCollection<V> {
-
-    @NotNull
     @Override
-    public Iterator<V> iterator() {
+    public @NotNull Iterator<V> iterator() {
       return new LinkedHashIterator<V>() {
         @Override
         public V next() {

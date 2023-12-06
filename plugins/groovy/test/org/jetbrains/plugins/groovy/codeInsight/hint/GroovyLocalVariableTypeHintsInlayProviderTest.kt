@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyLocalVariableTypeHintsInlayProvider
 
@@ -12,7 +13,7 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
     return GroovyProjectDescriptors.GROOVY_3_0
   }
 
-  private fun testTypeHints(text: String, drawHintBefore: Boolean = false) {
+  private fun testTypeHints(@Language("Groovy") text: String, drawHintBefore: Boolean = false) {
     doTestProvider("test.groovy",
                    text,
                    GroovyLocalVariableTypeHintsInlayProvider(),
@@ -21,8 +22,8 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
 
   fun `test basic cases`() {
     val text = """
-      def x<# [:  Integer] #> = 1
-      def y<# [:  String] #> = "abc"
+      def x/*<# [:  Integer] #>*/ = 1
+      def y/*<# [:  String] #>*/ = "abc"
     """.trimIndent()
     testTypeHints(text)
   }
@@ -51,19 +52,19 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
 
   fun `test var keyword`() {
     testTypeHints("""
-      def x<# [:  Integer] #> = 1
+      def x/*<# [:  Integer] #>*/ = 1
     """.trimIndent())
   }
 
   fun `test tuples`() {
     testTypeHints("""
-    def (a<# [:  Integer] #>, b<# [:  String] #>) = new Tuple2<>(1, "")
+    def (a/*<# [:  Integer] #>*/, b/*<# [:  String] #>*/) = new Tuple2<>(1, "")
     """.trimIndent())
   }
 
   fun `test draw hint before`() {
     testTypeHints("""
-      def <# [Integer  ] #>a = 1
+      def /*<# [Integer  ] #>*/a = 1
     """.trimIndent(), true)
   }
 

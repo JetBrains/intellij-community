@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.paths.PsiDynaReference;
@@ -18,8 +18,7 @@ public final class PsiReferenceUtil {
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  public static <T extends PsiReference> T findReferenceOfClass(PsiReference ref, Class<T> clazz) {
+  public static @Nullable <T extends PsiReference> T findReferenceOfClass(PsiReference ref, Class<T> clazz) {
     if (clazz.isInstance(ref)) return (T)ref;
     if (ref instanceof PsiMultiReference) {
       for (PsiReference reference : ((PsiMultiReference)ref).getReferences()) {
@@ -38,8 +37,7 @@ public final class PsiReferenceUtil {
     return null;
   }
 
-  @Unmodifiable
-  public static @NotNull List<PsiReference> unwrapMultiReference(@NotNull PsiReference maybeMultiReference) {
+  public static @Unmodifiable @NotNull List<PsiReference> unwrapMultiReference(@NotNull PsiReference maybeMultiReference) {
     if (maybeMultiReference instanceof PsiMultiReference) {
       return List.of(((PsiMultiReference)maybeMultiReference).getReferences());
     }

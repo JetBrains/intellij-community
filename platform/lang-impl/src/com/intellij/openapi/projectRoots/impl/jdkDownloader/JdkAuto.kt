@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.service
@@ -14,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType
-import com.intellij.openapi.projectRoots.impl.MockSdk
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ui.configuration.*
@@ -72,7 +72,9 @@ private class JarSdkConfigurator(val extraJars: List<String>) : UnknownSdkFixCon
         LOG.warn("Cant resolve path '$path' for jdk home '${sdk.homeDirectory}'")
       }
     }
-    sdkModificator.commitChanges()
+    runWriteAction {
+      sdkModificator.commitChanges()
+    }
   }
 
   private fun resolveExtraJar(sdk: Sdk, path: String): VirtualFile? {
@@ -85,7 +87,7 @@ private class JarSdkConfigurator(val extraJars: List<String>) : UnknownSdkFixCon
 private val LOG = logger<JdkAuto>()
 
 class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
-  override fun supportsResolution(sdkTypeId: SdkTypeId) = notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType().value(sdkTypeId)
+  override fun supportsResolution(sdkTypeId: SdkTypeId): Boolean = notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType().value(sdkTypeId)
 
   override fun createResolver(project: Project?, indicator: ProgressIndicator): UnknownSdkLookup? {
     if (!Registry.`is`("jdk.auto.setup")) return null
@@ -94,8 +96,15 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
   }
 
   fun createResolverImpl(project: Project?, indicator: ProgressIndicator): UnknownSdkLookup? {
-    val sdkType = SdkType.getAllTypes()
-                    .singleOrNull(notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value) ?: return null
+    val sdkType = SdkType.getAllTypeList()
+                    .asSequence()
+                    .filter(notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value)
+                    .also { sdkTypes ->
+                      if (sdkTypes.count() > 1) {
+                        val sdkTypeNames = sdkTypes.map { it.name }
+                        LOG.warn("Multiple SdkType candidates $sdkTypeNames. Proceeding with a first candidate: ${sdkTypeNames.first()}")
+                      }
+                    }.firstOrNull() ?: return null
 
     return object : UnknownSdkLookup {
       val projectWslDistribution by lazy {
@@ -116,17 +125,20 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           }
 
           JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, jdkPredicate)
-        } catch(e: ProcessCanceledException) {
+        }
+        catch (e: ProcessCanceledException) {
           throw e
-        } catch (t: Throwable) {
+        }
+        catch (t: Throwable) {
           LOG.warn("JdkAuto has failed to download the list of available JDKs. " + t.message, t)
           listOf()
-        } finally {
+        }
+        finally {
           indicator.popState()
         }
       }
 
-      private fun resolveHint(sdk: UnknownSdk) : JdkAutoHint? {
+      private fun resolveHint(sdk: UnknownSdk): JdkAutoHint? {
         if (sdk.sdkType != sdkType) return null
 
         project ?: return null
@@ -135,14 +147,16 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         return JdkAutoHintService
           .getInstance(project)
           .state
-          .jdks.singleOrNull { it.name.equals(sdkName, ignoreCase = true) &&
-                               it.path?.let { path -> projectInWsl == WslPath.isWslUncPath(path) } ?: false }
+          .jdks.singleOrNull {
+            it.name.equals(sdkName, ignoreCase = true) &&
+            it.path?.let { path -> projectInWsl == WslPath.isWslUncPath(path) } ?: false
+          }
       }
 
       private fun parseSdkRequirement(sdk: UnknownSdk): JdkRequirement? {
         val hint = resolveHint(sdk)
 
-        val namePredicate = hint?.version?.trim()?.toLowerCase()?.nullize(true)
+        val namePredicate = hint?.version?.trim()?.lowercase()?.nullize(true)
                             ?: JavaVersion.tryParse(sdk.expectedVersionString)?.toFeatureMinorUpdateString()
                             ?: sdk.sdkName
 
@@ -153,7 +167,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         )
       }
 
-      private fun resolveHintPath(sdk: UnknownSdk, indicator: ProgressIndicator) :UnknownSdkLocalSdkFix? {
+      private fun resolveHintPath(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkLocalSdkFix? {
         val hint = resolveHint(sdk)
         val path = hint?.path ?: return null
         indicator.text = ProjectBundle.message("progress.text.resolving.hint.path", path)
@@ -170,6 +184,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
             val hintPath = hint.path ?: return ""
             return sdkType.suggestSdkName(null, hintPath)
           }
+
           override fun toString() = "UnknownSdkLocalSdkFix{hint $version, $path}"
         }
       }
@@ -178,25 +193,29 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         if (sdk.sdkType != sdkType) return null
 
         val req = parseSdkRequirement(sdk) ?: return null
-        LOG.info("Looking for a possible download for ${sdk.sdkType.presentableName} with name ${sdk}")
+        LOG.info("Looking for a possible download for ${sdk.sdkType.presentableName} with name ${sdk.sdkName} ; $req")
 
         //we select the newest matching version for a possible fix
-        val jdkToDownload = lazyDownloadModel
-                              .asSequence()
-                              .filter { req.matches(it) }
-                              .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
-                              .mapNotNull {
-                                val v = JavaVersion.tryParse(it.versionString)
-                                if (v != null) {
-                                  it to v
-                                }
-                                else null
-                              }.maxByOrNull { it.second }
-                              ?.first ?: return null
+        val jdks = lazyDownloadModel
+                     .asSequence()
+                     .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
+                     .mapNotNull {
+                       val v = JavaVersion.tryParse(it.versionString)
+                       if (v != null) {
+                         it to v
+                       }
+                       else null
+                     }
+
+        val jdkToDownload =
+          jdks.filter { req.matches(it.first) }.maxByOrNull { it.second }?.first
+          ?: jdks.filter { it.first.suggestedSdkName == sdk.sdkName }.maxByOrNull { it.second }?.first
+          ?: jdks.filter { it.first.product.vendor == "Oracle" }.maxByOrNull { it.second }?.first
+          ?: return null
 
         val jarConfigurator = JarSdkConfigurator(resolveHint(sdk)?.includeJars ?: listOf())
 
-        return object: UnknownSdkDownloadableSdkFix, UnknownSdkFixConfigurator by jarConfigurator {
+        return object : UnknownSdkDownloadableSdkFix, UnknownSdkFixConfigurator by jarConfigurator {
           override fun getVersionString() = jdkToDownload.versionString
           override fun getPresentableVersionString() = jdkToDownload.presentableVersionString
 
@@ -206,7 +225,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
             val jdkInstaller = JdkInstaller.getInstance()
             val homeDir = jdkInstaller.defaultInstallDir(jdkToDownload, projectWslDistribution)
             val request = jdkInstaller.prepareJdkInstallation(jdkToDownload, homeDir)
-            return newDownloadTask(request, project)
+            return JdkDownloaderBase.newDownloadTask(jdkToDownload, request, project)
           }
 
           override fun toString() = "UnknownSdkDownloadableFix{${jdkToDownload.fullPresentationText}, wsl=${projectWslDistribution}}"
@@ -243,10 +262,10 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         }
 
         val req = parseSdkRequirement(sdk) ?: run {
-          LOG.info("Failed to parse unknown SDK requirement ${sdk}")
+          LOG.info("Failed to parse unknown SDK requirement ${sdk.sdkName}")
           return null
         }
-        LOG.info("Looking for a local SDK for ${sdk.sdkType.presentableName} with name ${sdk}")
+        LOG.info("Looking for a local SDK for ${sdk.sdkType.presentableName} with name ${sdk.sdkName}")
 
         fun List<JavaLocalSdkFix>.pickBestMatch() = this.maxByOrNull { it.version }
 
@@ -268,9 +287,10 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           val version = runCatching { JavaVersion.tryParse(versionString) }.getOrNull() ?: continue
           val suggestedName = runCatching { JdkUtil.suggestJdkName(versionString) }.getOrNull() ?: continue
 
-          if (it !is MockSdk && runCatching {
+          if (!it.isMockSdk() && runCatching {
               val homePath = it.homePath
-              homePath != null && sdkType.isValidSdkHome(homePath) }.getOrNull() != true) continue
+              homePath != null && sdkType.isValidSdkHome(homePath)
+            }.getOrNull() != true) continue
           if (runCatching { req.matches(it) }.getOrNull() != true) continue
 
           result += JavaLocalSdkFix(homeDir, version, suggestedName, prototype = it)

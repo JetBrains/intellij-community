@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.psi.PsiElement
@@ -14,12 +16,15 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 fun setupEditorSelection(editor: Editor, declaration: KtNamedDeclaration) {
     val caretModel = editor.caretModel
     val selectionModel = editor.selectionModel
+    val injectionOffsetOrZero = if (declaration.containingFile.virtualFile is VirtualFileWindow) {
+        InjectedLanguageManager.getInstance(declaration.project).injectedToHost(declaration, 0)
+    } else 0
 
     val offset = when (declaration) {
         is KtPrimaryConstructor -> declaration.getConstructorKeyword()?.endOffset ?: declaration.valueParameterList?.startOffset
         is KtSecondaryConstructor -> declaration.getConstructorKeyword().endOffset
         else -> declaration.nameIdentifier?.endOffset
-    }
+    }?.let { it + injectionOffsetOrZero }
     if (offset != null) {
         caretModel.moveToOffset(offset)
     }
@@ -27,8 +32,8 @@ fun setupEditorSelection(editor: Editor, declaration: KtNamedDeclaration) {
     fun positionBetween(left: PsiElement, right: PsiElement) {
         val from = left.siblings(withItself = false, forward = true).firstOrNull { it !is PsiWhiteSpace } ?: return
         val to = right.siblings(withItself = false, forward = false).firstOrNull { it !is PsiWhiteSpace } ?: return
-        val startOffset = from.startOffset
-        val endOffset = to.endOffset
+        val startOffset = from.startOffset + injectionOffsetOrZero
+        val endOffset = to.endOffset + injectionOffsetOrZero
         caretModel.moveToOffset(endOffset)
         selectionModel.setSelection(startOffset, endOffset)
     }
@@ -40,10 +45,10 @@ fun setupEditorSelection(editor: Editor, declaration: KtNamedDeclaration) {
             }
         }
         is KtClassOrObject -> {
-            caretModel.moveToOffset(declaration.nameIdentifier?.startOffset ?: declaration.startOffset)
+            caretModel.moveToOffset((declaration.nameIdentifier?.startOffset ?: declaration.startOffset).plus(injectionOffsetOrZero))
         }
         is KtProperty -> {
-            caretModel.moveToOffset(declaration.endOffset)
+            caretModel.moveToOffset(declaration.endOffset + injectionOffsetOrZero)
         }
     }
     editor.scrollingModel.scrollToCaret(ScrollType.CENTER)

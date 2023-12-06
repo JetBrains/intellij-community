@@ -216,11 +216,6 @@ class PythonOnboardingTourLesson :
     }
   }
 
-  private fun getCallBackActionId(@Suppress("SameParameterValue") actionId: String): Int {
-    val action = getActionById(actionId)
-    return LearningUiManager.addCallback { invokeActionForFocusContext(action) }
-  }
-
   private fun LessonContext.debugTasks() {
     clearBreakpoints()
 
@@ -249,6 +244,11 @@ class PythonOnboardingTourLesson :
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
+    lateinit var debuggerGotItTaskId: TaskContext.TaskId
+    task {
+      debuggerGotItTaskId = taskId
+    }
+
     highlightDebugActionsToolbar()
 
     task {
@@ -257,7 +257,7 @@ class PythonOnboardingTourLesson :
                 PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
                                             strong(UIBundle.message("tool.window.name.debug")),
                                             strong(LessonsBundle.message("debug.workflow.lesson.name"))))
-      restoreIfModified(sample)
+      restoreByUi(debuggerGotItTaskId)
     }
 
     highlightButtonById("Stop", highlightInside = false, usePulsation = false)
@@ -455,12 +455,19 @@ class PythonOnboardingTourLesson :
     }
 
     task {
+      val textToFind = "len()"
+      triggerOnEditorText(textToFind, centerOffset = textToFind.length - 1)
+    }
+
+    task {
       text(PythonLessonsBundle.message("python.onboarding.type.division",
-        code(" / len()")))
+                                       code(" / len()")))
       text(PythonLessonsBundle.message("python.onboarding.invoke.completion",
-        code("values"),
-        code("()"),
-        action("CodeCompletion")))
+                                       code("values"),
+                                       code("()"),
+                                       action("CodeCompletion")))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.completion.balloon", code("values")),
+           LearningBalloonConfig(Balloon.Position.below, width = 0))
       triggerAndBorderHighlight().listItem { // no highlighting
         it.isToStringContains("values")
       }
@@ -480,9 +487,16 @@ class PythonOnboardingTourLesson :
   private fun LessonContext.contextActions() {
     val reformatMessage = PyBundle.message("QFIX.reformat.file")
     caret(",6")
+
+    task {
+      triggerOnEditorText("5,6")
+    }
+
     task("ShowIntentionActions") {
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.1"))
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.2", action(it)))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.balloon", action(it)),
+           LearningBalloonConfig(Balloon.Position.below, width = 0))
       triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(reformatMessage)
       }
@@ -502,10 +516,17 @@ class PythonOnboardingTourLesson :
       if (PythonLessonsUtil.isPython3Installed(project)) PyPsiBundle.message("INTN.specify.return.type.in.annotation")
       else PyPsiBundle.message("INTN.specify.return.type.in.docstring")
 
-    caret("find_average")
+    caret("average")
+
+    task {
+      triggerOnEditorText("find_average", highlightBorder = true)
+    }
+
     task("ShowIntentionActions") {
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.code",
                                        code("find_average"), action(it)))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.code.balloon", action(it)),
+           LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = 50))
       triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(returnTypeMessage(project))
       }

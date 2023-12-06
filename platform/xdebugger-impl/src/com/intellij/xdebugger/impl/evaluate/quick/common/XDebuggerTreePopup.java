@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.openapi.Disposable;
@@ -80,8 +80,8 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
     return ScrollPaneFactory.createScrollPane(tree, true);
   }
 
-  public void show(@NotNull D selectedItem) {
-    showTreePopup(myTreeCreator.createTree(selectedItem));
+  public JBPopup show(@NotNull D selectedItem) {
+    return showTreePopup(myTreeCreator.createTree(selectedItem));
   }
 
   protected @NotNull DefaultActionGroup getToolbarActions() {
@@ -118,7 +118,7 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
     };
   }
 
-  protected void showTreePopup(final Tree tree) {
+  protected JBPopup showTreePopup(final Tree tree) {
     if (myPopup != null) {
       myPopup.cancel();
     }
@@ -184,9 +184,9 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
     registerTreeDisposable(myPopup, tree);
 
     //Editor may be disposed before later invokator process this action
-    if (myEditor.getComponent().getRootPane() == null) {
+    if (myEditor.isDisposed()) {
       myPopup.cancel();
-      return;
+      return null;
     }
     myPopup.setSize(new Dimension(0, 0));
 
@@ -194,6 +194,8 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
 
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
     setAutoResize(tree, myToolbar, myPopup);
+
+    return myPopup;
   }
 
   private void resize(final TreePath path, JTree tree) {

@@ -5,5 +5,5 @@ fun test() {
 }
 
 /*
-Text: (<disabled>vararg p0: String, [p1: Int],</disabled><highlight> </highlight>[p2: Int]), Disabled: false, Strikeout: false, Green: true
+Text: (<disabled>vararg p0: String, [p1: Int],</disabled><highlight></highlight> [p2: Int]), Disabled: false, Strikeout: false, Green: true
 */

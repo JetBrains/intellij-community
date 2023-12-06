@@ -139,7 +139,7 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
-      accessibleContext = new AccessibleContextDelegateWithContextMenu(super.getAccessibleContext()) {
+      accessibleContext = new AccessibleContextDelegateWithContextMenu(getOriginalAccessibleContext()) {
         @Override
         protected void doShowContextMenu() {
           ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true);
@@ -153,5 +153,9 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
       };
     }
     return accessibleContext;
+  }
+
+  protected AccessibleContext getOriginalAccessibleContext() {
+    return super.getAccessibleContext();
   }
 }

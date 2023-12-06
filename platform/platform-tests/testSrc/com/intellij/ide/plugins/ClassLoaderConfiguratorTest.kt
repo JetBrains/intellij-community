@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -10,13 +10,12 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.lang.Xx3UnencodedString
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.xxh3.Xxh3
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.nio.file.Path
-import java.util.*
 
 private val buildNumber = BuildNumber.fromString("2042.0")!!
 
@@ -37,6 +36,27 @@ internal class ClassLoaderConfiguratorTest {
     )
     sortDependenciesInPlace(plugins)
     assertThat(plugins.last().moduleName).isNull()
+  }
+
+  @Test
+  fun `child with common package prefix must be after included sibling`() {
+    val pluginId = PluginId.getId("com.example")
+    val emptyPath = Path.of("")
+
+    fun createModuleDescriptor(name: String): IdeaPluginDescriptorImpl {
+      return IdeaPluginDescriptorImpl(raw = RawPluginDescriptor().also { it.`package` = name },
+                                      path = emptyPath,
+                                      isBundled = false,
+                                      id = pluginId,
+                                      moduleName = name)
+    }
+
+    val modules = arrayOf(
+      createModuleDescriptor("com.foo"),
+      createModuleDescriptor("com.foo.bar"),
+    )
+    sortDependenciesInPlace(modules)
+    assertThat(modules.map { it.moduleName }).containsExactly("com.foo.bar", "com.foo")
   }
 
   @Test
@@ -65,14 +85,21 @@ internal class ClassLoaderConfiguratorTest {
 
   @Test
   fun regularPluginClassLoaderIsUsedIfPackageSpecified() {
-    val plugin = loadPlugins(modulePackage = "com.example.extraSupportedFeature")
+    val loadingResult = loadPlugins(modulePackage = "com.example.extraSupportedFeature")
+    val plugin = loadingResult
       .enabledPlugins
       .get(1)
     assertThat(plugin.content.modules.get(0).requireDescriptor().pluginClassLoader).isInstanceOf(PluginAwareClassLoader::class.java)
+
+    val scope = createPluginDependencyAndContentBasedScope(plugin, PluginSetBuilder(
+      loadingResult.enabledPlugins).createPluginSetWithEnabledModulesMap())!!
+    assertThat(scope.isDefinitelyAlienClass(name = "dd", packagePrefix = "dd", force = false)).isNull()
+    assertThat(scope.isDefinitelyAlienClass(name = "com.example.extraSupportedFeature.Foo", packagePrefix = "com.example.extraSupportedFeature.", force = false))
+      .isEqualToIgnoringWhitespace("Class com.example.extraSupportedFeature.Foo must not be requested from main classloader of p_dependent_1baqcnx plugin. " +
+                 "Matches content module (packagePrefix=com.example.extraSupportedFeature., moduleName=com.example.sub).")
   }
 
   @Test
-  @Suppress("PluginXmlValidity")
   fun `inject content module if another plugin specifies dependency in old format`() {
     val rootDir = inMemoryFs.fs.getPath("/")
 
@@ -108,12 +135,12 @@ internal class ClassLoaderConfiguratorTest {
       .containsExactly("com.example.sub.xml", null)
   }
 
-  @Suppress("PluginXmlValidity")
   private fun loadPlugins(modulePackage: String?): PluginLoadingResult {
     val rootDir = inMemoryFs.fs.getPath("/")
 
     // toUnsignedLong - avoid `-` symbol
-    val pluginIdSuffix = Integer.toUnsignedLong(Xxh3.hashUnencodedChars32(javaClass.name + name.methodName)).toString(36)
+    val pluginIdSuffix = Integer.toUnsignedLong(Xx3UnencodedString.hashUnencodedString(javaClass.name + name.methodName).toInt())
+      .toString(36)
     val dependencyId = "p_dependency_$pluginIdSuffix"
     plugin(rootDir, """
       <idea-plugin package="com.bar">
@@ -152,16 +179,16 @@ internal class ClassLoaderConfiguratorTest {
   }
 }
 
-private suspend fun loadDescriptors(dir: Path): PluginLoadingResult {
+private fun loadDescriptors(dir: Path): PluginLoadingResult {
   val result = PluginLoadingResult()
-  val context = DescriptorListLoadingContext(disabledPlugins = emptySet(),
-                                             brokenPluginVersions = emptyMap(),
+  val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet(),
+                                             customBrokenPluginVersions = emptyMap(),
                                              productBuildNumber = { buildNumber })
 
   // constant order in tests
   val paths = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
-    result.addAll(descriptors = paths.map { loadDescriptor(file = it, parentContext = context) },
+    result.addAll(descriptors = paths.asSequence().mapNotNull { loadDescriptor(file = it, parentContext = context) },
                   overrideUseIfCompatible = false,
                   productBuildNumber = buildNumber)
   }

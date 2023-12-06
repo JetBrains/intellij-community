@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -8,15 +8,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 
-public class MockFileManager implements FileManager {
+public final class MockFileManager implements FileManager {
   private final PsiManagerEx myManager;
   // in mock tests it's LightVirtualFile, they're only alive when they're referenced,
   // and there can not be several instances representing the same file
@@ -24,13 +24,14 @@ public class MockFileManager implements FileManager {
 
   @Override
   @NotNull
-  public FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled) {
-    return new SingleRootFileViewProvider(myManager, file, eventSystemEnabled);
+  public FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, boolean eventSystemEnabled) {
+    return new SingleRootFileViewProvider(myManager, vFile, eventSystemEnabled);
   }
 
   public MockFileManager(PsiManagerEx manager) {
     myManager = manager;
-    myViewProviders = ConcurrentFactoryMap.create(key->new SingleRootFileViewProvider(myManager, key), ContainerUtil::createConcurrentWeakKeyWeakValueMap);
+    myViewProviders = ConcurrentFactoryMap.create(key->new SingleRootFileViewProvider(myManager, key),
+                                                  () -> CollectionFactory.createConcurrentWeakKeyWeakValueMap());
   }
 
   @Override
@@ -46,7 +47,7 @@ public class MockFileManager implements FileManager {
   }
 
   @Override
-  public void reloadFromDisk(@NotNull PsiFile file) //Q: move to PsiFile(Impl)?
+  public void reloadFromDisk(@NotNull PsiFile psiFile) //Q: move to PsiFile(Impl)?
   {
     throw new UnsupportedOperationException("Method reloadFromDisk is not yet implemented in " + getClass().getName());
   }
@@ -64,18 +65,18 @@ public class MockFileManager implements FileManager {
   }
 
   @Override
-  public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+  public FileViewProvider findViewProvider(@NotNull VirtualFile vFile) {
     throw new UnsupportedOperationException("Method findViewProvider is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public FileViewProvider findCachedViewProvider(@NotNull VirtualFile file) {
-    return myViewProviders.get(file);
+  public FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
+    return myViewProviders.get(vFile);
   }
 
   @Override
-  public void setViewProvider(@NotNull VirtualFile virtualFile, FileViewProvider fileViewProvider) {
-    myViewProviders.put(virtualFile, fileViewProvider);
+  public void setViewProvider(@NotNull VirtualFile vFile, FileViewProvider viewProvider) {
+    myViewProviders.put(vFile, viewProvider);
   }
 
   @Override

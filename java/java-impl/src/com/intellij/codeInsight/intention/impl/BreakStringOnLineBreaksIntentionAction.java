@@ -1,65 +1,52 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaToken;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
 
-public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntentionAction {
+public class BreakStringOnLineBreaksIntentionAction extends PsiUpdateModCommandAction<PsiJavaToken> {
+  public BreakStringOnLineBreaksIntentionAction() {
+    super(PsiJavaToken.class);
+  }
+  
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!(element instanceof PsiJavaToken token)) {
-      return false;
-    }
-
-    if (token.getTokenType() != JavaTokenType.STRING_LITERAL) {
-      return false;
-    }
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaToken token) {
+    if (token.getTokenType() != JavaTokenType.STRING_LITERAL) return null;
 
     final String text = token.getText();
-    if (text == null) {
-      return false;
-    }
+    if (text == null) return null;
 
     final int indexOfSlashN = text.indexOf("\\n");
-    if (indexOfSlashN == -1 || Objects.equals(text.substring(indexOfSlashN), "\\n\"")){
-      return false;
-    }
+    if (indexOfSlashN == -1 || Objects.equals(text.substring(indexOfSlashN), "\\n\""))return null;
 
     final int indexOfSlashNSlashR = text.indexOf("\\n\\r");
-    if (indexOfSlashNSlashR != -1 && Objects.equals(text.substring(indexOfSlashNSlashR), "\\n\\r\"")){
-      return false;
-    }
+    if (indexOfSlashNSlashR != -1 && Objects.equals(text.substring(indexOfSlashNSlashR), "\\n\\r\""))return null;
 
-    return true;
+    return Presentation.of(getFamilyName());
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!(element instanceof PsiJavaToken token)) {
-      return;
-    }
-
-    if (token.getTokenType() != JavaTokenType.STRING_LITERAL) {
-      return;
-    }
-
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaToken token, @NotNull ModPsiUpdater updater) {
+    if (token.getTokenType() != JavaTokenType.STRING_LITERAL) return;
 
     final String text = token.getText();
-    if (text == null) {
-      return;
-    }
+    if (text == null) return;
 
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    token.getParent().replace(factory.createExpressionFromText(breakOnLineBreaks(text), element));
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
+    token.getParent().replace(factory.createExpressionFromText(breakOnLineBreaks(text), token));
   }
 
 
@@ -78,13 +65,7 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntent
 
   @NotNull
   @Override
-  public String getText() {
-    return JavaBundle.message("intention.break.string.on.line.breaks.text");
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getText();
+    return JavaBundle.message("intention.break.string.on.line.breaks.text");
   }
 }

@@ -3,17 +3,27 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.indexing.customizingIteration.ExternalEntityIndexableIterator;
+import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator;
 import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator;
-import com.intellij.util.indexing.customizingIteration.ModuleUnawareContentEntityIterator;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
-import com.intellij.workspaceModel.storage.EntityReference;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * @deprecated Customization of indexing algorythm is available only above {@link WorkspaceFileIndexContributor} API:
+ * roots may be recursive and non-recursive. This enforces consistency of project model and project indexes.
+ * <p>
+ * Presentation may be customized with {@link CustomizingIndexingPresentationContributor}
+ */
+@ApiStatus.OverrideOnly
+@ApiStatus.Experimental
+@Deprecated(forRemoval = true)
 public interface CustomizingIndexingContributor<E extends WorkspaceEntity, D> extends WorkspaceFileIndexContributor<E> {
 
   @Nullable
@@ -24,11 +34,10 @@ public interface CustomizingIndexingContributor<E extends WorkspaceEntity, D> ex
                                                                                            @NotNull EntityReference<E> reference,
                                                                                            @NotNull Collection<? extends VirtualFile> roots,
                                                                                            @Nullable D customization);
-
   @NotNull
-  Collection<? extends ModuleUnawareContentEntityIterator> createModuleUnawareContentIterators(@NotNull EntityReference<E> reference,
-                                                                                               @NotNull Collection<? extends VirtualFile> roots,
-                                                                                               @Nullable D customization);
+  Collection<? extends GenericContentEntityIterator> createGenericContentIterators(@NotNull EntityReference<E> reference,
+                                                                                   @NotNull Collection<? extends VirtualFile> roots,
+                                                                                   @Nullable D customization);
 
   Collection<? extends ExternalEntityIndexableIterator> createExternalEntityIterators(@NotNull EntityReference<E> reference,
                                                                                       @NotNull Collection<? extends VirtualFile> roots,

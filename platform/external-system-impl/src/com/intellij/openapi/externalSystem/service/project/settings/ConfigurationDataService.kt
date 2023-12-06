@@ -51,72 +51,72 @@ internal class ConfigurationDataService : AbstractProjectDataService<Configurati
                           ConfigurationHandler::onSuccessImport)
   }
 
-  companion object {
-    private val LOG = Logger.getInstance(ConfigurationDataService::class.java)
-    const val EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED = "external.system.configuration.import.enabled"
+  private fun <ModelsProvider : IdeModelsProvider> withConfigurationData(
+    configurationData: Collection<DataNode<ConfigurationData>>,
+    projectData: ProjectData?,
+    project: Project,
+    modelsProvider: ModelsProvider,
+    acceptProject: ConfigurationHandler.(Project, ProjectData?, ModelsProvider, ConfigurationData) -> Unit,
+    acceptModule: ConfigurationHandler.(Module, ModelsProvider, ConfigurationData) -> Unit
+  ) {
+    if (configurationData.isEmpty() || !Registry.`is`(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED)) {
+      LOG.debug("Configuration data is" +
+                (if (!configurationData.isEmpty()) " not " else " ") +
+                "empty, Registry flag is " +
+                Registry.`is`(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED))
+      return
+    }
 
-    private fun <ModelsProvider : IdeModelsProvider> withConfigurationData(
-      configurationData: Collection<DataNode<ConfigurationData>>,
-      projectData: ProjectData?,
-      project: Project,
-      modelsProvider: ModelsProvider,
-      acceptProject: ConfigurationHandler.(Project, ProjectData?, ModelsProvider, ConfigurationData) -> Unit,
-      acceptModule: ConfigurationHandler.(Module, ModelsProvider, ConfigurationData) -> Unit
-    ) {
-      if (configurationData.isEmpty() || !Registry.`is`(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED)) {
-        LOG.debug("Configuration data is" +
-                  (if (!configurationData.isEmpty()) " not " else " ") +
-                  "empty, Registry flag is " +
-                  Registry.`is`(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED))
-        return
+    val javaProjectDataNode = configurationData.iterator().next()
+    val projectDataNode = ExternalSystemApiUtil.findParent(javaProjectDataNode, ProjectKeys.PROJECT)!!
+
+    val projectConfigurationNode = ExternalSystemApiUtil.find(projectDataNode, ProjectKeys.CONFIGURATION)
+    if (projectConfigurationNode != null) {
+
+      val data = projectConfigurationNode.data
+      if (LOG.isDebugEnabled && data is ConfigurationDataImpl) {
+        LOG.debug("Importing project configuration: " + data.jsonString)
       }
 
-      val javaProjectDataNode = configurationData.iterator().next()
-      val projectDataNode = ExternalSystemApiUtil.findParent(javaProjectDataNode, ProjectKeys.PROJECT)!!
+      if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectDataNode.data, ModuleManager.getInstance(project).modules)) {
+        LOG.warn(
+          "This external project are not the only project in the current IDE workspace, " +
+          "found project level configuration can override the configuration came from other external projects.")
+      }
 
-      val projectConfigurationNode = ExternalSystemApiUtil.find(projectDataNode, ProjectKeys.CONFIGURATION)
-      if (projectConfigurationNode != null) {
+      for (handler in ConfigurationHandler.EP_NAME.extensions) {
+        handler.acceptProject(project, projectData, modelsProvider, data)
+      }
+    }
 
-        val data = projectConfigurationNode.data
-        if (LOG.isDebugEnabled && data is ConfigurationDataImpl) {
-          LOG.debug("Importing project configuration: " + data.jsonString)
+    for (node in configurationData) {
+      if (node === projectConfigurationNode) continue
+
+      val moduleDataNode = ExternalSystemApiUtil.findParent(node, ProjectKeys.MODULE)
+      if (moduleDataNode != null) {
+        var module = moduleDataNode.getUserData(MODULE_KEY)
+        module = module ?: modelsProvider.findIdeModule(moduleDataNode.data)
+
+        if (module == null) {
+          LOG.warn(String.format(
+            "Can't import module level configuration. Reason: target module (%s) is not found at the ide", moduleDataNode))
+          continue
         }
 
-        if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectDataNode.data, ModuleManager.getInstance(project).modules)) {
-          LOG.warn(
-            "This external project are not the only project in the current IDE workspace, " +
-            "found project level configuration can override the configuration came from other external projects.")
+        val data = node.data
+        if (LOG.isDebugEnabled && data is ConfigurationDataImpl) {
+          LOG.debug("Importing module configuration: " + data.jsonString)
         }
 
         for (handler in ConfigurationHandler.EP_NAME.extensions) {
-          handler.acceptProject(project, projectData, modelsProvider, data)
-        }
-      }
-
-      for (node in configurationData) {
-        if (node === projectConfigurationNode) continue
-
-        val moduleDataNode = ExternalSystemApiUtil.findParent(node, ProjectKeys.MODULE)
-        if (moduleDataNode != null) {
-          var module = moduleDataNode.getUserData<Module>(MODULE_KEY)
-          module = module ?: modelsProvider.findIdeModule(moduleDataNode.data)
-
-          if (module == null) {
-            LOG.warn(String.format(
-              "Can't import module level configuration. Reason: target module (%s) is not found at the ide", moduleDataNode))
-            continue
-          }
-
-          val data = node.data
-          if (LOG.isDebugEnabled && data is ConfigurationDataImpl) {
-            LOG.debug("Importing module configuration: " + data.jsonString)
-          }
-
-          for (handler in ConfigurationHandler.EP_NAME.extensions) {
-            handler.acceptModule(module, modelsProvider, data)
-          }
+          handler.acceptModule(module, modelsProvider, data)
         }
       }
     }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(ConfigurationDataService::class.java)
+    const val EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED = "external.system.configuration.import.enabled"
   }
 }

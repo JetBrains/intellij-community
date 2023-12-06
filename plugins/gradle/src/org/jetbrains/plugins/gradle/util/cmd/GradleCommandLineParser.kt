@@ -4,8 +4,10 @@ package org.jetbrains.plugins.gradle.util.cmd
 import org.apache.commons.cli.Option
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
-import org.jetbrains.plugins.gradle.util.cmd.node.*
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineOption
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineOption.*
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask
 
 @ApiStatus.Experimental
 internal class GradleCommandLineParser(private val tokenizer: GradleCommandLineTokenizer) {
@@ -21,7 +23,7 @@ internal class GradleCommandLineParser(private val tokenizer: GradleCommandLineT
       }
       tasks.add(parseTask())
     }
-    return GradleCommandLine(GradleCommandLineTasks(tasks), GradleCommandLineOptions(options))
+    return GradleCommandLine(tasks, options)
   }
 
   private fun parseTask(): GradleCommandLineTask {
@@ -31,7 +33,7 @@ internal class GradleCommandLineParser(private val tokenizer: GradleCommandLineT
       val option = tryParseOption(ALL_TASK_OPTIONS) ?: break
       options.add(option)
     }
-    return GradleCommandLineTask(name, GradleCommandLineOptions(options))
+    return GradleCommandLineTask(name, options)
   }
 
   private fun tryParseOption(options: Collection<Option>): GradleCommandLineOption? {

@@ -29,4 +29,5 @@ class Project(init: Project.() -> Unit) {
 @MyDsl
 class BuildType(p: Project, init: BuildType.() -> Unit)
 
+// IGNORE_K2
 // ORDER: buildType, project1, project2

@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,6 +31,11 @@ abstract class AbstractFileCommand(text: String, line: Int) : AbstractCallbackBa
   }
 }
 
+/**
+ * Command to add file to project.
+ * File name and path to project get from parameters.
+ * Example: %addFile C:\Users\username\intellij, fileName.java
+ */
 class AddFileCommand(text: String, line: Int) : AbstractFileCommand(text, line) {
   @Throws(Exception::class)
   override fun execute(callback: ActionCallback,
@@ -48,7 +54,7 @@ class AddFileCommand(text: String, line: Int) : AbstractFileCommand(text, line) 
   }
 
   companion object {
-    private val LOG = Logger.getInstance(AddFileCommand::class.java)
+    private val LOG = logger<AddFileCommand>()
     const val PREFIX: @NonNls String = CMD_PREFIX + "addFile"
   }
 }

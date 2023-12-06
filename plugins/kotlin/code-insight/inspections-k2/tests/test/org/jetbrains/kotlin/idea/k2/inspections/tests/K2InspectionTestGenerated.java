@@ -38,18 +38,7 @@ public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateInKotlin")
     public abstract static class EnumValuesSoftDeprecateInKotlin extends AbstractK2InspectionTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateInKotlin/inspectionData")
-        public static class InspectionData extends AbstractK2InspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
-            @TestMetadata("inspections.test")
-            public void testInspections_test() throws Exception {
-                runTest("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateInKotlin/inspectionData/inspections.test");
-            }
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -104,6 +93,23 @@ public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspections/protectedInFinal")
+    public abstract static class ProtectedInFinal extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/protectedInFinal/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/inspections/protectedInFinal/inspectionData/inspections.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertToStringTemplate")
     public abstract static class ConvertToStringTemplate extends AbstractK2InspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -116,6 +122,180 @@ public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest
             @TestMetadata("inspections.test")
             public void testInspections_test() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/inspectionData/inspections.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol")
+    public abstract static class UnusedSymbol extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/class")
+        public abstract static class Class extends AbstractK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/class/inspectionData")
+            public static class InspectionData extends AbstractK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../../../idea/tests/testData/inspections/unusedSymbol/class/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/enum")
+        public abstract static class Enum extends AbstractK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/enum/inspectionData")
+            public static class InspectionData extends AbstractK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../../../idea/tests/testData/inspections/unusedSymbol/enum/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/function")
+        public abstract static class Function extends AbstractK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/function/inspectionData")
+            public static class InspectionData extends AbstractK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../../../idea/tests/testData/inspections/unusedSymbol/function/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/functionMain")
+        public abstract static class FunctionMain extends AbstractK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/functionMain/inspectionData")
+            public static class InspectionData extends AbstractK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../../../idea/tests/testData/inspections/unusedSymbol/functionMain/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/js")
+        public abstract static class Js extends AbstractK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/js/inspectionData")
+            public static class InspectionData extends AbstractK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../../../idea/tests/testData/inspections/unusedSymbol/js/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/object")
+        public abstract static class Object extends AbstractK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/object/inspectionData")
+            public static class InspectionData extends AbstractK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../../../idea/tests/testData/inspections/unusedSymbol/object/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/parameter")
+        public abstract static class Parameter extends AbstractK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/parameter/inspectionData")
+            public static class InspectionData extends AbstractK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../../../idea/tests/testData/inspections/unusedSymbol/parameter/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/property")
+        public abstract static class Property extends AbstractK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/property/inspectionData")
+            public static class InspectionData extends AbstractK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../../../idea/tests/testData/inspections/unusedSymbol/property/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/typeAlias")
+        public abstract static class TypeAlias extends AbstractK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/typeAlias/inspectionData")
+            public static class InspectionData extends AbstractK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../../../idea/tests/testData/inspections/unusedSymbol/typeAlias/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/typeParameter")
+        public abstract static class TypeParameter extends AbstractK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspections/unusedSymbol/typeParameter/inspectionData")
+            public static class InspectionData extends AbstractK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../../../idea/tests/testData/inspections/unusedSymbol/typeParameter/inspectionData/inspections.test");
+                }
             }
         }
     }

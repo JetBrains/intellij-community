@@ -3,18 +3,16 @@
 package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.refactoring.RefactoringBundle
-import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.move.ContainerChangeInfo
-import org.jetbrains.kotlin.idea.refactoring.move.ContainerInfo
-import org.jetbrains.kotlin.idea.refactoring.move.getInternalReferencesToUpdateOnPackageNameChange
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
-import org.jetbrains.kotlin.idea.refactoring.move.postProcessMoveUsages
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -27,12 +25,12 @@ class KotlinChangePackageRefactoring(val file: KtFile) {
 
         val declarationProcessor = MoveKotlinDeclarationsProcessor(
             MoveDeclarationsDescriptor(
-                project = project,
-                moveSource = MoveSource(file),
-                moveTarget = KotlinDirectoryMoveTarget(newFqName, file.containingDirectory!!.virtualFile),
-                delegate = MoveDeclarationsDelegate.TopLevel,
-                searchInCommentsAndStrings = KotlinRefactoringSettings.instance.MOVE_SEARCH_IN_COMMENTS,
-                searchInNonCode = KotlinRefactoringSettings.instance.MOVE_SEARCH_FOR_TEXT,
+              project = project,
+              moveSource = KotlinMoveSource(file),
+              moveTarget = KotlinMoveTarget.Directory(newFqName, file.containingDirectory!!.virtualFile),
+              delegate = KotlinMoveDeclarationDelegate.TopLevel,
+              searchInCommentsAndStrings = KotlinRefactoringSettings.instance.MOVE_SEARCH_IN_COMMENTS,
+              searchInNonCode = KotlinRefactoringSettings.instance.MOVE_SEARCH_FOR_TEXT,
             )
         )
 
@@ -41,14 +39,17 @@ class KotlinChangePackageRefactoring(val file: KtFile) {
                 declarationProcessor.findUsages().toList()
             }
         } ?: return
-        val changeInfo = ContainerChangeInfo(ContainerInfo.Package(currentFqName), ContainerInfo.Package(newFqName))
+        val changeInfo = MoveContainerChangeInfo(MoveContainerInfo.Package(currentFqName), MoveContainerInfo.Package(newFqName))
         val internalUsages = file.getInternalReferencesToUpdateOnPackageNameChange(changeInfo)
 
-        project.executeWriteCommand(KotlinBundle.message("text.change.file.package.to.0", newFqName)) {
-            packageDirective.fqName = newFqName.quoteIfNeeded()
-            postProcessMoveUsages(internalUsages)
-            performDelayedRefactoringRequests(project)
+        project.executeCommand(KotlinBundle.message("text.change.file.package.to.0", newFqName)) {
+            runWriteAction {
+                packageDirective.fqName = newFqName.quoteIfNeeded()
+                postProcessMoveUsages(internalUsages)
+                performDelayedRefactoringRequests(project)
+            }
             declarationProcessor.execute(declarationUsages)
         }
+
     }
 }

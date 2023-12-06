@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.Sanitize_nameKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
@@ -82,15 +83,6 @@ public final class MavenArtifactUtil {
     return Objects.equals(groupId1, groupId2);
   }
 
-  /**
-   * @deprecated use {@link #getArtifactNioPath(File, String, String, String, String)} instead
-   */
-  @Deprecated
-  @NotNull
-  public static File getArtifactFile(File localRepository, String groupId, String artifactId, String version, String type) {
-    return getArtifactNioPath(localRepository, groupId, artifactId, version, type).toFile();
-  }
-
   @NotNull
   public static Path getArtifactNioPath(File localRepository, String groupId, String artifactId, String version, String type) {
     Path dir = null;
@@ -104,8 +96,14 @@ public final class MavenArtifactUtil {
       dir = getArtifactDirectory(localRepository, groupId, artifactId);
     }
 
+    version = sanitizeFileName(version);
     if (StringUtil.isEmpty(version)) version = resolveVersion(dir);
     return dir.resolve(version).resolve(artifactId + "-" + version + "." + type);
+  }
+
+  private static String sanitizeFileName(String name) {
+    if (null == name) return "";
+    return Sanitize_nameKt.sanitizeFileName(name, null, false, null);
   }
 
   private static Path getArtifactDirectory(File localRepository,

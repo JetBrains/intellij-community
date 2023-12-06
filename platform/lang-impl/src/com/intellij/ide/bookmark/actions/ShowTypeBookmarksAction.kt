@@ -18,9 +18,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys.NAVIGATABLE
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.popup.PopupState
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
@@ -31,9 +31,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Dimension
 import javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION
 
-internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messagePointer("show.type.bookmarks.action.text")) {
-  private val popupState = PopupState.forPopup()
-
+internal class ShowTypeBookmarksAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   private val BookmarksManager.typeBookmarks
@@ -44,9 +42,6 @@ internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    if (popupState.isRecentlyHidden) return
-    if (popupState.isShowing) return popupState.hidePopup()
-
     val bookmarks = event.bookmarksManager?.typeBookmarks ?: return
     val root = MyRoot(bookmarks.map { it.second })
     val tree = Tree(AsyncTreeModel(StructureTreeModel(MyStructure(root), root), root)).apply {
@@ -70,8 +65,8 @@ internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
         .setCancelOnOtherWindowOpen(true)
         .createPopup()
 
+      PopupUtil.setPopupToggleComponent(popup, event.inputEvent?.component)
       Disposer.register(popup, root)
-      popupState.prepareToShow(popup)
       popup.showCenteredInCurrentWindow(event.project!!)
     }
   }

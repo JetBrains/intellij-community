@@ -14,6 +14,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinFindUsagesWithLibraryCustomTest : AbstractKotlinFindUsagesWithLibraryTest() {
+
+    override val isWithSourcesTestData = false
+
     fun testFindUsagesForLocalClassProperty() {
         val ktParameter = findElementInLibrary<KtParameter>("localClassProperty")
         val usages = findUsages(ktParameter.originalElement, null, false, project)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -22,6 +8,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
@@ -43,10 +30,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-public class ResizeableMappedFile implements Forceable, Closeable {
+public final class ResizeableMappedFile implements Forceable, Closeable {
   private static final Logger LOG = Logger.getInstance(ResizeableMappedFile.class);
 
-  private static final boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
   private volatile long myLogicalSize;
   private volatile long myLastWrittenLogicalSize;
   private final PagedFileStorage myStorage;
@@ -70,6 +56,11 @@ public class ResizeableMappedFile implements Forceable, Closeable {
     ensureParentDirectoryExists();
     myInitialSize = initialSize;
     myLastWrittenLogicalSize = myLogicalSize = readLength();
+    if (myLastWrittenLogicalSize > 0 && !Files.exists(file)) {
+      //probably, the main file was removed
+      myLastWrittenLogicalSize = myLogicalSize = 0;
+      writeLength(0);
+    }
   }
 
   public boolean isNativeBytesOrder() {
@@ -106,7 +97,8 @@ public class ResizeableMappedFile implements Forceable, Closeable {
 
     if (realSize == 0) {
       suggestedSize = doRoundToFactor(Math.max(myInitialSize, max));
-    } else {
+    }
+    else {
       suggestedSize = Math.max(realSize + 1, 2); // suggestedSize should increase with int multiplication on 1.625 factor
 
       while (max > suggestedSize) {
@@ -190,9 +182,10 @@ public class ResizeableMappedFile implements Forceable, Closeable {
   }
 
   private long readLength() throws IOException {
-    Path lengthFile = getLengthFile();
-    long zero = 0L;
-    if (!Files.exists(lengthFile) && (!Files.exists(myStorage.getFile()) || Files.size(myStorage.getFile()) == zero)) {
+    final Path storageFile = myStorage.getFile();
+    final Path lengthFile = getLengthFile();
+    final long zero = 0L;
+    if (!Files.exists(lengthFile) && (!Files.exists(storageFile) || Files.size(storageFile) == zero)) {
       writeLength(zero);
       return zero;
     }
@@ -203,7 +196,8 @@ public class ResizeableMappedFile implements Forceable, Closeable {
     catch (IOException e) {
       long realSize = realSize();
       writeLength(realSize);
-      LOG.error("storage size = " + realSize + ", file size = " + Files.size(myStorage.getFile()), e);
+      LOG.info("Can't find .len file for " + storageFile + ", re-creating it from actual file. " +
+               "Storage size = " + realSize + ", file size = " + Files.size(storageFile), e);
       return realSize;
     }
   }
@@ -256,29 +250,29 @@ public class ResizeableMappedFile implements Forceable, Closeable {
     return myLogicalSize;
   }
 
+  @Override
   public void close() throws IOException {
-    List<Exception> exceptions = new SmartList<>();
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
-      ensureLengthWritten();
-      assert myLogicalSize == myLastWrittenLogicalSize;
-      myStorage.force();
-      if (truncateOnClose && myLogicalSize < myStorage.length()) {
-        myStorage.resize(myLogicalSize);
-      }
-    }));
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> myStorage.close()));
-    if (!exceptions.isEmpty()) {
-      throw new IOException(new CompoundRuntimeException(exceptions));
-    }
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      IOException.class,
+      () -> new IOException("Failed to close ResizableMappedFile[" + getPagedFileStorage().getFile() + "]"),
+      () -> {
+        ensureLengthWritten();
+        assert myLogicalSize == myLastWrittenLogicalSize;
+        myStorage.force();
+        boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
+        if (truncateOnClose && myLogicalSize < myStorage.length()) {
+          myStorage.resize(myLogicalSize);
+        }
+      },
+      myStorage::close
+    );
   }
 
-  @NotNull
-  public PagedFileStorage getPagedFileStorage() {
+  public @NotNull PagedFileStorage getPagedFileStorage() {
     return myStorage;
   }
 
-  @NotNull
-  public StorageLockContext getStorageLockContext() {
+  public @NotNull StorageLockContext getStorageLockContext() {
     return myStorage.getStorageLockContext();
   }
 
@@ -306,6 +300,19 @@ public class ResizeableMappedFile implements Forceable, Closeable {
 
   public void unlockWrite() {
     myStorage.unlockWrite();
+  }
+
+  /** Close the storage and remove all its data files */
+  public void closeAndRemoveAllFiles() throws IOException {
+    List<Exception> exceptions = new SmartList<>();
+
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(myStorage::close));
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> FileUtil.delete(myStorage.getFile())));
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> FileUtil.delete(getLengthFile())));
+
+    if (!exceptions.isEmpty()) {
+      throw new IOException(new CompoundRuntimeException(exceptions));
+    }
   }
 
   @Override

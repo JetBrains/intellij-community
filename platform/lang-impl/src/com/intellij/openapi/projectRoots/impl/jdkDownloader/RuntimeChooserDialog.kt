@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -20,10 +21,9 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.toJBEmptyBorder
 import com.intellij.util.asSafely
-import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.datatransfer.DataFlavor
@@ -33,6 +33,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.io.path.isDirectory
 
 sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
@@ -66,7 +67,7 @@ class RuntimeChooserDialog(
       }.getOrNull()
 
       if (!newPath.isNullOrBlank() && knownPaths.add(newPath)) {
-        RuntimeChooserCustom.importDetectedItem(newPath.trim(), model)
+        RuntimeChooserCustom.importDetectedItem(newPath.trim(), model, true)
       }
     }
 
@@ -143,7 +144,7 @@ class RuntimeChooserDialog(
       border = JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true)
       background = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Banner.WARNING_BACKGROUND else JBUI.CurrentTheme.Notification.BACKGROUND
       foreground = JBUI.CurrentTheme.Notification.FOREGROUND
-      putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+      putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
     }
   }
 
@@ -151,7 +152,19 @@ class RuntimeChooserDialog(
     jdkCombobox = object : ComboBox<RuntimeChooserItem>(model.mainComboBoxModel) {
       init {
         isSwingPopup = false
-        setRenderer(RuntimeChooserPresenter())
+        setRenderer(object: RuntimeChooserPresenter() {
+          override fun separatorFor(value: RuntimeChooserItem?): ListSeparator? {
+            val customJdks = this@RuntimeChooserDialog.model.customJdks
+            val advancedItems = this@RuntimeChooserDialog.model.advancedDownloadItems
+            val message = when {
+                            value is RuntimeChooserAddCustomItem && customJdks.isEmpty() -> LangBundle.message("dialog.separator.choose.ide.runtime.advanced")
+                            advancedItems.any() && value == advancedItems.first() -> LangBundle.message("dialog.separator.choose.ide.runtime.advancedJbrs")
+                            customJdks.any() && value == customJdks.first() -> LangBundle.message("dialog.separator.choose.ide.runtime.customSelected")
+                            else -> null
+                          } ?: return null
+            return ListSeparator(message)
+          }
+        })
       }
 
       override fun setSelectedItem(anObject: Any?) {
@@ -225,7 +238,7 @@ class RuntimeChooserDialog(
         jdkCombobox.addItemListener { updateLocation() }
       }
     }.apply {
-      border = IntelliJSpacingConfiguration().dialogGap.toJBEmptyBorder()
+      border = IntelliJSpacingConfiguration().dialogUnscaledGaps.toJBEmptyBorder()
       putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
     }
   }

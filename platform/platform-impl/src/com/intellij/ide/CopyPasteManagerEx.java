@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.CutElementMarker;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.LinkedListWithSum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,8 +17,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
-  private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
-
   public static CopyPasteManagerEx getInstanceEx() {
     return (CopyPasteManagerEx)getInstance();
   }
@@ -29,23 +26,19 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     ClientCopyPasteManager.getCurrentInstance().lostOwnership(clipboard, contents);
   }
 
-  void fireContentChanged(@Nullable Transferable oldContent, @Nullable Transferable newContent) {
-    myDispatcher.getMulticaster().contentChanged(oldContent, newContent);
-  }
-
   @Override
   public void addContentChangedListener(@NotNull ContentChangedListener listener) {
-    myDispatcher.addListener(listener);
+    ClientCopyPasteManager.getCurrentInstance().addContentChangedListener(listener);
   }
 
   @Override
-  public void addContentChangedListener(@NotNull final ContentChangedListener listener, @NotNull Disposable parentDisposable) {
-    myDispatcher.addListener(listener, parentDisposable);
+  public void addContentChangedListener(final @NotNull ContentChangedListener listener, @NotNull Disposable parentDisposable) {
+    ClientCopyPasteManager.getCurrentInstance().addContentChangedListener(listener, parentDisposable);
   }
 
   @Override
   public void removeContentChangedListener(@NotNull ContentChangedListener listener) {
-    myDispatcher.removeListener(listener);
+    ClientCopyPasteManager.getCurrentInstance().removeContentChangedListener(listener);
   }
 
   @Override
@@ -59,7 +52,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   @Override
-  public boolean isCutElement(@Nullable final Object element) {
+  public boolean isCutElement(final @Nullable Object element) {
     for (CutElementMarker marker : CutElementMarker.EP_NAME.getExtensionList()) {
       if (marker.isCutElement(element)) return true;
     }

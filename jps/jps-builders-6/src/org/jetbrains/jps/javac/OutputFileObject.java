@@ -2,16 +2,14 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.javac.Iterators.Function;
 
-import javax.tools.JavaFileManager;
+import javax.tools.*;
 import java.io.*;
 import java.net.URI;
-import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
@@ -74,17 +72,6 @@ public final class OutputFileObject extends JpsFileObject {
 
   public boolean isGenerated() {
     return myIsGenerated;
-  }
-
-  /**
-   * @deprecated In general, an output object may be generated from several source files. Use {@link OutputFileObject#getSourceFiles()} method instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @Nullable
-  public File getSourceFile() {
-    final Iterator<File> it = getSourceFiles().iterator();
-    return it.hasNext()? it.next() : null;
   }
 
   @NotNull

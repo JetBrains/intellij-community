@@ -4,15 +4,18 @@ package org.jetbrains.uast.kotlin
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtThrowExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UThrowExpression
+import org.jetbrains.uast.*
 
 @ApiStatus.Internal
 class KotlinUThrowExpression(
     override val sourcePsi: KtThrowExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UThrowExpression, KotlinUElementWithType {
-    override val thrownExpression by lz {
-        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.thrownExpression, this)
-    }
+
+    private val thrownExpressionPart = UastLazyPart<UExpression>()
+
+    override val thrownExpression: UExpression
+        get() = thrownExpressionPart.getOrBuild {
+            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.thrownExpression, this)
+        }
 }

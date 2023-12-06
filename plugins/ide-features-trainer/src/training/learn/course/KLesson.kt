@@ -49,4 +49,6 @@ abstract class KLesson(@NonNls id: String, @Nls name: String) : Lesson(id, name)
   }
 
   private fun isDumb(project: Project) = DumbService.getInstance(project).isDumb
+
+  open fun beforeCaretApplied() { }
 }

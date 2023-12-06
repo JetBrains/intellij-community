@@ -24,13 +24,13 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.DocumentUtil
@@ -39,6 +39,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+
 @SuppressWarnings("SpellCheckingInspection")
 class LiveTemplateTest extends LiveTemplateTestCase {
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"
@@ -1272,7 +1273,7 @@ class Foo {
 
     myFixture.configureByText "a.java", "class Foo {{ System.out.println(helloW<caret>) }}"
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
-    DumbServiceImpl.getInstance(getProject()).runInDumbMode {
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject()) {
       RecursionManager.disableMissedCacheAssertions(testRootDisposable)
       myFixture.completeBasic()
       assert myFixture.lookup
@@ -1319,5 +1320,14 @@ class Foo {
     assert !template.isDeactivated()
     children[1].actionPerformed(event)
     assert template.isDeactivated()
+  }
+  
+  void testEquality() {
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    TemplateImpl t1 = (TemplateImpl)manager.createTemplate('k', 'g', 't')
+    TemplateImpl t2 = (TemplateImpl)manager.createTemplate('k', 'g', 't')
+    assert t1 == t2
+    t1.setValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE, true)
+    assert t1 != t2
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -54,7 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Future;
 
-class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutterRendererComponent implements ListCellRenderer<RecentLocationItem> {
+final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutterRendererComponent implements ListCellRenderer<RecentLocationItem> {
   private final Project myProject;
   private final RecentLocationsDataModel myModel;
   private final JBCheckBox myCheckBox;

@@ -38,9 +38,6 @@ import java.util.List;
 
 public final class HighlightFixUtil {
   private static final Logger LOG = Logger.getInstance(HighlightFixUtil.class);
-
-  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
-
   private static final CallMatcher COLLECTION_TO_ARRAY =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "toArray").parameterCount(0);
 
@@ -63,7 +60,7 @@ public final class HighlightFixUtil {
             InheritanceUtil.isInheritor(fromType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(fromType, expression.getResolveScope());
           if (collectionItemType != null && arrayComponentType.isConvertibleFrom(collectionItemType)) {
-            IntentionAction action = QUICK_FIX_FACTORY.createCollectionToArrayFix(collection, expression, (PsiArrayType)toType);
+            IntentionAction action = QuickFixFactory.getInstance().createCollectionToArrayFix(collection, expression, (PsiArrayType)toType);
             info.registerFix(action, null, null, null, null);
           }
         }
@@ -180,23 +177,23 @@ public final class HighlightFixUtil {
   }
 
   static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @Nullable HighlightInfo.Builder info) {
-    IntentionAction action4 = QUICK_FIX_FACTORY.createAddExceptionFromFieldInitializerToConstructorThrowsFix(element);
+    IntentionAction action4 = QuickFixFactory.getInstance().createAddExceptionFromFieldInitializerToConstructorThrowsFix(element);
     if (info != null) {
       info.registerFix(action4, null, null, null, null);
     }
-    IntentionAction action3 = QUICK_FIX_FACTORY.createAddExceptionToCatchFix();
+    IntentionAction action3 = QuickFixFactory.getInstance().createAddExceptionToCatchFix();
     if (info != null) {
       info.registerFix(action3, null, null, null, null);
     }
-    IntentionAction action2 = QUICK_FIX_FACTORY.createAddExceptionToExistingCatch(element);
+    IntentionAction action2 = QuickFixFactory.getInstance().createAddExceptionToExistingCatch(element);
     if (info != null) {
       info.registerFix(action2, null, null, null, null);
     }
-    IntentionAction action1 = QUICK_FIX_FACTORY.createAddExceptionToThrowsFix(element);
+    IntentionAction action1 = QuickFixFactory.getInstance().createAddExceptionToThrowsFix(element);
     if (info != null) {
       info.registerFix(action1, null, null, null, null);
     }
-    IntentionAction action = QUICK_FIX_FACTORY.createSurroundWithTryCatchFix(element);
+    IntentionAction action = QuickFixFactory.getInstance().createSurroundWithTryCatchFix(element);
     if (info != null) {
       info.registerFix(action, null, null, null, null);
     }
@@ -214,13 +211,13 @@ public final class HighlightFixUtil {
     // make context non-static
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
     if (staticParent != null && isInstanceReference(place)) {
-      IntentionAction action = QUICK_FIX_FACTORY.createModifierListFix(staticParent, PsiModifier.STATIC, false, false);
+      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(staticParent, PsiModifier.STATIC, false, false);
       if (info != null) {
         info.registerFix(action, null, null, null, null);
       }
     }
     if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
-      IntentionAction action = QUICK_FIX_FACTORY.createCreateFieldFromUsageFix((PsiReferenceExpression)place);
+      IntentionAction action = QuickFixFactory.getInstance().createCreateFieldFromUsageFix((PsiReferenceExpression)place);
       if (info != null) {
         info.registerFix(action, null, null, null, null);
       }
@@ -255,7 +252,7 @@ public final class HighlightFixUtil {
       PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
       if (method != null) {
         IntentionAction action = PriorityIntentionActionWrapper
-          .lowPriority(QUICK_FIX_FACTORY.createMethodReturnFix(method, toType, true));
+          .lowPriority(QuickFixFactory.getInstance().createMethodReturnFix(method, toType, true));
         if (highlightInfo != null) {
           highlightInfo.registerFix(action, null, null, null, null);
         }
@@ -306,7 +303,7 @@ public final class HighlightFixUtil {
     if (lClass.isInheritor(rClass, true)) return null;
     if (lClass == rClass) return null;
 
-    return QUICK_FIX_FACTORY.createChangeParameterClassFix(rClass, (PsiClassType)lType);
+    return QuickFixFactory.getInstance().createChangeParameterClassFix(rClass, (PsiClassType)lType);
   }
 
   private static void registerReplaceInaccessibleFieldWithGetterSetterFix(@NotNull HighlightInfo.Builder builder,
@@ -315,6 +312,7 @@ public final class HighlightFixUtil {
                                                                           @Nullable PsiClass accessObjectClass,
                                                                           @Nullable TextRange parentFixRange) {
     if (refElement instanceof PsiField psiField && place instanceof PsiReferenceExpression ref) {
+      if (PsiTypes.nullType().equals(psiField.getType())) return;
       PsiClass containingClass = psiField.getContainingClass();
       if (containingClass != null) {
         if (PsiUtil.isOnAssignmentLeftHand(ref)) {
@@ -323,7 +321,7 @@ public final class HighlightFixUtil {
           if (setter != null && PsiUtil.isAccessible(setter, ref, accessObjectClass)) {
             PsiElement element = PsiTreeUtil.skipParentsOfType(ref, PsiParenthesizedExpression.class);
             if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationTokenType() == JavaTokenType.EQ) {
-              IntentionAction action = QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, setter, true);
+              IntentionAction action = QuickFixFactory.getInstance().createReplaceInaccessibleFieldWithGetterSetterFix(ref, setter, true);
               builder.registerFix(action, null, null, parentFixRange, null);
             }
           }
@@ -332,7 +330,7 @@ public final class HighlightFixUtil {
           PsiMethod getterPrototype = PropertyUtilBase.generateGetterPrototype(psiField);
           PsiMethod getter = containingClass.findMethodBySignature(getterPrototype, true);
           if (getter != null && PsiUtil.isAccessible(getter, ref, accessObjectClass)) {
-            IntentionAction action = QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, getter, false);
+            IntentionAction action = QuickFixFactory.getInstance().createReplaceInaccessibleFieldWithGetterSetterFix(ref, getter, false);
             builder.registerFix(action, null, null, parentFixRange, null);
           }
         }
@@ -401,7 +399,7 @@ public final class HighlightFixUtil {
     PsiSwitchStatement switchStatement = findInitializingSwitch(variable, topBlock, readPoint);
     if (switchStatement != null) {
       String message = QuickFixBundle.message("add.default.branch.to.variable.initializing.switch.fix.name", variable.getName());
-      return QUICK_FIX_FACTORY.createAddSwitchDefaultFix(switchStatement, message);
+      return QuickFixFactory.getInstance().createAddSwitchDefaultFix(switchStatement, message);
     }
     return null;
   }
@@ -414,7 +412,7 @@ public final class HighlightFixUtil {
       );
     }
     else {
-      IntentionAction action = QUICK_FIX_FACTORY.createModifierListFix(var, PsiModifier.FINAL, false, false);
+      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(var, PsiModifier.FINAL, false, false);
       if (highlightInfo != null) {
         highlightInfo.registerFix(action, null, null, null, null);
       }
@@ -430,22 +428,14 @@ public final class HighlightFixUtil {
     PsiType type = expression.getType();
     if (type == null) return;
     if (!type.equals(PsiTypes.voidType())) {
-      IntentionAction action = PriorityIntentionActionWrapper.highPriority(QUICK_FIX_FACTORY.createIterateFix(expression));
-      registrar.add(action);
-    }
-    if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) == block.getRBrace()) {
-      PsiElement blockParent = block.getParent();
-      if (blockParent instanceof PsiMethod) {
-        PsiType returnType = ((PsiMethod)blockParent).getReturnType();
+      registrar.add(PriorityIntentionActionWrapper.highPriority(QuickFixFactory.getInstance().createIterateFix(expression)));
+      if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) == block.getRBrace() && block.getParent() instanceof PsiMethod method) {
+        PsiType returnType = method.getReturnType();
         if (returnType != null && isPossibleReturnValue(expression, type, returnType)) {
-          IntentionAction action = QUICK_FIX_FACTORY.createInsertReturnFix(expression);
-          registrar.add(action);
+          registrar.add(QuickFixFactory.getInstance().createInsertReturnFix(expression));
         }
       }
-    }
-    if (!type.equals(PsiTypes.voidType())) {
-      IntentionAction action = QUICK_FIX_FACTORY.createIntroduceVariableAction(expression);
-      registrar.add(action);
+      registrar.add(QuickFixFactory.getInstance().createIntroduceVariableAction(expression));
     }
   }
 
@@ -476,7 +466,7 @@ public final class HighlightFixUtil {
               if (type != null) {
                 type = GenericsUtil.getVariableTypeByExpressionType(type);
                 if (PsiTypesUtil.isDenotableType(type, variable) && !PsiTypes.voidType().equals(type)) {
-                  IntentionAction fix = QUICK_FIX_FACTORY.createSetVariableTypeFix(variable, type);
+                  IntentionAction fix = QuickFixFactory.getInstance().createSetVariableTypeFix(variable, type);
                   info.registerFix(fix, null, null, null, null);
                 }
                 return false;
@@ -498,7 +488,7 @@ public final class HighlightFixUtil {
       if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
         PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodCall.getMethodExpression(), method);
         if (qualifier == null) continue;
-        IntentionAction fix = new QualifyMethodCallFix(methodCall, qualifier.getText());
+        var fix = new QualifyMethodCallFix(methodCall, qualifier.getText());
         TextRange fixRange = HighlightMethodUtil.getFixRange(methodCall);
         if (highlightInfo != null) {
           highlightInfo.registerFix(fix, null, null, fixRange, null);

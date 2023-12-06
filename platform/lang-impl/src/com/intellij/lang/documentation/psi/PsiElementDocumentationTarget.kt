@@ -8,13 +8,14 @@ import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.lang.documentation.DocumentationProvider
+import com.intellij.lang.documentation.DocumentationProvider.DocumentationParts
 import com.intellij.lang.documentation.ExternalDocumentationProvider
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.*
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -70,7 +71,7 @@ class PsiElementDocumentationTarget private constructor(
   override val navigatable: Navigatable? get() = targetElement as? Navigatable
 
   override fun computeDocumentationHint(): String? {
-    return SingleTargetElementInfo.generateInfo(targetElement, sourceElement, isNavigatableQuickDoc(sourceElement, targetElement)).text
+    return SingleTargetElementInfo.generateInfo(targetElement, sourceElement, isNavigatableQuickDoc(sourceElement, targetElement))
   }
 
   override fun computeDocumentation(): DocumentationResult? {
@@ -94,11 +95,12 @@ class PsiElementDocumentationTarget private constructor(
 
   @RequiresReadLock
   private fun localDoc(provider: DocumentationProvider): DocumentationData? {
-    val html = localDocHtml(provider)
-               ?: return null
+    val parts = localDocParts(provider)
+                ?: return null
     return DocumentationData(
       content = DocumentationContentData(
-        html = html,
+        html = parts.doc,
+        definitionDetails = parts.definitionDetails,
         imageResolver = pointer.imageResolver,
       ),
       anchor = pointer.anchor,
@@ -106,14 +108,17 @@ class PsiElementDocumentationTarget private constructor(
   }
 
   @RequiresReadLock
-  private fun localDocHtml(provider: DocumentationProvider): @Nls String? {
+  private fun localDocParts(provider: DocumentationProvider): @Nls DocumentationParts? {
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element
                       ?: sourceElement
-    val doc = provider.generateDoc(targetElement, originalPsi)
+    val doc = provider.getDocumentationParts(targetElement, originalPsi)
     if (targetElement is PsiFile) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)
       if (fileDoc != null) {
-        return if (doc == null) fileDoc else doc + fileDoc
+        return if (doc == null)
+          DocumentationParts(fileDoc, null)
+        else
+          DocumentationParts(doc.doc + fileDoc, doc.definitionDetails)
       }
     }
     return doc

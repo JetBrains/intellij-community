@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.compareDescriptors
-import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
+import org.jetbrains.kotlin.idea.refactoring.introduce.K1ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
@@ -78,8 +78,8 @@ data class ExtractionData(
     val originalElements: List<PsiElement> = originalRange.elements
     val physicalElements = originalElements.map { it.substringContextOrThis }
 
-    val substringInfo: ExtractableSubstringInfo?
-        get() = (originalElements.singleOrNull() as? KtExpression)?.extractableSubstringInfo
+    val substringInfo: K1ExtractableSubstringInfo?
+        get() = (originalElements.singleOrNull() as? KtExpression)?.extractableSubstringInfo as? K1ExtractableSubstringInfo
 
     val insertBefore: Boolean = options.extractAsProperty
             || targetSibling.getStrictParentOfType<KtDeclaration>()?.let {

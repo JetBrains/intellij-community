@@ -3,8 +3,13 @@ package client
 import server.Server
 
 class Client(name: String = Server.NAME) : Server() {
+
+    constructor(ctrParam: Server, name: String) : this(name)
+
     var nextServer: Server? = Server()
     val name = Server.NAME
+    val name2 = Server.Companion.NAME
+    val name3 = Server.Inner()
 
     fun foo(s: Server) {
         val server: Server = s
@@ -13,6 +18,18 @@ class Client(name: String = Server.NAME) : Server() {
 
     fun getNextServer2(): Server? {
         return nextServer
+    }
+
+    fun withFunctionalTypeInParam(p: (s: Server) -> Unit) {}
+    fun withFunctionalTypeInParam2(p: () -> Server) {}
+    fun withReturningFunctionalType() : (s: Server) -> Unit = {}
+    fun withReturningFunctionalType2() : () -> Server = { Server() }
+
+    fun withAnonymousFunction() {
+        withFunctionalTypeInParam(fun(s: Server) {})
+    }
+    fun withAnonymousFunction2() {
+        withFunctionalTypeInParam2(fun(): Server {return Server()})
     }
 
     override fun work() {
@@ -26,7 +43,9 @@ class Client(name: String = Server.NAME) : Server() {
 }
 
 object ClientObject : Server() {
-
+    fun useInnerObject() {
+        val c = Server.InnerObject
+    }
 }
 
 abstract class Servers : Iterator<Server> {

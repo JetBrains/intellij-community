@@ -118,48 +118,52 @@ private class IconScaleTestDialog(project: Project?) : DialogWrapper(project) {
 
       group("Options") {
         row {
-          checkBox("Pass object scale:").applyToComponent {
-            isSelected = passObjectScale
-            addItemListener {
-              passObjectScale = isSelected
-              invokeLater { rebuildUi() }
+          checkBox("Pass object scale:")
+            .selected(passObjectScale)
+            .applyToComponent {
+              addItemListener {
+                passObjectScale = isSelected
+                invokeLater { rebuildUi() }
+              }
             }
-          }
         }
         indent {
           row {
-            checkBox("Pass context component:").applyToComponent {
-              isSelected = passContextContext
+            checkBox("Pass context component:")
+              .selected(passContextContext)
+              .applyToComponent {
+                addItemListener {
+                  passContextContext = isSelected
+                  invokeLater { rebuildUi() }
+                }
+              }.enabled(passObjectScale)
+          }
+        }
+        row {
+          checkBox("Mark scalable:")
+            .selected(markScalable)
+            .applyToComponent {
               addItemListener {
-                passContextContext = isSelected
-                invokeLater { rebuildUi() }
-              }
-            }.enabled(passObjectScale)
-          }
-        }
-        row {
-          checkBox("Mark scalable:").applyToComponent {
-            isSelected = markScalable
-            addItemListener {
-              markScalable = isSelected
-              invokeLater {
-                rebuildIcons()
-                rebuildUi()
+                markScalable = isSelected
+                invokeLater {
+                  rebuildIcons()
+                  rebuildUi()
+                }
               }
             }
-          }
         }
         row {
-          checkBox("Wrap with DeferredIcon:").applyToComponent {
-            isSelected = wrapDeferred
-            addItemListener {
-              wrapDeferred = isSelected
-              invokeLater {
-                rebuildIcons()
-                rebuildUi()
+          checkBox("Wrap with DeferredIcon:")
+            .selected(wrapDeferred)
+            .applyToComponent {
+              addItemListener {
+                wrapDeferred = isSelected
+                invokeLater {
+                  rebuildIcons()
+                  rebuildUi()
+                }
               }
             }
-          }
         }
 
         row("User scale:") {

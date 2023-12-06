@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -35,8 +35,8 @@ public final class ProblemDescriptorUtil {
   static final int APPEND_LINE_NUMBER = 0x00000001;
   public static final int TRIM_AT_TREE_END = 0x00000004;
 
-  @NonNls private static final String LOC_REFERENCE = "#loc";
-  @NonNls private static final String REF_REFERENCE = "#ref";
+  private static final @NonNls String LOC_REFERENCE = "#loc";
+  private static final @NonNls String REF_REFERENCE = "#ref";
 
   @MagicConstant(flags = {NONE, APPEND_LINE_NUMBER, TRIM_AT_TREE_END})
   @interface FlagConstant {
@@ -44,21 +44,18 @@ public final class ProblemDescriptorUtil {
 
   public static final Couple<String> XML_CODE_MARKER = Couple.of("<xml-code>", "</xml-code>");
 
-  @NotNull
-  public static String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement psiElement) {
+  public static @NotNull String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement psiElement) {
     TextRange range = descriptor instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)descriptor).getTextRange() : null;
     return extractHighlightedText(range, psiElement);
   }
 
-  @NotNull
-  public static String sanitizeIllegalXmlChars(@NotNull String text) {
+  public static @NotNull String sanitizeIllegalXmlChars(@NotNull String text) {
     if (Verifier.checkCharacterData(text) == null) return text;
     return text.codePoints().map(cp -> Verifier.isXMLCharacter(cp) ? cp : '?')
       .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
   }
 
-  @NotNull
-  public static String extractHighlightedText(@Nullable TextRange range, @Nullable PsiElement psiElement) {
+  public static @NotNull String extractHighlightedText(@Nullable TextRange range, @Nullable PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return "";
     String ref = psiElement.getText();
     if (range != null) {
@@ -75,14 +72,11 @@ public final class ProblemDescriptorUtil {
     return ref.trim().replaceAll("\\s+", " ");
   }
 
-  @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, boolean appendLineNumber) {
+  public static @NotNull String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, boolean appendLineNumber) {
     return renderDescriptionMessage(descriptor, element, appendLineNumber ? APPEND_LINE_NUMBER : NONE);
   }
 
-  @NotNull
-  @InspectionMessage
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, @FlagConstant int flags) {
+  public static @NotNull @InspectionMessage String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, @FlagConstant int flags) {
     String message = descriptor.getDescriptionTemplate();
 
     // no message. This should not be the case if the inspection is correctly implemented.
@@ -125,13 +119,10 @@ public final class ProblemDescriptorUtil {
     @NotNull @NlsContexts.Tooltip String getTooltip();
   }
 
-  @NotNull
-  @InspectionMessage
-  @NlsContexts.Tooltip
-  private static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor,
-                                                @Nullable PsiElement element,
-                                                @FlagConstant int flags,
-                                                @InspectionMessage String template) {
+  private static @NotNull @InspectionMessage @NlsContexts.Tooltip String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor,
+                                                                                                  @Nullable PsiElement element,
+                                                                                                  @FlagConstant int flags,
+                                                                                                  @InspectionMessage String template) {
     String message = template;
     if ((flags & APPEND_LINE_NUMBER) != 0 &&
         descriptor instanceof ProblemDescriptor &&
@@ -168,8 +159,7 @@ public final class ProblemDescriptorUtil {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static String removeLocReference(@NotNull String message) {
+  public static @NotNull String removeLocReference(@NotNull String message) {
     message = StringUtil.replace(message, LOC_REFERENCE + " ", "");
     message = StringUtil.replace(message, " " + LOC_REFERENCE, "");
     message = StringUtil.replace(message, LOC_REFERENCE, "");
@@ -177,8 +167,7 @@ public final class ProblemDescriptorUtil {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static String unescapeTags(@NotNull String message) {
+  public static @NotNull String unescapeTags(@NotNull String message) {
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
     message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) :
@@ -186,8 +175,7 @@ public final class ProblemDescriptorUtil {
     return message;
   }
 
-  @NotNull
-  private static String unescapeXmlCode(@NotNull String message) {
+  private static @NotNull String unescapeXmlCode(@NotNull String message) {
     List<String> strings = new ArrayList<>();
     for (String string : StringUtil.split(message, XML_CODE_MARKER.first)) {
       if (string.contains(XML_CODE_MARKER.second)) {
@@ -209,22 +197,19 @@ public final class ProblemDescriptorUtil {
     return builder.toString();
   }
 
-  @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element) {
+  public static @NotNull String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element) {
     return renderDescriptionMessage(descriptor, element, false);
   }
 
-  @NotNull
-  public static HighlightInfoType highlightTypeFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
-                                                              @NotNull HighlightSeverity severity,
-                                                              @NotNull SeverityRegistrar severityRegistrar) {
+  public static @NotNull HighlightInfoType highlightTypeFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
+                                                                       @NotNull HighlightSeverity severity,
+                                                                       @NotNull SeverityRegistrar severityRegistrar) {
     return getHighlightInfoType(problemDescriptor.getHighlightType(), severity, severityRegistrar);
   }
 
-  @NotNull
-  public static HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,
-                                                       @NotNull HighlightSeverity severity,
-                                                       @NotNull SeverityRegistrar severityRegistrar) {
+  public static @NotNull HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,
+                                                                @NotNull HighlightSeverity severity,
+                                                                @NotNull SeverityRegistrar severityRegistrar) {
     return switch (highlightType) {
       case GENERIC_ERROR_OR_WARNING -> severityRegistrar.getHighlightInfoTypeBySeverity(severity);
       case LIKE_DEPRECATED -> new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
@@ -249,7 +234,7 @@ public final class ProblemDescriptorUtil {
       case POSSIBLE_PROBLEM -> HighlightInfoType.POSSIBLE_PROBLEM;
     };
   }
-  public static ProblemDescriptor @NotNull [] convertToProblemDescriptors(@NotNull final List<? extends Annotation> annotations, @NotNull final PsiFile file) {
+  public static ProblemDescriptor @NotNull [] convertToProblemDescriptors(final @NotNull List<? extends Annotation> annotations, final @NotNull PsiFile file) {
     if (annotations.isEmpty()) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
@@ -261,7 +246,7 @@ public final class ProblemDescriptorUtil {
       int startOffset = annotation.getStartOffset();
       int endOffset = annotation.getEndOffset();
 
-      String message = annotation.getMessage();
+      String message = StringUtil.notNullize(annotation.getMessage());
       boolean isAfterEndOfLine = annotation.isAfterEndOfLine();
       LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
 
@@ -311,8 +296,7 @@ public final class ProblemDescriptorUtil {
                                      false);
   }
 
-  @Nullable
-  private static TextRange getRangeInElement(@NotNull PsiElement startElement, int startOffset, PsiElement endElement, int endOffset) {
+  private static @Nullable TextRange getRangeInElement(@NotNull PsiElement startElement, int startOffset, PsiElement endElement, int endOffset) {
     if (startElement != endElement) {
       return null;
     }

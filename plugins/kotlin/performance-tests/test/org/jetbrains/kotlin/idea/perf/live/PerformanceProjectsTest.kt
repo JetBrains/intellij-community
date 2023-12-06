@@ -81,20 +81,21 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                     profile(DefaultProfile)
 
                     filesToHighlight.forEach {fileToHighlight ->
-                        fixture(fileToHighlight).use { fixture ->
-                            measureHighlight(fixture)
+                        fixture(fileToHighlight) {
+                            measureHighlight(this)
                         }
                     }
 
                     profile(EmptyProfile)
 
                     filesToHighlight.forEach {fileToHighlight ->
-                        fixture(fileToHighlight).use { fixture ->
-                            measureHighlight(fixture, "empty profile")
+                        fixture(fileToHighlight) {
+                            measureHighlight(this, "empty profile")
                         }
                     }
 
-                    fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt").use { fixture ->
+                    fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt"){
+                        val fixture = this
                         with(fixture.typingConfig) {
                             marker = "override fun getDeclarations(): List<KtDeclaration> {"
                             insertString = "val q = import"
@@ -124,8 +125,10 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
                     defaultStatsConfig()
 
-                    fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt").use { originalFixture ->
-                        fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtImportInfo.kt").use { targetFixture ->
+                    fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt") {
+                        val originalFixture = this
+                        fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtImportInfo.kt"){
+                            val targetFixture = this
                             var copied = false
                             measure<Unit>(originalFixture) {
                                 before = {
@@ -167,7 +170,8 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
                     defaultStatsConfig()
 
-                    fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt").use { fixture ->
+                    fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt") {
+                        val fixture = this
                         with(fixture.typingConfig) {
                             marker = "override fun getDeclarations(): List<KtDeclaration> {"
                             typePosition = AFTER_MARKER
@@ -188,7 +192,8 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                         }
                     }
 
-                    fixture("compiler/backend/src/org/jetbrains/kotlin/codegen/state/KotlinTypeMapper.kt").use { fixture ->
+                    fixture("compiler/backend/src/org/jetbrains/kotlin/codegen/state/KotlinTypeMapper.kt") {
+                        val fixture = this
                         with(fixture.typingConfig) {
                             marker = "fun mapOwner(descriptor: DeclarationDescriptor): Type {"
                             typePosition = AFTER_MARKER
@@ -208,7 +213,8 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                         }
                     }
 
-                    fixture("compiler/tests/org/jetbrains/kotlin/util/ArgsToParamsMatchingTest.kt").use { fixture ->
+                    fixture("compiler/tests/org/jetbrains/kotlin/util/ArgsToParamsMatchingTest.kt") {
+                        val fixture = this
                         with(fixture.typingConfig) {
                             marker = "fun testMatchNamed() {"
                             typePosition = AFTER_MARKER
@@ -243,7 +249,8 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
                     defaultStatsConfig()
 
-                    fixture("build.gradle.kts").use { fixture ->
+                    fixture("build.gradle.kts") {
+                        val fixture = this
                         with(fixture.typingConfig) {
                             marker = "tasks {"
                             insertString = "reg"
@@ -277,7 +284,8 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
                     defaultStatsConfig()
 
-                    fixture("build.gradle.kts", updateScriptDependenciesIfNeeded = false).use { fixture ->
+                    fixture("build.gradle.kts", updateScriptDependenciesIfNeeded = false) {
+                        val fixture = this
                         measure<Unit>(combineNameWithSimpleFileName("updateScriptDependencies", fixture)) {
                             before = {
                                 fixture.openInEditor()
@@ -302,7 +310,8 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
                     defaultStatsConfig()
 
-                    fixture("build.gradle.kts").use { fixture ->
+                    fixture("build.gradle.kts") {
+                        val fixture = this
                         measure<List<HighlightInfo>>(combineNameWithSimpleFileName("fileAnalysis", fixture)) {
                             before = {
                                 fixture.openInEditor()

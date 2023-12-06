@@ -11,22 +11,20 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.g
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.logState
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger.Companion.LOG
-import com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler
+import com.intellij.internal.statistic.updater.allowExecution
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
-import org.jetbrains.concurrency.asDeferred
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -36,30 +34,28 @@ private val LOG_PROJECTS_STATES_INITIAL_DELAY = 5.minutes
 private val LOG_PROJECTS_STATES_DELAY = 12.hours
 private const val REDUCE_DELAY_FLAG_KEY = "fus.internal.reduce.initial.delay"
 
+private val LOG = logger<FUStateUsagesLogger>()
+
 /**
  * Called by a scheduler once a day and records IDE/project state. <br></br>
  *
  * **Don't** use it directly unless absolutely necessary.
  * Implement [ApplicationUsagesCollector] or [ProjectUsagesCollector] instead.
  *
- * To record IDE events (e.g. invoked action, opened dialog) use [CounterUsagesCollector]
+ * To record IDE events (e.g., invoked action, opened dialog) use [CounterUsagesCollector]
  * @see ProjectFUStateUsagesLogger
  */
 @Service(Service.Level.APP)
 @Internal
-class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : UsagesCollectorConsumer {
-
+class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : UsagesCollectorConsumer {
   init {
-    cs.launch {
+    coroutineScope.launch {
       logApplicationStateRegularly()
     }
   }
 
   companion object {
-
-    internal val LOG = Logger.getInstance(FUStateUsagesLogger::class.java)
-
-    fun getInstance(): FUStateUsagesLogger = ApplicationManager.getApplication().getService(FUStateUsagesLogger::class.java)
+    fun getInstance(): FUStateUsagesLogger = ApplicationManager.getApplication().service()
 
     internal suspend fun logMetricsOrError(
       project: Project?,
@@ -88,7 +84,7 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
           return
         }
 
-        val data = FeatureUsageData().addProject(project)
+        val data = FeatureUsageData(recorder).addProject(project)
         @Suppress("UnstableApiUsage")
         logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_FAILED, data.build(), true).asDeferred().join()
       }
@@ -106,29 +102,33 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
 
       coroutineScope {
         if (!metrics.isEmpty()) {
-          val groupData = addProject(project)
+          val groupData = addProject(project, group.recorder)
           for (metric in metrics) {
             val data = mergeWithEventData(groupData, metric.data)
             val eventData = data?.build() ?: emptyMap()
             launch {
-              logger.logAsync(group, metric.eventId, eventData, true).asDeferred().join()
+              blockingContext { logger.logAsync(group, metric.eventId, eventData, true) }.asDeferred().join()
             }
           }
         }
 
         launch {
-          logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData().addProject(project).build(), true).join()
+          blockingContext {
+            logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData(group.recorder).addProject(project).build(), true).join()
+          }
         }
       }
     }
 
-    private fun addProject(project: Project?): FeatureUsageData? = if (project == null) null else FeatureUsageData().addProject(project)
+    private fun addProject(project: Project?, recorder: String): FeatureUsageData? {
+      return if (project == null) null else FeatureUsageData(recorder).addProject(project)
+    }
 
     fun mergeWithEventData(groupData: FeatureUsageData?, data: FeatureUsageData?): FeatureUsageData? {
       if (data == null) {
         return groupData
       }
-      val newData = groupData?.copy() ?: FeatureUsageData()
+      val newData = groupData?.copy() ?: FeatureUsageData(recorderId = data.recorderId)
       newData.merge(data, "event_")
       return newData
     }
@@ -148,31 +148,27 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
   }
 
   private suspend fun logApplicationStateRegularly() {
-    StatisticsStateCollectorsScheduler.allowExecution.set(true)
+    allowExecution.set(true)
     delay(LOG_APPLICATION_STATES_INITIAL_DELAY)
-    StatisticsStateCollectorsScheduler.allowExecution.set(false)
+    allowExecution.set(false)
     while (true) {
       logApplicationStates(onStartup = false)
       delay(LOG_APPLICATION_STATES_DELAY)
     }
   }
 
-  fun scheduleLogApplicationStatesOnStartup(): Job = cs.launch {
+  suspend fun logApplicationStatesOnStartup() {
     logApplicationStates(onStartup = true)
   }
 
-  fun scheduleLogApplicationState(): Job = cs.launch {
-    logApplicationStates(onStartup = false)
-  }
-
-  private suspend fun logApplicationStates(onStartup: Boolean) {
+  internal suspend fun logApplicationStates(onStartup: Boolean) {
     coroutineScope {
-      if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return@coroutineScope
+      if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) {
+        return@coroutineScope
+      }
 
       val recorderLoggers = HashMap<String, StatisticsEventLogger>()
-
-      val collectors = ApplicationUsagesCollector.getExtensions(this@FUStateUsagesLogger, onStartup)
-
+      val collectors = UsageCollectors.getApplicationCollectors(this@FUStateUsagesLogger, onStartup)
       for (usagesCollector in collectors) {
         if (!getPluginInfo(usagesCollector.javaClass).isDevelopedByJetBrains()) {
           @Suppress("removal", "DEPRECATION")
@@ -191,40 +187,17 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
       }
     }
   }
-
-  @ScheduledForRemoval
-  @Deprecated(
-    message = "Use ProjectFUStateUsagesLogger.scheduleLogProjectState",
-    ReplaceWith(
-      "project.service<ProjectFUStateUsagesLogger>().scheduleLogProjectState().join()",
-      "com.intellij.openapi.components.service"
-    ),
-  )
-  suspend fun logProjectStates(project: Project) {
-    project.service<ProjectFUStateUsagesLogger>().scheduleLogProjectState().join()
-  }
-
-  @ScheduledForRemoval
-  @Deprecated(
-    message = "Use FUStateUsagesLogger.scheduleLogProjectState",
-    replaceWith = ReplaceWith(
-      "scheduleLogApplicationState().join()"
-    ),
-  )
-  suspend fun logApplicationStates() {
-    scheduleLogApplicationState().join()
-  }
 }
 
 @Internal
 @Service(Service.Level.PROJECT)
 class ProjectFUStateUsagesLogger(
   private val project: Project,
-  private val cs: CoroutineScope,
+  private val coroutineScope: CoroutineScope,
 ) : UsagesCollectorConsumer {
 
   init {
-    cs.launch {
+    coroutineScope.launch {
       project.waitForSmartMode()
       logProjectStateRegularly()
     }
@@ -241,13 +214,9 @@ class ProjectFUStateUsagesLogger(
     }
   }
 
-  fun scheduleLogProjectState(): Job = cs.launch {
-    logProjectState()
-  }
-
   private suspend fun logProjectState(): Unit = coroutineScope {
     val recorderLoggers = HashMap<String, StatisticsEventLogger>()
-    for (usagesCollector in ProjectUsagesCollector.getExtensions(this@ProjectFUStateUsagesLogger)) {
+    for (usagesCollector in UsageCollectors.getProjectCollectors(this@ProjectFUStateUsagesLogger)) {
       if (!getPluginInfo(usagesCollector.javaClass).isDevelopedByJetBrains()) {
         @Suppress("removal", "DEPRECATION")
         LOG.warn("Skip '${usagesCollector.groupId}' because its registered in a third-party plugin")
@@ -255,26 +224,36 @@ class ProjectFUStateUsagesLogger(
       }
 
       launch {
-        val metrics = blockingContext { usagesCollector.getMetrics(project, null) }
+        val metrics = usagesCollector.collect(project)
+
         FUStateUsagesLogger.logMetricsOrError(
           project = project,
           recorderLoggers = recorderLoggers,
           usagesCollector = usagesCollector,
-          metrics = metrics.asDeferred().await() ?: emptySet(),
+          metrics = metrics,
         )
       }
     }
   }
 
-  fun scheduleLogApplicationAndProjectState(): Deferred<Unit> = cs.async {
-    launch {
-      FUStateUsagesLogger.getInstance().scheduleLogApplicationState().join()
-      logProjectState()
+  @Obsolete
+  fun scheduleLogApplicationAndProjectState(): Job {
+    return coroutineScope.launch {
+      logApplicationAndProjectState()
     }
+  }
 
-    for (extension in FeatureUsageStateEventTracker.EP_NAME.extensions) {
+  suspend fun logApplicationAndProjectState() {
+    coroutineScope {
       launch {
-        extension.reportNow()
+        FUStateUsagesLogger.getInstance().logApplicationStates(onStartup = false)
+        logProjectState()
+      }
+
+      for (extension in FeatureUsageStateEventTracker.EP_NAME.extensionList) {
+        launch {
+          extension.reportNow()
+        }
       }
     }
   }

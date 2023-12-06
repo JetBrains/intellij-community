@@ -7,23 +7,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.hashToHexString
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
-@State(
-  name = "ProcessedFilesStorage",
-  storages = [Storage(StoragePathMacros.CACHE_FILE)],
-  reportStatistic = false,
-  reloadable = false,
-)
+@State(name = "ProcessedFilesStorage", storages = [Storage(StoragePathMacros.CACHE_FILE)], reloadable = false)
 @ApiStatus.Internal
-class ProcessedFilesStorageService :
-  PersistentStateComponentWithModificationTracker<ProcessedFilesStorageService.MyState>,
-  Disposable {
-
+class ProcessedFilesStorageService : PersistentStateComponentWithModificationTracker<ProcessedFilesStorageService.MyState>, Disposable {
   override fun initializeComponent() {
     if (dropOutdatedPaths()) {
       tracker.incModificationCount()
@@ -49,13 +42,13 @@ class ProcessedFilesStorageService :
   }
 
   fun isVisited(vFile: VirtualFile): Boolean {
-    val fileTime = state.timestamps[vFile.pathMd5Hash()] ?: return false
+    val fileTime = state.timestamps[pathMd5Hash(vFile)] ?: return false
     val currentTime = System.currentTimeMillis()
     return !isDayPassed(lastTime = fileTime, currentTime = currentTime)
   }
 
   fun visit(vFile: VirtualFile): Boolean {
-    val hash = vFile.pathMd5Hash()
+    val hash = pathMd5Hash(vFile)
     val currentTime = System.currentTimeMillis()
     val oldTime = state.timestamps.put(hash, currentTime)
     dropOutdatedPaths(currentTime)
@@ -70,14 +63,14 @@ class ProcessedFilesStorageService :
     return state.timestamps.values.removeIf { isDayPassed(lastTime = it, currentTime = currentTime) }
   }
 
-  private fun VirtualFile.pathMd5Hash(): String = DigestUtil.md5Hex(path.encodeToByteArray())
-
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   companion object {
     fun getInstance(project: Project): ProcessedFilesStorageService = project.service()
   }
 }
+
+private fun pathMd5Hash(virtualFile: VirtualFile): String = hashToHexString(virtualFile.path, DigestUtil.md5())
 
 private fun isDayPassed(lastTime: Long, currentTime: Long): Boolean {
   return TimeUnit.MILLISECONDS.toDays(currentTime - lastTime) >= 1

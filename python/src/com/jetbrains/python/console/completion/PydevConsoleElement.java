@@ -16,10 +16,14 @@
 package com.jetbrains.python.console.completion;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.impl.LightNamedElement;
+
+import static com.intellij.openapi.util.text.HtmlChunk.text;
 
 /**
  * @author oleg
@@ -38,17 +42,16 @@ public class PydevConsoleElement extends LightNamedElement {
     return "PydevConsoleElement " + myDescription;
   }
 
-  public static @NlsSafe String generateDoc(final PydevConsoleElement pydevConsoleElement) {
+  public static @NlsSafe HtmlChunk generateDoc(final PydevConsoleElement pydevConsoleElement) {
     final String description = pydevConsoleElement.myDescription;
     // Description contract:
     // (Signatures\n\n) ? Description
     final int index = description.indexOf("\n\n");
     if (index != -1){
-      // TODO replace with HtmlBuilder
-      final StringBuilder builder = new StringBuilder();
-      builder.append("<b>").append(description.subSequence(0, index)).append("</b>").append("<hr/>").append(description.substring(index+2));
-      return StringUtil.replace(builder.toString(), "\n", "<br/>");
+      return new HtmlBuilder()
+        .append(text(description.substring(0, index)).bold())
+        .hr().append(description.substring(index + 2)).toFragment();
     }
-    return StringUtil.replace(description, "\n", "<br/>");
+    return text(description);
   }
 }

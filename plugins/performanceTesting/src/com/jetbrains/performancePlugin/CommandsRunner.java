@@ -1,19 +1,17 @@
 package com.jetbrains.performancePlugin;
 
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import oshi.SystemInfo;
 import oshi.software.os.OSProcess;
 import oshi.software.os.OperatingSystem;
 
-import static com.jetbrains.performancePlugin.ProjectLoaded.runScript;
+import java.util.concurrent.CompletableFuture;
 
-public class CommandsRunner {
-
+public final class CommandsRunner {
   private static CommandsRunner myCommandsRunner;
 
-  private ActionCallback actionCallback;
+  private CompletableFuture<?> actionCallback;
 
   synchronized static CommandsRunner getInstance() {
     if (myCommandsRunner == null) {
@@ -24,25 +22,29 @@ public class CommandsRunner {
 
   //TODO: add methode with project in parameter? AT-114
   public static void doRunScript(@NotNull String text) {
-    runScript(ProjectManager.getInstance().getOpenProjects()[0], text, false);
+    ProjectLoadedKt.runPerformanceScript(ProjectManager.getInstance().getOpenProjects()[0], text, false);
   }
 
-  public static void setActionCallback(ActionCallback actionCallback) {
+  public static void setActionCallback(CompletableFuture<?> actionCallback) {
     getInstance().actionCallback = actionCallback;
   }
 
   public static boolean haveCommandsFinished() {
-    if (getInstance().actionCallback == null) return false;
-    return getInstance().actionCallback.isProcessed();
+    if (getInstance().actionCallback == null) {
+      return false;
+    }
+    return getInstance().actionCallback.isDone();
   }
 
   public static boolean haveCommandsFinishedSuccessfully() {
-    if (getInstance().actionCallback == null) return false;
+    if (getInstance().actionCallback == null) {
+      return false;
+    }
     return getInstance().actionCallback.isDone();
   }
 
   public static boolean haveCommandsFailed() {
-    return getInstance().actionCallback.isRejected();
+    return getInstance().actionCallback.isCancelled();
   }
 
   public static int getPid() {

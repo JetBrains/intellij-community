@@ -2,8 +2,8 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.util.AtomicClearableLazyValue
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.mapSmartNotNull
 import kotlinx.coroutines.ensureActive
@@ -17,29 +17,27 @@ import kotlin.coroutines.coroutineContext
 import kotlin.io.path.exists
 
 class ReadOnlySourceManager(private val icsManager: IcsManager, val rootDir: Path) {
-  private val repositoryList = object : AtomicClearableLazyValue<List<Repository>>() {
-    override fun compute(): List<Repository> {
-      if (icsManager.settings.readOnlySources.isEmpty()) {
-        return emptyList()
-      }
+  private val repositoryList = SynchronizedClearableLazy {
+    if (icsManager.settings.readOnlySources.isEmpty()) {
+      return@SynchronizedClearableLazy emptyList()
+    }
 
-      return icsManager.settings.readOnlySources.mapSmartNotNull { source ->
-        LOG.runAndLogException {
-          if (!source.active) {
-            return@mapSmartNotNull null
-          }
-
-          val path = source.path ?: return@mapSmartNotNull null
-          val dir = rootDir.resolve(path)
-          if (dir.exists()) {
-            return@mapSmartNotNull buildBareRepository(dir)
-          }
-          else {
-            LOG.warn("Skip read-only source ${source.url} because dir doesn't exist")
-          }
-          null
+    icsManager.settings.readOnlySources.mapSmartNotNull { source ->
+      runCatching {
+        if (!source.active) {
+          return@runCatching null
         }
-      }
+
+        val path = source.path ?: return@mapSmartNotNull null
+        val dir = rootDir.resolve(path)
+        if (dir.exists()) {
+          return@runCatching buildBareRepository(dir)
+        }
+        else {
+          LOG.warn("Skip read-only source ${source.url} because dir doesn't exist")
+        }
+        null
+      }.getOrLogException(LOG)
     }
   }
 

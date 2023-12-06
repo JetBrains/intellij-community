@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
@@ -9,6 +9,7 @@ import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.Keymap;
@@ -80,6 +81,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   private final TreeExpander myTreeExpander;
   private String myHelpId;
 
+  @Topic.ProjectLevel
   public static final Topic<CommittedChangesReloadListener> ITEMS_RELOADED =
     new Topic<>("ITEMS_RELOADED", CommittedChangesReloadListener.class);
 
@@ -131,7 +133,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     CustomShortcutSet quickdocShortcuts = new CustomShortcutSet(keymap.getShortcuts(IdeActions.ACTION_QUICK_JAVADOC));
-    EmptyAction.registerWithShortcutSet("CommittedChanges.Details", quickdocShortcuts, this);
+    ActionUtil.wrap("CommittedChanges.Details").registerCustomShortcutSet(quickdocShortcuts, this);
 
     myCopyProvider = new TreeCopyProvider(myChangesTree);
     myTreeExpander = new DefaultTreeExpander(myChangesTree);
@@ -181,7 +183,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
   private void updateGrouping() {
     if (myGroupingStrategy.changedSinceApply()) {
-      ApplicationManager.getApplication().invokeLater(() -> updateModel(), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> updateModel(), ModalityState.nonModal());
     }
   }
 
@@ -561,7 +563,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   }
 
   public void setLoading(final boolean value) {
-    runOrInvokeLaterAboveProgress(() -> myChangesTree.setPaintBusy(value), ModalityState.NON_MODAL, myProject);
+    runOrInvokeLaterAboveProgress(() -> myChangesTree.setPaintBusy(value), ModalityState.nonModal(), myProject);
   }
 
   private static class MyRepositoryChangesViewer extends CommittedChangesBrowser {

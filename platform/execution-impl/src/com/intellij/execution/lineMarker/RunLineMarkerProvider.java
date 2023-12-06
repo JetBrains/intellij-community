@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -35,12 +37,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
+public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implements DumbAware {
   private static final Comparator<Info> COMPARATOR = (a, b) -> {
     if (b.shouldReplace(a)) {
       return 1;
@@ -56,7 +60,8 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(element.getContainingFile())) return null;
 
-    List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage());
+    List<RunLineMarkerContributor> contributors =
+      DumbService.getInstance(element.getProject()).filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
     Icon icon = null;
     List<Info> infos = null;
     for (RunLineMarkerContributor contributor : contributors) {
@@ -82,7 +87,8 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
   public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
                                      @NotNull Collection<? super LineMarkerInfo<?>> result) {
     for (PsiElement element : elements) {
-      List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage());
+      List<RunLineMarkerContributor> contributors = DumbService.getInstance(element.getProject())
+        .filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
       Icon icon = null;
       List<Info> infos = null;
       for (RunLineMarkerContributor contributor : contributors) {
@@ -126,22 +132,41 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
     }
 
-    Function<PsiElement, String> tooltipProvider = element1 -> {
-      final StringBuilder tooltip = new StringBuilder();
-      for (Info info : infos) {
+    Function<PsiElement, String> tooltipProvider = new EquatableTooltipProvider(infos);
+    return new RunLineMarkerInfo(element, icon, tooltipProvider, actionGroup);
+  }
+
+  // must provide sensible equals() to be able to reuse LineMarker on change
+  private static final class EquatableTooltipProvider implements Function<PsiElement, String> {
+    private final @NotNull List<? extends Info> myInfos;
+
+    EquatableTooltipProvider(@NotNull List<? extends Info> infos) { myInfos = infos; }
+
+    @Override
+    public int hashCode() {
+      return myInfos.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof EquatableTooltipProvider other && myInfos.equals(other.myInfos);
+    }
+
+    @Override
+    public String fun(PsiElement element1) {
+      StringBuilder tooltip = new StringBuilder();
+      for (Info info : myInfos) {
         if (info.tooltipProvider != null) {
           String string = info.tooltipProvider.apply(element1);
           if (string == null) continue;
-          if (tooltip.length() != 0) {
+          if (!tooltip.isEmpty()) {
             tooltip.append("\n");
           }
           tooltip.append(string);
         }
       }
-
-      return tooltip.length() == 0 ? null : appendShortcut(tooltip.toString());
-    };
-    return new RunLineMarkerInfo(element, icon, tooltipProvider, actionGroup);
+      return tooltip.isEmpty() ? null : appendShortcut(tooltip.toString());
+    }
   }
 
 
@@ -159,19 +184,13 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
   }
 
-  static class RunLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {
+  static final class RunLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {
     private final DefaultActionGroup myActionGroup;
-    private final AnAction mySingleAction;
 
     RunLineMarkerInfo(PsiElement element, Icon icon, Function<? super PsiElement, @Nls String> tooltipProvider, DefaultActionGroup actionGroup) {
       super(element, element.getTextRange(), icon, tooltipProvider, null, GutterIconRenderer.Alignment.CENTER,
             () -> tooltipProvider.fun(element));
       myActionGroup = actionGroup;
-      if (myActionGroup.getChildrenCount() == 1) {
-        mySingleAction = myActionGroup.getChildActionsOrStubs()[0];
-      } else {
-        mySingleAction = null;
-      }
     }
 
     @Override
@@ -179,7 +198,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
       return new LineMarkerGutterIconRenderer<>(this) {
         @Override
         public AnAction getClickAction() {
-          return mySingleAction;
+          return myActionGroup.getChildrenCount() == 1 ? myActionGroup.getChildActionsOrStubs()[0] : null;
         }
 
         @Override
@@ -191,12 +210,16 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
         public ActionGroup getPopupMenuActions() {
           return myActionGroup;
         }
+
+        @Override
+        public boolean isDumbAware() {
+          return myActionGroup.isDumbAware();
+        }
       };
     }
 
-    @NotNull
     @Override
-    public MarkupEditorFilter getEditorFilter() {
+    public @NotNull MarkupEditorFilter getEditorFilter() {
       return MarkupEditorFilterFactory.createIsNotDiffFilter();
     }
 
@@ -211,22 +234,19 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return ExecutionBundle.message("run.line.marker.name");
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return AllIcons.RunConfigurations.TestState.Run;
   }
 
   private static final Key<Boolean> HAS_ANYTHING_RUNNABLE = Key.create("HAS_ANYTHING_RUNNABLE");
 
-  @NotNull
-  public static ThreeState hadAnythingRunnable(@NotNull VirtualFile file) {
+  public static @NotNull ThreeState hadAnythingRunnable(@NotNull VirtualFile file) {
     Boolean data = file.getUserData(HAS_ANYTHING_RUNNABLE);
     return data == null ? ThreeState.UNSURE : ThreeState.fromBoolean(data);
   }

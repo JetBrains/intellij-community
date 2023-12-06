@@ -1,3 +1,4 @@
+// IGNORE_K2
 // Expect that root.p.bar(arg: String) and root.q.bar(arg: Long) are in the import list, since they're the only non-deprecated overload
 // in each package. (Note that no overloads have zero arguments, so none match this function call exactly.)
 

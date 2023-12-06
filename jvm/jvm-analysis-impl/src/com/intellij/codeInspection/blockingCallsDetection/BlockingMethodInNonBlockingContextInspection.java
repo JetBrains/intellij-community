@@ -13,11 +13,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.*;
 
@@ -28,10 +30,12 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
 
   public BlockingMethodInNonBlockingContextInspection() {
     myConsiderUnknownContextBlocking = true;
+    myConsiderSuspendContextNonBlocking = true;
   }
 
-  public BlockingMethodInNonBlockingContextInspection(boolean considerUnknownContextBlocking) {
+  public BlockingMethodInNonBlockingContextInspection(boolean considerUnknownContextBlocking, boolean considerSuspendContextNonBlocking) {
     myConsiderUnknownContextBlocking = considerUnknownContextBlocking;
+    myConsiderSuspendContextNonBlocking = considerSuspendContextNonBlocking;
   }
 
   public static final List<String> DEFAULT_BLOCKING_ANNOTATIONS = List.of(
@@ -48,20 +52,26 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
   public List<String> myBlockingAnnotations = new ArrayList<>(DEFAULT_BLOCKING_ANNOTATIONS);
   public List<String> myNonBlockingAnnotations = new ArrayList<>(DEFAULT_NONBLOCKING_ANNOTATIONS);
   public boolean myConsiderUnknownContextBlocking;
+  public boolean myConsiderSuspendContextNonBlocking;
+
+  @SuppressWarnings("unchecked")
+  private final Class<? extends UElement>[] hints = new Class[]{UMethod.class, UCallExpression.class};
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("myConsiderUnknownContextBlocking",
                JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking")),
+      checkbox("myConsiderSuspendContextNonBlocking",
+               JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.suspend.context.non.blocking")),
       stringList("myBlockingAnnotations", JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.blocking"),
                  new JavaClassValidator().withTitle(
-                    JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.blocking.title"))
-                  .annotationsOnly()),
+                     JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.blocking.title"))
+                   .annotationsOnly()),
       stringList("myNonBlockingAnnotations", JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.non-blocking"),
                  new JavaClassValidator().withTitle(
-                    JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.non-blocking.title"))
-                  .annotationsOnly())
+                     JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.non-blocking.title"))
+                   .annotationsOnly())
     );
   }
 
@@ -79,11 +89,25 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       getBlockingMethodCheckers(holder.getFile(), blockingAnnotations, nonBlockingAnnotations);
     if (blockingMethodCheckers.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    return new BlockingMethodInNonBlockingContextVisitor(holder, blockingMethodCheckers, nonBlockingContextCheckers, getSettings());
+    var visitor = new BlockingMethodInNonBlockingContextVisitor(holder, blockingMethodCheckers, nonBlockingContextCheckers, getSettings());
+
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
+      @Override
+      public boolean visitMethod(@NotNull UMethod node) {
+        visitor.visitMethod(node);
+        return super.visitMethod(node);
+      }
+
+      @Override
+      public boolean visitCallExpression(@NotNull UCallExpression node) {
+        visitor.visitCall(node);
+        return super.visitCallExpression(node);
+      }
+    }, hints);
   }
 
   public BlockingCallInspectionSettings getSettings() {
-    return new BlockingCallInspectionSettings(myConsiderUnknownContextBlocking);
+    return new BlockingCallInspectionSettings(myConsiderUnknownContextBlocking, myConsiderSuspendContextNonBlocking);
   }
 
   private static @NotNull List<NonBlockingContextChecker> getNonBlockingContextCheckers(@NotNull PsiFile file,
@@ -110,7 +134,7 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     return result;
   }
 
-  private class BlockingMethodInNonBlockingContextVisitor extends PsiElementVisitor {
+  private class BlockingMethodInNonBlockingContextVisitor {
     private final ProblemsHolder myHolder;
     private final List<BlockingMethodChecker> myBlockingMethodCheckers;
     private final List<NonBlockingContextChecker> myNonBlockingContextCheckers;
@@ -126,13 +150,12 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       mySettings = settings;
     }
 
-    @Override
-    public void visitElement(@NotNull PsiElement element) {
-      super.visitElement(element);
-      if (visitConstructor(element)) return;
-
-      UCallExpression callExpression = AnalysisUastUtil.getUCallExpression(element);
+    public void visitCall(UCallExpression callExpression) {
       if (callExpression == null) return;
+
+      var element = callExpression.getSourcePsi();
+      if (element == null) return;
+
       PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
       if (elementToHighLight == null) return;
 
@@ -183,44 +206,45 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       myHolder.registerProblem(elementToHighLight, message, fixesStream.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
 
-    private boolean visitConstructor(@NotNull PsiElement element) {
-      var method = UastContextKt.toUElement(element, UMethod.class);
-      if (method == null || !method.isConstructor()) return false;
+    public void visitMethod(UMethod method) {
+      if (method == null || !method.isConstructor()) return;
+
+      var element = method.getSourcePsi();
+      if (element == null) return;
 
       var anchor = method.getUastAnchor();
-      if (anchor == null) return false;
+      if (anchor == null) return;
       var elementToHighlight = anchor.getSourcePsi();
-      if (elementToHighlight == null) return false;
+      if (elementToHighlight == null) return;
 
-      if (!(method.getUastParent() instanceof UClass containingClass)) return false;
-      if (containingClass.getJavaPsi().getSuperClass() == null) return false;
-      if (!(method.getUastBody() instanceof UBlockExpression body)) return false;
+      if (!(method.getUastParent() instanceof UClass containingClass)) return;
+      if (containingClass.getJavaPsi().getSuperClass() == null) return;
+      if (!(method.getUastBody() instanceof UBlockExpression body)) return;
 
       var firstExpression = ContainerUtil.getFirstItem(body.getExpressions());
-      if (firstExpression != null && isExplicitSuperCall(firstExpression)) return false;
+      if (firstExpression != null && isExplicitSuperCall(firstExpression)) return;
 
       ContextType contextType = isContextNonBlockingFor(element, myNonBlockingContextCheckers, mySettings);
       if (contextType instanceof ContextType.Blocking) {
-        return true;
+        return;
       }
 
-      if (!(contextType instanceof ContextType.NonBlocking nonBlockingContext)) return true;
+      if (!(contextType instanceof ContextType.NonBlocking nonBlockingContext)) return;
 
       var implicitlyCalledCtr = findFirstExplicitNoArgConstructor(containingClass.getJavaPsi().getSuperClass());
-      if (implicitlyCalledCtr == null) return true;
-      if (!isMethodBlocking(implicitlyCalledCtr, myBlockingMethodCheckers, mySettings)) return true;
+      if (implicitlyCalledCtr == null) return;
+      if (!isMethodBlocking(implicitlyCalledCtr, myBlockingMethodCheckers, mySettings)) return;
 
       String message;
       if (StringUtil.isNotEmpty(nonBlockingContext.getDescription())) {
         String contextDescription = nonBlockingContext.getDescription();
-        message = JvmAnalysisBundle.message("jvm.inspections.blocking.method.in.implicit.ctr.problem.wildcard.descriptor", contextDescription);
+        message =
+          JvmAnalysisBundle.message("jvm.inspections.blocking.method.in.implicit.ctr.problem.wildcard.descriptor", contextDescription);
       }
       else {
         message = JvmAnalysisBundle.message("jvm.inspections.blocking.method.in.implicit.ctr.problem.descriptor");
       }
       myHolder.registerProblem(elementToHighlight, message);
-
-      return true;
     }
 
     private static @Nullable PsiMethod findFirstExplicitNoArgConstructor(@NotNull PsiClass currentClass) {
@@ -237,13 +261,14 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
 
     private static boolean isExplicitSuperCall(@NotNull UExpression expression) {
       if (!(expression instanceof USuperExpression) &&
-          !(expression instanceof UCallExpression call && call.getKind() == UastCallKind.CONSTRUCTOR_CALL)) return true;
+          !(expression instanceof UCallExpression call && call.getKind() == UastCallKind.CONSTRUCTOR_CALL)) {
+        return true;
+      }
       var sourcePsi = expression.getSourcePsi();
       if (sourcePsi == null) return false;
       return !sourcePsi.getTextRange().isEmpty();
     }
   }
-
 
   private static boolean isMethodOrSupersBlocking(PsiMethod referencedMethod,
                                                   List<BlockingMethodChecker> checkers,

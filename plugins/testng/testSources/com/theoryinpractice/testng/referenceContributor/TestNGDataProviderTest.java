@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.referenceContributor;
 
 import com.intellij.openapi.application.PluginPathManager;
@@ -15,7 +15,7 @@ public class TestNGDataProviderTest extends LightJavaCodeInsightFixtureTestCase 
   @BeforeMethod
   @Override
   protected void setUp() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
         TestNGDataProviderTest.super.setUp();
       }
@@ -28,7 +28,7 @@ public class TestNGDataProviderTest extends LightJavaCodeInsightFixtureTestCase 
   @AfterMethod
   @Override
   protected void tearDown() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
         TestNGDataProviderTest.super.tearDown();
       }
@@ -52,7 +52,7 @@ public class TestNGDataProviderTest extends LightJavaCodeInsightFixtureTestCase 
 
   @Test(dataProvider = "data")
   public void checkDataProviders(final String path, final String... results) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
         myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
         myFixture.addClass("package org.testng.annotations; public @interface Test {}");

@@ -1,14 +1,12 @@
-import java.lang.IllegalArgumentException
-import java.lang.IllegalStateException
 import java.lang.Integer.parseInt
 import java.lang.NumberFormatException
 
 fun test() {
     try {
         call(1, 2, parseInt("5"))
-    } catch (e: IllegalStateException) {
+    } catch (e: java.lang.IllegalStateException) {
         throw e
-    } catch (e: IllegalArgumentException) {
+    } catch (e: java.lang.IllegalArgumentException) {
         throw e
     } catch (e: NumberFormatException) {
         throw e

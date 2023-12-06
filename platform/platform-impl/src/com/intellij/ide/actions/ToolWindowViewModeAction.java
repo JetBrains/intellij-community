@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -18,8 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("ComponentNotRegistered")
-public class ToolWindowViewModeAction extends DumbAwareToggleAction implements FusAwareAction {
+public class ToolWindowViewModeAction extends DumbAwareToggleAction implements FusAwareAction, ActionRemoteBehaviorSpecification.Frontend {
   public enum ViewMode {
     DockPinned("DockPinnedMode"),
     DockUnpinned("DockUnpinnedMode"),
@@ -74,7 +74,7 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
     }
   }
 
-  @NotNull protected final ViewMode myMode;
+  protected final @NotNull ViewMode myMode;
 
   protected ToolWindowViewModeAction(@NotNull ViewMode mode) {
     myMode = mode;
@@ -82,16 +82,14 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
     getTemplatePresentation().setDescription(ActionsBundle.actionDescription(myMode.myActionID));
   }
 
-  @Nullable
-  protected ToolWindowManager getToolWindowManager(AnActionEvent e) {
+  protected @Nullable ToolWindowManager getToolWindowManager(AnActionEvent e) {
     Project project = e.getProject();
     return project == null || project.isDisposed()
            ? null
            : ToolWindowManager.getInstance(project);
   }
 
-  @Nullable
-  protected ToolWindow getToolWindow(AnActionEvent e) {
+  protected @Nullable ToolWindow getToolWindow(AnActionEvent e) {
     ToolWindowManager manager = getToolWindowManager(e);
     if (manager == null) {
       return null;
@@ -151,7 +149,7 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
     return Collections.emptyList();
   }
 
-  public static class Group extends DefaultActionGroup {
+  public static final class Group extends DefaultActionGroup {
     private boolean isInitialized = false;
 
     @Override

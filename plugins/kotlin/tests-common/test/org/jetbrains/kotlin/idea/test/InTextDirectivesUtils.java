@@ -25,6 +25,7 @@ public final class InTextDirectivesUtils {
 
     public static final String IGNORE_BACKEND_DIRECTIVE_PREFIX = "// IGNORE_BACKEND: ";
     public static final String MUTED_DIRECTIVE_PREFIX = "// MUTED: ";
+    public static final String IGNORE_FOR_K2_CODE = "// IGNORE_FOR_K2_CODE";
 
     private InTextDirectivesUtils() {
     }
@@ -109,6 +110,15 @@ public final class InTextDirectivesUtils {
         }
 
         return strings.get(0);
+    }
+
+    @Nullable
+    public static String findLineWithPrefixRemoved(String fileText, String prefix) {
+        var lines = findLinesWithPrefixesRemoved(fileText, prefix);
+        if (lines.size() > 1) {
+            throw new IllegalArgumentException("The test data should only contain at most one line with prefix `" + prefix + "`.");
+        }
+        return !lines.isEmpty() ? lines.get(0) : null;
     }
 
     @NotNull
@@ -265,5 +275,10 @@ public final class InTextDirectivesUtils {
         List<String> muted = findListWithPrefixes(fileText, MUTED_DIRECTIVE_PREFIX);
         if (muted.isEmpty()) return;
         throw new RuntimeException("muted:" + muted);
+    }
+
+    public static boolean isIgnoredForK2Code(boolean compileWithK2, @NotNull File file) {
+        return compileWithK2 &&
+               isDirectiveDefined(textWithDirectives(file), IGNORE_FOR_K2_CODE);
     }
 }

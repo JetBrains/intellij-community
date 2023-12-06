@@ -2,23 +2,29 @@
 
 package org.jetbrains.kotlin.idea.quickfix.expectactual
 
+import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiElement
+import com.intellij.util.SlowOperations
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.base.psi.mustHaveValOrVar
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
+import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.findOrCreateDirectoryForPackage
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.EmptyOrTemplate
@@ -34,13 +40,16 @@ import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.isEffectivelyActual
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
@@ -48,6 +57,80 @@ import org.jetbrains.kotlin.resolve.multiplatform.OptionalAnnotationUtil
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+
+fun <D : KtNamedDeclaration> generateExpectOrActualInFile(
+    project: Project,
+    editor: Editor?,
+    originalFile: KtFile,
+    targetFile: KtFile,
+    targetClass: KtClassOrObject?,
+    element: D,
+    module: Module,
+    generateIt: KtPsiFactory.(Project, TypeAccessibilityChecker, D) -> D?
+) {
+    val factory = KtPsiFactory(project)
+    val targetClassPointer = targetClass?.createSmartPointer()
+    val targetFilePointer = targetFile.createSmartPointer()
+    DumbService.getInstance(project).runWhenSmart(fun() {
+        val generated = try {
+            SlowOperations.allowSlowOperations(ThrowableComputable {
+                factory.generateIt(project, TypeAccessibilityChecker.create(project, module), element)
+            })
+        } catch (e: KotlinTypeInaccessibleException) {
+            if (editor != null) {
+                showErrorHint(
+                    project, editor,
+                    escapeXml(KotlinBundle.message("fix.create.declaration.error", element.getTypeDescription(), e.message)),
+                    KotlinBundle.message("fix.create.declaration.error.inaccessible.type")
+                )
+            }
+            null
+        } ?: return
+
+        val shortened = project.executeWriteCommand(KotlinBundle.message("fix.create.expect.actual"), null) {
+            val resultTargetFile = targetFilePointer.element ?: return@executeWriteCommand null
+            if (resultTargetFile.packageDirective?.fqName != originalFile.packageDirective?.fqName &&
+                resultTargetFile.declarations.isEmpty()
+            ) {
+                val packageDirective = originalFile.packageDirective
+                if (packageDirective != null) {
+                    val oldPackageDirective = resultTargetFile.packageDirective
+                    val newPackageDirective = packageDirective.copy() as KtPackageDirective
+                    if (oldPackageDirective != null) {
+                        if (oldPackageDirective.text.isEmpty()) {
+                            resultTargetFile.addAfter(factory.createNewLine(2), resultTargetFile.importList ?: oldPackageDirective) //
+                        }
+                        oldPackageDirective.replace(newPackageDirective)
+                    } else {
+                        resultTargetFile.add(newPackageDirective)
+                    }
+                }
+            }
+
+            val resultTargetClass = targetClassPointer?.element
+            val generatedDeclaration = when {
+                resultTargetClass != null -> {
+                    if (generated is KtPrimaryConstructor && resultTargetClass is KtClass)
+                        resultTargetClass.createPrimaryConstructorIfAbsent().replace(generated)
+                    else
+                        resultTargetClass.addDeclaration(generated as KtNamedDeclaration)
+                }
+
+                else -> {
+                    resultTargetFile.add(factory.createNewLine(1))
+                    resultTargetFile.add(generated) as KtElement
+                }
+            }
+
+            ShortenReferences.DEFAULT.process(generatedDeclaration.reformatted() as KtElement)
+        } ?: return
+
+        EditorHelper.openInEditor(shortened)?.caretModel?.moveToOffset(
+            (shortened as? KtNamedDeclaration)?.nameIdentifier?.startOffset ?: shortened.startOffset,
+            true,
+        )
+    })
+}
 
 fun createFileForDeclaration(module: Module, declaration: KtNamedDeclaration): KtFile? {
     val fileName = declaration.name ?: return null
@@ -69,7 +152,7 @@ fun createFileForDeclaration(module: Module, declaration: KtNamedDeclaration): K
             if (existingFile.declarations.isNotEmpty() &&
                 existingPackageDirective?.fqName != packageDirective?.fqName
             ) {
-                val newName = Fe10KotlinNameSuggester.suggestNameByName(fileName) {
+                val newName = KotlinNameSuggester.suggestNameByName(fileName) {
                     directory.findFile("$it.kt") == null
                 } + ".kt"
                 createKotlinFile(newName, directory, packageName)
@@ -90,6 +173,7 @@ fun KtPsiFactory.createClassHeaderCopyByText(originalClass: KtClassOrObject): Kt
         } else {
             createObject(text)
         }
+
         is KtEnumEntry -> createEnumEntry(text)
         else -> createClass(text)
     }.apply {
@@ -106,6 +190,7 @@ fun KtNamedDeclaration?.getTypeDescription(): String = when (this) {
         isAnnotation() -> KotlinBundle.message("text.annotation.class")
         else -> KotlinBundle.message("text.class")
     }
+
     is KtProperty, is KtParameter -> KotlinBundle.message("text.property")
     is KtFunction -> KotlinBundle.message("text.function")
     else -> KotlinBundle.message("text.declaration")
@@ -158,6 +243,7 @@ internal fun KtPsiFactory.generateClassOrObject(
                 originalDeclaration,
                 checker
             )
+
             is KtFunction, is KtProperty -> checker.runInContext(existingFqNamesWithSuperTypes) {
                 generateCallable(
                     project,
@@ -168,6 +254,7 @@ internal fun KtPsiFactory.generateClassOrObject(
                     this
                 )
             }
+
             else -> continue@declLoop
         }
         generatedClass.addDeclaration(generatedDeclaration)
@@ -322,6 +409,7 @@ private fun repairAnnotationEntries(
             val typeReference = target.typeReference ?: return
             repairAnnotationEntries(typeReference, descriptor.type, checker)
         }
+
         is TypeParameterDescriptor -> {
             if (target !is KtTypeParameter) return
             val extendsBound = target.extendsBound ?: return
@@ -329,6 +417,7 @@ private fun repairAnnotationEntries(
                 repairAnnotationEntries(extendsBound, upperBound, checker)
             }
         }
+
         is CallableDescriptor -> {
             val extension = descriptor.extensionReceiverParameter
             val receiver = target.safeAs<KtCallableDeclaration>()?.receiverTypeReference

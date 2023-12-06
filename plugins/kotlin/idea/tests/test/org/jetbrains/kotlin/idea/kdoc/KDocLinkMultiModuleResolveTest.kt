@@ -101,7 +101,7 @@ class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
             throw FileComparisonFailure(
                 "'// INFO:' directive was expected",
                 textData,
-                textData + "\n\n//INFO: " + info,
+                "$textData\n\n//INFO: $info",
                 testDataFile.absolutePath
             )
         } else {

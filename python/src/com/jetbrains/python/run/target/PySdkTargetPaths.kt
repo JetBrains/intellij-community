@@ -9,15 +9,11 @@ import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.targetPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.remote.RemoteMappingsManager
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.jetbrains.python.console.PyConsoleOptions
-import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.remote.PyRemotePathMapper
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager.appendBasicMappings
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.nio.file.Path
 
 @Deprecated("Use Path for localPath")
@@ -80,26 +76,3 @@ private fun getPythonConsolePathMapper(project: Project, sdk: Sdk?): PyRemotePat
 
 private fun PyRemotePathMapper.convertToRemoteOrNull(localPath: Path): String? =
   takeIf { it.canReplaceLocal(localPath.toString()) }?.convertToRemote(localPath.toString())
-
-fun getPathMapper(project: Project, consoleSettings: PyConsoleSettings, data: PyTargetAwareAdditionalData): PyRemotePathMapper {
-  val remotePathMapper = appendBasicMappings(project, null, data)
-  consoleSettings.mappingSettings?.let { mappingSettings ->
-    remotePathMapper.addAll(mappingSettings.pathMappings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
-  }
-  return remotePathMapper
-}
-
-private fun appendBasicMappings(project: Project?,
-                                pathMapper: PyRemotePathMapper?,
-                                data: PyTargetAwareAdditionalData): PyRemotePathMapper {
-  val newPathMapper = PyRemotePathMapper.cloneMapper(pathMapper)
-  PythonRemoteInterpreterManager.addHelpersMapping(data, newPathMapper)
-  newPathMapper.addAll(data.pathMappings.pathMappings, PyRemotePathMapper.PyPathMappingType.SYS_PATH)
-  if (project != null) {
-    val mappings = RemoteMappingsManager.getInstance(project).getForServer(PythonRemoteInterpreterManager.PYTHON_PREFIX, data.sdkId)
-    if (mappings != null) {
-      newPathMapper.addAll(mappings.settings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
-    }
-  }
-  return newPathMapper
-}

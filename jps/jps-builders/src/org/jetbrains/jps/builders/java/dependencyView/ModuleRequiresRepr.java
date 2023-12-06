@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -56,12 +56,12 @@ public final class ModuleRequiresRepr extends Proto {
   public static DataExternalizer<ModuleRequiresRepr> externalizer(DependencyContext context) {
     return new DataExternalizer<ModuleRequiresRepr>() {
       @Override
-      public void save(@NotNull DataOutput out, ModuleRequiresRepr value) throws IOException {
+      public void save(@NotNull DataOutput out, ModuleRequiresRepr value) {
         value.save(out);
       }
 
       @Override
-      public ModuleRequiresRepr read(@NotNull DataInput in) throws IOException {
+      public ModuleRequiresRepr read(@NotNull DataInput in) {
         return new ModuleRequiresRepr(context, in);
       }
     };

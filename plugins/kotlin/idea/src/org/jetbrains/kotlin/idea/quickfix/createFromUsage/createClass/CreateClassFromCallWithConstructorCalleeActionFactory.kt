@@ -60,7 +60,7 @@ object CreateClassFromCallWithConstructorCalleeActionFactory : CreateClassFromUs
         }
 
         val typeArgumentInfos = when {
-            isAnnotation -> Collections.emptyList<TypeInfo>()
+            isAnnotation -> Collections.emptyList()
             else -> element.typeArguments.mapNotNull { it.typeReference?.let { TypeInfo(it, Variance.INVARIANT) } }
         }
 

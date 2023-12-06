@@ -3,12 +3,18 @@ package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.testframework.TestIconProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.util.PlatformIcons;
+
+import javax.swing.*;
+import java.util.*;
 
 public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -166,17 +172,45 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testableMethodTest() {
         myFixture.addClass("package org.junit.jupiter.api;" +
                        "@org.junit.platform.commons.annotation.Testable public @interface Test {}");
+        myFixture.addClass("package org.junit.jupiter.api;" +
+                       "@org.junit.platform.commons.annotation.Testable public @interface Disabled {}");
         PsiFile file = myFixture.configureByText("TestableClassTest.java",
                                                  """
                                                    class TestableClassTest {
-                                                   \t@org.junit.jupiter.api.Test
-                                                   \tvoid foo() {}
-                                                   \tvoid foo1() {}
+                                                   \n\t@org.junit.jupiter.api.Test
+                                                   \n\tvoid foo() {}
+                                                   \n\tvoid foo1() {}
+                                                   \n\t@org.junit.jupiter.api.Test
+                                                   \n\t@org.junit.jupiter.api.Disabled
+                                                   \n\tvoid foo2() {}
                                                    }""");
     PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
     assertTrue(JUnitUtil.isTestClass(aClass));
-    assertTrue(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(aClass.getMethods()[0])));
-    assertFalse(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(aClass.getMethods()[1])));
+    TestFramework framework = TestFrameworks.detectFramework(aClass);
+    PsiMethod fooMethod = aClass.getMethods()[0];
+    PsiMethod foo1Method = aClass.getMethods()[1];
+    PsiMethod foo2Method = aClass.getMethods()[2];
+    assertTrue(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(fooMethod)));
+    assertFalse(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(foo1Method)));
+    assertTrue(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(foo2Method)));
+
+    assertFalse(framework.isIgnoredMethod(fooMethod));
+    assertFalse(framework.isIgnoredMethod(foo1Method));
+    assertTrue(framework.isIgnoredMethod(foo2Method));
+
+    TestIconProvider provider = new TestIconProvider();
+
+    LayeredIcon fooMethodIcon = (LayeredIcon) provider.getIcon(fooMethod, 0);
+    assertEquals("Method", fooMethodIcon.getIcon(0).toString());
+    assertEquals("runConfigurations/testMark.svg", fooMethodIcon.getIcon(1).toString());
+    assertEquals("nodes/c_public.svg", fooMethodIcon.getIcon(2).toString());
+
+    Icon foo1MethodIcon = provider.getIcon(foo1Method, 0);
+    assertNull(foo1MethodIcon);
+
+    LayeredIcon foo2MethodIcon = (LayeredIcon)provider.getIcon(foo2Method, 0);
+    assertEquals("runConfigurations/ignoredTest.svg", foo2MethodIcon.getIcon(0).toString());
+    assertEquals("nodes/c_public.svg", foo2MethodIcon.getIcon(1).toString());
   }
   
   public void testableClassTest() {
@@ -191,5 +225,31 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
     PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
     assertTrue(JUnitUtil.isTestClass(aClass));
     assertTrue(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(aClass.getMethods()[0])));
+  }
+
+  public void testMixJUnit3AndTestNG() {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+
+    myFixture.addClass("package org.testng.annotations;\n" +
+                       "public @interface Test {}");
+    myFixture.addClass("package org.testng.annotations;\n" +
+                       "public @interface BeforeMethod {}");
+    myFixture.addClass("package org.testng.annotations;\n" +
+                       "public @interface AfterMethod {}");
+
+    PsiFile file = myFixture.configureByText(
+      "MyTest.java",
+      """
+        public class MyTest extends junit.framework.TestCase {\t
+        @org.testng.annotations.Test public void fooBar(){}
+        }""");
+    PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
+    List<TestFramework> frameworks = new ArrayList<>(TestFrameworks.detectApplicableFrameworks(aClass));
+    Collections.sort(frameworks, Comparator.comparing(TestFramework::getName));
+    assertEquals(2, frameworks.size());
+    assertEquals("JUnit3", frameworks.get(0).getName());
+    assertEquals("TestNG", frameworks.get(1).getName());
+    assertTrue(JUnitUtil.isTestClass(aClass));
+    assertFalse(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(aClass.getMethods()[0])));
   }
 }

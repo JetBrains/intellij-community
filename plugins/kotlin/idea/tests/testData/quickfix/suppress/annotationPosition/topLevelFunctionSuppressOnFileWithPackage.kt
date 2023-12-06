@@ -1,8 +1,9 @@
-// "Suppress 'REDUNDANT_NULLABLE' for file ${file}" "true"
+// "Suppress 'DIVISION_BY_ZERO' for file ${file}" "true"
 /** Some Comment **/
 
 package test
 
-public fun foo(): String?<caret>? = null
+public fun foo() = 2 / <caret>0
 
-// IGNORE_FIR
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

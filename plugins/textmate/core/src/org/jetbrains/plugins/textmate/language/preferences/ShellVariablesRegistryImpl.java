@@ -8,14 +8,15 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
+public final class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
 
-  @NotNull private final Map<String, Collection<TextMateShellVariable>> myVariables = new HashMap<>();
+  @NotNull private final Map<String, Collection<TextMateShellVariable>> myVariables = new ConcurrentHashMap<>();
 
   /**
    * Append table with new variables
@@ -37,7 +38,7 @@ public class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
 
   public void addVariable(@NotNull TextMateShellVariable variable) {
     if (!variable.name.isEmpty()) {
-      myVariables.computeIfAbsent(variable.name, (key) -> new ArrayList<>()).add(variable);
+      myVariables.computeIfAbsent(variable.name, key -> Collections.synchronizedList(new CopyOnWriteArrayList<>())).add(variable);
     }
   }
 

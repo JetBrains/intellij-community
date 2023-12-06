@@ -345,6 +345,30 @@ Thread 7381: (state = BLOCKED)
     assert threads.size() == 4
   }
 
+  void "test coroutine dump"() {
+    String text = '''\
+"Timer-0" prio=0 tid=0x0 nid=0x0 waiting on condition
+     java.lang.Thread.State: TIMED_WAITING
+ on java.util.TaskQueue@4c3de1d6
+\tat java.base@17.0.6/java.lang.Object.wait(Native Method)
+\tat java.base@17.0.6/java.util.TimerThread.mainLoop(Timer.java:563)
+\tat java.base@17.0.6/java.util.TimerThread.run(Timer.java:516)
+
+
+---------- Coroutine dump (stripped) ----------
+
+- BlockingCoroutine{Active}@461d23d5 [no parent and no name, BlockingEventLoop@5486c656]
+
+- SupervisorJobImpl{Active}@7fe891af
+\t- "child handle '(ApplicationImpl@2058540848 x com.intellij.sisyphus@56)'":StandaloneCoroutine{Active}@73a3a09e, state: SUSPENDED [Dispatchers.Default]
+\t\tat com.intellij.util.CoroutineScopeKt$attachAsChildTo$1$1.invokeSuspend(coroutineScope.kt:85)
+\t\tat com.intellij.util.CoroutineScopeKt$attachAsChildTo$1.invokeSuspend(coroutineScope.kt:84)
+'''
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.size() == 2
+    assert threads.last().name == "Coroutine dump"
+  }
+
   @CompileStatic
   void "test very long line parsing performance"() {
     def spaces = ' ' * 1_000_000
@@ -352,11 +376,11 @@ Thread 7381: (state = BLOCKED)
     PlatformTestUtil.startPerformanceTest('parsing spaces', 100, {
       def threads = ThreadDumpParser.parse(spaces)
       assert threads.empty
-    }).assertTiming()
+    }).assertTimingAsSubtest()
+    
     PlatformTestUtil.startPerformanceTest('parsing letters', 100, {
       def threads = ThreadDumpParser.parse(letters)
       assert threads.empty
-    }).assertTiming()
+    }).assertTimingAsSubtest()
   }
-
 }

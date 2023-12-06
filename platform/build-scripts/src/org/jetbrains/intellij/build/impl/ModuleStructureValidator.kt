@@ -37,7 +37,7 @@ private val nonPathAttributes = hashSetOf(
 
 private val pathElements = hashSetOf("interface-class", "implementation-class")
 private val predefinedTypes = hashSetOf("java.lang.Object")
-private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.tests")
+private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.testFramework")
 
 class ModuleStructureValidator(private val context: BuildContext, modules: Collection<ModuleItem>) {
   // filter out jars with relative paths in name
@@ -127,7 +127,7 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
           continue
         }
 
-        if (modules.none { it.moduleName != dependantModule.name }) {
+        if (modules.none { it.moduleName == dependantModule.name }) {
           errors.add(AssertionError("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name}]", null))
           continue
         }

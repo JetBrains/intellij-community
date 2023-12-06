@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.TestEventResult;
 
@@ -12,13 +11,11 @@ import org.jetbrains.plugins.gradle.execution.test.runner.events.TestEventResult
  */
 public class GradleSMTestProxy extends SMTestProxy {
 
-  @NotNull private final String myClassName;
   @Nullable private String myParentId;
   @Nullable private TestEventResult myLastResult;
 
-  public GradleSMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, @NotNull String className) {
+  public GradleSMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
     super(testName, isSuite, locationUrl);
-    myClassName = className;
   }
 
   @Nullable
@@ -28,11 +25,6 @@ public class GradleSMTestProxy extends SMTestProxy {
 
   public void setParentId(@Nullable String parentId) {
     myParentId = parentId;
-  }
-
-  @NotNull
-  public String getClassName() {
-    return myClassName;
   }
 
   @ApiStatus.Experimental

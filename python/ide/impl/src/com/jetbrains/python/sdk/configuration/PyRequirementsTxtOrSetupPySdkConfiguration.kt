@@ -33,9 +33,9 @@ import com.jetbrains.python.packaging.PyPackageManagerImpl
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvFromFilePanel
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.InputData
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.Source
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.VirtualEnvResult
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.InputData
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Source
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.VirtualEnvResult
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.nio.file.Paths

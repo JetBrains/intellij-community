@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -20,11 +20,14 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
 
   public static final DataKey<Module> MODULE = DataKey.create("module");
 
+  /**
+   * @see com.intellij.openapi.actionSystem.PlatformDataKeys#LAST_ACTIVE_FILE_EDITOR
+   */
   public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
 
   /**
    * Returns the text of currently selected file/file revision
-   * @deprecated Use what's needed from {@link com.intellij.ide.impl.dataRules.FileTextRule}
+   * @deprecated Use {@link com.intellij.openapi.editor.Document} from {@link #VIRTUAL_FILE} or {@link #EDITOR}.
    */
   @Deprecated(forRemoval = true)
   public static final DataKey<String> FILE_TEXT = DataKey.create("fileText");
@@ -84,7 +87,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   public static final DataKey<DataProvider> BGT_DATA_PROVIDER = DataKey.create("bgtDataProvider");
 
   /** @deprecated Use {@link #BGT_DATA_PROVIDER} and {@link CompositeDataProvider} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
 
   /**
@@ -101,5 +104,8 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    */
   public static final DataKey<Object[]> SELECTED_ITEMS = DataKey.create("selectedItems");
 
+  /**
+   * @see CommonDataKeys#PSI_ELEMENT
+   */
   public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
 }

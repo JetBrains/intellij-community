@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -21,6 +21,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
@@ -76,8 +77,8 @@ public class XDebuggerTestUtil {
   public static <P extends XBreakpointProperties> XBreakpoint<P> insertBreakpoint(final Project project,
                                                                                   final P properties,
                                                                                   final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
-    return WriteAction.computeAndWait(() -> XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
-      XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties));
+    return XDebuggerManager.getInstance(project).getBreakpointManager()
+      .addBreakpoint(XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties);
   }
 
   public static void removeBreakpoint(@NotNull final Project project,
@@ -200,7 +201,7 @@ public class XDebuggerTestUtil {
     s.down();
     ApplicationManager.getApplication().invokeLater(() -> s.up());
     s.waitForUnsafe();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {});
+    UIUtil.invokeAndWaitIfNeeded(() -> {});
   }
 
   @NotNull
@@ -211,7 +212,7 @@ public class XDebuggerTestUtil {
         String eachName = ((XNamedValue)each).getName();
         if (eachName.equals(name)) return each;
 
-        if (names.length() > 0) names.append(", ");
+        if (!names.isEmpty()) names.append(", ");
         names.append(eachName);
       }
     }
@@ -310,20 +311,16 @@ public class XDebuggerTestUtil {
     XBreakpointUtil.breakpointTypes()
                    .select(exceptionType)
                    .findFirst()
-                   .ifPresent(type -> WriteAction.runAndWait(() -> breakpoint.set(breakpointManager.addBreakpoint(type, properties))));
+                   .ifPresent(type -> breakpoint.set(breakpointManager.addBreakpoint(type, properties)));
     return breakpoint.get();
   }
 
-  public static void removeAllBreakpoints(@NotNull final Project project) {
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    XBreakpoint<?>[] breakpoints = getBreakpoints(breakpointManager);
-    for (final XBreakpoint b : breakpoints) {
-      WriteAction.runAndWait(() -> breakpointManager.removeBreakpoint(b));
-    }
+  public static void removeAllBreakpoints(@NotNull Project project) {
+    XDebuggerUtilImpl.removeAllBreakpoints(project);
   }
 
   public static XBreakpoint<?>[] getBreakpoints(final XBreakpointManager breakpointManager) {
-    return ReadAction.compute(breakpointManager::getAllBreakpoints);
+    return breakpointManager.getAllBreakpoints();
   }
 
   public static <B extends XBreakpoint<?>>

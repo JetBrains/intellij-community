@@ -2,6 +2,7 @@
 package com.intellij.navigation
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
@@ -9,16 +10,16 @@ import java.net.URISyntaxException
 
 private val LOG = logger<JBProtocolNavigateCommand>()
 
-@VisibleForTesting
 fun areOriginsEqual(originUrl: String?, projectOriginUrl: String?): Boolean {
   if (originUrl.isNullOrBlank() || projectOriginUrl.isNullOrBlank()) return false
 
-  val canonicalOrigin = extractCanonicalPath(originUrl)
-  val canonicalProjectOrigin = extractCanonicalPath(projectOriginUrl)
+  val canonicalOrigin = extractVcsOriginCanonicalPath(originUrl)
+  val canonicalProjectOrigin = extractVcsOriginCanonicalPath(projectOriginUrl)
   return canonicalOrigin != null && canonicalProjectOrigin == canonicalOrigin
 }
 
-private fun extractCanonicalPath(originUrl: String?) : String? {
+@NlsSafe
+fun extractVcsOriginCanonicalPath(originUrl: String?) : String? {
   if (originUrl.isNullOrBlank()) return null
   try {
     val hostAndPath = extractHostAndPath(originUrl)
@@ -33,7 +34,7 @@ private fun extractHostAndPath(url: String) : String {
   val urlWithScheme = if (URLUtil.containsScheme(url)) url else "ssh://$url"
   val uri = URI(urlWithScheme)
   val host = uri.host
-  val path = uri.path ?: ""
+  val path = uri.path?.removeSuffix("/") ?: ""
 
   //val host, path
   if (host != null) {

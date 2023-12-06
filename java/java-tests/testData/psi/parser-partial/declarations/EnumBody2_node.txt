@@ -1,0 +1,27 @@
+test.java.file
+  LBRACE
+  WHITE_SPACE
+  ENUM_CONSTANT
+    MODIFIER_LIST
+      <empty list>
+    IDENTIFIER
+    EXPRESSION_LIST
+      <empty list>
+  COMMA
+  WHITE_SPACE
+  ENUM_CONSTANT
+    MODIFIER_LIST
+      <empty list>
+    IDENTIFIER
+    EXPRESSION_LIST
+      <empty list>
+  COMMA
+  WHITE_SPACE
+  ENUM_CONSTANT
+    MODIFIER_LIST
+      <empty list>
+    IDENTIFIER
+    EXPRESSION_LIST
+      <empty list>
+  WHITE_SPACE
+  RBRACE

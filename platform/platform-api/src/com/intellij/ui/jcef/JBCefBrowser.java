@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -265,7 +265,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
     Component uiComp = getCefBrowser().getUIComponent();
     JPanel resultPanel = new MyPanel(uiComp, isMouseWheelEventEnabled);
 
-    resultPanel.setBackground(JBColor.background());
+    resultPanel.setBackground(getBackgroundColor());
     resultPanel.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
     if (SystemInfo.isMac) {
       // We handle shortcuts manually on MacOS: https://www.magpcss.org/ceforum/viewtopic.php?f=6&t=12561
@@ -309,6 +309,10 @@ public class JBCefBrowser extends JBCefBrowserBase {
       }
     });
     return resultPanel;
+  }
+
+  protected @NotNull Color getBackgroundColor() {
+    return JBColor.background();
   }
 
   /**
@@ -430,8 +434,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       }
     }
 
-    @NotNull
-    public JBCefBrowser getJBCefBrowser() {
+    public @NotNull JBCefBrowser getJBCefBrowser() {
       return JBCefBrowser.this;
     }
   }

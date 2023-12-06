@@ -1,4 +1,16 @@
 fragment project on Project {
+  name
+  nameWithNamespace
+  path
+  fullPath
   httpUrlToRepo
-  webUrl
+  sshUrlToRepo
+
+  onlyAllowMergeIfAllDiscussionsAreResolved
+  onlyAllowMergeIfPipelineSucceeds
+  allowMergeOnSkippedPipeline
+
+  userPermissions {
+    createSnippet
+  }
 }

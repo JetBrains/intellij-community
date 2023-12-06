@@ -1,174 +1,121 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.*
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.utils.expressionWithoutClassInstanceAsReceiver
-import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToBuiltInEnumFunction
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
 
-class RemoveRedundantQualifierNameInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtElement, RemoveRedundantQualifierNameInspection.Context>(KtElement::class),
-    CleanupLocalInspectionTool {
-    class Context(val shortenings: List<ShortenCommand>)
+internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection() {
+    override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+        if (file !is KtFile) return null
 
-    override fun getProblemDescription(element: KtElement, context: Context): String =
-        KotlinBundle.message("redundant.qualifier.name")
+        val elementsWithRedundantQualifiers = collectPossibleShortenings(file).ifEmpty { return null }
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("remove.redundant.qualifier.name.quick.fix.text")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtElement> = ApplicabilityRanges.SELF
-
-    override fun apply(element: KtElement, context: Context, project: Project, editor: Editor?) {
-        context.shortenings.forEach { it.invokeShortening() }
+        return elementsWithRedundantQualifiers
+            .map { element -> manager.createRedundantQualifierProblemDescriptor(element, isOnTheFly) }
+            .toTypedArray()
     }
 
-    context(KtAnalysisSession)
-    override fun prepareContext(element: KtElement): Context? = when (element) {
-        is KtDotQualifiedExpression -> prepareContextForQualifier(element)
-        is KtUserType -> prepareContextForUserType(element)
-        else -> null
+    private fun collectPossibleShortenings(file: KtFile): List<KtElement> {
+        val shortenings = analyze(file) {
+            collectShortenings(file)
+        }
+
+        val qualifiersToShorten = shortenings.listOfQualifierToShortenInfo.mapNotNull { it.qualifierToShorten.element }
+        val typesToShorten = shortenings.listOfTypeToShortenInfo.mapNotNull { it.typeToShorten.element }
+
+        return qualifiersToShorten + typesToShorten
     }
 
+    /**
+     * See KTIJ-16225 and KTIJ-15232 for the details about why we have
+     * special treatment for enums.
+     */
     context(KtAnalysisSession)
-    private fun prepareContextForQualifier(expression: KtDotQualifiedExpression): Context? {
-        var expressionForAnalyze = expression.expressionWithoutClassInstanceAsReceiver() ?: return null
-        val receiver = expressionForAnalyze.receiverExpression
-        val receiverDeclaration = receiver.getQualifiedElementSelectorDeclaration()
-        when {
-            receiverDeclaration.isEnumCompanionObject() -> if (receiver is KtDotQualifiedExpression) {
-                if (receiver.receiverExpression.getQualifiedElementSelectorDeclaration().isEnumClass()) return null
-
-                /**
-                 * TODO: We guess that there is no example actually goes to this line. Make sure whether it is true or not, and
-                 *       drop the following line.
-                 * Note that the receiver makes `isEnumCompanionObject(receiverDeclaration)` true must be `(an enum class).Companion`.
-                 * Therefore, `receiver.receiverExpression.getQualifiedElementSelectorDeclaration()` is expected to be an enum class.
-                 */
-                expressionForAnalyze = receiver
-            }
-
-            receiverDeclaration.isEnumClass() -> {
-                val hasCompanion = expressionForAnalyze.selectorExpression?.getQualifiedElementSelectorDeclaration().isEnumCompanionObject()
-                val callingBuiltInEnumFunction = expressionForAnalyze.isReferenceToBuiltInEnumFunction()
-                when {
-                    receiver is KtDotQualifiedExpression -> expressionForAnalyze = receiver
-                    hasCompanion || callingBuiltInEnumFunction -> return null
+    private fun collectShortenings(declaration: KtElement): ShortenCommand =
+        collectPossibleReferenceShorteningsInElement(
+            declaration,
+            classShortenStrategy = { classSymbol ->
+                if (classSymbol.isEnumCompanionObject()) {
+                    ShortenStrategy.DO_NOT_SHORTEN
+                } else {
+                    ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
                 }
-            }
-        }
+            },
+            callableShortenStrategy = { callableSymbol ->
+                val containingSymbol = callableSymbol.getContainingSymbol()
 
-        while (true) {
-            val symbol = expressionForAnalyze.getQualifiedElementSelector()?.mainReference?.resolveToSymbol() ?: return null
-            if (symbol !is KtCallableSymbol && symbol !is KtClassLikeSymbol) return null
-            val shortenCommand = tryShorteningExpression(expressionForAnalyze, symbol)
-            if (!shortenCommand.isEmpty) {
-                return Context(listOf(shortenCommand))
-            }
-            expressionForAnalyze = expressionForAnalyze.receiverExpression as? KtDotQualifiedExpression ?: return null
-        }
-    }
-
-    context(KtAnalysisSession)
-    private fun tryShorteningExpression(expression: KtDotQualifiedExpression, symbol: KtSymbol) =
-        collectPossibleReferenceShortenings(
-            expression.containingKtFile,
-            TextRange(expression.startOffset, expression.endOffset),
-            {
-                if (it == symbol || it == symbol.getContainingClassForCompanionObject()) ShortenOption.SHORTEN_IF_ALREADY_IMPORTED
-                else ShortenOption.DO_NOT_SHORTEN
-            }, {
-                if (it == symbol) ShortenOption.SHORTEN_IF_ALREADY_IMPORTED
-                else ShortenOption.DO_NOT_SHORTEN
-            }
+                if (callableSymbol !is KtEnumEntrySymbol && (containingSymbol.isEnumClass() || containingSymbol.isEnumCompanionObject())) {
+                    ShortenStrategy.DO_NOT_SHORTEN
+                } else {
+                    ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
+                }
+            },
         )
 
-    context(KtAnalysisSession)
-    private fun prepareContextForUserType(type: KtUserType): Context? {
-        val shortenCommand = collectPossibleReferenceShortenings(
-            type.containingKtFile,
-            TextRange(type.startOffset, type.endOffset),
-            { ShortenOption.SHORTEN_IF_ALREADY_IMPORTED },
-            { ShortenOption.SHORTEN_IF_ALREADY_IMPORTED },
+    private fun InspectionManager.createRedundantQualifierProblemDescriptor(element: KtElement, isOnTheFly: Boolean): ProblemDescriptor {
+        val qualifierToRemove = element.getQualifier()
+
+        return createProblemDescriptor(
+            element,
+            qualifierToRemove?.textRangeIn(element),
+            KotlinBundle.message("remove.redundant.qualifier.name.quick.fix.text"),
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+            isOnTheFly,
+            RemoveQualifierQuickFix,
         )
-        if (!shortenCommand.isEmpty) {
-            return Context(listOf(shortenCommand))
-        }
-        return null
     }
 
-    override fun isApplicableByPsi(element: KtElement): Boolean {
-        return when (element) {
-            is KtDotQualifiedExpression -> element.isApplicableByPsi()
-            is KtUserType -> {
-                val selector = element.getQualifiedElementSelector() ?: return false
-                if (selector.text == element.text) return false
-                element.parent !is KtUserType
+    private object RemoveQualifierQuickFix : LocalQuickFix {
+        override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.qualifier.name.quick.fix.text")
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val elementWithQualifier = descriptor.psiElement ?: return
+
+            when (elementWithQualifier) {
+                is KtUserType -> elementWithQualifier.deleteQualifier()
+                is KtDotQualifiedExpression -> elementWithQualifier.deleteQualifier()
             }
-            else -> false
         }
     }
-
-    fun KtDotQualifiedExpression.isApplicableByPsi(): Boolean {
-        /**
-         * The following three lines avoid handling [KtDotQualifiedExpression] who is a child of [KtDotQualifiedExpression],
-         * package directive, and import directive.
-         *
-         * For example, for the following code,
-         *
-         * package a.b.c
-         * import x.y.z
-         * ...
-         * val foo = x.y.z.bar()
-         *
-         * It will skip `x.y.z` in `x.y.z.bar()`, `a.b.c` in `package a.b.c`, and `x.y.z` in `import x.y.z` while it handles
-         * `x.y.z.bar()`. Note that `x.y.z` is [KtDotQualifiedExpression], but its parent `x.y.z.bar()` is also
-         * [KtDotQualifiedExpression].
-         */
-        val expressionParent = parent
-        if (expressionParent is KtDotQualifiedExpression || expressionParent is KtPackageDirective || expressionParent is KtImportDirective) return false
-        val expressionForAnalyze = expressionWithoutClassInstanceAsReceiver() ?: return false
-
-        /**
-         * This will avoid the situation where removing a qualifier results in a name conflict.
-         * For example, in the following code:
-         *   val foo = package.name.ClassXYZ.foo
-         * if we drop `package.name.ClassXYZ` from `package.name.ClassXYZ.foo()`, it becomes `val foo = foo`
-         */
-        return expressionForAnalyze.selectorExpression?.text != expressionParent.getNonStrictParentOfType<KtProperty>()?.name
-    }
-
 }
 
 context (KtAnalysisSession)
-private fun KtSymbol.getContainingClassForCompanionObject(): KtNamedClassOrObjectSymbol? {
+private fun KtDeclarationSymbol.getContainingClassForCompanionObject(): KtNamedClassOrObjectSymbol? {
     if (this !is KtClassOrObjectSymbol || this.classKind != KtClassKind.COMPANION_OBJECT) return null
 
     val containingClass = getContainingSymbol() as? KtNamedClassOrObjectSymbol
     return containingClass?.takeIf { it.companionObject == this }
 }
 
-context(KtAnalysisSession)
-private fun KtExpression.getQualifiedElementSelectorDeclaration(): KtSymbol? =
-    getQualifiedElementSelector()?.mainReference?.resolveToSymbol()
-
-private fun KtSymbol?.isEnumClass(): Boolean {
+private fun KtDeclarationSymbol?.isEnumClass(): Boolean {
     val classSymbol = this as? KtClassOrObjectSymbol ?: return false
     return classSymbol.classKind == KtClassKind.ENUM_CLASS
 }
 
 context (KtAnalysisSession)
-private fun KtSymbol?.isEnumCompanionObject(): Boolean =
+private fun KtDeclarationSymbol?.isEnumCompanionObject(): Boolean =
   this?.getContainingClassForCompanionObject().isEnumClass()
+
+private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {
+    val selectorExpression = selectorExpression ?: return null
+    return this.replace(selectorExpression) as KtExpression
+}
+
+private fun KtElement.getQualifier(): KtElement? = when (this) {
+    is KtUserType -> qualifier
+    is KtDotQualifiedExpression -> receiverExpression
+    else -> null
+}

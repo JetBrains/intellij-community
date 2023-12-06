@@ -4,9 +4,13 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
+
+import java.util.function.Consumer;
 
 /**
  * @author Vladislav.Soroka
@@ -31,6 +35,9 @@ public class BeforeTestEventProcessor extends AbstractTestEventProcessor {
 
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
+    getExecutionConsole().getFileComparisonEventPatcher()
+      .setBuiltInTestEventsUsed();
+
     var testDescriptor = testEvent.getDescriptor();
     var testId = testEvent.getEventId();
     var parentTestId = testEvent.getParentEventId();
@@ -48,11 +55,50 @@ public class BeforeTestEventProcessor extends AbstractTestEventProcessor {
     @NotNull String suiteName,
     @NotNull String fqClassName,
     @Nullable String methodName,
-    @Nullable String displayName
+    @NotNull String displayName
   ) {
     var testProxy = createTestProxy(parentTestId, suiteName, fqClassName, methodName, displayName);
     registerTestProxy(testId, testProxy);
-    setParentForAllNodesInTreePath(testProxy);
-    setStartedForAllNodesInTreePath(testProxy);
+    // BeforeTestSuiteProcessor doesn't initialize suites (start and register in tree),
+    // because Gradle generates empty events for suites with filtered tests.
+    // But we can identify it only when we won't get any test events.
+    // So we register and start test suites in tree only here.
+    traverseTestNodesFromChildToParent(testProxy, node -> {
+      setParentIfNeeded(node);
+      setStartedIfNeeded(node);
+    });
+  }
+
+  private void setParentIfNeeded(@NotNull GradleSMTestProxy testProxy) {
+    if (testProxy.getParent() == null) {
+      var parentId = testProxy.getParentId();
+      var parentNode = findParentTestProxy(parentId);
+      parentNode.addChild(testProxy);
+    }
+  }
+
+  private void setStartedIfNeeded(@NotNull GradleSMTestProxy testProxy) {
+    if (!testProxy.isInProgress()) {
+      if (testProxy.isSuite()) {
+        testProxy.setStarted();
+        getResultsViewer().onSuiteStarted(testProxy);
+        getExecutionConsole().getEventPublisher().onSuiteStarted(testProxy);
+      }
+      else {
+        testProxy.setStarted();
+        getResultsViewer().onTestStarted(testProxy);
+        getExecutionConsole().getEventPublisher().onTestStarted(testProxy);
+      }
+    }
+  }
+
+  private static void traverseTestNodesFromChildToParent(
+    @NotNull GradleSMTestProxy node,
+    @NotNull Consumer<GradleSMTestProxy> process
+  ) {
+    while (node != null) {
+      process.accept(node);
+      node = ObjectUtils.tryCast(node.getParent(), GradleSMTestProxy.class);
+    }
   }
 }

@@ -10,9 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.remote.RemoteSdkAdditionalData;
-import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.console.PydevConsoleRunnerUtil;
-import com.jetbrains.python.console.PydevDocumentationProvider;
+import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.completion.PydevConsoleReference;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.documentation.PyRuntimeDocstringFormatter;
@@ -64,10 +62,13 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
     PsiFile file = element.getContainingFile();
     if (file != null) {
       final ConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY);
-      if (communication != null) {
-        PyExpression qualifier = element.getQualifier();
-        final String prefix = qualifier == null ? "" : qualifier.getText() + ".";
-        return new PydevConsoleReference(element, communication, prefix, context.allowRemote());
+      if (communication != null && PyConsoleOptions.getInstance(element.getProject()).isRuntimeCodeCompletion()) {
+          PyExpression qualifier = element.getQualifier();
+          final String prefix = qualifier == null ? "" : qualifier.getText() + ".";
+          return new PydevConsoleReference(element, communication, prefix, context.allowRemote());
+      }
+      if (communication instanceof PythonDebugConsoleCommunication comm) {
+        comm.setContext();
       }
     }
     return null;

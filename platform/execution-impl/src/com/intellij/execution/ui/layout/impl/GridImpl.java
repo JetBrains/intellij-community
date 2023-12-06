@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
@@ -22,8 +22,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
-  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true, this);
+public final class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
+  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
   private final Splitter mySplitter = new Splitter(true);
 
   private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<>(PlaceInGrid.class);
@@ -179,8 +179,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     }
   }
 
-  @Nullable
-  public Tab getTabIndex() {
+  public @Nullable Tab getTabIndex() {
     return getTab();
   }
 
@@ -193,8 +192,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     cell.processAlert(content, activate);
   }
 
-  @Nullable
-  public GridCellImpl findCell(final Content content) {
+  public @Nullable GridCellImpl findCell(final Content content) {
     return myContent2Cell.get(content);
   }
 
@@ -216,7 +214,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     Content[] getContents();
   }
 
-  static class Placeholder extends Wrapper implements NullableComponent {
+  static final class Placeholder extends Wrapper implements NullableComponent {
 
     private ContentProvider myContentProvider;
     private JComponent myComponent;
@@ -317,8 +315,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     }
   }
 
-  @Nullable
-  public Tab getTab() {
+  public @Nullable Tab getTab() {
     return myViewContext.getTabFor(this);
   }
 
@@ -329,17 +326,10 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     final TabImpl tab = (TabImpl)getTab();
     if (tab != null) {
       switch (placeInGrid) {
-        case left:
-          setLeftProportion(tab.getLeftProportion());
-          break;
-        case right:
-          setRightProportion(tab.getRightProportion());
-          break;
-        case bottom:
-          mySplitter.setProportion(tab.getBottomProportion());
-          break;
-        case center:
-          break;
+        case left -> setLeftProportion(tab.getLeftProportion());
+        case right -> setRightProportion(tab.getRightProportion());
+        case bottom -> mySplitter.setProportion(tab.getBottomProportion());
+        case center -> {}
       }
     }
   }
@@ -396,8 +386,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls final String dataId) {
+  public @Nullable Object getData(final @NotNull @NonNls String dataId) {
     if (ViewContext.CONTEXT_KEY.is(dataId)) {
       return myViewContext;
     }

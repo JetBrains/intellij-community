@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -24,10 +23,11 @@ import java.util.List;
 public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implements ProblemDescriptor {
   private static final Logger LOG = Logger.getInstance(ProblemDescriptorBase.class);
 
-  @NotNull private final SmartPsiElementPointer<?> myStartSmartPointer;
-  @Nullable private final SmartPsiElementPointer<?> myEndSmartPointer; // null means it's the same as myStartSmartPointer
+  private final @NotNull SmartPsiElementPointer<?> myStartSmartPointer;
+  private final @Nullable SmartPsiElementPointer<?> myEndSmartPointer; // null means it's the same as myStartSmartPointer
 
   private final ProblemHighlightType myHighlightType;
+  private final boolean myOnTheFly;
   private Navigatable myNavigatable;
   private final boolean myAfterEndOfLine;
   private final TextRange myTextRangeInElement;
@@ -35,7 +35,6 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
   private ProblemGroup myProblemGroup;
-  @Nullable private final Throwable myCreationTrace;
 
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
@@ -56,9 +55,9 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     if (startElement != endElement) assertPhysical(endElement);
 
     TextRange startElementRange = getAnnotationRange(startElement);
-    LOG.assertTrue(startElement instanceof ExternallyAnnotated || startElementRange != null, startElement);
+    LOG.assertTrue(startElement instanceof ExternallyAnnotated || startElement instanceof PsiBinaryFile || startElementRange != null, startElement);
     TextRange endElementRange = startElement == endElement ? startElementRange : getAnnotationRange(endElement);
-    LOG.assertTrue(endElement instanceof ExternallyAnnotated || endElementRange != null, endElement);
+    LOG.assertTrue(endElement instanceof ExternallyAnnotated || endElement instanceof PsiBinaryFile || endElementRange != null, endElement);
     if (startElementRange != null
         && endElementRange != null
         && startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
@@ -75,6 +74,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       }
     }
     if (rangeInElement != null) {
+      LOG.assertTrue(!(startElement instanceof PsiBinaryFile));
       TextRange.assertProperRange(rangeInElement);
     }
 
@@ -92,7 +92,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
-    myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
+    myOnTheFly = onTheFly;
   }
 
   private static @NotNull LocalQuickFix @Nullable [] filterFixes(LocalQuickFix @Nullable [] fixes, boolean onTheFly) {
@@ -102,26 +102,20 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   }
 
   public boolean isOnTheFly() {
-    return myCreationTrace == null;
+    return myOnTheFly;
   }
 
-  @Nullable
-  private static TextRange getAnnotationRange(@NotNull PsiElement startElement) {
+  private static @Nullable TextRange getAnnotationRange(@NotNull PsiElement startElement) {
     return startElement instanceof ExternallyAnnotated
            ? ((ExternallyAnnotated)startElement).getAnnotationRegion()
            : startElement.getTextRange();
   }
 
-  protected void assertPhysical(@NotNull PsiElement element) {
+  private void assertPhysical(@NotNull PsiElement element) {
     if (!element.isPhysical()) {
       LOG.error("Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree: " +
                 element + "; parent: " + element.getParent() +"; file: " + element.getContainingFile());
     }
-  }
-
-  @Nullable
-  public Throwable getCreationTrace() {
-    return myCreationTrace;
   }
 
   @Override
@@ -139,8 +133,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   }
 
   @Override
-  @Nullable
-  public TextRange getTextRangeInElement() {
+  public @Nullable TextRange getTextRangeInElement() {
     return myTextRangeInElement;
   }
 
@@ -154,8 +147,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myEndSmartPointer == null ? getStartElement() : myEndSmartPointer.getElement();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myStartSmartPointer.getProject();
   }
 
@@ -191,9 +183,8 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return document.getLineStartOffset(getLineNumber());
   }
 
-  @NotNull
   @Override
-  public ProblemHighlightType getHighlightType() {
+  public @NotNull ProblemHighlightType getHighlightType() {
     return myHighlightType;
   }
 
@@ -211,16 +202,14 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myEnforcedTextAttributes;
   }
 
-  @Nullable
-  public TextRange getTextRangeForNavigation() {
+  public @Nullable TextRange getTextRangeForNavigation() {
     TextRange textRange = getTextRange();
     if (textRange == null) return null;
     PsiElement element = getPsiElement();
     return InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, textRange);
   }
 
-  @Nullable
-  public TextRange getTextRange() {
+  public @Nullable TextRange getTextRange() {
     PsiElement startElement = getStartElement();
     PsiElement endElement = myEndSmartPointer == null ? startElement : getEndElement();
     if (startElement == null || endElement == null) {
@@ -255,8 +244,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myNavigatable;
   }
 
-  @Nullable
-  public VirtualFile getContainingFile() {
+  public @Nullable VirtualFile getContainingFile() {
     return myStartSmartPointer.getVirtualFile();
   }
 
@@ -265,8 +253,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   }
 
   @Override
-  @Nullable
-  public ProblemGroup getProblemGroup() {
+  public @Nullable ProblemGroup getProblemGroup() {
     return myProblemGroup;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.patterns.XmlPatterns;
@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 import static org.jetbrains.idea.devkit.references.IconsReferencesQueryExecutor.*;
 
-public final class IconsXmlReferencesContributor extends PsiReferenceContributor {
+final class IconsXmlReferencesContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registerForIconXmlAttribute(registrar);
@@ -76,7 +76,7 @@ public final class IconsXmlReferencesContributor extends PsiReferenceContributor
               return super.bindToElement(element);
             }
 
-            private PsiElement handleFile(PsiElement element, Function<FileReference, PsiElement> callback) {
+            private static PsiElement handleFile(PsiElement element, Function<FileReference, PsiElement> callback) {
               if (element instanceof PsiFile) {
                 FileReference lastRef = new FileReferenceSet(element).getLastReference();
                 if (lastRef != null) {

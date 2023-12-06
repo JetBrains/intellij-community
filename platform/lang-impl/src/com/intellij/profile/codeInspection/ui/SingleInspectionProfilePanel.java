@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -62,7 +63,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -81,6 +81,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -95,6 +96,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private final Map<String, ToolDescriptors> myInitialToolDescriptors = new HashMap<>();
   private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group(InspectionsBundle.message("inspection.root.node.title"));
+  private List<InspectionTreeAdvertiser.CustomGroup> myCustomGroups = new ArrayList<>();
   private final Alarm myAlarm = new Alarm();
   private final ProjectInspectionProfileManager myProjectProfileManager;
   @NotNull
@@ -126,6 +128,11 @@ public class SingleInspectionProfilePanel extends JPanel {
     super(new BorderLayout());
     myProjectProfileManager = projectProfileManager;
     myProfile = profile;
+
+    for (InspectionTreeAdvertiser advertiser : InspectionTreeAdvertiser.EP_NAME.getExtensionList()) {
+      myCustomGroups.addAll(advertiser.getCustomGroups());
+    }
+    myCreateInspectionActions = CustomInspectionActions.getAddActionGroup(this);
   }
 
   public boolean differsFromDefault() {
@@ -239,6 +246,23 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     }
     return forceInclude;
+  }
+
+  private static boolean isCustomGroupAccepted(InspectionTreeAdvertiser.CustomGroup customGroup,
+                                               @NonNls String filter,
+                                               final Set<String> quoted) {
+    final String[] path = customGroup.path();
+    if (StringUtil.containsIgnoreCase(path[path.length - 1], filter)) return true;
+
+    final String description = customGroup.description();
+    if (ContainerUtil.all(filter.split(" "), part -> StringUtil.containsIgnoreCase(description, part))) return true;
+
+    for (String stripped : quoted) {
+      if (StringUtil.containsIgnoreCase(path[path.length - 1], stripped)) return true;
+      if (StringUtil.containsIgnoreCase(description, stripped)) return true;
+    }
+
+    return false;
   }
 
   private void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
@@ -490,6 +514,10 @@ public class SingleInspectionProfilePanel extends JPanel {
         postProcessModification();
       }
     });
+    if (myCreateInspectionActions != null) {
+      actions.add(myCreateInspectionActions);
+      actions.add(new CustomInspectionActions.RemoveInspectionAction(this));
+    }
     for (InspectionProfileActionProvider provider : InspectionProfileActionProvider.EP_NAME.getExtensionList()) {
       for (AnAction action : provider.getActions(this)) {
         actions.add(action);
@@ -570,10 +598,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
 
-    myCreateInspectionActions = new DefaultActionGroup();
-    for (EmptyInspectionTreeActionProvider provider : EmptyInspectionTreeActionProvider.EP_NAME.getExtensionList()) {
-      myCreateInspectionActions.addAll(provider.getActions(this));
-    }
     updateEmptyText();
 
     final TreeTableTree tree = myTreeTable.getTree();
@@ -692,6 +716,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     final Set<String> quoted = new HashSet<>();
     if (filter != null && !filter.isEmpty()) {
       keySetList.addAll(SearchUtil.findKeys(filter, quoted));
+    } else {
+      // No filter -> add always visible groups
+      myCustomGroups.forEach(group -> getGroupNode(myRoot, group.path()));
     }
     Project project = getProject();
     final boolean emptyFilter = myInspectionsFilter.isEmptyFilter();
@@ -706,6 +733,11 @@ public class SingleInspectionProfilePanel extends JPanel {
         continue;
       }
       getGroupNode(myRoot, toolDescriptors.getDefaultDescriptor().getGroup()).add(node);
+    }
+    for (InspectionTreeAdvertiser.CustomGroup customGroup : myCustomGroups) {
+      if (filter != null && isCustomGroupAccepted(customGroup, filter, quoted)) {
+        getGroupNode(myRoot, customGroup.path());
+      }
     }
     if (filter != null && forceInclude && myRoot.getChildCount() == 0) {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
@@ -744,6 +776,7 @@ public class SingleInspectionProfilePanel extends JPanel {
                                        myProfile.getToolDefaultState(singleNode.getDefaultDescriptor().getKey().toString(), project) : null;
       boolean showDefaultConfigurationOptions = toolState == null || toolState.getTool().getTool().showDefaultConfigurationOptions();
       if (singleNode != null) {
+        // Inspection tool node selected
         final Descriptor descriptor = singleNode.getDefaultDescriptor();
         if (descriptor.loadDescription() != null) {
           // need this in order to correctly load plugin-supplied descriptions
@@ -752,8 +785,10 @@ public class SingleInspectionProfilePanel extends JPanel {
           final InspectionProfileEntry tool = defaultDescriptor.getToolWrapper().getTool();
           try {
             if (description == null) throw new NullPointerException();
-            String markedDescription = SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(description, tool.getClass().getClassLoader()), myProfileFilter.getFilter());
-            DescriptionEditorPaneKt.readHTML(myDescription, markedDescription);
+            @NlsSafe String markedDescription = SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(description, tool.getClass().getClassLoader()), myProfileFilter.getFilter());
+            DescriptionEditorPaneKt.readHTMLWithCodeHighlighting(myDescription,
+                                                                 markedDescription,
+                                                                 descriptor.getState().getTool().getLanguage());
           }
           catch (Throwable t) {
             LOG.error("Failed to load description for: " +
@@ -761,18 +796,18 @@ public class SingleInspectionProfilePanel extends JPanel {
                       "; description: " +
                       description, t);
           }
-
         }
         else {
           DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.no.description.warning"));
         }
       }
       else {
-        DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"));
+        // Inspection group node selected
+        showDescriptionForSelection();
       }
 
       myOptionsPanel.removeAll();
-      JPanel severityPanel = new JPanel(new GridBagLayout());
+      JPanel severityPanel;
       final JPanel configPanelAnchor = new JPanel(new GridBagLayout());
 
       final boolean showOptionPanel;
@@ -876,37 +911,10 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
         });
 
-        final GridBag constraint = new GridBag()
-          .setDefaultInsets(0, 0, 0, UIUtil.DEFAULT_HGAP)
-          .setDefaultWeightX(1.0)
-          .setDefaultFill(GridBagConstraints.HORIZONTAL);
-
-        final var scopesChooserPanel = UI.PanelFactory.panel(scopesChooserComponent)
-          .withLabel(InspectionsBundle.message("inspection.scope"))
-          .moveLabelOnTop()
-          .createPanel();
-        severityPanel.add(scopesChooserPanel, constraint.next().weightx(0.0));
-
-        final var severityLevelChooserPanel = UI.PanelFactory.panel(severityLevelChooserComponent)
-          .withLabel(InspectionsBundle.message("inspection.severity"))
-          .moveLabelOnTop()
-          .createPanel();
-        severityLevelChooserPanel.setMinimumSize(severityLevelChooserPanel.getPreferredSize());
-        severityPanel.add(severityLevelChooserPanel, constraint.next());
-
-        final var highlightChooserPanel = UI.PanelFactory.panel(highlightsChooserComponent)
-          .withLabel(InspectionsBundle.message("inspection.highlighting"))
-          .moveLabelOnTop()
-          .createPanel();
-        highlightChooserPanel.setMinimumSize(highlightChooserPanel.getPreferredSize());
-        severityPanel.add(highlightChooserPanel, constraint.next());
+        ScopesPanel scopesPanel = new ScopesPanel(scopesChooserComponent, severityLevelChooserComponent, highlightsChooserComponent);
+        severityPanel = scopesPanel.panel;
 
         if (toolState != null) {
-          if (!showDefaultConfigurationOptions) {
-            severityLevelChooserPanel.setVisible(false);
-            scopesChooserPanel.setVisible(false);
-          }
-
           setConfigPanel(configPanelAnchor, toolState);
           myOptionsLabel.setText(AnalysisBundle.message("inspections.settings.options.title"));
         }
@@ -988,7 +996,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       final GridBag constraint = new GridBag()
         .setDefaultWeightX(1.0)
         .setDefaultWeightY(1.0);
-      myOptionsPanel.add(severityPanel, constraint.nextLine().weighty(severityPanelWeightY).fillCell().insetTop(SECTION_GAP));
+      if (showDefaultConfigurationOptions) {
+        myOptionsPanel.add(severityPanel, constraint.nextLine().weighty(severityPanelWeightY).fillCell().insetTop(SECTION_GAP));
+      }
 
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
       if (showOptionPanel) {
@@ -1005,8 +1015,31 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     else {
       initOptionsAndDescriptionPanel();
+      final TreePath[] selectedPaths = myTreeTable.getTree().getSelectionPaths();
+      if (selectedPaths != null && selectedPaths.length > 0) {
+        showDescriptionForSelection();
+      }
     }
     myOptionsPanel.repaint();
+  }
+
+  private void showDescriptionForSelection() {
+    var group = myTreeTable.getStrictlySelectedGroupNode();
+    InspectionTreeAdvertiser.CustomGroup customGroup = null;
+    if (group != null) {
+      customGroup = ContainerUtil.find(
+        myCustomGroups,
+        g -> Arrays.equals(
+          g.path(),
+          Arrays.stream(group.getPath()).skip(1).map(node -> ((InspectionConfigTreeNode)node).getText()).toArray()
+        )
+      );
+    }
+    if (customGroup != null) {
+      DescriptionEditorPaneKt.readHTML(myDescription, SearchUtil.markup(customGroup.description(), myProfileFilter.getFilter()));
+    } else {
+      DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"));
+    }
   }
 
   private static void updateHighlightingChooser(Collection<? extends InspectionConfigTreeNode.Tool> nodes,
@@ -1109,6 +1142,25 @@ public class SingleInspectionProfilePanel extends JPanel {
                 });
               } else {
                 ShowSettingsUtilImpl.showSettingsDialog(project, configId, search);
+              }
+            }
+          }
+          else if (url.getScheme().equals("action")) {
+            AnAction action = ActionManager.getInstance().getAction(url.getAuthority());
+            if (action != null) {
+              if (action instanceof ActionGroup group) {
+                final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.POPUP, group);
+                final Point point = new Point();
+                if (e.getInputEvent() instanceof MouseEvent mouseEvent) {
+                  point.x = mouseEvent.getX();
+                  point.y = mouseEvent.getY();
+                }
+                menu.getComponent().show((Component)e.getSource(), point.x, point.y);
+              } else {
+                final AnActionEvent event = AnActionEvent.createFromInputEvent(
+                  e.getInputEvent(), ActionPlaces.UNKNOWN, null, DataContext.EMPTY_CONTEXT
+                );
+                action.actionPerformed(event);
               }
             }
           }
@@ -1327,7 +1379,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           e -> JBPopupFactory
             .getInstance()
             .createActionGroupPopup(
-              AnalysisBundle.message("inspections.settings.popup.title.create.inspection"),
+              null,
               myCreateInspectionActions,
               DataManager.getInstance().getDataContext(myInspectionProfilePanel),
               null,
@@ -1362,7 +1414,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  private class ToolOptionsSeparator extends JPanel {
+  private final class ToolOptionsSeparator extends JPanel {
     private final ActionLink myResetLink;
     @Nullable
     private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;

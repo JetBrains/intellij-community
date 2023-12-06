@@ -32,9 +32,12 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.impl.TextOptions
 import com.intellij.refactoring.rename.impl.isEmpty
 import com.intellij.refactoring.util.TextOccurrencesUtil
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -106,7 +109,8 @@ object TemplateInlayUtil {
                                        panel: DialogPanel,
                                        templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
                                        logStatisticsOnHide: () -> Unit = {}): Inlay<PresentationRenderer>? {
-    return createNavigatableButtonWithPopup(templateState, inEditorOffset, presentation, panel as JPanel, templateElement, logStatisticsOnHide)
+    return createNavigatableButtonWithPopup(templateState, inEditorOffset, presentation, panel as JPanel, templateElement,
+                                            isPopupAbove = false, logStatisticsOnHide)
   }
   
   @JvmOverloads
@@ -116,8 +120,10 @@ object TemplateInlayUtil {
                                        presentation: SelectableInlayPresentation,
                                        panel: JPanel,
                                        templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
+                                       isPopupAbove: Boolean,
                                        logStatisticsOnHide: () -> Unit = {}): Inlay<PresentationRenderer>? {
-    val inlay = createNavigatableButtonWithPopup(templateState.editor, inEditorOffset, presentation, panel, templateElement) ?: return null
+    val inlay = createNavigatableButtonWithPopup(templateState.editor, inEditorOffset, presentation, panel, templateElement,
+                                                 isPopupAbove = isPopupAbove) ?: return null
     Disposer.register(templateState, inlay)
     presentation.addSelectionListener { isSelected ->
       if (!isSelected) logStatisticsOnHide.invoke()
@@ -127,11 +133,13 @@ object TemplateInlayUtil {
 
   @JvmOverloads
   @JvmStatic
-  fun createNavigatableButtonWithPopup(editor: Editor,
-                                       offset: Int,
-                                       presentation: SelectableInlayPresentation,
-                                       panel: JPanel,
-                                       templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
+  fun createNavigatableButtonWithPopup(
+    editor: Editor,
+    offset: Int,
+    presentation: SelectableInlayPresentation,
+    panel: JPanel,
+    templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
+    isPopupAbove: Boolean,
   ): Inlay<PresentationRenderer>? {
     val inlay = createNavigatableButton(editor, offset, presentation, templateElement) ?: return null
     fun showPopup() {
@@ -157,7 +165,15 @@ object TemplateInlayUtil {
         .registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ENTER), panel, popup)
       try {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, inlay.visualPosition)
-        popup.showInBestPositionFor(editor)
+        if (isPopupAbove) {
+          val popupFactory = JBPopupFactory.getInstance()
+          val target = popupFactory.guessBestPopupLocation(editor)
+          val screenPoint = target.getScreenPoint()
+          popup.show(RelativePoint(Point(screenPoint.x, screenPoint.y - editor.lineHeight - panel.preferredHeight)))
+        }
+        else {
+          popup.showInBestPositionFor(editor)
+        }
       }
       finally {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null)
@@ -316,7 +332,7 @@ object TemplateInlayUtil {
       }
       optionsListener.invoke(newOptions)
     }
-    return createNavigatableButtonWithPopup(templateState, offset, presentation, panel as JPanel, templateElement) {
+    return createNavigatableButtonWithPopup(templateState, offset, presentation, panel as JPanel, templateElement, isPopupAbove = false) {
       logStatisticsOnHide(editor, initOptions, currentOptions)
     }
   }
@@ -352,8 +368,8 @@ object TemplateInlayUtil {
         commentsStringsOccurrences?.let {
           row {
             checkBox(RefactoringBundle.message("comments.and.strings"))
+              .selected(it)
               .applyToComponent {
-                isSelected = it
                 addActionListener {
                   commentsStringsOccurrences = isSelected
                   optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
@@ -366,8 +382,8 @@ object TemplateInlayUtil {
         textOccurrences?.let {
           row {
             val cb = checkBox(RefactoringBundle.message("text.occurrences"))
+              .selected(it)
               .applyToComponent {
-                isSelected = it
                 addActionListener {
                   textOccurrences = isSelected
                   optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))

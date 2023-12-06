@@ -24,17 +24,26 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module-library">
       <library name="file-prediction-model" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.filePrediction.model:file-prediction-model:0.3.0" />
+        <properties maven-id="org.jetbrains.intellij.deps.filePrediction.model:file-prediction-model:0.3.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.3.0/file-prediction-model-0.3.0.jar">
+              <sha256sum>e506fd77462afcdb16f0ccfe7c96c1549443580a3be240c5dcff1ae2bfac0555</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.3.0/file-prediction-model-0.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.3.0/file-prediction-model-0.3.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="library" name="ngram-slp" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
   </component>
 </module>

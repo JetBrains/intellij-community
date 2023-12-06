@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.rulerguide;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -15,7 +15,7 @@ import java.awt.*;
 
 final class RulerGuideAction extends ToggleAction implements DumbAware {
 
-  private final static int QUERY_DELAY = 40;
+  private static final int QUERY_DELAY = 40;
 
   private final SimpleTimer timer = SimpleTimer.newInstance("ruler-guide-action");
   private final RulerGuidePainter painter;
@@ -44,7 +44,7 @@ final class RulerGuideAction extends ToggleAction implements DumbAware {
 
   private void fireRepaintEvent() {
     if (state) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)this::findMousePositionAndRepaint);
+      UIUtil.invokeAndWaitIfNeeded(this::findMousePositionAndRepaint);
       timer.setUp(this::fireRepaintEvent, QUERY_DELAY);
     }
     else {

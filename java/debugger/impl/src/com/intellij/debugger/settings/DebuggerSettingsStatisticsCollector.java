@@ -14,7 +14,7 @@ import java.util.Set;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 
 public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("debugger.settings.ide", 3);
+  private static final EventLogGroup GROUP = new EventLogGroup("debugger.settings.ide", 4);
   private static final VarargEventId DISABLE_JIT = GROUP.registerVarargEvent("disableJit", EventFields.Enabled);
   private static final VarargEventId SHOW_ALTERNATIVE_SOURCE = GROUP.registerVarargEvent("showAlternativeSource", EventFields.Enabled);
   private static final VarargEventId HOTSWAP_IN_BACKROUND = GROUP.registerVarargEvent("hotswapInBackround", EventFields.Enabled);
@@ -46,7 +46,6 @@ public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollec
 
     addBoolIfDiffers(set, settings, sDefault, s -> s.DISABLE_JIT, DISABLE_JIT);
     addBoolIfDiffers(set, settings, sDefault, s -> s.SHOW_ALTERNATIVE_SOURCE, SHOW_ALTERNATIVE_SOURCE);
-    addBoolIfDiffers(set, settings, sDefault, s -> s.HOTSWAP_IN_BACKGROUND, HOTSWAP_IN_BACKROUND);
     addBoolIfDiffers(set, settings, sDefault, s -> s.ENABLE_MEMORY_AGENT, ENABLE_MEMORY_AGENT);
     addBoolIfDiffers(set, settings, sDefault, s -> s.ALWAYS_SMART_STEP_INTO, ALWAYS_SMART_STEP_INTO);
     addBoolIfDiffers(set, settings, sDefault, s -> s.SKIP_CONSTRUCTORS, SKIP_CONSTRUCTORS);

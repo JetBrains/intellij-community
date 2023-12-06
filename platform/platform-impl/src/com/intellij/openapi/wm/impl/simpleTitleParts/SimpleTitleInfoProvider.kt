@@ -39,5 +39,5 @@ abstract class SimpleTitleInfoProvider(protected val option: TitleInfoOption) : 
     TitleInfoProvider.fireConfigurationChanged()
   }
 
-  override fun isActive(project: Project) = isEnabled()
+  override fun isActive(project: Project): Boolean = isEnabled()
 }

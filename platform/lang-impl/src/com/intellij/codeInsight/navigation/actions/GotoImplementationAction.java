@@ -5,7 +5,10 @@ package com.intellij.codeInsight.navigation.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.navigation.*;
+import com.intellij.codeInsight.navigation.CtrlMouseAction;
+import com.intellij.codeInsight.navigation.CtrlMouseData;
+import com.intellij.codeInsight.navigation.GotoImplementationHandler;
+import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
@@ -20,9 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges;
-import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.multipleTargetsCtrlMouseData;
-import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.psiCtrlMouseData;
+import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.*;
 
 public class GotoImplementationAction extends BaseCodeInsightAction implements CtrlMouseAction {
 
@@ -67,29 +68,6 @@ public class GotoImplementationAction extends BaseCodeInsightAction implements C
     return descriptor != null && descriptor.canNavigate() && targetElement.isPhysical()
            ? targetElement
            : null;
-  }
-
-  @Deprecated
-  @Override
-  public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    PsiElement elementAtPointer = file.findElementAt(offset);
-    if (elementAtPointer == null) {
-      return null;
-    }
-    PsiElement[] targetElements = targetElements(editor, offset);
-    if (targetElements == null || targetElements.length == 0) {
-      return null;
-    }
-    else if (targetElements.length > 1) {
-      return new MultipleTargetElementsInfo(elementAtPointer);
-    }
-    else {
-      PsiElement targetElement = targetElement(targetElements[0]);
-      if (targetElement == null) {
-        return null;
-      }
-      return new SingleTargetElementInfo(elementAtPointer, targetElement);
-    }
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -17,7 +17,9 @@ import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
+import java.util.List;
+
+final class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
 
   private static final String VIRTUAL_FILE_CLASS_NAME = VirtualFile.class.getName();
   private static final String GET_CHILDREN_METHOD_NAME = "getChildren";
@@ -61,7 +63,7 @@ public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
 
   @Nullable
   private static PsiMethod tryToResolveGetChildrenMethod(@NotNull UExpression expression) {
-    if (expression instanceof UCallExpression call && hasMethodIdentifierEqualTo(call, GET_CHILDREN_METHOD_NAME)) {
+    if (expression instanceof UCallExpression call && call.isMethodNameOneOf(List.of(GET_CHILDREN_METHOD_NAME))) {
       return call.resolve();
     }
     else if (expression instanceof UQualifiedReferenceExpression qualifiedReference) {
@@ -90,7 +92,7 @@ public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
         super.visitElement(element);
         UCallExpression potentialRecursiveCall = UastContextKt.toUElement(element, UCallExpression.class);
         if (potentialRecursiveCall == null) return;
-        if (!hasMethodIdentifierEqualTo(potentialRecursiveCall, containingMethodName)) return;
+        if (!potentialRecursiveCall.isMethodNameOneOf(List.of(containingMethodName))) return;
         if (potentialRecursiveCall != getChildrenMethodCall && expressionResolvesToMethod(potentialRecursiveCall, containingMethod)) {
           isInRecursiveCall.set(Boolean.TRUE);
         }

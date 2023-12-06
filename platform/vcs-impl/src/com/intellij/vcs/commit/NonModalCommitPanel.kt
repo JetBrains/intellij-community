@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
-import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -21,7 +20,6 @@ import com.intellij.openapi.vcs.actions.ShowCommitOptionsAction
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
@@ -32,14 +30,12 @@ import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcsUtil.VcsUIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Color
-import java.awt.Point
-import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
-import javax.swing.SwingUtilities
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
@@ -104,7 +100,10 @@ abstract class NonModalCommitPanel(
   override fun getComponent(): JComponent = this
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
-  override fun getData(dataId: String) = getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
+  override fun getData(dataId: String): Any? {
+    return getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
+  }
+
   fun getDataFromProviders(dataId: String): Any? {
     for (dataProvider in dataProviders) {
       return dataProvider.getData(dataId) ?: continue
@@ -170,20 +169,8 @@ abstract class NonModalCommitPanel(
         }
       })
       .createPopup()
-      .apply { clickSource = getClickSourceFromLastMouseEvent() }
 
     showCommitOptions(commitOptionsPopup, isFromToolbar, dataContext)
-  }
-
-  private fun getClickSourceFromLastMouseEvent(): JComponent? {
-    val me = IdeEventQueue.getInstance().trueCurrentEvent
-    if (me is MouseEvent) {
-      val comp = SwingUtilities.getDeepestComponentAt(me.component, me.x, me.y)
-      if (comp is JComponent) {
-        return comp
-      }
-    }
-    return null
   }
 
   protected open fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
@@ -196,19 +183,9 @@ abstract class NonModalCommitPanel(
     internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
     internal const val COMMIT_EDITOR_PLACE: String = "ChangesView.Editor"
 
-    fun JBPopup.showAbove(component: JComponent) {
-      val northWest = RelativePoint(component, Point())
-
-      addListener(object : JBPopupListener {
-        override fun beforeShown(event: LightweightWindowEvent) {
-          val popup = event.asPopup()
-          val location = Point(popup.locationOnScreen).apply { y = northWest.screenPoint.y - popup.size.height }
-
-          popup.setLocation(location)
-        }
-      })
-      show(northWest)
-    }
+    @Deprecated("Extracted to a separate file",
+                replaceWith = ReplaceWith("showAbove(component)", "com.intellij.vcsUtil.showAbove"))
+    fun JBPopup.showAbove(component: JComponent) = VcsUIUtil.showPopupAbove(this, component)
   }
 }
 

@@ -52,7 +52,7 @@ class PrimaryConstructorDetectConversion(context: NewJ2kConverterContext) : Recu
                 primaryConstructorCandidate.otherModifierElements,
                 primaryConstructorCandidate.visibilityElement,
                 primaryConstructorCandidate.modalityElement
-            ).withFormattingFrom(primaryConstructorCandidate)
+            ).withCommentsFrom(primaryConstructorCandidate)
 
         symbolProvider.transferSymbol(primaryConstructor, primaryConstructorCandidate)
 

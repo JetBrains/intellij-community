@@ -1,7 +1,8 @@
 package com.intellij.tools.launch
 
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 
@@ -12,7 +13,7 @@ interface PathsProvider {
   val outputRootFolder: File
 
   val tempFolder: File
-    get() = TeamCityHelper.tempDirectory?.toFile() ?: sourcesRootFolder.resolve("out").resolve("tmp")
+    get() = resolveTempFolder(sourcesRootFolder)
 
   val launcherFolder: File
     get() = tempFolder.resolve("launcher").resolve(productId)
@@ -27,7 +28,7 @@ interface PathsProvider {
     get() = launcherFolder.resolve("system")
 
   val javaHomeFolder: File
-    get() = File(SystemProperties.getJavaHome())
+    get() = JdkDownloader.getJdkHome(BuildDependenciesCommunityRoot(communityRootFolder.toPath())).normalize().toFile()
 
   val mavenRepositoryFolder: File
     get() = File(System.getProperty("user.home")).resolve(".m2/repository")
@@ -36,14 +37,16 @@ interface PathsProvider {
     get() = communityRootFolder.resolve("bin")
 
   val javaExecutable: File
-    get() = when {
-      SystemInfo.isWindows -> javaHomeFolder.resolve("bin").resolve("java.exe")
-      else -> javaHomeFolder.resolve("bin").resolve("java")
-    }
+    get() = JdkDownloader.getJavaExecutable(javaHomeFolder.toPath()).normalize().toFile()
 
   val dockerVolumesToWritable: Map<File, Boolean>
     get() = emptyMap()
 
   val pluginsFolder: File
     get() = configFolder.resolve("plugins")
+
+  companion object {
+    fun resolveTempFolder(sourcesRootFolder: File) = TeamCityHelper.tempDirectory?.toFile()
+                                                     ?: sourcesRootFolder.resolve("out").resolve("tmp")
+  }
 }

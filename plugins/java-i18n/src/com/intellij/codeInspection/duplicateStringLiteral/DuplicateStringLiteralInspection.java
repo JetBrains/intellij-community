@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -10,8 +10,11 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -199,7 +202,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     return !SuppressManager.isSuppressedInspectionName(expression);
   }
 
-  private static void createReplaceFixes(PsiExpression @NotNull [] foundExpr, @NotNull PsiExpression originalExpression,
+  private static void createReplaceFixes(PsiExpression @NotNull [] foundExpr, @NotNull PsiLiteralExpression originalExpression,
                                          @NotNull Collection<? super LocalQuickFix> fixes) {
     for (PsiExpression expr : foundExpr) {
       if (expr == originalExpression) continue;
@@ -213,7 +216,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
           if (!isAccessible && containingClass.getQualifiedName() == null) {
             continue;
           }
-          fixes.add(new ReplaceFix(field, originalExpression));
+          fixes.add(LocalQuickFix.from(new ReplaceFix(field, originalExpression)));
         }
       }
     }
@@ -253,12 +256,11 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     }
   }
 
-  private static final class ReplaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+  private static final class ReplaceFix extends PsiUpdateModCommandAction<PsiLiteralExpression> {
     private final @IntentionName String myText;
-    @SafeFieldForPreview
     private final SmartPsiElementPointer<PsiField> myConst;
 
-    private ReplaceFix(PsiField constant, PsiExpression originalExpression) {
+    private ReplaceFix(PsiField constant, PsiLiteralExpression originalExpression) {
       super(originalExpression);
       myText = JavaI18nBundle.message("inspection.duplicates.replace.quickfix", PsiFormatUtil
         .formatVariable(constant, PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
@@ -268,37 +270,26 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
       myConst = SmartPointerManager.getInstance(constant.getProject()).createSmartPsiElementPointer(constant);
     }
 
-    @NotNull
     @Override
-    public String getText() {
-      return myText;
+    protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiLiteralExpression element) {
+      return Presentation.of(myText);
     }
 
     @Override
-    public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
-                       @Nullable Editor editor,
-                       @NotNull PsiElement startElement,
-                       @NotNull PsiElement endElement) {
-      final PsiLiteralExpression myOriginalExpression = (PsiLiteralExpression)startElement;
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression literal, @NotNull ModPsiUpdater updater) {
       final PsiField myConstant = myConst.getElement();
       if (myConstant == null) return;
       final PsiExpression initializer = myConstant.getInitializer();
       if (!(initializer instanceof PsiLiteralExpression)) {
         return;
       }
-      try {
-        final PsiReferenceExpression reference = createReferenceTo(myConstant);
-        if (reference != null) {
-          final PsiReferenceExpression newReference = (PsiReferenceExpression)myOriginalExpression.replace(reference);
-          if (UnnecessarilyQualifiedStaticUsageInspection.isUnnecessarilyQualifiedAccess(newReference, false, false, true)) {
-            //remove qualifier
-            newReference.getChildren()[0].delete();
-          }
+      final PsiReferenceExpression reference = createReferenceTo(myConstant);
+      if (reference != null) {
+        final PsiReferenceExpression newReference = (PsiReferenceExpression)literal.replace(reference);
+        if (UnnecessarilyQualifiedStaticUsageInspection.isUnnecessarilyQualifiedAccess(newReference, false, false, true)) {
+          //remove qualifier
+          newReference.getChildren()[0].delete();
         }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
       }
     }
 

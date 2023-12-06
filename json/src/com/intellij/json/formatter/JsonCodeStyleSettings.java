@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
 import com.intellij.json.JsonBundle;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.PropertyKey;
 /**
  * @author Mikhail Golubev
  */
-public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
+public final class JsonCodeStyleSettings extends CustomCodeStyleSettings {
 
   public static final int DO_NOT_ALIGN_PROPERTY = PropertyAlignment.DO_NOT_ALIGN.getId();
   public static final int ALIGN_PROPERTY_ON_VALUE = PropertyAlignment.ALIGN_ON_VALUE.getId();
@@ -60,8 +61,7 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
     DO_NOT_ALIGN(0, "formatter.align.properties.none"),
     ALIGN_ON_VALUE(1, "formatter.align.properties.on.value"),
     ALIGN_ON_COLON(2, "formatter.align.properties.on.colon");
-    @PropertyKey(resourceBundle = JsonBundle.BUNDLE)
-    private final String myKey;
+    private final @PropertyKey(resourceBundle = JsonBundle.BUNDLE) String myKey;
     private final int myId;
 
     PropertyAlignment(int id, @NotNull @PropertyKey(resourceBundle = JsonBundle.BUNDLE) String key) {
@@ -69,8 +69,7 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
       myId = id;
     }
 
-    @NotNull
-    public String getDescription() {
+    public @NotNull String getDescription() {
       return JsonBundle.message(myKey);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
@@ -111,18 +111,15 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     mySetter.accept(s, mySelectedVariant);
   }
 
-  @Nls
-  protected String getVariantName(V variant) {
+  protected @Nls String getVariantName(V variant) {
     return myVariantNameProvider == null ? StringUtil.capitalize(variant.toString()) : myVariantNameProvider.apply(variant); //NON-NLS
   }
 
-  @Nls
-  protected @Nullable String getVariantHint(V variant) {
+  protected @Nls @Nullable String getVariantHint(V variant) {
     return myVariantHintProvider == null ? null : myVariantHintProvider.apply(variant); //NON-NLS
   }
 
-  @Nls
-  protected String getVariantDescription(V variant) {
+  protected @Nls String getVariantDescription(V variant) {
     return myVariantDescriptionProvider == null ? null : myVariantDescriptionProvider.apply(variant); //NON-NLS
   }
 

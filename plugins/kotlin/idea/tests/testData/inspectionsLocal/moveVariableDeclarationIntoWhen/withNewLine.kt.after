@@ -1,6 +1,5 @@
+// HIGHLIGHT: INFORMATION
 fun foo() {
-
-
     when (1) {
         1 -> {
         }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.model;
 
 import com.intellij.designer.propertyTable.PropertyEditor;
@@ -44,13 +30,11 @@ public abstract class Property<T extends PropertiesContainer> {
     myName = name;
   }
 
-  @Nullable
-  public Property<T> createForNewPresentation() {
+  public @Nullable Property<T> createForNewPresentation() {
     return createForNewPresentation(myParent, myName);
   }
 
-  @Nullable
-  public Property<T> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
+  public @Nullable Property<T> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
     return null;
   }
 
@@ -60,23 +44,19 @@ public abstract class Property<T extends PropertiesContainer> {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  @Nullable
-  public String getGroup() {
+  public @Nullable String getGroup() {
     return null;
   }
 
-  @Nullable
-  public final Property getParent() {
+  public final @Nullable Property getParent() {
     return myParent;
   }
 
-  @NotNull
-  public List<? extends Property<T>> getChildren(@Nullable T container) {
+  public @NotNull List<? extends Property<T>> getChildren(@Nullable T container) {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public String getPath() {
+  public @NotNull String getPath() {
     return myParent == null ? myName : myParent.getPath() + "/" + myName;
   }
 
@@ -86,8 +66,7 @@ public abstract class Property<T extends PropertiesContainer> {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  @Nullable
-  public Object getValue(@NotNull T container) throws Exception {
+  public @Nullable Object getValue(@NotNull T container) throws Exception {
     return null;
   }
 
@@ -135,8 +114,7 @@ public abstract class Property<T extends PropertiesContainer> {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  @NotNull
-  public Transferable doCopy(@NotNull T container, @NotNull Object commonValue) {
+  public @NotNull Transferable doCopy(@NotNull T container, @NotNull Object commonValue) {
     return new TextTransferable(commonValue.toString());
   }
 
@@ -146,13 +124,11 @@ public abstract class Property<T extends PropertiesContainer> {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  @NotNull
-  public final @NlsSafe String getName() {
+  public final @NotNull @NlsSafe String getName() {
     return myName;
   }
 
-  @Nullable
-  public @NlsContexts.Tooltip String getTooltip() {
+  public @Nullable @NlsContexts.Tooltip String getTooltip() {
     return null;
   }
 
@@ -180,11 +156,9 @@ public abstract class Property<T extends PropertiesContainer> {
     myDeprecated = deprecated;
   }
 
-  @NotNull
-  public abstract PropertyRenderer getRenderer();
+  public abstract @NotNull PropertyRenderer getRenderer();
 
-  @Nullable
-  public abstract PropertyEditor getEditor();
+  public abstract @Nullable PropertyEditor getEditor();
 
   public boolean isEditable(@Nullable T component) {
     return getEditor() != null;
@@ -196,13 +170,11 @@ public abstract class Property<T extends PropertiesContainer> {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  @Nullable
-  public PsiElement getJavadocElement() {
+  public @Nullable PsiElement getJavadocElement() {
     return null;
   }
 
-  @Nullable
-  public @Nls String getJavadocText() {
+  public @Nullable @Nls String getJavadocText() {
     return null;
   }
 

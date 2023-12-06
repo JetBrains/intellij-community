@@ -40,3 +40,5 @@ class Outer {
 }
 
 fun lambda(f: () -> Unit) = f()
+
+// IGNORE_K2

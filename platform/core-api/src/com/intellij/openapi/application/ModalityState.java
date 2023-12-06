@@ -1,30 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
-import javax.swing.SwingUtilities;
-import com.intellij.openapi.project.DumbService;
+
 /**
  * Represents the stack of active modal dialogs. Used in calls to {@link Application#invokeLater} to specify
  * that the corresponding runnable is to be executed within the given modality state, i.e., when the same set modal dialogs is present, or its subset.<p/>
- *
+ * <p>
  * The primary purpose of the modality state is to guarantee code model (PSI/VFS/etc) correctness during user interaction.
  * Consider the following scenario:
  * <ul>
@@ -37,28 +25,27 @@ import com.intellij.openapi.project.DumbService;
  *   changed world, where PSI that it worked with might be already invalid, dumb mode (see {@link DumbService})
  *   might have unexpectedly begun, etc.</li>
  * </ul>
- *
+ * <p>
  * Normally clients of yes/no question dialogs aren't prepared for this at all, so exceptions are likely to arise.
  * Worse than that, there'll be no indication on why a particular change has occurred, because the runnable that was incorrectly invoked-later will
  * in many cases leave no trace of itself.<p/>
- *
+ * <p>
  * For these reasons, it's strongly advised to use {@link Application#invokeLater} methods everywhere instead of
  * {@link SwingUtilities#invokeLater(Runnable)} and {@link com.intellij.util.ui.UIUtil} convenience methods.<p/>
- *
+ * <p>
  * {@link SwingUtilities#invokeLater(Runnable)}, {@link #any()} and {@link com.intellij.util.ui.UIUtil} convenience methods may be used in the
  * purely UI-related code, but not with anything that deals with PSI or VFS.
  */
 public abstract class ModalityState {
   /**
-   * State when no modal dialogs are open.
-   * @see Application#getNoneModalityState()
+   * @deprecated use {@link #nonModal()} instead
    */
-  @NotNull public static final ModalityState NON_MODAL;
+  @Deprecated public static final @NotNull ModalityState NON_MODAL;
 
   static {
     try {
       @SuppressWarnings("unchecked")
-      final Class<? extends ModalityState> ex = (Class<? extends ModalityState>)Class.forName("com.intellij.openapi.application.impl.ModalityStateEx");
+      Class<? extends ModalityState> ex = (Class<? extends ModalityState>)Class.forName("com.intellij.openapi.application.impl.ModalityStateEx");
       NON_MODAL = ex.newInstance();
     }
     catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
@@ -67,10 +54,18 @@ public abstract class ModalityState {
   }
 
   /**
+   * @return state when no modal dialogs are open
+   */
+  public static @NotNull ModalityState nonModal() {
+    return NON_MODAL;
+  }
+
+  /**
    * @return the modality state corresponding to the currently opened modal dialogs. Can only be invoked on AWT thread.
    */
-  @NotNull
-  public static ModalityState current() {
+  @SuppressWarnings("deprecation")
+  @RequiresEdt
+  public static @NotNull ModalityState current() {
     return ApplicationManager.getApplication().getCurrentModalityState();
   }
 
@@ -79,8 +74,8 @@ public abstract class ModalityState {
    * Please don't use it unless absolutely needed. The code under this modality can only perform purely UI operations,
    * it shouldn't access any PSI, VFS or project model.
    */
-  @NotNull
-  public static ModalityState any() {
+  @SuppressWarnings("deprecation")
+  public static @NotNull ModalityState any() {
     return ApplicationManager.getApplication().getAnyModalityState();
   }
 
@@ -88,18 +83,16 @@ public abstract class ModalityState {
    * @return state corresponding to the modal dialog containing the given component.
    * @see Application#getModalityStateForComponent(Component)
    */
-  @NotNull
-  public static ModalityState stateForComponent(@NotNull Component component){
+  public static @NotNull ModalityState stateForComponent(@NotNull Component component) {
     return ApplicationManager.getApplication().getModalityStateForComponent(component);
   }
 
   /**
    * When invoked on AWT thread, returns {@link #current()}. When invoked in the thread of some modal progress, returns modality state
-   * corresponding to that progress' dialog. Otherwise, returns {@link #NON_MODAL}.
+   * corresponding to that progress' dialog. Otherwise, returns {@link #nonModal()}.
    */
-  @NotNull
   @RequiresBlockingContext
-  public static ModalityState defaultModalityState() {
+  public static @NotNull ModalityState defaultModalityState() {
     return ApplicationManager.getApplication().getDefaultModalityState();
   }
 

@@ -7,6 +7,7 @@ import com.sun.jdi.*
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_IMPL_NAME_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
+import org.jetbrains.kotlin.idea.debugger.isGeneratedErasedLambdaMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.org.objectweb.asm.Opcodes
@@ -16,6 +17,8 @@ import kotlin.jvm.internal.PropertyReference
 class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
     override fun isSynthetic(typeComponent: TypeComponent?): Boolean {
         if (typeComponent !is Method) return false
+
+        if (typeComponent.isGeneratedErasedLambdaMethod()) return true
 
         val containingType = typeComponent.declaringType()
         val typeName = containingType.name()
@@ -88,13 +91,6 @@ class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
         return hasInterfaceWithImplementation(this)
     }
 
-    private companion object {
-        private val LOAD_INSTRUCTIONS_WITH_INDEX = Opcodes.ILOAD.toByte()..Opcodes.ALOAD.toByte()
-        private val LOAD_INSTRUCTIONS = (Opcodes.ALOAD + 1).toByte()..(Opcodes.IALOAD - 1).toByte()
-        private val RETURN_INSTRUCTIONS = Opcodes.IRETURN.toByte()..Opcodes.RETURN.toByte()
-        private val ICONST_INSTRUCTIONS = Opcodes.ICONST_M1..Opcodes.ICONST_5
-    }
-
     // Check that method contains only load and invokeStatic instructions. Note that if after load goes ldc instruction it could be checkParametersNotNull method invocation
     private fun hasOnlyInvokeStatic(m: Method): Boolean {
         val instructions = m.bytecodes()
@@ -142,3 +138,8 @@ class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
         return traitImpls.any { it.methodsByName(method.name()).isNotEmpty() }
     }
 }
+
+private val LOAD_INSTRUCTIONS_WITH_INDEX = Opcodes.ILOAD.toByte()..Opcodes.ALOAD.toByte()
+private val LOAD_INSTRUCTIONS = (Opcodes.ALOAD + 1).toByte()..(Opcodes.IALOAD - 1).toByte()
+private val RETURN_INSTRUCTIONS = Opcodes.IRETURN.toByte()..Opcodes.RETURN.toByte()
+private val ICONST_INSTRUCTIONS = Opcodes.ICONST_M1..Opcodes.ICONST_5

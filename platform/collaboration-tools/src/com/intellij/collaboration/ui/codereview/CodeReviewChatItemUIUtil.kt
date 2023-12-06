@@ -6,14 +6,12 @@ import com.intellij.collaboration.ui.JPanelWithBackground
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
-import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
+import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -43,7 +41,7 @@ object CodeReviewChatItemUIUtil {
      * Full-sized component, to be used in timeline
      */
     FULL {
-      override val iconSize: Int = 30
+      override val iconSize: Int = Avatar.Sizes.TIMELINE
       override val iconGap: Int = 14
       override val paddingInsets: Insets = Insets(CodeReviewTimelineUIUtil.ITEM_VERT_PADDING,
                                                   CodeReviewTimelineUIUtil.ITEM_HOR_PADDING,
@@ -56,7 +54,7 @@ object CodeReviewChatItemUIUtil {
      * Special horizontally shifted compact-sized component, to be used in second level of timeline
      */
     FULL_SECONDARY {
-      override val iconSize: Int = 20
+      override val iconSize: Int = Avatar.Sizes.BASE
       override val iconGap: Int = 10
       override val paddingInsets: Insets = Insets(4, FULL.fullLeftShift, 4, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
       override val inputPaddingInsets: Insets = Insets(6, FULL.fullLeftShift, 6, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
@@ -66,7 +64,7 @@ object CodeReviewChatItemUIUtil {
      * Compact-sized component to be used in diffs and other places where space is scarce
      */
     COMPACT {
-      override val iconSize: Int = 20
+      override val iconSize: Int = Avatar.Sizes.BASE
       override val iconGap: Int = 10
       override val paddingInsets: Insets = Insets(4, CodeReviewCommentUIUtil.INLAY_PADDING, 4, CodeReviewCommentUIUtil.INLAY_PADDING)
       override val inputPaddingInsets: Insets = Insets(6, CodeReviewCommentUIUtil.INLAY_PADDING, 6, CodeReviewCommentUIUtil.INLAY_PADDING)
@@ -180,7 +178,7 @@ object CodeReviewChatItemUIUtil {
   object ComponentFactory {
     fun wrapWithHeader(item: JComponent, title: JComponent, actions: JComponent?): JComponent {
       val headerPanel = JPanel(null).apply {
-        layout = MigLayout(LC().gridGap("0", "0").insets("0")
+        layout = MigLayout(LC().gridGap("0", "0").insets("0").height("16")
                              .hideMode(3).fill())
         isOpaque = false
 
@@ -213,16 +211,17 @@ object CodeReviewChatItemUIUtil {
   fun withHoverHighlight(comp: JComponent): JComponent {
     val highlighterPanel = JPanelWithBackground(BorderLayout()).apply {
       isOpaque = false
+      background = UIUtil.TRANSPARENT_COLOR
       add(comp, BorderLayout.CENTER)
     }.also {
       object : HoverStateListener() {
         override fun hoverChanged(component: Component, hovered: Boolean) {
           // TODO: extract to theme colors
           component.background = if (hovered) {
-            JBColor.namedColor("Review.ChatItem.Hover", JBColor(ColorUtil.fromHex("#D8D8D833"), ColorUtil.fromHex("#4B4B4B33")))
+            CodeReviewColorUtil.Review.Chat.hover
           }
           else {
-            null
+            UIUtil.TRANSPARENT_COLOR
           }
         }
       }.apply {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -6,13 +6,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
@@ -28,8 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class VariantsCompletionAction extends DumbAwareAction implements LightEditCompatible {
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
+public final class VariantsCompletionAction extends DumbAwareAction implements LightEditCompatible {
   private final JTextComponent myTextField;
 
   public VariantsCompletionAction(JTextComponent textField) {
@@ -42,7 +39,6 @@ public class VariantsCompletionAction extends DumbAwareAction implements LightEd
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     final Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     if (editor == null) return;
     final String prefix = myTextField.getText().substring(0, myTextField.getCaretPosition());
@@ -65,7 +61,7 @@ public class VariantsCompletionAction extends DumbAwareAction implements LightEd
 
     Utils.showCompletionPopup(
       e.getInputEvent() instanceof MouseEvent ? myTextField: null,
-      list, null, myTextField, null, myPopupState);
+      list, null, myTextField, null);
   }
 
   private static String[] calcWords(final String prefix, Editor editor) {

@@ -1,11 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.diagnostic.ThreadDumper;
@@ -18,10 +16,10 @@ import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -79,6 +77,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
+import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
+
 public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
   private static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
 
@@ -122,6 +122,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       header();
       execute();
     }
+    catch (ProcessCanceledException e) {
+      reportError(e);
+      gracefulExit();
+      return;
+    }
     catch (Throwable e) {
       LOG.error(e);
       reportError(e);
@@ -142,7 +147,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public void header() { }
 
   public void execute() throws Exception {
-    ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
                                                           appInfo.getFullApplicationName() +
                                                           " (build " +
@@ -163,9 +168,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     myHelpProvider.printHelpAndExit();
   }
 
-  @NotNull
-  private CommandLineInspectionProjectConfigurator.ConfiguratorContext configuratorContext(@NotNull Path projectPath,
-                                                                                           @Nullable AnalysisScope scope) {
+  private @NotNull CommandLineInspectionProjectConfigurator.ConfiguratorContext configuratorContext(@NotNull Path projectPath,
+                                                                                                    @Nullable AnalysisScope scope) {
     return new CommandLineInspectionProjectConfigurator.ConfiguratorContext() {
       @Override
       public @NotNull ProgressIndicator getProgressIndicator() {
@@ -210,8 +214,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
   }
 
-  @Nullable
-  protected Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
+  protected @Nullable Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
     throws InterruptedException, ExecutionException {
     VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(
       FileUtil.toSystemIndependentName(projectPath.toString()));
@@ -224,10 +227,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     ConversionService conversionService = ConversionService.getInstance();
     StringBuilder convertErrorBuffer = new StringBuilder();
     if (conversionService != null &&
-        conversionService.convertSilently(projectPath, createConversionListener(convertErrorBuffer)).openingIsCanceled()) {
+        conversionService.blockingConvertSilently(projectPath, createConversionListener(convertErrorBuffer)).openingIsCanceled()) {
       onFailure(convertErrorBuffer.toString());
       return null;
     }
+
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getExtensionList()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, null);
       if (configurator.isApplicable(context)) {
@@ -264,16 +268,14 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return project;
   }
 
-  @Nullable
   @VisibleForTesting
-  public final AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  public @Nullable AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
     SearchScope scope = getSearchScope(project);
     if (scope == null) return null;
     return new AnalysisScope(scope, project);
   }
 
-  @Nullable
-  protected SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  public @Nullable SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
 
     if (myAnalyzeChanges) {
       return getSearchScopeFromChangedFiles(project);
@@ -311,9 +313,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
   }
 
-  @NotNull
-  public SearchScope getSearchScopeFromChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
+  public @NotNull SearchScope getSearchScopeFromChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
     List<VirtualFile> files = getChangedFiles(project);
+    for (VirtualFile file : files) {
+      reportMessage(0, "modified file: " + file.getPath());
+    }
     return GlobalSearchScope.filesWithoutLibrariesScope(project, files);
   }
 
@@ -335,7 +339,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     reportConverter.projectData(project, rootLogDir.resolve("state0"));
 
     MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         updateProjectStructure(counter, reportConverter, project, rootLogDir);
@@ -354,15 +358,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     LOG.info("Project structure update written. Change number " + i);
   }
 
-  private List<VirtualFile> getChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
+  public static List<VirtualFile> getChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     CompletableFuture<List<VirtualFile>> future = new CompletableFuture<>();
     changeListManager.invokeAfterUpdateWithModal(false, null, () -> {
       try {
         List<VirtualFile> files = changeListManager.getAffectedFiles();
-        for (VirtualFile file : files) {
-          reportMessage(0, "modified file: " + file.getPath());
-        }
         future.complete(files);
       }
       catch (Throwable e) {
@@ -379,6 +380,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     int timeout = Registry.intValue("batch.inspections.startup.activities.timeout", 180);
     try {
       FutureKt.asCompletableFuture(StartupManager.getInstance(project).getAllActivitiesPassedFuture()).get(timeout, TimeUnit.MINUTES);
+      waitForInvokeLaterActivities();
       LOG.info("Startup activities finished");
     }
     catch (TimeoutException e) {
@@ -389,8 +391,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
   }
 
-  @NotNull
-  private GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
+  private @NotNull GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
     InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
     GlobalInspectionContextEx context = (GlobalInspectionContextEx)im.createNewGlobalContext();
     context.setExternalProfile(myInspectionProfile);
@@ -450,10 +451,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private static void waitForInvokeLaterActivities() {
-    ApplicationManager.getApplication().invokeAndWait(
-      () -> {
-      },
-      ModalityState.any());
+    for (int i = 0; i < 3; i++) {
+      ApplicationManager.getApplication().invokeAndWait(() -> { }, ModalityState.any());
+    }
   }
 
   private void runAnalysis(Project project,
@@ -703,7 +703,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (!project.isDisposed()) {
         if (Boolean.getBoolean("inspect.save.project.settings")) {
-          StoreUtil.saveSettings(project, true);
+          forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project, true);
         }
         ProjectManagerEx.getInstanceEx().forceCloseProject(project);
       }
@@ -908,9 +908,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       super.setText(text);
       if (text == null) return;
       switch (myVerboseLevel) {
-        case 0:
-          break;
-        case 1:
+        case 0 -> { }
+        case 1 -> {
           String prefix = getPrefix(text);
           if (prefix.equals(lastPrefix)) {
             reportMessageNoLineBreak(1, ".");
@@ -920,11 +919,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
             reportMessage(1, "");
             reportMessage(1, prefix);
           }
-          break;
-        case 2:
-          reportMessage(2, text);
-          break;
-        case 3:
+        }
+        case 2 -> reportMessage(2, text);
+        case 3 -> {
           int percent = (int)(getFraction() * 100);
           if (!isIndeterminate() && getFraction() > 0 && myLastPercent != percent && nestingLevel == 0) {
             // do not print duplicate "processing xx%"
@@ -933,7 +930,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
             String msg = getPrefix(text) + " " + percent + "%";
             reportMessage(2, msg);
           }
-          break;
+        }
       }
     }
 

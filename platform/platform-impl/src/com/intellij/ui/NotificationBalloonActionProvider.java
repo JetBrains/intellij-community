@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -13,11 +13,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ui.JBRectangle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +29,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class NotificationBalloonActionProvider implements BalloonImpl.ActionProvider {
+public final class NotificationBalloonActionProvider implements BalloonImpl.ActionProvider {
   private final BalloonImpl myBalloon;
   private final BalloonLayoutData myLayoutData;
   private final Component myRepaintPanel;
@@ -39,7 +37,6 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   private BalloonImpl.ActionButton myMoreButton;
   private BalloonImpl.ActionButton myCloseButton;
   private List<BalloonImpl.ActionButton> myActions;
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   private static final Rectangle CloseHoverBounds = new JBRectangle(5, 5, 12, 10);
 
@@ -51,13 +48,10 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     myBalloon = balloon;
     myRepaintPanel = repaintPanel;
     myNotification = notification;
-
-    Disposer.register(balloon, () -> myPopupState.hidePopup());
   }
 
-  @NotNull
   @Override
-  public List<BalloonImpl.ActionButton> createActions() {
+  public @NotNull List<BalloonImpl.ActionButton> createActions() {
     myActions = new ArrayList<>();
 
     if (!myLayoutData.showSettingButton) {
@@ -68,7 +62,9 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
         AllIcons.Actions.More, null,
         IdeBundle.message("tooltip.turn.notification.off"),
         event -> myBalloon.runWithSmartFadeoutPause(() -> {
-          showMorePopup();
+          if (!myBalloon.isDisposed()) {
+            showMorePopup();
+          }
         })) {
         @Override
         public void repaint() {
@@ -129,10 +125,6 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   }
 
   private void showMorePopup() {
-    if (!myPopupState.isHidden() || myPopupState.isRecentlyHidden()) {
-      return;
-    }
-
     DefaultActionGroup group = new MyActionGroup();
 
     if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(myNotification.getGroupId())) {
@@ -162,7 +154,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
 
     ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(myMoreButton), true, null, -1);
-    myPopupState.prepareToShow(popup);
+    Disposer.register(myBalloon, popup);
     popup.showUnderneathOf(myMoreButton);
   }
 
@@ -198,7 +190,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     }
   }
 
-  private static class MyActionGroup extends DefaultActionGroup implements TooltipDescriptionProvider {
+  private static final class MyActionGroup extends DefaultActionGroup implements TooltipDescriptionProvider {
     private MyActionGroup() {
       setPopup(true);
     }

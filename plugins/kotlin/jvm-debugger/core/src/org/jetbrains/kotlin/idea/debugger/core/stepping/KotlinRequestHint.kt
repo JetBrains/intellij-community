@@ -33,7 +33,7 @@ open class KotlinRequestHint(
     override fun isTheSameFrame(context: SuspendContextImpl) =
         super.isTheSameFrame(context) && (myInlineFilter === null || !myInlineFilter.isNestedInline(context))
 
-    override fun doStep(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl?, stepThread: ThreadReferenceProxyImpl?, size: Int, depth: Int) {
+    override fun doStep(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl?, stepThread: ThreadReferenceProxyImpl?, size: Int, depth: Int, commandToken: Any?) {
         if (depth == StepRequest.STEP_OUT) {
             val frameProxy = suspendContext?.frameProxy
             val location = frameProxy?.safeLocation()
@@ -42,12 +42,12 @@ open class KotlinRequestHint(
                 if (action !== KotlinStepAction.StepOut) {
                     val command = action.createCommand(debugProcess, suspendContext, false)
                     val hint = command.getHint(suspendContext, stepThread, this)!!
-                    command.step(suspendContext, stepThread, hint)
+                    command.step(suspendContext, stepThread, hint, commandToken)
                     return
                 }
             }
         }
-        super.doStep(debugProcess, suspendContext, stepThread, size, depth)
+        super.doStep(debugProcess, suspendContext, stepThread, size, depth, commandToken)
     }
 }
 
@@ -56,8 +56,9 @@ class KotlinStepOverRequestHint(
     stepThread: ThreadReferenceProxyImpl,
     suspendContext: SuspendContextImpl,
     private val filter: KotlinMethodFilter,
-    parentHint: RequestHint?
-) : RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OVER, filter, parentHint) {
+    parentHint: RequestHint?,
+    stepSize: Int
+) : RequestHint(stepThread, suspendContext, stepSize, StepRequest.STEP_OVER, filter, parentHint) {
     private companion object {
         private val LOG = Logger.getInstance(KotlinStepOverRequestHint::class.java)
     }
@@ -142,11 +143,7 @@ class KotlinStepOverRequestHint(
             }
         }
 
-        if (endArgs[endArgs.size - 1].descriptor != "Ljava/lang/Object;") {
-            return false
-        }
-
-        return true
+        return endArgs[endArgs.size - 1].descriptor == "Ljava/lang/Object;"
     }
 
     private fun installCoroutineResumedBreakpoint(context: SuspendContextImpl): Boolean {
@@ -158,6 +155,8 @@ class KotlinStepOverRequestHint(
         return CoroutineBreakpointFacility.installCoroutineResumedBreakpoint(context, location, method)
     }
 }
+
+interface StopOnReachedMethodFilter
 
 class KotlinStepIntoRequestHint(
     stepThread: ThreadReferenceProxyImpl,
@@ -187,6 +186,12 @@ class KotlinStepIntoRequestHint(
                 lastWasKotlinFakeLineNumber = false
                 return STOP
             }
+
+            val filter = methodFilter
+            if (filter is StopOnReachedMethodFilter && filter.locationMatches(context.debugProcess, location)) {
+                return STOP
+            }
+
             return super.getNextStepDepth(context)
         } catch (ignored: VMDisconnectedException) {
         } catch (e: EvaluateException) {

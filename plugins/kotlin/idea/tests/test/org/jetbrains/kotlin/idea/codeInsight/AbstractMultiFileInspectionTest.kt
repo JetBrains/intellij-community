@@ -23,7 +23,7 @@ abstract class AbstractMultiFileInspectionTest : KotlinMultiFileTestCase() {
 
     protected fun doTest(path: String) {
         val configFile = File(path)
-        val config = JsonParser().parse(FileUtil.loadFile(configFile, true)) as JsonObject
+        val config = JsonParser.parseString(FileUtil.loadFile(configFile, true)) as JsonObject
 
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         val withFullJdk = config["withFullJdk"]?.asBoolean ?: false

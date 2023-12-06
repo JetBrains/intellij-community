@@ -2,7 +2,7 @@
 
 package sample
 
-actual data class <!LINE_MARKER("descr='Has expects in common module'")!>A<!>(actual val x: Int, actual val y: Double, val t: String)  {
+actual data class <!LINE_MARKER("descr='Has expects in common module'; targets=[(text=A; container=common); (text=x; container=common); (text=y; container=common)]")!>A<!>(actual val x: Int, actual val y: Double, val t: String)  {
     actual fun <!LINE_MARKER("descr='Has expects in common module'")!>commonFun<!>() {}
     fun platformFun() {}
 

@@ -1,0 +1,40 @@
+<idea-plugin package="com.intellij.platform.ide.newUiOnboarding">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.ide.newUiOnboarding.step"
+                    beanClass="com.intellij.util.KeyedLazyInstanceEP"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.ide.newUiOnboarding"
+                    beanClass="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBean"
+                    dynamic="true">
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.ide.newUiOnboarding">
+    <step key="mainMenu" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.MainMenuStep"/>
+    <step key="projectWidget" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.ProjectWidgetStep"/>
+    <step key="runWidget" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.RunWidgetStep"/>
+    <step key="toolWindowLayouts" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.ToolWindowLayoutsStep"/>
+    <step key="moreToolWindows" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.MoreToolWindowsStep"/>
+    <step key="navigationBar" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.NavigationBarStep"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStartupActivity"/>
+    <meetNewUiCustomization implementation="com.intellij.platform.ide.newUiOnboarding.MeetNewUiOnboardingCustomization"/>
+    <registryKey key="ide.experimental.ui.onboarding" defaultValue="true"
+                 description="Show the dialog on startup after New UI switch with a proposal to start the onboarding."/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStatistics"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepIdRule"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingAppListener" topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
+  <actions resource-bundle="messages.NewUiOnboardingBundle">
+    <action internal="true" id="StartNewUiOnboarding" class="com.intellij.platform.ide.newUiOnboarding.StartNewUiOnboardingAction"/>
+  </actions>
+</idea-plugin>

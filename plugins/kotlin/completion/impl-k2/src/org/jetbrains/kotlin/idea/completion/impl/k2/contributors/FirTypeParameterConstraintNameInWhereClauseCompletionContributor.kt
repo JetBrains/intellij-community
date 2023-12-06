@@ -8,23 +8,26 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirTypeConstraintNameInWhereClausePositionContext
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbolAndInvokeCompletion
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeConstraintNameInWhereClausePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirTypeParameterConstraintNameInWhereClauseCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
-) : FirCompletionContributorBase<FirTypeConstraintNameInWhereClausePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinTypeConstraintNameInWhereClausePositionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(
-        positionContext: FirTypeConstraintNameInWhereClausePositionContext,
-        weighingContext: WeighingContext
+    context(KtAnalysisSession)
+    override fun complete(
+        positionContext: KotlinTypeConstraintNameInWhereClausePositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
     ) {
         val ownerSymbol = positionContext.typeParametersOwner.getSymbol() as? KtSymbolWithTypeParameters ?: return
         ownerSymbol.typeParameters.forEach { typeParameter ->
@@ -49,7 +52,7 @@ private object TypeParameterInWhenClauseInsertionHandler : InsertHandler<LookupE
         val name = lookupElement.shortName.render()
         context.document.replaceString(context.startOffset, context.tailOffset, name)
         context.commitDocument()
-        context.insertSymbolAndInvokeCompletion(symbol = " : ")
+        context.insertStringAndInvokeCompletion(stringToInsert = " : ")
     }
 }
 

@@ -294,7 +294,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
 
   private fun VcsLogData.getCommitMetadata(hash: Hash): VcsCommitMetadata {
     val index = getCommitIndex(hash, roots.single())
-    return topCommitsCache[index] ?: miniDetailsGetter.getCommitData(index)
+    return topCommitsCache[index] ?: miniDetailsGetter.getCachedDataOrPlaceholder(index)
   }
 
   override val helpLinks: Map<String, String> get() = mapOf(

@@ -77,7 +77,7 @@ internal object MessageFactory {
           "callback" -> {
             val id = content.getAttributeValue("id")
             if (id != null) {
-              val callback = LearningUiManager.getAndClearCallback(id.toInt())
+              val callback = LearningUiManager.getAndClearCallback(id)
               if (callback != null) {
                 LinkTextPart(text, callback)
               }
@@ -112,7 +112,12 @@ internal object MessageFactory {
   fun convertToGotItFormat(@Language("HTML") htmlText: String): GotItTextBuilder.() -> @Nls String = {
     if (htmlText.contains('\n')) error("GotIt tooltip can contain only single paragraph, provided text:\n$htmlText")
 
-    val element: Element = parseXml(htmlText)
+    // remove surrounding spaces from shortcut and code elements,
+    // because GotIt will configure the insets itself
+    val spaces = "${StringUtil.NON_BREAK_SPACE}${StringUtil.NON_BREAK_SPACE}"
+    val adjustedText = htmlText.replace("$spaces<", "<").replace(">$spaces", ">")
+
+    val element: Element = parseXml(adjustedText)
     val builder = StringBuilder()
 
     for (content in element.content) {
@@ -137,7 +142,7 @@ internal object MessageFactory {
           "callback" -> {
             val id = content.getAttributeValue("id")
             if (id != null) {
-              val callback = LearningUiManager.getAndClearCallback(id.toInt())
+              val callback = LearningUiManager.getAndClearCallback(id)
               if (callback != null) {
                 this.link(text, callback)
               }
@@ -155,11 +160,11 @@ internal object MessageFactory {
             val keyStroke = KeyStroke.getKeyStroke(text) ?: error("Failed to parse key stroke, element: $element")
             this.shortcut(keyStroke)
           }
+          "code" -> this.code(text)
           "ide" -> LessonUtil.productName
 
           "icon" -> error("Need to return reflection-based icon processing")
           "illustration" -> error("Illustrations are not supported in Features Trainer GotIt tooltips for now")
-          "code" -> error("Code elements are not supported in GotIt tooltips for now")
           "shortcut" -> error("Use 'raw_shortcut' with providing key stroke instead, element: $element")
           else -> error("Unknown tag: ${content.name}")
         }

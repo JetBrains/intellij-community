@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
@@ -28,7 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class CopyElementAction extends AnAction {
+public final class CopyElementAction extends AnAction implements DumbAware {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -58,12 +45,12 @@ public class CopyElementAction extends AnAction {
       }
     }
     else {
-      elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     }
     doCopy(elements, defaultTargetDirectory);
   }
 
-  protected void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
+  private static void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     CopyHandler.doCopy(elements, defaultTargetDirectory);
   }
 
@@ -86,7 +73,7 @@ public class CopyElementAction extends AnAction {
     }
   }
 
-  protected void updateForEditor(DataContext dataContext, Presentation presentation) {
+  private static void updateForEditor(DataContext dataContext, Presentation presentation) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setVisible(false);
@@ -115,7 +102,7 @@ public class CopyElementAction extends AnAction {
     }
   }
 
-  protected void updateForToolWindow(DataContext dataContext, Presentation presentation) {
+  private static void updateForToolWindow(DataContext dataContext, Presentation presentation) {
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     Ref<@NlsActions.ActionText String> actionName = new Ref<>();
     presentation.setEnabled(elements != null && CopyHandler.canCopy(elements, actionName));

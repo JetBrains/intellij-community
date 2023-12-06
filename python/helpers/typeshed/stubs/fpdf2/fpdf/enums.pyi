@@ -1,21 +1,34 @@
-from _typeshed import Incomplete, Self
-from enum import Enum, IntEnum
+from enum import Enum, Flag, IntEnum, IntFlag
+from typing_extensions import Literal, Self
 
 from .syntax import Name
 
-class DocumentState(IntEnum):
-    UNINITIALIZED: int
-    READY: int
-    GENERATING_PAGE: int
-    CLOSED: int
+class SignatureFlag(IntEnum):
+    SIGNATURES_EXIST: int
+    APPEND_ONLY: int
 
 class CoerciveEnum(Enum):
     @classmethod
-    def coerce(cls: type[Self], value: Self | str) -> Self: ...
+    def coerce(cls, value: Self | str) -> Self: ...
 
 class CoerciveIntEnum(IntEnum):
     @classmethod
-    def coerce(cls: type[Self], value: Self | str | int) -> Self: ...
+    def coerce(cls, value: Self | str | int) -> Self: ...
+
+class CoerciveIntFlag(IntFlag):
+    @classmethod
+    def coerce(cls, value: Self | str | int) -> Self: ...
+
+class WrapMode(CoerciveEnum):
+    WORD: str
+    CHAR: str
+
+class CharVPos(CoerciveEnum):
+    SUP: str
+    SUB: str
+    NOM: str
+    DENOM: str
+    LINE: str
 
 class Align(CoerciveEnum):
     C: str
@@ -23,6 +36,34 @@ class Align(CoerciveEnum):
     L: str
     R: str
     J: str
+
+class TextEmphasis(CoerciveIntFlag):
+    B: int
+    I: int
+    U: int
+
+    @property
+    def style(self) -> str: ...
+
+class MethodReturnValue(CoerciveIntFlag):
+    PAGE_BREAK: int
+    LINES: int
+    HEIGHT: int
+
+class TableBordersLayout(CoerciveEnum):
+    ALL: str
+    NONE: str
+    INTERNAL: str
+    MINIMAL: str
+    HORIZONTAL_LINES: str
+    NO_HORIZONTAL_LINES: str
+    SINGLE_TOP_LINE: str
+
+class TableCellFillMode(CoerciveEnum):
+    NONE: str
+    ALL: str
+    ROWS: str
+    COLUMNS: str
 
 class RenderStyle(CoerciveEnum):
     D: str
@@ -122,6 +163,11 @@ class AnnotationName(CoerciveEnum):
     NEW_PARAGRAPH: Name
     INSERT: Name
 
+class FileAttachmentAnnotationName(CoerciveEnum):
+    PUSH_PIN: Name
+    GRAPH_PUSH_PIN: Name
+    PAPERCLIP_TAG: Name
+
 class IntersectionRule(CoerciveEnum):
     NONZERO: str
     EVENODD: str
@@ -166,4 +212,27 @@ class Corner(CoerciveEnum):
     BOTTOM_RIGHT: str
     BOTTOM_LEFT: str
 
-__pdoc__: Incomplete
+class FontDescriptorFlags(Flag):
+    FIXED_PITCH: int
+    SYMBOLIC: int
+    ITALIC: int
+    FORCE_BOLD: int
+
+class AccessPermission(IntFlag):
+    PRINT_LOW_RES: int
+    MODIFY: int
+    COPY: int
+    ANNOTATION: int
+    FILL_FORMS: int
+    COPY_FOR_ACCESSIBILITY: int
+    ASSEMBLE: int
+    PRINT_HIGH_RES: int
+    @classmethod
+    def all(cls) -> int: ...
+    @classmethod
+    def none(cls) -> Literal[0]: ...
+
+class EncryptionMethod(Enum):
+    NO_ENCRYPTION: int
+    RC4: int
+    AES_128: int

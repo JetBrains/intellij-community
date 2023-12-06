@@ -73,8 +73,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(final boolean expanded) {
+  public @Nullable Icon getIcon(final boolean expanded) {
     final PsiElement element = getPsiElement();
     if (element != null && element.isValid()) {
       return element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
@@ -94,13 +93,11 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  @Nullable
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return myID.getElement();
   }
 
-  @Nullable
-  public PsiFile getContainingFile() {
+  public @Nullable PsiFile getContainingFile() {
     return myID.getContainingFile();
   }
 
@@ -142,14 +139,12 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  @NotNull
-  public synchronized Collection<RefElement> getOutReferences() {
+  public synchronized @NotNull Collection<RefElement> getOutReferences() {
     return (myOutReferences == null) ? ContainerUtil.emptyList() : Collections.unmodifiableList(myOutReferences);
   }
 
   @Override
-  @NotNull
-  public synchronized Collection<RefElement> getInReferences() {
+  public synchronized @NotNull Collection<RefElement> getInReferences() {
     return (myInReferences == null) ? ContainerUtil.emptyList() : Collections.unmodifiableList(myInReferences);
   }
 
@@ -215,8 +210,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  @NotNull
-  public RefElement getContainingEntry() {
+  public @NotNull RefElement getContainingEntry() {
     return this;
   }
 
@@ -243,8 +237,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }
   }
 
-  @Nullable
-  public String getURL() {
+  public @Nullable String getURL() {
     final PsiElement element = getPsiElement();
     if (element == null || !element.isPhysical()) return null;
     final PsiFileSystemItem containingFile = element instanceof PsiFileSystemItem

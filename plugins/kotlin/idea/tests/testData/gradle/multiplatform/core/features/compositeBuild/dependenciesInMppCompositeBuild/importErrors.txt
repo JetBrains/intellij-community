@@ -1,0 +1,4 @@
+Could not resolve <unknown coordinates> for :includedBuild:consumer:iosArm64Main
+Could not resolve <unknown coordinates> for :includedBuild:consumer:iosArm64Test
+Could not resolve <unknown coordinates> for :includedBuild:consumer:iosX64Main
+Could not resolve <unknown coordinates> for :includedBuild:consumer:iosX64Test

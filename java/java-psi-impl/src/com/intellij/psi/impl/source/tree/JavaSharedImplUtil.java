@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class JavaSharedImplUtil {
@@ -40,20 +41,24 @@ public final class JavaSharedImplUtil {
 
   public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
     PsiType type = typeElement.getType();
+    boolean ellipsisType = type instanceof PsiEllipsisType;
 
     List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor, stopAt);
     if (allAnnotations == null) return null;
-    for (PsiAnnotation[] annotations : allAnnotations) {
-      type = type.createArrayType().annotate(TypeAnnotationProvider.Static.create(annotations));
+    for (int i = 0, size = allAnnotations.size(); i < size; i++) {
+      type = ((ellipsisType && i == size - 1) ? new PsiEllipsisType(type) : type.createArrayType())
+        .annotate(TypeAnnotationProvider.Static.create(allAnnotations.get(i)));
     }
 
     return type;
   }
 
-  // collects annotations bound to C-style arrays
+  /**
+   * Collects annotations bound to C-style arrays.
+   */
   @Nullable
   private static List<PsiAnnotation[]> collectAnnotations(@NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
-    List<PsiAnnotation[]> annotations = new SmartList<>();
+    List<PsiAnnotation[]> annotations = Collections.emptyList();
 
     List<PsiAnnotation> current = null;
     boolean found = stopAt == null;
@@ -69,6 +74,7 @@ public final class JavaSharedImplUtil {
       }
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
+        if (annotations == Collections.EMPTY_LIST) annotations = new SmartList<>();
         annotations.add(0, current == null ? PsiAnnotation.EMPTY_ARRAY : ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
         current = null;
         if (stop) return annotations;
@@ -84,7 +90,7 @@ public final class JavaSharedImplUtil {
 
   @NotNull
   public static PsiType createTypeFromStub(@NotNull PsiModifierListOwner owner, @NotNull TypeInfo typeInfo) {
-    String typeText = TypeInfo.createTypeText(typeInfo);
+    String typeText = typeInfo.text();
     assert typeText != null : owner;
     PsiType type = JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeFromText(typeText, owner);
     type = applyAnnotations(type, owner.getModifierList());
@@ -132,6 +138,17 @@ public final class JavaSharedImplUtil {
     return type.annotate(provider);
   }
 
+  /**
+   * Normalizes brackets, i.e. any brackets after the identifier of the variable are moved to the correct
+   * position in the type element of the variable.
+   * For example <br>
+   * {@code String @One [] array @Two [] = null;}<br>
+   * becomes<br>
+   * {@code String @Two [] @One [] array = null;}.<br>
+   * See <a href ="https://docs.oracle.com/javase/specs/jls/se20/html/jls-10.html#jls-10.2">JLS 10.2</a>
+   *
+   * @param variable  an array variable.
+   */
   public static void normalizeBrackets(@NotNull PsiVariable variable) {
     CompositeElement variableElement = (CompositeElement)variable.getNode();
 
@@ -178,11 +195,15 @@ public final class JavaSharedImplUtil {
         newType1.rawAddChildren(newType);
         newType = newType1;
       }
-      for (int i = 0; i < arrayCount; i++) {
-        annotationElementsToMove.get(i).forEach(newType::rawAddChildren);
-
-        newType.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
-        newType.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
+      for (int i = arrayCount - 1; i >= 0; i--) {
+        // add in reverse so the anchor can remain the same
+        TreeElement anchor = newType.getFirstChildNode();
+        anchor.rawInsertAfterMe(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
+        anchor.rawInsertAfterMe(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
+        List<AnnotationElement> annotations = (List<AnnotationElement>)annotationElementsToMove.get(i);
+        for (int j = annotations.size() - 1; j >= 0; j--) {
+          anchor.rawInsertAfterMe(annotations.get(j));
+        }
       }
       newType.acceptTree(new GeneratedMarkerVisitor());
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
@@ -194,7 +215,7 @@ public final class JavaSharedImplUtil {
   public static PsiElement getPatternVariableDeclarationScope(@NotNull PsiPatternVariable variable) {
     PsiElement parent = variable.getPattern().getParent();
     if (!(parent instanceof PsiInstanceOfExpression) && !(parent instanceof PsiCaseLabelElementList) && !(parent instanceof PsiPattern)
-        && !(parent instanceof PsiDeconstructionList) && !(parent instanceof PsiPatternGuard)) {
+        && !(parent instanceof PsiDeconstructionList)) {
       return parent;
     }
     return getInstanceOfPartDeclarationScope(parent);
@@ -241,7 +262,7 @@ public final class JavaSharedImplUtil {
         }
         return nextParent.getParent();
       }
-      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList || nextParent instanceof PsiPatternGuard ||
+      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList ||
           (parent instanceof PsiPattern && nextParent instanceof PsiInstanceOfExpression) ||
           (parent instanceof PsiPattern && nextParent instanceof PsiDeconstructionList)) {
         continue;

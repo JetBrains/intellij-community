@@ -1,13 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.editor.impl.jcef
 
-import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -17,19 +14,14 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.ScrollBarPainter
 import com.intellij.ui.jcef.*
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.ui.UIUtil
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -39,7 +31,7 @@ import org.intellij.images.editor.ImageZoomModel
 import org.intellij.images.editor.impl.ImageFileEditorState
 import org.intellij.images.options.OptionsManager
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions
-import org.intellij.images.thumbnail.actions.ShowBorderAction
+import org.intellij.images.thumbnail.actions.ShowBorderAction.isBorderVisible
 import org.intellij.images.ui.ImageComponentDecorator
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
@@ -52,7 +44,6 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -64,6 +55,9 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
     private const val HOST_NAME = "localhost"
     private const val PROTOCOL = "http"
+
+    private const val OVERLAY_SCROLLBARS_CSS_PATH = "/overlayscrollbars.css"
+    private const val OVERLAY_SCROLLBARS_JS_PATH = "/overlayscrollbars.browser.es6.js"
 
     private const val VIEWER_PATH = "/index.html"
     private const val IMAGE_PATH = "/image"
@@ -92,6 +86,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
   private val myUIComponent: JCefImageViewerUI
   private val myViewerStateJSQuery: JBCefJSQuery
   private val myRequestHandler: CefRequestHandler
+  private val myLoadHandler: CefLoadHandler
 
   private var myState = ViewerState()
   private var myEditorState: ImageFileEditorState = ImageFileEditorState(
@@ -136,6 +131,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
   override fun dispose() {
     ourCefClient.removeRequestHandler(myRequestHandler, myBrowser.cefBrowser)
+    ourCefClient.removeLoadHandler(myLoadHandler, myBrowser.cefBrowser)
     myViewerStateJSQuery.clearHandlers()
     myDocument.removeDocumentListener(this)
   }
@@ -191,8 +187,16 @@ class JCefImageViewer(private val myFile: VirtualFile,
       }
     }
 
+    myRequestHandler.addResource(OVERLAY_SCROLLBARS_CSS_PATH) {
+      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceCSS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+    }
+
+    myRequestHandler.addResource(OVERLAY_SCROLLBARS_JS_PATH) {
+      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceJS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+    }
+
     myRequestHandler.addResource(SCROLLBARS_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(buildScrollbarsStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(CHESSBOARD_CSS_PATH) {
@@ -216,7 +220,8 @@ class JCefImageViewer(private val myFile: VirtualFile,
       var resourceHandler: CefStreamResourceHandler? = null
       stream?.let {
         try {
-          resourceHandler = CefStreamResourceHandler(it, mimeType, this@JCefImageViewer)
+          resourceHandler = CefStreamResourceHandler(it, mimeType, this@JCefImageViewer,
+                                                     mapOf("Content-Security-Policy" to "script-src 'none'"))
         }
         catch (_: IncorrectOperationException) { // The viewer has been disposed just return null that will reject all requests
         }
@@ -239,7 +244,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
         myState = jsonParser.decodeFromString(s)
       }
       catch (_: Exception) {
-        myUIComponent.showError()
+        SwingUtilities.invokeLater { myUIComponent.showError() }
         return@addHandler JBCefJSQuery.Response(null, 255, "Failed to parse the viewer state")
       }
 
@@ -269,7 +274,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
       JBCefJSQuery.Response(null)
     }
 
-    ourCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
+    myLoadHandler = object : CefLoadHandlerAdapter() {
       override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
         if (frame.isMain) {
           reloadStyles()
@@ -277,10 +282,11 @@ class JCefImageViewer(private val myFile: VirtualFile,
           execute("setImageUrl('$IMAGE_URL');")
           isGridVisible = myEditorState.isGridVisible
           isTransparencyChessboardVisible = myEditorState.isBackgroundVisible
-          setBorderVisible(ShowBorderAction.isBorderVisible())
+          setBorderVisible(isBorderVisible())
         }
       }
-    }, myBrowser.cefBrowser)
+    }
+    ourCefClient.addLoadHandler(myLoadHandler, myBrowser.cefBrowser)
 
     if (isDebugMode()) {
       myBrowser.loadURL("$VIEWER_URL?debug")
@@ -314,102 +320,6 @@ class JCefImageViewer(private val myFile: VirtualFile,
   }
 
   private fun colorToCSS(color: Color) = "rgba(${color.red}, ${color.blue}, ${color.green}, ${color.alpha / 255.0})"
-
-  private fun getColorCSS(key: ColorKey): String {
-    val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
-    return (colorScheme.getColor(key) ?: key.defaultColor).let {
-      "rgba(${it.red}, ${it.blue}, ${it.green}, ${getScrollbarAlpha(key) ?: (it.alpha / 255.0)})"
-    }
-  }
-
-  private fun buildScrollbarsStyle(): String {
-    val background = getColorCSS(ScrollBarPainter.BACKGROUND)
-    val trackColor = getColorCSS(ScrollBarPainter.TRACK_OPAQUE_BACKGROUND)
-    val trackColorHovered = getColorCSS(ScrollBarPainter.TRACK_OPAQUE_HOVERED_BACKGROUND)
-    val thumbColor = getColorCSS(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND)
-    val thumbHoveredColor = getColorCSS(ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND)
-    val thumbBorder = getColorCSS(ScrollBarPainter.THUMB_OPAQUE_FOREGROUND)
-    val thumbBorderHovered = getColorCSS(ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND)
-
-    val scale = UISettingsUtils.instance.currentIdeScale
-    val trackSizePx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 14 else 10)) * scale
-    val thumbBorderSizePx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 3 else 1)) * scale
-    val thumbRadiusPx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 14 else 0)) * scale
-
-    return /*language=css*/ """
-      ::-webkit-scrollbar {
-        width: ${trackSizePx}px;
-        height: ${trackSizePx}px;
-        background-color: $background;
-      }
-      
-      /*!* background of the scrollbar except button or resizer *!*/
-      ::-webkit-scrollbar-track {
-        background-color:$trackColor;
-      }
-      
-      ::-webkit-scrollbar-track:hover {
-        background-color:$trackColorHovered;
-      }
-      
-      /*!* scrollbar itself *!*/
-      ::-webkit-scrollbar-thumb {
-        background-color:$thumbColor;
-        border-radius:${thumbRadiusPx}px;
-        border-width: ${thumbBorderSizePx}px;
-        border-style: solid;
-        border-color: $trackColor;
-        background-clip: padding-box;
-        outline: 1px solid $thumbBorder;
-        outline-offset: -${thumbBorderSizePx}px;
-      }
-      
-      ::-webkit-scrollbar-thumb:hover {
-        background-color:$thumbHoveredColor;
-        border-radius:${thumbRadiusPx}px;
-        border-width: ${thumbBorderSizePx}px;
-        border-style: solid;
-        border-color: $trackColor;
-        background-clip: padding-box;
-        outline: 1px solid $thumbBorderHovered;
-        outline-offset: -${thumbBorderSizePx}px;
-      }
-      
-      /* set button(top and bottom of the scrollbar) */
-      ::-webkit-scrollbar-button {
-        display:none;
-      }
-      
-      ::-webkit-scrollbar-corner {
-        background-color: $background;
-      }
-    """.trimIndent()
-  }
-
-  private fun getScrollbarAlpha(colorKey: ColorKey): Int? {
-    val contrastElementsKeys = listOf(
-      ScrollBarPainter.THUMB_OPAQUE_FOREGROUND,
-      ScrollBarPainter.THUMB_OPAQUE_BACKGROUND,
-      ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND,
-      ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND,
-      ScrollBarPainter.THUMB_FOREGROUND,
-      ScrollBarPainter.THUMB_BACKGROUND,
-      ScrollBarPainter.THUMB_HOVERED_FOREGROUND,
-      ScrollBarPainter.THUMB_HOVERED_BACKGROUND
-    )
-
-    if (!UISettings.shadowInstance.useContrastScrollbars || colorKey !in contrastElementsKeys) return null
-
-    val lightAlpha = if (SystemInfo.isMac) 120 else 160
-    val darkAlpha = if (SystemInfo.isMac) 255 else 180
-    val alpha = Registry.intValue("contrast.scrollbars.alpha.level")
-    return if (alpha > 0) {
-      Integer.min(alpha, 255)
-    }
-    else {
-      if (UIUtil.isUnderDarcula()) darkAlpha else lightAlpha
-    }
-  }
 
   private fun buildChessboardStyle(): String {
     val options = OptionsManager.getInstance().options.editorOptions.transparencyChessboardOptions

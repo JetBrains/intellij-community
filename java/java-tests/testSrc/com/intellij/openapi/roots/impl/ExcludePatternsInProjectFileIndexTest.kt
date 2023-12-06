@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class ExcludePatternsInProjectFileIndexTest {
   @JvmField
   @RegisterExtension
@@ -118,20 +118,10 @@ class ExcludePatternsInProjectFileIndexTest {
     val txt2 = projectModel.baseProjectDir.newVirtualFile("content/library/dir/a.txt")
     val java = projectModel.baseProjectDir.newVirtualFile("content/library/A.java")
     registerLibrary(libraryRoot) { file: VirtualFile -> "dir".contentEquals(file.nameSequence) }
-    if (WorkspaceFileIndexEx.IS_ENABLED) {
-      fileIndex.assertInModule(txt2, module, contentRoot, EXCLUDED)
-    }
-    else {
-      fileIndex.assertInModule(txt2, module, contentRoot)
-    }
+    fileIndex.assertInModule(txt2, module, contentRoot, EXCLUDED)
     fileIndex.assertInModule(txt1, module, contentRoot, IN_CONTENT or IN_LIBRARY or IN_SOURCE or IN_LIBRARY_SOURCE_ONLY)
     fileIndex.assertInModule(java, module, contentRoot, IN_CONTENT or IN_LIBRARY or IN_SOURCE or IN_LIBRARY_SOURCE_ONLY)
-    if (WorkspaceFileIndexEx.IS_ENABLED) {
-      assertIndexableContent(listOf(java, txt1), listOf(txt2))
-    }
-    else {
-      assertIndexableContent(listOf(java, txt1, txt2), null)
-    }
+    assertIndexableContent(listOf(java, txt1), listOf(txt2))
   }
 
   @Test
@@ -161,16 +151,9 @@ class ExcludePatternsInProjectFileIndexTest {
     val txt = projectModel.baseProjectDir.newVirtualFile("content/library/a.txt")
     val java = projectModel.baseProjectDir.newVirtualFile("content/library/A.java")
     registerLibrary(myLibraryRoot) { file: VirtualFile -> file == myLibraryRoot }
-    if (WorkspaceFileIndexEx.IS_ENABLED) {
-      fileIndex.assertInModule(txt, module, contentRoot, EXCLUDED)
-      fileIndex.assertInModule(java, module, contentRoot, EXCLUDED)
-      assertIndexableContent(null, listOf(txt, java))
-    }
-    else {
-      fileIndex.assertInModule(txt, module, contentRoot, EXCLUDED)
-      fileIndex.assertInModule(java, module, contentRoot, EXCLUDED)
-      assertIndexableContent(listOf(txt, java), null)
-    }
+    fileIndex.assertInModule(txt, module, contentRoot, EXCLUDED)
+    fileIndex.assertInModule(java, module, contentRoot, EXCLUDED)
+    assertIndexableContent(null, listOf(txt, java))
   }
 
   @Test

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class GotoSymbolAction extends SearchEverywhereBaseAction implements DumbAware {
+public final class GotoSymbolAction extends SearchEverywhereBaseAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -23,7 +23,7 @@ public class GotoSymbolAction extends SearchEverywhereBaseAction implements Dumb
       showInSearchEverywherePopup(tabID, e, true, true);
     }
     else {
-      GotoClassAction.invokeGoToFile(project, e);
+      GotoClassAction.invokeGoToFile(project, e, this);
     }
   }
 

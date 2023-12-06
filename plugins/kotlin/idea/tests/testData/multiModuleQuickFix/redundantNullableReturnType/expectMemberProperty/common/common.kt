@@ -1,6 +1,7 @@
 // "Make not-nullable" "false"
 // TOOL: org.jetbrains.kotlin.idea.inspections.RedundantNullableReturnTypeInspection
+// IGNORE_K2
 
 expect class MyClass {
-    actual val prop: Any?<caret>
+    val prop: Any?<caret>
 }

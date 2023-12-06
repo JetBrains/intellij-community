@@ -22,8 +22,8 @@ public class Splitter extends JPanel implements Splittable {
   private static final Icon SplitGlueH = EmptyIcon.create(6, 17);
   private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
   private static final Logger LOG = Logger.getInstance(Splitter.class);
-  @NonNls public static final String PROP_PROPORTION = "proportion";
-  @NonNls public static final String PROP_ORIENTATION = "orientation";
+  public static final @NonNls String PROP_PROPORTION = "proportion";
+  public static final @NonNls String PROP_ORIENTATION = "orientation";
 
   private int myDividerWidth;
   /**
@@ -54,8 +54,7 @@ public class Splitter extends JPanel implements Splittable {
     HONOR_THE_FIRST_MIN_SIZE,
     HONOR_THE_SECOND_MIN_SIZE
   }
-  @NotNull
-  private LackOfSpaceStrategy myLackOfSpaceStrategy = LackOfSpaceStrategy.SIMPLE_RATIO;
+  private @NotNull LackOfSpaceStrategy myLackOfSpaceStrategy = LackOfSpaceStrategy.SIMPLE_RATIO;
 
   public enum DividerPositionStrategy {
     KEEP_PROPORTION, //default
@@ -63,8 +62,7 @@ public class Splitter extends JPanel implements Splittable {
     KEEP_SECOND_SIZE,
     DISTRIBUTE
   }
-  @NotNull
-  private DividerPositionStrategy myDividerPositionStrategy = DividerPositionStrategy.KEEP_PROPORTION;
+  private @NotNull DividerPositionStrategy myDividerPositionStrategy = DividerPositionStrategy.KEEP_PROPORTION;
 
 
   /**
@@ -177,16 +175,14 @@ public class Splitter extends JPanel implements Splittable {
   public void setLackOfSpaceStrategy(@NotNull LackOfSpaceStrategy strategy) {
     myLackOfSpaceStrategy = strategy;
   }
-  @NotNull
-  public LackOfSpaceStrategy getLackOfSpaceStrategy() {
+  public @NotNull LackOfSpaceStrategy getLackOfSpaceStrategy() {
     return myLackOfSpaceStrategy;
   }
   public void setDividerPositionStrategy(@NotNull DividerPositionStrategy dividerPositionStrategy) {
     myDividerPositionStrategy = dividerPositionStrategy;
   }
 
-  @NotNull
-  public DividerPositionStrategy getDividerPositionStrategy() {
+  public @NotNull DividerPositionStrategy getDividerPositionStrategy() {
     return myDividerPositionStrategy;
   }
 
@@ -723,9 +719,8 @@ public class Splitter extends JPanel implements Splittable {
     return view == null ? c : view;
   }
 
-  @NotNull
   @Override
-  public Component asComponent() {
+  public @NotNull Component asComponent() {
     return this;
   }
 

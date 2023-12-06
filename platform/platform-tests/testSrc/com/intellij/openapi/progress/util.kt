@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.util.TEST_TIMEOUT_MS
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
@@ -19,20 +20,6 @@ import kotlin.coroutines.resumeWithException
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
-const val TEST_TIMEOUT_MS: Long = 1000
-
-fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
-  runBlocking {
-    try {
-      withTimeout(TEST_TIMEOUT_MS, action)
-    }
-    catch (e: TimeoutCancellationException) {
-      println(dumpCoroutines())
-      throw e
-    }
-  }
-}
-
 fun neverEndingStory(): Nothing {
   while (true) {
     Cancellation.checkCancelled()
@@ -43,7 +30,7 @@ fun neverEndingStory(): Nothing {
 fun withRootJob(action: (rootJob: Job) -> Unit): Job {
   @OptIn(DelicateCoroutinesApi::class)
   return GlobalScope.async {
-    blockingContext {
+    blockingContextScope {
       val currentJob = requireNotNull(Cancellation.currentJob())
       action(currentJob)
     }
@@ -52,12 +39,6 @@ fun withRootJob(action: (rootJob: Job) -> Unit): Job {
 
 fun Semaphore.timeoutWaitUp() {
   assertTrue(waitFor(TEST_TIMEOUT_MS))
-}
-
-suspend fun KSemaphore.timeoutAcquire() {
-  withTimeout(TEST_TIMEOUT_MS) {
-    acquire()
-  }
 }
 
 fun <X> Future<X>.timeoutGet(): X {
@@ -81,20 +62,8 @@ fun waitAssertCompletedWithCancellation(future: Future<*>) {
   waitAssertCompletedWith(future, CancellationException::class)
 }
 
-fun Job.timeoutJoinBlocking(): Unit = runBlocking {
-  timeoutJoin()
-}
-
-suspend fun Job.timeoutJoin() {
-  withTimeout(TEST_TIMEOUT_MS) {
-    join()
-  }
-}
-
-suspend fun <T> Deferred<T>.timeoutAwait(): T {
-  return withTimeout(TEST_TIMEOUT_MS) {
-    await()
-  }
+fun Job.timeoutJoinBlocking(): Unit = timeoutRunBlocking {
+  join()
 }
 
 fun waitAssertCompletedNormally(job: Job) {
@@ -114,9 +83,8 @@ fun assertCurrentJobIsChildOf(parent: Job): Job {
 }
 
 fun assertJobIsChildOf(job: Job, parent: Job) {
-  val children = parent.children.toSet()
-  job.ensureActive()
-  assertTrue(job in children)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  assertSame(parent, job.parent)
 }
 
 fun loggedError(canThrow: Semaphore): Throwable {
@@ -144,14 +112,10 @@ fun loggedError(canThrow: Semaphore): Throwable {
   return throwable
 }
 
-fun currentJobTest(test: (Job) -> Unit) {
-  val job = Job()
-  withCurrentJob(job) {
-    test(job)
+fun blockingContextTest(test: () -> Unit) {
+  timeoutRunBlocking {
+    blockingContext(test)
   }
-  assertTrue(job.isActive)
-  assertFalse(job.isCompleted)
-  assertFalse(job.isCancelled)
 }
 
 fun indicatorTest(test: (ProgressIndicator) -> Unit) {
@@ -177,7 +141,7 @@ internal suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Cal
             continuation.resume(Unit)
           }
         }
-        catch (e: JobCanceledException) {
+        catch (e: CeProcessCanceledException) {
           continuation.resume(Unit)
           throw e
         }

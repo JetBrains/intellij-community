@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.core.Lookup
@@ -8,7 +9,8 @@ import com.intellij.openapi.project.Project
 
 interface SuggestionsProvider {
   val name: String
-  fun getSuggestions(expectedText: String, editor: Editor, language: Language): Lookup
+  fun getSuggestions(expectedText: String, editor: Editor, language: Language,
+                     comparator: (String, String) -> Boolean): Lookup
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<SuggestionsProvider>("com.intellij.cce.suggestionsProvider")

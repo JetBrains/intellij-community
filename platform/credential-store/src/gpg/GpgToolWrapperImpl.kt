@@ -28,8 +28,8 @@ internal class GpgToolWrapperImpl(private val gpgPath: String = "gpg", private v
   override fun encrypt(data: ByteArray, recipient: String): ByteArray {
     val commandLine = createCommandLineForEncodeOrDecode()
     commandLine.addParameter("--encrypt")
-    // key id is stored, --hidden-recipient doesn't make sense because if it will be used, key id should be specified somewhere else,
-    // if it will be stored in master key metadata - for what to hide it then?
+    // key id is stored, --hidden-recipient doesn't make sense because if it is used, key id should be specified somewhere else,
+    // if it will be stored in main key metadata - for what to hide it then?
     commandLine.addParameter("--recipient")
     commandLine.addParameter(recipient)
     return doEncryptOrDecrypt(commandLine, data)
@@ -73,13 +73,13 @@ internal class GpgToolWrapperImpl(private val gpgPath: String = "gpg", private v
             FileUtilRt.copy(it, errorOutput)
           }
         }
-      ).get(3, TimeUnit.MINUTES /* user needs time to input passphrase/pin if need */)
+      ).get(3, TimeUnit.MINUTES /* user needs time to input passphrase/pin if needed */)
     }
     catch (e: ExecutionException) {
       throw RuntimeException("Cannot execute ${commandLine.commandLineString}\nerror output: ${errorOutput.toByteArray().toString(Charsets.UTF_8)}", e.cause)
     }
 
-    // not clear in which conditions process will not exited as soon as read futures completed, let's wait only 5 seconds
+    // not clear in which condition process will not exited as soon as read futures completed, let's wait only 5 seconds
     if (!process.waitFor(5, TimeUnit.SECONDS)) {
       throw RuntimeException("Cannot execute $gpgPath: timeout")
     }
@@ -92,7 +92,7 @@ internal class GpgToolWrapperImpl(private val gpgPath: String = "gpg", private v
     val result = output.toByteArray()
     val internalBuffer = output.internalBuffer
     if (result !== internalBuffer) {
-      // ensure that if buffer was copied, original internal buffer is cleared to avoid exposing sensitive data in memory
+      // ensure that if buffer was copied, the original internal buffer is cleared to avoid exposing sensitive data in memory
       internalBuffer.fill(0)
     }
     return result

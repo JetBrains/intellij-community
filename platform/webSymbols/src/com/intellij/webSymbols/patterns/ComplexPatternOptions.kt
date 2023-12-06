@@ -2,10 +2,11 @@
 package com.intellij.webSymbols.patterns
 
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 
 data class ComplexPatternOptions(
   val additionalScope: WebSymbol? = null,
-  val isDeprecated: Boolean? = null,
+  val apiStatus: WebSymbolApiStatus? = null,
   val isRequired: Boolean = true,
   val priority: WebSymbol.Priority? = null,
   val proximity: Int? = null,

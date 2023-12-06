@@ -6,14 +6,14 @@ import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport
+import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupportFactory
 import java.util.*
 
-internal class WebTypesSymbolTypeSupportFactoryEP : CustomLoadingExtensionPointBean<WebTypesSymbolTypeSupport.Factory>(),
-                                                    KeyedLazyInstance<WebTypesSymbolTypeSupport.Factory> {
+internal class WebTypesSymbolTypeSupportFactoryEP : CustomLoadingExtensionPointBean<WebTypesSymbolTypeSupportFactory>(),
+                                                    KeyedLazyInstance<WebTypesSymbolTypeSupportFactory> {
 
   companion object {
-    val EP_NAME = KeyedExtensionCollector<WebTypesSymbolTypeSupport.Factory, String>(
+    val EP_NAME = KeyedExtensionCollector<WebTypesSymbolTypeSupportFactory, String>(
       "com.intellij.webSymbols.webTypes.symbolTypeSupportFactory")
   }
 
@@ -27,6 +27,6 @@ internal class WebTypesSymbolTypeSupportFactoryEP : CustomLoadingExtensionPointB
 
   override fun getImplementationClassName(): String? = implementation
 
-  override fun getKey(): String? = syntax?.lowercase(Locale.US)
+  override fun getKey(): String = syntax!!.lowercase(Locale.US)
 
 }

@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Difference {
+public final class Difference {
   private final boolean myIsFile;
   private final Entry myLeft;
   private final Entry myRight;
@@ -35,11 +35,11 @@ public class Difference {
     return myIsFile;
   }
 
-  public Entry getLeft() {
+  public @Nullable Entry getLeft() {
     return myLeft;
   }
 
-  public Entry getRight() {
+  public @Nullable Entry getRight() {
     return myRight;
   }
 
@@ -63,8 +63,7 @@ public class Difference {
 
     return new ByteBackedContentRevision() {
       @Override
-      @Nullable
-      public String getContent() {
+      public @Nullable String getContent() {
         if (e.isDirectory()) return null;
         return e.getContent().getString(e, gw);
       }
@@ -76,14 +75,12 @@ public class Difference {
       }
 
       @Override
-      @NotNull
-      public FilePath getFile() {
+      public @NotNull FilePath getFile() {
         return Paths.createDvcsFilePath(e.getPath(), e.isDirectory());
       }
 
       @Override
-      @NotNull
-      public VcsRevisionNumber getRevisionNumber() {
+      public @NotNull VcsRevisionNumber getRevisionNumber() {
         return VcsRevisionNumber.NULL;
       }
     };

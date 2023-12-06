@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.PrimitiveType
@@ -20,7 +22,7 @@ internal class KotlinWrapIntoArrayPostfixTemplate : StringBasedPostfixTemplate {
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ "arrayOf",
         /* example = */ "arrayOf(expr)",
-        /* selector = */ allExpressions(ValuedFilter),
+        /* selector = */ allExpressions(ValuedFilter, NonPackageAndNonImportFilter),
         /* provider = */ provider
     )
 
@@ -59,17 +61,20 @@ private val PRIMITIVES_TO_ARRAYS: Map<ClassId, String> = buildMap {
 private fun getArrayFunctionName(element: PsiElement): String {
     if (element is KtExpression) {
         allowAnalysisOnEdt {
-            analyze(element) {
-                val expectedType = element.getExpectedType()
-                if (expectedType != null && expectedType.isClassTypeWithClassId(ARRAY_CLASS_ID)) {
-                    return "kotlin.arrayOf"
-                }
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(element) {
+                    val expectedType = element.getExpectedType()
+                    if (expectedType != null && expectedType.isClassTypeWithClassId(ARRAY_CLASS_ID)) {
+                        return "kotlin.arrayOf"
+                    }
 
-                val elementType = element.getKtType()
-                if (elementType != null && elementType is KtNonErrorClassType && !elementType.isMarkedNullable) {
-                    val functionName = PRIMITIVES_TO_ARRAYS[elementType.classId]
-                    if (functionName != null) {
-                        return functionName
+                    val elementType = element.getKtType()
+                    if (elementType != null && elementType is KtNonErrorClassType && !elementType.isMarkedNullable) {
+                        val functionName = PRIMITIVES_TO_ARRAYS[elementType.classId]
+                        if (functionName != null) {
+                            return functionName
+                        }
                     }
                 }
             }

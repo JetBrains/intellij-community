@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -18,6 +19,7 @@ import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -99,9 +101,8 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     return myTextField;
   }
 
-  @NotNull
-  protected ExtendableTextField createTextField(boolean liveErrorValidation) {
-    ExtendableTextField res = new ExtendableTextField();
+  protected @NotNull ExtendableTextField createTextField(boolean liveErrorValidation) {
+    ExtendableTextField res = createNonCustomizedTextField();
 
     Dimension minSize = res.getMinimumSize();
     Dimension prefSize = res.getPreferredSize();
@@ -122,7 +123,10 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          if (myApplyAction != null) myApplyAction.consume(e);
+          if (myApplyAction == null) return;
+          try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+            myApplyAction.consume(e);
+          }
         }
       }
     });
@@ -135,6 +139,10 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     });
 
     return res;
+  }
+
+  protected ExtendableTextField createNonCustomizedTextField() {
+    return new ExtendableTextField();
   }
   
   public boolean hasError() {

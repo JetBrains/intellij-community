@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinResolvedBinaryDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinUnresolvedBinaryDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.extras.*
 import org.jetbrains.kotlin.gradle.idea.tcs.isKotlinCompileBinaryType
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
@@ -20,16 +21,14 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
 
     val dependencyNode = findLibraryDependencyNode(dependency) ?: run create@{
         val coordinates = dependency.coordinates ?: return null
-        val libraryData = LibraryData(KotlinLibraryName(coordinates))
+        val libraryData = LibraryData(KotlinLibraryName(coordinates), isUnresolved = dependency is IdeaKotlinUnresolvedBinaryDependency)
         val libraryLevel = if (dependency.isIdeaProjectLevel) LibraryLevel.PROJECT else LibraryLevel.MODULE
         libraryData.setGroup(coordinates.group)
         libraryData.artifactId = coordinates.module
         libraryData.version = coordinates.version
+        libraryData.internalName = coordinates.displayString
         createChild(ProjectKeys.LIBRARY_DEPENDENCY, LibraryDependencyData(this.data, libraryData, libraryLevel))
     }
-
-    /* Track dependencies associated with this node */
-    dependencyNode.kotlinDependencies.add(dependency)
 
     /*
     Handle dependencies that are marked as 'project level'.

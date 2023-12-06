@@ -1,6 +1,6 @@
 {
   "name": "terraform",
-  "version": "2.25.2",
+  "version": "2.28.2",
   "description": "Syntax highlighting and autocompletion for Terraform",
   "license": "MPL-2.0",
   "contributes": {
@@ -102,6 +102,11 @@
         "id": "hcl-typePrimitive",
         "superType": "keyword",
         "description": "Type (primitive)"
+      },
+      {
+        "id": "hcl-functionName",
+        "superType": "function",
+        "description": "Function name"
       }
     ],
     "semanticTokenScopes": [
@@ -142,6 +147,9 @@
           ],
           "hcl-typePrimitive": [
             "keyword.control"
+          ],
+          "hcl-functionName": [
+            "support.function"
           ]
         }
       }
@@ -224,6 +232,12 @@
             "type": "boolean",
             "default": false,
             "description": "Display reference counts above top level blocks and attributes."
+          },
+          "terraform.validation.enableEnhancedValidation": {
+            "scope": "window",
+            "type": "boolean",
+            "default": true,
+            "description": "Enable enhanced validation of Terraform files and modules"
           }
         }
       },
@@ -274,26 +288,6 @@
             "default": false,
             "description": "Enable warning when opening a single Terraform file instead of a Terraform folder. Enabling this will prevent the message being sent"
           },
-          "terraform.languageServer.rootModules": {
-            "scope": "machine",
-            "type": "array",
-            "items": {
-              "type": "machine"
-            },
-            "default": [],
-            "description": "Per-workspace list of module directories for the language server to read",
-            "deprecationMessage": "Deprecated: This setting is not used by the extension and will be removed in a future release. Add a folder/path to your workspace instead, if you wish it to be indexed."
-          },
-          "terraform.languageServer.excludeRootModules": {
-            "scope": "machine",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "description": "Per-workspace list of module directories for the language server to exclude",
-            "deprecationMessage": "Moved: Use `#terraform.languageServer.indexing.ignorePaths#` instead."
-          },
           "terraform.languageServer.indexing.ignorePaths": {
             "scope": "machine",
             "type": "array",
@@ -303,16 +297,6 @@
             "default": [],
             "description": "Per-workspace list of paths for the language server to ignore when indexing files"
           },
-          "terraform.languageServer.ignoreDirectoryNames": {
-            "scope": "machine",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "description": "Per-workspace list of directory names for the language server to ignore when indexing files",
-            "deprecationMessage": "Moved: Use `#terraform.languageServer.indexing.ignoreDirectoryNames#` instead."
-          },
           "terraform.languageServer.indexing.ignoreDirectoryNames": {
             "scope": "machine",
             "type": "array",
@@ -321,54 +305,6 @@
             },
             "default": [],
             "description": "Per-workspace list of directory names for the language server to ignore when indexing files"
-          },
-          "terraform-ls.rootModules": {
-            "scope": "window",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "description": "Per-workspace list of module directories for the language server to read",
-            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.rootModules#` instead"
-          },
-          "terraform-ls.terraformExecPath": {
-            "scope": "window",
-            "type": "string",
-            "description": "Path to the Terraform binary",
-            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.terraform.path#` instead"
-          },
-          "terraform-ls.terraformExecTimeout": {
-            "scope": "window",
-            "type": "string",
-            "description": "Overrides Terraform execution timeout (e.g. 30s)",
-            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.terraform.timeout#` instead"
-          },
-          "terraform-ls.terraformLogFilePath": {
-            "scope": "window",
-            "type": "string",
-            "description": "Path to a file for Terraform executions to be logged into (TF_LOG_PATH) with support for variables (e.g. timestamp, pid, ppid) via Go template syntax {{varName}}",
-            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.terraform.logFilePath#` instead"
-          },
-          "terraform-ls.excludeRootModules": {
-            "scope": "window",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "description": "Per-workspace list of module directories for the language server to exclude",
-            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.indexing.ignorePaths#` instead"
-          },
-          "terraform-ls.ignoreDirectoryNames": {
-            "scope": "window",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "description": "Per-workspace list of directory names for the language server to ignore when indexing files",
-            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.indexing.ignoreDirectoryNames#` instead"
           }
         }
       },
@@ -411,26 +347,6 @@
             "scope": "window",
             "type": "boolean",
             "default": false
-          },
-          "terraform-ls.experimentalFeatures": {
-            "scope": "window",
-            "type": "object",
-            "description": "Experimental (opt-in) terraform-ls features",
-            "deprecationMessage": "Moved: Use individual terraform.experimentalFeatures.* instead",
-            "properties": {
-              "validateOnSave": {
-                "scope": "window",
-                "markdownDeprecationMessage": "Moved: Use `#terraform.experimentalFeatures.validateOnSave#` instead",
-                "type": "boolean",
-                "default": false
-              },
-              "prefillRequiredFields": {
-                "scope": "window",
-                "markdownDeprecationMessage": "Moved: Use `#terraform.experimentalFeatures.prefillRequiredFields#` instead",
-                "type": "boolean",
-                "default": false
-              }
-            }
           }
         }
       }

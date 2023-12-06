@@ -1,52 +1,68 @@
 package org.jetbrains.plugins.textmate.configuration;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
-import com.intellij.util.xmlb.annotations.Transient;
-import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.openapi.components.PersistentStateComponent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.TextMateBundleToLoad;
+import org.jetbrains.plugins.textmate.TextMateServiceImpl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-@State(name = "TextMateSettings", storages = @Storage(StoragePathMacros.CACHE_FILE))
-@Service
+/**
+ * @deprecated use {@link TextMateUserBundlesSettings} and {@link TextMateBuiltinBundlesSettings} instead
+ */
+@Deprecated(forRemoval = true)
 public final class TextMateSettings implements PersistentStateComponent<TextMateSettings.TextMateSettingsState> {
-  private TextMateSettingsState myState;
-
   public static TextMateSettings getInstance() {
-    return ApplicationManager.getApplication().getService(TextMateSettings.class);
+    return new TextMateSettings();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public TextMateSettingsState getState() {
-    return myState;
+    TextMateSettingsState state = new TextMateSettingsState();
+    ArrayList<BundleConfigBean> bundles = new ArrayList<>();
+    TextMateUserBundlesSettings settings = TextMateUserBundlesSettings.getInstance();
+    if (settings != null) {
+      for (Map.Entry<String, TextMatePersistentBundle> entry : settings.getBundles().entrySet()) {
+        bundles.add(new BundleConfigBean(entry.getValue().getName(),
+                                         entry.getKey(),
+                                         entry.getValue().getEnabled()));
+      }
+    }
+    TextMateBuiltinBundlesSettings builtinBundlesSettings = TextMateBuiltinBundlesSettings.getInstance();
+    if (builtinBundlesSettings != null) {
+      Set<String> turnedOffBundleNames = builtinBundlesSettings.getTurnedOffBundleNames();
+      for (TextMateBundleToLoad bundle : TextMateServiceImpl.discoverBuiltinBundles(builtinBundlesSettings)) {
+        bundles.add(new BundleConfigBean(bundle.getName(), bundle.getPath(), !turnedOffBundleNames.contains(bundle.getName())));
+      }
+    }
+    state.setBundles(bundles);
+    return state;
   }
 
   @Override
   public void loadState(@NotNull TextMateSettingsState state) {
-    myState = state;
+    TextMateUserBundlesSettings settings = TextMateUserBundlesSettings.getInstance();
+    if (settings != null) {
+      Map<String, TextMatePersistentBundle> bundles = new HashMap<>();
+      for (BundleConfigBean bundle : state.bundles) {
+        bundles.put(bundle.getPath(), new TextMatePersistentBundle(bundle.getName(), bundle.isEnabled()));
+      }
+      settings.setBundlesConfig(bundles);
+    }
   }
 
   public Collection<BundleConfigBean> getBundles() {
-    return myState != null ? myState.getBundles() : Collections.emptyList();
+    return getState().getBundles();
   }
 
   public static final class TextMateSettingsState {
-    @XCollection(style = XCollection.Style.v2)
     private final ArrayList<BundleConfigBean> bundles = new ArrayList<>();
 
-    @Transient
     public List<BundleConfigBean> getBundles() {
       return new ArrayList<>(bundles);
     }
 
-    // transient because XML serializer should set value directly, but our setter transforms data and accepts not List, but Collection
-    @Transient
     public void setBundles(@NotNull Collection<BundleConfigBean> value) {
       bundles.clear();
       bundles.ensureCapacity(value.size());

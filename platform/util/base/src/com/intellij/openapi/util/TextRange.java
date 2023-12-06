@@ -69,22 +69,27 @@ public class TextRange implements Segment, Serializable {
     return myStartOffset + myEndOffset;
   }
 
+  @Contract(pure = true)
   public boolean contains(@NotNull TextRange range) {
     return contains((Segment)range);
   }
 
+  @Contract(pure = true)
   public boolean contains(@NotNull Segment range) {
     return containsRange(range.getStartOffset(), range.getEndOffset());
   }
 
+  @Contract(pure = true)
   public boolean containsRange(int startOffset, int endOffset) {
     return getStartOffset() <= startOffset && endOffset <= getEndOffset();
   }
 
+  @Contract(pure = true)
   public static boolean containsRange(@NotNull Segment outer, @NotNull Segment inner) {
     return outer.getStartOffset() <= inner.getStartOffset() && inner.getEndOffset() <= outer.getEndOffset();
   }
 
+  @Contract(pure = true)
   public boolean containsOffset(int offset) {
     return myStartOffset <= offset && offset <= myEndOffset;
   }
@@ -94,6 +99,7 @@ public class TextRange implements Segment, Serializable {
     return "(" + myStartOffset + "," + myEndOffset + ")";
   }
 
+  @Contract(pure = true)
   public boolean contains(int offset) {
     return myStartOffset <= offset && offset < myEndOffset;
   }
@@ -104,11 +110,13 @@ public class TextRange implements Segment, Serializable {
     return str.substring(myStartOffset, myEndOffset);
   }
 
+  @Contract(pure = true)
   @NotNull
   public CharSequence subSequence(@NotNull CharSequence str) {
     return str.subSequence(myStartOffset, myEndOffset);
   }
 
+  @Contract(pure = true)
   @NotNull
   public TextRange cutOut(@NotNull TextRange subRange) {
     if (subRange.getStartOffset() > getLength()) {
@@ -122,18 +130,21 @@ public class TextRange implements Segment, Serializable {
                          Math.min(myEndOffset, myStartOffset + subRange.getEndOffset()));
   }
 
+  @Contract(pure = true)
   @NotNull
   public TextRange shiftRight(int delta) {
     if (delta == 0) return this;
     return new TextRange(myStartOffset + delta, myEndOffset + delta);
   }
 
+  @Contract(pure = true)
   @NotNull
   public TextRange shiftLeft(int delta) {
     if (delta == 0) return this;
     return new TextRange(myStartOffset - delta, myEndOffset - delta);
   }
 
+  @Contract(pure = true)
   @NotNull
   public TextRange grown(int lengthDelta) {
     if (lengthDelta == 0) {
@@ -154,16 +165,19 @@ public class TextRange implements Segment, Serializable {
     return new TextRange(startOffset, endOffset);
   }
 
+  @Contract(pure = true)
   @NotNull
   public static TextRange create(@NotNull Segment segment) {
     return create(segment.getStartOffset(), segment.getEndOffset());
   }
 
+  @Contract(pure = true)
   public static boolean areSegmentsEqual(@NotNull Segment segment1, @NotNull Segment segment2) {
     return segment1.getStartOffset() == segment2.getStartOffset()
            && segment1.getEndOffset() == segment2.getEndOffset();
   }
 
+  @Contract(pure = true)
   @NotNull
   public String replace(@NotNull String original, @NotNull String replacement) {
     String beginning = original.substring(0, getStartOffset());
@@ -171,26 +185,32 @@ public class TextRange implements Segment, Serializable {
     return beginning + replacement + ending;
   }
 
+  @Contract(pure = true)
   public boolean intersects(@NotNull TextRange textRange) {
     return intersects((Segment)textRange);
   }
 
+  @Contract(pure = true)
   public boolean intersects(@NotNull Segment textRange) {
     return intersects(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
+  @Contract(pure = true)
   public boolean intersects(int startOffset, int endOffset) {
     return Math.max(myStartOffset, startOffset) <= Math.min(myEndOffset, endOffset);
   }
 
+  @Contract(pure = true)
   public boolean intersectsStrict(@NotNull TextRange textRange) {
     return intersectsStrict(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
+  @Contract(pure = true)
   public boolean intersectsStrict(int startOffset, int endOffset) {
     return Math.max(myStartOffset, startOffset) < Math.min(myEndOffset, endOffset);
   }
 
+  @Contract(pure = true)
   public TextRange intersection(@NotNull TextRange range) {
     if (equals(range)) {
       return this;
@@ -200,10 +220,12 @@ public class TextRange implements Segment, Serializable {
     return isProperRange(newStart, newEnd) ? new TextRange(newStart, newEnd) : null;
   }
 
+  @Contract(pure = true)
   public boolean isEmpty() {
     return myStartOffset >= myEndOffset;
   }
 
+  @Contract(pure = true)
   @NotNull
   public TextRange union(@NotNull TextRange textRange) {
     if (equals(textRange)) {
@@ -212,10 +234,12 @@ public class TextRange implements Segment, Serializable {
     return new TextRange(Math.min(myStartOffset, textRange.getStartOffset()), Math.max(myEndOffset, textRange.getEndOffset()));
   }
 
+  @Contract(pure = true)
   public boolean equalsToRange(int startOffset, int endOffset) {
     return startOffset == myStartOffset && endOffset == myEndOffset;
   }
 
+  @Contract(pure = true)
   @NotNull
   public static TextRange allOf(@NotNull String s) {
     return new TextRange(0, s.length());

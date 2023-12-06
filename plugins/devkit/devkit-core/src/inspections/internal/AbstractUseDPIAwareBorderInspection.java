@@ -13,6 +13,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
@@ -65,7 +66,7 @@ abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionB
         else if (expressionKind == UastCallKind.CONSTRUCTOR_CALL &&
                  isNonDpiAwareClassConstructor(expression) &&
                  !isAllowedConstructorCall(expression) &&
-                 isJBUIClassAccessible(expression)) {
+                 DevKitInspectionUtil.isClassAvailable(holder, JB_UI_CLASS_NAME)) {
           PsiElement sourcePsi = expression.getSourcePsi();
           if (sourcePsi != null) {
             holder.registerProblem(sourcePsi,
@@ -161,13 +162,6 @@ abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionB
     return getNonDpiAwareClassName().equals(constructorClass.getQualifiedName());
   }
 
-  private static boolean isJBUIClassAccessible(@NotNull UElement uElement) {
-    PsiElement checkedPlace = uElement.getSourcePsi();
-    if (checkedPlace == null) return false;
-    Project project = checkedPlace.getProject();
-    PsiClass jbuiClass = JavaPsiFacade.getInstance(project).findClass(JB_UI_CLASS_NAME, checkedPlace.getResolveScope());
-    return jbuiClass != null;
-  }
 
   abstract static class AbstractConvertToDpiAwareCallQuickFix implements LocalQuickFix {
 

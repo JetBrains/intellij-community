@@ -3,139 +3,93 @@
 
 package com.intellij.util
 
-import it.unimi.dsi.fastutil.longs.LongArrayList
+import com.dynatrace.hash4j.hashing.HashStream64
+import com.dynatrace.hash4j.hashing.Hasher64
+import com.dynatrace.hash4j.hashing.Hashing
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.xxh3.Access
-import org.jetbrains.xxh3.Xxh3
-import org.jetbrains.xxh3.Xxh3Impl
-import java.util.*
 
-private const val extraSeed = 1867412186L
-
-// see https://github.com/Cyan4973/xxHash/wiki/Collision-ratio-comparison
 @Experimental
 class InsecureHashBuilder {
-  private val result = LongArrayList()
+  private val hashStream = firstHasher().hashStream()
+  private val hashStream2 = secondHasher().hashStream()
 
-  fun build(): LongArray {
-    return result.toLongArray()
-  }
+  fun build(): LongArray = longArrayOf(hashStream.asLong, hashStream2.asLong)
 
-  fun update(value: CharSequence) {
-    result.add(Xxh3.hashUnencodedChars(value))
-  }
+  //fun putChars(value: CharSequence): InsecureHashBuilder {
+  //  hashStream.putChars(value)
+  //  return this
+  //}
 
-  fun update(value: LongArray): InsecureHashBuilder {
-    result.add(Xxh3.hashLongs(value))
+  fun putString(s: String): InsecureHashBuilder {
+    hashStream.putString(s)
     return this
   }
 
-  fun update(value: Int) {
-    result.add(Xxh3.hashInt(value))
-  }
-
-  fun updateRaw(hash: Long) {
-    result.add(hash)
-  }
-
-  fun stringList(list: List<String>) {
-    val size = list.size
-    result.add(Xxh3.hashInt(size))
-
-    if (list.isEmpty()) {
-      return
-    }
-
-    val offset = result.size
-    result.ensureCapacity(size)
-    for (s in list) {
-      result.add(Xxh3.hashUnencodedChars(s))
-    }
-    hash128(offset)
-  }
-
-  fun stringMap(map: Map<String, String>): InsecureHashBuilder {
-    val size = map.size
-    result.add(Xxh3.hashInt(size))
-
-    if (map.isEmpty()) {
-      return this
-    }
-
-    val offset = result.size
-    result.ensureCapacity(size * 2)
-
-    if (map is SortedMap || map is LinkedHashMap) {
-      for ((k, v) in map) {
-        result.add(Xxh3.hashUnencodedChars(k))
-        result.add(Xxh3.hashUnencodedChars(v))
-      }
-    }
-    else {
-      for (k in map.keys.sorted()) {
-        result.add(Xxh3.hashUnencodedChars(k))
-        val v = map.get(k)
-        result.add(if (v == null) 0 else Xxh3.hashUnencodedChars(v))
-      }
-    }
-    hash128(offset)
+  fun putLongArray(value: LongArray): InsecureHashBuilder {
+    hashStream.putLongArray(value)
     return this
   }
 
-  fun stringIntMap(map: Map<String, Int?>): InsecureHashBuilder {
-    val size = map.size
-    result.add(Xxh3.hashInt(size))
-
-    if (map.isEmpty()) {
-      return this
-    }
-
-    val offset = result.size
-    result.ensureCapacity(size * 2)
-
-    if (map is SortedMap || map is LinkedHashMap) {
-      for ((k, v) in map) {
-        result.add(Xxh3.hashUnencodedChars(k))
-        result.add(if (v == null) 0 else Xxh3.hashInt(v, 0))
-      }
-    }
-    else {
-      for (k in map.keys.sorted()) {
-        result.add(Xxh3.hashUnencodedChars(k))
-        val v = map.get(k)
-        result.add(if (v == null) 0 else Xxh3.hashInt(v, 0))
-      }
-    }
-
-    hash128(offset)
+  fun putInt(value: Int): InsecureHashBuilder {
+    hashStream.putInt(value)
     return this
   }
 
-  private fun hash128(offset: Int) {
-    val sizeInBytes = (result.size - offset) * Long.SIZE_BYTES
-    val offsetInBytes = offset * Long.SIZE_BYTES
-    val l1 = Xxh3Impl.hash(result, LongListAccessForLongs, offsetInBytes, sizeInBytes, 0)
-    // and with a custom seed to get a 128-bit hash
-    val l2 = Xxh3Impl.hash(result, LongListAccessForLongs, offsetInBytes, sizeInBytes, extraSeed)
-    result.size(offset)
-    result.add(l1)
-    result.add(l2)
+  fun putLong(value: Long): InsecureHashBuilder {
+    hashStream.putLong(value)
+    return this
+  }
+
+  //fun putStringList(list: List<String>): InsecureHashBuilder {
+  //  hashStream.putOrderedIterable(list, HashFunnel.forString())
+  //  return this
+  //}
+
+  fun putStringMap(map: Map<String, String>): InsecureHashBuilder {
+    val entryHashes = LongArray(map.size)
+    hashUnorderedStringStringMap(entryHasher = firstHasher(), finalHashStream = hashStream, map = map, elementHashes = entryHashes)
+    hashUnorderedStringStringMap(entryHasher = secondHasher(), finalHashStream = hashStream2, map = map, elementHashes = entryHashes)
+    return this
+  }
+
+  fun putStringIntMap(map: Map<String, Int>): InsecureHashBuilder {
+    val entryHashes = LongArray(map.size)
+    hashUnorderedStringIntMap(entryHasher = firstHasher(), finalHashStream = hashStream, map = map, elementHashes = entryHashes)
+    hashUnorderedStringIntMap(entryHasher = secondHasher(), finalHashStream = hashStream2, map = map, elementHashes = entryHashes)
+    return this
   }
 }
 
-// special implementation for hashing long array - it is guaranteed that only i64 will be called (as input is aligned)
-object LongListAccessForLongs : Access<LongArrayList> {
-  override fun i64(input: LongArrayList, offset: Int): Long {
-    return input.getLong(offset shr 3)
-  }
+private fun firstHasher(): Hasher64 = Hashing.komihash5_0()
 
-  override fun i32(input: LongArrayList, offset: Int): Int {
-    val v = input.getLong(offset shr 3)
-    return if (offset and 7 == 0) (v shr 32).toInt() else v.toInt()
-  }
+private fun secondHasher(): Hasher64 = Hashing.wyhashFinal4()
 
-  override fun i8(input: LongArrayList, offset: Int): Int {
-    throw UnsupportedOperationException()
+private fun hashUnorderedStringStringMap(entryHasher: Hasher64,
+                                         finalHashStream: HashStream64,
+                                         map: Map<String, String>,
+                                         elementHashes: LongArray) {
+  var index = 0
+  val stream = entryHasher.hashStream()
+  for ((k, v) in map) {
+    elementHashes[index++] = stream.reset().putString(k).putString(v).asLong
   }
+  elementHashes.sort()
+
+  finalHashStream.putLongArray(elementHashes)
+  finalHashStream.putInt(elementHashes.size)
 }
 
+private fun hashUnorderedStringIntMap(entryHasher: Hasher64,
+                                      finalHashStream: HashStream64,
+                                      map: Map<String, Int>,
+                                      elementHashes: LongArray) {
+  var index = 0
+  val stream = entryHasher.hashStream()
+  for ((k, v) in map) {
+    elementHashes[index++] = stream.reset().putString(k).putInt(v).asLong
+  }
+  elementHashes.sort()
+
+  finalHashStream.putLongArray(elementHashes)
+  finalHashStream.putInt(elementHashes.size)
+}

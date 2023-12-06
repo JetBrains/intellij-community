@@ -2,6 +2,7 @@
 package com.intellij.diff.actions.impl
 
 import com.intellij.diff.tools.simple.SimpleDiffViewer
+import com.intellij.diff.tools.util.DiffDataKeys.DIFF_CONTEXT
 import com.intellij.diff.tools.util.DiffDataKeys.DIFF_VIEWER
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.util.DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF
@@ -30,14 +31,12 @@ class ToggleDiffAligningModeAction : DumbAwareToggleAction() {
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    val viewer = e.getData(DIFF_VIEWER) as? SimpleDiffViewer ?: return false
-    return TextDiffViewerUtil.getTextSettings(viewer.context).isEnableAligningChangesMode
+    val diffContext = e.getData(DIFF_CONTEXT) ?: return false
+    return TextDiffViewerUtil.getTextSettings(diffContext).isEnableAligningChangesMode
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val viewer = e.getData(DIFF_VIEWER) as SimpleDiffViewer
-
-    TextDiffViewerUtil.getTextSettings(viewer.context).isEnableAligningChangesMode = state
-    viewer.rediff()
+    val diffContext = e.getData(DIFF_CONTEXT) ?: return
+    TextDiffViewerUtil.getTextSettings(diffContext).isEnableAligningChangesMode = state
   }
 }

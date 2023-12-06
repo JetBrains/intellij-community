@@ -2,11 +2,12 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,6 @@ public abstract class JavaPsiImplementationHelper {
                                        @Nullable PsiElement context,
                                        @NotNull PsiCatchSection element);
 
-  public abstract @Nullable PsiElement resolveSnippetRegion(@NotNull PsiElement context,
-                                                            @NotNull PsiSnippetDocTagValue snippet,
-                                                            @NotNull String region);
+  public abstract @NotNull PsiSymbolReference getSnippetRegionSymbol(@NotNull PsiSnippetAttributeValue value);
+
 }

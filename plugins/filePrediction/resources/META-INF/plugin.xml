@@ -22,6 +22,7 @@
     <registryKey key="filePrediction.calculate.candidates.percent" defaultValue="1.0" description="Defines percentage of opened files for which next candidates will be calculated."/>
     <registryKey key="filePrediction.action.calculate.candidates" defaultValue="50" description="Number of candidates used to predict next file in 'Show Next File Candidates' action."/>
     <registryKey key="filePrediction.action.show.candidates" defaultValue="10" description="Number of next file candidates to show in 'Show Next File Candidates' action."/>
+    <registryKey key="filePrediction.highlighting.cache.enabled" defaultValue="true" description="Enables highlighting cache for predicted next open files."/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.filePrediction.logger.FileNavigationLogger"/>
     <statistics.validation.customValidationRule implementation="com.intellij.filePrediction.logger.FilePredictionFeaturesValidator"/>

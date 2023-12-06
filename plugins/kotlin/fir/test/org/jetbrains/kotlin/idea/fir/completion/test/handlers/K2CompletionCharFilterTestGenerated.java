@@ -168,6 +168,16 @@ public class K2CompletionCharFilterTestGenerated extends AbstractK2CompletionCha
         runTest("../completion/testData/handlers/charFilter/Space.kt");
     }
 
+    @TestMetadata("SuperEntry.kt")
+    public void testSuperEntry() throws Exception {
+        runTest("../completion/testData/handlers/charFilter/SuperEntry.kt");
+    }
+
+    @TestMetadata("SuperEntry2.kt")
+    public void testSuperEntry2() throws Exception {
+        runTest("../completion/testData/handlers/charFilter/SuperEntry2.kt");
+    }
+
     @TestMetadata("VariableAndTypeLateinit.kt")
     public void testVariableAndTypeLateinit() throws Exception {
         runTest("../completion/testData/handlers/charFilter/VariableAndTypeLateinit.kt");

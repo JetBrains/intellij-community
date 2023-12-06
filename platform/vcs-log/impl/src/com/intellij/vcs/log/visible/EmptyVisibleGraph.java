@@ -16,8 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class EmptyVisibleGraph implements VisibleGraph<Integer> {
-
+public final class EmptyVisibleGraph implements VisibleGraph<Integer> {
   private static final VisibleGraph<Integer> INSTANCE = new EmptyVisibleGraph();
 
   public static @NotNull VisibleGraph<Integer> getInstance() {
@@ -67,7 +66,7 @@ public class EmptyVisibleGraph implements VisibleGraph<Integer> {
     public void setLongEdgesHidden(boolean longEdgesHidden) {
     }
 
-    private static class EmptyGraphAnswer implements GraphAnswer<Integer> {
+    private static final class EmptyGraphAnswer implements GraphAnswer<Integer> {
       private static final EmptyGraphAnswer INSTANCE = new EmptyGraphAnswer();
 
       @Override

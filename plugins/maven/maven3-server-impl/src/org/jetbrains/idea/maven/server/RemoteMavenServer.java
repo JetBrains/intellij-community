@@ -15,11 +15,9 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.execution.rmi.RemoteServer;
-
-public class RemoteMavenServer extends RemoteServer {
+public class RemoteMavenServer extends RemoteMavenServerBase {
   public static void main(String[] args) throws Throwable {
     MavenServerUtil.readToken();
-    start(new Maven3ServerImpl(), !RemoteServerUtil.isWSL());
+    startMavenServer(new Maven3ServerImpl(), args);
   }
 }

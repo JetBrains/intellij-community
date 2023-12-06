@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.components.Service
@@ -14,35 +14,43 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
+import org.jetbrains.kotlin.analysis.project.structure.KtModuleStructureInternals
+import org.jetbrains.kotlin.analysis.project.structure.analysisExtensionFileContextModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.runReadAction
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.config.SourceKotlinRootType
-import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
-import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
+import org.jetbrains.kotlin.idea.base.util.*
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.psi.doNotAnalyze
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 @DslMarker
 private annotation class ModuleInfoDsl
 
 @ModuleInfoDsl
-suspend fun SequenceScope<Result<IdeaModuleInfo>>.register(moduleInfo: IdeaModuleInfo) = yield(Result.success(moduleInfo))
+fun SeqScope<Result<IdeaModuleInfo>>.register(moduleInfo: IdeaModuleInfo) = yield { Result.success(moduleInfo) }
 
 @ModuleInfoDsl
-suspend fun SequenceScope<Result<IdeaModuleInfo>>.reportError(error: Throwable) = yield(Result.failure(error))
+fun SeqScope<Result<IdeaModuleInfo>>.register(block: () -> IdeaModuleInfo?) = yield {
+    block()?.let(Result.Companion::success)
+}
+
+@ModuleInfoDsl
+fun SeqScope<Result<IdeaModuleInfo>>.reportError(error: Throwable) = yield { Result.failure(error) }
 
 interface ModuleInfoProviderExtension {
     companion object {
@@ -50,10 +58,15 @@ interface ModuleInfoProviderExtension {
             ExtensionPointName("org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoProviderExtension")
     }
 
-    suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByElement(element: PsiElement, file: PsiFile, virtualFile: VirtualFile)
-    suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByFile(project: Project, virtualFile: VirtualFile, isLibrarySource: Boolean)
+    fun SeqScope<Result<IdeaModuleInfo>>.collectByElement(element: PsiElement, file: PsiFile, virtualFile: VirtualFile)
+    fun SeqScope<Result<IdeaModuleInfo>>.collectByFile(
+        project: Project,
+        virtualFile: VirtualFile,
+        isLibrarySource: Boolean,
+        config: ModuleInfoProvider.Configuration,
+    )
 
-    suspend fun SequenceScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile)
+    fun SeqScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile)
 }
 
 @Service(Service.Level.PROJECT)
@@ -62,9 +75,25 @@ class ModuleInfoProvider(private val project: Project) {
         internal val LOG = Logger.getInstance(ModuleInfoProvider::class.java)
 
         fun getInstance(project: Project): ModuleInfoProvider = project.service()
+
+        fun findAnchorElement(element: PsiElement): PsiElement? = when {
+            element is PsiDirectory -> element
+            element !is KtLightElement<*, *> -> element.containingFile
+            /**
+             * We shouldn't unwrap decompiled classes
+             * @see [ModuleInfoProvider.collectByLightElement]
+             */
+            element.getNonStrictParentOfType<KtLightClassForDecompiledDeclaration>() != null -> null
+            element is KtLightClassForFacade -> element.files.first()
+            else -> element.kotlinOrigin?.let(::findAnchorElement)
+        }
     }
 
-    class Configuration(val createSourceLibraryInfoForLibraryBinaries: Boolean = true) {
+    data class Configuration(
+        val createSourceLibraryInfoForLibraryBinaries: Boolean = true,
+        val preferModulesFromExtensions: Boolean = false,
+        val contextualModuleInfo: IdeaModuleInfo? = null,
+    ) {
         companion object {
             val Default = Configuration()
         }
@@ -74,18 +103,22 @@ class ModuleInfoProvider(private val project: Project) {
     private val libraryInfoCache by lazy { LibraryInfoCache.getInstance(project) }
 
     fun collect(element: PsiElement, config: Configuration = Configuration.Default): Sequence<Result<IdeaModuleInfo>> {
-        return sequence {
+        return seq {
             collectByElement(element, config)
         }
     }
 
-    fun collect(virtualFile: VirtualFile, isLibrarySource: Boolean = false): Sequence<Result<IdeaModuleInfo>> {
-        return sequence {
-            collectByFile(virtualFile, isLibrarySource)
+    fun collect(
+        virtualFile: VirtualFile,
+        isLibrarySource: Boolean = false,
+        config: Configuration = Configuration.Default,
+    ): Sequence<Result<IdeaModuleInfo>> {
+        return seq {
+            collectByFile(virtualFile, isLibrarySource, config)
         }
     }
 
-    private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByElement(element: PsiElement, config: Configuration) {
+    private fun SeqScope<Result<IdeaModuleInfo>>.collectByElement(element: PsiElement, config: Configuration) {
         val containingFile = element.containingFile
 
         if (containingFile != null) {
@@ -93,6 +126,11 @@ class ModuleInfoProvider(private val project: Project) {
             if (moduleInfo is IdeaModuleInfo) {
                 register(moduleInfo)
             }
+        }
+
+        if (element is PsiDirectory) {
+            collectByFile(element.virtualFile, isLibrarySource = false, config)
+            return
         }
 
         if (element is KtLightElement<*, *>) {
@@ -108,6 +146,11 @@ class ModuleInfoProvider(private val project: Project) {
 
         val containingKtFile = containingFile as? KtFile
         if (containingKtFile != null) {
+            @OptIn(KtModuleStructureInternals::class, Frontend10ApiUsage::class)
+            containingFile.virtualFile?.analysisExtensionFileContextModule?.let { module ->
+                register(module.moduleInfo)
+            }
+
             val analysisContext = containingKtFile.analysisContext
             if (analysisContext != null) {
                 collectByElement(analysisContext, config)
@@ -134,22 +177,42 @@ class ModuleInfoProvider(private val project: Project) {
             }
         }
 
-        val virtualFile = containingFile.originalFile.virtualFile
-        if (virtualFile != null) {
-            val isLibrarySource = if (containingKtFile != null) isLibrarySource(containingKtFile, config) else false
-            collectByFile(virtualFile, isLibrarySource)
-            callExtensions { collectByElement(element, containingFile, virtualFile) }
-        } else {
-            val message = "Analyzing element of type ${element::class.java} in non-physical file of type ${containingFile::class.java}"
-            reportError(KotlinExceptionWithAttachments(message).withAttachment("file.kt", containingFile.text))
+        if (containingFile != null) {
+            val virtualFile = containingFile.originalFile.virtualFile
+            if (virtualFile != null) {
+                withCallExtensions(
+                    config = config,
+                    extensionBlock = { collectByElement(element, containingFile, virtualFile) },
+                ) {
+                    val isLibrarySource = if (containingKtFile != null) isLibrarySource(containingKtFile, config) else false
+                    collectByFile(virtualFile, isLibrarySource, config)
+                }
+            } else {
+                val message = "Analyzing element of type ${element::class.java} in non-physical file of type ${containingFile::class.java}"
+                reportError(KotlinExceptionWithAttachments(message).withAttachment("file.kt", containingFile.text))
+            }
         }
     }
 
     private inline fun callExtensions(block: ModuleInfoProviderExtension.() -> Unit) {
-        for (extension in project.extensionArea.getExtensionPoint(ModuleInfoProviderExtension.EP_NAME).extensions) {
-            with(extension) {
-                block()
-            }
+        for (extension in project.extensionArea.getExtensionPoint(ModuleInfoProviderExtension.EP_NAME).extensionList) {
+            with(extension, block)
+        }
+    }
+
+    private inline fun withCallExtensions(
+        config: Configuration,
+        extensionBlock: ModuleInfoProviderExtension.() -> Unit,
+        block: () -> Unit,
+    ) {
+        if (config.preferModulesFromExtensions) {
+            callExtensions(extensionBlock)
+        }
+
+        block()
+
+        if (!config.preferModulesFromExtensions) {
+            callExtensions(extensionBlock)
         }
     }
 
@@ -158,10 +221,10 @@ class ModuleInfoProvider(private val project: Project) {
         return if (config.createSourceLibraryInfoForLibraryBinaries) isCompiled else !isCompiled
     }
 
-    private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByLightElement(element: KtLightElement<*, *>, config: Configuration) {
+    private fun SeqScope<Result<IdeaModuleInfo>>.collectByLightElement(element: KtLightElement<*, *>, config: Configuration) {
         if (element.getNonStrictParentOfType<KtLightClassForDecompiledDeclaration>() != null) {
             val virtualFile = element.containingFile.virtualFile ?: error("Decompiled class should be build from physical file")
-            collectByFile(virtualFile, isLibrarySource = false)
+            collectByFile(virtualFile, isLibrarySource = false, config)
         }
 
         val originalElement = element.kotlinOrigin
@@ -177,67 +240,77 @@ class ModuleInfoProvider(private val project: Project) {
         }
     }
 
-    private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByFile(virtualFile: VirtualFile, isLibrarySource: Boolean) {
+    private fun SeqScope<Result<IdeaModuleInfo>>.collectByFile(
+        virtualFile: VirtualFile,
+        isLibrarySource: Boolean,
+        config: Configuration,
+    ) {
         collectByUserData(UserDataModuleContainer.ForVirtualFile(virtualFile, project))
-        collectSourceRelatedByFile(virtualFile)
+        withCallExtensions(
+            config = config,
+            extensionBlock = { collectByFile(project, virtualFile, isLibrarySource, config) }
+        ) {
+            collectSourceRelatedByFile(virtualFile, config)
 
-        val orderEntries = runReadAction { fileIndex.getOrderEntriesForFile(virtualFile) }
-        val visited = hashSetOf<IdeaModuleInfo>()
-        for (orderEntry in orderEntries) {
-            ProgressManager.checkCanceled()
-            collectByOrderEntry(virtualFile, orderEntry, isLibrarySource, visited)
+            yieldAll(object : Iterable<Result<IdeaModuleInfo>> {
+                override fun iterator(): Iterator<Result<IdeaModuleInfo>> {
+                    val orderEntries = runReadAction { fileIndex.getOrderEntriesForFile(virtualFile) }
+                    val iterator = orderEntries.iterator()
+                    val visited = hashSetOf<IdeaModuleInfo>()
+                    return MappingIterator(iterator) { orderEntry ->
+                        collectByOrderEntry(virtualFile, orderEntry, isLibrarySource, visited, config)?.let(Result.Companion::success)
+                    }
+                }
+            })
         }
-
-        callExtensions { collectByFile(project, virtualFile, isLibrarySource) }
     }
 
-    private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectSourceRelatedByFile(virtualFile: VirtualFile) {
-        val modules = sequence {
-            val module = runReadAction { fileIndex.getModuleForFile(virtualFile) }
-            yieldIfNotNull(module)
-
-            callExtensions { findContainingModules(project, virtualFile) }
-        }
-
-        for (module in modules) {
-            if (module.isDisposed) {
-                continue
-            }
-
-            val moduleFileIndex = ModuleRootManager.getInstance(module).fileIndex
-            when (moduleFileIndex.getKotlinSourceRootType(virtualFile)) {
-                null -> {}
-                SourceKotlinRootType -> {
-                    val moduleInfo = module.productionSourceInfo
-                    if (moduleInfo != null) {
-                        register(moduleInfo)
+    private fun SeqScope<Result<IdeaModuleInfo>>.collectSourceRelatedByFile(virtualFile: VirtualFile, config: Configuration) {
+        yieldAll(object : Iterable<Result<IdeaModuleInfo>> {
+            override fun iterator(): Iterator<Result<IdeaModuleInfo>> {
+                val modules = seq {
+                    withCallExtensions(
+                        config = config,
+                        extensionBlock = { findContainingModules(project, virtualFile) },
+                    ) {
+                        runReadAction { fileIndex.getModuleForFile(virtualFile) }?.let { module ->
+                            yield { module }
+                        }
                     }
                 }
-                TestSourceKotlinRootType -> {
-                    val moduleInfo = module.testSourceInfo
-                    if (moduleInfo != null) {
-                        register(moduleInfo)
-                    }
+                val iterator = modules.iterator()
+
+                return MappingIterator(iterator) { module ->
+                    if (module.isDisposed) return@MappingIterator null
+                    val projectFileIndex = ProjectFileIndex.getInstance(project)
+                    val sourceRootType: KotlinSourceRootType? = projectFileIndex.getKotlinSourceRootType(virtualFile)
+                    module.asSourceInfo(sourceRootType)?.let(Result.Companion::success)
                 }
             }
-        }
+        })
 
         val fileOrigin = getOutsiderFileOrigin(project, virtualFile)
         if (fileOrigin != null) {
-            collectSourceRelatedByFile(fileOrigin)
+            collectSourceRelatedByFile(fileOrigin, config)
         }
     }
 
-    private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByOrderEntry(
-      virtualFile: VirtualFile,
-      orderEntry: OrderEntry,
-      isLibrarySource: Boolean,
-      visited: HashSet<IdeaModuleInfo>
-    ) {
-        if (!orderEntry.isValid || orderEntry is ModuleOrderEntry) {
+    private fun collectByOrderEntry(
+        virtualFile: VirtualFile,
+        orderEntry: OrderEntry,
+        isLibrarySource: Boolean,
+        visited: HashSet<IdeaModuleInfo>,
+        config: Configuration,
+    ): IdeaModuleInfo? {
+        if (orderEntry is ModuleOrderEntry) {
             // Module-related entries are covered in 'collectModuleRelatedModuleInfosByFile()'
-            return
+            return null
         }
+
+        val sourceContext = config.contextualModuleInfo as? ModuleSourceInfo
+
+        ProgressManager.checkCanceled()
+        if (!orderEntry.isValid) return null
 
         if (orderEntry is LibraryOrderEntry) {
             val library = orderEntry.library
@@ -245,17 +318,22 @@ class ModuleInfoProvider(private val project: Project) {
                 if (!isLibrarySource && RootKindFilter.libraryClasses.matches(project, virtualFile)) {
                     for (libraryInfo in libraryInfoCache[library]) {
                         if (visited.add(libraryInfo)) {
-                            register(libraryInfo)
+                            if (libraryInfo.isApplicable(sourceContext)) {
+                                return libraryInfo
+                            }
                         }
                     }
                 } else if (isLibrarySource || RootKindFilter.libraryFiles.matches(project, virtualFile)) {
                     for (libraryInfo in libraryInfoCache[library]) {
                         val moduleInfo = libraryInfo.sourcesModuleInfo
                         if (visited.add(moduleInfo)) {
-                            register(moduleInfo)
+                            if (libraryInfo.isApplicable(sourceContext)) {
+                                return moduleInfo
+                            }
                         }
                     }
                 }
+                return null
             }
         }
 
@@ -264,38 +342,41 @@ class ModuleInfoProvider(private val project: Project) {
             if (sdk != null) {
                 val moduleInfo = SdkInfo(project, sdk)
                 if (visited.add(moduleInfo)) {
-                    register(moduleInfo)
+                    return moduleInfo
                 }
             }
         }
+        return null
     }
 
-    private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByUserData(container: UserDataModuleContainer) {
-        val module = container.module
-        val sourceRootType = container.customSourceRootType
+    private fun LibraryInfo.isApplicable(contextualModuleInfo: ModuleSourceInfo?): Boolean {
+        if (contextualModuleInfo == null) return true
 
-        if (module != null && sourceRootType != null) {
-            val moduleInfo = when (sourceRootType.sourceRootType) {
-                SourceKotlinRootType -> module.productionSourceInfo
-                TestSourceKotlinRootType -> module.testSourceInfo
-                else -> null
-            }
+        val service = project.service<LibraryUsageIndex>()
+        return service.hasDependentModule(this, contextualModuleInfo.module)
+    }
 
-            if (moduleInfo != null) {
-                register(moduleInfo)
+    private fun SeqScope<Result<IdeaModuleInfo>>.collectByUserData(container: UserDataModuleContainer) {
+        register {
+            val module = container.module
+            val sourceRootType = container.customSourceRootType
+
+            if (module != null && sourceRootType != null) {
+                module.asSourceInfo(sourceRootType.sourceRootType)?.let {moduleInfo ->
+                    return@register moduleInfo
+                }
             }
+            null
         }
 
-        val library = container.customLibrary
-        if (library != null) {
+        container.customLibrary?.let { library ->
             for (libraryInfo in libraryInfoCache[library]) {
                 register(libraryInfo)
             }
         }
 
-        val sdk = container.customSdk
-        if (sdk != null) {
-            register(SdkInfo(project, sdk))
+        register {
+            container.customSdk?.let { SdkInfo(project, it) }
         }
     }
 }
@@ -327,10 +408,11 @@ private sealed class UserDataModuleContainer {
             get() = ModuleUtilCore.findModuleForPsiElement(psiElement)
 
         override val holders: List<UserDataHolder> by lazy {
+            val containingFile = psiElement.containingFile
             listOfNotNull(
                 psiElement,
-                psiElement.containingFile,
-                psiElement.containingFile?.originalFile?.virtualFile
+                containingFile,
+                containingFile?.originalFile?.virtualFile
             )
         }
     }
@@ -341,18 +423,26 @@ fun Sequence<Result<IdeaModuleInfo>>.unwrap(
     errorHandler: (String, Throwable) -> Unit,
     stopOnErrors: Boolean = true
 ): Sequence<IdeaModuleInfo> {
-    return sequence {
-        for (result in this@unwrap) {
-            val moduleInfo = result.getOrNull()
-            if (moduleInfo != null) {
-                yield(moduleInfo)
-            }
+    val originalSequence = this
+    return object : Sequence<IdeaModuleInfo> {
+        override fun iterator(): Iterator<IdeaModuleInfo> {
+            return object : TransformingIterator<IdeaModuleInfo>() {
+                private var iterator: Iterator<Result<IdeaModuleInfo>>? = originalSequence.iterator()
+                override fun calculateHasNext(): Boolean = iterator?.hasNext() == true
 
-            val error = result.exceptionOrNull()
-            if (error != null) {
-                errorHandler("Could not find correct module information", error)
-                if (stopOnErrors) {
-                    break
+                override fun calculateNext(): IdeaModuleInfo? {
+                    val iter = iterator ?: return null
+                    val result = iter.next()
+                    result.getOrNull()?.let { return it }
+
+                    val error = result.exceptionOrNull()
+                    if (error != null) {
+                        errorHandler("Could not find correct module information", error)
+                        if (stopOnErrors) {
+                            iterator = null
+                        }
+                    }
+                    return null
                 }
             }
         }

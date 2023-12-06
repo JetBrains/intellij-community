@@ -9,19 +9,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class ResourceBundleEditorBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.ResourceBundleEditorBundle";
-  private static final ResourceBundleEditorBundle INSTANCE = new ResourceBundleEditorBundle();
+public final class ResourceBundleEditorBundle {
+  private static final @NonNls String BUNDLE = "messages.ResourceBundleEditorBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ResourceBundleEditorBundle.class, BUNDLE);
 
-  private ResourceBundleEditorBundle() { super(BUNDLE); }
+  private ResourceBundleEditorBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.containsKey(key) ? INSTANCE.getMessage(key, params) : ResourceBundleEditorDeprecatedMessagesBundle.message(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.containsKey(key) ? INSTANCE.getLazyMessage(key, params) : ResourceBundleEditorDeprecatedMessagesBundle.messagePointer(key, params);
   }
 }

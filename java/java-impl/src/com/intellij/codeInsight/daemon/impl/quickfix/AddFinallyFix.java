@@ -1,26 +1,44 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.generation.surroundWith.JavaWithTryFinallySurrounder;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class AddFinallyFix extends BaseIntentionAction {
-  private final PsiTryStatement myTryStatement;
-
+public class AddFinallyFix extends PsiUpdateModCommandAction<PsiTryStatement> {
   public AddFinallyFix(PsiTryStatement statement) {
-    myTryStatement = statement;
+    super(statement);
+  }
+
+  @Override
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiTryStatement tryStatement, @NotNull ModPsiUpdater updater) {
+    PsiStatement replacement =
+      JavaPsiFacade.getElementFactory(context.project())
+        .createStatementFromText(tryStatement.getText() + "finally {\n\n}", tryStatement);
+    PsiTryStatement result = (PsiTryStatement)tryStatement.replace(replacement);
+    moveCaretToFinallyBlock(updater, Objects.requireNonNull(result.getFinallyBlock()));
+  }
+
+  private static void moveCaretToFinallyBlock(@NotNull ModPsiUpdater updater, @NotNull PsiCodeBlock block) {
+    PsiFile file = block.getContainingFile();
+    Document document = file.getViewProvider().getDocument();
+    Project project = file.getProject();
+    updater.moveTo(Objects.requireNonNull(block.getRBrace()));
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+    TextRange finallyBlockRange = block.getTextRange();
+    int newLineOffset = finallyBlockRange.getStartOffset() + 2;
+    CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
+    updater.moveToPrevious('\n');
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -28,32 +46,5 @@ public class AddFinallyFix extends BaseIntentionAction {
   @Override
   public String getFamilyName() {
     return QuickFixBundle.message("add.finally.block.family");
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
-    if (!myTryStatement.isValid()) return false;
-    if (myTryStatement.getFinallyBlock() != null) return false;
-    return true;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiStatement replacement =
-      JavaPsiFacade.getElementFactory(project).createStatementFromText(myTryStatement.getText() + "finally {\n\n}", myTryStatement);
-    PsiTryStatement result = (PsiTryStatement)myTryStatement.replace(replacement);
-    JavaWithTryFinallySurrounder.moveCaretToFinallyBlock(project, editor, Objects.requireNonNull(result.getFinallyBlock()));
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new AddFinallyFix(PsiTreeUtil.findSameElementInCopy(myTryStatement, target));
   }
 }

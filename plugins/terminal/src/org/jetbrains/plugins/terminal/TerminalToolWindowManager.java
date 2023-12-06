@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Sets;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.DistractionFreeModeController;
 import com.intellij.ide.actions.ShowContentAction;
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.ide.dnd.DnDDropHandler;
 import com.intellij.ide.dnd.DnDEvent;
@@ -17,12 +17,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +38,7 @@ import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.TerminalTitleListener;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
@@ -52,8 +51,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import com.jediterm.terminal.RequestOrigin;
-import com.jediterm.terminal.ui.TerminalPanelListener;
 import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +65,10 @@ import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -97,9 +97,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public TerminalToolWindowManager(@NotNull Project project) {
     myProject = project;
-    myTerminalRunner = ApplicationManager.getApplication()
-      .getService(DefaultTerminalRunnerFactory.class)
-      .create(project);
+    myTerminalRunner = DefaultTerminalRunnerFactory.getInstance().create(project);
   }
 
   @Override
@@ -187,25 +185,44 @@ public final class TerminalToolWindowManager implements Disposable {
     return createNewSession(myTerminalRunner, null, true, true);
   }
 
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
-    return createLocalShellWidget(workingDirectory, tabName, true, true);
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(createShellWidget(workingDirectory, tabName, true, true));
   }
 
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
                                                              @Nullable @Nls String tabName,
                                                              boolean requestFocus) {
-    return createLocalShellWidget(workingDirectory, tabName, requestFocus, true);
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(createShellWidget(workingDirectory, tabName, requestFocus, true));
   }
 
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
                                                              @Nullable @Nls String tabName,
                                                              boolean requestFocus,
                                                              boolean deferSessionStartUntilUiShown) {
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(
+      createShellWidget(workingDirectory, tabName, requestFocus, deferSessionStartUntilUiShown));
+  }
+
+  public @NotNull TerminalWidget createShellWidget(@Nullable String workingDirectory,
+                                                   @Nullable @Nls String tabName,
+                                                   boolean requestFocus,
+                                                   boolean deferSessionStartUntilUiShown) {
     TerminalTabState tabState = new TerminalTabState();
     tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
-    TerminalWidget widget = createNewSession(myTerminalRunner, tabState, requestFocus, deferSessionStartUntilUiShown);
-    return (ShellTerminalWidget)Objects.requireNonNull(JBTerminalWidget.asJediTermWidget(widget));
+    return createNewSession(myTerminalRunner, tabState, requestFocus, deferSessionStartUntilUiShown);
   }
 
   private void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
@@ -333,8 +350,7 @@ public final class TerminalToolWindowManager implements Disposable {
     myTerminalSetupHandlers.forEach(consumer -> consumer.accept(finalWidget));
     panel.updateDFState();
 
-    updatePreferredFocusableComponent(content, widget);
-
+    content.setPreferredFocusedComponent(() -> finalWidget.getPreferredFocusableComponent());
     return content;
   }
 
@@ -354,21 +370,6 @@ public final class TerminalToolWindowManager implements Disposable {
     }, content);
     JBTerminalWidget terminalWidget = JBTerminalWidget.asJediTermWidget(widget);
     if (terminalWidget == null) return;
-    terminalWidget.setTerminalPanelListener(new TerminalPanelListener() {
-      @Override
-      public void onPanelResize(@NotNull RequestOrigin origin) { }
-
-      @Override
-      public void onTitleChanged(@NlsSafe String title) {
-        if (AdvancedSettings.getBoolean("terminal.show.application.title")) {
-          TerminalTitle terminalTitle = terminalWidget.getTerminalTitle();
-          terminalTitle.change(terminalTitleState -> {
-            terminalTitleState.setApplicationTitle(title);
-            return null;
-          });
-        }
-      }
-    });
 
     terminalWidget.setListener(new JBTerminalWidgetListener() {
       @Override
@@ -448,12 +449,6 @@ public final class TerminalToolWindowManager implements Disposable {
         TerminalToolWindowManager.this.gotoNextSplitTerminal(widget, forward);
       }
     });
-    terminalWidget.getTerminalPanel().addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        updatePreferredFocusableComponent(content, widget);
-      }
-    });
   }
 
   private static void updateTabTitle(@NotNull TerminalTitle terminalTitle,
@@ -464,10 +459,6 @@ public final class TerminalToolWindowManager implements Disposable {
       .filter(c -> c!= content)
       .map(c -> c.getDisplayName()).toList();
     content.setDisplayName(generateUniqueName(title, tabs));
-  }
-
-  private static void updatePreferredFocusableComponent(@NotNull Content content, @NotNull TerminalWidget terminalWidget) {
-    content.setPreferredFocusableComponent(terminalWidget.getPreferredFocusableComponent());
   }
 
   public boolean isSplitTerminal(@NotNull JBTerminalWidget widget) {
@@ -658,7 +649,7 @@ public final class TerminalToolWindowManager implements Disposable {
 }
 
 
-class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISettingsListener {
+final class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISettingsListener {
   private final PropertiesComponent myPropertiesComponent;
   private final ToolWindow myWindow;
 
@@ -724,13 +715,20 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
   }
 
   private boolean shouldMakeDistractionFree() {
-    return !myWindow.getAnchor().isHorizontal() && ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled();
+    return !myWindow.getAnchor().isHorizontal() && DistractionFreeModeController.isDistractionFreeModeEnabled();
   }
 
   @Override
   public void addNotify() {
     super.addNotify();
     updateDFState();
+    InternalDecoratorImpl.componentWithEditorBackgroundAdded(this);
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
   }
 
   private static boolean isDfmSupportEnabled() {

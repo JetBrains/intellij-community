@@ -1,20 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.BundleBase
 import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.IdeUICustomization
+import com.intellij.ui.icons.findIconByPath
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -41,14 +39,6 @@ enum class ToolWindowEventSource {
   InspectionsWidget
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("This API was replaced", ReplaceWith("getStripeTitleSupplier(id, project, pluginDescriptor)"))
-fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescriptor): Supplier<String>? {
-  val openProjects = ProjectUtilCore.getOpenProjects()
-  val project = if (openProjects.size == 1) openProjects.first() else DefaultProjectFactory.getInstance().defaultProject
-  return getStripeTitleSupplier(id, project, pluginDescriptor)
-}
-
 fun getStripeTitleSupplier(id: String, project: Project, pluginDescriptor: PluginDescriptor): Supplier<@NlsContexts.TabTitle String>? {
   if (id == "Project") {
     return Supplier { IdeUICustomization.getInstance().getProjectViewTitle(project) }
@@ -60,19 +50,19 @@ fun getStripeTitleSupplier(id: String, project: Project, pluginDescriptor: Plugi
     else -> pluginDescriptor.resourceBundleBaseName ?: return null
   }
 
-  try {
-    val bundle = DynamicBundle.getResourceBundle(classLoader, bundleName)
-    val key = "toolwindow.stripe.${id}".replace(" ", "_")
+  return Supplier {
+    try {
+      val bundle = DynamicBundle.getResourceBundle(classLoader, bundleName)
+      val key = "toolwindow.stripe.${id}".replace(" ", "_")
 
-    @Suppress("HardCodedStringLiteral", "UnnecessaryVariable")
-    val fallback = id
-    val label = BundleBase.messageOrDefault(bundle, key, fallback)
-    return Supplier { label }
+      @Suppress("HardCodedStringLiteral")
+      BundleBase.messageOrDefault(bundle = bundle, key = key, defaultValue = id)
+    }
+    catch (e: MissingResourceException) {
+      logger<ToolWindowManagerImpl>().warn("Missing bundle $bundleName at $classLoader", e)
+      ""
+    }
   }
-  catch (e: MissingResourceException) {
-    logger<ToolWindowManagerImpl>().warn("Missing bundle $bundleName at $classLoader", e)
-  }
-  return null
 }
 
 fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescriptor: PluginDescriptor): Icon? {
@@ -81,7 +71,8 @@ fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescr
   }
 
   try {
-    return IconLoader.findIcon(bean.icon ?: return null, pluginDescriptor.classLoader)
+    // cache is not used - cached as a part of ToolWindow instance
+    return findIconByPath(path = bean.icon ?: return null, classLoader = pluginDescriptor.classLoader, cache = null)
   }
   catch (e: Exception) {
     logger<ToolWindowManagerImpl>().error(e)

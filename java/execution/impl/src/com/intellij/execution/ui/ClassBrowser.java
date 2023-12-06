@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleValueActionListener<T> {
-  private final @NlsContexts.DialogTitle String myTitle;
+  protected final @NlsContexts.DialogTitle String myTitle;
 
   public ClassBrowser(@NotNull Project project, @NlsContexts.DialogTitle String title) {
     super(project);

@@ -14,18 +14,4 @@ class CustomKotlinCompilerReferenceFirTest : CustomKotlinCompilerReferenceTest6(
     override fun testTooltips() {
         doTestTooltips(ClassInheritorsTooltip, CallableOverridingsTooltip)
     }
-
-    override fun testMixedSubtypes() {
-        // drop after KTIJ-24828
-        var failed = false
-        try {
-            super.testMixedSubtypes()
-        } catch (e: AssertionFailedError) {
-            failed = true
-        }
-
-        if (!failed) {
-            error("Unmute me")
-        }
-    }
 }

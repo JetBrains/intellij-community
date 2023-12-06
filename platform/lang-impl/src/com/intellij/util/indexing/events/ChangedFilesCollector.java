@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
@@ -195,7 +196,12 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   public void ensureUpToDateAsync() {
-    if (getEventMerger().getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.compareAndSet(0,1)) {
+    if (getEventMerger().getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.compareAndSet(0, 1)) {
+      if (DumbServiceImpl.isSynchronousTaskExecution()) {
+        ensureUpToDate();
+        return;
+      }
+
       myVfsEventsExecutor.execute(() -> {
         try {
           processFilesInReadActionWithYieldingToWriteAction();
@@ -226,15 +232,22 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         ((StubIndexImpl)StubIndex.getInstance()).getPerFileElementTypeModificationTrackerUpdateProcessor();
       @Override
       public boolean process(VfsEventsMerger.@NotNull ChangeInfo info) {
-        int fileId = info.getFileId();
-        VirtualFile file = info.getFile();
-        if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file);
-        if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
-        if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
-        if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
-        if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
-            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
-          perFileElementTypeUpdateProcessor.processUpdate(file);
+        LOG.debug("Processing ", info);
+        try {
+          int fileId = info.getFileId();
+          VirtualFile file = info.getFile();
+          if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file);
+          if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
+          if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
+          if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
+          if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
+              StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
+            perFileElementTypeUpdateProcessor.processUpdate(file);
+          }
+        }
+        catch (Throwable t) {
+          if (LOG.isDebugEnabled()) LOG.debug("Exception while processing " + info, t);
+          throw t;
         }
         return true;
       }
@@ -290,14 +303,26 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
 
     try {
-      myWorkersFinishedSync.awaitAdvance(phase);
-    } catch (RejectedExecutionException e) {
+      awaitWithCheckCancelled(myWorkersFinishedSync, phase);
+    } catch (RejectedExecutionException | InterruptedException e) {
       LOG.warn(e);
       throw new ProcessCanceledException(e);
     }
 
     if (getEventMerger().getPublishedEventIndex() == publishedEventIndex) {
       myProcessedEventIndex.compareAndSet(processedEventIndex, publishedEventIndex);
+    }
+  }
+
+  private static void awaitWithCheckCancelled(Phaser phaser, int phase) throws InterruptedException {
+    while (true) {
+      ProgressManager.checkCanceled();
+      try {
+        phaser.awaitAdvanceInterruptibly(phase, 100, TimeUnit.MILLISECONDS);
+        break;
+      }
+      catch (TimeoutException ignored) {
+      }
     }
   }
 

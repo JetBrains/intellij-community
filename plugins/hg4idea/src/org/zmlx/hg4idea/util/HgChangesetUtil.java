@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.util;
 
 import org.jetbrains.annotations.NonNls;
@@ -22,8 +22,7 @@ public final class HgChangesetUtil {
    * @param templateItems template items like <pre>{rev}</pre>, <pre>{node}</pre>.
    * @return items joined by ITEM_SEPARATOR, ended by CHANGESET_SEPARATOR.
    */
-  @NonNls
-  public static String makeTemplate(@NonNls String... templateItems) {
+  public static @NonNls String makeTemplate(@NonNls String... templateItems) {
     StringBuilder template = new StringBuilder();
 
     for (String item : templateItems) {

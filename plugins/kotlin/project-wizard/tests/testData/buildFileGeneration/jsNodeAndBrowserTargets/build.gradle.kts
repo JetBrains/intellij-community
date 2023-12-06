@@ -9,17 +9,18 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven("KOTLIN_BOOTSTRAP_REPO")
+    maven("KOTLIN_IDE_PLUGIN_DEPENDENCIES_REPO")
     maven("KOTLIN_REPO")
 }
 
 kotlin {
-    js("nodeJs", IR) {
+    js("nodeJs") {
         binaries.executable()
         nodejs {
 
         }
     }
-    js("browser", IR) {
+    js("browser") {
         binaries.executable()
         browser {
             commonWebpackConfig {

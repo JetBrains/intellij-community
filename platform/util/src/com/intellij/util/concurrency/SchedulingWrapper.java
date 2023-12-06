@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
@@ -22,12 +23,13 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCa
  * Makes a {@link ScheduledExecutorService} from the supplied plain non-scheduling {@link ExecutorService} by awaiting scheduled tasks in a separate thread
  * and then passing them for execution to the {@code backendExecutorService}.
  * Unlike the standard {@link ScheduledThreadPoolExecutor}, this pool can be unbounded if the {@code backendExecutorService} is.
+ * Used for reducing the number of always-running threads, because it reuses the threads from the supplied pool.
  */
 class SchedulingWrapper implements ScheduledExecutorService {
   private static final Logger LOG = Logger.getInstance(SchedulingWrapper.class);
   
   private final AtomicBoolean shutdown = new AtomicBoolean();
-  @NotNull final ExecutorService backendExecutorService;
+  final @NotNull ExecutorService backendExecutorService;
   final AppDelayQueue delayQueue;
 
   // make sure transferrerThread doesn't retain a task on its stack
@@ -54,9 +56,8 @@ class SchedulingWrapper implements ScheduledExecutorService {
     this.backendExecutorService = backendExecutorService;
   }
 
-  @NotNull
   @Override
-  public List<Runnable> shutdownNow() {
+  public @NotNull List<Runnable> shutdownNow() {
     List<Runnable> canceled = doShutdown();
     List<Runnable> backEndCanceled = backendExecutorService instanceof BoundedTaskExecutor
                                      ? ((BoundedTaskExecutor)backendExecutorService).clearAndCancelAll()
@@ -95,8 +96,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   void onDelayQueuePurgedOnShutdown() {
   }
 
-  @NotNull
-  private List<MyScheduledFutureTask<?>> getMyTasksFromDelayQueue() {
+  private @NotNull List<MyScheduledFutureTask<?>> getMyTasksFromDelayQueue() {
     List<MyScheduledFutureTask<?>> result = new ArrayList<>();
     for (MyScheduledFutureTask<?> task : delayQueue) {
       if (task.getBackendExecutorService() == backendExecutorService) {
@@ -156,7 +156,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     return backendExecutorService.awaitTermination(deadline - System.nanoTime(), TimeUnit.NANOSECONDS);
   }
 
-  class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V> {
+  class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V>, ContextAwareRunnable {
     /**
      * Sequence number to break ties FIFO
      */
@@ -299,8 +299,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
       return "Delay: " + getDelay(TimeUnit.MILLISECONDS) + "ms; " + (info == this ? super.toString() : info) + " backendExecutorService: "+backendExecutorService;
     }
 
-    @NotNull
-    private ExecutorService getBackendExecutorService() {
+    private @NotNull ExecutorService getBackendExecutorService() {
       return backendExecutorService;
     }
 
@@ -356,15 +355,13 @@ class SchedulingWrapper implements ScheduledExecutorService {
     return delay;
   }
 
-  @NotNull
   @Override
-  public ScheduledFuture<?> schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
+  public @NotNull ScheduledFuture<?> schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
     return schedule(Executors.callable(command), delay, unit);
   }
 
-  @NotNull
   @Override
-  public <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable, long delay, @NotNull TimeUnit unit) {
+  public @NotNull <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable, long delay, @NotNull TimeUnit unit) {
     return delayedExecute(createTask(callable, triggerTime(delay, unit)));
   }
 
@@ -392,15 +389,13 @@ class SchedulingWrapper implements ScheduledExecutorService {
     }
   }
 
-  @NotNull
   @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(@NotNull Runnable command, long initialDelay, long period, @NotNull TimeUnit unit) {
+  public @NotNull ScheduledFuture<?> scheduleAtFixedRate(@NotNull Runnable command, long initialDelay, long period, @NotNull TimeUnit unit) {
     throw new IncorrectOperationException("Not supported because it's bad for hibernation; use scheduleWithFixedDelay() with the same parameters instead.");
   }
 
-  @NotNull
   @Override
-  public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull Runnable command, long initialDelay, long delay, @NotNull TimeUnit unit) {
+  public @NotNull ScheduledFuture<?> scheduleWithFixedDelay(@NotNull Runnable command, long initialDelay, long delay, @NotNull TimeUnit unit) {
     if (delay <= 0) {
       throw new IllegalArgumentException("delay must be positive but got: " + delay);
     }
@@ -420,44 +415,38 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   /////////////////////// delegates for ExecutorService ///////////////////////////
 
-  @NotNull
   @Override
-  public <T> Future<T> submit(@NotNull Callable<T> task) {
+  public @NotNull <T> Future<T> submit(@NotNull Callable<T> task) {
     checkAlreadyShutdown();
     return backendExecutorService.submit(task);
   }
 
-  @NotNull
   @Override
-  public <T> Future<T> submit(@NotNull Runnable task, T result) {
+  public @NotNull <T> Future<T> submit(@NotNull Runnable task, T result) {
     checkAlreadyShutdown();
     return backendExecutorService.submit(task, result);
   }
 
-  @NotNull
   @Override
-  public Future<?> submit(@NotNull Runnable task) {
+  public @NotNull Future<?> submit(@NotNull Runnable task) {
     checkAlreadyShutdown();
     return backendExecutorService.submit(task);
   }
 
-  @NotNull
   @Override
-  public <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks) throws InterruptedException {
+  public @NotNull <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks) throws InterruptedException {
     checkAlreadyShutdown();
     return backendExecutorService.invokeAll(tasks);
   }
 
-  @NotNull
   @Override
-  public <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks, long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+  public @NotNull <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks, long timeout, @NotNull TimeUnit unit) throws InterruptedException {
     checkAlreadyShutdown();
     return backendExecutorService.invokeAll(tasks, timeout, unit);
   }
 
-  @NotNull
   @Override
-  public <T> T invokeAny(@NotNull Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+  public @NotNull <T> T invokeAny(@NotNull Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
     checkAlreadyShutdown();
     return backendExecutorService.invokeAny(tasks);
   }

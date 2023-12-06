@@ -10,9 +10,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -86,7 +84,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     myMustBeFinal = mustBeFinal;
     myReplaceChoice = replaceChoice;
 
-    myEditorState = new EditorState(editor);
+    myEditorState = new EditorState(project, editor);
 
     myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager,
                                               myOccurrences) {
@@ -188,7 +186,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
 
   @Override
   protected void afterTemplateStart() {
-     super.afterTemplateStart();
+    super.afterTemplateStart();
     TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
     if (templateState == null) return;
 
@@ -299,7 +297,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
 
   @Override
   protected void performCleanup() {
-    ApplicationManager.getApplication().invokeLater(() -> myEditorState.revert());
+    myEditorState.revert();
   }
 
   @Override
@@ -314,34 +312,25 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
       isDeleteLocalVariable = myPanel.isDeleteLocalVariable();
     }
 
-    final IntList parametersToRemove = myPanel.getParametersToRemove();
-
     IntroduceParameterUsagesCollector.settingsOnPerform.log(myProject, IntroduceParameterUsagesCollector.delegate.with(isGenerateDelegate()));
 
+    final IntList parametersToRemove = myPanel.getParametersToRemove();
     final IntroduceParameterProcessor processor =
       new IntroduceParameterProcessor(myProject, myMethod,
                                       myMethodToSearchFor, parameterInitializer, myExpr,
                                       (PsiLocalVariable)getLocalVariable(), isDeleteLocalVariable, getInputName(),
                                       myReplaceChoice,
                                       myPanel.getReplaceFieldsWithGetters(), myMustBeFinal || myPanel.isGenerateFinal(),
-                                      isGenerateDelegate(),
+                                      false /* delegate is already generated when needed */,
                                       false,
                                       getType(),
                                       parametersToRemove);
-    final Runnable runnable = () -> {
-      final Runnable performRefactoring = () -> {
-        processor.setPrepareSuccessfulSwingThreadCallback(() -> {
-        });
-        processor.run();
-        normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
-        final PsiParameter parameter = getParameter();
-        if (parameter != null) {
-          super.saveSettings(parameter);
-        }
-      };
-      ApplicationManager.getApplication().invokeLater(performRefactoring, myProject.getDisposed());
-    };
-    CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);
+    processor.run();
+    normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
+    final PsiParameter parameter = getParameter();
+    if (parameter != null) {
+      super.saveSettings(parameter);
+    }
   }
 
   public boolean isGenerateDelegate() {
@@ -380,7 +369,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
   }
 
   @Override
-  public void setReplaceAllOccurrences(boolean replaceAll) { 
+  public void setReplaceAllOccurrences(boolean replaceAll) {
     myReplaceChoice = replaceAll ? IntroduceVariableBase.JavaReplaceChoice.ALL : IntroduceVariableBase.JavaReplaceChoice.NO;
   }
 

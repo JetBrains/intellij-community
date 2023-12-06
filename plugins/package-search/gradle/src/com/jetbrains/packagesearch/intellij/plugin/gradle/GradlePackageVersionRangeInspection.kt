@@ -25,7 +25,6 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleTy
 internal class GradlePackageVersionRangeInspection : PackageVersionRangeInspection() {
 
     companion object {
-
         private const val FILE_TYPE_GROOVY = "groovy"
         private const val FILE_TYPE_KOTLIN = "kotlin"
         private const val EXTENSION_GRADLE = "gradle"
@@ -46,10 +45,11 @@ internal class GradlePackageVersionRangeInspection : PackageVersionRangeInspecti
             projectModuleType is GradleProjectModuleType
     }
 
-    override fun getStaticDescription(): String = PackageSearchBundle.getMessage("packagesearch.inspection.range.description.gradle")
+    override fun getStaticDescription(): String = PackageSearchBundle.message("packagesearch.inspection.range.description.gradle")
 
-    override fun selectPsiElementIndex(dependencyDeclarationIndexes: DependencyDeclarationIndexes) =
-        dependencyDeclarationIndexes.coordinatesStartIndex
+    override fun selectPsiElementIndex(dependencyDeclarationIndexes: DependencyDeclarationIndexes): Int {
+        return dependencyDeclarationIndexes.coordinatesStartIndex
+    }
 
     override fun shouldCheckFile(file: PsiFile) = hasSupportFor(file)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -76,9 +76,8 @@ public class SchemaPrefix extends RenameableFakePsiElement {
     return TextRange.from(getTextOffset(), getTextLength());
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return XmlExtension.getExtension(getContainingFile()).getNsPrefixScope(getDeclaration());
   }
 
@@ -87,8 +86,7 @@ public class SchemaPrefix extends RenameableFakePsiElement {
     return another instanceof SchemaPrefix && ((SchemaPrefix)another).getDeclaration() == getDeclaration();
   }
 
-  @NlsSafe
-  public String getQuickNavigateInfo() {
+  public @NlsSafe String getQuickNavigateInfo() {
     String ns = getNamespace();
     StringBuilder builder = new StringBuilder().append(getTypeName()).append(" \"").append(getName()).append("\"");
     if (ns != null) {
@@ -97,8 +95,7 @@ public class SchemaPrefix extends RenameableFakePsiElement {
     return builder.toString();
   }
 
-  @Nullable
-  protected String getNamespace() {
+  protected @Nullable String getNamespace() {
     XmlAttribute parent = (XmlAttribute)getParent();
     return parent == null ? null : parent.getValue();
   }

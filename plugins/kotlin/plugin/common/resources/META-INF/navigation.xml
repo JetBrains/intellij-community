@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <navbar implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension" order="first"/>
+    <navbar id="kotlinNavBar"
+            implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension"/>
 
     <psi.referenceContributor
             id="kotlinFilePathReferenceContributor"
@@ -10,6 +11,10 @@
     <psi.referenceContributor
             language="kotlin"
             implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>
+
+    <psi.referenceContributor
+            language="kotlin"
+            implementation="org.jetbrains.kotlin.idea.references.KotlinIssueReferenceContributor"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.psi.KtFileClassProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl"/>

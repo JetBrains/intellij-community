@@ -35,12 +35,11 @@ class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
 
   private var reparsePosition: Long = 0
   private var remapFunction: LongUnaryOperator? = null
-  val buffer: HProfReadBuffer
+  val buffer: HProfReadBuffer = HProfReadBufferSlidingWindow(fileChannel, this)
 
   private var heapRecordPosition: Long = 0
 
   init {
-    buffer = HProfReadBufferSlidingWindow(fileChannel, this)
     initialParse()
   }
 

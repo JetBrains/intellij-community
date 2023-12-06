@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -6,9 +6,11 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicHTML;
@@ -16,8 +18,8 @@ import java.awt.*;
 
 public class TitlePanel extends CaptionPanel {
   private final JLabel myLabel;
-  private final Icon myRegular;
-  private final Icon myInactive;
+  private @Nullable Icon myRegular;
+  private @Nullable Icon myInactive;
   private boolean obeyPreferredWidth;
   private boolean isPopup = false;
   private boolean useHeaderInsets = false;
@@ -65,6 +67,24 @@ public class TitlePanel extends CaptionPanel {
     myLabel.setText(titleText);
   }
 
+  public void setRegularIcon(@Nullable Icon icon) {
+    myRegular = icon;
+  }
+
+  public void setInactiveIcon(@Nullable Icon icon) {
+    myInactive = icon;
+  }
+
+  @MagicConstant(intValues = {
+    SwingConstants.LEFT,
+    SwingConstants.CENTER,
+    SwingConstants.RIGHT,
+    SwingConstants.LEADING,
+    SwingConstants.TRAILING})
+  public void setHorizontalTextPosition(int textPosition) {
+    myLabel.setHorizontalTextPosition(textPosition);
+  }
+
   @Override
   public Dimension getMinimumSize() {
     return new Dimension(10, getPreferredSize().height);
@@ -91,8 +111,7 @@ public class TitlePanel extends CaptionPanel {
     return preferredSize;
   }
 
-  @NotNull
-  public JLabel getLabel() {
+  public @NotNull JLabel getLabel() {
     return myLabel;
   }
 

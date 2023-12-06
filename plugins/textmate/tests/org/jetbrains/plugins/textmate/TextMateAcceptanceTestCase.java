@@ -1,14 +1,16 @@
 package org.jetbrains.plugins.textmate;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.plugins.textmate.configuration.BundleConfigBean;
-import org.jetbrains.plugins.textmate.configuration.TextMateSettings;
+import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings;
+import org.jetbrains.plugins.textmate.configuration.TextMatePersistentBundle;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -22,24 +24,23 @@ import java.util.Set;
  * <p/>
  */
 public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
-  private static final Set<String> loadingBundles = ContainerUtil.newHashSet(TestUtil.MARKDOWN_TEXTMATE, TestUtil.HTML, TestUtil.LATEX, TestUtil.PHP, TestUtil.BAT, TestUtil.JAVASCRIPT);
+  private static final Set<String> loadingBundles =
+    ContainerUtil.newHashSet(TestUtil.MARKDOWN_TEXTMATE, TestUtil.HTML, TestUtil.LATEX, TestUtil.PHP, TestUtil.BAT, TestUtil.JAVASCRIPT);
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    TextMateSettings.TextMateSettingsState state = TextMateSettings.getInstance().getState();
-    if (state == null) {
-      state = new TextMateSettings.TextMateSettingsState();
-    }
-    Set<String> enabledBundles = ContainerUtil.map2Set(state.getBundles(), bean -> bean.getName());
+    TextMateUserBundlesSettings settings = TextMateUserBundlesSettings.getInstance();
+    assertNotNull(settings);
+    Set<String> enabledBundles = ContainerUtil.map2Set(settings.getBundles().values(), bean -> bean.getName());
     if (!loadingBundles.equals(enabledBundles)) {
-      List<BundleConfigBean> bundles = new ArrayList<>();
+      Map<String, TextMatePersistentBundle> bundles = new HashMap<>();
       for (String bundleName : loadingBundles) {
         Path bundleDirectory = TestUtil.getBundleDirectory(bundleName);
-        bundles.add(new BundleConfigBean(bundleName, bundleDirectory.toAbsolutePath().toString(), true));
+        String path = bundleDirectory.toAbsolutePath().toString();
+        bundles.put(FileUtil.toSystemIndependentName(path), new TextMatePersistentBundle(bundleName, true));
       }
-      state.setBundles(bundles);
-      TextMateSettings.getInstance().loadState(state);
+      settings.setBundlesConfig(bundles);
       ((TextMateServiceImpl)TextMateService.getInstance()).disableBuiltinBundles(getTestRootDisposable());
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -48,7 +49,7 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      TextMateSettings.getInstance().loadState(new TextMateSettings.TextMateSettingsState());
+      TextMateUserBundlesSettings.getInstance().setBundlesConfig(Collections.emptyMap());
       UIUtil.dispatchAllInvocationEvents();
     }
     catch (Throwable e) {

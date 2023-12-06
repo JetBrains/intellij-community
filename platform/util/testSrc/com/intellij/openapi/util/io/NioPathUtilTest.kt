@@ -1,13 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io
 
+import com.intellij.openapi.util.io.NioPathAssertion.Companion.assertNioPath
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.testFramework.utils.io.deleteChildrenRecursively
 import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.io.IOException
+import java.nio.file.Path
 import kotlin.io.path.extension
 
 
@@ -16,16 +21,16 @@ class NioPathUtilTest : NioPathUtilTestCase() {
   @Test
   fun `test directory find or create`() {
     runBlocking {
-      assertNioPath { findOrCreateDirectory("directory") }
-        .isEqualsTo { findOrCreateDirectory("directory") }
-        .isEqualsTo { findOrCreateDirectory("temp/../directory") }
-        .isEqualsTo { findOrCreateDirectory("directory/temp/..") }
+      assertNioPath { root.findOrCreateDirectory("directory") }
+        .isEqualsTo { root.findOrCreateDirectory("directory") }
+        .isEqualsTo { root.findOrCreateDirectory("temp/../directory") }
+        .isEqualsTo { root.findOrCreateDirectory("directory/temp/..") }
         .isExistedDirectory()
 
-      assertNioPath { findOrCreateDirectory("directory/dir") }
-        .isEqualsTo { findOrCreateDirectory("directory/dir") }
-        .isEqualsTo { findOrCreateDirectory("directory/temp/../dir") }
-        .isEqualsTo { findOrCreateDirectory("directory/dir/temp/..") }
+      assertNioPath { root.findOrCreateDirectory("directory/dir") }
+        .isEqualsTo { root.findOrCreateDirectory("directory/dir") }
+        .isEqualsTo { root.findOrCreateDirectory("directory/temp/../dir") }
+        .isEqualsTo { root.findOrCreateDirectory("directory/dir/temp/..") }
         .isExistedDirectory()
     }
   }
@@ -33,15 +38,15 @@ class NioPathUtilTest : NioPathUtilTestCase() {
   @Test
   fun `test file find or create`() {
     runBlocking {
-      assertNioPath { findOrCreateFile("file.txt") }
-        .isEqualsTo { findOrCreateFile("file.txt") }
-        .isEqualsTo { findOrCreateFile("temp/../file.txt") }
+      assertNioPath { root.findOrCreateFile("file.txt") }
+        .isEqualsTo { root.findOrCreateFile("file.txt") }
+        .isEqualsTo { root.findOrCreateFile("temp/../file.txt") }
         .isExistedFile()
 
-      assertNioPath { findOrCreateFile("directory/file.txt") }
-        .isEqualsTo { findOrCreateFile("directory/file.txt") }
-        .isEqualsTo { findOrCreateFile("temp/../directory/file.txt") }
-        .isEqualsTo { findOrCreateFile("directory/temp/../file.txt") }
+      assertNioPath { root.findOrCreateFile("directory/file.txt") }
+        .isEqualsTo { root.findOrCreateFile("directory/file.txt") }
+        .isEqualsTo { root.findOrCreateFile("temp/../directory/file.txt") }
+        .isEqualsTo { root.findOrCreateFile("directory/temp/../file.txt") }
         .isExistedFile()
     }
   }
@@ -49,25 +54,25 @@ class NioPathUtilTest : NioPathUtilTestCase() {
   @Test
   fun `test directory finding and creation`() {
     runBlocking {
-      assertNioPath { getResolvedPath("directory") }
+      assertNioPath { root.getResolvedPath("directory") }
         .doesNotExist()
-      assertNioPath { createDirectory("directory") }
-        .isEqualsTo { getResolvedPath("directory") }
-        .isEqualsTo { getResolvedPath("directory/temp/..") }
+      assertNioPath { root.createDirectory("directory") }
+        .isEqualsTo { root.getResolvedPath("directory") }
+        .isEqualsTo { root.getResolvedPath("directory/temp/..") }
         .isExistedDirectory()
 
-      assertNioPath { getResolvedPath("directory/dir") }
+      assertNioPath { root.getResolvedPath("directory/dir") }
         .doesNotExist()
-      assertNioPath { getResolvedPath("directory/dir/temp") }
+      assertNioPath { root.getResolvedPath("directory/dir/temp") }
         .doesNotExist()
-      assertNioPath { createDirectory("directory/dir/temp/..") }
-        .isEqualsTo { getResolvedPath("directory/dir") }
-        .isEqualsTo { getResolvedPath("directory/dir/temp/..") }
+      assertNioPath { root.createDirectory("directory/dir/temp/..") }
+        .isEqualsTo { root.getResolvedPath("directory/dir") }
+        .isEqualsTo { root.getResolvedPath("directory/dir/temp/..") }
         .isExistedDirectory()
-      assertNioPath { getResolvedPath("directory/dir/temp") }
+      assertNioPath { root.getResolvedPath("directory/dir/temp") }
         .doesNotExist()
 
-      assertNioPath { createDirectory("d1/d2/d3/d4") }
+      assertNioPath { root.createDirectory("d1/d2/d3/d4") }
         .isExistedDirectory()
     }
   }
@@ -75,25 +80,25 @@ class NioPathUtilTest : NioPathUtilTestCase() {
   @Test
   fun `test file finding and creation`() {
     runBlocking {
-      assertNioPath { getResolvedPath("file.txt") }
+      assertNioPath { root.getResolvedPath("file.txt") }
         .doesNotExist()
-      assertNioPath { createFile("file.txt") }
-        .isEqualsTo { getResolvedPath("file.txt") }
-        .isEqualsTo { getResolvedPath("temp/../file.txt") }
+      assertNioPath { root.createFile("file.txt") }
+        .isEqualsTo { root.getResolvedPath("file.txt") }
+        .isEqualsTo { root.getResolvedPath("temp/../file.txt") }
         .isExistedFile()
 
-      assertNioPath { getResolvedPath("directory") }
+      assertNioPath { root.getResolvedPath("directory") }
         .doesNotExist()
-      assertNioPath { getResolvedPath("directory/temp") }
+      assertNioPath { root.getResolvedPath("directory/temp") }
         .doesNotExist()
-      assertNioPath { createFile("directory/temp/../file.txt") }
-        .isEqualsTo { getResolvedPath("directory/file.txt") }
-        .isEqualsTo { getResolvedPath("directory/temp/../file.txt") }
+      assertNioPath { root.createFile("directory/temp/../file.txt") }
+        .isEqualsTo { root.getResolvedPath("directory/file.txt") }
+        .isEqualsTo { root.getResolvedPath("directory/temp/../file.txt") }
         .isExistedFile()
-      assertNioPath { getResolvedPath("directory/temp") }
+      assertNioPath { root.getResolvedPath("directory/temp") }
         .doesNotExist()
 
-      assertNioPath { createFile("d1/d2/d3/d4/file.txt") }
+      assertNioPath { root.createFile("d1/d2/d3/d4/file.txt") }
         .isExistedFile()
     }
   }
@@ -101,24 +106,24 @@ class NioPathUtilTest : NioPathUtilTestCase() {
   @Test
   fun `test creation errors`() {
     runBlocking {
-      assertNioPath { createFile("file.txt") }
+      assertNioPath { root.createFile("file.txt") }
         .isExistedFile()
-      assertNioPath { createDirectory("directory") }
+      assertNioPath { root.createDirectory("directory") }
         .isExistedDirectory()
 
-      assertNioPath { createFile("file.txt") }
+      assertNioPath { root.createFile("file.txt") }
         .isFailedWithException<IOException>("File already exists: .*")
-      assertNioPath { createDirectory("directory") }
+      assertNioPath { root.createDirectory("directory") }
         .isFailedWithException<IOException>("Directory already exists: .*")
 
-      assertNioPath { findOrCreateFile("directory") }
+      assertNioPath { root.findOrCreateFile("directory") }
         .isFailedWithException<IOException>("Expected file instead of directory: .*")
-      assertNioPath { findOrCreateDirectory("file.txt") }
+      assertNioPath { root.findOrCreateDirectory("file.txt") }
         .isFailedWithException<IOException>()
 
-      assertNioPath { createFile("file.txt/file.txt") }
+      assertNioPath { root.createFile("file.txt/file.txt") }
         .isFailedWithException<IOException>()
-      assertNioPath { createDirectory("file.txt/directory") }
+      assertNioPath { root.createDirectory("file.txt/directory") }
         .isFailedWithException<IOException>()
     }
   }
@@ -128,14 +133,14 @@ class NioPathUtilTest : NioPathUtilTestCase() {
     runBlocking {
       root.createFile("file.txt")
       root.deleteRecursively("file.txt")
-      assertNioPath { getResolvedPath("file.txt") }
+      assertNioPath { root.getResolvedPath("file.txt") }
         .doesNotExist()
 
       repeat(3) {
         root.createDirectory("directory/file$it.txt")
       }
       root.deleteRecursively("directory")
-      assertNioPath { getResolvedPath("directory") }
+      assertNioPath { root.getResolvedPath("directory") }
         .doesNotExist()
 
       root.createFile("directory/file")
@@ -143,18 +148,38 @@ class NioPathUtilTest : NioPathUtilTestCase() {
         root.createFile("directory/file$it.txt")
       }
       root.deleteChildrenRecursively("directory") { it.extension == "txt" }
-      assertNioPath { getResolvedPath("directory") }
+      assertNioPath { root.getResolvedPath("directory") }
         .isExistedDirectory()
-      assertNioPath { getResolvedPath("directory/file") }
+      assertNioPath { root.getResolvedPath("directory/file") }
         .isExistedFile()
       repeat(3) {
-        assertNioPath { getResolvedPath("directory/file$it.txt") }
+        assertNioPath { root.getResolvedPath("directory/file$it.txt") }
           .doesNotExist()
       }
       root.deleteChildrenRecursively("directory") { true }
-      assertNioPath { getResolvedPath("directory") }
+      assertNioPath { root.getResolvedPath("directory") }
         .isExistedDirectory()
         .isEmptyDirectory()
     }
+  }
+
+  @ParameterizedTest
+  @CsvSource(
+    "/1/2/3/4/5, a/b/c,        /1/2/3/4/5, a/b/c",
+    "/1/2/3/4/5, ../../a/b/c,  /1/2/3,     a/b/c",
+    "/1/2/3/4/5, ../..,        /1/2/3,     ''",
+    "/1/2/3/4/5, a/../b,       /1/2/3/4/5, b",
+    "/1/2/3/4/5, a/b/..,       /1/2/3/4/5, a",
+    "/1/2/3/4/5, .,            /1/2/3/4/5, ''",
+    "/1/2/3/4/5, ./a/b,        /1/2/3/4/5, a/b"
+  )
+  fun `test base and relative paths normalization`(
+    basePath: String, relativePath: String,
+    expectedBasePath: String, expectedRelativePath: String
+  ) {
+    val (actualBasePath, actualRelativePath) = Path.of(basePath)
+      .relativizeToClosestAncestor(relativePath)
+    Assertions.assertEquals(Path.of(expectedBasePath), actualBasePath)
+    Assertions.assertEquals(Path.of(expectedRelativePath), actualRelativePath)
   }
 }

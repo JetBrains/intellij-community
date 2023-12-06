@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.AsyncSpanExporter
+import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import org.jetbrains.annotations.Contract
@@ -132,10 +132,14 @@ private fun writeValueAsHumanReadable(s: String, sb: StringBuilder) {
   sb.append(s)
 }
 
+private val THREAD_NAME = AttributeKey.stringKey("thread.name")
+private val THREAD_ID = AttributeKey.longKey("thread.id")
+private val EXCEPTION_STACKTRACE = AttributeKey.stringKey("exception.stacktrace")
+
 private fun writeAttributesAsHumanReadable(attributes: Attributes, sb: StringBuilder, writeFirstComma: Boolean) {
   var writeComma = writeFirstComma
   attributes.forEach(BiConsumer { k, v ->
-    if (k == SemanticAttributes.THREAD_NAME || k == SemanticAttributes.THREAD_ID) {
+    if (k == THREAD_NAME || k == THREAD_ID) {
       return@BiConsumer
     }
 
@@ -148,7 +152,7 @@ private fun writeAttributesAsHumanReadable(attributes: Attributes, sb: StringBui
 
     sb.append(k.key)
     sb.append('=')
-    if (k == SemanticAttributes.EXCEPTION_STACKTRACE) {
+    if (k == EXCEPTION_STACKTRACE) {
       val delimiter = "─".repeat(79)
       sb.append("\n  ┌")
       sb.append(delimiter)

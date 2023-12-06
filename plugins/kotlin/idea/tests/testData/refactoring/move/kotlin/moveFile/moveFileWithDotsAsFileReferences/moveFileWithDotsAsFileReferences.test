@@ -1,5 +1,6 @@
 {
   "mainFile": "a/a/main.kt",
   "type": "MOVE_FILES",
-  "targetDirectory": "b"
+  "targetDirectory": "b",
+  "enabledInK2": "true"
 }

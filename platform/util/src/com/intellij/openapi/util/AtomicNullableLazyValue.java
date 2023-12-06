@@ -13,7 +13,6 @@ public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
   /** @deprecated please use {@link NullableLazyValue#atomicLazyNullable} instead */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   protected AtomicNullableLazyValue() { }
 
   @Override
@@ -45,6 +44,7 @@ public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
   }
 
   /** @deprecated please use {@link NullableLazyValue#atomicLazyNullable} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static @NotNull <T> AtomicNullableLazyValue<T> createValue(@NotNull Factory<? extends T> value) {

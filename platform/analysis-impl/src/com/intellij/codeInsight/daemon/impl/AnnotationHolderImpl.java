@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -20,9 +19,6 @@ import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
 
-import java.time.LocalDate;
-import java.time.Month;
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +26,7 @@ import java.util.List;
  * Use {@link AnnotationHolder} instead. The members of this class can suddenly change or disappear.
  */
 @ApiStatus.Internal
+@ApiStatus.NonExtendable
 public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
   private static final Logger LOG = Logger.getInstance(AnnotationHolderImpl.class);
   private final AnnotationSession myAnnotationSession;
@@ -42,14 +39,14 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
    * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AnnotationHolderImpl(@NotNull AnnotationSession session) {
     this(session, false);
     PluginException.reportDeprecatedUsage("AnnotationHolderImpl(AnnotationSession)", "Please use the AnnotationHolder passed to Annotator.annotate() instead");
   }
 
   /**
-   * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
+   * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided via {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
    */
   @ApiStatus.Internal
   @Deprecated
@@ -111,13 +108,6 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   @Override
-  public Annotation createWeakWarningAnnotation(@NotNull ASTNode node, @NlsContexts.DetailedDescription @Nullable String message) {
-    assertMyFile(node.getPsi());
-    Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
-    return doCreateAnnotation(HighlightSeverity.WEAK_WARNING, node.getTextRange(), message, wrapXml(message), callerClass, "createWeakWarningAnnotation");
-  }
-
-  @Override
   public Annotation createWeakWarningAnnotation(@NotNull TextRange range, @NlsContexts.DetailedDescription String message) {
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.WEAK_WARNING, range, message, wrapXml(message), callerClass, "createWeakWarningAnnotation");
@@ -163,9 +153,8 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return doCreateAnnotation(severity, range, message, wrapXml(message), callerClass, "createAnnotation");
   }
 
-  @Nullable
   @Contract(pure = true)
-  private static String wrapXml(@Nullable String message) {
+  private static @Nullable String wrapXml(@Nullable String message) {
     return message == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
   }
 
@@ -179,9 +168,8 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   /**
    * @deprecated this is an old way of creating annotations, via createXXXAnnotation(). please use newAnnotation() instead
    */
-  @NotNull
   @Deprecated
-  private Annotation doCreateAnnotation(@NotNull HighlightSeverity severity,
+  private @NotNull Annotation doCreateAnnotation(@NotNull HighlightSeverity severity,
                                         @NotNull TextRange range,
                                         @NlsContexts.DetailedDescription @Nullable String message,
                                         @NlsContexts.Tooltip @Nullable String tooltip,
@@ -195,23 +183,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
                                       "and thus can cause unexpected behaviour (e.g. annoying blinking), " +
                                       "is deprecated and will be removed soon. " +
                                       "Please use `newAnnotation(...).create()` instead"), callerClass == null ? getClass() : callerClass);
-    if ("com.jetbrains.cidr.lang.daemon.OCAnnotator".equals(callerClass == null ? null : callerClass.getName())) {
-      //todo temporary fix. CLion guys promised to fix their annotator eventually
-      //LOG.warnInProduction(pluginException);
-      if (LocalDate.now().isAfter(LocalDate.of(2023, Month.MARCH, 13))) {
-        if (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode()) {
-          Period p = Period.between(LocalDate.of(2020, Month.APRIL, 27), LocalDate.now());
-          String f = String.format("CLion developers promised to fix their annotator %d centuries %d years %d months %d days ago", p.getYears() / 100, p.getYears() % 100, p.getMonths(), p.getDays());
-          LOG.warn(f, pluginException);
-        }
-        else {
-          LOG.warn(pluginException);
-        }
-      }
-    }
-    else {
-      LOG.warnInProduction(pluginException);
-    }
+    LOG.warnInProduction(pluginException);
     return annotation;
   }
 
@@ -219,9 +191,8 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return !isEmpty();
   }
 
-  @NotNull
   @Override
-  public AnnotationSession getCurrentAnnotationSession() {
+  public @NotNull AnnotationSession getCurrentAnnotationSession() {
     return myAnnotationSession;
   }
 
@@ -233,14 +204,12 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   void queueToUpdateIncrementally() {
   }
 
-  @NotNull
   @Override
-  public AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
+  public @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
     return new B(this, severity, message, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
   }
-  @NotNull
   @Override
-  public AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
+  public @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
     return new B(this, severity, null, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
   }
 

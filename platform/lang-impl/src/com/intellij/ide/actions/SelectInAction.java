@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -22,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class SelectInAction extends DumbAwareAction implements PerformWithDocumentsCommitted {
+public final class SelectInAction extends DumbAwareAction implements PerformWithDocumentsCommitted, ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

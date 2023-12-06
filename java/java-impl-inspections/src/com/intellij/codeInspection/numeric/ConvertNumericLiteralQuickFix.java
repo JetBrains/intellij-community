@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.numeric;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @see InsertLiteralUnderscoresInspection
  * @see RemoveLiteralUnderscoresInspection
  */
-final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
+final class ConvertNumericLiteralQuickFix extends PsiUpdateModCommandQuickFix {
 
   @NotNull private final String myConvertedValue;
   @NotNull @IntentionName private final String myName;
@@ -43,11 +43,7 @@ final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
-
-    if (element == null) return;
-
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myConvertedValue, null);
     element.replace(replacement);
   }

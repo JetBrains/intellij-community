@@ -1,32 +1,50 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.util.IntentionName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiJavaModule
+import com.intellij.psi.PsiKeyword
+import com.intellij.psi.PsiPackageAccessibilityStatement
 import com.intellij.psi.util.PsiUtil
 
-abstract class AddModuleDirectiveFix(module: PsiJavaModule) : LocalQuickFixAndIntentionActionOnPsiElement(module) {
+abstract class AddModuleDirectiveFix(module: PsiJavaModule) : PsiUpdateModCommandAction<PsiJavaModule>(module) {
   override fun getFamilyName(): String = QuickFixBundle.message("module.info.add.directive.family.name")
 
-  override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean =
-    startElement is PsiJavaModule && PsiUtil.isLanguageLevel9OrHigher(file) && BaseIntentionAction.canModify(startElement)
+  @IntentionName
+  abstract fun getText(): String
 
-  override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement): Unit =
-    invoke(project, startElement as PsiJavaModule)
-
-  protected abstract fun invoke(project: Project, module: PsiJavaModule)
+  override fun getPresentation(context: ActionContext, module: PsiJavaModule): Presentation? {
+    return if (PsiUtil.isLanguageLevel9OrHigher(module)) Presentation.of(getText()) else null
+  }
 }
 
 class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: String) : AddModuleDirectiveFix(module) {
-  override fun getText(): String = QuickFixBundle.message("module.info.add.requires.name", requiredName)
+  private var STATIC_REQUIRES_MODULE_NAMES = setOf("lombok")
+  override fun getText(): String {
+    if (STATIC_REQUIRES_MODULE_NAMES.contains(requiredName)) {
+      return QuickFixBundle.message("module.info.add.requires.static.name", requiredName)
+    }
+    else {
+      return QuickFixBundle.message("module.info.add.requires.name", requiredName)
+    }
+  }
 
-  override fun invoke(project: Project, module: PsiJavaModule) {
+  override fun invoke(context: ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
     if (module.requires.find { requiredName == it.moduleName } == null) {
-      PsiUtil.addModuleStatement(module, PsiKeyword.REQUIRES + ' ' + requiredName)
+
+      if (STATIC_REQUIRES_MODULE_NAMES.contains(requiredName)) {
+        PsiUtil.addModuleStatement(module, PsiKeyword.REQUIRES + ' ' + PsiKeyword.STATIC + ' ' + requiredName)
+      }
+      else {
+        PsiUtil.addModuleStatement(module, PsiKeyword.REQUIRES + ' ' + requiredName)
+      }
     }
   }
 }
@@ -38,8 +56,8 @@ class AddExportsDirectiveFix(
 ) : AddPackageAccessibilityFix(PsiKeyword.EXPORTS, module, packageName, targetName) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.exports.name", packageName)
 
-  override fun invoke(project: Project, module: PsiJavaModule) {
-    addPackageAccessibility(project, module, module.exports)
+  override fun invoke(context: ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
+    addPackageAccessibility(context.project, module, module.exports)
   }
 }
 
@@ -50,8 +68,8 @@ class AddOpensDirectiveFix(
 ) : AddPackageAccessibilityFix(PsiKeyword.OPENS, module, packageName, targetName) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.opens.name", packageName)
 
-  override fun invoke(project: Project, module: PsiJavaModule) {
-    addPackageAccessibility(project, module, module.opens)
+  override fun invoke(context: ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
+    addPackageAccessibility(context.project, module, module.opens)
   }
 }
 
@@ -82,7 +100,7 @@ abstract class AddPackageAccessibilityFix(
 class AddUsesDirectiveFix(module: PsiJavaModule, private val svcName: String) : AddModuleDirectiveFix(module) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.uses.name", svcName)
 
-  override fun invoke(project: Project, module: PsiJavaModule) {
+  override fun invoke(context: ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
     if (module.uses.find { svcName == it.classReference?.qualifiedName } == null) {
       PsiUtil.addModuleStatement(module, PsiKeyword.USES + ' ' + svcName)
     }

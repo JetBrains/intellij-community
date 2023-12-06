@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView.impl;
 
 import com.intellij.ide.hierarchy.*;
@@ -24,10 +24,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
+public final class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
   private HierarchyBrowser myBrowser;
 
-  public static class Provider implements UsageContextPanel.Provider {
+  public static final class Provider implements UsageContextPanel.Provider {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {

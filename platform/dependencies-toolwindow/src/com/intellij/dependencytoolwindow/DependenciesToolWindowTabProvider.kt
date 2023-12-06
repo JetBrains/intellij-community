@@ -35,6 +35,8 @@ interface DependenciesToolWindowTabProvider {
     fun extensions(project: Project): List<DependenciesToolWindowTabProvider> {
       return extensionPointName.extensionList.filter { it.isAvailable(project) }
     }
+
+    fun hasAnyExtensions(): Boolean = extensionPointName.hasAnyExtensions()
   }
 
   val id: Id

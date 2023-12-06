@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.ExecutionBundle;
@@ -74,7 +74,7 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 
-public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
+public final class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private Project myProject;
   private Tree myTree;
   private final AntBuildFilePropertiesAction myAntBuildFilePropertiesAction;
@@ -505,8 +505,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      final TreePath[] paths = myTree.getSelectionPaths();
-      final TreePath leadPath = myTree.getLeadSelectionPath();
+      Tree tree = myTree;
+      if (tree == null) {
+        return null;
+      }
+      final TreePath[] paths = tree.getSelectionPaths();
+      final TreePath leadPath = tree.getLeadSelectionPath();
       final AntBuildFile currentBuildFile = getCurrentBuildFile();
       return (DataProvider)id -> getSlowData(id, paths, leadPath, currentBuildFile);
     }
@@ -843,10 +847,9 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private final class CreateMetaTargetAction extends AnAction {
-
     CreateMetaTargetAction() {
       super(AntBundle.messagePointer("ant.create.meta.target.action.name"),
-            AntBundle.messagePointer("ant.create.meta.target.action.description"), null);
+            AntBundle.messagePointer("ant.create.meta.target.action.description"));
     }
 
     @Override
@@ -1023,7 +1026,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       return FileCopyPasteUtil.isFileListFlavorAvailable(support.getDataFlavors());
     }
 
-    private VirtualFile[] getAntFiles(final TransferSupport support) {
+    private static VirtualFile[] getAntFiles(final TransferSupport support) {
       List<VirtualFile> virtualFileList = new ArrayList<>();
       final List<File> fileList = FileCopyPasteUtil.getFileList(support.getTransferable());
       if (fileList != null) {

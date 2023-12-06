@@ -19,6 +19,7 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
         referenceProcessor: Processor<PsiReference>
     ): Boolean {
         val klass = companionObject.getStrictParentOfType<KtClass>() ?: return true
+        if (klass.containingKtFile.isCompiled) return true
         return !klass.anyDescendantOfType(fun(element: KtElement): Boolean {
             if (element == companionObject) return false // skip companion object itself
             return if (isCallReceiverRefersToCompanionObject(element, companionObject)) {

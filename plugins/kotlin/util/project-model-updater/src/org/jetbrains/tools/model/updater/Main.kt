@@ -2,10 +2,7 @@
 package org.jetbrains.tools.model.updater
 
 import org.jdom.Document
-import org.jetbrains.tools.model.updater.impl.JpsLibrary
-import org.jetbrains.tools.model.updater.impl.Preferences
-import org.jetbrains.tools.model.updater.impl.readXml
-import org.jetbrains.tools.model.updater.impl.xml
+import org.jetbrains.tools.model.updater.impl.*
 import java.io.File
 import java.util.*
 
@@ -47,13 +44,16 @@ fun main(args: Array<String>) {
     val preferences = GeneratorPreferences.parse(args)
 
     val communityRoot = generateSequence(File(".").canonicalFile) { it.parentFile }
-        .first { it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory }
+        .first { it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory }.normalize()
 
-    val monorepoRoot = communityRoot.resolve("..").takeIf { it.resolve(".idea").isDirectory }
+    val monorepoRoot = communityRoot.resolve("..").takeIf { it.resolve(".idea").isDirectory }?.normalize()
+
+    val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
     fun processRoot(root: File, isCommunity: Boolean) {
+        println("Processing kotlinc libraries in root: $root")
         val libraries = generateKotlincLibraries(preferences, isCommunity)
-        regenerateProjectLibraries(root.resolve(".idea"), libraries)
+        regenerateProjectLibraries(root.resolve(".idea"), libraries, resolverSettings)
     }
 
     if (monorepoRoot != null) {
@@ -66,13 +66,18 @@ fun main(args: Array<String>) {
     updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinGradlePluginVersion)
 }
 
-private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>) {
+private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>, resolverSettings: JpsResolverSettings) {
     val librariesDir = dotIdea.resolve("libraries")
-    librariesDir.listFiles { file -> file.startsWith("kotlinc_") }!!.forEach { it.delete() }
+    librariesDir.listFiles { file -> file.name.startsWith("kotlinc_") }!!.forEach {
+        println("Removing $it")
+        it.delete()
+    }
 
     for (library in libraries) {
         val libraryFileName = library.name.replace("\\W".toRegex(), "_") + ".xml"
-        librariesDir.resolve(libraryFileName).writeText(library.render())
+        val xmlFile = librariesDir.resolve(libraryFileName)
+        println("Writing $xmlFile")
+        xmlFile.writeText(library.render(resolverSettings))
     }
 }
 

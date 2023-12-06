@@ -1,5 +1,6 @@
-// "Create actual class for module testModule_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
 // COMPILER_ARGUMENTS: -Xexplicit-api=strict
+// IGNORE_K2
 
 public expect class <caret>My {
     public fun foo(param: String): Int

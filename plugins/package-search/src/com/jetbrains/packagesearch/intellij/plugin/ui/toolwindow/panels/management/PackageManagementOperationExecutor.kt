@@ -20,6 +20,7 @@ import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.DependencyModifierService
+import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.writeAction
@@ -239,7 +240,7 @@ internal class PackageManagementOperationExecutor(private val project: Project) 
         val suspender = coroutineSuspender()
         withBackgroundLoadingBar(
             project = project,
-            title = PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
+            title = IdeBundle.message("toolwindow.stripe.Dependencies"),
             isIndeterminate = false,
             cancellable = true,
             isPausable = true

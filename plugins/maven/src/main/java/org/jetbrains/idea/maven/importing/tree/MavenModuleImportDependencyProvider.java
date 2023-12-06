@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.importing.tree;
 
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId;
 import kotlin.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +92,7 @@ public class MavenModuleImportDependencyProvider {
       else {
         var result = new ArrayList<MavenImportDependency<?>>();
         boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(dependencyType) || "tests".equals(artifact.getClassifier());
-        String moduleName = getModuleName(mavenProjectImportData);
+        String moduleName = getModuleName(mavenProjectImportData, isTestJar);
 
         ContainerUtil.addIfNotNull(result, createAttachArtifactDependency(depProject, scope, artifact));
 
@@ -132,9 +132,12 @@ public class MavenModuleImportDependencyProvider {
     }
   }
 
-  private static String getModuleName(MavenProjectImportData data) {
+  private static String getModuleName(MavenProjectImportData data, boolean isTestJar) {
     SplittedMainAndTestModules modules = data.getSplittedMainAndTestModules();
-    return modules == null ? data.getModuleData().getModuleName() : modules.getMainData().getModuleName();
+    if (modules == null) {
+      return data.getModuleData().getModuleName();
+    }
+    return isTestJar ? modules.getTestData().getModuleName() : modules.getMainData().getModuleName();
   }
 
   @Nullable

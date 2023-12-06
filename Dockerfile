@@ -10,6 +10,7 @@ RUN apt-get update && \
     zip \
     unzip \
     libgl1-mesa-glx \
+    squashfs-tools \
     && rm -rf /var/lib/apt/lists/*
 # Maven cache to reuse
 VOLUME /root/.m2

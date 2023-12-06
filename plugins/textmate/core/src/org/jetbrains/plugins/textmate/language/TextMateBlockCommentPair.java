@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class TextMateBlockCommentPair {
+public final class TextMateBlockCommentPair {
   private final @NotNull String prefix;
   private final @NotNull String suffix;
 

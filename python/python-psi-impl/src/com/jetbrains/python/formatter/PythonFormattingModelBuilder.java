@@ -82,6 +82,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .between(COMMA, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS || commonSettings.SPACE_AFTER_COMMA)
       .withinPair(LBRACKET, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS)
 
+      .between(COMMA, TYPE_PARAMETER).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS || commonSettings.SPACE_AFTER_COMMA)
+
       .withinPair(FSTRING_FRAGMENT_START, FSTRING_FRAGMENT_END).spaces(0)
 
       .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON)
@@ -123,6 +125,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .after(DECORATOR_LIST).spacing(1, Integer.MAX_VALUE, 0, true, 0)
 
       .aroundInside(EQ, ASSIGNMENT_STATEMENT).spaceIf(commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
+      .aroundInside(EQ, TYPE_ALIAS_STATEMENT).spaceIf(commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
       .aroundInside(EQ, NAMED_PARAMETER).spaceIf(pySettings.SPACE_AROUND_EQ_IN_NAMED_PARAMETER)
       .aroundInside(EQ, KEYWORD_ARGUMENT_EXPRESSION).spaceIf(pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)
       .aroundInside(EQ, KEYWORD_PATTERN).spaceIf(pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)
@@ -133,8 +136,6 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .aroundInside(STAR_OPERATORS, STAR_PATTERNS).none()
       .between(EXCEPT_KEYWORD, MULT).none()
       .between(PERC, TokenSet.create(PERC, IDENTIFIER, EXPRESSION_STATEMENT)).none()
-      .between(DIV, IDENTIFIER).spaces(0)
-      .between(IDENTIFIER, DIV).spaces(0)
       .around(MULTIPLICATIVE_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS)
       .around(EXP).spaceIf(pySettings.SPACE_AROUND_POWER_OPERATOR)
       .around(SHIFT_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_SHIFT_OPERATORS)
@@ -151,7 +152,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
                                                                         ASSERT_KEYWORD, CLASS_KEYWORD, DEF_KEYWORD, DEL_KEYWORD,
                                                                         EXEC_KEYWORD, GLOBAL_KEYWORD, NONLOCAL_KEYWORD, IMPORT_KEYWORD,
                                                                         LAMBDA_KEYWORD, NOT_KEYWORD, WHILE_KEYWORD, YIELD_KEYWORD,
-                                                                        AS_KEYWORD, MATCH_KEYWORD, CASE_KEYWORD);
+                                                                        AS_KEYWORD, MATCH_KEYWORD, CASE_KEYWORD, TYPE_KEYWORD);
 
   private static TokenSet allButLambda() {
     final PythonLanguage pythonLanguage = PythonLanguage.getInstance();

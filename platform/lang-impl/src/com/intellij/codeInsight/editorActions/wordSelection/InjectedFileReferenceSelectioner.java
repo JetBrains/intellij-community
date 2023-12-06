@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.wordSelection;
 
@@ -29,7 +29,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  * and cause long freezes. If the selectioner improperly behaves with a specific language
  * construct please improve it.
  */
-public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
+public final class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

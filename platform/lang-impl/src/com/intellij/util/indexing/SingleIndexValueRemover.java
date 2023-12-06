@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,28 +12,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
+final
 class SingleIndexValueRemover {
   private final FileBasedIndexImpl myIndexImpl;
   final @NotNull ID<?, ?> indexId;
-  private final VirtualFile file;
   private final int inputId;
   private final @Nullable String fileInfo;
-  private final @Nullable String filePath;
-  private final boolean isWritingValuesSeparately;
+  private final @NotNull FileIndexesValuesApplier.ApplicationMode applicationMode;
   long evaluatingValueRemoverTime;
 
   SingleIndexValueRemover(FileBasedIndexImpl indexImpl, @NotNull ID<?, ?> indexId,
                           @Nullable VirtualFile file,
                           @Nullable FileContent fileContent,
                           int inputId,
-                          boolean isWritingValuesSeparately) {
+                          @NotNull FileIndexesValuesApplier.ApplicationMode applicationMode) {
     myIndexImpl = indexImpl;
     this.indexId = indexId;
-    this.file = file;
     this.inputId = inputId;
     this.fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, fileContent);
-    this.filePath = file == null ? (fileContent == null ? null : fileContent.getFile().getPath()) : file.getPath();
-    this.isWritingValuesSeparately = isWritingValuesSeparately;
+    this.applicationMode = applicationMode;
   }
 
   /**
@@ -48,12 +44,7 @@ class SingleIndexValueRemover {
 
     UpdatableIndex<?, ?, FileContent, ?> index = myIndexImpl.getIndex(indexId);
 
-    if (isWritingValuesSeparately) {
-      FileBasedIndexImpl.markFileWritingIndexes(inputId);
-    }
-    else {
-      FileBasedIndexImpl.markFileIndexed(file, null);
-    }
+    FileBasedIndexImpl.markFileWritingIndexes(inputId);
     try {
       Supplier<Boolean> storageUpdate;
       long startTime = System.nanoTime();
@@ -61,11 +52,6 @@ class SingleIndexValueRemover {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, null);
       }
       catch (MapReduceIndexMappingException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof SnapshotInputMappingException) {
-          myIndexImpl.requestRebuild(indexId, e);
-          return false;
-        }
         BrokenIndexingDiagnostics.INSTANCE.getExceptionListener().onFileIndexMappingFailed(inputId, null, null, indexId, e);
         return false;
       }
@@ -74,7 +60,7 @@ class SingleIndexValueRemover {
       }
 
       if (myIndexImpl.runUpdateForPersistentData(storageUpdate)) {
-        if (myIndexImpl.doTraceStubUpdates(indexId) || myIndexImpl.doTraceIndexUpdates()) {
+        if (FileBasedIndexEx.doTraceStubUpdates(indexId) || FileBasedIndexEx.doTraceIndexUpdates()) {
           FileBasedIndexImpl.LOG.info("index " + indexId + " deletion finished for " + fileInfo);
         }
         ConcurrencyUtil.withLock(myIndexImpl.myReadLock, () -> {
@@ -88,12 +74,17 @@ class SingleIndexValueRemover {
       return false;
     }
     finally {
-      if (isWritingValuesSeparately) {
-        FileBasedIndexImpl.unmarkWritingIndexes();
-      }
-      else {
-        FileBasedIndexImpl.unmarkBeingIndexed();
-      }
+      FileBasedIndexImpl.unmarkWritingIndexes();
     }
+  }
+
+  @Override
+  public String toString() {
+    return "SingleIndexValueRemover{" +
+           "indexId=" + indexId +
+           ", inputId=" + inputId +
+           ", fileInfo='" + fileInfo + '\'' +
+           ", applicationMode =" + applicationMode +
+           '}';
   }
 }

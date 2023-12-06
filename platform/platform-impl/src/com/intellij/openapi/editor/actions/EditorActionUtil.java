@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -138,16 +139,14 @@ public final class EditorActionUtil {
     caret.setSelection(range.getStartOffset(), range.getEndOffset());
   }
 
-  @NotNull
-  public static TextRange getRangeToWordEnd(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
+  public static @NotNull TextRange getRangeToWordEnd(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
     int startOffset = editor.getCaretModel().getOffset();
     // IDEA-211756 "Delete to word end" is extremely inconvenient on whitespaces
     int endOffset = getNextCaretStopOffset(editor, CaretStopPolicy.BOTH, isCamel, handleQuoted);
     return TextRange.create(startOffset, endOffset);
   }
 
-  @NotNull
-  public static TextRange getRangeToWordStart(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
+  public static @NotNull TextRange getRangeToWordStart(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
     int endOffset = editor.getCaretModel().getOffset();
     int startOffset = getPreviousCaretStopOffset(editor, CaretStopPolicy.WORD_START, isCamel, handleQuoted);
     return TextRange.create(startOffset, endOffset);
@@ -796,6 +795,49 @@ public final class EditorActionUtil {
     editor.getCaretModel().moveCaretRelatively(0, lineShift, isWithSelection, editor.isColumnMode(), true);
   }
 
+  public static void moveCaretToTextStart(@NotNull Editor editor, @Nullable Project project) {
+    editor.getCaretModel().removeSecondaryCarets();
+    editor.getCaretModel().moveToOffset(0);
+    editor.getSelectionModel().removeSelection();
+
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    scrollingModel.disableAnimation();
+    scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+    scrollingModel.enableAnimation();
+
+    if (project != null) {
+      IdeDocumentHistory instance = IdeDocumentHistory.getInstance(project);
+      if (instance != null) {
+        instance.includeCurrentCommandAsNavigation();
+      }
+    }
+  }
+
+  public static void moveCaretToTextEnd(@NotNull Editor editor, @Nullable Project project) {
+    editor.getCaretModel().removeSecondaryCarets();
+    int offset = editor.getDocument().getTextLength();
+    if (editor instanceof EditorImpl) {
+      editor.getCaretModel().moveToLogicalPosition(editor.offsetToLogicalPosition(offset).leanForward(true));
+    }
+    else {
+      editor.getCaretModel().moveToOffset(offset);
+    }
+    editor.getSelectionModel().removeSelection();
+
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    scrollingModel.disableAnimation();
+    scrollingModel.scrollToCaret(ScrollType.CENTER);
+    scrollingModel.enableAnimation();
+
+    if (project != null) {
+      IdeDocumentHistory instance = IdeDocumentHistory.getInstance(project);
+      if (instance != null) {
+        instance.includeCurrentCommandAsNavigation();
+      }
+    }
+  }
+
+
   private static int adjustYToVisualLineBase(@NotNull Editor editor, int y) {
     int visualLineBaseY = editor.visualLineToY(editor.yToVisualLine(y));
     return y > visualLineBaseY && y < visualLineBaseY + editor.getLineHeight() ? visualLineBaseY : y;
@@ -846,8 +888,7 @@ public final class EditorActionUtil {
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
 
-  @NotNull
-  private static Rectangle getVisibleArea(@NotNull Editor editor) {
+  private static @NotNull Rectangle getVisibleArea(@NotNull Editor editor) {
     ScrollingModel model = editor.getScrollingModel();
     return EditorCoreUtil.isTrueSmoothScrollingEnabled() ? model.getVisibleAreaOnScrollingFinished() : model.getVisibleArea();
   }
@@ -921,7 +962,7 @@ public final class EditorActionUtil {
   /**
    * This method will make required expansions of collapsed region to make given offset 'visible'.
    */
-  public static void makePositionVisible(@NotNull final Editor editor, final int offset) {
+  public static void makePositionVisible(final @NotNull Editor editor, final int offset) {
     FoldingModel foldingModel = editor.getFoldingModel();
     while (true) {
       FoldRegion region = foldingModel.getCollapsedRegionAtOffset(offset);

@@ -5,10 +5,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 
 /**
@@ -18,7 +18,7 @@ internal object RootsChangeWatcher {
   private fun getProjectRootManagerToFireEvent(project: Project): ProjectRootManagerBridge? {
     if (project.isDisposed) return null
     val projectRootManager = ProjectRootManager.getInstance(project) as? ProjectRootManagerBridge
-    return projectRootManager?.takeUnless { it.isFiringEvent() }
+    return projectRootManager?.takeUnless { it.isFiringEvent }
   }
   
   internal fun prepareChange(events: List<VFileEvent>, project: Project): AsyncFileListener.ChangeApplier? {
@@ -39,7 +39,7 @@ internal object RootsChangeWatcher {
           //todo indexing should automatically schedule indexing for newly registered WorkspaceFileSet instead of determining entities manually 
           val entitiesToReindex = applier.entitiesToReindex.filter { 
             val entity = it.resolve(snapshot)
-            entity != null && indexingService.shouldCauseRescan(entity, project) 
+            entity != null && indexingService.shouldCauseRescan(null, entity, project)
           }
           val indexingInfo = indexingService.createWorkspaceEntitiesRootsChangedInfo(entitiesToReindex)
           projectRootManager.rootsChanged.rootsChanged(indexingInfo)

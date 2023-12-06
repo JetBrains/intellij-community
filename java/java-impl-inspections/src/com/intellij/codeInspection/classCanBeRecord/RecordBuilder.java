@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -48,7 +49,7 @@ class RecordBuilder {
     }
     else {
       Arrays.stream(canonicalCtor.getParameterList().getParameters())
-        .map(parameter -> generateComponentText(parameter, parameter.getType(), fieldAccessors))
+        .map(parameter -> generateComponentText(parameter, fieldAccessors))
         .forEach(recordComponentsJoiner::add);
     }
     myRecordText.append(recordComponentsJoiner);
@@ -94,7 +95,7 @@ class RecordBuilder {
   }
 
   @NotNull
-  private static String generateComponentText(@NotNull PsiParameter parameter, @NotNull PsiType componentType,
+  private static String generateComponentText(@NotNull PsiParameter parameter,
                                               @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors) {
     PsiField field = null;
     FieldAccessorCandidate fieldAccessorCandidate = null;
@@ -106,6 +107,11 @@ class RecordBuilder {
       }
     }
     assert field != null;
+    // Do not use parameter.getType() directly, as type annotations may differ; prefer type annotations on the field
+    PsiType componentType = field.getType();
+    if (parameter.getType() instanceof PsiEllipsisType && componentType instanceof PsiArrayType arrayType) {
+      componentType = new PsiEllipsisType(arrayType.getComponentType(), arrayType.getAnnotationProvider());
+    }
     return generateComponentText(field, componentType, fieldAccessorCandidate);
   }
 
@@ -113,16 +119,19 @@ class RecordBuilder {
   private static String generateComponentText(@NotNull PsiField field, @NotNull PsiType componentType,
                                               @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
     PsiAnnotation[] fieldAnnotations = field.getAnnotations();
-    String fieldAnnotationsText = Arrays.stream(fieldAnnotations).map(PsiAnnotation::getText).collect(Collectors.joining(" "));
+    String fieldAnnotationsText = Arrays.stream(fieldAnnotations)
+      .filter(anno -> !AnnotationTargetUtil.isTypeAnnotation(anno))
+      .map(PsiAnnotation::getText).collect(Collectors.joining(" "));
     String annotationsText = fieldAnnotationsText.isEmpty() ? fieldAnnotationsText : fieldAnnotationsText + " ";
     if (fieldAccessorCandidate != null && fieldAccessorCandidate.isDefault()) {
       String accessorAnnotationsText = Arrays.stream(fieldAccessorCandidate.getAccessor().getAnnotations())
         .filter(accessorAnn -> !CommonClassNames.JAVA_LANG_OVERRIDE.equals(accessorAnn.getQualifiedName()))
+        .filter(anno -> !AnnotationTargetUtil.isTypeAnnotation(anno))
         .filter(accessorAnn -> !ContainerUtil.exists(fieldAnnotations, fieldAnn -> AnnotationUtil.equal(fieldAnn, accessorAnn)))
         .map(PsiAnnotation::getText).collect(Collectors.joining(" "));
       annotationsText = accessorAnnotationsText.isEmpty() ? annotationsText : annotationsText + accessorAnnotationsText + " ";
     }
-    return annotationsText + componentType.getCanonicalText() + " " + field.getName();
+    return annotationsText + componentType.getCanonicalText(true) + " " + field.getName();
   }
 
   private void processOverrideAnnotation(@NotNull PsiModifierList accessorModifiers) {

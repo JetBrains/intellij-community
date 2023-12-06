@@ -26,6 +26,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI.PanelFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IntentionDescriptionPanel {
+public final class IntentionDescriptionPanel {
   private static final Logger LOG = Logger.getInstance(IntentionDescriptionPanel.class);
   private final JPanel myPanel;
 
@@ -49,37 +50,38 @@ public class IntentionDescriptionPanel {
   private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
   private static final @NonNls String AFTER_TEMPLATE = "after.java.template";
   private static final float DIVIDER_PROPORTION_DEFAULT = .25f;
+  private final @NotNull JPanel myBeforeWrapperPanel;
+  private final @NotNull JPanel myAfterWrapperPanel;
 
   public IntentionDescriptionPanel() {
     myDescriptionBrowser = new DescriptionEditorPane();
-    var descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
+    JScrollPane descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
     descriptionScrollPane.setBorder(null);
 
     JPanel examplePanel = new JPanel(new GridBagLayout());
-    var constraint = new GridBag()
+    GridBag constraint = new GridBag()
       .setDefaultInsets(UIUtil.LARGE_VGAP, 0, 0, 0)
       .setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultWeightY(0.5)
       .setDefaultWeightX(1.0);
 
     myBeforePanel = new JPanel();
-    examplePanel.add(PanelFactory.panel(myBeforePanel)
-                  .withLabel(CodeInsightBundle.message("border.title.before"))
-                  .moveLabelOnTop()
-                  .resizeX(true)
-                  .resizeY(true)
-                  .createPanel(),
-                constraint.nextLine()
-    );
+    myBeforeWrapperPanel = PanelFactory.panel(myBeforePanel)
+      .withLabel(CodeInsightBundle.message("border.title.before"))
+      .moveLabelOnTop()
+      .resizeX(true)
+      .resizeY(true)
+      .createPanel();
+    examplePanel.add(myBeforeWrapperPanel, constraint.nextLine());
 
     myAfterPanel = new JPanel();
-    examplePanel.add(PanelFactory.panel(myAfterPanel)
-                  .withLabel(CodeInsightBundle.message("border.title.after"))
-                  .moveLabelOnTop()
-                  .resizeX(true)
-                  .resizeY(true)
-                  .createPanel(),
-                constraint.nextLine()
+    myAfterWrapperPanel = PanelFactory.panel(myAfterPanel)
+      .withLabel(CodeInsightBundle.message("border.title.after"))
+      .moveLabelOnTop()
+      .resizeX(true)
+      .resizeY(true)
+      .createPanel();
+    examplePanel.add(myAfterWrapperPanel, constraint.nextLine()
     );
 
     OnePixelSplitter mySplitter = new OnePixelSplitter(true,
@@ -105,7 +107,8 @@ public class IntentionDescriptionPanel {
                   settings.select(configurable).doWhenDone(() -> {
                     if (searchTextField != null && search != null) searchTextField.setText(search);
                   });
-                } else {
+                }
+                else {
                   Project project = context.getData(CommonDataKeys.PROJECT);
                   ShowSettingsUtilImpl.showSettingsDialog(project, configId, search);
                 }
@@ -123,7 +126,7 @@ public class IntentionDescriptionPanel {
     });
   }
 
-  public void reset(IntentionActionMetaData actionMetaData, String filter)  {
+  public void reset(IntentionActionMetaData actionMetaData, String filter) {
     try {
       TextDescriptor url = actionMetaData.getDescription();
       String description = StringUtil.isEmpty(url.getText()) ?
@@ -132,6 +135,8 @@ public class IntentionDescriptionPanel {
 
       DescriptionEditorPaneKt.readHTML(myDescriptionBrowser, description);
 
+      myBeforeWrapperPanel.setVisible(!actionMetaData.isSkipBeforeAfter());
+      myAfterWrapperPanel.setVisible(!actionMetaData.isSkipBeforeAfter());
       showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
       showUsages(myAfterPanel, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
 
@@ -142,13 +147,18 @@ public class IntentionDescriptionPanel {
     }
   }
 
-  public void reset(String intentionCategory)  {
+  public void reset(String intentionCategory) {
     try {
-      DescriptionEditorPaneKt.readHTML(myDescriptionBrowser, CodeInsightBundle.message("intention.settings.category.text", intentionCategory));
+      DescriptionEditorPaneKt.readHTML(myDescriptionBrowser,
+                                       CodeInsightBundle.message("intention.settings.category.text", intentionCategory));
 
-      TextDescriptor beforeTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE);
+      TextDescriptor beforeTemplate =
+        new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE);
       showUsages(myBeforePanel, myBeforeUsagePanels, new TextDescriptor[]{beforeTemplate});
-      TextDescriptor afterTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE);
+      TextDescriptor afterTemplate =
+        new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE);
+      myBeforeWrapperPanel.setVisible(true);
+      myAfterWrapperPanel.setVisible(true);
       showUsages(myAfterPanel, myAfterUsagePanels, new TextDescriptor[]{afterTemplate});
 
       SwingUtilities.invokeLater(() -> myPanel.revalidate());

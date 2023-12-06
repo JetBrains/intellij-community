@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -21,13 +23,19 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.IconUtil;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
@@ -48,9 +56,11 @@ import java.awt.event.*;
 import java.util.EventObject;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(AbstractValueHint.class);
+  private static final Key<AbstractValueHint> HINT_KEY = Key.create("allows only one value hint per editor");
 
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     @Override
@@ -67,8 +77,13 @@ public abstract class AbstractValueHint {
   private final Editor myEditor;
   private final ValueHintType myType;
   protected final Point myPoint;
-  protected LightweightHint myCurrentHint;
-  private boolean myHintHidden;
+  private EditorMouseEvent myEditorMouseEvent;
+
+  // TODO: now hint could be shown as a LightweightHint or a JBPopup
+  private LightweightHint myCurrentHint;
+  private JBPopup myCurrentPopup;
+
+  private volatile boolean myHintHidden;
   private TextRange myCurrentRange;
   private Runnable myHideRunnable;
 
@@ -81,7 +96,9 @@ public abstract class AbstractValueHint {
     myCurrentRange = textRange;
   }
 
-  protected abstract boolean canShowHint();
+  protected boolean canShowHint() {
+    return true;
+  }
 
   protected abstract void evaluateAndShowHint();
 
@@ -105,10 +122,7 @@ public abstract class AbstractValueHint {
       myEditor.getContentComponent().removeKeyListener(myEditorKeyListener);
     }
 
-    if (myCurrentHint != null) {
-      myCurrentHint.hide();
-      myCurrentHint = null;
-    }
+    hideCurrentHint();
     disposeHighlighter();
   }
 
@@ -186,12 +200,12 @@ public abstract class AbstractValueHint {
     return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
   }
 
-  public Project getProject() {
+  public final Project getProject() {
     return myProject;
   }
 
   @NotNull
-  protected Editor getEditor() {
+  protected final Editor getEditor() {
     return myEditor;
   }
 
@@ -199,56 +213,99 @@ public abstract class AbstractValueHint {
     return myType;
   }
 
-  private boolean myInsideShow = false;
+  protected final void hideCurrentHint() {
+    EDT.assertIsEdt();
+    if (myCurrentHint != null) {
+      myCurrentHint.hide();
+      myCurrentHint = null;
+    }
+    if (myCurrentPopup != null) {
+      myCurrentPopup.cancel();
+      myCurrentPopup = null;
+    }
+  }
+
+  private boolean myInsideShow = false; // to avoid invoking myHideRunnable for new popups with updated presentation
+
+  private void processHintHidden() {
+    if (!myInsideShow) {
+      if (myHideRunnable != null) {
+        myHideRunnable.run();
+      }
+      myHintHidden = true;
+    }
+
+    disposeHighlighter();
+    if (getEditor().getUserData(HINT_KEY) == this) {
+      getEditor().putUserData(HINT_KEY, null);
+    }
+
+    onHintHidden();
+  }
+
+  private void setCurrentEditorHint() {
+    AbstractValueHint prev = getEditor().getUserData(HINT_KEY);
+    if (prev != null) {
+      prev.hideHint();
+    }
+    getEditor().putUserData(HINT_KEY, this);
+  }
 
   protected boolean showHint(final JComponent component) {
     myInsideShow = true;
-    if (myCurrentHint != null) {
-      myCurrentHint.hide();
-    }
-    myCurrentHint = new LightweightHint(component) {
-      @Override
-      protected boolean canAutoHideOn(TooltipEvent event) {
-        InputEvent inputEvent = event.getInputEvent();
-        if (inputEvent instanceof MouseEvent) {
-          Component comp = inputEvent.getComponent();
-          if (comp instanceof EditorComponentImpl) {
-            EditorImpl editor = ((EditorComponentImpl)comp).getEditor();
-            return !isInsideCurrentRange(editor, ((MouseEvent)inputEvent).getPoint());
+    try {
+      hideCurrentHint();
+
+      BorderLayoutPanel content = JBUI.Panels.simplePanel();
+      content.setBackground(component.getBackground());
+      content.setBorder(JBUI.Borders.empty(10));
+      content.addToCenter(component);
+
+      myCurrentHint = new LightweightHint(content) {
+        @Override
+        protected boolean canAutoHideOn(TooltipEvent event) {
+          InputEvent inputEvent = event.getInputEvent();
+          if (inputEvent instanceof MouseEvent) {
+            Component comp = inputEvent.getComponent();
+            if (comp instanceof EditorComponentImpl) {
+              EditorImpl editor = ((EditorComponentImpl)comp).getEditor();
+              return !isInsideCurrentRange(editor, ((MouseEvent)inputEvent).getPoint());
+            }
           }
+          return true;
         }
-        return true;
-      }
-    };
-    myCurrentHint.addHintListener(new HintListener() {
-      @Override
-      public void hintHidden(@NotNull EventObject event) {
-        if (myHideRunnable != null && !myInsideShow) {
-          myHideRunnable.run();
+      };
+      myCurrentHint.setForceShowAsPopup(true);
+      myCurrentHint.addHintListener(new HintListener() {
+        @Override
+        public void hintHidden(@NotNull EventObject event) {
+          processHintHidden();
         }
-        onHintHidden();
+      });
+
+      // editor may be disposed before later invokator process this action
+      if (myEditor.isDisposed()) {
+        return false;
       }
-    });
 
-    // editor may be disposed before later invokator process this action
-    if (myEditor.isDisposed() || myEditor.getComponent().getRootPane() == null) {
-      return false;
+      AppUIUtil.targetToDevice(myCurrentHint.getComponent(), myEditor.getComponent());
+      Point p = HintManagerImpl.getHintPosition(myCurrentHint, myEditor, myEditor.xyToLogicalPosition(myPoint), HintManager.UNDER);
+      HintHint hint = HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true);
+      hint.setShowImmediately(true);
+      HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, myEditor, p,
+                                                       HintManager.HIDE_BY_ANY_KEY |
+                                                       HintManager.HIDE_BY_TEXT_CHANGE |
+                                                       HintManager.HIDE_BY_SCROLLING, 0, false,
+                                                       hint);
+      if (myHighlighter == null && isCurrentRangeValid()) { // hint text update
+        createHighlighter();
+      }
+      setHighlighterAttributes();
+      setCurrentEditorHint();
     }
-
-    AppUIUtil.targetToDevice(myCurrentHint.getComponent(), myEditor.getComponent());
-    Point p = HintManagerImpl.getHintPosition(myCurrentHint, myEditor, myEditor.xyToLogicalPosition(myPoint), HintManager.UNDER);
-    HintHint hint = HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true);
-    hint.setShowImmediately(true);
-    HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, myEditor, p,
-                                                     HintManager.HIDE_BY_ANY_KEY |
-                                                     HintManager.HIDE_BY_TEXT_CHANGE |
-                                                     HintManager.HIDE_BY_SCROLLING, 0, false,
-                                                     hint);
-    if (myHighlighter == null && isCurrentRangeValid()) { // hint text update
-      createHighlighter();
+    finally {
+      myInsideShow = false;
     }
-    setHighlighterAttributes();
-    myInsideShow = false;
     return true;
   }
 
@@ -257,7 +314,6 @@ public abstract class AbstractValueHint {
   }
 
   protected void onHintHidden() {
-    disposeHighlighter();
   }
 
   protected boolean isHintHidden() {
@@ -270,8 +326,8 @@ public abstract class AbstractValueHint {
                                                      @Nullable XFullValueEvaluator evaluator) {
     SimpleColoredComponent component = HintUtil.createInformationComponent();
     component.setIcon(icon != null
-                      ? IconManager.getInstance().createRowIcon(IconUtil.getAddIcon(), icon)
-                      : IconUtil.getAddIcon());
+                      ? IconManager.getInstance().createRowIcon(UIUtil.getTreeCollapsedIcon(), icon)
+                      : UIUtil.getTreeCollapsedIcon());
     component.setCursor(hintCursor());
     text.appendToComponent(component);
     appendEvaluatorLink(evaluator, component);
@@ -290,9 +346,7 @@ public abstract class AbstractValueHint {
             }
           }
           else {
-            if (myCurrentHint != null) {
-              myCurrentHint.hide();
-            }
+            hideCurrentHint();
             expand.run();
           }
           return true;
@@ -343,30 +397,72 @@ public abstract class AbstractValueHint {
     return null;
   }
 
+  protected boolean isShowing() {
+    return myCurrentHint != null || myCurrentPopup != null;
+  }
+
   public boolean isInsideHint(Editor editor, Point point) {
     return myCurrentHint != null && myCurrentHint.isInsideHint(new RelativePoint(editor.getContentComponent(), point));
   }
 
-  protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
-    if (myEditor.isDisposed() || !isCurrentRangeValid()) {
-      hideHint();
-      return;
-    }
-
-    createHighlighter();
-    setHighlighterAttributes();
-
-    // align the popup with the bottom of the line
-    Point point = myEditor.visualPositionToXY(myEditor.xyToVisualPosition(myPoint));
-    point.translate(0, myEditor.getLineHeight());
-
-    var popup = new XDebuggerTreePopup<>(creator, myEditor, point, getProject(), () -> {
-      disposeHighlighter();
-      if (myHideRunnable != null) {
-        myHideRunnable.run();
+  private void showPopup(Function<Point, @Nullable JBPopup> popupPresenter) {
+    EDT.assertIsEdt();
+    myInsideShow = true;
+    try {
+      if (myEditor.isDisposed() || !isCurrentRangeValid()) {
+        hideHint();
+        return;
       }
-    });
-    popup.show(descriptor);
+
+      hideCurrentHint();
+
+      createHighlighter();
+      setHighlighterAttributes();
+
+      // align the popup with the bottom of the line
+      Point point = myEditor.visualPositionToXY(myEditor.xyToVisualPosition(myPoint));
+      point.translate(0, myEditor.getLineHeight());
+
+      JBPopup popup = popupPresenter.apply(point);
+      if (popup != null) {
+        myCurrentPopup = popup;
+        myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+          if (!Objects.equals(e.getOldRectangle(), e.getNewRectangle())) {
+            hideCurrentHint();
+          }
+        }, popup);
+        myEditor.getCaretModel().addCaretListener(new CaretListener() {
+          @Override
+          public void caretPositionChanged(@NotNull CaretEvent event) {
+            hideCurrentHint();
+          }
+
+          @Override
+          public void caretAdded(@NotNull CaretEvent event) {
+            hideCurrentHint();
+          }
+
+          @Override
+          public void caretRemoved(@NotNull CaretEvent event) {
+            hideCurrentHint();
+          }
+        }, popup);
+        popup.addListener(new JBPopupListener() {
+          @Override
+          public void onClosed(@NotNull LightweightWindowEvent event) {
+            processHintHidden();
+          }
+        });
+        setCurrentEditorHint();
+      }
+    }
+    finally {
+      myInsideShow = false;
+    }
+  }
+
+  protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
+    showPopup(point -> new XDebuggerTreePopup<>(creator, myEditor, point, myProject, null).show(descriptor));
   }
 
   @ApiStatus.Experimental
@@ -374,29 +470,14 @@ public abstract class AbstractValueHint {
                                @NotNull Pair<XValue, String> descriptor,
                                @NotNull String initialText,
                                @Nullable XFullValueEvaluator evaluator) {
-    if (myEditor.isDisposed() || !isCurrentRangeValid()) {
-      hideHint();
-      return;
-    }
+    showPopup(point ->
+                new XDebuggerTextPopup<>(evaluator, descriptor.first, creator, descriptor, myEditor, point, myProject, null)
+                  .show(initialText)
+    );
+  }
 
-    createHighlighter();
-    setHighlighterAttributes();
-
-    Project project = getProject();
-    Editor editor = getEditor();
-
-    Point point = editor.visualPositionToXY(editor.xyToVisualPosition(myPoint));
-    point.translate(0, editor.getLineHeight());
-
-    Runnable hideRunnable = () -> {
-      disposeHighlighter();
-      if (myHideRunnable != null) {
-        myHideRunnable.run();
-      }
-    };
-
-    var popup = new XDebuggerTextPopup<>(evaluator, descriptor.first, creator, descriptor, editor, point, project, hideRunnable);
-    popup.show(initialText);
+  protected void showTooltipPopup(JComponent component) {
+    showPopup(point -> new XDebuggerTooltipPopup(myEditor, point).show(component, myEditorMouseEvent));
   }
 
   @Override
@@ -417,5 +498,9 @@ public abstract class AbstractValueHint {
   @Override
   public int hashCode() {
     return Objects.hash(myProject, myEditor, myType, myCurrentRange);
+  }
+
+  void setEditorMouseEvent(EditorMouseEvent editorMouseEvent) {
+    myEditorMouseEvent = editorMouseEvent;
   }
 }

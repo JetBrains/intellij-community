@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
@@ -13,6 +12,7 @@ import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -53,13 +53,9 @@ class GroovyStubsTest extends LightJavaCodeInsightFixtureTestCase {
     } as ThrowableRunnable)
     PsiDocumentManager.getInstance(project).commitDocument(fooDocument)
     fooFile.setTreeElementPointer(null)
-    DumbServiceImpl.getInstance(project).setDumb(true)
-    try {
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
       assertOneElement(((GroovyFile) fooFile).classes)
       assertFalse(fooFile.isContentsLoaded())
-    }
-    finally {
-      DumbServiceImpl.getInstance(project).setDumb(false)
     }
     assert JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
   }

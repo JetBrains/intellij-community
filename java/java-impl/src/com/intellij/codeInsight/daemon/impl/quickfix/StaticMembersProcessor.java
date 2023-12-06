@@ -4,10 +4,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,18 +33,35 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     myAddStaticImport = addStaticImport;
   }
 
-  protected abstract boolean isApplicable(@NotNull T member, @NotNull PsiElement place);
+  enum ApplicableType {NONE, PARTLY, APPLICABLE}
 
-  @NotNull List<T> getMembersToImport(boolean applicableOnly) {
-    final List<T> list = new ArrayList<>();
+  protected abstract ApplicableType isApplicable(@NotNull T member, @NotNull PsiElement place);
+
+  record MembersToImport<K>(@NotNull List<K> applicable,@NotNull List<K> all) {
+  }
+
+  @NotNull MembersToImport<T> getMembersToImport() {
+    final List<Pair<T, ApplicableType>> list = new ArrayList<>();
     final List<T> applicableList = new ArrayList<>();
     for (Map.Entry<PsiClass, Collection<T>> methodEntry : mySuggestions.entrySet()) {
       registerMember(methodEntry.getKey(), methodEntry.getValue(), list, applicableList);
     }
 
-    List<T> result = !applicableOnly && applicableList.isEmpty() ? list : applicableList;
-    result.sort(CodeInsightUtil.createSortIdenticalNamedMembersComparator(myPlace));
-    return result;
+    Comparator<T> comparator = CodeInsightUtil.createSortIdenticalNamedMembersComparator(myPlace);
+    if (applicableList.isEmpty()) {
+      list.sort(Comparator.<Pair<T, ApplicableType>, ApplicableType>comparing(t -> t.getSecond(), Comparator.naturalOrder())
+                  .reversed()
+                  .thenComparing(t -> t.getFirst(), comparator));
+    }
+    else {
+      applicableList.sort(comparator);
+      applicableList.addAll(list.stream()
+                              .filter(t -> t.getSecond() == ApplicableType.PARTLY)
+                              .map(t -> t.getFirst())
+                              .sorted(comparator)
+                              .toList());
+    }
+    return new MembersToImport<>(applicableList, ContainerUtil.map(list, t -> t.getFirst()));
   }
 
   protected ExpectedTypeInfo @NotNull [] getExpectedTypes() {
@@ -57,12 +76,17 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     return myExpectedTypes;
   }
 
-  protected boolean isApplicableFor(@NotNull PsiType fieldType) {
+  protected ApplicableType isApplicableFor(@NotNull PsiType fieldType) {
     ExpectedTypeInfo[] expectedTypes = getExpectedTypes();
     for (ExpectedTypeInfo info : expectedTypes) {
-      if (TypeConversionUtil.isAssignable(info.getType(), fieldType)) return true;
+      if (TypeConversionUtil.isAssignable(info.getType(), fieldType)) return ApplicableType.APPLICABLE;
+      if (info.getType() instanceof PsiClassType classType &&
+          classType.getParameters().length != 0 &&
+          TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(info.getType()), fieldType)) {
+        return ApplicableType.PARTLY;
+      }
     }
-    return expectedTypes.length == 0;
+    return expectedTypes.length == 0 ? ApplicableType.APPLICABLE : ApplicableType.NONE;
   }
 
   @Override
@@ -107,8 +131,8 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
 
   private void registerMember(@NotNull PsiClass containingClass,
                               @NotNull Collection<? extends T> members,
-                              @NotNull List<? super T> list,
-                              @NotNull List<? super T> applicableList) {
+                              @NotNull List<Pair<T, ApplicableType>> list,
+                              @NotNull List<T> applicableList) {
     String qualifiedName = containingClass.getQualifiedName();
     if (qualifiedName == null) {
       return;
@@ -125,7 +149,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       }
 
       if (alreadyMentioned == null) {
-        list.add(member);
+        list.add(new Pair<>(member, ApplicableType.NONE));
         alreadyMentioned = Boolean.FALSE;
       }
 
@@ -137,7 +161,17 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
         continue;
       }
 
-      if (isApplicable(member, myPlace)) {
+      ApplicableType type = isApplicable(member, myPlace);
+      if (list.size() > 0) {
+        Pair<T, ApplicableType> previousPair = list.get(list.size() - 1);
+        if (previousPair.getFirst().getContainingClass() == containingClass &&
+            previousPair.getSecond().ordinal() < type.ordinal()) {
+          list.remove(list.size() - 1);
+          list.add(new Pair<>(member, type));
+        }
+      }
+
+      if (type == ApplicableType.APPLICABLE) {
         applicableList.add(member);
         myPossibleClasses.put(qualifiedName, true);
         break;

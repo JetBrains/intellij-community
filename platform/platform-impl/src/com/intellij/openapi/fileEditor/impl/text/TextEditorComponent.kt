@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LeakingThis")
 
 package com.intellij.openapi.fileEditor.impl.text
@@ -14,17 +14,16 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.LoadingDecorator
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,19 +31,15 @@ import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.util.FileContentUtilCore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBSwingUtilities
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Component
-import java.awt.Graphics
-import javax.swing.JPanel
+import java.awt.*
+import javax.swing.JComponent
+import javax.swing.JLayeredPane
 
 private val LOG = logger<TextEditorComponent>()
-
-private fun assertThread() {
-  ApplicationManager.getApplication().assertIsDispatchThread()
-}
 
 @Internal
 open class TextEditorComponent(
@@ -52,9 +47,7 @@ open class TextEditorComponent(
   val file: VirtualFile,
   private val textEditor: TextEditorImpl,
   private val editorImpl: EditorImpl,
-) : JPanel(BorderLayout()), DataProvider, Disposable, BackgroundableDataProvider {
-  private val loadingDecorator: LoadingDecorator
-
+) : JLayeredPane(), DataProvider, Disposable, BackgroundableDataProvider {
   /**
    * Whether the editor's document is modified or not
    */
@@ -67,34 +60,32 @@ open class TextEditorComponent(
   private var isValid: Boolean
   private val editorHighlighterUpdater: EditorHighlighterUpdater
 
-  override fun add(comp: Component): Component = throw IllegalCallerException()
-
-  override fun add(comp: Component, constraints: Any) {
-    throw IllegalCallerException()
-  }
-
-  fun startLoading() {
-    loadingDecorator.startLoading(false)
-  }
-
   @Volatile
-  var isDisposed = false
+  var isDisposed: Boolean = false
     private set
 
   init {
+    layout = GridBagLayout()
+    // to be able to set background for JLayeredPane
+    isOpaque = true
     val editor = editorImpl
     editor.component.isFocusable = false
     editor.document.addDocumentListener(MyDocumentListener(), this)
     (editor.markupModel as EditorMarkupModel).isErrorStripeVisible = true
-    editor.gutterComponentEx.setForceShowRightFreePaintersArea(true)
+    editor.gutterComponentEx.setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.SHOW)
     editor.setFile(file)
     editor.contextMenuGroupId = IdeActions.GROUP_EDITOR_POPUP
     editor.setDropHandler(FileDropHandler(editor))
     TextEditorProvider.putTextEditor(editor, textEditor)
 
-    // don't show yet another loading indicator on project open - use 3-second delay
-    loadingDecorator = LoadingDecorator(editor.component, textEditor, if (EditorsSplitters.isOpenedInBulk(file)) 3000 else 300)
-    super.add(loadingDecorator.component, BorderLayout.CENTER)
+    super.add(editor.component, GridBagConstraints().also {
+      it.gridx = 0
+      it.gridy = 0
+      it.weightx = 1.0
+      it.weighty = 1.0
+      it.fill = GridBagConstraints.BOTH
+    })
+
     isModified = isModifiedImpl
     isValid = isEditorValidImpl
     LOG.assertTrue(isValid)
@@ -105,6 +96,30 @@ open class TextEditorComponent(
     project.messageBus.connect(this).subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
   }
 
+  final override fun add(comp: Component): Component {
+    throw IllegalCallerException()
+  }
+
+  final override fun add(comp: Component, constraints: Any) {
+    throw IllegalCallerException()
+  }
+
+  @Suppress("FunctionName", "unused")
+  @Experimental
+  @Internal
+  fun __add(component: Component, constraints: Any) {
+    super.add(component, constraints)
+  }
+
+  internal fun addLoadingDecoratorUi(component: JComponent) {
+    putLayer(component, DRAG_LAYER)
+    super.add(component, GridBagConstraints().also {
+      it.gridx = 0
+      it.gridy = 0
+      it.anchor = GridBagConstraints.CENTER
+    })
+  }
+
   /**
    * Disposes all resources allocated be the TextEditorComponent. It disposes all created
    * editors, unregisters listeners. The behaviour of the splitter after disposing is unpredictable.
@@ -112,11 +127,6 @@ open class TextEditorComponent(
   override fun dispose() {
     disposeEditor()
     isDisposed = true
-  }
-
-  fun loadingFinished() {
-    loadingDecorator.stopLoading()
-    editorImpl.component.isVisible = true
   }
 
   /**
@@ -193,7 +203,7 @@ open class TextEditorComponent(
    */
   private inner class MyDocumentListener : DocumentListener {
     /**
-     * We can reuse this runnable to decrease number of allocated object.
+     * We can reuse this runnable to decrease the number of allocated objects.
      */
     private val updateRunnable: Runnable
     private var isUpdateScheduled = false
@@ -207,7 +217,7 @@ open class TextEditorComponent(
 
     override fun documentChanged(e: DocumentEvent) {
       if (!isUpdateScheduled) {
-        // document's timestamp is changed later on undo or PSI changes
+        // a document's timestamp is changed later on undo or PSI changes
         ApplicationManager.getApplication().invokeLater(updateRunnable)
         isUpdateScheduled = true
       }
@@ -228,7 +238,7 @@ open class TextEditorComponent(
   private inner class MyVirtualFileListener : VirtualFileListener {
     override fun propertyChanged(e: VirtualFilePropertyEvent) {
       if (VirtualFile.PROP_NAME == e.propertyName) {
-        // File can be invalidated after file changes name (extension also can change). The editor should be removed if it's invalid.
+        // File can be invalidated after file changes name (an extension also can change). The editor should be removed if it's invalid.
         updateValidProperty()
         if (e.file == file &&
             (FileContentUtilCore.FORCE_RELOAD_REQUESTOR == e.requestor || !Comparing.equal<Any>(e.oldValue, e.newValue))) {
@@ -240,7 +250,7 @@ open class TextEditorComponent(
     override fun contentsChanged(event: VirtualFileEvent) {
       // commit
       if (event.isFromSave) {
-        assertThread()
+        ThreadingAssertions.assertEventDispatchThread()
         val file = event.file
         LOG.assertTrue(file.isValid)
         if (file == this@TextEditorComponent.file) {
@@ -250,7 +260,7 @@ open class TextEditorComponent(
     }
   }
 
-  // Swing calls us _before_ ours constructor
+  // Swing calls us _before_ mine constructor
   @Suppress("UNNECESSARY_SAFE_CALL", "USELESS_ELVIS")
   override fun getBackground(): Color? = editorImpl?.backgroundColor ?: super.getBackground()
 

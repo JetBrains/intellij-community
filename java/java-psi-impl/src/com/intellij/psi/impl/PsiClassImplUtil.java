@@ -32,6 +32,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
+import kotlin.jvm.functions.Function1;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
 
 public final class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiClassImplUtil.class);
@@ -216,7 +216,7 @@ public final class PsiClassImplUtil {
     }
   }
 
-  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = r -> {
+  private static final Function1<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = r -> {
     if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) {
       return null;
     }
@@ -313,8 +313,11 @@ public final class PsiClassImplUtil {
   }
 
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
+    if ("main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method)) {
+      return true;
+    }
     String name = method.getName();
-    if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
+    if ("premain".equals(name) || "agentmain".equals(name)) return false;
     if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
@@ -1116,8 +1119,8 @@ public final class PsiClassImplUtil {
       return true;
     }
 
-    FileIndexFacade fileIndex = file1.getProject().getService(FileIndexFacade.class);
-    FileIndexFacade fileIndex2 = file2.getProject().getService(FileIndexFacade.class);
+    FileIndexFacade fileIndex = FileIndexFacade.getInstance(file1.getProject());
+    FileIndexFacade fileIndex2 = FileIndexFacade.getInstance(file2.getProject());
     VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
     VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     boolean lib1 = fileIndex.isInLibraryClasses(vfile1);

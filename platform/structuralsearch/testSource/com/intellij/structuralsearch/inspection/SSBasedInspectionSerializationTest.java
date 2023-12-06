@@ -1,6 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolsSupplier;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -960,7 +964,33 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
     assertEquals(NEW_SETTINGS, writeSettings(inspection));
   }
 
-  private static void doTest(String xml) throws Exception {
+  public void testScopedInspectionDoesNotDisappearOnWrite() throws Exception {
+    var initInspections = InspectionProfileImpl.INIT_INSPECTIONS;
+    if (!initInspections) {
+      InspectionProfileImpl.INIT_INSPECTIONS = true;
+      Disposer.register(getTestRootDisposable(), () -> InspectionProfileImpl.INIT_INSPECTIONS = initInspections);
+    }
+
+    var profileXml = """
+      <profile version="1.0">
+        <option name="myName" value="foo.profile" />
+        <inspection_tool class="SSBasedInspection" enabled="true" level="WARNING" enabled_by_default="true">
+          <searchConfiguration name="foo.search" text="..." recursive="false" caseInsensitive="false" type="JAVA" />
+        </inspection_tool>
+        <inspection_tool class="e3a3ba52-b4e2-3010-a5de-4e1ff9d4f37b" enabled="true" level="WARNING" enabled_by_default="true">
+          <scope name="Tests" level="WARNING" enabled="true" />
+        </inspection_tool>
+      </profile>""";
+    var wrapper = new LocalInspectionToolWrapper(new SSBasedInspection());
+    var supplier = new InspectionToolsSupplier.Simple(List.of(wrapper));
+    var profile = new InspectionProfileImpl("foo.profile", supplier, InspectionProfileImpl.BASE_PROFILE.get());
+    profile.readExternal(JDOMUtil.load(profileXml));
+    profile.initInspectionTools(getProject());
+    profile.profileChanged();
+    assertEquals(profileXml, JDOMUtil.write(profile.writeScheme()));
+  }
+
+  private static void doTest(@SuppressWarnings("SameParameterValue") String xml) throws Exception {
     assertEquals(xml, writeSettings(readSettings(xml)));
   }
 

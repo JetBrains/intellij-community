@@ -27,9 +27,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 class BooleanLiteralArgumentInspection(
     @JvmField var reportSingle: Boolean = false
 ) : AbstractKotlinInspection() {
-    companion object {
-        private val ignoreConstructors = listOf("kotlin.Pair", "kotlin.Triple").map { FqName(it) }
-    }
 
     private fun KtExpression.isBooleanLiteral(): Boolean =
         this is KtConstantExpression && node.elementType == KtNodeTypes.BOOLEAN_CONSTANT
@@ -46,7 +43,7 @@ class BooleanLiteralArgumentInspection(
             val valueArguments = call.valueArguments
 
             if (argumentExpression.safeAnalyzeNonSourceRootCode().diagnostics.forElement(argumentExpression).any { it.severity == Severity.ERROR }) return
-            if (AddNameToArgumentIntention.detectNameToAdd(argument, shouldBeLastUnnamed = false) == null) return
+            if (AddNameToArgumentIntention.Holder.detectNameToAdd(argument, shouldBeLastUnnamed = false) == null) return
 
             val resolvedCall = call.resolveToCall() ?: return
             if ((resolvedCall.resultingDescriptor as? ClassConstructorDescriptor)?.constructedClass?.fqNameOrNull() in ignoreConstructors) {
@@ -55,7 +52,7 @@ class BooleanLiteralArgumentInspection(
             if (!resolvedCall.candidateDescriptor.hasStableParameterNames()) return
             val languageVersionSettings = call.languageVersionSettings
             if (valueArguments.any {
-                    !AddNameToArgumentIntention.argumentMatchedAndCouldBeNamedInCall(it, resolvedCall, languageVersionSettings)
+                    !AddNameToArgumentIntention.Holder.argumentMatchedAndCouldBeNamedInCall(it, resolvedCall, languageVersionSettings)
                 }
             ) return
 
@@ -86,3 +83,5 @@ class BooleanLiteralArgumentInspection(
   override fun getOptionsPane() = pane(
     checkbox("reportSingle", KotlinBundle.message("report.also.on.call.with.single.boolean.literal.argument")))
 }
+
+private val ignoreConstructors: List<FqName> = listOf("kotlin.Pair", "kotlin.Triple").map { FqName(it) }

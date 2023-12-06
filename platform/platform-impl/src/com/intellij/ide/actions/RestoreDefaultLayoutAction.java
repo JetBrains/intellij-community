@@ -19,10 +19,12 @@ public final class RestoreDefaultLayoutAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
-    e.getPresentation().setDescription(ActionsBundle.message(
-      "action.RestoreDefaultLayout.named.description",
-      ToolWindowDefaultLayoutManager.getInstance().getActiveLayoutName()
-    ));
+    String activeLayout = ToolWindowDefaultLayoutManager.getInstance().getActiveLayoutName();
+    e.getPresentation().setDescription(
+      ToolWindowDefaultLayoutManager.FACTORY_DEFAULT_LAYOUT_NAME.equals(activeLayout)
+      ? ActionsBundle.message("action.RestoreFactoryDefaultLayout.description")
+      : ActionsBundle.message("action.RestoreDefaultLayout.named.description", activeLayout)
+    );
   }
 
   @Override

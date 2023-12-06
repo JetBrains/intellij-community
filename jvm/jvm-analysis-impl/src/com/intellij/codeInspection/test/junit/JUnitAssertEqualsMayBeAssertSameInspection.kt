@@ -3,7 +3,9 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.fix.ReplaceMethodCallFix
+import com.intellij.jvm.analysis.quickFix.ReplaceCallableExpressionQuickFix
+import com.intellij.jvm.analysis.refactoring.CallChainReplacementInfo
+import com.intellij.jvm.analysis.refactoring.CallReplacementInfo
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -32,7 +34,8 @@ private class JUnitAssertEqualsMayBeAssertSameVisitor(private val holder: Proble
     if (!couldBeAssertSameArgument(assertHint.firstArgument)) return true
     if (!couldBeAssertSameArgument(assertHint.secondArgument)) return true
     val message = JvmAnalysisBundle.message("jvm.inspections.junit.assertequals.may.be.assertsame.problem.descriptor")
-    holder.registerUProblem(node, message, ReplaceMethodCallFix("assertSame"))
+    holder.registerUProblem(node, message, ReplaceCallableExpressionQuickFix(CallChainReplacementInfo(
+      null, CallReplacementInfo("assertSame", null, *node.valueArguments.toTypedArray()))))
     return true
   }
 

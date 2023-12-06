@@ -114,12 +114,15 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
 
   private suspend fun startServerInPooledThread() {
     if (SystemProperties.getBooleanProperty(PROPERTY_DISABLED, false)) {
-      throw RuntimeException("Built-in server is disabled by `$PROPERTY_DISABLED` VM option")
+      return
     }
 
     try {
       server = BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
       bindCustomPorts(server!!)
+    }
+    catch (e: CancellationException) {
+      return
     }
     catch (e: Throwable) {
       LOG.info(e)

@@ -6,17 +6,20 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 
-fun Action.getName(): @NlsSafe String = (getValue(Action.NAME) as? String).orEmpty()
+var Action.name: @Nls String?
+  get() = getValue(Action.NAME) as? String
+  set(value) {
+    putValue(Action.NAME, value)
+  }
 
 fun Action.toAnAction(): AnAction {
   val action = this
-  return object : DumbAwareAction(action.getName()) {
+  return object : DumbAwareAction(action.name.orEmpty()) {
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.EDT
     }

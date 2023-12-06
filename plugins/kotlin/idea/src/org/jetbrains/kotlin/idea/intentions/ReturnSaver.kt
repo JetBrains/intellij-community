@@ -43,7 +43,7 @@ class ReturnSaver(val function: KtNamedFunction) {
 
         val lambdaBody = lambda.bodyExpression!!
 
-        val returnToReplace = lambda.collectDescendantsOfType<KtReturnExpression>() { it.getCopyableUserData(RETURN_KEY) != null }
+        val returnToReplace = lambda.collectDescendantsOfType<KtReturnExpression> { it.getCopyableUserData(RETURN_KEY) != null }
 
         for (returnExpression in returnToReplace) {
             val value = returnExpression.returnedExpression

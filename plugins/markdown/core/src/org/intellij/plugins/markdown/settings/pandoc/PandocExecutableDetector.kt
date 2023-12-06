@@ -14,7 +14,7 @@ import com.intellij.util.EnvironmentUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import java.io.File
 
-object PandocExecutableDetector {
+internal object PandocExecutableDetector {
   private const val WIN_EXECUTABLE = "pandoc.exe"
   private const val WIN_PANDOC_DIR_NAME = "Pandoc"
   private const val UNIX_EXECUTABLE = "pandoc"

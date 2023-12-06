@@ -1,70 +1,82 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar
+from typing_extensions import Literal
 
+from openpyxl.chart.shapes import GraphicalProperties
+from openpyxl.descriptors.base import Alias, Bool, String, Typed, _ConvertibleToBool
+from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.drawing.fill import BlipFillProperties
+from openpyxl.drawing.geometry import ShapeStyle
+from openpyxl.drawing.properties import NonVisualDrawingProps
 
 class PictureLocking(Serialisable):
-    tagname: str
-    namespace: Any
-    noCrop: Any
-    noGrp: Any
-    noSelect: Any
-    noRot: Any
-    noChangeAspect: Any
-    noMove: Any
-    noResize: Any
-    noEditPoints: Any
-    noAdjustHandles: Any
-    noChangeArrowheads: Any
-    noChangeShapeType: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    namespace: ClassVar[str]
+    noCrop: Bool[Literal[True]]
+    noGrp: Bool[Literal[True]]
+    noSelect: Bool[Literal[True]]
+    noRot: Bool[Literal[True]]
+    noChangeAspect: Bool[Literal[True]]
+    noMove: Bool[Literal[True]]
+    noResize: Bool[Literal[True]]
+    noEditPoints: Bool[Literal[True]]
+    noAdjustHandles: Bool[Literal[True]]
+    noChangeArrowheads: Bool[Literal[True]]
+    noChangeShapeType: Bool[Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        noCrop: Any | None = ...,
-        noGrp: Any | None = ...,
-        noSelect: Any | None = ...,
-        noRot: Any | None = ...,
-        noChangeAspect: Any | None = ...,
-        noMove: Any | None = ...,
-        noResize: Any | None = ...,
-        noEditPoints: Any | None = ...,
-        noAdjustHandles: Any | None = ...,
-        noChangeArrowheads: Any | None = ...,
-        noChangeShapeType: Any | None = ...,
-        extLst: Any | None = ...,
+        noCrop: _ConvertibleToBool | None = None,
+        noGrp: _ConvertibleToBool | None = None,
+        noSelect: _ConvertibleToBool | None = None,
+        noRot: _ConvertibleToBool | None = None,
+        noChangeAspect: _ConvertibleToBool | None = None,
+        noMove: _ConvertibleToBool | None = None,
+        noResize: _ConvertibleToBool | None = None,
+        noEditPoints: _ConvertibleToBool | None = None,
+        noAdjustHandles: _ConvertibleToBool | None = None,
+        noChangeArrowheads: _ConvertibleToBool | None = None,
+        noChangeShapeType: _ConvertibleToBool | None = None,
+        extLst: Unused = None,
     ) -> None: ...
 
 class NonVisualPictureProperties(Serialisable):
-    tagname: str
-    preferRelativeResize: Any
-    picLocks: Any
-    extLst: Any
-    __elements__: Any
-    def __init__(self, preferRelativeResize: Any | None = ..., picLocks: Any | None = ..., extLst: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    preferRelativeResize: Bool[Literal[True]]
+    picLocks: Typed[PictureLocking, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(
+        self, preferRelativeResize: _ConvertibleToBool | None = None, picLocks: Incomplete | None = None, extLst: Unused = None
+    ) -> None: ...
 
 class PictureNonVisual(Serialisable):
-    tagname: str
-    cNvPr: Any
-    cNvPicPr: Any
-    __elements__: Any
-    def __init__(self, cNvPr: Any | None = ..., cNvPicPr: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    cNvPr: Typed[NonVisualDrawingProps, Literal[False]]
+    cNvPicPr: Typed[NonVisualPictureProperties, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(
+        self, cNvPr: NonVisualDrawingProps | None = None, cNvPicPr: NonVisualPictureProperties | None = None
+    ) -> None: ...
 
 class PictureFrame(Serialisable):
-    tagname: str
-    macro: Any
-    fPublished: Any
-    nvPicPr: Any
-    blipFill: Any
-    spPr: Any
-    graphicalProperties: Any
-    style: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    macro: String[Literal[True]]
+    fPublished: Bool[Literal[True]]
+    nvPicPr: Typed[PictureNonVisual, Literal[False]]
+    blipFill: Typed[BlipFillProperties, Literal[False]]
+    spPr: Typed[GraphicalProperties, Literal[False]]
+    graphicalProperties: Alias
+    style: Typed[ShapeStyle, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        macro: Any | None = ...,
-        fPublished: Any | None = ...,
-        nvPicPr: Any | None = ...,
-        blipFill: Any | None = ...,
-        spPr: Any | None = ...,
-        style: Any | None = ...,
+        macro: str | None = None,
+        fPublished: _ConvertibleToBool | None = None,
+        nvPicPr: PictureNonVisual | None = None,
+        blipFill: BlipFillProperties | None = None,
+        spPr: GraphicalProperties | None = None,
+        style: ShapeStyle | None = None,
     ) -> None: ...

@@ -2,11 +2,18 @@
 <project name="Prepare classpath for jps bootstrap" xmlns:resolver="antlib:org.apache.maven.resolver.ant" default="jps-bootstrap-classpath">
   <dirname property="jps.bootstrap.dir" file="${ant.file}"/>
   <property name="community.home" value="${jps.bootstrap.dir}/../.."/>
+  <property name="ultimate.home" value="${community.home}/.."/>
   <property name="build.dir" value="${community.home}/out/jps-bootstrap" />
   <property name="classes.dir" value="${build.dir}/jps-bootstrap.classes" />
   <property name="uber.dir" value="${build.dir}/jps-bootstrap.out.lib" />
   <property environment="env"/>
   <property prefix="dependencies" file="${community.home}/build/dependencies/dependencies.properties" />
+  <property name="retry.attempts" value="7"/>
+  <property name="retry.delay" value="1000"/>
+
+  <taskdef name="executeOnChanged" classname="org.jetbrains.ExecuteOnChanged" classpath="execute-on-changed-ant-task/target/execute-on-changed-ant-task-1.0-SNAPSHOT.jar"/>
+
+  <property name="ij.packages.auth.java.path" value="${ultimate.home}/build/private-packages-auth/src/com/intellij/idea/ultimate/build/packages/auth/IJPrivatePackagesAuthorizer.java"/>
 
   <mkdir dir="${build.dir}" />
 
@@ -28,13 +35,34 @@
   <echo message="kotlinc.version=${kotlinc.version}" />
 
   <available file="${maven.resolver.ant.tasks.cache.file}" property="maven.resolver.ant.tasks.file.exists"/>
+  <available file="${ij.packages.auth.java.path}" property="ij.packages.auth.java.exists" />
 
-  <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists">
+  <condition property="exec-ij-ultimate-packages-auth">
+    <and>
+      <istrue value="${ij.packages.auth.java.exists}"/>
+      <not>
+        <equals arg1="${env.IJ_PRIVATE_PACKAGES_AUTHORIZER_SKIP}" arg2="1"/>
+      </not>
+      <not>
+        <isset property="env.TEAMCITY_VERSION"/>
+      </not>
+    </and>
+  </condition>
+
+  <target name="ij-ultimate-packages-auth" if="exec-ij-ultimate-packages-auth">
+    <java sourcefile="${ij.packages.auth.java.path}" fork="true" failonerror="true" >
+      <sysproperty key="ij.private.packages.authorizer.idea.ultimate.path" value="${ultimate.home}"/>
+    </java>
+  </target>
+
+  <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists" depends="ij-ultimate-packages-auth">
     <mkdir dir="${maven.resolver.ant.tasks.cache.dir}" />
-    <get
-      src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/${maven.resolver.ant.tasks.file.path}/${maven.resolver.ant.tasks.file.name}"
-      dest="${maven.resolver.ant.tasks.cache.file}.tmp"
-      verbose="true"/>
+    <retry retrycount="${retry.attempts}" retrydelay="${retry.delay}">
+      <get
+        src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/${maven.resolver.ant.tasks.file.path}/${maven.resolver.ant.tasks.file.name}"
+        dest="${maven.resolver.ant.tasks.cache.file}.tmp"
+        verbose="true"/>
+    </retry>
     <move
       file="${maven.resolver.ant.tasks.cache.file}.tmp"
       tofile="${maven.resolver.ant.tasks.cache.file}"
@@ -54,44 +82,64 @@
 
     <resolver:pom file="${jps.bootstrap.dir}/pom.xml" id="jps.bootstrap.pom"/>
 
-    <resolver:resolve failOnMissingAttachments="true">
-      <resolver:remoterepos refid="remoterepos.buildscript"/>
-      <resolver:dependencies pomRef="jps.bootstrap.pom">
-        <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-jps-plugin-classpath" version="${kotlinc.version}" />
-      </resolver:dependencies>
-      <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
-    </resolver:resolve>
+    <retry retrycount="${retry.attempts}" retrydelay="${retry.delay}">
+      <resolver:resolve failOnMissingAttachments="true">
+        <resolver:remoterepos refid="remoterepos.buildscript"/>
+        <resolver:dependencies pomRef="jps.bootstrap.pom">
+          <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-jps-plugin-classpath" version="${kotlinc.version}" />
+        </resolver:dependencies>
+        <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
+      </resolver:resolve>
+    </retry>
 
-    <resolver:resolve failOnMissingAttachments="true">
-      <resolver:remoterepos refid="remoterepos.buildscript"/>
-      <resolver:dependencies>
-        <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-compiler" version="${kotlinc.version}" />
-      </resolver:dependencies>
-      <resolver:path refid="classpath.kotlin.compiler" classpath="runtime"/>
-    </resolver:resolve>
+    <retry retrycount="${retry.attempts}" retrydelay="${retry.delay}">
+      <resolver:resolve failOnMissingAttachments="true">
+        <resolver:remoterepos refid="remoterepos.buildscript"/>
+        <resolver:dependencies>
+          <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-compiler" version="${kotlinc.version}" />
+        </resolver:dependencies>
+        <resolver:path refid="classpath.kotlin.compiler" classpath="runtime"/>
+      </resolver:resolve>
+    </retry>
 
-    <delete dir="${classes.dir}" />
-    <java
-      classname="org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
-      classpathref="classpath.kotlin.compiler"
-      fork="true"
-      failonerror="true">
-      <arg value="-no-reflect" />
-      <arg value="-no-stdlib" />
-      <arg value="-jvm-target" />
-      <arg value="11" />
-      <arg value="-classpath" />
-      <arg pathref="classpath.buildscripts" />
-      <arg path="${jps.bootstrap.dir}/src/main/java" />
-      <arg path="${community.home}/platform/build-scripts/downloader/src" />
-      <arg value="-d" />
-      <arg value="${classes.dir}" />
-    </java>
+    <executeOnChanged statefile="${build.dir}/jps-bootstrap.classes.jar.state.txt">
+      <inputs>
+        <pathelement location="${ant.file}"/>
+        <pathelement location="${jps.bootstrap.dir}/src/main/java"/>
+        <pathelement location="${community.home}/platform/build-scripts/downloader/src"/>
+        <pathelement location="${jps.bootstrap.dir}/pom.xml"/>
+        <pathelement location="${community.home}/.idea/kotlinc.xml"/>
+      </inputs>
 
-    <delete file="${classes.dir}.jar" />
-    <zip destfile="${classes.dir}.jar">
-      <fileset dir="${classes.dir}" />
-    </zip>
+      <outputs>
+        <pathelement location="${classes.dir}.jar"/>
+      </outputs>
+
+      <sequential>
+        <delete dir="${classes.dir}"/>
+        <java
+          classname="org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
+          classpathref="classpath.kotlin.compiler"
+          fork="true"
+          failonerror="true">
+          <arg value="-no-reflect"/>
+          <arg value="-no-stdlib"/>
+          <arg value="-jvm-target"/>
+          <arg value="11"/>
+          <arg value="-classpath"/>
+          <arg pathref="classpath.buildscripts"/>
+          <arg path="${jps.bootstrap.dir}/src/main/java"/>
+          <arg path="${community.home}/platform/build-scripts/downloader/src"/>
+          <arg value="-d"/>
+          <arg value="${classes.dir}"/>
+        </java>
+
+        <delete file="${classes.dir}.jar"/>
+        <zip destfile="${classes.dir}.jar">
+          <fileset dir="${classes.dir}"/>
+        </zip>
+      </sequential>
+    </executeOnChanged>
 
     <mkdir dir="${uber.dir}" />
     <sync todir="${uber.dir}">

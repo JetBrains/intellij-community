@@ -1,4 +1,4 @@
-// FIR_IGNORE
+// IGNORE_K2
 package test
 
 class Foo

@@ -1,11 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("UsePropertyAccessSyntax")
+@file:Suppress("UsePropertyAccessSyntax", "RAW_RUN_BLOCKING")
 
 package com.intellij.toolWindow
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.*
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import javax.swing.Icon
 
@@ -21,7 +22,7 @@ fun testStripeButton(id: String, manager: ToolWindowManagerImpl, shouldBeVisible
 
 private fun init(project: Project,
                  isNewUi: Boolean,
-                 taskProducer: ((Project) -> List<RegisterToolWindowTask>) = ::computeToolWindowBeans,
+                 taskProducer: ((Project) -> List<RegisterToolWindowTask>)? = null,
                  layoutCustomizer: ((DesktopLayout) -> Unit) = {}): ToolWindowManagerImpl {
   val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
   val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager(paneId) else ToolWindowPaneOldButtonManager(paneId)
@@ -35,7 +36,7 @@ private fun init(project: Project,
 
   manager.setLayoutOnInit(toolWindowLayoutManager.getLayoutCopy().also(layoutCustomizer))
 
-  val tasks = taskProducer(project)
+  val tasks = if (taskProducer == null) runBlocking { computeToolWindowBeans(project) } else taskProducer(project)
   for (task in tasks) {
     manager.registerToolWindow(task, buttonManager)
   }
@@ -58,8 +59,16 @@ object ToolWindowManagerTestHelper {
       project = project,
       isNewUi = isNewUi,
       taskProducer = {
-        computeToolWindowBeans(project).map {
-          if (it.id == id) it.copy(shouldBeAvailable = false, contentFactory = { _, _ -> /* empty to avoid any UI tasks */ }) else it
+        runBlocking { computeToolWindowBeans(project) }.map {
+          if (it.id == id) {
+            it.copy(shouldBeAvailable = false, contentFactory = object : ToolWindowFactory {
+              override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+              }
+            })
+          }
+          else {
+            it
+          }
         }
       },
       layoutCustomizer = {
@@ -97,15 +106,14 @@ fun testDefaultLayout(isNewUi: Boolean, project: Project) {
   manager.setLayoutOnInit(layout)
   assertThat(manager.getEntry("TODO")).isNull()
 
-  val tasks = computeToolWindowBeans(project)
+  val tasks = runBlocking { computeToolWindowBeans(project) }
   for (task in tasks) {
     manager.registerToolWindow(task, buttonManager)
   }
 
   val todoInfo = manager.getEntry("TODO")!!.readOnlyWindowInfo
-  assertThat(todoInfo.isShowStripeButton).isEqualTo(!isNewUi)
   // order allocation logic is the same for old and new ui, but by default not all tool windows are shown in a new UI,
-  // so, button for T O D O is not created by default, therefore order is not set
+  //  so the button for T O D O is not created by default, therefore, order is not set
   assertThat(todoInfo.order).let { if (isNewUi) it.isEqualTo(-1) else it.isNotEqualTo(-1) }
   assertThat(manager.getEntry("Project")!!.readOnlyWindowInfo.order).isNotEqualTo(-1)
 }

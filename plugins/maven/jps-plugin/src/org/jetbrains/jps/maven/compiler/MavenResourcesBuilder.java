@@ -55,7 +55,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
 
       @Override
-      public boolean apply(MavenResourcesTarget t, File file, MavenResourceRootDescriptor rd) throws IOException {
+      public boolean apply(@NotNull MavenResourcesTarget t, @NotNull File file, @NotNull MavenResourceRootDescriptor rd) throws IOException {
         assert target == t;
 
         List<File> fileList = files.get(rd);

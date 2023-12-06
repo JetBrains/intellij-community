@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -17,7 +19,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,23 +57,36 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
     return !project.isDisposed() && !myCurrentModule.isDisposed();
   }
 
   @Override
-  public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) throws IncorrectOperationException {
     ModalityState modality = ModalityState.defaultModalityState();
     JavaProjectModelModificationService.getInstance(project)
       .addDependency(myCurrentModule, myLibraryDescriptor, myScope)
-      .onSuccess(__ -> ModalityUiUtil.invokeLaterIfNeeded(modality, ___ -> editor.isDisposed() || myCurrentModule.isDisposed(), () -> {
-        try {
-          importClass(myCurrentModule, editor, restoreReference(), myQualifiedClassName);
-        }
-        catch (IndexNotReadyException e) {
-          Logger.getInstance(AddExtLibraryDependencyFix.class).info(e);
-        }
-      }));
+      .onSuccess(__ -> {
+        if (editor == null) return;
+        ReadAction.nonBlocking(() -> {
+            PsiReference reference = restoreReference();
+            if (myQualifiedClassName == null || reference == null) return null;
+            try {
+              return AddImportAction.create(editor, myCurrentModule, reference, myQualifiedClassName);
+            }
+            catch (IndexNotReadyException e) {
+              Logger.getInstance(AddExtLibraryDependencyFix.class).info(e);
+              return null;
+            }
+          })
+          .expireWhen(() -> editor.isDisposed() || myCurrentModule.isDisposed())
+          .finishOnUiThread(modality, action -> {
+            if (action != null) {
+              action.execute();
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
+      });
   }
 
   @Override

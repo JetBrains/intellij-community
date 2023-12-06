@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import com.intellij.util.Function;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +12,7 @@ import java.util.Comparator;
  */
 public class Pair<A, B> {
   public final A first;
-  public final B second;
+  @Nls public final B second;
 
   @NotNull
   public static <A, B> Pair<A, B> create(A first, B second) {
@@ -27,16 +27,6 @@ public class Pair<A, B> {
   @NotNull
   public static <A, B> Pair<A, B> pair(A first, B second) {
     return new Pair<>(first, second);
-  }
-
-  @NotNull
-  public static <A, B> Function<A, Pair<A, B>> createFunction(final B value) {
-    return new Function<A, Pair<A, B>>() {
-      @Override
-      public Pair<A, B> fun(A a) {
-        return create(a, value);
-      }
-    };
   }
 
   public static <T> T getFirst(@Nullable Pair<T, ?> pair) {

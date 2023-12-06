@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 
 public final class LoggerFactory implements Logger.Factory {
@@ -40,5 +41,11 @@ public final class LoggerFactory implements Logger.Factory {
   @Override
   public @NotNull Logger getLoggerInstance(@NotNull String name) {
     return new IdeaLogger(java.util.logging.Logger.getLogger(name));
+  }
+
+  public void flushHandlers() {
+    for (Handler handler : java.util.logging.Logger.getLogger("").getHandlers()) {
+      handler.flush();
+    }
   }
 }

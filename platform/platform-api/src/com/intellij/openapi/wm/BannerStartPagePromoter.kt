@@ -9,10 +9,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
@@ -36,7 +33,12 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     headerPanel.add(createHeader())
     headerPanel.add(Box.createHorizontalGlue())
 
-    val hPanel: JPanel = BackgroundRoundedPanel(JBUI.scale(16))
+    val hPanel: JPanel = object : BackgroundRoundedPanel(JBUI.scale(16)) {
+      override fun addNotify() {
+        super.addNotify()
+        onBannerShown()
+      }
+    }
 
     closeAction?.let { closeAction ->
       val closeIcons = IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey)
@@ -59,18 +61,12 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
       it.foreground = UIUtil.getContextHelpForeground()
     }
     vPanel.add(description)
-    val jButton = JButton()
-    jButton.isOpaque = false
-    jButton.alignmentX = Component.LEFT_ALIGNMENT
-    jButton.action = object : AbstractAction(actionLabel) {
-      override fun actionPerformed(e: ActionEvent?) {
-        runAction()
-      }
-    }
+
+    val button = createButton()
 
     val minSize = JBDimension(0, 8)
     vPanel.add(Box.Filler(minSize, minSize, Dimension(0, Short.MAX_VALUE.toInt())))
-    vPanel.add(buttonPixelHunting(jButton))
+    vPanel.add(buttonPixelHunting(button))
 
     hPanel.background = JBColor.namedColor("WelcomeScreen.SidePanel.background", JBColor(0xF2F2F2, 0x3C3F41))
     hPanel.layout = BoxLayout(hPanel, BoxLayout.X_AXIS)
@@ -84,22 +80,29 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     return hPanel
   }
 
-  private fun buttonPixelHunting(button: JButton): JPanel {
+  private fun buttonPixelHunting(button: JComponent): JPanel {
+    val buttonPlace = object: JPanel() {
+      override fun updateUI() {
+        super.updateUI()
 
-    val buttonSizeWithoutInsets = Dimension(button.preferredSize.width - button.insets.left - button.insets.right,
-                                            button.preferredSize.height - button.insets.top - button.insets.bottom)
+        val buttonSizeWithoutInsets = Dimension(button.preferredSize.width - button.insets.left - button.insets.right,
+                                                button.preferredSize.height - button.insets.top - button.insets.bottom)
 
-    val buttonPlace = JPanel().apply {
-      layout = null
-      maximumSize = buttonSizeWithoutInsets
-      preferredSize = buttonSizeWithoutInsets
-      minimumSize = buttonSizeWithoutInsets
-      isOpaque = false
-      alignmentX = JPanel.LEFT_ALIGNMENT
+        apply {
+          layout = null
+          maximumSize = buttonSizeWithoutInsets
+          preferredSize = buttonSizeWithoutInsets
+          minimumSize = buttonSizeWithoutInsets
+          isOpaque = false
+          alignmentX = LEFT_ALIGNMENT
+        }
+
+        button.bounds = Rectangle(-button.insets.left, -button.insets.top, button.preferredSize.width, button.preferredSize.height)
+      }
     }
 
     buttonPlace.add(button)
-    button.bounds = Rectangle(-button.insets.left, -button.insets.top, button.preferredSize.width, button.preferredSize.height)
+    buttonPlace.updateUI()
 
     return buttonPlace
   }
@@ -124,9 +127,24 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
 
   protected abstract fun runAction()
 
+  protected open fun onBannerShown() {}
+
   protected open fun createHeader(): JLabel {
     val result = JLabel(headerLabel)
-    result.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(2))
+    val labelFont = StartupUiUtil.labelFont
+    result.font = JBFont.create(labelFont).deriveFont(Font.BOLD).deriveFont(labelFont.size2D + JBUI.scale(2))
     return result
+  }
+
+  protected open fun createButton(): JComponent {
+    val jButton = JButton()
+    jButton.isOpaque = false
+    jButton.alignmentX = Component.LEFT_ALIGNMENT
+    jButton.action = object : AbstractAction(actionLabel) {
+      override fun actionPerformed(e: ActionEvent?) {
+        runAction()
+      }
+    }
+    return jButton
   }
 }

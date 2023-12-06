@@ -1,18 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.project.MavenProjectResolver
+import com.intellij.openapi.util.registry.Registry
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
-
+  
   @Test
-  fun `simple library substitution`() {
+  fun `simple library substitution`() = runBlocking {
     val value = Registry.get("external.system.substitute.library.dependencies")
     try {
       value.setValue(true)
@@ -33,48 +30,13 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
                            "    <version>1.0</version>" +
                            "  </dependency>" +
                            "</dependencies>")
-      importNewProject(p1Pom)
-      importNewProject(p2Pom)
+      importProjectAsync(p1Pom)
+      importProjectAsync(p2Pom)
       assertModules("p1", "p2")
       assertModuleModuleDeps("p2", "p1")
     }
     finally {
       value.resetToDefault()
-    }
-  }
-
-  protected fun importNewProject(file: VirtualFile) {
-    if (isNewImportingProcess) {
-      importProject(file)
-    }
-    else {
-      importNewProjectLegacyWay(file)
-    }
-
-  }
-
-  protected fun importNewProjectLegacyWay(file: VirtualFile) {
-
-    val files = listOf(file)
-
-    myProjectsManager.initForTests()
-    myProjectResolver = MavenProjectResolver(getProjectsTree())
-
-    myProjectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles(emptyList(), emptyList()), null)
-
-    ApplicationManager.getApplication().invokeAndWait {
-      try {
-        myProjectsManager.waitForReadingCompletion()
-      }
-      catch (e: Exception) {
-        throw RuntimeException(e)
-      }
-    }
-
-    ApplicationManager.getApplication().invokeAndWait {
-      myProjectsManager.waitForResolvingCompletion()
-      myProjectsManager.scheduleImportInTests(files)
-      myProjectsManager.importProjects()
     }
   }
 }

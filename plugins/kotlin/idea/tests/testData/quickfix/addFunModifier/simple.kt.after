@@ -6,3 +6,5 @@ fun interface I {
 fun test() {
     val x = I {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunModifierFix

@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -80,9 +80,10 @@ internal class PortableCompilationCacheUploader(
   }
 
   private fun uploadToS3() {
-    spanBuilder("aws s3 sync").useWithScope {
-      context.messages.info(awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache"))
-      println("##teamcity[setParameter name='jps.caches.aws.sync.skip' value='true']")
+    if (remoteCache.shouldBeSyncedToS3) {
+      spanBuilder("aws s3 sync").useWithScopeBlocking {
+        awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", "$s3Folder", "s3://intellij-jps-cache", returnStdOut = false)
+      }
     }
   }
 
@@ -96,14 +97,18 @@ internal class PortableCompilationCacheUploader(
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
     }
-    moveFile(zipFile, s3Folder.resolve(cachePath))
+    if (remoteCache.shouldBeSyncedToS3) {
+      moveFile(zipFile, s3Folder.resolve(cachePath))
+    }
   }
 
   private fun uploadMetadata() {
     val metadataPath = "metadata/$commitHash"
     val sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
-    moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+    if (remoteCache.shouldBeSyncedToS3) {
+      moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+    }
   }
 
   private fun uploadCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>,
@@ -124,7 +129,9 @@ internal class PortableCompilationCacheUploader(
           uploader.upload(sourcePath, zipFile)
           uploadedOutputCount.incrementAndGet()
         }
-        moveFile(zipFile, s3Folder.resolve(sourcePath))
+        if (remoteCache.shouldBeSyncedToS3) {
+          moveFile(zipFile, s3Folder.resolve(sourcePath))
+        }
       }
     }
   }
@@ -146,8 +153,18 @@ internal class PortableCompilationCacheUploader(
         "JPS Caches are uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded"
       }
     }
-    uploader.upload(path = CommitsHistory.JSON_FILE,
-                    file = writeCommitHistory(if (overrideRemoteHistory) commitHistory else commitHistory.plus(remoteCommitHistory())))
+    val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory()
+    uploader.upload(path = CommitsHistory.JSON_FILE, file = writeCommitHistory(newHistory))
+    val expected = newHistory.commitsForRemote(remoteGitUrl).toSet()
+    val actual = remoteCommitHistory().commitsForRemote(remoteGitUrl).toSet()
+    val missing = expected - actual
+    val unexpected = actual - expected
+    check(missing.none() && unexpected.none()) {
+      """
+        Missing: $missing
+        Unexpected: $unexpected
+      """.trimIndent()
+    }
   }
 
   private fun remoteCommitHistory(): CommitsHistory {
@@ -172,9 +189,9 @@ internal class PortableCompilationCacheUploader(
 private class Uploader(serverUrl: String, val authHeader: String) {
   private val serverUrl = serverUrl.withTrailingSlash()
 
-  fun upload(path: String, file: Path): Boolean {
+  fun upload(path: String, file: Path) {
     val url = pathToUrl(path)
-    spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).useWithScope {
+    spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).useWithScopeBlocking {
       check(Files.exists(file)) {
         "The file $file does not exist"
       }
@@ -192,7 +209,6 @@ private class Uploader(serverUrl: String, val authHeader: String) {
           }).build()).execute().useSuccessful {}
       }
     }
-    return true
   }
 
   fun isExist(path: String, logIfExists: Boolean = false): Boolean {

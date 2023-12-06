@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.checkers.utils.clearFileFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
@@ -21,15 +22,13 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.sourceRoots
-import org.jetbrains.kotlin.platform.CommonPlatforms
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.projectModel.*
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.types.typeUtil.closure
@@ -156,6 +155,13 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
 
     infosByModuleId.entries.forEach { (id, rootInfos) ->
         val module = modulesById[id]!!
+
+        if (id.isTest) {
+            modulesById[id.copy(isTest = false)]?.let { mainModule ->
+                module.addDependency(mainModule)
+            }
+        }
+
         rootInfos.flatMap { it.dependencies }.forEach {
             val platform = id.platform
             when (it) {
@@ -165,6 +171,7 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                         platform.isCommon() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibCommon, kind = KotlinCommonLibraryKind)
                         platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlib)
                         platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
+                        platform.isWasm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasmJs, kind = KotlinWasmLibraryKind)
                         else -> error("Unknown platform $this")
                     }
                 }
@@ -183,33 +190,42 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
     }
 
     modulesById.forEach { (nameAndPlatform, module) ->
-        val (name, platform) = nameAndPlatform
+        val (name, platform, isTest) = nameAndPlatform
         val pureKotlinSourceFolders = module.collectSourceFolders()
+
+        val additionalVisibleModuleNames = buildSet {
+            if (isTest) {
+                add(nameAndPlatform.copy(isTest = false).ideaModuleName())
+            }
+        }
+
         when {
             platform.isCommon() -> {
                 module.createMultiplatformFacetM1(
                     platform,
                     useProjectSettings = false,
                     implementedModuleNames = emptyList(),
-                    pureKotlinSourceFolders = pureKotlinSourceFolders
+                    pureKotlinSourceFolders = pureKotlinSourceFolders,
+                    additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
             }
 
             else -> {
-                val commonModuleId = ModuleId(name, CommonPlatforms.defaultCommonPlatform)
+                val commonModuleId = ModuleId(name, CommonPlatforms.defaultCommonPlatform, isTest)
 
                 module.createMultiplatformFacetM1(
                     platform,
                     implementedModuleNames = listOf(commonModuleId.ideaModuleName()),
-                    pureKotlinSourceFolders = pureKotlinSourceFolders
+                    pureKotlinSourceFolders = pureKotlinSourceFolders,
+                    additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
-                module.enableMultiPlatform()
 
                 modulesById[commonModuleId]?.let { commonModule ->
                     module.addDependency(commonModule)
                 }
             }
         }
+        module.enableMultiPlatform()
     }
 }
 
@@ -244,6 +260,7 @@ private val platformNames = mapOf(
     listOf("java8", "jvm8") to JvmPlatforms.jvm8,
     listOf("java6", "jvm6") to JvmPlatforms.jvm6,
     listOf("js", "javascript") to JsPlatforms.defaultJsPlatform,
+    listOf("wasm") to WasmPlatforms.Default,
     listOf("native") to NativePlatforms.unspecifiedNativePlatform
 )
 
@@ -271,10 +288,11 @@ private fun parseDependency(it: String): Dependency {
 
 private fun parseModuleId(parts: List<String>): ModuleId {
     val platform = parsePlatform(parts)
+    val isTest = parseIsTestRoot(parts)
     val name = parseModuleName(parts)
     val id = parseIndex(parts) ?: 0
     assert(id == 0 || !platform.isCommon())
-    return ModuleId(name, platform, id)
+    return ModuleId(name, platform, isTest, id)
 }
 
 private fun parsePlatform(parts: List<String>) =
@@ -291,17 +309,24 @@ private fun parseIsTestRoot(parts: List<String>) =
     testSuffixes.any { suffix -> parts.any { it.equals(suffix, ignoreCase = true) } }
 
 private fun parseIndex(parts: List<String>): Int? {
-    return parts.singleOrNull() { it.startsWith("id") }?.substringAfter("id")?.toInt()
+    return parts.singleOrNull { it.startsWith("id") }?.substringAfter("id")?.toInt()
 }
 
 private data class ModuleId(
     val groupName: String,
     val platform: TargetPlatform,
+    val isTest: Boolean,
     val index: Int = 0
 ) {
-    fun ideaModuleName(): String {
-        val suffix = "_$index".takeIf { index != 0 } ?: ""
-        return "${groupName}_${platform.presentableName}$suffix"
+    fun ideaModuleName(): String = buildString {
+        append(groupName)
+        append("_${platform.presentableName}")
+        if (index != 0) {
+            append("_$index")
+        }
+        if (isTest) {
+            append("Test")
+        }
     }
 }
 

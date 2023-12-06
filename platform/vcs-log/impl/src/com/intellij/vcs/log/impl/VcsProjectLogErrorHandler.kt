@@ -1,17 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.google.common.collect.EnumMultiset
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.impl.VcsProjectLog.Companion.runOnDisposedLog
 import com.intellij.vcs.log.util.StorageId
-import java.util.concurrent.Future
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog) {
+internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog, private val coroutineScope: CoroutineScope) {
   private val countBySource = EnumMultiset.create(VcsLogErrorHandler.Source::class.java)
 
   @RequiresEdt
@@ -24,11 +27,11 @@ internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog) 
 
     if (source == VcsLogErrorHandler.Source.Index) {
       if (count > DISABLE_INDEX_COUNT) {
-        val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(logManager.dataManager.logProviders)
+        val rootsForIndexing = logManager.dataManager.index.indexingRoots
         thisLogger().error("Disabling indexing for ${rootsForIndexing.map { it.name }} due to corruption " +
-                          "(count=$count).", t)
+                           "(count=$count).", t)
         rootsForIndexing.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
-        projectLog.recreateLog(logManager, true)
+        coroutineScope.launch { projectLog.recreateLog(logManager, true) }
         return
       }
     }
@@ -41,40 +44,43 @@ internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog) 
       thisLogger().debug("Recreating Vcs Log after $source corruption (count=$count).", t)
     }
 
-    projectLog.recreateLog(logManager, invalidateCaches)
+    coroutineScope.launch { projectLog.recreateLog(logManager, invalidateCaches) }
   }
+}
 
-  companion object {
-    private const val INVALIDATE_CACHES_COUNT = 5
-    private const val DISABLE_INDEX_COUNT = 2 * INVALIDATE_CACHES_COUNT
+private const val INVALIDATE_CACHES_COUNT = 5
+private const val DISABLE_INDEX_COUNT = 2 * INVALIDATE_CACHES_COUNT
 
-    fun VcsLogManager.storageIds(): List<StorageId> {
-      return listOfNotNull((dataManager.index as? VcsLogPersistentIndex)?.indexStorageId,
-                           (dataManager.storage as? VcsLogStorageImpl)?.refsStorageId,
-                           (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId)
-    }
+internal fun VcsLogManager.storageIds(): List<StorageId> {
+  return linkedSetOf((dataManager.index as? VcsLogPersistentIndex)?.indexStorageId,
+                     (dataManager.storage as? VcsLogStorageImpl)?.refsStorageId,
+                     (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId).filterNotNull()
+}
 
-    private fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCaches: Boolean): Future<*>? {
-      val storageIds = logManager.storageIds()
-      thisLogger().assertTrue(storageIds.isNotEmpty())
+internal suspend fun VcsProjectLog.invalidateCaches(logManager: VcsLogManager) {
+  recreateLog(logManager = logManager, invalidateCaches = true)
+}
 
-      return runOnDisposedLog {
-        if (invalidateCaches) {
-          for (storageId in storageIds) {
-            try {
-              val storageDir = storageId.projectStorageDir
-              val deleted = FileUtil.deleteWithRenaming(storageDir)
-              if (deleted) thisLogger().info("Deleted $storageDir")
-              else thisLogger().error("Could not delete $storageDir")
-            }
-            catch (t: Throwable) {
-              thisLogger().error(t)
-            }
+private suspend fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCaches: Boolean) {
+  val storageIds = logManager.storageIds()
+  thisLogger().assertTrue(storageIds.isNotEmpty())
+
+  runOnDisposedLog {
+    if (invalidateCaches) {
+      for (storageId in storageIds) {
+        try {
+          val deleted = withContext(Dispatchers.IO) { storageId.cleanupAllStorageFiles() }
+          if (deleted) {
+            thisLogger().info("Deleted ${storageId.storagePath}")
           }
+          else {
+            thisLogger().error("Could not delete ${storageId.storagePath}")
+          }
+        }
+        catch (t: Throwable) {
+          thisLogger().error(t)
         }
       }
     }
-
-    fun VcsProjectLog.invalidateCaches(logManager: VcsLogManager): Future<*>? = recreateLog(logManager, true)
   }
 }

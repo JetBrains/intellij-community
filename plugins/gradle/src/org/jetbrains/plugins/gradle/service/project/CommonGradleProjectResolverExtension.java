@@ -3,10 +3,11 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectModelProvider;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelProvider;
+import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension;
 import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl;
@@ -15,23 +16,16 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision;
-import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -43,7 +37,6 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.prefix.map.MutablePrefixTreeMap;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.lang.JavaVersion;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
@@ -63,8 +56,6 @@ import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleModuleData;
@@ -80,7 +71,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
 
@@ -220,7 +210,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     return mainModuleNode;
   }
 
-  private void populateBuildScriptSource(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> mainModuleNode) {
+  private static void populateBuildScriptSource(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> mainModuleNode) {
     try {
       File buildScriptSource = ideaModule.getGradleProject().getBuildScript().getSourceFile();
       GradleProjectBuildScriptData buildProjectData = new GradleProjectBuildScriptData(buildScriptSource);
@@ -615,7 +605,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     if (resolverCtx.isResolveModulePerSourceSet()) {
       final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap =
         ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
-      final Map<String, String> artifactsMap = ideProject.getUserData(CONFIGURATION_ARTIFACTS);
+      final ArtifactMappingService artifactsMap = resolverCtx.getArtifactsMap();
       assert sourceSetMap != null;
       assert artifactsMap != null;
       assert externalProject != null;
@@ -724,6 +714,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         taskData.setGroup(taskGroup);
         taskData.setType(task.getType());
         taskData.setTest(task.isTest());
+        taskData.setJvmTest(task.isJvmTest());
         ideModule.createChild(ProjectKeys.TASK, taskData);
         taskData.setInherited(inherited);
         tasks.add(taskData);
@@ -758,9 +749,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     return taskGroup;
   }
 
-  @NotNull
   @Override
-  public Set<Class<?>> getExtraProjectModelClasses() {
+  public @NotNull Set<Class<?>> getExtraProjectModelClasses() {
     return ContainerUtil.newLinkedHashSet(
       BuildScriptClasspathModel.class,
       GradleExtensions.class,
@@ -772,10 +762,21 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     );
   }
 
-  @NotNull
   @Override
-  public ProjectImportModelProvider getModelProvider() {
-    return new ClassSetImportModelProvider(getExtraProjectModelClasses(), ContainerUtil.newLinkedHashSet(ExternalProject.class, IdeaProject.class));
+  public @NotNull Set<Class<?>> getExtraBuildModelClasses() {
+    return ContainerUtil.newLinkedHashSet(
+      IdeaProject.class
+    );
+  }
+
+  @Override
+  public @NotNull List<ProjectImportModelProvider> getModelProviders() {
+    return ContainerUtil.append(
+      super.getModelProviders(),
+      new GradleSourceSetModelProvider(),
+      new GradleTaskModelProvider(),
+      new GradleExternalProjectModelProvider()
+    );
   }
 
   @Override

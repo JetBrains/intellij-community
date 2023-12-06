@@ -261,38 +261,14 @@ class SingleInstructionInterpreter(private val eval: Eval) : Interpreter<Value>(
             FADD -> float(value1.float + value2.float)
             FSUB -> float(value1.float - value2.float)
             FMUL -> float(value1.float * value2.float)
-            FDIV -> {
-                val divider = value2.float
-                if (divider == 0f) {
-                    divisionByZero()
-                }
-                float(value1.float / divider)
-            }
-            FREM -> {
-                val divider = value2.float
-                if (divider == 0f) {
-                    divisionByZero()
-                }
-                float(value1.float % divider)
-            }
+            FDIV -> float(value1.float / value2.float)
+            FREM -> float(value1.float % value2.float)
 
             DADD -> double(value1.double + value2.double)
             DSUB -> double(value1.double - value2.double)
             DMUL -> double(value1.double * value2.double)
-            DDIV -> {
-                val divider = value2.double
-                if (divider == 0.0) {
-                    divisionByZero()
-                }
-                double(value1.double / divider)
-            }
-            DREM -> {
-                val divider = value2.double
-                if (divider == 0.0) {
-                    divisionByZero()
-                }
-                double(value1.double % divider)
-            }
+            DDIV -> double(value1.double / value2.double)
+            DREM -> double(value1.double % value2.double)
 
             LCMP -> {
                 val l1 = value1.long

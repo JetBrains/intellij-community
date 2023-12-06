@@ -1,31 +1,36 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.fileEditor.impl.waitForFullyLoaded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
+import com.sampullara.cli.Args
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 
-class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+/**
+ * Command opens file.
+ * Example: %openFile -file <filename from the root of the project> [-suppressErrors] [-timeout <in seconds>] [WARMUP] [-disableCodeAnalysis(-dsa) by default false]
+ */
+class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
-    const val PREFIX: @NonNls String = CMD_PREFIX + "openFile"
+    const val NAME: @NonNls String = "openFile"
+    const val PREFIX: @NonNls String = "$CMD_PREFIX$NAME"
     const val SPAN_NAME: @NonNls String = "firstCodeAnalysis"
-    const val SUPPRESS_ERROR: @NonNls String = "SUPPRESS_ERROR"
 
     @JvmStatic
     fun findFile(filePath: String, project: Project): VirtualFile? {
@@ -37,44 +42,57 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
     }
   }
 
+  override fun getName(): String {
+    return NAME
+  }
+
   override suspend fun doExecute(context: PlaybackContext) {
-    val params = text.split(' ', limit = 4)
-    val filePath = params[1]
-    val timeout = if (params.size > 2) params[2].toLong() else 0
-    val suppressErrors = text.contains(SUPPRESS_ERROR)
+    val myOptions = runCatching {
+      OpenFileCommandOptions().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
+    }.getOrNull()
+    val filePath = myOptions?.file ?: text.split(' ', limit = 4)[1]
+    val timeout = myOptions?.timeout ?: 0
+    val suppressErrors = myOptions?.suppressErrors ?: false
+
     val project = context.project
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
     val connection = project.messageBus.simpleConnect()
-    val span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
     val spanRef = Ref<Span>()
-    val scopeRef = Ref<Scope>()
     val projectPath = project.basePath
-    val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, scopeRef, timeout)
+    val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, timeout)
     if (suppressErrors) {
       job.suppressErrors()
     }
+    spanRef.set(startSpan(SPAN_NAME))
+    setFilePath(projectPath = projectPath, span = spanRef.get(), file = file)
+
+    // focus window
     withContext(Dispatchers.EDT) {
-      spanRef.set(span.startSpan())
-      scopeRef.set(spanRef.get().makeCurrent())
-      setFilePath(projectPath, spanRef, file)
-      FileEditorManager.getInstance(project).openFile(file, true)
+      ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
+    }
+
+    val fileEditor = FileEditorManagerEx.getInstanceEx(project).openFile(file = file,
+                                                        options = FileEditorOpenOptions(requestFocus = true))
+    if(myOptions!=null && !myOptions.disableCodeAnalysis) {
+      fileEditor.waitForFullyLoaded()
     }
 
     job.onError {
       spanRef.get()?.setAttribute("timeout", "true")
     }
     job.withErrorMessage("Timeout on open file ${file.path} more than $timeout seconds")
-    job.waitForComplete()
+
+    if(myOptions!=null && !myOptions.disableCodeAnalysis) {
+      job.waitForComplete()
+    }
   }
 
-  private fun setFilePath(projectPath: @SystemIndependent @NonNls String?,
-                        spanRef: Ref<Span>,
-                        file: VirtualFile) {
+  private fun setFilePath(projectPath: @SystemIndependent @NonNls String?, span: Span, file: VirtualFile) {
     if (projectPath != null) {
-      spanRef.get().setAttribute("filePath", file.path.replaceFirst(projectPath, ""))
+      span.setAttribute("filePath", file.path.replaceFirst(projectPath, ""))
     }
     else {
-      spanRef.get().setAttribute("filePath", file.path)
+      span.setAttribute("filePath", file.path)
     }
   }
 }

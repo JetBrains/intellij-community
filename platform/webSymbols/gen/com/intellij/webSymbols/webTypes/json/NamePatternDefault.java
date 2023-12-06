@@ -42,8 +42,13 @@ public class NamePatternDefault
     @JsonProperty("delegate")
     @JsonPropertyDescription("A reference to an element in Web-Types model.")
     private Reference delegate;
+    /**
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
     @JsonProperty("deprecated")
-    private Boolean deprecated = false;
+    @JsonPropertyDescription("Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.")
+    private Deprecated deprecated = null;
     @JsonProperty("priority")
     private com.intellij.webSymbols.webTypes.json.BaseContribution.Priority priority;
     @JsonProperty("proximity")
@@ -124,13 +129,21 @@ public class NamePatternDefault
         this.delegate = delegate;
     }
 
+    /**
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
     @JsonProperty("deprecated")
-    public Boolean getDeprecated() {
+    public Deprecated getDeprecated() {
         return deprecated;
     }
 
+    /**
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
     @JsonProperty("deprecated")
-    public void setDeprecated(Boolean deprecated) {
+    public void setDeprecated(Deprecated deprecated) {
         this.deprecated = deprecated;
     }
 

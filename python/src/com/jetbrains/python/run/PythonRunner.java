@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -42,10 +43,11 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
    * Any other state must be invoked on EDT only
    */
   private static void execute(@NotNull RunProfileState profileState, @NotNull Runnable runnable) {
+    var clientIdRunnable = ClientId.decorateRunnable(runnable);
     if (profileState instanceof PythonCommandLineState) {
-      AppExecutorUtil.getAppExecutorService().execute(runnable);
+      AppExecutorUtil.getAppExecutorService().execute(clientIdRunnable);
     } else {
-      ApplicationManager.getApplication().invokeAndWait(runnable);
+      ApplicationManager.getApplication().invokeAndWait(clientIdRunnable);
     }
   }
 

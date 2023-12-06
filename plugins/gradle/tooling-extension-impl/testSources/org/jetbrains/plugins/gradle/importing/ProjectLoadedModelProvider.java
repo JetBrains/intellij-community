@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.Model;
-import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder;
@@ -13,10 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ProjectLoadedModelProvider implements ProjectImportModelProvider {
+
   @Override
-  public void populateBuildModels(@NotNull BuildController controller,
-                                  @NotNull GradleBuild buildModel,
-                                  @NotNull ProjectImportModelProvider.BuildModelConsumer consumer) { }
+  public GradleModelFetchPhase getPhase() {
+    return GradleModelFetchPhase.PROJECT_LOADED_PHASE;
+  }
 
   @Override
   public void populateProjectModels(@NotNull BuildController controller,

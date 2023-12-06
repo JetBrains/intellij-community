@@ -1,6 +1,15 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.metric
 
-class MetricInfo(name: String, val value: Double, evaluationType: String, val valueType: MetricValueType, val showByDefault: Boolean) {
+class MetricInfo(
+  name: String,
+  val description: String,
+  val value: Double,
+  val confidenceInterval: Pair<Double, Double>?,
+  evaluationType: String,
+  val valueType: MetricValueType,
+  val showByDefault: Boolean) {
+
   val name = name.filter { it.isLetterOrDigit() }
   val evaluationType = evaluationType.filter { it.isLetterOrDigit() }
 }

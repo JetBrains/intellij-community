@@ -1,20 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.RunContentActionsContributor;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
+public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView implements RunContentActionsContributor {
   private SMTestRunnerResultsForm myResultsViewer;
   @Nullable private final String mySplitterProperty;
   private final List<AttachToProcessListener> myAttachToProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -102,5 +106,24 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   public void dispose() {
     myAttachToProcessListeners.clear();
     super.dispose();
+  }
+
+  @Override
+  public AnAction @NotNull [] getActions() {
+    if (!ExperimentalUI.isNewUI()) return AnAction.EMPTY_ARRAY;
+    return myResultsViewer.getToolbarActions();
+  }
+
+  @Override
+  public AnAction @NotNull [] getAdditionalActions() {
+    if (!ExperimentalUI.isNewUI()) return AnAction.EMPTY_ARRAY;
+    return myResultsViewer.getAdditionalToolbarActions();
+  }
+
+  @Override
+  public void hideOriginalActions() {
+    if (ExperimentalUI.isNewUI()) {
+      myResultsViewer.hideToolbar();
+    }
   }
 }

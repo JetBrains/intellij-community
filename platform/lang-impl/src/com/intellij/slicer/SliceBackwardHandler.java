@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -18,7 +18,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.util.List;
 
-class SliceBackwardHandler extends SliceHandler {
+final class SliceBackwardHandler extends SliceHandler {
   SliceBackwardHandler() {
     super(true);
   }
@@ -37,7 +37,7 @@ class SliceBackwardHandler extends SliceHandler {
     List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(myProject, analysisScope, module, element);
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
     boolean supportFilter = provider.supportValueFilters(element);
-    class BackwardHandlerDialog extends BaseAnalysisActionDialog {
+    final class BackwardHandlerDialog extends BaseAnalysisActionDialog {
       private SliceBackwardAdditionalUi myUi;
       
       private BackwardHandlerDialog() {

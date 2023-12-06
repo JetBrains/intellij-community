@@ -1,3 +1,4 @@
+// IGNORE_K2
 import java.io as JavaIO
 import java.util.ArrayList
 import java.util.ArrayList as SomeThing

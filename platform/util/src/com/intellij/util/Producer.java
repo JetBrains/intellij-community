@@ -3,13 +3,19 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.ApiStatus;
 
+import java.util.function.Supplier;
+
 /**
  * Deprecated. Use {@link java.util.function.Supplier} instead
  */
 @FunctionalInterface
 @ApiStatus.Obsolete
-public interface Producer<T> {
+public interface Producer<T> extends Supplier<T> {
 
   T produce();
 
+  @Override
+  default T get() {
+    return produce();
+  }
 }

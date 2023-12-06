@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
@@ -43,14 +42,12 @@ public class IntroduceFunctionalParameterHandler extends IntroduceParameterHandl
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<>() {
-      @Override
-      public void pass(PsiElement[] elements) {
+    ExtractMethodHandler.selectAndPass(project, editor, file, elements-> {
         if (!introduceStrategy(project, editor, file, elements)) {
           showErrorMessage(project, editor);
         }
       }
-    });
+    );
   }
 
   private static void showErrorMessage(@NotNull Project project, Editor editor) {

@@ -4,9 +4,9 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.WhatsNewAction
+import com.intellij.ide.actions.WhatsNewUtil
 import com.intellij.ide.nls.NlsMessages
-import com.intellij.ide.plugins.newui.PluginLogo
+import com.intellij.ide.plugins.newui.reloadPluginIcon
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -17,10 +17,9 @@ import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.JBGaps
-import com.intellij.ui.dsl.gridLayout.VerticalGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
@@ -93,7 +92,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
       }.topGap(TopGap.SMALL)
         .bottomGap(BottomGap.SMALL)
 
-      if (WhatsNewAction.isAvailable()) {
+      if (WhatsNewUtil.isWhatsNewAvailable()) {
         row {
           checkBox(IdeBundle.message("updates.settings.show.editor"))
             .bindSelected(settings.state::isShowWhatsNewEditor)
@@ -118,9 +117,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         group(indent = false) {
           customizeSpacingConfiguration(EmptySpacingConfiguration()) {
             row {
-              icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
+              icon(reloadPluginIcon(AllIcons.Nodes.Toolbox, 40, 40))
                 .align(AlignY.TOP)
-                .customize(customGaps = JBGaps(right = 10))
+                .customize(customGaps = UnscaledGaps(right = 10))
               panel {
                 row {
                   text(IdeBundle.message("updates.settings.recommend.toolbox", TOOLBOX_URL, ExternalUpdateManager.TOOLBOX.toolName))
@@ -128,9 +127,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
                 }
                 row {
                   text(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
-                }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(3)))
+                }.customize(customRowGaps = UnscaledGapsY(top = 3))
               }
-            }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(12)))
+            }.customize(customRowGaps = UnscaledGapsY(top = 12))
           }
         }
       }

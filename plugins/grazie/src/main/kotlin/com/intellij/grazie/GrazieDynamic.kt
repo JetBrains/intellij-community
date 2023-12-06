@@ -2,6 +2,7 @@
 package com.intellij.grazie
 
 import com.intellij.grazie.jlanguage.Lang
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -9,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.delete
-import com.intellij.util.io.isFile
 import com.intellij.util.lang.UrlClassLoader
 import org.languagetool.Language
 import org.languagetool.Languages
@@ -19,11 +19,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.isRegularFile
 
-internal object GrazieDynamic : DynamicPluginListener {
+@ApiStatus.Internal
+object GrazieDynamic : DynamicPluginListener {
   private val myDynClassLoaders by lazy {
     val oldFiles = Files.walk(dynamicFolder).filter { file ->
-      file.isFile() && Lang.values().all { it.remote.file.toAbsolutePath() != file.toAbsolutePath() }
+      file.isRegularFile() && Lang.values().all { it.remote.file.toAbsolutePath() != file.toAbsolutePath() }
     }
 
     for (file in oldFiles) {

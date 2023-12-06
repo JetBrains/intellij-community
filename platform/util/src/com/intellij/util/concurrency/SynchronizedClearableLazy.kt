@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
 import com.intellij.util.ObjectUtils
@@ -6,9 +6,9 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
 /**
- * Kotlin-friendly version of ClearableLazyValue
+ * Kotlin-friendly version of [com.intellij.openapi.util.ClearableLazyValue]
  */
-class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T>, Supplier<T> {
+class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Supplier<T> {
   private val computedValue = AtomicReference(notYetInitialized())
 
   @Suppress("UNCHECKED_CAST")
@@ -27,7 +27,7 @@ class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T>, 
 
   override fun get(): T = value
 
-  override var value: T
+  var value: T
     get() {
       val currentValue = computedValue.get()
       if (isInitialized(currentValue)) {
@@ -46,9 +46,9 @@ class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T>, 
       computedValue.set(value)
     }
 
-  override fun isInitialized() = isInitialized(computedValue.get())
+  fun isInitialized(): Boolean = isInitialized(computedValue.get())
 
-  override fun toString() = computedValue.toString()
+  override fun toString(): String = computedValue.toString()
 
   fun drop(): T? = nullize(computedValue.getAndSet(notYetInitialized()))
 

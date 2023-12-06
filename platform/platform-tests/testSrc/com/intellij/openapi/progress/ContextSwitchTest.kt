@@ -1,19 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 class ContextSwitchTest : CancellationTest() {
 
@@ -29,8 +30,8 @@ class ContextSwitchTest : CancellationTest() {
   }
 
   @Test
-  fun `current job`() {
-    currentJobTest {
+  fun `blocking context`() {
+    blockingContextTest {
       testBlocking {
         testCoroutine {
           testBlocking {}
@@ -55,13 +56,13 @@ class ContextSwitchTest : CancellationTest() {
   }
 
   private fun testBlocking(coroutineTest: suspend () -> Unit, blockingTest: () -> Unit) {
-    testEnsureCurrentJob(blockingTest)
+    testPrepareThreadContext(blockingTest)
     testCancellableReadAction(blockingTest)
     testRunBlockingCancellable(coroutineTest)
   }
 
-  private fun testEnsureCurrentJob(blockingTest: () -> Unit) {
-    ensureCurrentJob {
+  private fun testPrepareThreadContext(blockingTest: () -> Unit) {
+    prepareThreadContextTest {
       assertNotNull(Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
       blockingTest()
@@ -134,21 +135,21 @@ class ContextSwitchTest : CancellationTest() {
     }
 
     withContext(testElement) {
-      assertSame(currentThreadContext(), EmptyCoroutineContext)
+      assertNull(currentThreadContextOrNull())
       blockingContext {
         assertThreadContext()
         runBlockingCancellable {
-          assertSame(currentThreadContext(), EmptyCoroutineContext)
+          assertNull(currentThreadContextOrNull())
           withContext(Dispatchers.Default) {
             blockingContext {
               assertThreadContext()
             }
           }
-          assertSame(currentThreadContext(), EmptyCoroutineContext)
+          assertNull(currentThreadContextOrNull())
         }
         assertThreadContext()
       }
-      assertSame(currentThreadContext(), EmptyCoroutineContext)
+      assertNull(currentThreadContextOrNull())
     }
   }
 }

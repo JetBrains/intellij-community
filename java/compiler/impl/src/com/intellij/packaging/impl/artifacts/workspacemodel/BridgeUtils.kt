@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
+import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.project.Project
@@ -18,10 +20,10 @@ import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.ArtifactLoadingErrorDescription
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.mutableArtifactsMap
 import com.intellij.packaging.impl.elements.*
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: MutableEntityStorage) {
@@ -60,7 +62,7 @@ internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEn
   val unknownProperty = it.customProperties.firstOrNull { ArtifactPropertiesProvider.findById(it.providerType) == null }
   if (unknownProperty != null) {
     return createInvalidArtifact(it, entityStorage, project,
-                                 JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty))
+                                 JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty.providerType))
   }
 
   return ArtifactBridge(it.symbolicId, entityStorage, project, null, null)
@@ -126,4 +128,26 @@ internal fun ArtifactProperties<*>.propertiesTag(): String? {
     JDOMUtil.write(element)
   }
   else null
+}
+
+@ApiStatus.Internal
+fun getArtifactProperties(artifactEntity: ArtifactEntity, artifactType: ArtifactType, propertiesProvider: ArtifactPropertiesProvider): ArtifactProperties<*>? {
+  val providerId = propertiesProvider.id
+  val customProperty = artifactEntity.customProperties.find { it.providerType == providerId }
+                       ?: return if (propertiesProvider.isAvailableFor(artifactType)) {
+                         propertiesProvider.createProperties(artifactType)
+                       }
+                       else null
+
+  @Suppress("UNCHECKED_CAST")
+  val createdProperties: ArtifactProperties<Any> = propertiesProvider.createProperties(artifactType) as ArtifactProperties<Any>
+  val state = createdProperties.state!!
+
+  customProperty.propertiesXmlTag?.let {
+    JDOMUtil.load(it).deserializeInto(state)
+  }
+
+  createdProperties.loadState(state)
+
+  return createdProperties
 }

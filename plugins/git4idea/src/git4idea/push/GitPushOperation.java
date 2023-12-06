@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -6,6 +6,7 @@ import com.intellij.dvcs.push.PushSpec;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -22,10 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
-import git4idea.GitBranch;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.GitRevisionNumber;
+import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -75,16 +73,16 @@ public class GitPushOperation {
   private static final int MAX_PUSH_ATTEMPTS = 10;
 
   private final Project myProject;
-  @NotNull private final GitPushSupport myPushSupport;
+  private final @NotNull GitPushSupport myPushSupport;
   private final Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> myPushSpecs;
-  @Nullable private final GitPushTagMode myTagMode;
+  private final @Nullable GitPushTagMode myTagMode;
   private final ForceMode myForceMode;
   private final boolean mySkipHook;
   private final Git myGit;
   private final ProgressIndicator myProgressIndicator;
   private final GitVcsSettings mySettings;
   private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final Map<GitRepository, HashRange> myUpdatedRanges = new LinkedHashMap<>();
+  private final @NotNull Map<GitRepository, HashRange> myUpdatedRanges = new LinkedHashMap<>();
 
   public GitPushOperation(@NotNull Project project,
                           @NotNull GitPushSupport pushSupport,
@@ -95,8 +93,7 @@ public class GitPushOperation {
     this(project, pushSupport, pushSpecs, tagMode, getForceMode(force), skipHook);
   }
 
-  @NotNull
-  private static ForceMode getForceMode(boolean force) {
+  private static @NotNull ForceMode getForceMode(boolean force) {
     if (force) return AdvancedSettings.getBoolean("git.use.push.force.with.lease") ? ForceMode.FORCE_WITH_LEASE : ForceMode.FORCE;
     return ForceMode.NONE;
   }
@@ -119,8 +116,7 @@ public class GitPushOperation {
     myRepositoryManager = GitRepositoryManager.getInstance(myProject);
   }
 
-  @NotNull
-  public GitPushResult execute() {
+  public @NotNull GitPushResult execute() {
     PushUpdateSettings updateSettings = readPushUpdateSettings();
     Label beforePushLabel = null;
     Label afterPushLabel = null;
@@ -193,8 +189,7 @@ public class GitPushOperation {
     return prepareCombinedResult(results, updatedRoots, preUpdatePositions, beforePushLabel, afterPushLabel);
   }
 
-  @NotNull
-  private Collection<VirtualFile> findRootsWithMergeCommits(@NotNull Collection<? extends GitRepository> rootsToSearch) {
+  private @NotNull Collection<VirtualFile> findRootsWithMergeCommits(@NotNull Collection<? extends GitRepository> rootsToSearch) {
     return ContainerUtil.mapNotNull(rootsToSearch, repo -> {
       PushSpec<GitPushSource, GitPushTarget> pushSpec = myPushSpecs.get(repo);
       if (pushSpec == null) { // repository is not selected to be pushed, but can be rebased
@@ -211,8 +206,7 @@ public class GitPushOperation {
     });
   }
 
-  @NotNull
-  public GitPushOperation deriveForceWithoutLease(@NotNull List<GitRepository> newRepositories) {
+  public @NotNull GitPushOperation deriveForceWithoutLease(@NotNull List<GitRepository> newRepositories) {
     Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> newPushSpec = filter(myPushSpecs, repo -> newRepositories.contains(repo));
     return new GitPushOperation(myProject, myPushSupport, newPushSpec, myTagMode, ForceMode.FORCE, mySkipHook);
   }
@@ -240,26 +234,23 @@ public class GitPushOperation {
     return pushingNotCurrentBranch;
   }
 
-  @NotNull
-  private static List<GitRepository> getRejectedAndNotPushed(@NotNull final Map<GitRepository, GitPushRepoResult> results) {
+  private static @NotNull List<GitRepository> getRejectedAndNotPushed(final @NotNull Map<GitRepository, GitPushRepoResult> results) {
     return filter(results.keySet(),
                   repository -> results.get(repository).getType() == REJECTED_NO_FF ||
                                 results.get(repository).getType() == NOT_PUSHED);
   }
 
-  @NotNull
-  private Map<GitRepository, String> updateRootInfoAndRememberPositions() {
+  private @NotNull Map<GitRepository, String> updateRootInfoAndRememberPositions() {
     Set<GitRepository> repositories = myPushSpecs.keySet();
     repositories.forEach(GitRepository::update);
     return StreamEx.of(repositories).toMap(Repository::getCurrentRevision);
   }
 
-  @NotNull
-  private GitPushResult prepareCombinedResult(@NotNull Map<GitRepository, GitPushRepoResult> allRoots,
-                                              @NotNull Map<GitRepository, GitUpdateResult> updatedRoots,
-                                              @NotNull Map<GitRepository, String> preUpdatePositions,
-                                              @Nullable Label beforeUpdateLabel,
-                                              @Nullable Label afterUpdateLabel) {
+  private @NotNull GitPushResult prepareCombinedResult(@NotNull Map<GitRepository, GitPushRepoResult> allRoots,
+                                                       @NotNull Map<GitRepository, GitUpdateResult> updatedRoots,
+                                                       @NotNull Map<GitRepository, String> preUpdatePositions,
+                                                       @Nullable Label beforeUpdateLabel,
+                                                       @Nullable Label afterUpdateLabel) {
     Map<GitRepository, GitPushRepoResult> results = new HashMap<>();
     UpdatedFiles updatedFiles = UpdatedFiles.create();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : allRoots.entrySet()) {
@@ -278,32 +269,39 @@ public class GitPushOperation {
     return new GitPushResult(results, updatedFiles, beforeUpdateLabel, afterUpdateLabel, myUpdatedRanges);
   }
 
-  @NotNull
-  private Map<GitRepository, GitPushRepoResult> push(@NotNull List<? extends GitRepository> repositories) {
+  private @NotNull Map<GitRepository, GitPushRepoResult> push(@NotNull List<? extends GitRepository> repositories) {
     Map<GitRepository, GitPushRepoResult> results = new LinkedHashMap<>();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
-      ResultWithOutput resultWithOutput = doPush(repository, spec);
-      LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
+      ResultWithOutput resultWithOutput = null;
+      GitPushRepoResult repoResult = null;
 
-      GitPushSource pushSource = spec.getSource();
-      GitPushTarget target = spec.getTarget();
-      GitPushRepoResult repoResult;
-      if (resultWithOutput.isError()) {
-        repoResult = GitPushRepoResult.error(pushSource, target.getBranch(), resultWithOutput.getErrorAsString());
-      }
-      else {
-        List<GitPushNativeResult> nativeResults = resultWithOutput.parsedResults;
-        final GitPushNativeResult sourceResult = getPushedBranchOrCommit(nativeResults);
-        if (sourceResult == null) {
-          LOG.error("No result for branch or commit among: [" + nativeResults + "]\n" +
-                    "Full result: " + resultWithOutput);
-          continue;
+      StructuredIdeActivity pushActivity = GitOperationsCollector.startLogPush(repository.getProject());
+      try {
+        resultWithOutput = doPush(repository, spec);
+        LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
+
+        GitPushSource pushSource = spec.getSource();
+        GitPushTarget target = spec.getTarget();
+        if (resultWithOutput.isError()) {
+          repoResult = GitPushRepoResult.error(pushSource, target.getBranch(), resultWithOutput.getErrorAsString());
         }
-        List<GitPushNativeResult> tagResults = filter(nativeResults, result ->
-          !result.equals(sourceResult) && (result.getType() == NEW_REF || result.getType() == FORCED_UPDATE));
-        int commits = collectNumberOfPushedCommits(repository.getRoot(), sourceResult);
-        repoResult = GitPushRepoResult.convertFromNative(sourceResult, tagResults, commits, pushSource, target.getBranch());
+        else {
+          List<GitPushNativeResult> nativeResults = resultWithOutput.parsedResults;
+          final GitPushNativeResult sourceResult = getPushedBranchOrCommit(nativeResults);
+          if (sourceResult == null) {
+            LOG.error("No result for branch or commit among: [" + nativeResults + "]\n" +
+                      "Full result: " + resultWithOutput);
+            continue;
+          }
+          List<GitPushNativeResult> tagResults = filter(nativeResults, result ->
+            !result.equals(sourceResult) && (result.getType() == NEW_REF || result.getType() == FORCED_UPDATE));
+          int commits = collectNumberOfPushedCommits(repository.getRoot(), sourceResult);
+          repoResult = GitPushRepoResult.convertFromNative(sourceResult, tagResults, commits, pushSource, target.getBranch());
+        }
+      }
+      finally {
+        GitOperationsCollector.endLogPush(pushActivity, resultWithOutput != null ? resultWithOutput.resultOutput : null, repoResult);
       }
 
       LOG.debug("Converted result: " + repoResult);
@@ -320,8 +318,7 @@ public class GitPushOperation {
     return results;
   }
 
-  @Nullable
-  private static GitPushNativeResult getPushedBranchOrCommit(@NotNull List<? extends GitPushNativeResult> results) {
+  private static @Nullable GitPushNativeResult getPushedBranchOrCommit(@NotNull List<? extends GitPushNativeResult> results) {
     return ContainerUtil.find(results, result -> isBranch(result) || isHash(result) || isHeadRelativeReference(result));
   }
 
@@ -353,7 +350,7 @@ public class GitPushOperation {
       return GitHistoryUtils.history(myProject, root, range).size();
     }
     catch (VcsException e) {
-      LOG.error("Couldn't collect commits from range " + range);
+      LOG.error("Couldn't collect commits from range " + range, e);
       return -1;
     }
   }
@@ -368,8 +365,7 @@ public class GitPushOperation {
     }
   }
 
-  @NotNull
-  private ResultWithOutput doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
+  private @NotNull ResultWithOutput doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
     GitPushSource pushSource = pushSpec.getSource();
     GitPushTarget pushTarget = pushSpec.getTarget();
     GitLocalBranch sourceBranch = pushSource.getBranch();
@@ -414,7 +410,7 @@ public class GitPushOperation {
     return source.getRevision() + ":" + targetRef;
   }
 
-  private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, @NotNull final GitLocalBranch source) {
+  private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, final @NotNull GitLocalBranch source) {
     return ContainerUtil.exists(repository.getBranchTrackInfos(), info -> info.getLocalBranch().equals(source));
   }
 
@@ -427,8 +423,7 @@ public class GitPushOperation {
     }
   }
 
-  @NotNull
-  private PushUpdateSettings readPushUpdateSettings() {
+  private @NotNull PushUpdateSettings readPushUpdateSettings() {
     UpdateMethod updateMethod = mySettings.getUpdateMethod();
     if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
       // deliberate limitation: we have only 2 buttons => choose method from the 1st repo if different
@@ -437,10 +432,9 @@ public class GitPushOperation {
     return new PushUpdateSettings(updateMethod);
   }
 
-  @Nullable
-  private PushUpdateSettings showDialogAndGetExitCode(@NotNull final Set<? extends GitRepository> repositories,
-                                                      @NotNull final PushUpdateSettings initialSettings,
-                                                      final boolean rebaseOverMergeProblemDetected) {
+  private @Nullable PushUpdateSettings showDialogAndGetExitCode(final @NotNull Set<? extends GitRepository> repositories,
+                                                                final @NotNull PushUpdateSettings initialSettings,
+                                                                final boolean rebaseOverMergeProblemDetected) {
     Ref<PushUpdateSettings> updateSettings = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(
@@ -456,8 +450,7 @@ public class GitPushOperation {
     return updateSettings.get();
   }
 
-  @NotNull
-  private static UpdateMethod convertUpdateMethodFromDialogExitCode(PushRejectedExitCode exitCode) {
+  private static @NotNull UpdateMethod convertUpdateMethodFromDialogExitCode(PushRejectedExitCode exitCode) {
     return switch (exitCode) {
       case MERGE -> UpdateMethod.MERGE;
       case REBASE -> UpdateMethod.REBASE;
@@ -465,10 +458,9 @@ public class GitPushOperation {
     };
   }
 
-  @NotNull
-  protected GitUpdateResult update(@NotNull Collection<? extends GitRepository> rootsToUpdate,
-                                   @NotNull UpdateMethod updateMethod,
-                                   boolean checkForRebaseOverMergeProblem) {
+  protected @NotNull GitUpdateResult update(@NotNull Collection<? extends GitRepository> rootsToUpdate,
+                                            @NotNull UpdateMethod updateMethod,
+                                            boolean checkForRebaseOverMergeProblem) {
     GitUpdateProcess updateProcess = new GitUpdateProcess(myProject, myProgressIndicator,
                                                           new HashSet<>(rootsToUpdate), UpdatedFiles.create(), null,
                                                           checkForRebaseOverMergeProblem, false);
@@ -495,8 +487,8 @@ public class GitPushOperation {
   }
 
   private static class ResultWithOutput {
-    @NotNull private final List<GitPushNativeResult> parsedResults;
-    @NotNull private final GitCommandResult resultOutput;
+    private final @NotNull List<GitPushNativeResult> parsedResults;
+    private final @NotNull GitCommandResult resultOutput;
 
     ResultWithOutput(@NotNull GitCommandResult resultOutput) {
       this.resultOutput = resultOutput;

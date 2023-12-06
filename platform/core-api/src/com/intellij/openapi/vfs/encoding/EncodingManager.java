@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,16 +12,14 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 
 public abstract class EncodingManager extends EncodingRegistry {
-  @NonNls public static final String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
-  @NonNls public static final String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";
+  public static final @NonNls String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
+  public static final @NonNls String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";
 
-  @NotNull
-  public static EncodingManager getInstance() {
+  public static @NotNull EncodingManager getInstance() {
     return ApplicationManager.getApplication().getService(EncodingManager.class);
   }
 
-  @NotNull
-  public abstract Collection<Charset> getFavorites();
+  public abstract @NotNull Collection<Charset> getFavorites();
 
   @Override
   public abstract boolean isNative2AsciiForPropertiesFiles();
@@ -31,8 +29,7 @@ public abstract class EncodingManager extends EncodingRegistry {
   /**
    * @return returns empty for system default
    */
-  @NotNull
-  public abstract String getDefaultCharsetName();
+  public abstract @NotNull String getDefaultCharsetName();
 
   public void setDefaultCharsetName(@NotNull String name) {
     throw new UnsupportedOperationException("Not implemented");
@@ -42,8 +39,7 @@ public abstract class EncodingManager extends EncodingRegistry {
    * @return null for system-default
    */
   @Override
-  @Nullable
-  public abstract Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile);
+  public abstract @Nullable Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile);
 
   public abstract void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, @Nullable Charset charset);
 
@@ -53,8 +49,7 @@ public abstract class EncodingManager extends EncodingRegistry {
   @Override
   public abstract @NotNull Charset getDefaultConsoleEncoding();
 
-  @Nullable
-  public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
+  public abstract @Nullable Charset getCachedCharsetFromContent(@NotNull Document document);
 
   public boolean shouldAddBOMForNewUtf8File() {
     return false;

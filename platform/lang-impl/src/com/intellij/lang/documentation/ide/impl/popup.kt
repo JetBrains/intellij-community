@@ -10,17 +10,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
+import java.awt.Rectangle
 
 internal suspend fun showDocumentationPopup(
   project: Project,
-  request: DocumentationRequest,
+  requests: List<DocumentationRequest>,
   popupContext: PopupContext,
 ): AbstractPopup {
-  val browser = DocumentationBrowser.createBrowser(project, request)
+  val browser = DocumentationBrowser.createBrowser(project, requests)
   try {
     // to avoid flickering: show popup after there is anything to show
     // OR show popup after the timeout
@@ -72,5 +75,23 @@ private fun createDocumentationPopup(
 }
 
 internal fun resizePopup(popup: AbstractPopup) {
+  val location = UIUtil.getLocationOnScreen(popup.component)
+  if (location == null) {
+    resizePopupFallback(popup)
+    return
+  }
+
+  val bounds = Rectangle(location, popup.component.preferredSize)
+  ScreenUtil.cropRectangleToFitTheScreen(bounds)
+  if (location != bounds.location) {
+    // Location was outside visible bounds -- not sure what to do, fallback
+    resizePopupFallback(popup)
+    return
+  }
+
+  popup.size = bounds.size
+}
+
+private fun resizePopupFallback(popup: AbstractPopup) {
   popup.size = popup.component.preferredSize
 }

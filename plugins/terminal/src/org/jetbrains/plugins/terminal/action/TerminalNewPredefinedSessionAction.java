@@ -11,21 +11,23 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.*;
+import org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory;
+import org.jetbrains.plugins.terminal.TerminalOptionsConfigurable;
+import org.jetbrains.plugins.terminal.TerminalTabState;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider;
 
 import javax.swing.*;
@@ -37,22 +39,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
-public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
-
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
-
-  public TerminalNewPredefinedSessionAction() {
-    super(TerminalBundle.messagePointer("action.NewPredefinedSession.label"));
-    getTemplatePresentation().setIcon(AllIcons.Toolbar.Expand);
-  }
+public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || myPopupState.isRecentlyHidden()) return;
+    if (project == null) return;
     RelativePoint popupPoint = getPreferredPopupPoint(e);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<OpenShellAction> shells = detectShells();
@@ -66,7 +60,10 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
         else {
           popup.showInFocusCenter();
         }
-        myPopupState.prepareToShow(popup);
+        InputEvent inputEvent = e.getInputEvent();
+        if (inputEvent != null && inputEvent.getComponent() != null) {
+          PopupUtil.setPopupToggleComponent(popup, inputEvent.getComponent());
+        }
       }, project.getDisposed());
     });
   }
@@ -153,7 +150,7 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     return null;
   }
 
-  private static class TerminalSettingsAction extends DumbAwareAction {
+  private static final class TerminalSettingsAction extends DumbAwareAction {
 
     private TerminalSettingsAction() {
       super(IdeBundle.message("action.text.settings"), null, AllIcons.General.Settings);
@@ -168,7 +165,7 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     }
   }
 
-  private static class OpenShellAction extends DumbAwareAction {
+  private static final class OpenShellAction extends DumbAwareAction {
 
     private final List<String> myCommand;
     private final Supplier<@NlsActions.ActionText String> myPresentableName;
@@ -183,14 +180,10 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project != null) {
-        LocalTerminalDirectRunner runner = new LocalTerminalDirectRunner(project) {
-          @Override
-          public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
-            return myCommand;
-          }
-        };
+        var runner = DefaultTerminalRunnerFactory.getInstance().createLocalRunner(project);
         TerminalTabState tabState = new TerminalTabState();
         tabState.myTabName = myPresentableName.get();
+        tabState.myShellCommand = myCommand;
         TerminalToolWindowManager.getInstance(project).createNewSession(runner, tabState);
       }
     }

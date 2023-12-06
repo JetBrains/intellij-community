@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.*
@@ -18,7 +18,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.PathUtil
 import com.intellij.util.io.*
-import com.intellij.util.toBufferExposingByteArray
+import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Tag
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -30,7 +30,8 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.function.Function
+import kotlin.io.path.inputStream
+import kotlin.io.path.readText
 
 /**
  * Functionality without stream provider covered, ICS has own test suite
@@ -138,13 +139,13 @@ internal class SchemeManagerTest {
   @Test fun testGenerateUniqueSchemeName() {
     val manager = createAndLoad("options1")
     val scheme = TestScheme("first")
-    manager.addScheme(scheme, false)
+    manager.addScheme(scheme = scheme, replaceExisting = false)
 
     assertThat("first2").isEqualTo(scheme.name)
   }
 
   fun TestScheme.save(file: Path) {
-    file.write(serialize(this)!!.toBufferExposingByteArray().toByteArray())
+    file.write(serialize(this)!!.toByteArray())
   }
 
   @Test fun `different extensions - old, new`() {
@@ -287,8 +288,8 @@ internal class SchemeManagerTest {
       return TestScheme(name, data)
     }
 
-    var s1 = writeScheme(1, "foo")
-    var s2 = writeScheme(2, "foo")
+    var s1 = writeScheme(1, "initial data")
+    var s2 = writeScheme(2, "initial data")
 
     fun createVirtualFile(scheme: TestScheme): VirtualFile {
       val fileName = "${scheme.name}.xml"
@@ -296,12 +297,12 @@ internal class SchemeManagerTest {
       return LightVirtualFile(fileName, null, file.readText(), Charsets.UTF_8, Files.getLastModifiedTime(file).toMillis())
     }
 
-    val schemeManager: SchemeManagerImpl<TestScheme, TestScheme> = createSchemeManager(dir)
+    val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).containsExactly(s1, s2)
 
-    s1 = writeScheme(1, "bar")
-    s2 = writeScheme(2, "bar")
+    s1 = writeScheme(1, "new data")
+    s2 = writeScheme(2, "new data")
 
     val schemeChangeApplicator = SchemeChangeApplicator(schemeManager)
     if (kind == UpdateScheme::class.java) {
@@ -598,7 +599,9 @@ internal class SchemeManagerTest {
     assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
-  private fun createSchemeManager(dir: Path) = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir)
+  private fun createSchemeManager(dir: Path): SchemeManagerImpl<TestScheme, TestScheme> {
+    return SchemeManagerImpl(fileSpec = FILE_SPEC, processor = TestSchemeProcessor(), provider = null, ioDirectory = dir)
+  }
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -661,7 +664,8 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 }
 
 @Tag("scheme")
-data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:kotlin.jvm.JvmField var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme, SerializableScheme {
+data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:JvmField var name: String = "",
+                      @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme, SerializableScheme {
   override fun getName() = name
 
   override fun setName(value: String) {
@@ -674,7 +678,7 @@ data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field
 open class TestSchemeProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {
   override fun createScheme(dataHolder: SchemeDataHolder<TestScheme>,
                             name: String,
-                            attributeProvider: Function<in String, String?>,
+                            attributeProvider: (String) -> String?,
                             isBundled: Boolean): TestScheme {
     val scheme = dataHolder.read().deserialize(TestScheme::class.java)
     dataHolder.updateDigest(scheme)

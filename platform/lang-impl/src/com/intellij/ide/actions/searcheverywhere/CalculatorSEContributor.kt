@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.icons.AllIcons
@@ -13,6 +13,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Processor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.datatransfer.StringSelection
@@ -37,7 +38,11 @@ internal class CalculatorSEContributorFactory : SearchEverywhereContributorFacto
   }
 }
 
-internal class EvaluationResult(val value: String)
+/**
+ * @param value The resulting value of the given [expression]
+ * @param expression The query typed by the user, for example 2+2
+ */
+data class EvaluationResult(val value: String, val expression: String)
 
 private class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationResult> {
 
@@ -58,7 +63,7 @@ private class CalculatorSEContributor : WeightedSearchEverywhereContributor<Eval
     catch (_: Throwable) {
       return
     }
-    consumer.process(FoundItemDescriptor(EvaluationResult(result), 0x8000))
+    consumer.process(FoundItemDescriptor(EvaluationResult(result, pattern), 0x8000))
   }
 
   override fun getDataForItem(element: EvaluationResult, dataId: String): Any? = null
@@ -110,7 +115,8 @@ private class EvaluationResultRenderer : ListCellRenderer<EvaluationResult> {
   }
 }
 
-internal fun evaluate(input: String): String {
+@ApiStatus.Internal
+fun evaluate(input: String): String {
   return format(round(doEvaluate(input)))
 }
 
@@ -197,29 +203,31 @@ private fun doEvaluate(str: String): Double {
       }
       else {
         val startPos = pos
-        if (ch in '1'..'9' || ch == '.') { // numbers
-          nextChar()
-          while (ch in '0'..'9' || ch == '.') {
+        when (ch) {
+          in '1'..'9', '.' -> { // numbers
             nextChar()
+            while (ch in '0'..'9' || ch == '.') {
+              nextChar()
+            }
+            x = str.substring(startPos, pos).toDouble()
           }
-          x = str.substring(startPos, pos).toDouble()
-        }
-        else if (ch in 'a'..'z') { // functions
-          while (ch in 'a'..'z') {
-            nextChar()
+          in 'a'..'z' -> { // functions
+            while (ch in 'a'..'z') {
+              nextChar()
+            }
+            val func = str.substring(startPos, pos)
+            x = parseFactor()
+            x = when (func) {
+              "sqrt" -> sqrt(x)
+              "sin" -> sin(Math.toRadians(x))
+              "cos" -> cos(Math.toRadians(x))
+              "tan" -> tan(Math.toRadians(x))
+              else -> throw RuntimeException("Unknown function: $func")
+            }
           }
-          val func = str.substring(startPos, pos)
-          x = parseFactor()
-          x = when (func) {
-            "sqrt" -> sqrt(x)
-            "sin" -> sin(Math.toRadians(x))
-            "cos" -> cos(Math.toRadians(x))
-            "tan" -> tan(Math.toRadians(x))
-            else -> throw RuntimeException("Unknown function: $func")
+          else -> {
+            throw RuntimeException("Unexpected: $ch")
           }
-        }
-        else {
-          throw RuntimeException("Unexpected: $ch")
         }
       }
       if (eat('^')) {

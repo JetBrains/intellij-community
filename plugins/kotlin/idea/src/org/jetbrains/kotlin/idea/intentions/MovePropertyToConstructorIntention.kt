@@ -6,7 +6,6 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -21,10 +20,11 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyT
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.buildReplacementConstructorParameterText
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.isMovableToConstructorByPsi
 import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorUtils.canMoveToConstructor
+import org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorUtils.moveToConstructor
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
@@ -42,33 +42,41 @@ class MovePropertyToConstructorIntention :
         applyTo(property, null)
     }
 
-    override fun isApplicableTo(element: KtProperty, caretOffset: Int): Boolean =
-        element.isMovableToConstructorByPsi() && (element.initializer?.isValidInConstructor() ?: true)
+    override fun isApplicableTo(element: KtProperty, caretOffset: Int): Boolean = element.canMoveToConstructor()
 
     override fun applyTo(element: KtProperty, editor: Editor?) {
-        val parentClass = PsiTreeUtil.getParentOfType(element, KtClass::class.java) ?: return
-        val psiFactory = KtPsiFactory(element.project)
+        element.moveToConstructor()
+    }
+}
+
+internal object MovePropertyToConstructorUtils {
+    fun KtProperty.canMoveToConstructor(): Boolean =
+        isMovableToConstructorByPsi() && (initializer?.isValidInConstructor() ?: true)
+
+    fun KtProperty.moveToConstructor() {
+        val parentClass = PsiTreeUtil.getParentOfType(this, KtClass::class.java) ?: return
+        val psiFactory = KtPsiFactory(project)
         val primaryConstructor = parentClass.createPrimaryConstructorIfAbsent()
-        val constructorParameter = element.findConstructorParameter()
+        val constructorParameter = findConstructorParameter()
 
-        val commentSaver = CommentSaver(element)
+        val commentSaver = CommentSaver(this)
 
-        val context = element.analyze(BodyResolveMode.PARTIAL)
-        val propertyAnnotationsText = element.modifierList?.annotationEntries?.joinToString(separator = " ") {
+        val context = analyze(BodyResolveMode.PARTIAL)
+        val propertyAnnotationsText = modifierList?.annotationEntries?.joinToString(separator = " ") {
             it.getTextWithUseSite(context)
         }
 
         if (constructorParameter != null) {
-            val parameterText = element.buildReplacementConstructorParameterText(constructorParameter, propertyAnnotationsText)
+            val parameterText = buildReplacementConstructorParameterText(constructorParameter, propertyAnnotationsText)
             constructorParameter.replace(psiFactory.createParameter(parameterText)).apply {
                 commentSaver.restore(this)
             }
         } else {
-            val typeText = element.typeReference?.text
-                ?: (element.resolveToDescriptorIfAny() as? PropertyDescriptor)?.type?.render()
+            val typeText = typeReference?.text
+                ?: (resolveToDescriptorIfAny() as? PropertyDescriptor)?.type?.render()
                 ?: return
 
-            val parameterText = element.buildAdditionalConstructorParameterText(typeText, propertyAnnotationsText)
+            val parameterText = buildAdditionalConstructorParameterText(typeText, propertyAnnotationsText)
 
             primaryConstructor.valueParameterList?.addParameter(psiFactory.createParameter(parameterText))?.apply {
                 ShortenReferences.DEFAULT.process(this)
@@ -76,7 +84,7 @@ class MovePropertyToConstructorIntention :
             }
         }
 
-        element.delete()
+        delete()
     }
 
     private fun KtProperty.findConstructorParameter(): KtParameter? {

@@ -1,42 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
-import com.intellij.codeInsight.unwrap.RangeSplitter
-import com.intellij.codeInsight.unwrap.UnwrapHandler
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.psi.impl.file.PsiPackageBase
-import com.intellij.psi.impl.light.LightElement
-import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil
@@ -45,9 +27,9 @@ import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.ui.ConflictsDialog
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
-import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.VisibilityUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -56,20 +38,15 @@ import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
-import org.jetbrains.kotlin.idea.base.util.collapseSpaces
 import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.caches.resolve.*
-import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
@@ -92,12 +69,21 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.typeUtil.unCapture
 import java.lang.annotation.Retention
 import java.util.*
-import javax.swing.Icon
-import kotlin.math.min
-import org.jetbrains.kotlin.idea.base.psi.getLineCount as newGetLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
+
+@Deprecated("Was moved to the common part", replaceWith = ReplaceWith("canRefactorElement()"))
+fun PsiElement.canRefactor(): Boolean {
+    return when {
+        !isValid -> false
+        this is PsiPackage ->
+            directories.any { it.canRefactor() }
+        this is KtElement || this is PsiMember && language == JavaLanguage.INSTANCE || this is PsiDirectory ->
+            RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
+        else -> false
+    }
+}
 
 @JvmOverloads
 fun getOrCreateKotlinFile(
@@ -232,72 +218,6 @@ fun reportDeclarationConflict(
     conflicts.putValue(declaration, message(RefactoringUIUtil.getDescription(declaration, true).capitalize()))
 }
 
-fun <T : PsiElement> getPsiElementPopup(
-    editor: Editor,
-    elements: List<T>,
-    renderer: PsiElementListCellRenderer<T>,
-    @NlsContexts.PopupTitle title: String?,
-    highlightSelection: Boolean,
-    processor: (T) -> Boolean
-): JBPopup = with(JBPopupFactory.getInstance().createPopupChooserBuilder(elements)) {
-    val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
-    setRenderer(renderer)
-    setItemSelectedCallback { element: T? ->
-        highlighter?.dropHighlight()
-        element?.let {
-            highlighter?.highlight(element)
-        }
-    }
-
-    if (title != null) {
-        setTitle(title)
-    }
-    renderer.installSpeedSearch(this, true)
-    setItemChosenCallback { it?.let(processor) }
-
-    addListener(object : JBPopupListener {
-        override fun onClosed(event: LightweightWindowEvent) {
-            highlighter?.dropHighlight()
-        }
-    })
-
-    createPopup()
-}
-
-class SelectionAwareScopeHighlighter(val editor: Editor) {
-    private val highlighters = ArrayList<RangeHighlighter>()
-
-    private fun addHighlighter(r: TextRange, attr: TextAttributes) {
-        highlighters.add(
-            editor.markupModel.addRangeHighlighter(
-                r.startOffset,
-                r.endOffset,
-                UnwrapHandler.HIGHLIGHTER_LEVEL,
-                attr,
-                HighlighterTargetArea.EXACT_RANGE
-            )
-        )
-    }
-
-    fun highlight(wholeAffected: PsiElement) {
-        dropHighlight()
-
-        val affectedRange = wholeAffected.textRange ?: return
-
-        val attributes = EditorColorsManager.getInstance().globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES)!!
-        val selectedRange = with(editor.selectionModel) { TextRange(selectionStart, selectionEnd) }
-        val textLength = editor.document.textLength
-        for (r in RangeSplitter.split(affectedRange, Collections.singletonList(selectedRange))) {
-            if (r.endOffset <= textLength) addHighlighter(r, attributes)
-        }
-    }
-
-    fun dropHighlight() {
-        highlighters.forEach { it.dispose() }
-        highlighters.clear()
-    }
-}
-
 @Deprecated(
     "Use org.jetbrains.kotlin.idea.base.psi.getLineStartOffset() instead",
     ReplaceWith("this.getLineStartOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineStartOffset"),
@@ -318,187 +238,13 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
     return null
 }
 
-@Deprecated(
-    "Use org.jetbrains.kotlin.idea.base.psi.getLineEndOffset() instead",
-    ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineEndOffset"),
-    DeprecationLevel.ERROR
-)
-fun PsiFile.getLineEndOffset(line: Int): Int? {
-    val document = viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(this)
-    return document?.getLineEndOffset(line)
-}
-
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt.getLineNumber instead")
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
    return _getLineNumber(start)
 }
 
-class SeparateFileWrapper(manager: PsiManager) : LightElement(manager, KotlinLanguage.INSTANCE) {
-    override fun toString() = ""
-}
-
-fun <T> chooseContainerElement(
-    containers: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    toPsi: (T) -> PsiElement,
-    onSelect: (T) -> Unit
-) {
-    val psiElements = containers.map(toPsi)
-    choosePsiContainerElement(
-        elements = psiElements,
-        editor = editor,
-        title = title,
-        highlightSelection = highlightSelection,
-        psi2Container = { containers[psiElements.indexOf(it)] },
-        onSelect = onSelect
-    )
-}
-
-fun <T : PsiElement> chooseContainerElement(
-    elements: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    onSelect: (T) -> Unit
-): Unit = choosePsiContainerElement(
-    elements = elements,
-    editor = editor,
-    title = title,
-    highlightSelection = highlightSelection,
-    psi2Container = { it },
-    onSelect = onSelect,
-)
-
-private fun psiElementRenderer() = object : PsiElementListCellRenderer<PsiElement>() {
-    private fun PsiElement.renderName(): String = when {
-        this is KtPropertyAccessor -> property.renderName() + if (isGetter) ".get" else ".set"
-        this is KtObjectDeclaration && isCompanion() -> {
-            val name = getStrictParentOfType<KtClassOrObject>()?.renderName() ?: "<anonymous>"
-            "Companion object of $name"
-        }
-
-        else -> (this as? PsiNamedElement)?.name ?: "<anonymous>"
-    }
-
-    private fun PsiElement.renderDeclaration(): String? {
-        if (this is KtFunctionLiteral || isFunctionalExpression()) return renderText()
-        val descriptor = when (this) {
-            is KtFile -> name
-            is KtElement -> analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, this]
-            is PsiMember -> getJavaMemberDescriptor()
-            else -> null
-        } ?: return null
-
-        val name = renderName()
-        val params = (descriptor as? FunctionDescriptor)?.valueParameters?.joinToString(
-            ", ",
-            "(",
-            ")"
-        ) { DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(it.type) } ?: ""
-
-        return "$name$params"
-    }
-
-    private fun PsiElement.renderText(): String = when (this) {
-        is SeparateFileWrapper -> KotlinBundle.message("refactoring.extract.to.separate.file.text")
-        is PsiPackageBase -> qualifiedName
-        else -> {
-            val text = text ?: "<invalid text>"
-            StringUtil.shortenTextWithEllipsis(text.collapseSpaces(), 53, 0)
-        }
-    }
-
-    private fun PsiElement.getRepresentativeElement(): PsiElement = when (this) {
-        is KtBlockExpression -> (parent as? KtDeclarationWithBody) ?: this
-        is KtClassBody -> parent as KtClassOrObject
-        else -> this
-    }
-
-    override fun getElementText(element: PsiElement): String {
-        val representativeElement = element.getRepresentativeElement()
-        return representativeElement.renderDeclaration() ?: representativeElement.renderText()
-    }
-
-    override fun getContainerText(element: PsiElement, name: String?): String? = null
-
-    override fun getIcon(element: PsiElement): Icon? = super.getIcon(element.getRepresentativeElement())
-}
-
-private fun <T, E : PsiElement> choosePsiContainerElement(
-    elements: List<E>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    psi2Container: (E) -> T,
-    onSelect: (T) -> Unit,
-) {
-    val popup = getPsiElementPopup(
-        editor,
-        elements,
-        psiElementRenderer(),
-        title,
-        highlightSelection,
-    ) { psiElement ->
-        @Suppress("UNCHECKED_CAST")
-        onSelect(psi2Container(psiElement as E))
-        true
-    }
-
-    invokeLater {
-        popup.showInBestPositionFor(editor)
-    }
-}
-
-fun <T> chooseContainerElementIfNecessary(
-    containers: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    toPsi: (T) -> PsiElement,
-    onSelect: (T) -> Unit
-): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, toPsi, onSelect)
-
-fun <T : PsiElement> chooseContainerElementIfNecessary(
-    containers: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    onSelect: (T) -> Unit
-): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, null, onSelect)
-
-private fun <T> chooseContainerElementIfNecessaryImpl(
-    containers: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    toPsi: ((T) -> PsiElement)?,
-    onSelect: (T) -> Unit
-) {
-    when {
-        containers.isEmpty() -> return
-        containers.size == 1 || isUnitTestMode() -> onSelect(containers.first())
-        toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
-        else -> {
-            @Suppress("UNCHECKED_CAST")
-            chooseContainerElement(containers as List<PsiElement>, editor, title, highlightSelection, onSelect as (PsiElement) -> Unit)
-        }
-    }
-}
-
 fun PsiElement.isTrueJavaMethod(): Boolean = this is PsiMethod && this !is KtLightMethod
-
-fun PsiElement.canRefactor(): Boolean {
-    return when {
-        !isValid -> false
-        this is PsiPackage ->
-            directories.any { it.canRefactor() }
-        this is KtElement || this is PsiMember && language == JavaLanguage.INSTANCE || this is PsiDirectory ->
-            RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
-        else -> false
-    }
-}
 
 private fun copyModifierListItems(from: PsiModifierList, to: PsiModifierList, withPsiModifiers: Boolean = true) {
     if (withPsiModifiers) {
@@ -696,21 +442,9 @@ internal abstract class CompositeRefactoringRunner(
         connection.subscribe(
             RefactoringEventListener.REFACTORING_EVENT_TOPIC,
             object : RefactoringEventListener {
-                override fun undoRefactoring(refactoringId: String) {
-
-                }
-
-                override fun refactoringStarted(refactoringId: String, beforeData: RefactoringEventData?) {
-
-                }
-
-                override fun conflictsDetected(refactoringId: String, conflictsData: RefactoringEventData) {
-
-                }
-
                 override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
                     if (refactoringId == this@CompositeRefactoringRunner.refactoringId) {
-                        onRefactoringDone()
+                        WriteAction.run<Throwable> { onRefactoringDone() }
                     }
                 }
             }
@@ -773,72 +507,7 @@ fun KtNamedDeclaration.isAbstract(): Boolean = when {
     else -> false
 }
 
-fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
-    changeInfo: KotlinChangeInfo,
-    originalList: ListType,
-    newList: ListType,
-    @Suppress("UNCHECKED_CAST") listReplacer: ListType.(ListType) -> ListType = { replace(it) as ListType },
-    itemsFun: ListType.() -> List<KtElement>
-): ListType {
-    originalList.children.takeWhile { it is PsiErrorElement }.forEach { it.delete() }
-
-    val oldParameters = originalList.itemsFun().toMutableList()
-    val newParameters = newList.itemsFun()
-    val oldCount = oldParameters.size
-    val newCount = newParameters.size
-
-    val commonCount = min(oldCount, newCount)
-    val originalIndexes = changeInfo.newParameters.map { it.originalIndex }
-    val keepComments = originalList.allChildren.any { it is PsiComment } &&
-            oldCount > commonCount && originalIndexes == originalIndexes.sorted()
-    if (!keepComments) {
-        for (i in 0 until commonCount) {
-            oldParameters[i] = oldParameters[i].replace(newParameters[i]) as KtElement
-        }
-    }
-
-    if (commonCount == 0 && !keepComments) return originalList.listReplacer(newList)
-
-    if (oldCount > commonCount) {
-        if (keepComments) {
-            ((0 until oldParameters.size) - originalIndexes).forEach { index ->
-                val oldParameter = oldParameters[index]
-                val nextComma = oldParameter.getNextSiblingIgnoringWhitespaceAndComments()?.takeIf { it.node.elementType == KtTokens.COMMA }
-                if (nextComma != null) {
-                    nextComma.delete()
-                } else {
-                    oldParameter.getPrevSiblingIgnoringWhitespaceAndComments()?.takeIf { it.node.elementType == KtTokens.COMMA }?.delete()
-                }
-                oldParameter.delete()
-            }
-        } else {
-            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, oldParameters.last())
-        }
-    } else if (newCount > commonCount) {
-        val lastOriginalParameter = oldParameters.last()
-        val psiBeforeLastParameter = lastOriginalParameter.prevSibling
-        val withMultiline =
-            (psiBeforeLastParameter is PsiWhiteSpace || psiBeforeLastParameter is PsiComment) && psiBeforeLastParameter.textContains('\n')
-        val extraSpace = if (withMultiline) KtPsiFactory(originalList.project).createNewLine() else null
-        originalList.addRangeAfter(newParameters[commonCount - 1].nextSibling, newParameters.last(), lastOriginalParameter)
-        if (extraSpace != null) {
-            val addedItems = originalList.itemsFun().subList(commonCount, newCount)
-            for (addedItem in addedItems) {
-                val elementBefore = addedItem.prevSibling
-                if ((elementBefore !is PsiWhiteSpace && elementBefore !is PsiComment) || !elementBefore.textContains('\n')) {
-                    addedItem.parent.addBefore(extraSpace, addedItem)
-                }
-            }
-        }
-    }
-
-    return originalList
-}
-
-fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
-    val parent = parent as? KtBlockStringTemplateEntry ?: return this
-    return parent.dropCurlyBracketsIfPossible().expression!!
-}
+fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD) || this.isAbstract() || this.isInterfaceClass() || this.isSealed()
 
 fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
     val callableDescriptor = element.resolveToDescriptorIfAny() as? CallableDescriptor ?: return
@@ -1042,15 +711,6 @@ fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
     val newDescriptor = resolveStrategy(elementCopy, newContext) ?: return null
 
     return if (originDescriptor.canonicalRender() == newDescriptor.canonicalRender()) elementCopy.postHook() else null
-}
-
-@Deprecated(
-    "Use org.jetbrains.kotlin.idea.base.psi.getLineCount() instead",
-    ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.base.psi.getLineCount"),
-    DeprecationLevel.ERROR
-)
-fun PsiElement.getLineCount(): Int {
-    return newGetLineCount()
 }
 
 @Deprecated(

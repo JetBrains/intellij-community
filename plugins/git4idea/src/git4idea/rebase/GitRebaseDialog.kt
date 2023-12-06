@@ -26,7 +26,7 @@ import com.intellij.ui.InplaceButton
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.JBVerticalGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.IconUtil
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -347,7 +347,7 @@ internal class GitRebaseDialog(private val project: Project,
           .resizableColumn()
 
         topBranchFieldPlaceholder = placeholder()
-      }.customize(JBVerticalGaps(0, 6))
+      }.customize(UnscaledGapsY(0, 6))
 
       row {
         bottomUpstreamFieldPlaceholder = placeholder()
@@ -356,7 +356,7 @@ internal class GitRebaseDialog(private val project: Project,
         bottomBranchFieldPlaceholder = placeholder()
           .align(AlignX.FILL)
           .resizableColumn()
-      }.customize(JBVerticalGaps(0, 6))
+      }.customize(UnscaledGapsY(0, 6))
 
       row {
         cell(optionsPanel)
@@ -654,7 +654,7 @@ internal class GitRebaseDialog(private val project: Project,
   companion object {
     private val LOG = logger<GitRebaseDialog>()
 
-    private val HELP_BUTTON_ICON_FOCUSED = if (StartupUiUtil.isUnderDarcula())
+    private val HELP_BUTTON_ICON_FOCUSED = if (StartupUiUtil.isUnderDarcula)
       IconUtil.brighter(AllIcons.General.ContextHelp, 3)
     else
       IconUtil.darker(AllIcons.General.ContextHelp, 3)

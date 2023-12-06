@@ -1,11 +1,9 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
-import com.intellij.diagnostic.telemetry.TraceUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -14,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
@@ -27,6 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Command invokes alt+enter combination.
+ * Simulate invocation of alt+enter and pressing item in the list defined by parameter.
+ * Optional: it is possible to only open pop up and check if item from pa is presented in list.
+ * <p>
+ * Syntax: %altEnter <item in list>(Optional)|<invoke>
+ * Example: %altEnter Find cause|true
+ */
 public final class ShowAltEnter extends AbstractCommand implements Disposable {
   public static final String PREFIX = CMD_PREFIX + "altEnter";
   public static final String SPAN_NAME = "showQuickFixes";
@@ -50,27 +57,33 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
         PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         if (psiFile != null) {
           TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, SPAN_NAME, span -> {
-            ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionActionsHandler.calcIntentions(project, editor, psiFile);
+            CachedIntentions intentions = ShowIntentionActionsHandler.calcCachedIntentions(project, editor, psiFile);
             if (!actionName.isEmpty()) {
-              List<HighlightInfo.IntentionActionDescriptor> combined = new ArrayList<>();
-              combined.addAll(intentions.intentionsToShow);
-              combined.addAll(intentions.inspectionFixesToShow);
-              combined.addAll(intentions.errorFixesToShow);
+              List<IntentionActionWithTextCaching> combined = new ArrayList<>();
+              combined.addAll(intentions.getIntentions());
+              combined.addAll(intentions.getInspectionFixes());
+              combined.addAll(intentions.getErrorFixes());
               //combined.addAll(intentions.guttersToShow);
-              combined.addAll(intentions.notificationActionsToShow);
+              combined.addAll(intentions.getNotifications());
               span.setAttribute("number", combined.size());
-              Optional<HighlightInfo.IntentionActionDescriptor>
+              Optional<IntentionActionWithTextCaching>
                 singleIntention = combined.stream().filter(s -> s.getAction().getText().startsWith(actionName)).findFirst();
-              if (singleIntention.isEmpty()) actionCallback.reject(actionName + " is not found among " + combined);
-              if (invoke) singleIntention
-                .ifPresent(c -> ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, c.getAction(), c.getAction().getText()));
+              if (singleIntention.isEmpty()) {
+                actionCallback.reject(actionName + " is not found among " + combined);
+                return;
+              }
+              if (invoke) {
+                singleIntention.ifPresent(
+                  c -> ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, c.getAction(), c.getAction().getText()));
+              }
             }
             if (!invoke || actionName.isEmpty()) {
-              CachedIntentions cachedIntentions = CachedIntentions.create(project, psiFile, editor, intentions);
-              IntentionHintComponent.showIntentionHint(project, psiFile, editor, true, cachedIntentions);
+              IntentionHintComponent.showIntentionHint(project, psiFile, editor, true, intentions);
             }
           });
-          actionCallback.setDone();
+          if(!actionCallback.isRejected()){
+            actionCallback.setDone();
+          }
         }
         else {
           actionCallback.reject("PSI File is null");

@@ -57,3 +57,6 @@ val KotlinType.fqName: FqName?
         is AbbreviatedType -> abbreviation.fqName
         else -> constructor.declarationDescriptor?.fqNameOrNull()
     }
+
+fun FqName.isJavaClassNotToBeUsedInKotlin(): Boolean =
+    JavaToKotlinClassMap.isJavaPlatformClass(this) || this in javaToKotlinNameMap

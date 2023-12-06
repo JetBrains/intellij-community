@@ -21,6 +21,14 @@ import org.jetbrains.concurrency.Promises;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * Puts the caret to the location defined by parameters.
+ * <p>
+ * Syntax: %goto <line> <column>
+ * Example: %goto 25 17
+ * Syntax: %goto <offset>
+ * Example: %goto 25
+ */
 public class GoToCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "goto";
 
@@ -32,48 +40,64 @@ public class GoToCommand extends AbstractCommand {
   protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     String input = extractCommandArgument(PREFIX);
-    String[] lineAndColumn = input.split(" ");
-    final int line = Integer.parseInt(lineAndColumn[0]) - 1;
-    final int column = Integer.parseInt(lineAndColumn[1]) - 1;
+    String[] args = input.split(" ");
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      Project project = context.getProject();
-      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      assert editor != null;
-      Document document = editor.getDocument();
-      if (line <= document.getLineCount()) {
-        int lineStartOffset = document.getLineStartOffset(line);
-        int lineLength = document.getLineEndOffset(line) - lineStartOffset;
-        if (column > lineLength) {
-          //noinspection TestOnlyProblems
-          WriteCommandAction.runWriteCommandAction(project, () ->
-            document.insertString(lineStartOffset + lineLength,
-                                  IntStream.range(0, column - lineLength).mapToObj(i -> " ").collect(Collectors.joining())));
-        }
-        int offset = lineStartOffset + column;
-        final CaretListener caretListener = new CaretListener() {
-          @Override
-          public void caretPositionChanged(@NotNull CaretEvent e) {
-            context.message(PerformanceTestingBundle.message("command.goto.finish"), getLine());
-            actionCallback.setDone();
+    if (args.length == 1) {
+      int offset = Integer.parseInt(args[0]);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Project project = context.getProject();
+        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        assert editor != null;
+        goToOffset(context, actionCallback, editor, offset);
+      });
+    } else {
+      final int line = Integer.parseInt(args[0]) - 1;
+      final int columnArg = Integer.parseInt(args[1]);
+      final int column = columnArg == 0 ? 0 : columnArg - 1;
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Project project = context.getProject();
+        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        assert editor != null;
+        Document document = editor.getDocument();
+        if (line <= document.getLineCount()) {
+          int lineStartOffset = document.getLineStartOffset(line);
+          int lineLength = document.getLineEndOffset(line) - lineStartOffset;
+          if (column > lineLength) {
+            //noinspection TestOnlyProblems
+            WriteCommandAction.runWriteCommandAction(project, () ->
+              document.insertString(lineStartOffset + lineLength,
+                                    IntStream.range(0, column - lineLength).mapToObj(i -> " ").collect(Collectors.joining())));
           }
-        };
-        editor.getCaretModel().addCaretListener(caretListener);
-        actionCallback.doWhenDone(() -> editor.getCaretModel().removeCaretListener(caretListener));
-        if (editor.getCaretModel().getOffset() == offset) {
-          context.message(PerformanceTestingBundle.message("command.goto.finish"), getLine());
-          actionCallback.setDone();
+          int offset = lineStartOffset + column;
+          goToOffset(context, actionCallback, editor, offset);
         }
         else {
-          editor.getCaretModel().moveToOffset(offset);
-          editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+          context.error("Line is out of range", getLine());
+          actionCallback.setRejected();
         }
-      }
-      else {
-        context.error("Line is out of range", getLine());
-        actionCallback.setRejected();
-      }
-    });
+      });
+    }
     return Promises.toPromise(actionCallback);
+  }
+
+  private void goToOffset(@NotNull PlaybackContext context, @NotNull ActionCallback actionCallback, @NotNull Editor editor, int offset) {
+    final CaretListener caretListener = new CaretListener() {
+      @Override
+      public void caretPositionChanged(@NotNull CaretEvent e) {
+        context.message(PerformanceTestingBundle.message("command.goto.finish"), getLine());
+        actionCallback.setDone();
+      }
+    };
+    editor.getCaretModel().addCaretListener(caretListener);
+    actionCallback.doWhenDone(() -> editor.getCaretModel().removeCaretListener(caretListener));
+    if (editor.getCaretModel().getOffset() == offset) {
+      context.message(PerformanceTestingBundle.message("command.goto.finish"), getLine());
+      actionCallback.setDone();
+    }
+    else {
+      editor.getCaretModel().moveToOffset(offset);
+      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    }
   }
 }

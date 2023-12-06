@@ -6,15 +6,18 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
-import com.intellij.openapi.fileChooser.ex.TextFieldAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -27,7 +30,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
@@ -40,8 +42,12 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
@@ -49,28 +55,29 @@ import java.util.Objects;
 public class PackageChooserDialog extends PackageChooser {
   private static final Logger LOG = Logger.getInstance(PackageChooserDialog.class);
 
-  private Tree myTree;
-  private DefaultTreeModel myModel;
-  private final Project myProject;
-  private final @NlsContexts.DialogTitle String myTitle;
+  private final @NotNull Project myProject;
+
   private Module myModule;
+
+  private Tree myTree;
+
+  private DefaultTreeModel myModel;
+
   private EditorTextField myPathEditor;
 
   private final Alarm myAlarm = new Alarm(getDisposable());
 
-  public PackageChooserDialog(@NlsContexts.DialogTitle String title, @NotNull Module module) {
+  public PackageChooserDialog(@NlsContexts.DialogTitle @NotNull String title, @NotNull Module module) {
     super(module.getProject(), true);
     setTitle(title);
-    myTitle = title;
     myProject = module.getProject();
     myModule = module;
     init();
   }
 
-  public PackageChooserDialog(@NlsContexts.DialogTitle String title, Project project) {
+  public PackageChooserDialog(@NlsContexts.DialogTitle @NotNull String title, @NotNull Project project) {
     super(project, true);
     setTitle(title);
-    myTitle = title;
     myProject = project;
     init();
   }
@@ -79,85 +86,81 @@ public class PackageChooserDialog extends PackageChooser {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
-
-
     myModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     createTreeModel();
     myTree = new Tree(myModel);
-    myTree.setCellRenderer(
-      new DefaultTreeCellRenderer() {
-        @Override
-        public Component getTreeCellRendererComponent(
-          JTree tree, Object value,
-          boolean sel,
-          boolean expanded,
-          boolean leaf, int row,
-          boolean hasFocus
-        ) {
-          super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-          setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Package));
-
-          if (value instanceof DefaultMutableTreeNode node) {
-            Object object = node.getUserObject();
-            if (object instanceof PsiPackage pkg) {
-              String name = pkg.getName();
-              if (name != null && name.length() > 0) {
-                setText(name);
-              }
-              else {
-                setText(IdeCoreBundle.message("node.default"));
-              }
+    myTree.setCellRenderer(new ColoredTreeCellRenderer() {
+      @Override
+      public void customizeCellRenderer(
+        @NotNull JTree tree,
+        Object value,
+        boolean selected,
+        boolean expanded,
+        boolean leaf,
+        int row,
+        boolean hasFocus
+      ) {
+        setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Package));
+        if (value instanceof DefaultMutableTreeNode node) {
+          Object object = node.getUserObject();
+          if (object instanceof PsiPackage pkg) {
+            String name = pkg.getName();
+            if (name != null && !name.isEmpty()) {
+              append(name);
+            }
+            else {
+              append(IdeCoreBundle.message("node.default"));
             }
           }
-          return this;
         }
       }
-    );
+    });
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(JBUI.size(500, 300));
 
-    TreeSpeedSearch.installOn(myTree, false, path -> {
+    TreeSpeedSearch.installOn(myTree, canExpandInSpeedSearch(), path -> {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object object = node.getUserObject();
-      if (object instanceof PsiPackage) return ((PsiPackage)object).getName();
-      else
-        return "";
+      if (object instanceof PsiPackage) return ((PsiPackage)object).getName(); else return "";
     });
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        PsiPackage selection = getTreeSelection();
-        if (selection != null) {
-          String name = selection.getQualifiedName();
-          setTitle(myTitle + " - " + (name.isEmpty() ? IdeBundle.message("node.default.package") : name));
-        }
-        else {
-          setTitle(myTitle);
-        }
         updatePathFromTree();
       }
     });
 
     panel.add(scrollPane, BorderLayout.CENTER);
-    DefaultActionGroup group = createActionGroup(myTree);
 
-    final JPanel northPanel = new JPanel(new BorderLayout());
+    JPanel northPanel = new JPanel(new BorderLayout(8, 0));
+    northPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
     panel.add(northPanel, BorderLayout.NORTH);
-    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(PackageChooserDialog.class.getSimpleName(), group, true);
-    northPanel.add(toolBar.getComponent(), BorderLayout.WEST);
+    ActionButton actionButton = createNewPackageActionButton();
+    northPanel.add(actionButton, BorderLayout.WEST);
     setupPathComponent(northPanel);
     return panel;
   }
 
-  private void setupPathComponent(final JPanel northPanel) {
-    northPanel.add(new TextFieldAction() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        toggleShowPathComponent(northPanel, this);
-      }
-    }, BorderLayout.EAST);
+  private ActionButton createNewPackageActionButton() {
+    NewPackageAction newPackageAction = new NewPackageAction();
+    newPackageAction.enableInModalContext();
+    ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_ELEMENT).getShortcutSet();
+    newPackageAction.registerCustomShortcutSet(shortcutSet, myTree);
+    return new ActionButton(
+      newPackageAction,
+      null,
+      ActionPlaces.UNKNOWN,
+      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+    );
+  }
+
+  protected boolean canExpandInSpeedSearch() {
+    return false;
+  }
+
+  private void setupPathComponent(JPanel northPanel) {
     myPathEditor = new EditorTextField(JavaReferenceEditorUtil.createDocument("", myProject, false), myProject, JavaFileType.INSTANCE);
     myPathEditor.addDocumentListener(new DocumentListener() {
       @Override
@@ -166,18 +169,7 @@ public class PackageChooserDialog extends PackageChooser {
         myAlarm.addRequest(() -> updateTreeFromPath(), 300);
       }
     });
-    myPathEditor.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
-    northPanel.add(myPathEditor, BorderLayout.SOUTH);
-  }
-
-  private void toggleShowPathComponent(JPanel northPanel, TextFieldAction fieldAction) {
-    boolean toShowTextField = !isPathShowing();
-    PropertiesComponent.getInstance().setValue(FileChooserDialogImpl.FILE_CHOOSER_SHOW_PATH_PROPERTY, toShowTextField, true);
-    myPathEditor.setVisible(toShowTextField);
-    fieldAction.update();
-    northPanel.revalidate();
-    northPanel.repaint();
-    updatePathFromTree();
+    northPanel.add(myPathEditor, BorderLayout.CENTER);
   }
 
   private static boolean isPathShowing() {
@@ -186,23 +178,12 @@ public class PackageChooserDialog extends PackageChooser {
 
   private void updatePathFromTree() {
     if (!isPathShowing()) return;
-    final PsiPackage selection = getTreeSelection();
+    PsiPackage selection = getTreeSelection();
     myPathEditor.setText(selection != null ? selection.getQualifiedName() : "");
   }
 
   private void updateTreeFromPath() {
     selectPackage(myPathEditor.getText().trim());
-  }
-
-  private DefaultActionGroup createActionGroup(JComponent component) {
-    final DefaultActionGroup group = new DefaultActionGroup();
-    final DefaultActionGroup temp = new DefaultActionGroup();
-    NewPackageAction newPackageAction = new NewPackageAction();
-    newPackageAction.enableInModalConext();
-    newPackageAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_ELEMENT).getShortcutSet(), component);
-    temp.add(newPackageAction);
-    group.add(temp);
-    return group;
   }
 
   @Override
@@ -227,7 +208,7 @@ public class PackageChooserDialog extends PackageChooser {
   }
 
   @Override
-  public void selectPackage(final String qualifiedName) {
+  public void selectPackage(String qualifiedName) {
     /*ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {*/
           DefaultMutableTreeNode node = findNodeForPackage(qualifiedName);
@@ -248,39 +229,67 @@ public class PackageChooserDialog extends PackageChooser {
     return (PsiPackage)node.getUserObject();
   }
 
-  private void createTreeModel() {
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    final FileIndex fileIndex = myModule != null ? ModuleRootManager.getInstance(myModule).getFileIndex() : ProjectRootManager.getInstance(myProject).getFileIndex();
-    fileIndex.iterateContent(
-      fileOrDir -> {
-        if (fileOrDir.isDirectory() && fileIndex.isUnderSourceRootOfType(fileOrDir, JavaModuleSourceRootTypes.SOURCES)) {
-          final PsiDirectory psiDirectory = psiManager.findDirectory(fileOrDir);
-          LOG.assertTrue(psiDirectory != null);
-          PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-          if (aPackage != null){
-            addPackage(aPackage);
-          }
-        }
-        return true;
-      }
-    );
 
+  /**
+   * A {@link PsiPackage} wrapper that eagerly calculates the package hierarchy.
+   */
+  static class PackageUpdate {
+    private final @NotNull PsiPackage myPkg;
+
+    private final @Nullable PackageUpdate myParentUpdate;
+
+    PackageUpdate(@NotNull PsiPackage pkg) {
+      myPkg = pkg;
+      PsiPackage parentPkg = pkg.getParentPackage();
+      myParentUpdate = parentPkg == null ? null : new PackageUpdate(parentPkg);
+    }
+
+    @NotNull PsiPackage getPkg() {
+      return myPkg;
+    }
+
+    @Nullable PackageUpdate getParentUpdate() {
+      return myParentUpdate;
+    }
+  }
+
+  void createTreeModel() {
+    List<PackageUpdate> pkgUpdates = ActionUtil.underModalProgress(
+      myProject,
+      JavaBundle.message("package.chooser.modal.progress.title"
+      ), () -> {
+        PsiManager psiManager = PsiManager.getInstance(myProject);
+        FileIndex fileIndex = myModule != null
+                              ? ModuleRootManager.getInstance(myModule).getFileIndex()
+                              : ProjectRootManager.getInstance(myProject).getFileIndex();
+        List<PackageUpdate> pkgUpdateList = new ArrayList<>();
+        fileIndex.iterateContent(fileOrDir -> {
+          if (fileOrDir.isDirectory() && fileIndex.isUnderSourceRootOfType(fileOrDir, JavaModuleSourceRootTypes.SOURCES)) {
+            PsiDirectory psiDirectory = psiManager.findDirectory(fileOrDir);
+            ProgressManager.checkCanceled();
+            LOG.assertTrue(psiDirectory != null);
+            PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+            if (pkg != null) pkgUpdateList.add(new PackageUpdate(pkg));
+          }
+          return true;
+        });
+        return pkgUpdateList;
+      });
+    for (PackageUpdate pkgUpdate : pkgUpdates) addPackage(pkgUpdate);
     TreeUtil.sort(myModel, (o1, o2) -> {
-      DefaultMutableTreeNode n1 = (DefaultMutableTreeNode) o1;
-      DefaultMutableTreeNode n2 = (DefaultMutableTreeNode) o2;
-      PsiNamedElement element1 = (PsiNamedElement) n1.getUserObject();
-      PsiNamedElement element2 = (PsiNamedElement) n2.getUserObject();
-      return element1.getName().compareToIgnoreCase(element2.getName());
+      PsiNamedElement element1 = (PsiNamedElement)((DefaultMutableTreeNode)o1).getUserObject();
+      PsiNamedElement element2 = (PsiNamedElement)((DefaultMutableTreeNode)o2).getUserObject();
+      return Objects.requireNonNull(element1.getName()).compareToIgnoreCase(Objects.requireNonNull(element2.getName()));
     });
   }
 
   @NotNull
-  private DefaultMutableTreeNode addPackage(PsiPackage aPackage) {
-    final String qualifiedPackageName = aPackage.getQualifiedName();
-    final PsiPackage parentPackage = aPackage.getParentPackage();
-    if (parentPackage == null) {
-      final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)myModel.getRoot();
-      if (qualifiedPackageName.length() == 0) {
+  private DefaultMutableTreeNode addPackage(@NotNull PackageChooserDialog.PackageUpdate pkgUpdate) {
+    PsiPackage aPackage = pkgUpdate.getPkg();
+    String qualifiedPackageName = aPackage.getQualifiedName();
+    if (pkgUpdate.getParentUpdate() == null) {
+      DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)myModel.getRoot();
+      if (qualifiedPackageName.isEmpty()) {
         rootNode.setUserObject(aPackage);
         return rootNode;
       }
@@ -293,11 +302,9 @@ public class PackageChooserDialog extends PackageChooser {
       }
     }
     else {
-      final DefaultMutableTreeNode parentNode = addPackage(parentPackage);
+      DefaultMutableTreeNode parentNode = addPackage(pkgUpdate.getParentUpdate());
       DefaultMutableTreeNode packageNode = findPackageNode(parentNode, qualifiedPackageName);
-      if (packageNode != null) {
-        return packageNode;
-      }
+      if (packageNode != null) return packageNode;
       packageNode = new DefaultMutableTreeNode(aPackage);
       parentNode.add(packageNode);
       return packageNode;
@@ -307,8 +314,8 @@ public class PackageChooserDialog extends PackageChooser {
   @Nullable
   private static DefaultMutableTreeNode findPackageNode(DefaultMutableTreeNode rootNode, String qualifiedName) {
     for (int i = 0; i < rootNode.getChildCount(); i++) {
-      final DefaultMutableTreeNode child = (DefaultMutableTreeNode)rootNode.getChildAt(i);
-      final PsiPackage nodePackage = (PsiPackage)child.getUserObject();
+      DefaultMutableTreeNode child = (DefaultMutableTreeNode)rootNode.getChildAt(i);
+      PsiPackage nodePackage = (PsiPackage)child.getUserObject();
       if (nodePackage != null) {
         if (Objects.equals(nodePackage.getQualifiedName(), qualifiedName)) return child;
       }
@@ -331,38 +338,38 @@ public class PackageChooserDialog extends PackageChooser {
   }
 
   private void createNewPackage() {
-    final PsiPackage selectedPackage = getTreeSelection();
+    PsiPackage selectedPackage = getTreeSelection();
     if (selectedPackage == null) return;
+    String newPackageName = Messages.showInputDialog(
+      myProject,
+      IdeBundle.message("prompt.enter.a.new.package.name"),
+      IdeBundle.message("title.new.package"),
+      null, "",
+      new InputValidator() {
+        @Override
+        public boolean checkInput(String inputString) {
+          return inputString != null && !inputString.isEmpty();
+        }
 
-    final String newPackageName = Messages.showInputDialog(myProject, IdeBundle.message("prompt.enter.a.new.package.name"), IdeBundle.message("title.new.package"), Messages.getQuestionIcon(), "",
-                                                           new InputValidator() {
-                                                             @Override
-                                                             public boolean checkInput(final String inputString) {
-                                                               return inputString != null && inputString.length() > 0;
-                                                             }
-
-                                                             @Override
-                                                             public boolean canClose(final String inputString) {
-                                                               return checkInput(inputString);
-                                                             }
-                                                           });
+        @Override
+        public boolean canClose(String inputString) {
+          return checkInput(inputString);
+        }
+      }
+    );
     if (newPackageName == null) return;
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      final Runnable action = () -> {
-
+      Runnable action = () -> {
         try {
           String newQualifiedName = selectedPackage.getQualifiedName();
           if (!Comparing.strEqual(newQualifiedName,"")) newQualifiedName += ".";
           newQualifiedName += newPackageName;
-          final PsiPackage newPackage = getPsiPackage(newQualifiedName);
-
+          PsiPackage newPackage = getPsiPackage(newQualifiedName);
           if (newPackage != null) {
-            DefaultMutableTreeNode newChild = addPackage(newPackage);
-
+            DefaultMutableTreeNode newChild = addPackage(new PackageUpdate(newPackage));
             DefaultTreeModel model = (DefaultTreeModel)myTree.getModel();
             model.nodeStructureChanged((TreeNode)model.getRoot());
-
             TreePath path = new TreePath(newChild.getPath());
             myTree.setSelectionPath(path);
             myTree.scrollPathToVisible(path);
@@ -380,22 +387,23 @@ public class PackageChooserDialog extends PackageChooser {
         }
       };
       ApplicationManager.getApplication().runReadAction(action);
-    },
-                                                  IdeBundle.message("command.create.new.package"),
-                                                  null);
+    }, IdeBundle.message("command.create.new.package"), null);
   }
 
   @Nullable
   protected PsiPackage getPsiPackage(String newQualifiedName) {
-    final PsiDirectory dir = PackageUtil.findOrCreateDirectoryForPackage(myProject, newQualifiedName, null, false);
+    PsiDirectory dir = PackageUtil.findOrCreateDirectoryForPackage(myProject, newQualifiedName, null, false);
     if (dir == null) return null;
     return JavaDirectoryService.getInstance().getPackage(dir);
   }
 
   private class NewPackageAction extends AnAction {
     NewPackageAction() {
-      super(IdeBundle.messagePointer("action.new.package"), IdeBundle.messagePointer("action.description.create.new.package"),
-            AllIcons.Actions.NewFolder);
+      super(
+        IdeBundle.messagePointer("action.new.package"),
+        IdeBundle.messagePointer("action.description.create.new.package"),
+        AllIcons.Actions.NewFolder
+      );
     }
 
     @Override
@@ -414,10 +422,9 @@ public class PackageChooserDialog extends PackageChooser {
       return ActionUpdateThread.EDT;
     }
 
-    public void enableInModalConext() {
+    public void enableInModalContext() {
       setEnabledInModalContext(true);
     }
   }
-
 }
 

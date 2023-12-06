@@ -38,9 +38,8 @@ public class UrlFilter implements Filter, DumbAware {
     myProject = project;
   }
 
-  @Nullable
   @Override
-  public Result applyFilter(@NotNull String line, int entireLength) {
+  public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
     if (!URLUtil.canContainUrl(line)) return null;
 
     int textStartOffset = entireLength - line.length();
@@ -64,8 +63,7 @@ public class UrlFilter implements Filter, DumbAware {
                                         : null;
   }
 
-  @NotNull
-  protected HyperlinkInfo buildHyperlinkInfo(@NotNull String url) {
+  protected @NotNull HyperlinkInfo buildHyperlinkInfo(@NotNull String url) {
     HyperlinkInfo fileHyperlinkInfo = buildFileHyperlinkInfo(url);
     return fileHyperlinkInfo != null ? fileHyperlinkInfo : new OpenUrlHyperlinkInfo(url);
   }
@@ -126,8 +124,8 @@ public class UrlFilter implements Filter, DumbAware {
     }
   }
 
-  public static class FileUrlHyperlinkInfo extends LazyFileHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
-    private @NotNull final String myUrl;
+  public static final class FileUrlHyperlinkInfo extends LazyFileHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
+    private final @NotNull String myUrl;
     final String myFilePath;
     final int myDocumentLine;
     final int myDocumentColumn;

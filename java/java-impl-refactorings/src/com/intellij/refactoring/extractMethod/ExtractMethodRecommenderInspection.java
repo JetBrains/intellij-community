@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -26,6 +28,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +63,7 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
         BitSet declarations = getDeclarations(statements);
         if (declarations.isEmpty()) return;
         int maxLength = body.getTextLength() * 3 / 5;
+        if (maxLength < minLength) return;
         int maxCount;
         if (block == body) {
           maxCount = statements.length - 1;
@@ -107,14 +111,20 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
               List<LocalQuickFix> fixes = new ArrayList<>();
               fixes.add(new ExtractMethodFix(from, count, output, inputVariables));
               if (inputVariables.size() > 1) {
-                fixes.add(new SetInspectionOptionFix(ExtractMethodRecommenderInspection.this, "maxParameters",
-                                                     JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.parameters", inputVariables.size()),
-                                                     inputVariables.size() - 1));
+                fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+                  ExtractMethodRecommenderInspection.this, "maxParameters",
+                  JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.parameters", inputVariables.size()),
+                  inputVariables.size() - 1)));
               }
               if (textRange.getLength() < 10_000) {
-                fixes.add(new SetInspectionOptionFix(ExtractMethodRecommenderInspection.this, "minLength",
-                                                     JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.length"),
-                                                     textRange.getLength() + 1));
+                fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+                  ExtractMethodRecommenderInspection.this, "minLength",
+                  JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.length"),
+                  textRange.getLength() + 1)));
+              }
+              int firstLineBreak = textRange.substring(block.getText()).indexOf('\n');
+              if (firstLineBreak > -1) {
+                textRange = TextRange.from(textRange.getStartOffset(), firstLineBreak);
               }
               holder.registerProblem(block, JavaAnalysisBundle.message("inspection.extract.method.message", output.getName()),
                                      ProblemHighlightType.WEAK_WARNING,
@@ -436,11 +446,26 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiCodeBlock block = ObjectUtils.tryCast(descriptor.getStartElement(), PsiCodeBlock.class);
-      if (block == null) return;
+      TextRange range = getRange(block);
+      if (range == null) return;
+      new MethodExtractor().doExtract(block.getContainingFile(), range.shiftRight(block.getTextRange().getStartOffset()));
+    }
+
+    @Override
+    public @NotNull List<CustomizableIntentionAction.RangeToHighlight> getRangesToHighlight(Project project, ProblemDescriptor descriptor) {
+      PsiCodeBlock block = ObjectUtils.tryCast(descriptor.getStartElement(), PsiCodeBlock.class);
+      TextRange range = getRange(block);
+      if (range == null) return List.of();
+      return List.of(new CustomizableIntentionAction.RangeToHighlight(
+        block, range, EditorColors.SEARCH_RESULT_ATTRIBUTES));
+    }
+
+    @Contract("null -> null")
+    private @Nullable TextRange getRange(@Nullable PsiCodeBlock block) {
+      if (block == null) return null;
       PsiStatement[] statements = block.getStatements();
-      if (statements.length < myFrom + myLength) return;
-      new MethodExtractor().doExtract(block.getContainingFile(),
-                                      descriptor.getTextRangeInElement().shiftRight(block.getTextRange().getStartOffset()));
+      if (statements.length < myFrom + myLength) return null;
+      return statements[myFrom].getTextRangeInParent().union(statements[myFrom + myLength - 1].getTextRangeInParent());
     }
 
     @Override

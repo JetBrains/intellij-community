@@ -2,18 +2,17 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
@@ -62,16 +61,13 @@ public class AbstractTreeBuilder implements Disposable {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-
-    var aClass = getClass();
-    ClassLoader classLoader = aClass.getClassLoader();
-    if (classLoader instanceof PluginAwareClassLoader) {
-      PluginId pluginId = ((PluginAwareClassLoader)classLoader).getPluginId();
-      if (pluginId.getIdString().equals("Jetbrains TeamCity Plugin")) {
-        return;
-      }
-
-      Logger.getInstance(aClass).error(new PluginException("'AbstractTreeBuilder' is going to be dropped soon and must not be used", pluginId));
+    PluginException error = PluginException.createByClass(
+      "'AbstractTreeBuilder' is almost dropped and must not be used", null, getClass());
+    if (Registry.is("override.AbstractTreeBuilder.removal")) {
+      Logger.getInstance(getClass()).error(error);
+    }
+    else {
+      throw error;
     }
   }
 
@@ -528,8 +524,10 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   public static @Nullable AbstractTreeBuilder getBuilderFor(@NotNull JTree tree) {
-    Reference<AbstractTreeBuilder> ref = (Reference)tree.getClientProperty(TREE_BUILDER);
-    return SoftReference.dereference(ref);
+    Reference<?> ref = (Reference)tree.getClientProperty(TREE_BUILDER);
+    Object real = SoftReference.dereference(ref);
+    if (real instanceof AbstractTreeBuilder) return (AbstractTreeBuilder)real;
+    return null;
   }
 
   public final @Nullable <T> Object accept(@NotNull Class<?> nodeClass, @NotNull TreeVisitor<T> visitor) {

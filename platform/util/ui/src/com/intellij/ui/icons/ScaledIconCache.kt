@@ -4,69 +4,102 @@
 package com.intellij.ui.icons
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.reference.SoftReference
+import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.DerivedScaleType
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
-import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ui.drawImage
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
-import org.jetbrains.annotations.ApiStatus
-import java.awt.Image
+import java.awt.*
+import java.lang.ref.SoftReference
+import java.util.concurrent.CancellationException
 import javax.swing.Icon
-import javax.swing.ImageIcon
 
-private const val SCALED_ICONS_CACHE_LIMIT = 5
+private const val SCALED_ICON_CACHE_LIMIT = 8
 
-@ApiStatus.Internal
-fun isIconTooLargeForCache(icon: Icon): Boolean {
-  return (4L * icon.iconWidth * icon.iconHeight) > CACHED_IMAGE_MAX_SIZE
-}
-
-private fun key(context: ScaleContext): Long {
-  return (context.getScale(DerivedScaleType.EFF_USR_SCALE).toFloat().toBits().toLong() shl 32) or
-    (context.getScale(ScaleType.SYS_SCALE).toFloat().toBits().toLong() and 0xffffffffL)
-}
+@JvmField
+internal var isIconActivated: Boolean = !GraphicsEnvironment.isHeadless()
 
 internal class ScaledIconCache {
-  private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT)
+  private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICON_CACHE_LIMIT + 1)
 
-  /**
-   * Retrieves the orig icon scaled by the provided scale.
-   */
   @Synchronized
-  fun getOrScaleIcon(scale: Float, host: CachedImageIcon, scaleContext: ScaleContext): ImageIcon? {
-    val cacheKey = key(scaleContext)
-    // don't worry that empty ref in the map, we compute and put a new icon by the same key, so no need to remove invalid entry
+  fun getCachedIcon(host: CachedImageIcon, gc: GraphicsConfiguration?, attributes: IconAttributes): Icon {
+    val sysScale = JBUIScale.sysScale(gc)
+    val pixScale = if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale * JBUIScale.scale(1f) else JBUIScale.scale(1f)
+    val cacheKey = getCacheKey(pixScale, attributes)
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
     }
 
-    val image = host.loadImage(scaleContext = scaleContext, isDark = host.isDark) ?: return null
-    val icon = createScaledIcon(image = image, host = host, scale = scale)
-    if (icon != null && !isIconTooLargeForCache(icon)) {
+    if (!isIconActivated) {
+      return EMPTY_ICON
+    }
+
+    val scaleContext = ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale))
+    return loadIcon(host = host, scaleContext = scaleContext, cacheKey = cacheKey, attributes = attributes)
+  }
+
+  @Synchronized
+  fun getOrScaleIcon(host: CachedImageIcon, scaleContext: ScaleContext, attributes: IconAttributes): Icon {
+    val cacheKey = getCacheKey(pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat(), attributes)
+    // don't worry that empty ref in the map, we compute and put a new icon by the same key, so no need to remove invalid entry
+    cache.getAndMoveToFirst(cacheKey)?.get()?.let {
+      return it
+    }
+    return loadIcon(host = host, scaleContext = scaleContext, cacheKey = cacheKey, attributes = attributes)
+  }
+
+  private fun loadIcon(host: CachedImageIcon, scaleContext: ScaleContext, cacheKey: Long, attributes: IconAttributes): Icon {
+    val image = try {
+      host.loadImage(scaleContext = scaleContext, attributes = attributes) ?: return EMPTY_ICON
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      logger<ScaledIconCache>().error(e)
+
+      // cache it - don't try to load it again and again
+      val icon = EMPTY_ICON
       cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
-      if (cache.size > SCALED_ICONS_CACHE_LIMIT) {
-        cache.removeLast()
-      }
+      return icon
+    }
+
+    val icon = ScaledResultIcon(image = image, original = host, objectScale = scaleContext.getScale(ScaleType.OBJ_SCALE).toFloat())
+    cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
+    if (cache.size > SCALED_ICON_CACHE_LIMIT) {
+      cache.removeLast()
     }
     return icon
   }
 
-  @Synchronized
   fun clear() {
     cache.clear()
   }
 }
 
-private class ScaledResultIcon(image: Image,
-                               private val original: CachedImageIcon,
-                               private val scale: Float) : JBImageIcon(image), ReplaceableIcon {
+internal class ScaledResultIcon(@JvmField internal val image: Image,
+                                private val original: CachedImageIcon,
+                                private val objectScale: Float) : Icon, ReplaceableIcon {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    drawImage(g = g, image = image, x = x, y = y, sourceBounds = null, op = null, observer = c)
+  }
+
+  override fun getIconWidth(): Int = image.getWidth(null)
+
+  override fun getIconHeight(): Int = image.getHeight(null)
+
   override fun replaceBy(replacer: IconReplacer): Icon {
     val originalReplaced = replacer.replaceIcon(original)
     if (originalReplaced is ScalableIcon) {
-      return originalReplaced.scale(scale)
+      return originalReplaced.scale(objectScale)
     }
     else {
       logger<ScaledResultIcon>().error("The result after replacing cannot be scaled: $originalReplaced")
@@ -77,17 +110,10 @@ private class ScaledResultIcon(image: Image,
   override fun toString(): String = "ScaledResultIcon for $original"
 }
 
-private fun createScaledIcon(image: Image, host: CachedImageIcon, scale: Float): ImageIcon? {
-  // image wasn't loaded or broken
-  if (image.getHeight(null) < 1) {
-    return null
-  }
+private fun getCacheKey(pixScale: Float, cacheFlags: IconAttributes): Long {
+  return packTwoIntToLong(pixScale.toRawBits(), cacheFlags.flags)
+}
 
-  val icon = ScaledResultIcon(image = image, original = host, scale = scale)
-  if (!IconLoader.isGoodSize(icon)) {
-    // # 22481
-    logger<ScaledResultIcon>().error("Invalid icon: $host")
-    return CachedImageIcon.EMPTY_ICON
-  }
-  return icon
+private fun packTwoIntToLong(v1: Int, v2: Int): Long {
+  return (v1.toLong() shl 32) or (v2.toLong() and 0xffffffffL)
 }

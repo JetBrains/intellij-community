@@ -18,7 +18,7 @@ import com.intellij.ui.HyperlinkLabel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.script.StandardIdeScriptDefinition
+import org.jetbrains.kotlin.idea.core.script.BundledIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
@@ -43,8 +43,8 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
         val allApplicableDefinitions = ScriptDefinitionsManager.getInstance(project)
             .getAllDefinitions()
             .filter {
-                it.asLegacyOrNull<StandardIdeScriptDefinition>() == null && it.isScript(KtFileScriptSource(ktFile)) &&
-                        KotlinScriptingSettings.getInstance(project).isScriptDefinitionEnabled(it)
+              it.asLegacyOrNull<BundledIdeScriptDefinition>() == null && it.isScript(KtFileScriptSource(ktFile)) &&
+              KotlinScriptingSettings.getInstance(project).isScriptDefinitionEnabled(it)
             }
             .toList()
         if (allApplicableDefinitions.size < 2 || areDefinitionsForGradleKts(allApplicableDefinitions)) return null
@@ -76,7 +76,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
                             @NlsSafe
                             val text = value.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
                                 it.name + " (${it.scriptFilePattern})"
-                            } ?: value.asLegacyOrNull<StandardIdeScriptDefinition>()?.let {
+                            } ?: value.asLegacyOrNull<BundledIdeScriptDefinition>()?.let {
                                 it.name + " (${KotlinParserDefinition.STD_SCRIPT_EXT})"
                             } ?: (value.name + " (${value.fileExtension})")
                             return text

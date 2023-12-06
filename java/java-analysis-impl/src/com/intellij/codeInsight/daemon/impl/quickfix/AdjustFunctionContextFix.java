@@ -2,10 +2,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public class AdjustFunctionContextFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
+public class AdjustFunctionContextFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   private static final Function<PsiMethodCallExpression, Function<PsiType, String>>
     MAP_NAME_ADJUSTER = (PsiMethodCallExpression call) -> (PsiType type) -> {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
@@ -56,27 +58,21 @@ public class AdjustFunctionContextFix extends LocalQuickFixAndIntentionActionOnP
   private final String myOriginalName;
   private final String myNewName;
 
-  protected AdjustFunctionContextFix(@NotNull PsiMethodCallExpression call, @NotNull String targetMethodName) {
+  private AdjustFunctionContextFix(@NotNull PsiMethodCallExpression call, @NotNull String targetMethodName) {
     super(call);
     myOriginalName = call.getMethodExpression().getReferenceName();
     myNewName = targetMethodName;
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiMethodCallExpression call = ObjectUtils.tryCast(startElement, PsiMethodCallExpression.class);
-    if (call == null) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull ModPsiUpdater updater) {
     ExpressionUtils.bindCallTo(call, myNewName);
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return QuickFixBundle.message("adjust.method.accepting.functional.expression.fix.text", myOriginalName, myNewName);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression element) {
+    return Presentation.of(QuickFixBundle.message("adjust.method.accepting.functional.expression.fix.text", myOriginalName, myNewName)).withPriority(
+      PriorityAction.Priority.HIGH).withFixAllOption(this);
   }
 
   @Nls
@@ -88,7 +84,7 @@ public class AdjustFunctionContextFix extends LocalQuickFixAndIntentionActionOnP
 
   @Contract("null -> null")
   @Nullable
-  public static AdjustFunctionContextFix createFix(PsiElement context) {
+  public static IntentionAction createFix(PsiElement context) {
     if (!(context instanceof PsiExpression expression)) return null;
     PsiFunctionalExpression fn = PsiTreeUtil.getParentOfType(context, PsiFunctionalExpression.class, false);
     if (fn == null) return null;
@@ -105,6 +101,6 @@ public class AdjustFunctionContextFix extends LocalQuickFixAndIntentionActionOnP
     }
     String targetMethodName = remapper.apply(actualReturnType);
     if (targetMethodName == null) return null;
-    return new AdjustFunctionContextFix(call, targetMethodName);
+    return new AdjustFunctionContextFix(call, targetMethodName).asIntention();
   }
 }

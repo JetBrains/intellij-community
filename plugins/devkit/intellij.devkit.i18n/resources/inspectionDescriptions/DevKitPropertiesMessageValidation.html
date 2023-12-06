@@ -1,59 +1,61 @@
 <html>
 <body>
-Report next cases:
+Reports the following <code>MessageFormat</code> problems in property values:
+
+<p><b>Unknown format types</b>
+<p>
+  <code>MessageFormat</code> supports only these format types:
 <ul>
-  <li>
-    Unknown format type.
-    <p>
-      <code>MessageFormat</code> supports only next format types:
-    <ul>
-      <li>number</li>
-      <li>date</li>
-      <li>time</li>
-      <li>choice</li>
-    </ul>
-    Other format types will be warned.
-  </li>
-  <li>
-    Unpaired quote.
-    <p>
-      Single quotes are used to escape until the end of properties, and they will not be present in the result string.
-      Often it is a smell of mistakes.
-      If they should be visible, they must be duplicated.
-  </li>
-  <li>
-    Unmatched braces.
-    <p> It is expected that every placeholder must contain a closed brace.
-  </li>
-  <li>
-    Many quotes.
-    <p> In some cases (like <code>it's</code>), it is expected that only one quote is printed;
-      cases, when more quotes than one are printed, will be warned.
-  </li>
-  <li>
-    Incorrect lower bounds for nested <code>ChoiceFormat</code>.
-    <p> Lower bounds are expected to be numbers and to be sorted in ascending order.
-  </li>
-  <li>Wrong number of quotes around parameter in property value.
-    <p>
-      If parameters are present in the property value, then the value will be passed as a pattern to <code>java.text.MessageFormat</code>.
-      This means that single quotes are used for escaping.
-      Thus, to keep a quote visible, it must be duplicated:
-    <ul>
-      <li><code>'{0}'</code> &rarr; <code>{0}</code></li>
-      <li><code>''{0}''</code> &rarr; <code>'$value$'</code></li>
-    </ul>
-    <p>
-      When using choice format, nested formats are evaluated as formats themselves, and second double quotes are required.
-      When passing <code>1</code>:
-    <ul>
-      <li><code>{0, choice, 0#no|#1''{0}'' files}</code> &rarr; <code>{0} files</code></li>
-      <li><code>{0, choice, 0#no|#1''''{0}'''' files}</code> &rarr; <code>'$number_of_files$' files</code></li>
-    </ul>
-  </li>
+  <li>number</li>
+  <li>date</li>
+  <li>time</li>
+  <li>choice</li>
 </ul>
-Property values are verified only it they contain <code>{0}</code>, <code>{0,</code>, <code>{1}</code>, <code>{1,</code>,
-This condition is used to check that these property values can be used as patterns for <code>MessageFormat</code>.
+  Other format types will be reported.
+
+<p><b>Unpaired quotes</b>
+<pre><code>
+  property.key=Shouldn't happen: {0}
+</code></pre>
+<p>
+  A single quote is interpreted as an escape until the end of the property, and will not be present in the result string.
+  In most cases this is not what is intended.
+  If a single quote should be present in the result string, it has to be duplicated in the property.
+
+<p><b>Unmatched braces</b>
+<p>
+  Every placeholder must have a closing brace.
+
+<p><b>Too many quotes</b>
+<p>
+  In some cases (e.g. <code>it's</code>), it is expected that only one quote ends up in the result string.
+  Cases where two or more quotes are placed together in the result string are reported.
+
+<p><b>Incorrect lower bounds for nested <code>ChoiceFormat</code></b>
+<p>
+  Lower bounds are expected to be numbers and to be sorted in ascending order.
+
+<p><b>Wrong number of quotes around parameters</b>
+<p>
+  In <code>java.text.MessageFormat</code> patterns single quotes are used for escaping.
+  To keep quotes visible, they must be duplicated.
+  For example when passing <code>1</code>:
+<ul>
+  <li><code>'{0}'</code> &rarr; <code>{0}</code></li>
+  <li><code>''{0}''</code> &rarr; <code>'1'</code></li>
+</ul>
+<p>
+  When using choice format, nested formats are evaluated as format strings themselves, and quotes will need to be duplicated twice.
+  For example when passing <code>1</code>:
+<ul>
+  <li><code>{0, choice, 0#no|#1''{0}'' files}</code> &rarr; <code>{0} files</code></li>
+  <li><code>{0, choice, 0#no|#1''''{0}'''' files}</code> &rarr; <code>'1' files</code></li>
+</ul>
+
+<p><b>Note</b>
+<p>
+  Property values are verified only if they contain the literal text <code>{0}</code>, <code>{0,</code>, <code>{1}</code> or <code>{1,</code>.
+  This is to make sure that these property values are actually used as <code>MessageFormat</code> patterns.
 <!-- tooltip end -->
 <p><small>New in 2023.2</small>
 </body>

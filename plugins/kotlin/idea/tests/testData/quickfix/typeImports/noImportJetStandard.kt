@@ -6,3 +6,4 @@ class M {
         abstract val i = <caret>10
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemovePartsFromPropertyFix

@@ -5,9 +5,10 @@ package org.jetbrains.kotlin.idea.maven.configuration
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.actions.OpenFileAction
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.undo.BasicUndoableAction
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -21,8 +22,6 @@ import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.search.FileTypeIndex
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
@@ -39,8 +38,8 @@ import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.maven.*
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 
 abstract class KotlinMavenConfigurator
 protected constructor(
@@ -68,6 +67,10 @@ protected constructor(
             return runReadAction { checkKotlinPlugin(module) }
         }
         return ConfigureKotlinStatus.CAN_BE_CONFIGURED
+    }
+
+    override fun isApplicable(module: Module): Boolean {
+        return module.buildSystemType == BuildSystemType.Maven
     }
 
     private fun checkKotlinPlugin(module: Module): ConfigureKotlinStatus {
@@ -105,19 +108,30 @@ protected constructor(
 
         dialog.show()
         if (!dialog.isOK) return
+        val kotlinVersion = dialog.kotlinVersion ?: return
+
+        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
 
         WriteCommandAction.runWriteCommandAction(project) {
             val collector = NotificationMessageCollector.create(project)
             for (module in excludeMavenChildrenModules(project, dialog.modulesToConfigure)) {
                 val file = findModulePomFile(module)
                 if (file != null && canConfigureFile(file)) {
-                    configureModule(module, file, IdeKotlinVersion.get(dialog.kotlinVersion), collector)
+                    configureModule(module, file, IdeKotlinVersion.get(kotlinVersion), collector)
                     OpenFileAction.openFile(file.virtualFile, project)
                 } else {
                     showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
                 }
             }
             collector.showNotification()
+
+            UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
+                override fun undo() {
+                    KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
+                }
+
+                override fun redo() {}
+            })
         }
     }
 
@@ -192,10 +206,6 @@ protected constructor(
         isTest: Boolean
     ) {
         pomFile.addKotlinExecution(module, kotlinPlugin, executionId, PomFile.getPhase(false, isTest), isTest, listOf(goalName))
-
-        if (hasJavaFiles(module)) {
-            pomFile.addJavacExecutions(module, kotlinPlugin)
-        }
     }
 
     override fun updateLanguageVersion(
@@ -301,10 +311,6 @@ protected constructor(
         const val GROUP_ID = "org.jetbrains.kotlin"
         const val MAVEN_PLUGIN_ID = "kotlin-maven-plugin"
         private const val KOTLIN_VERSION_PROPERTY = "kotlin.version"
-
-        private fun hasJavaFiles(module: Module): Boolean {
-            return !FileTypeIndex.getFiles(JavaFileType.INSTANCE, GlobalSearchScope.moduleScope(module)).isEmpty()
-        }
 
         fun findModulePomFile(module: Module): PsiFile? {
             val files = MavenProjectsManager.getInstance(module.project).projectsFiles

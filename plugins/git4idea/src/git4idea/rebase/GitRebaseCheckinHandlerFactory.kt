@@ -35,8 +35,8 @@ class GitRebaseCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
         }.queue()
       }
 
-      override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>?): ReturnResult? {
-        executor as GitAutoSquashCommitAction.GitRebaseAfterCommitExecutor;
+      override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>?): ReturnResult {
+        executor as GitAutoSquashCommitAction.GitRebaseAfterCommitExecutor
 
         active = true
         project = executor.project
@@ -47,7 +47,7 @@ class GitRebaseCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
       }
 
       override fun acceptExecutor(executor: CommitExecutor?): Boolean {
-        return executor is GitAutoSquashCommitAction.GitRebaseAfterCommitExecutor;
+        return executor is GitAutoSquashCommitAction.GitRebaseAfterCommitExecutor
       }
     }
   }

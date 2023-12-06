@@ -1,10 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
-import com.intellij.diagnostic.telemetry.TraceManager
-import com.intellij.diagnostic.telemetry.computeWithSpan
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -18,8 +15,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
@@ -32,7 +33,6 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.util.subgraphDifference
 import com.intellij.vcs.log.visible.VisiblePack
-import git4idea.GitBranch
 import git4idea.GitNotificationIdsHolder.Companion.COULD_NOT_COMPARE_WITH_BRANCH
 import git4idea.GitUtil
 import git4idea.commands.Git
@@ -56,7 +56,7 @@ class DeepComparator(private val project: Project,
 
   private var progressIndicator: ProgressIndicator? = null
   private var comparedBranch: String? = null
-  private var repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>? = null
+  private var repositoriesWithCurrentBranches: Map<GitRepository, String>? = null
   private var nonPickedCommits: IntOpenHashSet? = null
 
   init {
@@ -103,7 +103,7 @@ class DeepComparator(private val project: Project,
 
   @RequiresEdt
   fun startTask(dataPack: VcsLogDataPack, branchToCompare: String) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (comparedBranch != null) {
       LOG.error("Already comparing with branch $comparedBranch")
       return
@@ -122,14 +122,14 @@ class DeepComparator(private val project: Project,
 
   @RequiresEdt
   fun stopTaskAndUnhighlight() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     stopTask()
     unhighlight()
   }
 
   @RequiresEdt
   fun hasHighlightingOrInProgress(): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     return comparedBranch != null
   }
 
@@ -154,11 +154,10 @@ class DeepComparator(private val project: Project,
   }
 
   private fun getRepositories(providers: Map<VirtualFile, VcsLogProvider>,
-                              branchToCompare: String): Map<GitRepository, GitBranch> {
+                              branchToCompare: String): Map<GitRepository, String> {
     return providers.keys.mapNotNull { repositoryManager.getRepositoryForRootQuick(it) }.filter { repository ->
-      repository.currentBranch != null &&
       repository.branches.findBranchByName(branchToCompare) != null
-    }.associateWith { it.currentBranch!! }
+    }.associateWith { it.currentBranch?.name ?: GitUtil.HEAD }
   }
 
   private fun notifyUnhighlight(branch: String?) {
@@ -178,7 +177,7 @@ class DeepComparator(private val project: Project,
     stopTaskAndUnhighlight()
   }
 
-  private inner class MyTask(private val repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>,
+  private inner class MyTask(private val repositoriesWithCurrentBranches: Map<GitRepository, String>,
                              vcsLogDataPack: VcsLogDataPack,
                              private val comparedBranch: String) :
     Task.Backgroundable(project, GitBundle.message("git.log.cherry.picked.highlighter.process")) {
@@ -192,14 +191,14 @@ class DeepComparator(private val project: Project,
         repositoriesWithCurrentBranches.forEach { (repo, currentBranch) ->
           val commits = if (Registry.`is`("git.log.use.index.for.picked.commits.highlighting")) {
             if (Registry.`is`("git.log.fast.picked.commits.highlighting")) {
-              getCommitsByIndexFast(repo.root, comparedBranch) ?: getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch.name)
+              getCommitsByIndexFast(repo.root, comparedBranch, currentBranch) ?: getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch)
             }
             else {
-              getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch.name)
+              getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch)
             }
           }
           else {
-            getCommitsByPatch(repo.root, comparedBranch, currentBranch.name)
+            getCommitsByPatch(repo.root, comparedBranch, currentBranch)
           }
           collectedNonPickedCommits.addAll(commits)
         }
@@ -241,19 +240,19 @@ class DeepComparator(private val project: Project,
 
       val resultFromIndex = recordSpan(root, "Getting non picked commits with index reliable") {
         val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return resultFromGit
-        val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return resultFromGit
+        val targetBranchRef = dataPack.refsModel.findBranch(targetBranch, root) ?: return resultFromGit
         getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, resultFromGit, true)
       }
 
       return resultFromIndex ?: resultFromGit
     }
 
-    private fun getCommitsByIndexFast(root: VirtualFile, sourceBranch: String): IntSet? {
+    private fun getCommitsByIndexFast(root: VirtualFile, sourceBranch: String, targetBranch: String): IntSet? {
       if (!vcsLogData.index.isIndexed(root) || dataPack == null || !dataPack.isFull) return null
 
       return recordSpan(root, "Getting non picked commits with index fast") {
         val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return null
-        val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return null
+        val targetBranchRef = dataPack.refsModel.findBranch(targetBranch, root) ?: return null
         val sourceBranchCommits = dataPack.subgraphDifference(sourceBranchRef, targetBranchRef, storage) ?: return null
         getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, sourceBranchCommits, false)
       }
@@ -357,7 +356,7 @@ class DeepComparator(private val project: Project,
   }
 
   private inline fun <R> recordSpan(root: VirtualFile, @NonNls actionName: String, block: () -> R): R {
-    return computeWithSpan(TraceManager.getTracer("vcs"), actionName) { span ->
+    return TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(actionName).useWithScopeBlocking { span ->
       span.setAttribute("rootName", root.name)
       block()
     }

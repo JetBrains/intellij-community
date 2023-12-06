@@ -23,3 +23,5 @@ fun d() : java.lang.Iterable<String>? {
 fun e() : Iterable<String>? {
     throw Exception()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MapPlatformClassToKotlinFix

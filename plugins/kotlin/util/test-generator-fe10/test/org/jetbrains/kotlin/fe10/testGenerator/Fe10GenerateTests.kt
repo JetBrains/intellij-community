@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.AbstractExpressionSelectionTest
 import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
-import org.jetbrains.kotlin.idea.actions.AbstractKotlinAddImportActionTest
+import org.jetbrains.kotlin.idea.actions.AbstractK1AddImportActionTest
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiPlatformHighlightingTest
@@ -55,28 +55,26 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletio
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletionTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.debugger.test.*
-import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractSequenceTraceTestCase
-import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractSequenceTraceWithIREvaluatorTestCase
-import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateJavaToLibrarySourceTest
-import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToDecompiledLibraryTest
-import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToLibrarySourceTest
-import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToLibrarySourceTestWithJS
+import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractIrSequenceTraceTestCase
+import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractIrSequenceTraceWithIREvaluatorTestCase
+import org.jetbrains.kotlin.idea.decompiler.navigation.*
 import org.jetbrains.kotlin.idea.decompiler.stubBuilder.AbstractLoadJavaClsStubTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiledTextTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractJvmDecompiledTextTest
 import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandlerTest
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
-import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
+import org.jetbrains.kotlin.idea.externalAnnotations.AbstractK1ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
-import org.jetbrains.kotlin.idea.imports.AbstractAutoImportTest
-import org.jetbrains.kotlin.idea.imports.AbstractFilteringAutoImportTest
 import org.jetbrains.kotlin.idea.imports.AbstractJsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1AutoImportTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
+import org.jetbrains.kotlin.idea.inspections.AbstractInspectionTest
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
 import org.jetbrains.kotlin.idea.inspections.AbstractViewOfflineInspectionTest
@@ -85,6 +83,7 @@ import org.jetbrains.kotlin.idea.intentions.AbstractK1IntentionTest
 import org.jetbrains.kotlin.idea.intentions.AbstractK1IntentionTest2
 import org.jetbrains.kotlin.idea.intentions.AbstractMultiFileIntentionTest
 import org.jetbrains.kotlin.idea.intentions.declarations.AbstractJoinLinesTest
+import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowMultiplatformTest
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocHighlightingTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocTypingTest
@@ -112,6 +111,7 @@ import org.jetbrains.kotlin.idea.refactoring.move.AbstractMoveTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.pullUp.AbstractPullUpTest
 import org.jetbrains.kotlin.idea.refactoring.pushDown.AbstractPushDownTest
+import org.jetbrains.kotlin.idea.refactoring.rename.AbstractInplaceRenameTest
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractRenameTest
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.AbstractMultiModuleSafeDeleteTest
@@ -122,6 +122,7 @@ import org.jetbrains.kotlin.idea.scratch.AbstractScratchLineMarkersTest
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest
 import org.jetbrains.kotlin.idea.script.*
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexTest
+import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceByReferenceTest
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerLeafGroupingTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerMultiplatformTest
@@ -135,8 +136,8 @@ import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.inference.common.AbstractCommonConstraintCollectorTest
 import org.jetbrains.kotlin.nj2k.inference.mutability.AbstractMutabilityInferenceTest
 import org.jetbrains.kotlin.nj2k.inference.nullability.AbstractNullabilityInferenceTest
-import org.jetbrains.kotlin.pacelize.ide.test.AbstractParcelizeCheckerTest
-import org.jetbrains.kotlin.pacelize.ide.test.AbstractParcelizeQuickFixTest
+import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK1CheckerTest
+import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK1QuickFixTest
 import org.jetbrains.kotlin.psi.patternMatching.AbstractPsiUnifierTest
 import org.jetbrains.kotlin.search.AbstractAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.search.AbstractInheritorsSearchTest
@@ -165,6 +166,8 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK1Tests()
 }
 
+fun assembleK1Workspace(): TWorkspace = assembleWorkspace()
+
 fun generateK1Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
@@ -174,59 +177,58 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     val excludedFirPrecondition = fun(name: String) = !name.endsWith(".fir.kt") && !name.endsWith(".fir.kts")
 
     testGroup("jvm-debugger/test") {
-        testClass<AbstractKotlinSteppingTest> {
-            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
-            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
-            model("stepping/stepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
-            model("stepping/stepOut", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
-            model("stepping/stepOver", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
-            model("stepping/filters", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
-            model("stepping/custom", pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
-        }
-
-        testClass<AbstractIrKotlinSteppingTest> {
-            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
-            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
-            model("stepping/stepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
-            model("stepping/stepOut", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
-            model("stepping/stepOver", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
-            model("stepping/filters", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
-            model("stepping/custom", pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
-        }
-
-        testClass<AbstractIndyLambdaKotlinSteppingTest> {
-            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
-            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
-            model("stepping/stepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
-            model("stepping/stepOut", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
-            model("stepping/stepOver", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
-            model("stepping/filters", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
-            model("stepping/custom", pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
-        }
-
-        testClass<AbstractKotlinEvaluateExpressionTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
+        listOf(
+          AbstractIrKotlinSteppingTest::class,
+          AbstractIndyLambdaIrKotlinSteppingTest::class,
+          AbstractK1IdeK2CodeKotlinSteppingTest::class,
+        ).forEach {
+            testClass(it) {
+                model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
+                model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
+                model("stepping/stepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
+                model("stepping/stepOut", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
+                model("stepping/stepOver", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
+                model("stepping/filters", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
+                model("stepping/custom", pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+            }
         }
 
         testClass<AbstractIrKotlinEvaluateExpressionTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
+            model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
         }
 
-        testClass<AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest> {
+        listOf(
+          AbstractIndyLambdaIrKotlinEvaluateExpressionTest::class,
+          AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
+          AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
+        ).forEach {
+            testClass(it) {
+                model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+                model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+                model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            }
+        }
+
+        listOf(
+          AbstractIrKotlinScriptEvaluateExpressionTest::class,
+          AbstractK1IdeK2CodeScriptEvaluateExpressionTest::class,
+        ).forEach {
+            testClass(it) {
+                model("evaluation/scripts", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            }
+        }
+
+        testClass<AbstractIrKotlinEvaluateExpressionInMppTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
 
-        testClass<AbstractIndyLambdaKotlinEvaluateExpressionTest> {
+        testClass<AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-        }
-
-        testClass<AbstractKotlinEvaluateExpressionInMppTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
             model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
 
@@ -243,44 +245,64 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("positionManager", isRecursive = false, pattern = DIRECTORY, testClassName = "MultiFile")
         }
 
+
+        listOf(AbstractIrBreakpointHighlightingTest::class,
+               AbstractK1IdeK2CodeBreakpointHighlightingTest::class).forEach {
+            testClass(it) {
+                model("highlighting", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+            }
+        }
+
         testClass<AbstractSmartStepIntoTest> {
             model("smartStepInto")
         }
 
         testClass<AbstractBreakpointApplicabilityTest> {
-            model("breakpointApplicability")
+            model("breakpointApplicability", pattern = KT_OR_KTS)
         }
 
-        testClass<AbstractFileRankingTest> {
-            model("fileRanking")
+        listOf(AbstractFileRankingTest::class, AbstractK1IdeK2CodeFileRankingTest::class).forEach {
+            testClass(it) {
+                model("fileRanking")
+            }
         }
 
-        testClass<AbstractAsyncStackTraceTest> {
-            model("asyncStackTrace")
+        listOf(AbstractAsyncStackTraceTest::class, AbstractK1IdeK2CodeAsyncStackTraceTest::class).forEach {
+            testClass(it) {
+                model("asyncStackTrace")
+            }
         }
 
-        testClass<AbstractCoroutineDumpTest> {
-            model("coroutines")
+        listOf(AbstractCoroutineDumpTest::class, AbstractK1IdeK2CodeCoroutineDumpTest::class).forEach {
+            testClass(it) {
+                model("coroutines")
+            }
         }
 
-        testClass<AbstractSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
+        testClass<AbstractIrSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
             model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         }
 
-        testClass<AbstractSequenceTraceWithIREvaluatorTestCase> { // TODO: implement mapping logic for terminal operations
+        testClass<AbstractIrSequenceTraceWithIREvaluatorTestCase> { // TODO: implement mapping logic for terminal operations
             model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         }
 
-        testClass<AbstractContinuationStackTraceTest> {
-            model("continuation")
+        listOf(AbstractContinuationStackTraceTest::class, AbstractK1IdeK2CodeContinuationStackTraceTest::class).forEach {
+            testClass(it) {
+                model("continuation")
+            }
         }
 
-        testClass<AbstractKotlinVariablePrintingTest> {
-            model("variables")
+        listOf(AbstractKotlinVariablePrintingTest::class, AbstractK1IdeK2CodeKotlinVariablePrintingTest::class).forEach {
+            testClass(it) {
+                model("variables")
+            }
         }
 
-        testClass<AbstractXCoroutinesStackTraceTest> {
-            model("xcoroutines")
+        listOf(AbstractXCoroutinesStackTraceTest::class, AbstractK1IdeK2CodeXCoroutinesStackTraceTest::class).forEach {
+            testClass(it) {
+                model("xcoroutines")
+            }
         }
 
         testClass<AbstractClassNameCalculatorTest> {
@@ -318,7 +340,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/resolveModeComparison")
         }
 
-        testClass<AbstractKotlinHighlightVisitorTest> {
+        testClass<AbstractKotlinHighlightVisitorTest>(commonSuite = false) {
             model("checker", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
             model("checker/regression", pattern = KT.withPrecondition(excludedFirPrecondition))
             model("checker/recovery", pattern = KT.withPrecondition(excludedFirPrecondition))
@@ -329,7 +351,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("checker/diagnosticsMessage", pattern = KT.withPrecondition(excludedFirPrecondition))
         }
 
-        testClass<AbstractKotlinHighlightWolfPassTest> {
+        testClass<AbstractKotlinHighlightWolfPassTest>(commonSuite = false) {
             model("checker/wolf", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
         }
 
@@ -360,7 +382,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractK1QuickFixTest> {
-            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
+            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kts?$"))
         }
 
         testClass<AbstractGotoSuperTest> {
@@ -393,8 +415,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("decompiler/navigation/usercode")
         }
 
-        testClass<AbstractNavigateJavaToLibrarySourceTest> {
+        testClass<AbstractNavigateJavaSourceToLibraryTest> {
             model("decompiler/navigation/userJavaCode", pattern = Patterns.forRegex("^(.+)\\.java$"))
+        }
+
+        testClass<AbstractNavigateJavaSourceToLibrarySourceTest> {
+            model("navigation/javaSource", pattern = Patterns.forRegex("^(.+)\\.java$"))
         }
 
         testClass<AbstractNavigateToLibrarySourceTestWithJS> {
@@ -421,8 +447,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("search/annotations")
         }
 
-        testClass<AbstractExternalAnnotationTest> {
-            model("externalAnnotations")
+        testClass<AbstractK1ExternalAnnotationTest> {
+            model("externalAnnotations", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractQuickFixMultiFileTest> {
@@ -433,12 +459,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("typealiasExpansionIndex")
         }
 
-        testClass<AbstractHighlightingTest> {
+        testClass<AbstractHighlightingTest>(commonSuite = false) {
             model("highlighter", pattern = Patterns.KT_OR_JAVA)
         }
 
         testClass<AbstractK1HighlightingMetaInfoTest> {
-            model("highlighterMetaInfo")
+            model("highlighterMetaInfo", pattern = Patterns.KT_OR_KTS)
         }
 
         testClass<AbstractDslHighlighterTest> {
@@ -478,7 +504,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractBreadcrumbsTest> {
-            model("codeInsight/breadcrumbs")
+            model("codeInsight/breadcrumbs", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractK1IntentionTest> {
@@ -614,7 +640,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractReferenceResolveWithLibTest> {
-            model("resolve/referenceWithLib", isRecursive = false)
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractReferenceResolveWithCompiledLibTest> {
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractReferenceResolveWithCrossLibTest> {
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractReferenceResolveInLibrarySourcesTest> {
@@ -640,7 +674,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinFindUsagesWithLibraryTest> {
-            model("findUsages/libraryUsages", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""))
+            model("findUsages/libraryUsages", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|java)$"""))
         }
 
         testClass<AbstractKotlinFindUsagesWithStdlibTest> {
@@ -711,6 +745,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/rename", pattern = TEST, flatten = true)
         }
 
+        testClass<AbstractInplaceRenameTest> {
+            model("refactoring/rename/inplace", pattern = KT, flatten = true)
+        }
+
         testClass<AbstractMultiModuleRenameTest> {
             model("refactoring/renameMultiModule", pattern = TEST, flatten = true)
         }
@@ -748,17 +786,26 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("copyPaste/moveDeclarations", pattern = KT_WITHOUT_DOTS, testMethodName = "doTest")
         }
 
-        testClass<AbstractHighlightExitPointsTest> {
+        testClass<AbstractCustomHighlightUsageHandlerTest>("HighlightExitPointsTestGenerated") {
             model("exitPoints")
+        }
+
+        testClass<AbstractCustomHighlightUsageHandlerTest>("KotlinHighlightUsagesTestGenerated") {
+            model("highlightUsages")
+        }
+
+        testClass<AbstractKotlinReceiverUsageHighlightingTest>("KotlinReceiverUsageHighlightingTestGenerated") {
+            model("receiverUsageHighlighting")
         }
 
         testClass<AbstractLineMarkersTest> {
             model("codeInsight/lineMarker", pattern = Patterns.forRegex("^(\\w+)\\.(kt|kts)$"))
         }
 
-        testClass<AbstractLightTestRunLineMarkersTest> {
-            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doLightTest", testClassName = "WithLightTestFramework")
+        testClass<AbstractKotlinPsiBasedTestFrameworkTest> {
+            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doPsiBasedTest", testClassName = "WithLightTestFramework")
             model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doPureTest", testClassName = "WithoutLightTestFramework")
+            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doTestWithGradleConfiguration", testClassName = "WithGradleConfiguration")
         }
 
         testClass<AbstractLineMarkersTestInLibrarySources> {
@@ -781,7 +828,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("addImportAlias", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractKotlinAddImportActionTest> {
+        testClass<AbstractK1AddImportActionTest> {
             model("idea/actions/kotlinAddImportAction", pattern = KT_WITHOUT_DOTS)
         }
 
@@ -809,14 +856,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("decompiler/decompiledTextJvm", pattern = Patterns.forRegex("""^([^\.]+)$"""))
         }
 
-        testClass<AbstractAutoImportTest> {
+        testClass<AbstractK1AutoImportTest> {
             model("editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
-            model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName = "WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
-        testClass<AbstractFilteringAutoImportTest> {
+        testClass<AbstractK1FilteringAutoImportTest> {
             model("editor/autoImportExtension", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
-            model("editor/autoImportExtension", testMethodName = "doTestWithoutAutoImport", testClassName = "WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractJvmOptimizeImportsTest> {
@@ -897,7 +942,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractBytecodeToolWindowTest> {
-            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY)
+            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIr", testClassName = "WithIR")
+            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithoutIr", testClassName = "WithoutIR")
+        }
+
+        testClass<AbstractBytecodeToolWindowMultiplatformTest> {
+            model("internal/toolWindowMultiplatform", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIrCommon", testClassName = "WithIRCommon")
+            model("internal/toolWindowMultiplatform", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithoutIrCommon", testClassName = "WithoutIRCommon")
+            model("internal/toolWindowMultiplatform", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIrJvm", testClassName = "WithIRJvm")
+            model("internal/toolWindowMultiplatform", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithoutIrJvm", testClassName = "WithoutIRJvm")
         }
 
         testClass<AbstractReferenceResolveTest>("org.jetbrains.kotlin.idea.kdoc.KdocResolveTestGenerated") {
@@ -1071,12 +1124,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("compiler-plugins/parcelize/tests") {
-        testClass<AbstractParcelizeQuickFixTest> {
+    testGroup("compiler-plugins/parcelize/tests/k1", testDataPath = "../testData") {
+        testClass<AbstractParcelizeK1QuickFixTest> {
             model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
         }
 
-        testClass<AbstractParcelizeCheckerTest> {
+        testClass<AbstractParcelizeK1CheckerTest> {
             model("checker", pattern = KT)
         }
     }
@@ -1102,12 +1155,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("weighers/smart", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
-        testClass<AbstractJSBasicCompletionTest> {
+        testClass<AbstractK1JSBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/js", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
-        testClass<AbstractJvmBasicCompletionTest> {
+        testClass<AbstractK1JvmBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }
@@ -1121,7 +1174,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractJvmWithLibBasicCompletionTest> {
-            model("basic/withLib", isRecursive = false)
+            model("basic/withLib", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractBasicCompletionHandlerTest> {
@@ -1152,8 +1205,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("smartMultiFile", pattern = DIRECTORY, isRecursive = false)
         }
 
-        testClass<AbstractJvmBasicCompletionTest>("org.jetbrains.kotlin.idea.completion.test.KDocCompletionTestGenerated") {
-            model("kdoc")
+        testClass<AbstractK1JvmBasicCompletionTest>("org.jetbrains.kotlin.idea.completion.test.K1KDocCompletionTestGenerated") {
+            model("kdoc", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+        }
+
+        testClass<AbstractK1MLPerformanceCompletionTest>(commonSuite = false) {
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractJava8BasicCompletionTest> {
@@ -1218,27 +1276,27 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("partialConverter", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractCommonConstraintCollectorTest> {
+        testClass<AbstractCommonConstraintCollectorTest>(commonSuite = false) {
             model("inference/common")
         }
 
-        testClass<AbstractNullabilityInferenceTest> {
+        testClass<AbstractNullabilityInferenceTest>(commonSuite = false) {
             model("inference/nullability")
         }
 
-        testClass<AbstractMutabilityInferenceTest> {
+        testClass<AbstractMutabilityInferenceTest>(commonSuite = false) {
             model("inference/mutability")
         }
 
-        testClass<AbstractNewJavaToKotlinCopyPasteConversionTest> {
+        testClass<AbstractNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPaste", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractTextNewJavaToKotlinCopyPasteConversionTest> {
+        testClass<AbstractTextNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPastePlainText", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
         }
 
-        testClass<AbstractNewJavaToKotlinConverterMultiFileTest> {
+        testClass<AbstractNewJavaToKotlinConverterMultiFileTest>(commonSuite = false) {
             model("multiFile", pattern = DIRECTORY, isRecursive = false)
         }
     }
@@ -1246,6 +1304,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("compiler-reference-index/tests") {
         testClass<AbstractKotlinCompilerReferenceTest> {
             model("compilerIndex", pattern = DIRECTORY, classPerTest = true)
+        }
+
+        testClass<AbstractKotlinCompilerReferenceByReferenceTest> {
+            model("compilerIndexByReference", pattern = DIRECTORY, classPerTest = true)
         }
     }
 
@@ -1266,9 +1328,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("uast/uast-kotlin/tests", testDataPath = "../../uast-kotlin-fir/testData") {
+    testGroup("uast/uast-kotlin/tests", testDataPath = "../../uast-kotlin-fir/tests/testData") {
         testClass<AbstractFE1UastDeclarationTest> {
-            model("declaration")
+            model("declaration", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractFE1UastTypesTest> {
@@ -1303,58 +1365,58 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("performance-tests", testDataPath = "../idea/tests/testData") {
-        testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
+        testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest> {
+        testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest> {
+        testClass<AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest>(commonSuite = false) {
             model("copyPaste/literal", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.kt$"""))
         }
 
-        testClass<AbstractPerformanceHighlightingTest> {
+        testClass<AbstractPerformanceHighlightingTest>(commonSuite = false) {
             model("highlighter", testMethodName = "doPerfTest")
         }
 
-        testClass<AbstractPerformanceHighlightingStatNamesTest> {
+        testClass<AbstractPerformanceHighlightingStatNamesTest>(commonSuite = false) {
             model("highlighter", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^(InvokeCall)\.kt$"""))
         }
 
-        testClass<AbstractPerformanceAddImportTest> {
+        testClass<AbstractPerformanceAddImportTest>(commonSuite = false) {
             model("addImport", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractPerformanceTypingIndentationTest> {
+        testClass<AbstractPerformanceTypingIndentationTest>(commonSuite = false) {
             model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
             model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
         }
     }
 
     testGroup("performance-tests", testDataPath = "../completion/testData") {
-        testClass<AbstractPerformanceCompletionIncrementalResolveTest> {
+        testClass<AbstractPerformanceCompletionIncrementalResolveTest>(commonSuite = false) {
             model("incrementalResolve", testMethodName = "doPerfTest")
         }
 
-        testClass<AbstractPerformanceBasicCompletionHandlerTest> {
+        testClass<AbstractPerformanceBasicCompletionHandlerTest>(commonSuite = false) {
             model("handlers/basic", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractPerformanceBasicCompletionHandlerStatNamesTest> {
+        testClass<AbstractPerformanceBasicCompletionHandlerStatNamesTest>(commonSuite = false) {
             model("handlers/basic", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^(GetOperator)\.kt$"""))
         }
 
-        testClass<AbstractPerformanceSmartCompletionHandlerTest> {
+        testClass<AbstractPerformanceSmartCompletionHandlerTest>(commonSuite = false) {
             model("handlers/smart", testMethodName = "doPerfTest")
         }
 
-        testClass<AbstractPerformanceKeywordCompletionHandlerTest> {
+        testClass<AbstractPerformanceKeywordCompletionHandlerTest>(commonSuite = false) {
             model("handlers/keywords", testMethodName = "doPerfTest")
         }
 
-        testClass<AbstractPerformanceCompletionCharFilterTest> {
+        testClass<AbstractPerformanceCompletionCharFilterTest>(commonSuite = false) {
             model("handlers/charFilter", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
     }

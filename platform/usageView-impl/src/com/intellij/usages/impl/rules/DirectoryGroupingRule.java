@@ -38,11 +38,11 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   }
 
   protected final Project myProject;
-  private final boolean myFlattenDirs;
+  protected final boolean myFlattenDirs;
   /**
    * A flag specifying if the middle paths (that do not contain a usage) should be compacted
    */
-  private final boolean compactMiddleDirectories;
+  protected final boolean compactMiddleDirectories;
 
   public DirectoryGroupingRule(@NotNull Project project) {
     this(project, true, false);
@@ -89,12 +89,12 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     return "UsageGrouping.Directory";
   }
 
-  private final class DirectoryGroup implements UsageGroup, DataProvider {
-    private final VirtualFile myDir;
+  protected class DirectoryGroup implements UsageGroup, DataProvider {
+    protected final VirtualFile myDir;
     private Icon myIcon;
     private final @NlsSafe String relativePathText;
 
-    private DirectoryGroup(@NotNull VirtualFile dir) {
+    protected DirectoryGroup(@NotNull VirtualFile dir) {
       myDir = dir;
       relativePathText = myDir.getPath();
       update();

@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
@@ -12,9 +13,8 @@ import static java.util.Objects.requireNonNull;
  * Logger wrapper that ignores repeating logging attempts if they are done inside specified throttling interval
  * (see ignoreRepeatedMessagesInMs ctor arg)
  */
-public class ThrottledLogger {
-  @NotNull
-  private final Logger logger;
+public final class ThrottledLogger {
+  private final @NotNull Logger logger;
   /**
    * Ignore (i.e. skip logging) subsequent messages with same key if they come during that period after the first message.
    */
@@ -31,8 +31,7 @@ public class ThrottledLogger {
     this.ignoreRepeatedMessagesInMs = ignoreRepeatedMessagesInMs;
   }
 
-  @NotNull
-  public Logger logger() {
+  public @NotNull Logger wrappedLogger() {
     return logger;
   }
 
@@ -46,6 +45,16 @@ public class ThrottledLogger {
     long lastLoggedAt = lastLoggedAtMsHolder.get();
     if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
       logger.debug(message, t);
+
+      forwardLastLogged(nowMs, lastLoggedAt);
+    }
+  }
+
+  public void debug(@NotNull Supplier<String> messageSupplier){
+    final long nowMs = System.currentTimeMillis();
+    long lastLoggedAt = lastLoggedAtMsHolder.get();
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
+      logger.debug(messageSupplier.get());
 
       forwardLastLogged(nowMs, lastLoggedAt);
     }
@@ -67,6 +76,16 @@ public class ThrottledLogger {
     }
   }
 
+  public void info(@NotNull Supplier<String> messageSupplier){
+    final long nowMs = System.currentTimeMillis();
+    long lastLoggedAt = lastLoggedAtMsHolder.get();
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
+      logger.info(messageSupplier.get());
+
+      forwardLastLogged(nowMs, lastLoggedAt);
+    }
+  }
+
   public void warn(final String message) {
     warn(message, null);
   }
@@ -82,6 +101,16 @@ public class ThrottledLogger {
     }
   }
 
+  public void warn(@NotNull Supplier<String> messageSupplier){
+    final long nowMs = System.currentTimeMillis();
+    long lastLoggedAt = lastLoggedAtMsHolder.get();
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
+      logger.warn(messageSupplier.get());
+
+      forwardLastLogged(nowMs, lastLoggedAt);
+    }
+  }
+
   public void error(final String message) {
     error(message, null);
   }
@@ -92,6 +121,16 @@ public class ThrottledLogger {
     long lastLoggedAt = lastLoggedAtMsHolder.get();
     if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
       logger.error(message, t);
+
+      forwardLastLogged(nowMs, lastLoggedAt);
+    }
+  }
+
+  public void error(@NotNull Supplier<String> messageSupplier){
+    final long nowMs = System.currentTimeMillis();
+    long lastLoggedAt = lastLoggedAtMsHolder.get();
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
+      logger.error(messageSupplier.get());
 
       forwardLastLogged(nowMs, lastLoggedAt);
     }

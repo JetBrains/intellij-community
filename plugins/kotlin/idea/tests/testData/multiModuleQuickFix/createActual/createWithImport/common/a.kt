@@ -1,4 +1,6 @@
-// "Create actual class for module testModule_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
+// IGNORE_K2
+
 package a
 
 import b.B

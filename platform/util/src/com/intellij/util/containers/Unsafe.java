@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ReflectionUtil;
@@ -13,37 +13,27 @@ import java.lang.reflect.Field;
 @ApiStatus.Internal
 public final class Unsafe {
   private static final MethodHandle putObjectVolatile;
-  private static final MethodHandle putOrderedLong;
   private static final MethodHandle getObjectVolatile;
   private static final MethodHandle compareAndSwapObject;
   private static final MethodHandle compareAndSwapInt;
   private static final MethodHandle compareAndSwapLong;
   private static final MethodHandle getAndAddInt;
   private static final MethodHandle objectFieldOffset;
-  private static final MethodHandle getLong;
   private static final MethodHandle arrayIndexScale;
   private static final MethodHandle arrayBaseOffset;
-  private static final MethodHandle putObject;
-  private static final MethodHandle getObject;
-  private static final MethodHandle putOrderedObject;
   private static final MethodHandle copyMemory;
 
   static {
     try {
       putObjectVolatile = find("putObjectVolatile", void.class, Object.class, long.class, Object.class);
-      putOrderedLong = find("putOrderedLong", void.class, Object.class, long.class, long.class);
       getObjectVolatile = find("getObjectVolatile", Object.class, Object.class, long.class);
       compareAndSwapObject = find("compareAndSwapObject", boolean.class, Object.class, long.class, Object.class, Object.class);
       compareAndSwapInt = find("compareAndSwapInt", boolean.class, Object.class, long.class, int.class, int.class);
       compareAndSwapLong = find("compareAndSwapLong", boolean.class, Object.class, long.class, long.class, long.class);
       getAndAddInt = find("getAndAddInt", int.class, Object.class, long.class, int.class);
       objectFieldOffset = find("objectFieldOffset", long.class, Field.class);
-      getLong = find("getLong", long.class, Object.class, long.class);
       arrayBaseOffset = find("arrayBaseOffset", int.class, Class.class);
       arrayIndexScale = find("arrayIndexScale", int.class, Class.class);
-      putObject = find("putObject", void.class, Object.class, long.class, Object.class);
-      getObject = find("getObject", Object.class, Object.class, long.class);
-      putOrderedObject = find("putOrderedObject", void.class, Object.class, long.class, Object.class);
       copyMemory = find("copyMemory", void.class, Object.class, long.class, Object.class, long.class, long.class);
     }
     catch (Throwable t) {
@@ -51,8 +41,7 @@ public final class Unsafe {
     }
   }
 
-  @NotNull
-  private static MethodHandle find(String name, Class returnType, Class... params) throws Exception {
+  private static @NotNull MethodHandle find(String name, Class<?> returnType, Class<?>... params) throws Exception {
     MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
     Object unsafe = ReflectionUtil.getUnsafe();
     return publicLookup
@@ -77,7 +66,7 @@ public final class Unsafe {
       throw new RuntimeException(throwable);
     }
   }
-  static int getAndAddInt(Object object, long offset, int v) {
+  public static int getAndAddInt(Object object, long offset, int v) {
     try {
       return (int)getAndAddInt.invokeExact(object, offset, v);
     }
@@ -94,7 +83,7 @@ public final class Unsafe {
     }
   }
 
-  static boolean compareAndSwapObject(Object o, long offset,
+  public static boolean compareAndSwapObject(Object o, long offset,
                                                 Object expected,
                                                 Object x) {
     try {
@@ -105,7 +94,7 @@ public final class Unsafe {
     }
   }
 
-  static void putObjectVolatile(Object o, long offset, Object x) {
+  public static void putObjectVolatile(Object o, long offset, Object x) {
     try {
       putObjectVolatile.invokeExact(o, offset, x);
     }
@@ -113,26 +102,9 @@ public final class Unsafe {
       throw new RuntimeException(throwable);
     }
   }
-  public static void putOrderedLong(Object o, long offset, long x) {
-    try {
-      putOrderedLong.invokeExact(o, offset, x);
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
-  }
-
   public static long objectFieldOffset(Field f) {
     try {
       return (long)objectFieldOffset.invokeExact(f);
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
-  }
-  public static long getLong(Object o, long offset) {
-    try {
-      return (long)getLong.invokeExact(o, offset);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
@@ -150,30 +122,6 @@ public final class Unsafe {
   public static int arrayBaseOffset(Class<?> arrayClass) {
     try {
       return (int)arrayBaseOffset.invokeExact(arrayClass);
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
-  }
-  public static void putObject(Object o, long offset, Object x) {
-    try {
-      putObject.invokeExact(o, offset, x);
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
-  }
-  public static Object getObject(Object o, long offset) {
-    try {
-      return getObject.invokeExact(o, offset);
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
-  }
-  public static void putOrderedObject(Object o, long offset, Object x) {
-    try {
-      putOrderedObject.invokeExact(o, offset, x);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);

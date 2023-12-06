@@ -1,16 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.*;
+import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,66 +39,64 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    Set<VirtualFile> contentRoots = getModuleRootsToIterate();
-    for (VirtualFile contentRoot : contentRoots) {
-      if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
-        return false;
-      }
-    }
-    return true;
+    Pair<Collection<VirtualFile>, Collection<VirtualFile>> rootsPair = ReadAction.nonBlocking(() -> {
+      Project project = myModule.getProject();
+      if (project.isDisposed()) return null;
+      WorkspaceFileIndexEx index = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
+      Collection<VirtualFile> recursiveRoots = new HashSet<>();
+      Collection<VirtualFile> nonRecursiveRoots = new SmartList<>();
+      index.visitFileSets(new WorkspaceFileSetVisitor() {
+        @Override
+        public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet) {
+          if (!(fileSet instanceof WorkspaceFileSetWithCustomData<?>) || !isInContent((WorkspaceFileSetWithCustomData<?>)fileSet)) {
+            return;
+          }
+          VirtualFile root = fileSet.getRoot();
+          if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
+            nonRecursiveRoots.add(fileSet.getRoot());
+          }
+          else {
+            recursiveRoots.add(root);
+          }
+        }
+      });
+      Collection<VirtualFile> filteredRecursiveRoots = ContainerUtil.filter(recursiveRoots, root -> !isNestedRootOfModuleContent(root));
+      return new Pair<>(filteredRecursiveRoots, nonRecursiveRoots);
+    }).executeSynchronously();
+    return iterateProvidedRootsOfContent(processor, filter, rootsPair.getFirst(), rootsPair.getSecond());
   }
 
-  public @NotNull Set<VirtualFile> getModuleRootsToIterate() {
-    return ReadAction.compute(() -> {
-      if (myModule.isDisposed()) {
-        return Collections.emptySet();
-      }
+  private boolean isNestedRootOfModuleContent(@NotNull VirtualFile root) {
+    VirtualFile parent = root.getParent();
+    if (parent == null) {
+      return false;
+    }
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(parent, false, true, false, false, false);
+    return fileInfo.findFileSet(this::hasRecursiveRootFromModuleContent) != null;
+  }
 
-      Set<VirtualFile> result = new LinkedHashSet<>();
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(myModule);
-      ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(myModule.getProject());
-      for (VirtualFile[] roots : Arrays.asList(moduleRootManager.getContentRoots(), moduleRootManager.getSourceRoots())) {
-        for (VirtualFile root : roots) {
-          if (!projectFileIndex.isInProject(root)) continue;
-
-          VirtualFile parent = root.getParent();
-          if (parent != null) {
-            Module parentModule = projectFileIndex.getModuleForFile(parent, false);
-            if (myModule.equals(parentModule)) {
-              // inner content - skip it
-              continue;
-            }
-          }
-          result.add(root);
-        }
-      }
-      return result;
-    });
+  private boolean hasRecursiveRootFromModuleContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
+    if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
+      return false;
+    }
+    return isInContent(fileSet);
   }
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    if (myWorkspaceFileIndex != null) {
-      WorkspaceFileSetWithCustomData<ModuleContentOrSourceRootData> fileSet = 
-        myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleContentOrSourceRootData.class);
-      return isFromThisModule(fileSet);
-    }
-
-    return isInContent(fileOrDir, getInfoForFileOrDirectory(fileOrDir));
+    WorkspaceFileSetWithCustomData<ModuleRelatedRootData> fileSet =
+      myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, false, ModuleRelatedRootData.class);
+    return isFromThisModule(fileSet);
   }
 
-  private boolean isFromThisModule(@Nullable WorkspaceFileSetWithCustomData<? extends ModuleContentOrSourceRootData> fileSet) {
+  private boolean isFromThisModule(@Nullable WorkspaceFileSetWithCustomData<? extends ModuleRelatedRootData> fileSet) {
     return fileSet != null && fileSet.getData().getModule().equals(myModule);
   }
 
   @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
-    if (myWorkspaceFileIndex != null) {
-      WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet = myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleSourceRootData.class);
-      return fileSet != null && isFromThisModule(fileSet);
-    }
-    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule());
+    WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet = myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, false, ModuleSourceRootData.class);
+    return fileSet != null && isFromThisModule(fileSet);
   }
 
   @Override
@@ -109,24 +112,14 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
-    if (myWorkspaceFileIndex != null) {
-      WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet = myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleSourceRootData.class);
-      return fileSet != null && isFromThisModule(fileSet) && fileSet.getKind() == WorkspaceFileKind.TEST_CONTENT;
-    }
-    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule()) && isTestSourcesRoot(info);
+    WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet = myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, false, ModuleSourceRootData.class);
+    return fileSet != null && isFromThisModule(fileSet) && fileSet.getKind() == WorkspaceFileKind.TEST_CONTENT;
   }
 
   @Override
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
-    if (myWorkspaceFileIndex != null) {
-      WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet = myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleSourceRootData.class);
-      return isFromThisModule(fileSet) && ProjectFileIndexImpl.isSourceRootOfType(fileSet, rootTypes);
-    }
-    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    if (!info.isInModuleSource(fileOrDir) || !myModule.equals(info.getModule())) return  false;
-    JpsModuleSourceRootType<?> rootType = myDirectoryIndex.getSourceRootType(info);
-    return rootType != null && rootTypes.contains(rootType);
+    WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet = myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, false, ModuleSourceRootData.class);
+    return isFromThisModule(fileSet) && ProjectFileIndexImpl.isSourceRootOfType(fileSet, rootTypes);
   }
 
   @Override
@@ -223,12 +216,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   @Override
-  protected boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
-    return ProjectFileIndexImpl.isFileInContent(file, info) && myModule.equals(info.getModule());
-  }
-
-  @Override
   protected boolean isInContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
-    return fileSet.getData() instanceof ModuleContentOrSourceRootData data && myModule.equals(data.getModule());
+    return fileSet.getData() instanceof ModuleRelatedRootData data && myModule.equals(data.getModule());
   }
 }

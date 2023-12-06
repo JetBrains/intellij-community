@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight
 
 import com.intellij.lang.ASTNode
@@ -13,11 +13,14 @@ import com.intellij.psi.PsiElement
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigSection
+import kotlin.math.min
 
-class EditorConfigFoldingBuilder : FoldingBuilderEx(), DumbAware {
+private val LOG = logger<EditorConfigFoldingBuilder>()
+
+internal class EditorConfigFoldingBuilder : FoldingBuilderEx(), DumbAware {
   override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
     if (root !is EditorConfigPsiFile) {
-      Log.warn("Folding builder was given unexpected element")
+      LOG.warn("Folding builder was given unexpected element")
       return emptyArray()
     }
 
@@ -89,22 +92,18 @@ class EditorConfigFoldingBuilder : FoldingBuilderEx(), DumbAware {
   private val COMMENT_FOLD_LENGTH_LIMIT = 40
 
   override fun getPlaceholderText(node: ASTNode) = when (node.elementType) {
-    EditorConfigElementTypes.LINE_COMMENT -> "${node.text.substring(0 until Math.min(node.textLength, COMMENT_FOLD_LENGTH_LIMIT))}..."
+    EditorConfigElementTypes.LINE_COMMENT -> "${node.text.substring(0 until min(node.textLength, COMMENT_FOLD_LENGTH_LIMIT))}..."
     EditorConfigElementTypes.SECTION -> "..."
     else -> {
-      Log.warn("Requested folding placeholder for unknown node (${node.elementType})")
+      LOG.warn("Requested folding placeholder for unknown node (${node.elementType})")
       "..."
     }
   }
 
   override fun isCollapsedByDefault(node: ASTNode) = false
 
+  private fun isLineBreak(element: PsiElement?) =
+    element != null && LINE_BREAK.matches(element.text)
 
-  private companion object {
-    private val Log = logger<EditorConfigFoldingBuilder>()
-
-    private val LINE_BREAK = "\\R".toRegex()
-    private fun isLineBreak(element: PsiElement?) =
-      element != null && LINE_BREAK.matches(element.text)
-  }
+  private val LINE_BREAK = "\\R".toRegex()
 }

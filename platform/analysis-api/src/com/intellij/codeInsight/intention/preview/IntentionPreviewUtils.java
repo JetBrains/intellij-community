@@ -3,6 +3,9 @@ package com.intellij.codeInsight.intention.preview;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
@@ -11,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,6 +130,7 @@ public final class IntentionPreviewUtils {
   /**
    * @return current imaginary editor used for preview; null if we are not in preview session
    */
+  @Contract(pure = true)
   public static @Nullable Editor getPreviewEditor() {
     return PREVIEW_EDITOR.get();
   }
@@ -133,7 +138,19 @@ public final class IntentionPreviewUtils {
   /**
    * @return true if intention preview is currently being computed in this thread
    */
+  @Contract(pure = true)
   public static boolean isIntentionPreviewActive() {
     return PREVIEW_EDITOR.get() != null;
+  }
+
+  /**
+   * @param modCommand {@link ModCommand} to generate preview for
+   * @param context context in which the action is about to be executed
+   * @return default preview for a given ModCommand
+   */
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  public static @NotNull IntentionPreviewInfo getModCommandPreview(@NotNull ModCommand modCommand, @NotNull ActionContext context) {
+    return ModCommandService.getInstance().getPreview(modCommand, context);
   }
 }

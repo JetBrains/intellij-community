@@ -17,7 +17,9 @@
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
-import com.intellij.history.core.revisions.*;
+import com.intellij.history.core.revisions.ChangeRevision;
+import com.intellij.history.core.revisions.CurrentRevision;
+import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RevisionsCollector extends ChangeSetsProcessor {
+public final class RevisionsCollector extends ChangeSetsProcessor {
   private final LocalHistoryFacade myFacade;
   private final RootEntry myRoot;
   private final String myProjectId;
@@ -42,7 +44,7 @@ public class RevisionsCollector extends ChangeSetsProcessor {
     myPattern = pattern;
   }
 
-  public List<Revision> getResult() {
+  public @NotNull List<Revision> getResult() {
     process();
     return myResult;
   }

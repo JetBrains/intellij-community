@@ -7,7 +7,7 @@ class FakeModule(object):
         return object.__getattribute__(self, item)
 
 
-sys.modules['extra'] = FakeModule()
+sys.modules['mod.extra'] = FakeModule()
 
 del FakeModule
 del sys

@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RemoteSdkCredentialsBuilder {
+public final class RemoteSdkCredentialsBuilder {
   private String myInterpreterPath = null;
   private RemoteCredentials myRemoteCredentials = null;
   private static final String myHelpersDefaultDirName = ".idea_helpers";
@@ -38,7 +38,7 @@ public class RemoteSdkCredentialsBuilder {
   /**
    * @deprecated Just inline this method.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void copyCredentials(@NotNull RemoteCredentials data, @NotNull MutableRemoteCredentials copyTo) {
     RemoteCredentialsHolder.copyRemoteCredentials(data, copyTo);
   }

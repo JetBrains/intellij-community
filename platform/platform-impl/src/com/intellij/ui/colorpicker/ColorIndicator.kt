@@ -24,7 +24,7 @@ private val BORDER_STROKE = BasicStroke(2f)
 
 class ColorIndicator(color: Color = DEFAULT_PICKER_COLOR) : JComponent() {
 
-  var color = color
+  var color: Color = color
     set(value) {
       field = value
       repaint()

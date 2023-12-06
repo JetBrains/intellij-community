@@ -1,5 +1,6 @@
-// "Create actual annotation class for module testModule_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
 // TOOL: org.jetbrains.kotlin.idea.inspections.OptionalExpectationInspection
+// IGNORE_K2
 
 package kotlin
 

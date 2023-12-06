@@ -1,14 +1,14 @@
+from _typeshed import Incomplete
 from datetime import datetime
-from typing import Any
 
-def __getattr__(name: str) -> Any: ...  # incomplete
+def __getattr__(name: str) -> Incomplete: ...
 
 class Event:
     createdTime: datetime
 
 class EventFilterSpec:
     class ByTime:
-        def __init__(self, beginTime: datetime): ...
+        def __init__(self, beginTime: datetime) -> None: ...
     time: EventFilterSpec.ByTime
 
 class EventManager:

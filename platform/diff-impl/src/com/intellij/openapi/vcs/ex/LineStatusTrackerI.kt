@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
@@ -15,7 +16,7 @@ import java.util.*
  *
  * Pay attention to [isValid] and [isOperational].
  */
-interface LineStatusTrackerI<out R : Range> {
+interface LineStatusTrackerI<out R : Range> : LineStatusMarkerRangesSource<R> {
   val project: Project?
   val disposable: Disposable
 
@@ -40,21 +41,21 @@ interface LineStatusTrackerI<out R : Range> {
    *
    * Returns `false` if tracker is not [isOperational] or is frozen [doFrozen].
    */
-  fun isValid(): Boolean
+  override fun isValid(): Boolean
 
   /**
    * Changed line ranges between documents.
    *
    * Requires an Application readLock.
    */
-  fun getRanges(): List<R>?
+  override fun getRanges(): List<R>?
 
   fun getRangesForLines(lines: BitSet): List<R>?
   fun getRangeForLine(line: Int): R?
 
   fun getNextRange(line: Int): R?
   fun getPrevRange(line: Int): R?
-  fun findRange(range: Range): R?
+  override fun findRange(range: Range): R?
 
 
   fun isLineModified(line: Int): Boolean
@@ -91,4 +92,14 @@ interface LineStatusTrackerI<out R : Range> {
    * [task] should not take Application readLock inside.
    */
   fun <T> readLock(task: () -> T): T
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @RequiresEdt
+  fun addListener(listener: LineStatusTrackerListener)
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @RequiresEdt
+  fun removeListener(listener: LineStatusTrackerListener)
 }

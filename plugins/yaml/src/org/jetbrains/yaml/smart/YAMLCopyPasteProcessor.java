@@ -127,9 +127,11 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     if (!file.getViewProvider().hasLanguage(YAMLLanguage.INSTANCE)) return text;
     CaretModel caretModel = editor.getCaretModel();
     SelectionModel selectionModel = editor.getSelectionModel();
-    Document document = editor.getDocument();
     int caretOffset = selectionModel.getSelectionStart() != selectionModel.getSelectionEnd() ?
                       selectionModel.getSelectionStart() : caretModel.getOffset();
+    if (isCommentElement(file.findElementAt(caretOffset))) return text;
+
+    Document document = editor.getDocument();
     int lineNumber = document.getLineNumber(caretOffset);
     int lineStartOffset = YAMLTextUtil.getLineStartSafeOffset(document, lineNumber);
     int indent = caretOffset - lineStartOffset;
@@ -147,6 +149,15 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     }
 
     return indentText(text, StringUtil.repeatSymbol(' ', indent), shouldInsertIndentAtTheEnd(caretOffset, document));
+  }
+
+  private static boolean isCommentElement(@Nullable PsiElement element) {
+    return element != null && isCommentNode(element.getNode());
+  }
+
+  private static boolean isCommentNode(@Nullable ASTNode node) {
+    return node != null &&
+           YAMLTokenTypes.COMMENT == PsiUtilCore.getElementType(node.getElementType() == YAMLTokenTypes.EOL ? node.getTreePrev() : node);
   }
 
   private static boolean shouldInsertIndentAtTheEnd(int caretOffset, Document document) {

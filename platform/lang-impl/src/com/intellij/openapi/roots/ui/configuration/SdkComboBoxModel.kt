@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
@@ -21,7 +21,7 @@ class SdkComboBoxModel private constructor(
   val modelBuilder: SdkListModelBuilder
 ) : ComboBoxModel<SdkListItem>, ListModel<SdkListItem> by listModel, ComboBoxPopupState<SdkListItem> by listModel {
 
-  override fun getSelectedItem() = selectedItem
+  override fun getSelectedItem(): SdkListItem = selectedItem
 
   override fun setSelectedItem(anItem: Any?) {
     selectedItem = when (anItem) {
@@ -70,10 +70,11 @@ class SdkComboBoxModel private constructor(
         (sdkTypeFilter == null || sdkTypeFilter.test(it))
       }
       val noJavaSdkTypes = {
-        SdkType.getAllTypes()
+        SdkType.getAllTypeList()
+          .asSequence()
           .filter { sdkTypeFilter.test(it) }
           .filterNot { it is SimpleJavaSdkType }
-          .isEmpty()
+          .none()
       }
       val sdkTypeCreationFilter = Predicate<SdkTypeId> {
         (it !is SimpleJavaSdkType || noJavaSdkTypes()) &&

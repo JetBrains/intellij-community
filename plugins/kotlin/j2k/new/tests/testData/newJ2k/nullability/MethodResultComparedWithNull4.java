@@ -8,7 +8,7 @@ class C {
         String result = i.getString();
         if (b) result = null;
         if (result != null) {
-            print(result);
+            System.out.println(result);
         }
     }
 }

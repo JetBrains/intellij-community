@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -206,12 +208,12 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         TextRange range = getRange(statement, type);
 
         if (isSetAll && mySuggestSetAll && isOnTheFly) {
-          SetInspectionOptionFix disableForSetAllFix =
-            new SetInspectionOptionFix(ExplicitArrayFillingInspection.this,
+          var disableForSetAllFix =
+            new UpdateInspectionOptionFix(ExplicitArrayFillingInspection.this,
                                        "mySuggestSetAll",
                                        JavaBundle.message("inspection.explicit.array.filling.no.suggestion.for.set.all"),
                                        false);
-          holder.registerProblem(statement, message, type, range, fix, disableForSetAllFix);
+          holder.problem(statement, message).highlight(type).range(range).fix(fix).fix(disableForSetAllFix).register();
           return;
         }
 
@@ -235,8 +237,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  private static final class ReplaceWithArraysCallFix implements LocalQuickFix {
-
+  private static final class ReplaceWithArraysCallFix extends PsiUpdateModCommandQuickFix {
     private final boolean myIsRhsConstant;
 
     private ReplaceWithArraysCallFix(boolean isRhsConstant) {
@@ -251,8 +252,8 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiForStatement statement = tryCast(descriptor.getStartElement(), PsiForStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiForStatement statement = tryCast(element, PsiForStatement.class);
       if (statement == null) return;
       CountingLoop loop = CountingLoop.from(statement);
       if (loop == null) return;

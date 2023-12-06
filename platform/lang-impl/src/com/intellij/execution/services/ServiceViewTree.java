@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -19,7 +19,7 @@ import java.util.function.Function;
 
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
-class ServiceViewTree extends Tree {
+final class ServiceViewTree extends Tree {
   private static final Function<TreePath, String> DISPLAY_NAME_CONVERTER = path -> {
     Object node = path.getLastPathComponent();
     if (node instanceof ServiceViewItem) {
@@ -51,7 +51,7 @@ class ServiceViewTree extends Tree {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        TreePath path = getPathForLocation(e.getX(), e.getY());
+        TreePath path = getClosestPathForLocation(e.getX(), e.getY());
         if (path == null) return false;
 
         Object lastComponent = path.getLastPathComponent();
@@ -64,7 +64,7 @@ class ServiceViewTree extends Tree {
     }.installOn(this);
   }
 
-  private static class ServiceViewTreeCellRenderer extends ServiceViewTreeCellRendererBase {
+  private static final class ServiceViewTreeCellRenderer extends ServiceViewTreeCellRendererBase {
     private ServiceViewDescriptor myDescriptor;
     private ServiceViewItemState myItemState;
     private JComponent myComponent;

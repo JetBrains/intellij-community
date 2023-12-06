@@ -8,7 +8,7 @@ import org.jetbrains.plugins.textmate.plist.Plist;
 
 import java.util.Map;
 
-public class TextMateTextAttributes {
+public final class TextMateTextAttributes {
   private final String foreground;
   private final String background;
   private final FontStyle fontStyle;

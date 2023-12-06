@@ -7,9 +7,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -73,11 +77,12 @@ public final class StaleIndexesChecker {
   }
 
   private static String getRecordPath(int record) {
-    StringBuilder name = new StringBuilder(FSRecords.getName(record));
-    int parent = FSRecords.getParent(record);
+    FSRecordsImpl vfs = FSRecords.getInstance();
+    StringBuilder name = new StringBuilder(vfs.getName(record));
+    int parent = vfs.getParent(record);
     while (parent > 0) {
-      name.insert(0, FSRecords.getName(parent) + "/");
-      parent = FSRecords.getParent(parent);
+      name.insert(0, vfs.getName(parent) + "/");
+      parent = vfs.getParent(parent);
     }
     return name.toString();
   }
@@ -87,12 +92,21 @@ public final class StaleIndexesChecker {
     boolean unitTest = ApplicationManager.getApplication().isUnitTestMode();
     try {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        staleIds.forEach((staleId) -> {
-          if (unitTest) {
+        final int maxLogCount = (unitTest || FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES || LOG.isDebugEnabled()) ? Integer.MAX_VALUE : 10;
+        int loggedCount = 0;
+        for (int staleId : staleIds) {
+          if (loggedCount < maxLogCount) {
             LOG.info("clearing stale id = " + staleId + ", path =  " + getRecordPath(staleId));
           }
+          else if (loggedCount == maxLogCount) {
+            LOG.info(
+              "clearing more items (not logged due to logging limit). Use -Didea.trace.stub.index.update=true, " +
+              "or enable debug log for: #" + StaleIndexesChecker.class.getName()
+            );
+          }
+          loggedCount++;
           clearStaleIndexesForId(staleId);
-        });
+        }
       });
     }
     finally {

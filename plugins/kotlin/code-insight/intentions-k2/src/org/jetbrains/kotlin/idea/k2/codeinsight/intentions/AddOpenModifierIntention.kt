@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal class AddOpenModifierIntention :
-    AbstractKotlinApplicableIntention<KtCallableDeclaration>(KtCallableDeclaration::class),
+    AbstractKotlinApplicableModCommandIntention<KtCallableDeclaration>(KtCallableDeclaration::class),
     LowPriorityAction {
 
     override fun getFamilyName(): String = KotlinBundle.message("make.open")
@@ -49,7 +49,7 @@ internal class AddOpenModifierIntention :
                 || ownerSymbol.modality == Modality.SEALED
     }
 
-    override fun apply(element: KtCallableDeclaration, project: Project, editor: Editor?) {
+    override fun invoke(context: ActionContext, element: KtCallableDeclaration, updater: ModPsiUpdater) {
         element.addModifier(KtTokens.OPEN_KEYWORD)
     }
 }

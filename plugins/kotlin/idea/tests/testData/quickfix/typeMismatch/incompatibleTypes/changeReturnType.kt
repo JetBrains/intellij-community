@@ -7,3 +7,4 @@ fun test(i: Int) {
 }
 
 fun foo(): String = TODO()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled

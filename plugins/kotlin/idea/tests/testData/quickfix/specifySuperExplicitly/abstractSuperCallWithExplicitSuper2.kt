@@ -21,3 +21,5 @@ class DerivedB : DerivedA(), IntB, IntA {
         return super<DerivedA>.<caret>check()
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.statusBar;
 
 import com.intellij.openapi.wm.impl.status.StatusBarUI;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public class LightEditStatusBarUI extends StatusBarUI {
+public final class LightEditStatusBarUI extends StatusBarUI {
 
   private static final int HEIGHT = 26;
 

@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -60,6 +62,13 @@ class ProfileNode extends MavenSimpleNode {
     return "Maven.ToggleProfile";
   }
 
+  @Override
+  @Nullable
+  @NonNls
+  String getMenuId() {
+    return "Maven.ProfileMenu";
+  }
+
   @Nullable
   @Override
   public Navigatable getNavigatable() {
@@ -97,7 +106,7 @@ class ProfileNode extends MavenSimpleNode {
     return getNavigatable(profiles);
   }
 
-  private Navigatable getNavigatable(@NotNull final List<MavenDomProfile> profiles) {
+  private static Navigatable getNavigatable(@NotNull final List<MavenDomProfile> profiles) {
     if (profiles.size() > 1) {
       return new NavigatableAdapter() {
         @Override
@@ -115,7 +124,8 @@ class ProfileNode extends MavenSimpleNode {
                 MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
                 XmlElement xmlElement = mavenDomProfile.getXmlElement();
                 if (xmlElement != null) {
-                  setText(xmlElement.getContainingFile().getVirtualFile().getPresentableUrl());
+                  String url = getPresentableUrl(xmlElement);
+                  setText(url);
                 }
                 return result;
               }
@@ -133,8 +143,13 @@ class ProfileNode extends MavenSimpleNode {
     }
   }
 
+  @NlsSafe
+  private static @NotNull String getPresentableUrl(XmlElement xmlElement) {
+    return ReadAction.nonBlocking(() -> xmlElement.getContainingFile().getVirtualFile().getPresentableUrl()).executeSynchronously();
+  }
+
   @Nullable
-  private Navigatable getNavigatable(@Nullable final MavenDomProfile profile) {
+  private static Navigatable getNavigatable(@Nullable final MavenDomProfile profile) {
     if (profile == null) return null;
     XmlElement xmlElement = profile.getId().getXmlElement();
     return xmlElement instanceof Navigatable ? (Navigatable)xmlElement : null;

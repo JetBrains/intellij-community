@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.memory;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.function.IntConsumer;
 
 class SortedIntSet implements Comparable<SortedIntSet> {
@@ -119,8 +118,8 @@ class SortedIntSet implements Comparable<SortedIntSet> {
   @Override
   public int hashCode() {
     int size = mySize;
-    int result = Objects.hash(size);
     int[] arr = myData;
+    int result = size;
     for (int i = 0; i < size; i++) {
       int element = arr[i];
       result = 31 * result + element;

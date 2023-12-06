@@ -1,13 +1,12 @@
 enum class JavaEnum {
-    A("a"),
-    B;
+    A("a"), B;
 
     constructor(x: String) {
         this.x = x
     }
 
     constructor() {
-        x = "default"
+        this.x = "default"
     }
 
     protected var x: String

@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -22,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JavaHomeFinderBasic {
@@ -99,6 +99,9 @@ public class JavaHomeFinderBasic {
       try {
         result.addAll(action.get());
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Exception e) {
         log.warn("Failed to find Java Home. " + e.getMessage(), e);
       }
@@ -107,7 +110,7 @@ public class JavaHomeFinderBasic {
     return result;
   }
 
-  private @NotNull Set<String> findInJavaHome() {
+  public @NotNull Set<String> findInJavaHome() {
     String javaHome = mySystemInfo.getEnvironmentVariable("JAVA_HOME");
     return javaHome != null ? scanAll(mySystemInfo.getPath(javaHome), false) : Collections.emptySet();
   }
@@ -223,7 +226,7 @@ public class JavaHomeFinderBasic {
   }
 
   /**
-   * Finds Java home directories installed by SDKMAN: https://github.com/sdkman
+   * Finds Java home directories installed by <a href="https://github.com/sdkman">SDKMAN</a>
    */
   private @NotNull Set<@NotNull String> findJavaInstalledBySdkMan() {
     try {
@@ -295,7 +298,7 @@ public class JavaHomeFinderBasic {
         if (!safeExists(releaseFile)) continue;
 
         if (mac) {
-          // Zulu JDK on MacOS has a rogue layout, with which Gradle failed to operate (see the bugreport IDEA-253051),
+          // Zulu JDK on macOS has a rogue layout, with which Gradle failed to operate (see the bugreport IDEA-253051),
           // and in order to get Gradle working with Zulu JDK we should use it's second home (when symbolic links are resolved).
           try {
             if (Files.isSymbolicLink(releaseFile)) {
@@ -343,7 +346,7 @@ public class JavaHomeFinderBasic {
 
 
   /**
-   * Finds Java home directories installed by asdf-java: https://github.com/halcyon/asdf-java
+   * Finds Java home directories installed by <a href="https://github.com/halcyon/asdf-java">asdf-java</a>
    */
   private @NotNull Set<String> findJavaInstalledByAsdfJava() {
     Path installsDir = findAsdfInstallsDir();
@@ -365,7 +368,7 @@ public class JavaHomeFinderBasic {
       }
     }
 
-    // finally, try the usual location in Unix or MacOS
+    // finally, try the usual location in Unix or macOS
     if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
       Path installsDir = getPathInUserHome(".asdf/installs");
       if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;

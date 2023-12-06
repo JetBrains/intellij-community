@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.ProjectTopics;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -37,10 +36,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
@@ -68,6 +64,7 @@ import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
@@ -86,8 +83,7 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
   private static LightProjectDescriptor ourProjectDescriptor;
@@ -251,7 +247,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     Ref<Boolean> reusedProject = new Ref<>(true);
     app.invokeAndWait(() -> {
       IdeaLogger.ourErrorsOccurred = null;
-      app.assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       myOldSdks = new SdkLeakTracker();
 
@@ -260,6 +256,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
         initProject(descriptor);
         reusedProject.set(false);
+      } else {
+        // At migration from MockSDK we faced the situation that light tests don't reuse instance of project if we use
+        // [SimpleLightProjectDescriptor] and its derivatives. The root cause is in SDK dispose thus we need to introduce
+        // the mechanize to compare old disposed SDK and the new one and if they are equal, replace it. So, here reuse
+        // newly created SDK otherwise there will be old disposed SDK.
+        if (ourProjectDescriptor instanceof SimpleLightProjectDescriptor) {
+          ((SimpleLightProjectDescriptor)ourProjectDescriptor).setSdk(descriptor.getSdk());
+        }
       }
     });
 
@@ -292,7 +296,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
 
       MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
-      connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      connection.subscribe(ModuleListener.TOPIC, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project project, @NotNull Module module) {
           fail("Adding modules is not permitted in light tests.");
@@ -387,8 +391,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> checkEditorsReleased(),
       () -> super.tearDown(),
-      () -> Disposer.dispose(mySdkParentDisposable),
-      () -> myOldSdks.checkForJdkTableLeaks(),
+      () -> {
+        // Disposing the SDK and its roots
+        Disposer.dispose(mySdkParentDisposable);
+        // Checking for leaked SDKs
+        myOldSdks.checkForJdkTableLeaks();
+      },
       () -> {
         if (myThreadTracker != null) {
           myThreadTracker.checkLeak();
@@ -626,13 +634,16 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ourProject = project;
   }
 
-  private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {
+  protected static class SimpleLightProjectDescriptor extends LightProjectDescriptor {
     private final @NotNull String myModuleTypeId;
-    private final @Nullable Sdk mySdk;
+    private @Nullable Sdk mySdk;
+    private @NotNull Map<OrderRootType, List<String>> mySdkRoots;
 
     SimpleLightProjectDescriptor(@NotNull String moduleTypeId, @Nullable Sdk sdk) {
       myModuleTypeId = moduleTypeId;
       mySdk = sdk;
+      mySdkRoots = new HashMap<>();
+      subscribeToRootsChanges();
     }
 
     @Override
@@ -643,6 +654,31 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     @Override
     public @Nullable Sdk getSdk() {
       return mySdk;
+    }
+
+    private void setSdk(@Nullable Sdk sdk) {
+      mySdk = sdk;
+      subscribeToRootsChanges();
+    }
+
+    private void subscribeToRootsChanges() {
+      if (mySdk != null) {
+        dumpSdkRoots();
+        mySdk.getRootProvider().addRootSetChangedListener(wrapper -> {
+          dumpSdkRoots();
+        });
+      }
+    }
+
+    private void dumpSdkRoots() {
+      mySdkRoots = new HashMap<>();
+      if (mySdk == null) return;
+      RootProvider sdkRootProvider = mySdk.getRootProvider();
+      OrderRootType[] rootTypes = {OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
+      for (OrderRootType rootType : rootTypes) {
+        String[] myUrls = sdkRootProvider.getUrls(rootType);
+        mySdkRoots.put(rootType, Arrays.asList(myUrls));
+      }
     }
 
     @Override
@@ -665,11 +701,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       if (mySdk == null || newSdk == null) return mySdk == newSdk;
       if (!mySdk.getName().equals(newSdk.getName())) return false;
 
+      RootProvider newSdkRootProvider = newSdk.getRootProvider();
       OrderRootType[] rootTypes = {OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
       for (OrderRootType rootType : rootTypes) {
-        String[] myUrls = mySdk.getRootProvider().getUrls(rootType);
-        String[] newUrls = newSdk.getRootProvider().getUrls(rootType);
-        if (!ContainerUtil.newHashSet(myUrls).equals(ContainerUtil.newHashSet(newUrls))) return false;
+        Set<String> myUrls = new HashSet<>(mySdkRoots.getOrDefault(rootType, Collections.emptyList()));
+        Set<String> newUrls = ContainerUtil.newHashSet(newSdkRootProvider.getUrls(rootType));
+        if (!myUrls.equals(newUrls)) return false;
       }
       return true;
     }

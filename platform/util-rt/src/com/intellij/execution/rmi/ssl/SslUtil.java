@@ -13,6 +13,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class SslUtil {
@@ -21,19 +22,33 @@ public final class SslUtil {
   public static final String SSL_CLIENT_KEY_PATH = "sslClientKeyPath";
   public static final String SSL_TRUST_EVERYBODY = "sslTrustEverybody";
   public static final String SSL_USE_FACTORY = "sslUseFactory";
-  private static final String END_CERTIFICATE = "-----END CERTIFICATE-----";
+  private static final String BEGIN_MARK = "-----BEGIN";
 
   @NotNull
   public static List<X509Certificate> loadCertificates(@NotNull String caCertPath)
     throws IOException, CertificateException {
     String string = FileUtilRt.loadFile(new File(caCertPath));
-    String[] tokens = string.split(END_CERTIFICATE);
-    List<X509Certificate> certs = new ArrayList<>(tokens.length);
+    List<X509Certificate> certs = new ArrayList<>();
+    List<String> tokens = splitBundle(string);
     for (String token : tokens) {
-      if (token == null || token.trim().length() == 0) continue;
-      certs.add(readCertificate(stringStream(token + END_CERTIFICATE)));
+      if (token == null || token.trim().isEmpty()) continue;
+      certs.add(readCertificate(stringStream(token)));
     }
     return certs;
+  }
+
+  private static List<String> splitBundle(@NotNull String string) {
+    int idx = string.indexOf(BEGIN_MARK);
+    if (idx == -1) {
+      return Collections.singletonList(string);
+    }
+    List<String> res = new ArrayList<>();
+    while (idx != -1) {
+      int endIdx = string.indexOf(BEGIN_MARK, idx + BEGIN_MARK.length());
+      res.add(string.substring(idx, endIdx == -1 ? string.length() : endIdx));
+      idx = endIdx;
+    }
+    return res;
   }
 
   @NotNull

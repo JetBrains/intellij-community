@@ -39,7 +39,6 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.io.BufferedWriter
 import java.io.File
-import java.util.Arrays.asList
 import javax.swing.*
 import javax.swing.table.TableRowSorter
 
@@ -145,9 +144,9 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
     table.model = DataFrameTableModel(dataFrame)
 
     for (i in dataFrame.getColumns().indices) {
-      table.columnModel.getColumn(i).cellRenderer = when {
-        dataFrame[i].type == IntType -> IntegerTableCellRenderer()
-        dataFrame[i].type == DoubleType -> DoubleTableCellRenderer()
+      table.columnModel.getColumn(i).cellRenderer = when (dataFrame[i].type) {
+        IntType -> IntegerTableCellRenderer()
+        DoubleType -> DoubleTableCellRenderer()
         else -> StringTableCellRenderer()
       }
     }
@@ -170,7 +169,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
 
   private fun addTableFilterHeader() {
     filterHeader = TableFilterHeader()
-    filterHeader!!.table = table
+    filterHeader!!.installTable(table)
   }
 
   override fun createActions(): List<AnAction> {
@@ -197,7 +196,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
           addTableFilterHeader()
         }
         else {
-          filterHeader?.table = null
+          filterHeader?.installTable(null)
           filterHeader = null
         }
       }
@@ -224,7 +223,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
       }
     }
 
-    return asList(actionSaveAsCsv, filterTable, paginateTable)
+    return listOf(actionSaveAsCsv, filterTable, paginateTable)
   }
 
   /** Save the file as tsv (tab separated values) via intellij SaveFileDialog. */

@@ -231,7 +231,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
 
     PythonScriptExecution pythonExecution = PythonScripts.prepareHelperScriptExecution(
-      languageLevel.isPython2() ? PythonHelper.PY2_VIRTUALENV_ZIPAPP : PythonHelper.VIRTUALENV_ZIPAPP,
+      isLegacyPython(languageLevel) ? PythonHelper.LEGACY_VIRTUALENV_ZIPAPP : PythonHelper.VIRTUALENV_ZIPAPP,
       helpersAwareTargetRequest);
     if (useGlobalSite) {
       pythonExecution.addParameter("--system-site-packages");
@@ -245,6 +245,13 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     final String binaryFallback = destinationDir + separator + "bin" + separator + "python";
 
     return (binary != null) ? binary : binaryFallback;
+  }
+
+  /**
+   * Is it a legacy python version that we still support
+   */
+  private static @NotNull Boolean isLegacyPython(@NotNull LanguageLevel languageLevel) {
+    return languageLevel.isPython2() || languageLevel.isOlderThan(LanguageLevel.PYTHON37);
   }
 
   @NotNull

@@ -3,7 +3,6 @@ package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -80,6 +79,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
   private boolean myShowLastHorizontalLine;
 
+  private ValueScaler myValueScaler;
+
   public JBTable() {
     this(new DefaultTableModel());
   }
@@ -112,6 +113,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         return isEmpty();
       }
     };
+
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, myEmptyText.getWrappedFragmentsIterable());
 
     myExpandableItemsHandler = createExpandableItemsHandler();
 
@@ -155,7 +158,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     final TableModelListener modelListener = new TableModelListener() {
       @Override
-      public void tableChanged(@NotNull final TableModelEvent e) {
+      public void tableChanged(final @NotNull TableModelEvent e) {
         onTableChanged(e);
       }
     };
@@ -182,7 +185,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   protected void onTableChanged(@NotNull TableModelEvent e) {
     if (!myRowHeightIsExplicitlySet) {
-      myRowHeight = -1;
+      setRowHeightWithScaler(-1);
     }
     if (e.getType() == TableModelEvent.DELETE && isEmpty() ||
         e.getType() == TableModelEvent.INSERT && !isEmpty() ||
@@ -191,8 +194,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  @NotNull
-  protected ExpandableItemsHandler<TableCell> createExpandableItemsHandler() {
+  protected @NotNull ExpandableItemsHandler<TableCell> createExpandableItemsHandler() {
     return ExpandableItemsHandlerFactory.install(this);
   }
 
@@ -237,7 +239,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (myRowHeight < 0) {
       try {
         myRowHeightIsComputing = true;
-        myRowHeight = calculateRowHeight();
+        setRowHeightWithScaler(calculateRowHeight());
       }
       finally {
         myRowHeightIsComputing = false;
@@ -291,11 +293,17 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   public void setRowHeight(int rowHeight) {
     if (!myUiUpdating) {
-      myRowHeight = rowHeight;
+      setRowHeightWithScaler(rowHeight);
       myRowHeightIsExplicitlySet = true;
     }
     // call super to clean rowModel
     super.setRowHeight(rowHeight);
+  }
+
+  private void setRowHeightWithScaler(int rowHeight) {
+    myRowHeight = rowHeight;
+    if (myRowHeight < 0) myValueScaler = null;
+    else myValueScaler = new ValueScaler(myRowHeight);
   }
 
   @Override
@@ -303,16 +311,18 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myUiUpdating = true;
     try {
       super.updateUI();
+
       myMinRowHeight = null;
+      if (!myRowHeightIsExplicitlySet) setRowHeightWithScaler(-1);
+      else if (myValueScaler != null) myRowHeight = myValueScaler.get();
     }
     finally {
       myUiUpdating = false;
     }
   }
 
-  @NotNull
   @Override
-  protected JTableHeader createDefaultTableHeader() {
+  protected @NotNull JTableHeader createDefaultTableHeader() {
     return new JBTableHeader();
   }
 
@@ -498,15 +508,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     });
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 
   @Override
-  @NotNull
-  public ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
+  public @NotNull ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
   }
 
@@ -521,7 +529,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       if (myBusyIcon != null) {
         remove(myBusyIcon);
-        Disposer.dispose(myBusyIcon);
+        myBusyIcon.dispose();
         myBusyIcon = null;
       }
     }
@@ -605,8 +613,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  @NotNull
-  protected AsyncProcessIcon createBusyIcon() {
+  protected @NotNull AsyncProcessIcon createBusyIcon() {
     return new AsyncProcessIcon(toString());
   }
 
@@ -719,9 +726,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
            || UIUtil.isUnderIntelliJLaF();
   }
 
-  @NotNull
   @Override
-  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+  public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
 
     if (result instanceof JComponent component && !isCellSelected(row, column)) {
@@ -756,8 +762,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return result;
   }
 
-  @Nullable
-  protected Color getStripeColor() {
+  protected @Nullable Color getStripeColor() {
     return UIUtil.getDecoratedRowColor();
   }
 
@@ -823,7 +828,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     @Override
-    public void propertyChange(@NotNull final PropertyChangeEvent e) {
+    public void propertyChange(final @NotNull PropertyChangeEvent e) {
       if ("tableCellEditor".equals(e.getPropertyName())) {
         tableCellEditorChanged(e.getOldValue(), e.getNewValue());
       }
@@ -893,7 +898,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private final class MyMouseListener extends MouseAdapter {
     @Override
-    public void mousePressed(@NotNull final MouseEvent e) {
+    public void mousePressed(final @NotNull MouseEvent e) {
       if (SwingUtilities.isRightMouseButton(e)) {
         final int[] selectedRows = getSelectedRows();
         if (selectedRows.length < 2) {
@@ -988,9 +993,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         return myModel.getValueAt(row, column);
       }
 
-      @NotNull
       @Override
-      public String getStringValueAt(int row, int column) {
+      public @NotNull String getStringValueAt(int row, int column) {
         TableStringConverter converter = getStringConverter();
         if (converter != null) {
           // Use the converter
@@ -1049,7 +1053,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
           cmp.setHorizontalAlignment(SwingConstants.LEFT);
           Border border = cmp.getBorder();
-          JBEmptyBorder indent = JBUI.Borders.emptyLeft(8);
+          JBEmptyBorder indent = JBUI.Borders.empty(0, 8);
           border = JBUI.Borders.merge(border, indent, true);
           cmp.setBorder(border);
 
@@ -1085,7 +1089,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     @Override
-    public String getToolTipText(@NotNull final MouseEvent event) {
+    public String getToolTipText(final @NotNull MouseEvent event) {
       ColumnInfo[] columnInfos = getColumnInfos();
       if (columnInfos != null) {
         final int i = columnAtPoint(event.getPoint());
@@ -1191,8 +1195,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   protected class InvisibleResizableHeader extends JBTableHeader {
-    @NotNull private final MyBasicTableHeaderUI myHeaderUI;
-    @Nullable private Cursor myCursor = null;
+    private final @NotNull MyBasicTableHeaderUI myHeaderUI;
+    private @Nullable Cursor myCursor = null;
 
     public InvisibleResizableHeader() {
       myHeaderUI = new MyBasicTableHeaderUI(this);
@@ -1243,9 +1247,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       return myCursor;
     }
 
-    @NotNull
     @Override
-    public Rectangle getHeaderRect(int column) {
+    public @NotNull Rectangle getHeaderRect(int column) {
       // if a header has zero height, mouse pointer can never be inside it, so we pretend it is one pixel high
       Rectangle headerRect = super.getHeaderRect(column);
       return new Rectangle(headerRect.x, headerRect.y, headerRect.width, 1);
@@ -1258,9 +1261,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   private static class EmptyTableCellRenderer extends CellRendererPanel implements TableCellRenderer {
-    @NotNull
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    public @NotNull Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       return this;
     }
 
@@ -1280,8 +1282,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       mouseInputListener = createMouseInputListener();
     }
 
-    @NotNull
-    private MouseEvent convertMouseEvent(@NotNull MouseEvent e) {
+    private @NotNull MouseEvent convertMouseEvent(@NotNull MouseEvent e) {
       // create a new event, almost exactly the same, but in the header
       return new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), 0, e.getXOnScreen(), header.getY(),
                             e.getClickCount(), e.isPopupTrigger(), e.getButton());
@@ -1409,6 +1410,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
    * are created in all code paths.
    */
   protected class AccessibleJBTable extends AccessibleJTable {
+
+    @Override
+    public Accessible getAccessibleAt(int r, int c) {
+      if (r >= 0 && c < 0) c = 0;
+      if (r < 0 && c >= 0) r = 0;
+      return super.getAccessibleAt(r, c);
+    }
+
     @Override
     public Accessible getAccessibleChild(int i) {
       if (i < 0 || i >= getAccessibleChildrenCount()) {
@@ -1486,7 +1495,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           return c.getAccessibleContext();
         }
         // Note: don't call "super" as 1) we know for sure the cell is not accessible
-        // and 2) the super implementation is incorrect anyways
+        // and 2) the super implementation is incorrect anyway
         return null;
       }
     }

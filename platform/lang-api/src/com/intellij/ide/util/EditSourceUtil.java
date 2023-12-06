@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -16,6 +16,7 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +25,7 @@ import java.util.function.Function;
 public final class EditSourceUtil {
   private EditSourceUtil() { }
 
-  @Nullable
-  public static Navigatable getDescriptor(@NotNull PsiElement element) {
+  public static @Nullable Navigatable getDescriptor(@NotNull PsiElement element) {
     PsiElement original = getNavigatableOriginalElement(element);
     if (original != null) {
       element = original;
@@ -53,7 +53,8 @@ public final class EditSourceUtil {
     return desc;
   }
 
-  private static PsiElement getNavigatableOriginalElement(@NotNull PsiElement element) {
+  @Internal
+  public static PsiElement getNavigatableOriginalElement(@NotNull PsiElement element) {
     return processAllOriginalElements(element, original -> canNavigate(original) ? original : null);
   }
 
@@ -80,7 +81,7 @@ public final class EditSourceUtil {
    * Collect original elements from all filters.
    */
   private static PsiElement processAllOriginalElements(@NotNull PsiElement element, @NotNull Function<? super PsiElement, ? extends PsiElement> processor) {
-    for (GeneratedSourcesFilter filter : GeneratedSourcesFilter.EP_NAME.getExtensions()) {
+    for (GeneratedSourcesFilter filter : GeneratedSourcesFilter.EP_NAME.getExtensionList()) {
       for (PsiElement originalElement: filter.getOriginalElements(element)) {
         PsiElement apply = processor.apply(originalElement);
         if (apply != null) return apply;

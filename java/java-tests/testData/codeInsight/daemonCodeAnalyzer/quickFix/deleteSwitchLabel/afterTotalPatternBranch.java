@@ -1,4 +1,4 @@
-// "Remove switch branch 'Day dd && true'" "true-preview"
+// "Remove switch branch 'Day dd when true'" "true-preview"
 enum Day {
     MONDAY, TUESDAY, WEDNESDAY
 }
@@ -6,7 +6,7 @@ enum Day {
 class Test {
     int foo(Day d) {
         switch (d) {
-            case default:
+            default:
                 System.out.println(13);
         }
     }

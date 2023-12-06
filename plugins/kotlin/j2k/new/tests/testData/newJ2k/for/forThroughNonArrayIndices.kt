@@ -1,5 +1,5 @@
 internal class X {
-    var length = 5
+    var length: Int = 5
 }
 
 internal class C {

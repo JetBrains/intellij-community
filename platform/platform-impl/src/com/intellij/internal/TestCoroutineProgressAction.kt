@@ -1,27 +1,30 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.platform.ide.progress.*
+import com.intellij.platform.util.progress.*
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.*
 import javax.swing.JComponent
 
 internal class TestCoroutineProgressAction : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     try {
-      runBlockingModal(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
         awaitCancellation()
       }
     }
-    catch (ignored: CancellationException) {
+    catch (ignored: ProcessCanceledException) {
 
     }
 
@@ -58,17 +61,46 @@ internal class TestCoroutineProgressAction : AnAction() {
         }
         row {
           button("Cancellable Synchronous Modal Progress") {
-            runBlockingModal(project, "Cancellable synchronous modal progress") {
+            runWithModalProgressBlocking(project, "Cancellable synchronous modal progress") {
               doStuff()
             }
           }
           button("Non-Cancellable Synchronous Modal Progress") {
-            runBlockingModal(
+            runWithModalProgressBlocking(
               ModalTaskOwner.project(project),
               "Non-cancellable synchronous modal progress",
               TaskCancellation.nonCancellable(),
             ) {
               doStuff()
+            }
+          }
+        }
+        row {
+          button("Delayed Completion BG Progress") {
+            cs.launch {
+              withBackgroundProgress(project, "Delayed completion BG progress") {
+                withContext(NonCancellable) {
+                  stage(parallel = true)
+                }
+              }
+            }
+          }
+          button("Delayed Completion Modal Progress") {
+            cs.launch {
+              withModalProgress(project, "Delayed completion modal progress") {
+                withContext(NonCancellable) {
+                  stage(parallel = true)
+                }
+              }
+            }
+          }
+        }
+        row {
+          button("300ms BG Progress") {
+            cs.launch {
+              withBackgroundProgress(project, "300ms background progress") {
+                delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong() + 10) // + epsilon
+              }
             }
           }
         }
@@ -139,7 +171,7 @@ internal class TestCoroutineProgressAction : AnAction() {
     }
     val items = (1..if (parallel) 100 else 5).toList()
     val transformed = progressStep(endFraction = 0.1) {
-      items.transformWithProgress(parallel) { item, out ->
+      items.transformWithProgress(parallel) { item ->
         progressStep(endFraction = 1.0, text = "Transforming $item") {
           if (Math.random() < 0.5) {
             out(item)

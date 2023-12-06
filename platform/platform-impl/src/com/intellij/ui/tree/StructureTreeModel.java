@@ -62,6 +62,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     this.description = format(structure.toString());
     this.invoker = invoker;
     this.comparator = comparator == null ? null : wrapToNodeComparator(comparator);
+    Disposer.register(this, invoker);
     Disposer.register(parent, this);
   }
 
@@ -603,7 +604,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   /**
    * @deprecated do not use
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final TreeNode getRootImmediately() {
     if (!root.isValid()) {
       root.set(getValidRoot());

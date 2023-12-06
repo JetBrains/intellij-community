@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl.storage;
 
@@ -22,8 +22,7 @@ import java.nio.file.Path;
 
 public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private final boolean myBuildKeyHashToVirtualFileMapping;
-  @Nullable
-  private KeyHashLog<Key> myKeyHashToVirtualFileMapping;
+  private @Nullable KeyHashLog<Key> myKeyHashToVirtualFileMapping;
 
   @TestOnly
   public VfsAwareMapIndexStorage(Path storageFile,
@@ -106,12 +105,10 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
       Project project = scope.getProject();
       if (myKeyHashToVirtualFileMapping != null && project != null && idFilter != null) {
         IntSet hashMaskSet = myKeyHashToVirtualFileMapping.getSuitableKeyHashes(idFilter, project);
-        if (hashMaskSet != null) {
-          return doProcessKeys(key -> {
-            if (!hashMaskSet.contains(myKeyDescriptor.getHashCode(key))) return true;
-            return processor.process(key);
-          });
-        }
+        return doProcessKeys(key -> {
+          if (!hashMaskSet.contains(myKeyDescriptor.getHashCode(key))) return true;
+          return processor.process(key);
+        });
       }
       return doProcessKeys(processor);
     }

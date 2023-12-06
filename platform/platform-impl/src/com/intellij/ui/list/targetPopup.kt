@@ -1,16 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("TargetPopup")
 
 package com.intellij.ui.list
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
 import com.intellij.openapi.util.NlsContexts.PopupTitle
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer
@@ -52,6 +52,9 @@ fun <T> buildTargetPopup(
   presentationProvider: Function<in T, out TargetPresentation>,
   processor: Consumer<in T>
 ): IPopupChooserBuilder<T> {
+  require(items.size > 1) {
+    "Attempted to build a target popup with ${items.size} elements"
+  }
   return buildTargetPopupWithMultiSelect(items, presentationProvider, Predicate { processor.accept(it); return@Predicate false })
 }
 
@@ -61,9 +64,6 @@ fun <T> buildTargetPopupWithMultiSelect(
   presentationProvider: Function<in T, out TargetPresentation>,
   predicate: Predicate<in T>
 ): IPopupChooserBuilder<T> {
-  require(items.size > 1) {
-    "Attempted to build a target popup with ${items.size} elements"
-  }
   return JBPopupFactory.getInstance()
     .createPopupChooserBuilder(items)
     .setRenderer(RoundedCellRenderer(createTargetPresentationRenderer(presentationProvider)))

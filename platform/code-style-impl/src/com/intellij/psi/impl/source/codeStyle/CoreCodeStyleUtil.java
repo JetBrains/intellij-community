@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -33,7 +33,7 @@ import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public final class CoreCodeStyleUtil {
-  private final static Logger LOG = Logger.getInstance(CoreCodeStyleUtil.class);
+  private static final Logger LOG = Logger.getInstance(CoreCodeStyleUtil.class);
 
   private static final ThreadLocal<ProcessingUnderProgressInfo> SEQUENTIAL_PROCESSING_ALLOWED
     = ThreadLocal.withInitial(() -> new ProcessingUnderProgressInfo());
@@ -41,7 +41,7 @@ public final class CoreCodeStyleUtil {
   private CoreCodeStyleUtil() {
   }
 
-  public static PsiElement postProcessElement(@NotNull PsiFile file, @NotNull final PsiElement element, boolean isWhitespaceOnly) {
+  public static PsiElement postProcessElement(@NotNull PsiFile file, final @NotNull PsiElement element, boolean isWhitespaceOnly) {
     CodeStyleSettings settingsForFile = CodeStyle.getSettings(file);
     List<TextRange> textRanges;
     if (settingsForFile.FORMATTER_TAGS_ENABLED) {
@@ -117,7 +117,7 @@ public final class CoreCodeStyleUtil {
     }
   }
 
-  public static void postProcessText(@NotNull final PsiFile file, @NotNull final TextRange textRange, boolean isWhitespaceOnly) {
+  public static void postProcessText(final @NotNull PsiFile file, final @NotNull TextRange textRange, boolean isWhitespaceOnly) {
     CodeStyleSettings settings = CodeStyle.getSettings(file);
     if (!getSettings(file).FORMATTER_TAGS_ENABLED) {
       postProcessRange(file, textRange, settings, isWhitespaceOnly);
@@ -127,7 +127,7 @@ public final class CoreCodeStyleUtil {
     }
   }
 
-  private static void postProcessEnabledRanges(@NotNull final PsiFile file,
+  private static void postProcessEnabledRanges(final @NotNull PsiFile file,
                                                @NotNull TextRange range,
                                                CodeStyleSettings settings,
                                                boolean isWhitespaceOnly) {
@@ -149,7 +149,7 @@ public final class CoreCodeStyleUtil {
     return currentRange;
   }
 
-  public static class RangeFormatInfo {
+  public static final class RangeFormatInfo {
     private final PsiFile                   myFile;
     private final SmartPsiElementPointer<?> startPointer;
     private final SmartPsiElementPointer<?> endPointer;
@@ -203,8 +203,7 @@ public final class CoreCodeStyleUtil {
     }
   }
 
-  @Nullable
-  public static PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
+  public static @Nullable PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
     final PsiElement bottommost = file.findElementAt(offset);
     if (bottommost != null && LanguageFormatting.INSTANCE.forContext(bottommost) != null) {
       return bottommost;
@@ -234,7 +233,7 @@ public final class CoreCodeStyleUtil {
     return SEQUENTIAL_PROCESSING_ALLOWED.get().isAllowed();
   }
 
-  private static class ProcessingUnderProgressInfo {
+  private static final class ProcessingUnderProgressInfo {
 
     private static final long DURATION_TIME = TimeUnit.SECONDS.toMillis(5);
 

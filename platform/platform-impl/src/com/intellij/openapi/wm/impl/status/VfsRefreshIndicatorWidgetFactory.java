@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFactory {
-  private static final String ID = "VFS_REFRESH";
+  private static final String ID = "VfsRefresh";
 
   private volatile boolean myAvailable;
 
@@ -67,21 +67,15 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
 
   @RequiresEdt
   public static void start(@NotNull StatusBar statusBar, @NotNull @NlsContexts.Tooltip String tooltipText) {
-    var widget = ((VfsRefreshWidget)statusBar.getWidget(ID));
-    if (widget != null) {
-      widget.myComponent.setIcon(widget.myProgress);
-      widget.myComponent.setEnabled(true);
-      widget.myComponent.setToolTipText(tooltipText);
+    if (statusBar.getWidget(ID) instanceof VfsRefreshWidget widget) {
+      widget.start(tooltipText);
     }
   }
 
   @RequiresEdt
   public static void stop(@NotNull StatusBar statusBar) {
-    var widget = ((VfsRefreshWidget)statusBar.getWidget(ID));
-    if (widget != null) {
-      widget.myComponent.setIcon(widget.myInactive);
-      widget.myComponent.setEnabled(false);
-      widget.myComponent.setToolTipText(UIBundle.message("status.bar.vfs.refresh.widget.tooltip"));
+    if (statusBar.getWidget(ID) instanceof VfsRefreshWidget widget) {
+      widget.stop();
     }
   }
 
@@ -102,6 +96,18 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
     @Override
     public JComponent getComponent() {
       return myComponent;
+    }
+
+    private void start(@NlsContexts.Tooltip String tooltipText) {
+      myComponent.setIcon(myProgress);
+      myComponent.setEnabled(true);
+      myComponent.setToolTipText(tooltipText);
+    }
+
+    private void stop() {
+      myComponent.setIcon(myInactive);
+      myComponent.setEnabled(false);
+      myComponent.setToolTipText(UIBundle.message("status.bar.vfs.refresh.widget.tooltip"));
     }
   }
 }

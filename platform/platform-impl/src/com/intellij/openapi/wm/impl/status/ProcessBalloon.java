@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -12,6 +13,7 @@ import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyInlineProgressIndicator;
 import com.intellij.toolWindow.ToolWindowPane;
 import com.intellij.ui.BalloonLayoutImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.awt.RelativePoint;
@@ -47,7 +49,7 @@ final class ProcessBalloon {
   public void removeIndicator(@Nullable JRootPane pane, @NotNull MyInlineProgressIndicator indicator) {
     myIndicators.remove(indicator);
 
-    if (indicator.myPresentationModeProgressPanel != null) {
+    if (indicator.presentationModeProgressPanel != null) {
       myVisible--;
 
       if (pane != null && !myIndicators.isEmpty()) {
@@ -60,31 +62,31 @@ final class ProcessBalloon {
     List<MyInlineProgressIndicator> indicators = new ArrayList<>();
 
     for (MyInlineProgressIndicator indicator : myIndicators) {
-      if (indicator.myPresentationModeProgressPanel == null) {
+      if (indicator.presentationModeProgressPanel == null) {
         if (myVisible == myMaxVisible) {
           continue;
         }
 
         myVisible++;
 
-        indicator.myPresentationModeProgressPanel = new PresentationModeProgressPanel(indicator);
+        indicator.presentationModeProgressPanel = new PresentationModeProgressPanel(indicator);
         indicator.updateProgressNow();
 
-        indicator.myPresentationModeBalloon = create(pane, indicator, indicator.myPresentationModeProgressPanel.getProgressPanel());
-        indicator.myPresentationModeShowBalloon = true;
+        indicator.presentationModeBalloon = create(pane, indicator, indicator.presentationModeProgressPanel.getProgressPanel());
+        indicator.presentationModeShowBalloon = true;
 
         indicators.add(indicator);
       }
-      else if (!indicator.myPresentationModeBalloon.isDisposed()) {
+      else if (!indicator.presentationModeBalloon.isDisposed()) {
         indicators.add(indicator);
       }
     }
 
     for (MyInlineProgressIndicator indicator : indicators) {
-      if (indicator.myPresentationModeShowBalloon) {
-        indicator.myPresentationModeShowBalloon = false;
+      if (indicator.presentationModeShowBalloon) {
+        indicator.presentationModeShowBalloon = false;
 
-        indicator.myPresentationModeBalloon.show(new PositionTracker<>(getAnchor(pane)) {
+        indicator.presentationModeBalloon.show(new PositionTracker<>(getAnchor(pane)) {
           @Override
           public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
             Component c = getAnchor(pane);
@@ -109,7 +111,7 @@ final class ProcessBalloon {
         }, Balloon.Position.above);
       }
       else {
-        indicator.myPresentationModeBalloon.revalidate();
+        indicator.presentationModeBalloon.revalidate();
       }
     }
   }
@@ -136,7 +138,7 @@ final class ProcessBalloon {
 
     BalloonLayoutImpl balloonLayout = getBalloonLayout(pane);
     if (balloonLayout != null) {
-      class MyListener implements JBPopupListener, Runnable {
+      final class MyListener implements JBPopupListener, Runnable {
         @Override
         public void beforeShown(@NotNull LightweightWindowEvent event) {
           balloonLayout.addListener(this);
@@ -161,7 +163,7 @@ final class ProcessBalloon {
   }
 
   private static @Nullable BalloonLayoutImpl getBalloonLayout(@NotNull JRootPane pane) {
-    Component parent = UIUtil.findUltimateParent(pane);
+    Component parent = ComponentUtil.findUltimateParent(pane);
     if (parent instanceof IdeFrame) {
       return (BalloonLayoutImpl)((IdeFrame)parent).getBalloonLayout();
     }
@@ -169,8 +171,8 @@ final class ProcessBalloon {
   }
 
   private static @NotNull Component getAnchor(@NotNull JRootPane pane) {
-    if (pane instanceof IdeRootPane) {
-      JComponent component = ((IdeRootPane)pane).getToolWindowPane().getDocumentComponent();
+    if (pane instanceof IdeRootPane ideRootPane && !(ideRootPane instanceof LightEditCompatible)) {
+      JComponent component = ideRootPane.getToolWindowPane().getDocumentComponent();
       return component == null || !component.isShowing() ? pane : component;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -188,8 +188,8 @@ public class CodeInspectionAction extends BaseAnalysisAction {
                               InspectionProfileManager appProfileManager,
                               InspectionProjectProfileManager projectProfileManager,
                               Project project) {
-    profilesCombo.resetSchemes(InspectionProfileSchemesModel.getSortedProfiles(appProfileManager, projectProfileManager));
     InspectionProfileImpl selectedProfile = getProfileToUse(project, appProfileManager, projectProfileManager);
+    profilesCombo.resetSchemes(InspectionProfileSchemesModel.getSortedProfiles(appProfileManager, projectProfileManager));
     profilesCombo.selectScheme(selectedProfile);
   }
 
@@ -213,7 +213,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     return getGlobalInspectionContext(project).getCurrentProfile();
   }
 
-  private static class MySingleConfigurableEditor extends SingleConfigurableEditor {
+  private static final class MySingleConfigurableEditor extends SingleConfigurableEditor {
     private final InspectionManagerEx myManager;
 
     MySingleConfigurableEditor(final Project project, final ErrorsConfigurable configurable, InspectionManagerEx manager) {

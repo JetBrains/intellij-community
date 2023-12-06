@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -10,11 +9,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
-import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -40,11 +38,10 @@ class FilePartNode {
   static final int JAR_SEPARATOR_NAME_ID = -2;
   private final int nameId; // name id of the VirtualFile corresponding to this node
   FilePartNode @NotNull [] children = EMPTY_ARRAY; // sorted by this.getName(). elements never updated inplace
-  // file pointers for this exact path (i.e. concatenation of all getName() down from the root).
-  // Either VirtualFilePointerImpl or VirtualFilePointerImpl[] (when it so happened that several pointers merged into one node - e.g. after file rename onto existing pointer)
+  // file pointers for this exact path (i.e., concatenation of all getName() down from the root).
+  // Either VirtualFilePointerImpl or VirtualFilePointerImpl[] (when it so happened that several pointers merged into one node - e.g., after file rename onto existing pointer)
   private Object leaves;
-  @NotNull
-  volatile Object myFileOrUrl;
+  volatile @NotNull Object myFileOrUrl;
   final NewVirtualFileSystem myFS; // the file system of this particular component. E.g. for path "/x.jar!/foo.txt" the node "x.jar" fs is LocalFileSystem, the node "foo.txt" fs is JarFileSystem
 
   FilePartNode(int nameId, @NotNull Object fileOrUrl, @NotNull NewVirtualFileSystem fs) {
@@ -101,13 +98,11 @@ class FilePartNode {
     return fileOrUrl instanceof VirtualFile ? (VirtualFile)fileOrUrl : null;
   }
 
-  @NotNull
-  private String myUrl() {
+  private @NotNull String myUrl() {
     return myUrl(myFileOrUrl);
   }
 
-  @NotNull
-  static String myUrl(@NotNull Object fileOrUrl) {
+  static @NotNull String myUrl(@NotNull Object fileOrUrl) {
     return fileOrUrl instanceof VirtualFile ? ((VirtualFile)fileOrUrl).getUrl() : (String)fileOrUrl;
   }
 
@@ -122,9 +117,8 @@ class FilePartNode {
     myFS = fs;
   }
 
-  @NotNull
-  static CharSequence fromNameId(int nameId) {
-    return nameId == JAR_SEPARATOR_NAME_ID ? JarFileSystem.JAR_SEPARATOR : FileNameCache.getVFileName(nameId);
+  static @NotNull CharSequence fromNameId(int nameId) {
+    return nameId == JAR_SEPARATOR_NAME_ID ? JarFileSystem.JAR_SEPARATOR : FSRecords.getInstance().getNameByNameId(nameId);
   }
 
   @NotNull
@@ -261,7 +255,7 @@ class FilePartNode {
     }
   }
 
-  // update myFileOrUrl to a VirtualFile and replace UrlPartNode with FilePartNode if the file exists, including all subnodes
+  // update myFileOrUrl to a VirtualFile and replace UrlPartNode with FilePartNode if the file exists, including all sub-nodes
   void update(@NotNull FilePartNode parent, @NotNull FilePartNodeRoot root, @NotNull String debugSource, @Nullable Object debugInvalidationReason) {
     boolean oldCaseSensitive = isCaseSensitive();
     Object fileOrUrl = myFileOrUrl;
@@ -301,7 +295,7 @@ class FilePartNode {
       fileIsValid = file != null && file.isValid();
     }
     if (parent.nameId != -1 && !(parentFileOrUrl instanceof VirtualFile) && file != null) {
-      // if parent file can't be found then the child is not valid too
+      // if the parent file can't be found, then the child is not valid either
       file = null;
       fileIsValid = false;
       url = myUrl(fileOrUrl);
@@ -396,8 +390,7 @@ class FilePartNode {
     children = ContainerUtil.map(children, n -> n.replaceWithUPN(this), EMPTY_ARRAY);
   }
 
-  @NotNull
-  private UrlPartNode replaceWithUPN(@NotNull FilePartNode parent) {
+  private @NotNull UrlPartNode replaceWithUPN(@NotNull FilePartNode parent) {
     if (this instanceof UrlPartNode) return (UrlPartNode)this;
     if (this instanceof FilePartNodeRoot) throw new IllegalArgumentException("invalid argument node: " + this);
 
@@ -425,8 +418,7 @@ class FilePartNode {
     return newNode;
   }
 
-  @NotNull
-  static String childUrl(@NotNull String parentUrl, @NotNull CharSequence childName, @NotNull NewVirtualFileSystem fs) {
+  static @NotNull String childUrl(@NotNull String parentUrl, @NotNull CharSequence childName, @NotNull NewVirtualFileSystem fs) {
     if (childName.equals(JarFileSystem.JAR_SEPARATOR) && fs instanceof ArchiveFileSystem) {
       return VirtualFileManager.constructUrl(fs.getProtocol(), StringUtil.trimEnd(VfsUtilCore.urlToPath(parentUrl), '/')) + childName;
     }
@@ -520,11 +512,11 @@ class FilePartNode {
   }
 
   void removeEmptyNodesByPath(@NotNull String path) {
-    Pair<NewVirtualFile, String> pair = VfsImplUtil.extractRootFromPath(myFS, path);
+    VfsImplUtil.PathFromRoot pair = VfsImplUtil.extractRootFromPath(myFS, path);
     if (pair != null) {
-      int rootIndex = binarySearchChildByName(pair.first.getNameSequence());
+      int rootIndex = binarySearchChildByName(pair.root().getNameSequence());
       if (rootIndex >= 0) {
-        if (children[rootIndex].removeEmptyNodesByPath(FilePartNodeRoot.splitNames(pair.second))) {
+        if (children[rootIndex].removeEmptyNodesByPath(FilePartNodeRoot.splitNames(pair.pathFromRoot()))) {
           children = children.length == 1 ? EMPTY_ARRAY : ArrayUtil.remove(children, rootIndex);
         }
       }

@@ -4,8 +4,7 @@ package com.intellij.ide.environment.impl
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.intellij.ide.environment.EnvironmentKey
-import com.intellij.ide.environment.EnvironmentKeyRegistry
+import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
@@ -13,7 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.platform.util.ArgsParser
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,12 +21,12 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolute
+import kotlin.io.path.createFile
 import kotlin.system.exitProcess
 
 class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
 
   override val commandName: String = COMMAND_NAME
-
 
   override suspend fun start(args: List<String>) {
     performGeneration(args)
@@ -37,10 +36,10 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
     }
   }
 
-  suspend fun performGeneration(args: List<String>) {
+  suspend fun performGeneration(args: List<String>, configuration: EnvironmentConfiguration = EnvironmentConfiguration.EMPTY) {
     val parsedArgs = parseCommandLine(args)
 
-    val config = generateKeyConfig(!parsedArgs.noDescriptions)
+    val config = generateKeyConfig(!parsedArgs.noDescriptions, configuration)
 
     withContext(Dispatchers.IO) {
       try {
@@ -48,7 +47,7 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
           println(config.toString(Charsets.UTF_8))
         } else {
           val path = parsedArgs.outputFileName ?: Path(DEFAULT_FILE_NAME)
-          path.createFile().write(config)
+          path.createParentDirectories().createFile().write(config)
           thisLogger().info("Configuration keys are successfully written to ${path.absolute()}")
         }
       }
@@ -59,30 +58,39 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
   }
 
   companion object {
-    const val COMMAND_NAME = "generateEnvironmentKeysFile"
+    const val COMMAND_NAME: String = "generateEnvironmentKeysFile"
   }
 }
 
-private suspend fun generateKeyConfig(generateDescriptions: Boolean): ByteArray {
+private suspend fun generateKeyConfig(generateDescriptions: Boolean, configuration: EnvironmentConfiguration): ByteArray {
   val environmentKeys = blockingContext {
-    EnvironmentKeyRegistry.EP_NAME.extensionList.flatMap { it.getAllKeys() }
-  }.sortedBy(EnvironmentKey::id)
+    EnvironmentKeyProvider.EP_NAME.extensionList.flatMap { it.knownKeys.toList() }
+  }.sortedBy { it.first.id }
+
+  val registeredKeys = environmentKeys.mapTo(HashSet()) { it.first }
+  val unregisteredValues = configuration.map.entries.filter { it.key !in registeredKeys }
 
   val byteStream = ByteArrayOutputStream()
   val generator = JsonFactory().createGenerator(byteStream).setPrettyPrinter(KeyConfigPrettyPrinter())
   with(generator) {
     writeStartArray()
-    for (key in environmentKeys) {
+    for ((key, descr) in environmentKeys) {
       writeStartObject()
       if (generateDescriptions) {
         writeArrayFieldStart("description")
-        for (line in key.description.get().lines()) {
+        for (line in descr.get().lines()) {
           writeString(line)
         }
         writeEndArray()
       }
       writeStringField("key", key.id)
-      writeStringField("value", key.defaultValue)
+      writeStringField("value", configuration.get(key) ?: "")
+      writeEndObject()
+    }
+    for ((key, value) in unregisteredValues) {
+      writeStartObject()
+      writeStringField("key", key.id)
+      writeStringField("value", value)
       writeEndObject()
     }
     writeEndArray()
@@ -138,7 +146,6 @@ private fun parseCommandLine(args: List<String>) : GenerateEnvironmentKeysArgs {
     ${argsParser.usage(includeHidden = true)}""".trimMargin())
     exitProcess(2)
   }
-
 }
 
 
@@ -146,4 +153,3 @@ private const val DEFAULT_FILE_NAME : String = "environmentKeys.json"
 private const val FILE_ARGUMENT_NAME : String = "file"
 private const val STDOUT_ARGUMENT_NAME : String = "stdout"
 private const val NO_DESCRIPTIONS_ARGUMENT_NAME : String = "no-descriptions"
-

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -17,6 +18,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
+
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
 
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Trigram">trigram index</a> for fast text search.
@@ -38,34 +41,29 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
            (!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES || fileType != PlainTextFileType.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public ID<Integer, Void> getName() {
+  public @NotNull ID<Integer, Void> getName() {
     return INDEX_ID;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<Integer, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<Integer, Void, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
-      @NotNull
-      public Map<Integer, Void> map(@NotNull FileContent inputData) {
+      public @NotNull Map<Integer, Void> map(@NotNull FileContent inputData) {
         return TrigramBuilder.getTrigramsAsMap(inputData.getContentAsText());
       }
     };
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<Integer> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> isIndexable(file.getFileType());
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
   }
 
   @Override
@@ -75,12 +73,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
   @Override
   public int getVersion() {
-    return 3;
-  }
-
-  @Override
-  public boolean hasSnapshotMapping() {
-    return true;
+    return 4;
   }
 
   @Override
@@ -90,9 +83,8 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
   private static final ThreadLocalCachedIntArray SPARE_BUFFER_LOCAL = new ThreadLocalCachedIntArray();
 
-  @NotNull
   @Override
-  public DataExternalizer<Collection<Integer>> createExternalizer() {
+  public @NotNull DataExternalizer<Collection<Integer>> createExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, @NotNull Collection<Integer> value) throws IOException {
@@ -113,9 +105,8 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
         }
       }
 
-      @NotNull
       @Override
-      public Collection<Integer> read(@NotNull DataInput in) throws IOException {
+      public @NotNull Collection<Integer> read(@NotNull DataInput in) throws IOException {
         int size = DataInputOutputUtil.readINT(in);
         List<Integer> result = new ArrayList<>(size);
         int prev = 0;

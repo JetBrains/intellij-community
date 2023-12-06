@@ -11,7 +11,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -21,15 +20,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import java.awt.datatransfer.StringSelection
 
 abstract class CopyPathProvider : AnAction() {
   companion object {
-    @JvmField val QUALIFIED_NAME : Key<@NlsSafe String> = Key.create("QUALIFIED_NAME");
+    @JvmField val QUALIFIED_NAME : Key<@NlsSafe String> = Key.create("QUALIFIED_NAME")
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: run {
@@ -108,7 +106,7 @@ abstract class CopyPathProvider : AnAction() {
 abstract class DumbAwareCopyPathProvider : CopyPathProvider(), DumbAware
 
 class CopyAbsolutePathProvider : DumbAwareCopyPathProvider() {
-  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?) = virtualFile?.presentableUrl
+  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? = virtualFile?.presentableUrl
 }
 
 class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
@@ -116,18 +114,9 @@ class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
                                 virtualFile: VirtualFile?,
                                 editor: Editor?): String? {
     if (virtualFile == null) return null
-    
-    if (WorkspaceFileIndexEx.IS_ENABLED) {
-      val root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
-      return VfsUtilCore.getRelativePath(virtualFile, root)
-    }
-    else {
-      return ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false)?.let { module ->
-        ModuleRootManager.getInstance(module).contentRoots.mapNotNull { root ->
-          VfsUtilCore.getRelativePath(virtualFile, root)
-        }.singleOrNull()
-      }
-    }
+    val root = ProjectFileIndex.getInstance(project).getContentRootForFile(virtualFile) ?: 
+               WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
+    return VfsUtilCore.getRelativePath(virtualFile, root)
   }
 }
 
@@ -141,7 +130,7 @@ class CopyFileWithLineNumberPathProvider : DumbAwareCopyPathProvider() {
 }
 
 class CopySourceRootPathProvider : DumbAwareCopyPathProvider() {
-  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?) =
+  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? =
     virtualFile?.let {
       VfsUtilCore.getRelativePath(virtualFile, ProjectFileIndex.getInstance(project).getSourceRootForFile(virtualFile) ?: return null)
     }

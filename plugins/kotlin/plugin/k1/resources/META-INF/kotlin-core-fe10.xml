@@ -5,15 +5,29 @@
             qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
             interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinIndicesHelperExtension"
+            interface="org.jetbrains.kotlin.idea.core.extension.KotlinIndicesHelperExtension"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.quickFixContributor"
+            interface="org.jetbrains.kotlin.idea.quickfix.QuickFixContributor"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
+
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10ShortenReferencesFacility"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.Fe10OverrideImplementFacility"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.compiler.K1KotlinCompilerIdeAllowedErrorFilter"/>
 
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
@@ -33,6 +47,12 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade"
             serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.IdeFe10AnalysisFacade"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
+            serviceImplementation="org.jetbrains.kotlin.idea.decompiler.navigation.Fe10LibrarySourceScopeService"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.K1ReferenceImporterFacility"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
@@ -64,8 +84,6 @@
     <codeInsight.blockingMethodChecker
             implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingMethodChecker"/>
 
-    <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
-
     <codeInsight.implementMethod language="kotlin"
                                  implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler"/>
     <codeInsight.overrideMethod language="kotlin"
@@ -85,15 +103,11 @@
                           implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinExpressionTypeProviderDescriptorsImpl"/>
 
     <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestCreator"/>
-    <testDiffProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestDiffProvider"/>
+    <testDiffProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.KotlinTestDiffProvider"/>
     <testFinder implementation="org.jetbrains.kotlin.idea.testIntegration.KotlinTestFinder"/>
 
     <lang.jvm.actions.jvmElementActionsFactory
             implementation="org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory"/>
-
-    <referenceImporter
-            id="KotlinReferenceImporter"
-            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider
             id="kotlinUnresolvedReferenceQuickFixProvider"
@@ -103,6 +117,10 @@
     <documentationProvider implementation="org.jetbrains.kotlin.idea.KotlinDocumentationProvider"/>
 
     <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDefinitionsSearcher"/>
+
+    <codeInspection.suppressionAnnotationUtil
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinSuppressionAnnotationUtil"/>
 
   </extensions>
 
@@ -119,7 +137,15 @@
     <structureViewBuilder
             order="first"
             key="CLASS"
-            factoryClass="org.jetbrains.kotlin.idea.structureView.KtClsStructureViewBuilderProvider"/>
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <structureViewBuilder
+            order="first"
+            key="kotlin_builtins"
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <structureViewBuilder
+            order="first"
+            key="KNM"
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
   </extensions>
 
   <!-- Line markers -->
@@ -137,8 +163,6 @@
     <codeInsight.parameterNameHints language="kotlin"
                                     implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayParameterHintsProvider"/>
 
-    <codeInsight.inlayProvider language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCodeAuthorInlayHintsProvider"/>
     <codeInsight.inlayProvider language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>
     <codeInsight.inlayProvider language="kotlin"
@@ -158,8 +182,7 @@
 
   <!-- Go to declaration -->
   <extensions defaultExtensionNs="com.intellij">
-    
-    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinImportAliasGotoDeclarationHandler"/>
+
     <gotoRelatedProvider implementation="org.jetbrains.kotlin.idea.goto.KotlinExpectOrActualGotoRelatedProvider"/>
 
     <codeInsight.gotoSuper language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.GotoSuperActionHandler"/>
@@ -217,8 +240,10 @@
 
     <usageTypeProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypeProviderImpl"/>
 
-    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightExitPointsHandlerFactory"/>
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.K1HighlightExitPointsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightImplicitItHandlerFactory"/>
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightReceiverUsagesHandlerFactory"/>
+    <registryKey defaultValue="false" description="Enables highlighting for receiver usages" key="kotlin.receiver.usage.highlighting"/>
 
     <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithGenericsSearcher"/>
 

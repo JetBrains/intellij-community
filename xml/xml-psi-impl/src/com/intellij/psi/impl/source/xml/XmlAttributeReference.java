@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.NullableLazyValue;
@@ -29,15 +29,13 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
     myAttribute = attribute;
   }
 
-  @NotNull
   @Override
-  public XmlAttribute getElement() {
+  public @NotNull XmlAttribute getElement() {
     return myAttribute;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final int parentOffset = myAttribute.getNameElement().getStartOffsetInParent();
     int nsLen = myAttribute.getNamespacePrefix().length();
     String realName = XmlAttributeImpl.getRealName(myAttribute);
@@ -52,8 +50,7 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myAttribute.getName();
   }
 
@@ -103,8 +100,7 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
     return getDescriptor() == null;
   }
 
-  @Nullable
-  protected XmlAttributeDescriptor getDescriptor() {
+  protected @Nullable XmlAttributeDescriptor getDescriptor() {
     return myDescriptor.getValue();
   }
 }

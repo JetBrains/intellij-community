@@ -1,11 +1,10 @@
 package com.intellij.settingsSync
 
-import com.intellij.util.io.isAncestor
-import com.intellij.util.io.isFile
-import com.intellij.util.io.readText
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 
 internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
@@ -13,7 +12,7 @@ internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
 
   private var exceptionToThrowOnApply: Exception? = null
 
-  override fun applyToIde(snapshot: SettingsSnapshot) {
+  override fun applyToIde(snapshot: SettingsSnapshot, settings: SettingsSyncState?) {
     if (exceptionToThrowOnApply != null) {
       throw exceptionToThrowOnApply!!
     }
@@ -46,7 +45,7 @@ internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
     fun getAllFilesFromSettingsAsSnapshot(appConfigPath: Path): SettingsSnapshot {
       val settingsSyncStorage = appConfigPath.resolve(SETTINGS_SYNC_STORAGE_FOLDER)
       val files = Files.walk(appConfigPath).filter {
-        it.isFile() && !settingsSyncStorage.isAncestor(it)
+        it.isRegularFile() && !it.startsWith(settingsSyncStorage)
       }.toList()
 
       return settingsSnapshot {

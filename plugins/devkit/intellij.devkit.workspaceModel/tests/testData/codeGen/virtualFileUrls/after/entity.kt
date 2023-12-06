@@ -1,13 +1,12 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 interface EntityWithUrls : WorkspaceEntity {
   val simpleUrl: VirtualFileUrl
@@ -16,8 +15,8 @@ interface EntityWithUrls : WorkspaceEntity {
   val dataClassWithUrl: DataClassWithUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder : EntityWithUrls, WorkspaceEntity.Builder<EntityWithUrls>, ObjBuilder<EntityWithUrls> {
+  @GeneratedCodeApiVersion(2)
+  interface Builder : EntityWithUrls, WorkspaceEntity.Builder<EntityWithUrls> {
     override var entitySource: EntitySource
     override var simpleUrl: VirtualFileUrl
     override var nullableUrl: VirtualFileUrl?
@@ -25,7 +24,7 @@ interface EntityWithUrls : WorkspaceEntity {
     override var dataClassWithUrl: DataClassWithUrl
   }
 
-  companion object : Type<EntityWithUrls, Builder>() {
+  companion object : EntityType<EntityWithUrls, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

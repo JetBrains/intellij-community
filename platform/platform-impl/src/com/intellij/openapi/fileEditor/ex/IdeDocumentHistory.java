@@ -44,4 +44,13 @@ public abstract class IdeDocumentHistory {
 
   @ApiStatus.Internal
   public abstract void onSelectionChanged();
+
+  /**
+   * IdeDocumentHistory#onSelectionChanged can add the current command to the navigation history,
+   * even if IdeDocumentHistory#includeCurrentCommandAsNavigation was not called.
+   * This method ensures that the current command is excluded from the navigation history,
+   * even if there were attempts to add it to the navigation history by other methods.
+   */
+  @ApiStatus.Experimental
+  public abstract void reallyExcludeCurrentCommandAsNavigation();
 }

@@ -1,19 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
@@ -28,7 +28,7 @@ import java.util.Set;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class WrapWithUnmodifiableAction extends BaseIntentionAction {
+public class WrapWithUnmodifiableAction extends PsiUpdateModCommandAction<PsiExpression> {
   private static final String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
 
   private static final Map<String, String> CLASS_TO_METHOD = Map.of(
@@ -38,42 +38,32 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
               JAVA_UTIL_SORTED_MAP, "unmodifiableSortedMap",
               JAVA_UTIL_MAP, "unmodifiableMap"
   );
+  
+  public WrapWithUnmodifiableAction() {
+    super(PsiExpression.class);
+  }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (editor == null || file == null || !canModify(file)) {
-      return;
-    }
-    PsiExpression expression = getParentExpression(editor, file);
-    if (expression != null) {
-      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-      if (psiClass != null) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression element, @NotNull ModPsiUpdater updater) {
+    PsiExpression expression = getParentExpression(element);
+    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+    if (psiClass != null) {
 
-        PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(getExpectedType(expression));
-        if (expectedClass != null) {
-          String collectionClass = findSuperClass(psiClass, expectedClass, CLASS_TO_METHOD.keySet());
-          if (collectionClass != null) {
-            String method = CLASS_TO_METHOD.get(collectionClass);
-            wrapWith(expression, method);
-          }
+      PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(getExpectedType(expression));
+      if (expectedClass != null) {
+        String collectionClass = findSuperClass(psiClass, expectedClass, CLASS_TO_METHOD.keySet());
+        if (collectionClass != null) {
+          String method = CLASS_TO_METHOD.get(collectionClass);
+          wrapWith(expression, method);
         }
       }
     }
   }
 
-  @Nullable
-  private static PsiExpression getParentExpression(@NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    PsiExpression expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
-    if (expression == null) {
-      element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
-      expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
-    }
-    if (expression != null) {
-      PsiMethodCallExpression methodCall = tryCast(expression.getParent(), PsiMethodCallExpression.class);
-      if (methodCall != null && methodCall.getMethodExpression() == expression) {
-        return methodCall;
-      }
+  private static @NotNull PsiExpression getParentExpression(@NotNull PsiExpression expression) {
+    PsiMethodCallExpression methodCall = tryCast(expression.getParent(), PsiMethodCallExpression.class);
+    if (methodCall != null && methodCall.getMethodExpression() == expression) {
+      return methodCall;
     }
     return expression;
   }
@@ -86,32 +76,26 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (editor == null || file == null || !canModify(file)) {
-      return false;
-    }
-    PsiExpression expression = getParentExpression(editor, file);
-    if (expression != null) {
-      if (PsiUtil.isOnAssignmentLeftHand(expression)) return false;
-      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-      if (psiClass != null) {
-        PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(getExpectedType(expression));
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression element) {
+    PsiExpression expression = getParentExpression(element);
+    if (PsiUtil.isOnAssignmentLeftHand(expression)) return null;
+    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+    if (psiClass != null) {
+      PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(getExpectedType(expression));
 
-        if (expectedClass != null) {
-          String collectionClass = findSuperClass(psiClass, expectedClass, CLASS_TO_METHOD.keySet());
-          if (collectionClass != null && !isUnmodifiable(expression)) {
-            String message = switch (collectionClass) {
-              case JAVA_UTIL_LIST -> "intention.wrap.with.unmodifiable.list";
-              case JAVA_UTIL_SET, JAVA_UTIL_SORTED_SET -> "intention.wrap.with.unmodifiable.set";
-              default -> "intention.wrap.with.unmodifiable.map";
-            };
-            setText(JavaBundle.message(message));
-            return true;
-          }
+      if (expectedClass != null) {
+        String collectionClass = findSuperClass(psiClass, expectedClass, CLASS_TO_METHOD.keySet());
+        if (collectionClass != null && !isUnmodifiable(expression)) {
+          String message = switch (collectionClass) {
+            case JAVA_UTIL_LIST -> "intention.wrap.with.unmodifiable.list";
+            case JAVA_UTIL_SET, JAVA_UTIL_SORTED_SET -> "intention.wrap.with.unmodifiable.set";
+            default -> "intention.wrap.with.unmodifiable.map";
+          };
+          return Presentation.of(JavaBundle.message(message));
         }
       }
     }
-    return false;
+    return null;
   }
 
   private static PsiType getExpectedType(@NotNull PsiExpression expression) {

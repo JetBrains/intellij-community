@@ -2,12 +2,14 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
@@ -627,10 +629,12 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-45541
   public void testCanonicalNameOfNumpyNdarray() {
+    Project project = myFixture.getProject();
     final String testDir = getTestName(true);
     runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
       runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
-        PyClass ndarrayClass = PyClassNameIndex.findClass("numpy.core._multiarray_umath.ndarray", myFixture.getProject());
+        PyClass ndarrayClass = assertOneElement(PyClassNameIndex.findByQualifiedName("numpy.core._multiarray_umath.ndarray",
+                                                                                     project, GlobalSearchScope.allScope(project)));
         QualifiedName canonicalImportPath = QualifiedNameFinder.findCanonicalImportPath(ndarrayClass, null);
         assertEquals(QualifiedName.fromDottedString("numpy"), canonicalImportPath);
       });

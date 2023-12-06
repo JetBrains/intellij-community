@@ -1,25 +1,28 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.containers.hash.LongLinkedHashMap;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Iterator;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -45,6 +48,18 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 @ApiStatus.Internal
 final class FilePageCache {
   private static final Logger LOG = Logger.getInstance(FilePageCache.class);
+  //@formatter:off
+  /**
+   * By default, we throw errors, since it is almost 100% incorrect and buggy to create >1 storage over the same file.
+   * But some legacy code relies on that (RIDER-100680), and for backward-compatibility one could set the flag to false,
+   * returning to the old behavior there it was allowed to have >1 storage (and exception is logged as warning).
+   * This is only a temporary, short-term solution, because it just suppresses error, which almost always manifests
+   * itself later as data corruption.
+   * Beware: 99%+ data corruption risks are on you then.
+   */
+  private static final boolean THROW_ERROR_ON_DUPLICATE_STORAGE_REGISTRATION = getBooleanProperty("FilePageCache.THROW_ERROR_ON_DUPLICATE_STORAGE_REGISTRATION", true);
+  private static final boolean KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION = getBooleanProperty("FilePageCache.KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION", true);
+  //@formatter:on
 
   /**
    * Measure times of page loading/disposing.
@@ -57,11 +72,13 @@ final class FilePageCache {
   static final long MAX_PAGES_COUNT = 0xFFFF_FFFFL;
   private static final long FILE_INDEX_MASK = 0xFFFF_FFFF_0000_0000L;
 
-  /**
-   * storageId -> storage
-   */
+  /** storageId -> storage */
   //@GuardedBy("storageById")
   private final Int2ObjectMap<PagedFileStorage> storageById = new Int2ObjectOpenHashMap<>();
+  //@GuardedBy("storageById")
+  private final Map<Path, Exception> stackTracesOfStorageRegistration = KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION ? new HashMap<>() : null;
+  //@GuardedBy("storageById")
+  private final Map<Path, PagedFileStorage> storageByAbsolutePath = new HashMap<>();
 
   /**
    * In cases there both pagesAllocationLock and pagesAccessLock need to be acquired, pagesAllocationLock
@@ -84,7 +101,7 @@ final class FilePageCache {
   private final LongLinkedHashMap<DirectBufferWrapper> pagesByPageId;
 
   //@GuardedBy("pagesAllocationLock")
-  private final LinkedHashMap<Long, DirectBufferWrapper> pagesToRemoveByPageId = new LinkedHashMap<>();
+  private final Long2ObjectLinkedOpenHashMap<DirectBufferWrapper> pagesToRemoveByPageId = new Long2ObjectLinkedOpenHashMap<>();
 
   private final long cachedSizeLimit;
   /** Total size of all pages currently cached (i.e. in .pagesByPageId, not in .pagesToRemoveByPageId), bytes */
@@ -93,13 +110,13 @@ final class FilePageCache {
 
   //stats counters:
 
-  /** how many times a file channel was accessed bypassing cache (see {@link PagedFileStorage#useChannel}) */
+  /** how many times a file channel was accessed bypassing cache (see {@link PagedFileStorage#executeOp}) */
   private volatile int myUncachedFileAccess;
   /** How many times page was found in local PagedFileStorage cache */
   private int myFastCacheHits;
   /** How many times page was found in this cache */
   private int myHits;
-  /** How many pages were loaded so totalSizeCached become above the cacheCapacityBytes  */
+  /** How many pages were loaded so totalSizeCached become above the cacheCapacityBytes */
   private int myPageLoadsAboveSizeThreshold;
   /** How many pages were loaded without overthrowing cache capacity (cacheCapacityBytes) */
   private int myRegularPageLoads;
@@ -144,9 +161,8 @@ final class FilePageCache {
         return oldShouldBeNull;
       }
 
-      @Nullable
       @Override
-      public DirectBufferWrapper remove(long key) {
+      public @Nullable DirectBufferWrapper remove(long key) {
         assert pagesAccessLock.isHeldByCurrentThread();
         // this method can be called after removeEldestEntry
         DirectBufferWrapper wrapper = super.remove(key);
@@ -340,7 +356,15 @@ final class FilePageCache {
 
   void removeStorage(final long storageId) {
     synchronized (storageById) {
-      storageById.remove((int)(storageId >> 32));
+      PagedFileStorage removedStorage = storageById.remove((int)(storageId >> 32));
+      if (removedStorage != null) {
+        Path storageFile = removedStorage.getFile();
+        Path storageAbsolutePath = storageFile.toAbsolutePath();
+        storageByAbsolutePath.remove(storageAbsolutePath);
+        if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
+          stackTracesOfStorageRegistration.remove(storageAbsolutePath);
+        }
+      }
     }
   }
 
@@ -379,16 +403,40 @@ final class FilePageCache {
    */
   long registerPagedFileStorage(@NotNull PagedFileStorage storage) {
     synchronized (storageById) {
-      //FIXME RC: why no check for !registered yet? Could be registered twice with different id
+      Path storageFile = storage.getFile();
+      Path storageAbsolutePath = storageFile.toAbsolutePath();
+      PagedFileStorage alreadyRegisteredStorage = storageByAbsolutePath.get(storageAbsolutePath);
+      if (alreadyRegisteredStorage != null) {
+        IllegalStateException ex = new IllegalStateException(
+          "Storage for [" + storageAbsolutePath + "] is already registered"
+        );
+        if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
+          Exception stackTraceHolder = stackTracesOfStorageRegistration.get(storageAbsolutePath);
+          if (stackTraceHolder != null) {
+            ex.addSuppressed(stackTraceHolder);
+          }
+        }
+        if (THROW_ERROR_ON_DUPLICATE_STORAGE_REGISTRATION) {
+          throw ex;
+        }
+        else {
+          LOG.warn(ex.getMessage(), ex);
+        }
+      }
 
       //Generate unique 'id' (index) for a new storage: just find the number not occupied yet. Assume
-      // storages rarely closed, so start with currently registered storages count, and count up until
-      // 'index' is not in use yet:
+      // storages are rarely closed, so start with currently registered storages count, and count up
+      // until 'index' is not in use yet:
       int storageIndex = storageById.size();
       while (storageById.get(storageIndex) != null) {
         storageIndex++;
       }
       storageById.put(storageIndex, storage);
+      storageByAbsolutePath.put(storageAbsolutePath, storage);
+      if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
+        stackTracesOfStorageRegistration.put(storageAbsolutePath,
+                                             new Exception("Storage[" + storageAbsolutePath + "] registration stack trace"));
+      }
       myMaxRegisteredFiles = Math.max(myMaxRegisteredFiles, storageById.size());
       return (long)storageIndex << 32;
     }
@@ -427,8 +475,8 @@ final class FilePageCache {
 
   /* ======================= implementation ==================================================================================== */
 
-  @NotNull("Seems accessed storage has been closed")
-  private PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId) throws ClosedStorageException {
+  private @NotNull("Seems accessed storage has been closed") PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId)
+    throws ClosedStorageException {
     int storageIndex = (int)((storageId & FILE_INDEX_MASK) >> 32);
     synchronized (storageById) {
       PagedFileStorage storage = storageById.get(storageIndex);
@@ -442,14 +490,15 @@ final class FilePageCache {
   private void disposeRemovedSegments(@Nullable PagedFileStorage verificationStorage) {
     assertUnderSegmentAllocationLock();
 
-    if (pagesToRemoveByPageId.isEmpty()) return;
-    Iterator<Map.Entry<Long, DirectBufferWrapper>> iterator = pagesToRemoveByPageId.entrySet().iterator();
+    if (pagesToRemoveByPageId.isEmpty()) {
+      return;
+    }
+
+    ObjectIterator<DirectBufferWrapper> iterator = pagesToRemoveByPageId.values().iterator();
     while (iterator.hasNext()) {
       try {
-        Map.Entry<Long, DirectBufferWrapper> entry = iterator.next();
-        DirectBufferWrapper wrapper = entry.getValue();
+        DirectBufferWrapper wrapper = iterator.next();
         boolean released = wrapper.tryRelease(wrapper.getFile() == verificationStorage);
-
         if (released) {
           iterator.remove();
         }
@@ -477,8 +526,7 @@ final class FilePageCache {
     disposeRemovedSegments(null);
   }
 
-  @NotNull
-  private static DirectBufferWrapper allocateAndLoadPage(long pageId, boolean read, PagedFileStorage owner, boolean checkAccess)
+  private static @NotNull DirectBufferWrapper allocateAndLoadPage(long pageId, boolean read, PagedFileStorage owner, boolean checkAccess)
     throws IOException {
     if (checkAccess) {
       StorageLockContext context = owner.getStorageLockContext();
@@ -494,8 +542,7 @@ final class FilePageCache {
     return new DirectBufferWrapper(owner, offsetInFile);
   }
 
-  @NotNull
-  private Map<Long, DirectBufferWrapper> getBuffersForOwner(@NotNull PagedFileStorage storage) {
+  private @NotNull Map<Long, DirectBufferWrapper> getBuffersForOwner(@NotNull PagedFileStorage storage) {
     StorageLockContext storageLockContext = storage.getStorageLockContext();
     pagesAccessLock.lock();
     try {

@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,8 +17,6 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiSnippetAttribute;
 import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
-import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiSnippetAttributeValue {
@@ -54,11 +55,21 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
       else if (name.equals(PsiSnippetAttribute.FILE_ATTRIBUTE)) {
         return new SnippetFileReference(true);
       }
-      else if (name.equals(PsiSnippetAttribute.REGION_ATTRIBUTE)) {
-        return new SnippetRegionReference();
-      }
     }
     return null;
+  }
+
+  @Override
+  public @NotNull Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiSnippetAttribute) {
+      PsiSnippetAttribute attribute = (PsiSnippetAttribute)parent;
+      if (attribute.getName().equals(PsiSnippetAttribute.REGION_ATTRIBUTE)) {
+        return Collections.singleton(JavaPsiImplementationHelper.getInstance(getProject())
+                                       .getSnippetRegionSymbol(this));
+      }
+    }
+    return super.getOwnReferences();
   }
 
   @Override
@@ -73,7 +84,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
 
 
   @NotNull
-  private TextRange getValueRange() {
+  public TextRange getValueRange() {
     String text = getText();
     int start = 0;
     int end = text.length();
@@ -129,7 +140,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
     @Nullable
     private VirtualFile getDirectory() {
       if (mySnippetRoot == null) return null;
-      List<String> path = StringUtil.split(getCanonicalText(), mySeparator);
+      List<String> path = StringUtil.split(getValue(), mySeparator);
       if (path.isEmpty()) return null;
       VirtualFile dir = mySnippetRoot;
       for (int i = 0; i < path.size() - 1; i++) {
@@ -164,7 +175,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
     }
 
     @Override
-    public Object @NotNull [] getVariants() {
+    public @NotNull Object @NotNull [] getVariants() {
       VirtualFile directory = getDirectory();
       if (directory == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       PsiManager manager = getManager();
@@ -188,7 +199,9 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
 
     @Override
     public @NotNull @NlsSafe String getCanonicalText() {
-      return getValue();
+      String text = getValue();
+      return PsiSnippetAttribute.SNIPPETS_FOLDER + '/' +
+             text.replace(mySeparator, "/") + (myExtension == null ? "" : "." + myExtension);
     }
 
     @Override
@@ -241,57 +254,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
 
     @Override
     public String toString() {
-      return getClass().getName() + "(" + getCanonicalText() + ")";
-    }
-  }
-
-  private class SnippetRegionReference implements PsiReference {
-    private PsiElement myTarget;
-    
-    @Override
-    public @NotNull PsiElement getElement() {
-      return PsiSnippetAttributeValueImpl.this;
-    }
-
-    @Override
-    public @NotNull TextRange getRangeInElement() {
-      return getValueRange();
-    }
-
-    @Override
-    public @Nullable PsiElement resolve() {
-      if (myTarget == null) {
-        PsiSnippetDocTagValue snippet = PsiTreeUtil.getParentOfType(PsiSnippetAttributeValueImpl.this, PsiSnippetDocTagValue.class);
-        if (snippet == null) return null;
-        myTarget = JavaPsiImplementationHelper.getInstance(getProject())
-          .resolveSnippetRegion(PsiSnippetAttributeValueImpl.this, snippet, getValue());
-      }
-      return myTarget;
-    }
-
-    @Override
-    public @NotNull String getCanonicalText() {
-      return getValue();
-    }
-
-    @Override
-    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public boolean isReferenceTo(@NotNull PsiElement element) {
-      return element.equals(myTarget);
-    }
-
-    @Override
-    public boolean isSoft() {
-      return false;
+      return getClass().getName() + "(" + getValue() + ")";
     }
   }
 }

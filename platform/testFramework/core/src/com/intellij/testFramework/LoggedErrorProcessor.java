@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.util.ThrowableRunnable;
@@ -18,7 +18,7 @@ public class LoggedErrorProcessor {
   }
 
   /**
-   * Sets the processor to {@code newInstance}, executes {@code runnable} with it, and restores the old processor afterwards.
+   * Sets the processor to {@code newInstance}, executes {@code runnable} with it, and restores the old processor afterward.
    */
   public static <T extends Throwable> void executeWith(@NotNull LoggedErrorProcessor newInstance, @NotNull ThrowableRunnable<T> runnable) throws T {
     LoggedErrorProcessor oldInstance = getInstance();
@@ -39,12 +39,12 @@ public class LoggedErrorProcessor {
     AtomicReference<Throwable> error = new AtomicReference<>();
     executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processError(@NotNull String category, @NotNull String message, Throwable t, String @NotNull [] details) {
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
         Assert.assertNotNull("Unexpected error without Throwable: " + message, t);
         if (!error.compareAndSet(null, t)) {
           Assert.fail("Multiple errors were reported: " + error.get().getMessage() + " and " + t.getMessage());
         }
-        return false;
+        return Action.NONE;
       }
     }, () -> runnable.run());
     Throwable result = error.get();
@@ -71,15 +71,7 @@ public class LoggedErrorProcessor {
   /**
    * Returns a set of actions to be performed by {@link TestLoggerFactory.TestLogger#error(String, Throwable, String...)} on the given log event.
    */
-  @NotNull
-  public Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
-    var process = processError(category, message, t, details);
-    return process ? Action.ALL : Action.NONE;
-  }
-
-  /** @deprecated use/override {@link #processError(String, String, String[], Throwable)} instead */
-  @Deprecated(forRemoval = true)
-  public boolean processError(@NotNull String category, @NotNull String message, @Nullable Throwable t, String @NotNull [] details) {
-    return true;
+  public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
+    return Action.ALL;
   }
 }

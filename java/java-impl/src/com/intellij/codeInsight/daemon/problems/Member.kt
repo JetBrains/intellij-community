@@ -7,11 +7,11 @@ import com.intellij.psi.search.SearchScope
 
 internal class ScopedMember(val member: Member, val scope: SearchScope) {
 
-  val name = member.name
+  val name: String = member.name
 
-  internal fun hasChanged(other: ScopedMember) = member.hasChanged(other.member)
+  internal fun hasChanged(other: ScopedMember): Boolean = member.hasChanged(other.member)
 
-  override fun equals(other: Any?) = other is ScopedMember && member == other.member
+  override fun equals(other: Any?): Boolean = other is ScopedMember && member == other.member
 
   override fun hashCode(): Int = member.hashCode()
 
@@ -37,7 +37,7 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
   protected abstract fun copy(modifiers: MutableSet<String>): Member
 
   companion object {
-    internal fun create(psiMember: PsiMember) = when (psiMember) {
+    internal fun create(psiMember: PsiMember): Member? = when (psiMember) {
       is PsiEnumConstant -> EnumConstant.create(psiMember)
       is PsiMethod -> Method.create(psiMember)
       is PsiField -> Field.create(psiMember)

@@ -6,7 +6,6 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,7 @@ public final class TextMateFileType extends LanguageFileType implements FileType
 
   @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
-    if (file.isDirectory() || !(file instanceof LightVirtualFile)) {
+    if (file.isDirectory()) {
       return false;
     }
     CharSequence fileName = file.getNameSequence();
@@ -61,7 +60,8 @@ public final class TextMateFileType extends LanguageFileType implements FileType
   private static boolean isTypeShouldBeReplacedByTextMateType(@Nullable FileType registeredType) {
     return registeredType == UnknownFileType.INSTANCE
            || registeredType == INSTANCE
-           || registeredType == PlainTextFileType.INSTANCE;
+           || registeredType == PlainTextFileType.INSTANCE
+           || registeredType instanceof TextMateBackedFileType;
   }
 
   @Override
@@ -69,7 +69,7 @@ public final class TextMateFileType extends LanguageFileType implements FileType
     return true;
   }
 
-  private static class TextMateFileDetector implements FileTypeRegistry.FileTypeDetector {
+  static final class TextMateFileDetector implements FileTypeRegistry.FileTypeDetector {
     @Override
     public @Nullable FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
       if (file.isDirectory()) {

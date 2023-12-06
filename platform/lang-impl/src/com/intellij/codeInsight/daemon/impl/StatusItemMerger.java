@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.markup.SeverityStatusItem;
@@ -18,8 +18,7 @@ public abstract class StatusItemMerger {
    * @param lower the item with the lower of the two adjacent severities
    * @return the merged item, if any
    */
-  @Nullable
-  public abstract SeverityStatusItem mergeItems(@NotNull SeverityStatusItem higher, @NotNull SeverityStatusItem lower);
+  public abstract @Nullable SeverityStatusItem mergeItems(@NotNull SeverityStatusItem higher, @NotNull SeverityStatusItem lower);
 
   static @Nullable SeverityStatusItem runMerge(@NotNull SeverityStatusItem higher, @NotNull SeverityStatusItem lower) {
     return EP_NAME.getExtensionList().stream().map(e -> e.mergeItems(higher, lower)).filter(Objects::nonNull).findFirst().orElse(null);

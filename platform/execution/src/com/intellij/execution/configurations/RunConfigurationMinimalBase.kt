@@ -31,11 +31,11 @@ abstract class RunConfigurationMinimalBase<T : BaseState>(name: String?,
     name = value
   }
 
-  override fun getFactory() = factory
+  override fun getFactory(): ConfigurationFactory = factory
 
   override fun getIcon(): Icon = factory.icon
 
-  override fun getProject() = project
+  override fun getProject(): Project = project
   
   final override fun readExternal(element: Element) {
     throw UnsupportedOperationException("readExternal must be not called")
@@ -51,7 +51,7 @@ abstract class RunConfigurationMinimalBase<T : BaseState>(name: String?,
   }
 
   private fun createOptions(): T {
-    return ReflectionUtil.newInstance<T>(getOptionsClass())
+    return ReflectionUtil.newInstance(getOptionsClass())
   }
 
   private fun getOptionsClass(): Class<T> {

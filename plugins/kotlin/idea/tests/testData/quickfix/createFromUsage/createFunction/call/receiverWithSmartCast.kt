@@ -8,3 +8,4 @@ fun doSomething(p: Any): List<Number>{
     }
     return emptyList()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

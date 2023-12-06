@@ -418,8 +418,14 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
       if (error != null) {
         HighlightInfoType type = getTagProblemInfoType(tag);
-        final HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(value).descriptionAndTooltip(error).create();
-        myHolder.add(info);
+        if (error.startsWith("<html>")) {
+          myHolder.add(HighlightInfo.newHighlightInfo(type).range(value)
+                         .description(StringUtil.removeHtmlTags(error).replace("\n", " "))
+                         .escapedToolTip(error).create());
+        }
+        else {
+          myHolder.add(HighlightInfo.newHighlightInfo(type).range(value).descriptionAndTooltip(error).create());
+        }
       }
     }
   }

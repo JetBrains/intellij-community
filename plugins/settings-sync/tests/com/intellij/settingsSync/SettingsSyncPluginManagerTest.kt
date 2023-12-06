@@ -1,47 +1,17 @@
 package com.intellij.settingsSync
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.Disposer
-import com.intellij.settingsSync.plugins.PluginManagerProxy
-import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
-import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
-import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
-import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Assert
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicReference
 
-class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
-  private lateinit var pluginManager: SettingsSyncPluginManager
-  private lateinit var testPluginManager: TestPluginManager
+@OptIn(ExperimentalCoroutinesApi::class)
+class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
 
-  private val quickJump = TestPluginDescriptor(
-    "QuickJump",
-    listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false))
-  )
-  private val typengo = TestPluginDescriptor(
-    "codeflections.typengo",
-    listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false))
-  )
-  private val ideaLight = TestPluginDescriptor(
-    "color.scheme.IdeaLight",
-    listOf(TestPluginDependency("com.intellij.modules.lang", isOptional = false))
-  )
-  private val git4idea = TestPluginDescriptor(
-    "git4idea",
-    listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
-    bundled = true
-  )
-
-  override fun setUp() {
-    super.setUp()
-    SettingsSyncSettings.getInstance().syncEnabled = true
-    testPluginManager = TestPluginManager()
-    ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
-    pluginManager = SettingsSyncPluginManager()
-    Disposer.register(testRootDisposable, pluginManager)
-  }
-
+  @Test
   fun `test install missing plugins`() {
     pluginManager.pushChangesToIde(state {
       quickJump(enabled = false)
@@ -52,9 +22,10 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     val installedPluginIds = testPluginManager.installer.installedPluginIds
     // NB: quickJump should be skipped because it is disabled
     assertEquals(2, installedPluginIds.size)
-    assertTrue(installedPluginIds.containsAll(listOf(typengo.idString, ideaLight.idString)))
+    assertTrue(installedPluginIds.containsAll(listOf(typengo.pluginId, ideaLight.pluginId)))
   }
 
+  @Test
   fun `test do not install when plugin sync is disabled`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, false)
     try {
@@ -67,13 +38,14 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
       assertEquals(1, installedPluginIds.size)
-      assertTrue(installedPluginIds.contains(ideaLight.idString))
+      assertTrue(installedPluginIds.contains(ideaLight.pluginId))
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, true)
     }
   }
 
+  @Test
   fun `test do not install UI plugin when UI category is disabled`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, false)
     try {
@@ -86,15 +58,16 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
       assertEquals(1, installedPluginIds.size)
-      assertTrue(installedPluginIds.contains(typengo.idString))
+      assertTrue(installedPluginIds.contains(typengo.pluginId))
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, true)
     }
   }
 
+  @Test
   fun `test disable installed plugin`() {
-    testPluginManager.addPluginDescriptors(pluginManager, quickJump)
+    testPluginManager.addPluginDescriptors(quickJump)
     pluginManager.updateStateFromIdeOnStart(null)
 
     assertPluginManagerState {
@@ -110,12 +83,15 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     assertFalse(quickJump.isEnabled)
     assertIdeState {
       quickJump(enabled = false)
+      typengo(enabled = true)
+      ideaLight(enabled = true, category = SettingsCategory.UI)
     }
   }
 
+  @Test
   fun `test disable two plugins at once`() {
     // install two plugins
-    testPluginManager.addPluginDescriptors(pluginManager, quickJump, typengo)
+    testPluginManager.addPluginDescriptors(quickJump, typengo)
 
     pluginManager.pushChangesToIde(state {
       quickJump(enabled = false)
@@ -126,8 +102,9 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     assertFalse(typengo.isEnabled)
   }
 
+  @Test
   fun `test update state from IDE`() {
-    testPluginManager.addPluginDescriptors(pluginManager, quickJump, typengo, git4idea)
+    testPluginManager.addPluginDescriptors(quickJump, typengo, git4idea)
 
     pluginManager.updateStateFromIdeOnStart(null)
 
@@ -137,6 +114,8 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     }
 
     testPluginManager.disablePlugin(git4idea.pluginId)
+    // PluginEnabledStateListener.invoke is called in coroutine scope, so we'll have to wait a bit until it's ready
+    testScheduler.runCurrent()
 
     assertPluginManagerState {
       quickJump(enabled = true)
@@ -144,17 +123,20 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
       git4idea(enabled = false)
     }
 
+    // here we test concurrency, because PluginEnabledStateListener processes only plugins that were affected
     testPluginManager.disablePlugin(typengo.pluginId)
     testPluginManager.enablePlugin(git4idea.pluginId)
 
+    testScheduler.runCurrent()
     assertPluginManagerState {
       quickJump(enabled = true)
       typengo(enabled = false)
     }
   }
 
+  @Test
   fun `test do not remove entries about disabled plugins which are not installed`() {
-    testPluginManager.addPluginDescriptors(pluginManager, typengo, git4idea)
+    testPluginManager.addPluginDescriptors(typengo, git4idea)
 
     val savedState = state {
       quickJump(enabled = false)
@@ -171,8 +153,9 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     }
   }
 
+  @Test
   fun `test push settings to IDE`() {
-    testPluginManager.addPluginDescriptors(pluginManager, quickJump, typengo, git4idea)
+    testPluginManager.addPluginDescriptors(quickJump, typengo, git4idea)
     pluginManager.updateStateFromIdeOnStart(null)
 
     pluginManager.pushChangesToIde(state {
@@ -198,55 +181,224 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     }
   }
 
-  private fun assertPluginManagerState(build: StateBuilder.() -> Unit) {
-    val expectedState = state(build)
-    assertPluginsState(expectedState.plugins, pluginManager.state.plugins)
-  }
+  @Test
+  @TestFor(issues = ["IDEA-313300"])
+  fun `test update removed from IDE on start`() {
+    quickJump.isEnabled = false
+    testPluginManager.addPluginDescriptors(typengo, quickJump)
 
-  private fun assertIdeState(build: StateBuilder.() -> Unit) {
-    val expectedState = state(build)
-
-    val actualState = PluginManagerProxy.getInstance().getPlugins().associate { plugin ->
-      plugin.pluginId to PluginData(plugin.isEnabled)
+    val savedState = state {
+      quickJump(enabled = false)
+      typengo(enabled = true)
+      ideaLight(enabled = true)
     }
-    assertPluginsState(expectedState.plugins, actualState)
+
+    pluginManager.updateStateFromIdeOnStart(savedState)
+
+    assertPluginManagerState {
+      quickJump(enabled = false)
+      typengo(enabled = true)
+      ideaLight(enabled = false) // ideaLight is disabled because it was removed manually (from disk)
+    }
   }
 
-  private fun state(build: StateBuilder.() -> Unit): SettingsSyncPluginsState {
-    val builder = StateBuilder()
-    builder.build()
-    return SettingsSyncPluginsState(builder.states)
+  @Test
+  @TestFor(issues = ["IDEA-314934"])
+  fun `test don't disable effective essential plugins`() {
+    testPluginManager.addPluginDescriptors(javascript, css)
+    pluginManager.updateStateFromIdeOnStart(null)
+
+    pluginManager.pushChangesToIde(state {
+      css(enabled = false)
+    })
+
+    assertIdeState {
+      css(enabled = true) // IDE state shouldn't have changed (css is an essential plugin)
+      javascript(enabled = true) // IDE state shouldn't have changed (css is an essential plugin)
+    }
+    assertPluginManagerState {
+      css(enabled = false) // we shouldn't enable it in PluginManager
+    }
   }
 
-  private class StateBuilder {
-    val states = mutableMapOf<PluginId, PluginData>()
+  @Test
+  @TestFor(issues = ["IDEA-314934"])
+  fun `test don't disable essential plugins`() {
+    testPluginManager.addPluginDescriptors(javascript)
+    pluginManager.updateStateFromIdeOnStart(null)
 
-    operator fun TestPluginDescriptor.invoke(
-      enabled: Boolean,
-      category: SettingsCategory = SettingsCategory.PLUGINS): Pair<PluginId, PluginData> {
+    pluginManager.pushChangesToIde(state {
+      javascript(enabled = false)
+    })
 
-      val pluginData = PluginData(enabled, category)
-      states[pluginId] = pluginData
-      return this.pluginId to pluginData
+    assertIdeState {
+      javascript(enabled = true) // IDE state shouldn't have changed (css is an essential plugin)
+    }
+    assertPluginManagerState {
+      javascript(enabled = false) // we shouldn't enable it in PluginManager
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-303581"])
+  fun `test don't fail the sync on plugins' action fail`() {
+    testPluginManager.addPluginDescriptors(git4idea, quickJump.withEnabled(false))
+    pluginManager.updateStateFromIdeOnStart(null)
+
+    testPluginManager.pluginStateExceptionThrower = {
+      if (it == git4idea.pluginId)
+        throw RuntimeException("Some arbitrary exception")
+    }
+
+    val pushedState = state {
+      git4idea(enabled = false)
+      quickJump(enabled = true)
+      typengo(enabled = true)
+    }
+
+    pluginManager.pushChangesToIde(pushedState)
+
+    assertIdeState(pushedState)
+    assertPluginManagerState(pushedState)
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-303581"])
+  fun `test don't fail the sync when plugin install fails`() {
+    testPluginManager.addPluginDescriptors(git4idea, quickJump.withEnabled(false))
+    pluginManager.updateStateFromIdeOnStart(null)
+
+    testPluginManager.pluginStateExceptionThrower = {
+      if (it == git4idea.pluginId)
+        throw RuntimeException("Some arbitrary exception")
+    }
+
+    val pushedState = state {
+      git4idea(enabled = false)
+      quickJump(enabled = true)
+      typengo(enabled = true)
+    }
+
+    pluginManager.pushChangesToIde(pushedState)
+
+    assertIdeState(pushedState)
+    assertPluginManagerState(pushedState)
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-303581"])
+  fun `turn-off sync of plugin that fails to install`() {
+    testPluginManager.addPluginDescriptors(git4idea)
+    pluginManager.updateStateFromIdeOnStart(null)
+
+    testPluginManager.installer.installPluginExceptionThrower = {
+      if (it == quickJump.pluginId)
+        throw RuntimeException("Some arbitrary install exception")
+    }
+
+    val pushedState = state {
+      git4idea(enabled = false)
+      quickJump(enabled = true)
+      typengo(enabled = true)
+    }
+
+    pluginManager.pushChangesToIde(pushedState)
+
+    assertIdeState{
+      git4idea(enabled = false)
+      typengo(enabled = true)
+    }
+    assertPluginManagerState(pushedState)
+    Thread.sleep(100)
+    assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, quickJump.idString))
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-305325"])
+  fun `don't disable incompatible existing on start`() {
+    testPluginManager.addPluginDescriptors(git4idea, cvsOutdated.withEnabled(false))
+    pluginManager.updateStateFromIdeOnStart(state {
+      cvsOutdated(enabled = true)
+    })
+
+    assertIdeState {
+      git4idea(enabled = true)
+      cvsOutdated(enabled = false)
+    }
+    assertPluginManagerState {
+      cvsOutdated(enabled = true) // remains the same as it's incompatible
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-305325"])
+  fun `don't disable incompatible absent on start`() {
+    val weirdPlugin = TestPluginDescriptor(
+      "org.intellij.weird",
+      listOf(TestPluginDependency("com.intellij.ephemeral", isOptional = false)),
+      isDynamic = false
+    )
+    testPluginManager.addPluginDescriptors( git4idea)
+    pluginManager.updateStateFromIdeOnStart(state {
+      git4idea (enabled = true)
+      weirdPlugin (enabled = true)
+    })
+
+    assertIdeState {
+      git4idea (enabled = true)
+    }
+    assertPluginManagerState {
+      weirdPlugin(enabled = true)
+      //git4idea (enabled = true)
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-303622"])
+  fun `show restart required after install` (){
+    restart_required_base(false, false, true)
+  }
+  @Test
+  @TestFor(issues = ["IDEA-303622"])
+  fun `show restart required after enable` (){
+    restart_required_base(true, false, true)
+  }
+  @Test
+  @TestFor(issues = ["IDEA-303622"])
+  fun `show restart required after disable` (){
+    restart_required_base(true, true, false)
+  }
+
+  private fun restart_required_base(installedBefore: Boolean, enabledBefore: Boolean, enabledInPush: Boolean){
+    val restartRequiredRef = AtomicReference<RestartReason>()
+    SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
+      override fun restartRequired(reason: RestartReason) {
+        restartRequiredRef.set(reason)
+      }
+    })
+    testPluginManager.addPluginDescriptors(quickJump)
+    if (installedBefore) {
+      testPluginManager.addPluginDescriptors(scala.withEnabled(enabledBefore))
+    }
+
+    pluginManager.pushChangesToIde(state {
+      quickJump(enabled = false)
+      scala(enabled = enabledInPush)
+    })
+
+    assertIdeState {
+      quickJump(enabled = false)
+      if (installedBefore) {
+        scala(enabled = enabledBefore)
+      }
+    }
+    assertNotNull(restartRequiredRef.get(), "Should have processed")
+    if (!installedBefore) {
+      assert(restartRequiredRef.get() is RestartForPluginInstall)
+    } else if (enabledBefore) {
+      assert(restartRequiredRef.get() is RestartForPluginDisable)
+    } else {
+      assert(restartRequiredRef.get() is RestartForPluginEnable)
     }
   }
 }
-
-internal fun assertPluginsState(expectedStates: Map<PluginId, PluginData>, actualStates: Map<PluginId, PluginData>) {
-  fun stringifyStates(states: Map<PluginId, PluginData>) =
-    states.entries
-      .sortedBy { it.key }
-      .joinToString { (id, data) -> "$id: ${enabledOrDisabled(data.enabled)}" }
-
-  if (expectedStates.size != actualStates.size) {
-    LightPlatformTestCase.assertEquals("Expected and actual states have different number of elements",
-                                       stringifyStates(expectedStates), stringifyStates(actualStates))
-  }
-  for ((expectedId, expectedData) in expectedStates) {
-    val actualData = actualStates[expectedId]
-    LightPlatformTestCase.assertNotNull("Record for plugin $expectedId not found", actualData)
-    LightPlatformTestCase.assertEquals("Plugin $expectedId has incorrect state", expectedData.enabled, actualData!!.enabled)
-  }
-}
-
-private fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"

@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -11,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -43,6 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.Command;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(SafeDeleteProcessor.class);
@@ -199,7 +200,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private boolean checkConflicts(UsageInfo @NotNull [] usages, @NotNull List<String> conflicts) {
+  private boolean checkConflicts(UsageInfo @NotNull [] usages, @NotNull List<@DialogMessage String> conflicts) {
     Map<PsiElement,UsageHolder> elementsToUsageHolders = sortUsages(usages);
     Collection<UsageHolder> usageHolders = elementsToUsageHolders.values();
     for (UsageHolder usageHolder : usageHolders) {
@@ -283,7 +284,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return myElements;
   }
 
-  private static class RerunSafeDelete implements Runnable {
+  private static final class RerunSafeDelete implements Runnable {
     final SmartPsiElementPointer<?>[] myPointers;
     private final Project myProject;
     private final UsageView myUsageView;
@@ -403,11 +404,11 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private @NlsContexts.Command String calcCommandName() {
+  private @Command String calcCommandName() {
     return RefactoringBundle.message("safe.delete.command", RefactoringUIUtil.calculatePsiElementDescriptionList(myElements));
   }
 
-  private @NlsContexts.Command String myCachedCommandName;
+  private @Command String myCachedCommandName;
   @NotNull
   @Override
   protected String getCommandName() {

@@ -16,8 +16,8 @@ public final class DefaultJavaCoverageRunner extends DefaultJavaProgramRunner {
       return executorId.equals(CoverageExecutor.EXECUTOR_ID) &&
              //profile instanceof ModuleBasedConfiguration &&
              !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction) &&
-             profile instanceof RunConfigurationBase &&
-             CoverageEngine.EP_NAME.findExtensionOrFail(JavaCoverageEngine.class).isApplicableTo((RunConfigurationBase)profile);
+             profile instanceof RunConfigurationBase<?> runConfiguration &&
+             CoverageEngine.EP_NAME.findExtensionOrFail(JavaCoverageEngine.class).isApplicableTo(runConfiguration);
     }
     catch (Exception e) {
       return false;

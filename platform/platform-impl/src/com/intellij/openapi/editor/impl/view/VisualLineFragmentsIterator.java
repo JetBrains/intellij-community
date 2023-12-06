@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
@@ -23,13 +23,11 @@ import java.util.function.Consumer;
  * as fragments.
  */
 final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterator.Fragment> {
-  @NotNull
-  static Iterable<Fragment> create(@NotNull EditorView view, int offset, boolean beforeSoftWrap) {
+  static @NotNull Iterable<Fragment> create(@NotNull EditorView view, int offset, boolean beforeSoftWrap) {
     return create(view, offset, beforeSoftWrap, false);
   }
 
-  @NotNull
-  static Iterable<Fragment> create(@NotNull EditorView view, int offset, boolean beforeSoftWrap, boolean align) {
+  static @NotNull Iterable<Fragment> create(@NotNull EditorView view, int offset, boolean beforeSoftWrap, boolean align) {
     return () -> new VisualLineFragmentsIterator(view, offset, beforeSoftWrap, align);
   }
 
@@ -37,8 +35,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
    * If {@code quickEvaluationListener} is provided, quick approximate iteration mode becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
-  @NotNull
-  static Iterable<Fragment> create(@NotNull EditorView view,
+  static @NotNull Iterable<Fragment> create(@NotNull EditorView view,
                                    @NotNull VisualLinesIterator visualLinesIterator,
                                    @Nullable Runnable quickEvaluationListener,
                                    boolean align) {
@@ -351,8 +348,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     }
 
     // returns array of two elements
-    // - first one is visual column,
-    // - second one is 1 if target location is closer to larger columns and 0 otherwise
+    // - first one is a visual column,
+    // - second one is 1 if the target location is closer to larger columns, and 0 otherwise
     int[] xToVisualColumn(float x) {
       if (myDelegate != null) {
         return myDelegate.xToVisualColumn(x);
@@ -478,7 +475,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     }
   }
 
-  class RightAlignedFragment extends Fragment {
+  final class RightAlignedFragment extends Fragment {
     private final float xOffset;
 
     RightAlignedFragment(float offset) {

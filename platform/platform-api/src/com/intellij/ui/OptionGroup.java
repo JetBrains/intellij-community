@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -31,7 +31,11 @@ import static java.awt.GridBagConstraints.*;
 private val myLabel: JLabel by lazy { JLabel(message("some.message.key")) }
 </pre>
  * </p>
+ *
+ * @deprecated Provides incorrect spacing between components and out-dated. Fully covered by Kotlin UI DSL, which should be used instead.
+ * OptionGroup will be removed after moving Kotlin UI DSL into platform API package
  */
+@Deprecated(forRemoval = true)
 public class OptionGroup implements PanelWithAnchor {
   private final @NlsContexts.BorderTitle String myTitle;
   private final List<Object> myOptions = new ArrayList<>();
@@ -99,7 +103,7 @@ public class OptionGroup implements PanelWithAnchor {
       panel.setBorder(titledBorder);
       titledBorder.acceptMinimumSize(panel);
     }
-
+    UIUtil.applyDeprecatedBackground(panel);
     return panel;
   }
 
@@ -120,35 +124,5 @@ public class OptionGroup implements PanelWithAnchor {
         ((AnchorableComponent)((Pair<?, ?>)o).first).setAnchor(anchor);
       }
     }
-  }
-
-  public JComponent[] getComponents() {
-    List<JComponent> components = new ArrayList<>();
-    for (Object o : myOptions) {
-      if (o instanceof Pair) {
-        components.add((JComponent)((Pair<?, ?>)o).first);
-        components.add((JComponent)((Pair<?, ?>)o).second);
-      }
-      else {
-        components.add((JComponent)o);
-      }
-    }
-    return components.toArray(new JComponent[0]);
-  }
-
-  @Nullable
-  public JComponent findAnchor() {
-    double maxWidth = -1;
-    JComponent anchor = null;
-    for (Object o : myOptions) {
-      if (o instanceof Pair && ((Pair<?, ?>)o).first instanceof AnchorableComponent &&
-          ((Pair<?, ?>)o).first instanceof JComponent component) {
-        if (component.getPreferredSize().getWidth() > maxWidth) {
-          maxWidth = component.getPreferredSize().getWidth();
-          anchor = component;
-        }
-      }
-    }
-    return anchor;
   }
 }

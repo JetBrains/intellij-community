@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
@@ -31,10 +31,8 @@ import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vassiliy Kudryashov
@@ -42,6 +40,7 @@ import java.util.Set;
 public final class BeforeRunStepsPanel extends JPanel {
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
   private final JCheckBox myActivateToolWindowBeforeRunCheckBox;
+  private final JCheckBox myFocusToolWindowBeforeRunCheckBox;
   private final JBList<BeforeRunTask<?>> myList;
   private final CollectionListModel<BeforeRunTask<?>> myModel;
   private RunConfiguration myRunConfiguration;
@@ -145,12 +144,7 @@ public final class BeforeRunStepsPanel extends JPanel {
       }
     });
     myActivateToolWindowBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.activate.toolwindow.before.run"));
-    myActivateToolWindowBeforeRunCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateText();
-      }
-    });
+    myFocusToolWindowBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.focus.toolwindow.before.run"));
 
     myPanel = myDecorator.createPanel();
     myDecorator.getActionsPanel().setCustomShortcuts(CommonActionsPanel.Buttons.EDIT,
@@ -160,9 +154,10 @@ public final class BeforeRunStepsPanel extends JPanel {
 
     setLayout(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
-    JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, JBUIScale.scale(5), JBUIScale.scale(5)));
+    JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, JBUIScale.scale(10), JBUIScale.scale(5)));
     checkboxPanel.add(myShowSettingsBeforeRunCheckBox);
     checkboxPanel.add(myActivateToolWindowBeforeRunCheckBox);
+    checkboxPanel.add(myFocusToolWindowBeforeRunCheckBox);
     add(checkboxPanel, BorderLayout.SOUTH);
   }
 
@@ -194,6 +189,8 @@ public final class BeforeRunStepsPanel extends JPanel {
     myShowSettingsBeforeRunCheckBox.setEnabled(!isUnknown());
     myActivateToolWindowBeforeRunCheckBox.setSelected(settings.isActivateToolWindowBeforeRun());
     myActivateToolWindowBeforeRunCheckBox.setEnabled(!isUnknown());
+    myFocusToolWindowBeforeRunCheckBox.setSelected(settings.isFocusToolWindowBeforeRun());
+    myFocusToolWindowBeforeRunCheckBox.setEnabled(!isUnknown());
     myPanel.setVisible(checkBeforeRunTasksAbility(false));
     updateText();
   }
@@ -216,6 +213,10 @@ public final class BeforeRunStepsPanel extends JPanel {
 
   public boolean needActivateToolWindowBeforeRun() {
     return myActivateToolWindowBeforeRunCheckBox.isSelected();
+  }
+
+  public boolean needFocusToolWindowBeforeRun() {
+    return myFocusToolWindowBeforeRunCheckBox.isSelected();
   }
 
   private boolean checkBeforeRunTasksAbility(boolean checkOnlyAddAction) {
@@ -304,6 +305,10 @@ public final class BeforeRunStepsPanel extends JPanel {
     myModel.add(task);
   }
 
+  public void replaceTasks(@NotNull List<BeforeRunTask<?>> tasks) {
+    myModel.replaceAll(tasks);
+  }
+
   private @NotNull Set<Key<?>> getActiveProviderKeys() {
     List<BeforeRunTask<?>> items = myModel.getItems();
     Set<Key<?>> result = CollectionFactory.createSmallMemoryFootprintSet(items.size());
@@ -353,7 +358,9 @@ public final class BeforeRunStepsPanel extends JPanel {
   }
 
   private static @Nullable BeforeRunTaskProvider<BeforeRunTask<?>> getProvider(@NotNull Project project, Key<?> key) {
-    for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : BeforeRunTaskProvider.EP_NAME.getIterable(project)) {
+    for (Iterator<BeforeRunTaskProvider<BeforeRunTask<?>>> it = BeforeRunTaskProvider.EP_NAME.asSequence(project).iterator();
+         it.hasNext(); ) {
+      BeforeRunTaskProvider<BeforeRunTask<?>> provider = it.next();
       if (provider.getId() == key) {
         return provider;
       }

@@ -1,0 +1,26 @@
+<html>
+<body>
+<p>
+  Reports <code>while</code> loops that could be more effectively written as <code>do-while</code> loops.
+  The focus is on cases where the entire body of the <code>while</code> loop is executed before the condition is checked,
+  leading to potential redundancy in code execution.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  foo();
+  while (x) {
+      foo();
+  }
+</code></pre>
+<p>Can be replaced with:</p>
+<pre><code>
+  do {
+    foo();
+  } while (x);
+</code></pre>
+<!-- tooltip end -->
+<p>
+  <small>New in 2024.1</small>
+</p>
+</body>
+</html>

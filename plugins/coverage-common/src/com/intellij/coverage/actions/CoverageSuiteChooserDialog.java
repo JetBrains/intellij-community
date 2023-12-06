@@ -3,14 +3,13 @@ package com.intellij.coverage.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -18,9 +17,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,12 +29,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CoverageSuiteChooserDialog extends DialogWrapper {
   @NonNls private static final String LOCAL = "Local";
@@ -41,7 +42,6 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   private final CheckboxTree mySuitesTree;
   private final CoverageDataManager myCoverageManager;
   private final CheckedTreeNode myRootNode;
-  private CoverageEngine myEngine;
 
   public CoverageSuiteChooserDialog(Project project) {
     super(project, true);
@@ -89,8 +89,8 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   protected JComponent createNorthPanel() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddExternalSuiteAction());
+    group.add(new RemoveSuiteAction());
     group.add(new DeleteSuiteAction());
-    group.add(new SwitchEngineAction());
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CoverageSuiteChooser", group, true);
     toolbar.setTargetComponent(mySuitesTree);
     return toolbar.getComponent();
@@ -99,40 +99,36 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
-    final CoverageSuitesBundle bundle = suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0]));
-    CoverageLogger.logSuiteImport(myProject, bundle);
-    myCoverageManager.chooseSuitesBundle(bundle);
-    ((CoverageDataManagerImpl)myCoverageManager).addRootsToWatch(suites);
+    Map<CoverageEngine, List<CoverageSuite>> byEngine = suites.stream().collect(Collectors.groupingBy((suite) -> suite.getCoverageEngine()));
+    closeBundlesThatAreNotChosen(byEngine);
+
+    for (List<CoverageSuite> suiteList : byEngine.values()) {
+      CoverageSuitesBundle bundle = new CoverageSuitesBundle(suiteList.toArray(new CoverageSuite[0]));
+      CoverageLogger.logSuiteImport(myProject, bundle);
+      myCoverageManager.chooseSuitesBundle(bundle);
+    }
+
+    if (!suites.isEmpty()) {
+      ExternalCoverageWatchManager.getInstance(myProject).addRootsToWatch(suites);
+    }
     super.doOKAction();
   }
 
-  @NotNull
-  @Override
-  protected List<ValidationInfo> doValidateAll() {
-    CoverageEngine engine = null;
-    for (CoverageSuite suite : collectSelectedSuites()) {
-      if (engine == null) {
-        engine = suite.getCoverageEngine();
-        continue;
-      }
-      if (!Comparing.equal(engine, suite.getCoverageEngine())) {
-        return Collections.singletonList(new ValidationInfo(CoverageBundle.message("cannot.show.coverage.reports.from.different.engines"), mySuitesTree));
+  private void closeBundlesThatAreNotChosen(Map<CoverageEngine, List<CoverageSuite>> byEngine) {
+    Collection<CoverageSuitesBundle> activeSuites = myCoverageManager.activeSuites();
+    Set<CoverageEngine> activeEngines = activeSuites.stream().map(b -> b.getCoverageEngine()).collect(Collectors.toSet());
+    activeEngines.removeAll(byEngine.keySet());
+
+    for (CoverageSuitesBundle bundle : activeSuites) {
+      if (activeEngines.contains(bundle.getCoverageEngine())) {
+        myCoverageManager.closeSuitesBundle(bundle);
       }
     }
-    return super.doValidateAll();
   }
 
   @Override
   protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), new NoCoverageAction(), getCancelAction()};
-  }
-
-  private Set<CoverageEngine> collectEngines() {
-    final Set<CoverageEngine> engines = new HashSet<>();
-    for (CoverageSuite suite : myCoverageManager.getSuites()) {
-      engines.add(suite.getCoverageEngine());
-    }
-    return engines;
   }
 
   private static String getCoverageRunnerTitle(CoverageRunner coverageRunner) {
@@ -152,10 +148,10 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   private List<CoverageSuite> collectSelectedSuites() {
     final List<CoverageSuite> suites = new ArrayList<>();
     TreeUtil.treeNodeTraverser(myRootNode).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(treeNode -> {
-      if (treeNode instanceof CheckedTreeNode && ((CheckedTreeNode)treeNode).isChecked()) {
-        final Object userObject = ((CheckedTreeNode)treeNode).getUserObject();
-        if (userObject instanceof CoverageSuite) {
-          suites.add((CoverageSuite)userObject);
+      if (treeNode instanceof CheckedTreeNode checkedTreeNode && checkedTreeNode.isChecked()) {
+        final Object userObject = checkedTreeNode.getUserObject();
+        if (userObject instanceof CoverageSuite suite) {
+          suites.add(suite);
         }
       }
       return true;
@@ -163,111 +159,115 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     return suites;
   }
 
+  private void selectSuites(List<CoverageSuite> suites) {
+    TreeUtil.treeNodeTraverser(myRootNode).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(treeNode -> {
+      if (treeNode instanceof CheckedTreeNode checkedTreeNode) {
+        final Object userObject = checkedTreeNode.getUserObject();
+        checkedTreeNode.setChecked(userObject instanceof CoverageSuite && suites.contains(userObject));
+      }
+      return true;
+    });
+  }
+
   private void initTree() {
     myRootNode.removeAllChildren();
-    final HashMap<CoverageRunner, Map<String, List<CoverageSuite>>> grouped =
-      new HashMap<>();
-    groupSuites(grouped, myCoverageManager.getSuites(), myEngine);
-    final CoverageSuitesBundle currentSuite = myCoverageManager.getCurrentSuitesBundle();
+    final HashMap<CoverageRunner, Map<String, List<CoverageSuite>>> grouped = new HashMap<>();
+    groupSuites(grouped, myCoverageManager.getSuites());
     final List<CoverageRunner> runners = new ArrayList<>(grouped.keySet());
     runners.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     for (CoverageRunner runner : runners) {
       final DefaultMutableTreeNode runnerNode = new DefaultMutableTreeNode(getCoverageRunnerTitle(runner));
+      myRootNode.add(runnerNode);
       final Map<String, List<CoverageSuite>> providers = grouped.get(runner);
-      final DefaultMutableTreeNode remoteNode = new DefaultMutableTreeNode(CoverageBundle.message("remote.suites.node"));
       if (providers.size() == 1) {
-        final String providersKey = providers.keySet().iterator().next();
-        DefaultMutableTreeNode suitesNode = runnerNode;
-        if (!Comparing.strEqual(providersKey, DefaultCoverageFileProvider.class.getName())) {
-          suitesNode = remoteNode;
-          runnerNode.add(remoteNode);
+        String providerKey = providers.keySet().iterator().next();
+        DefaultMutableTreeNode parent = runnerNode;
+        if (!isLocalProvider(providerKey)) {
+          DefaultMutableTreeNode remoteNode = new DefaultMutableTreeNode(CoverageBundle.message("remote.suites.node"));
+          parent.add(remoteNode);
+          parent = remoteNode;
         }
-        final List<CoverageSuite> suites = providers.get(providersKey);
-        suites.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
-        for (CoverageSuite suite : suites) {
-          final CheckedTreeNode treeNode = new CheckedTreeNode(suite);
-          treeNode.setChecked(currentSuite != null && currentSuite.contains(suite) ? Boolean.TRUE : Boolean.FALSE);
-          suitesNode.add(treeNode);
-        }
+        List<CoverageSuite> suites = providers.get(providerKey);
+        createSuitesNodes(suites, parent);
       }
       else {
-        final DefaultMutableTreeNode localNode = new DefaultMutableTreeNode(LOCAL);
+        DefaultMutableTreeNode localNode = new DefaultMutableTreeNode(LOCAL);
+        DefaultMutableTreeNode remoteNode = new DefaultMutableTreeNode(CoverageBundle.message("remote.suites.node"));
         runnerNode.add(localNode);
         runnerNode.add(remoteNode);
-        for (String aClass : providers.keySet()) {
-          DefaultMutableTreeNode node = Comparing.strEqual(aClass, DefaultCoverageFileProvider.class.getName()) ? localNode : remoteNode;
-          for (CoverageSuite suite : providers.get(aClass)) {
-            final CheckedTreeNode treeNode = new CheckedTreeNode(suite);
-            treeNode.setChecked(currentSuite != null && currentSuite.contains(suite) ? Boolean.TRUE : Boolean.FALSE);
-            node.add(treeNode);
-          }
+        for (var entry : providers.entrySet()) {
+          DefaultMutableTreeNode parent = isLocalProvider(entry.getKey()) ? localNode : remoteNode;
+          createSuitesNodes(entry.getValue(), parent);
         }
       }
-      myRootNode.add(runnerNode);
     }
   }
 
-  private static void groupSuites(final HashMap<CoverageRunner, Map<String, List<CoverageSuite>>> grouped,
-                                  final CoverageSuite[] suites,
-                                  final CoverageEngine engine) {
+  private void createSuitesNodes(List<CoverageSuite> suites, DefaultMutableTreeNode parent) {
+    suites.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     for (CoverageSuite suite : suites) {
-      if (engine != null && suite.getCoverageEngine() != engine) continue;
-      final CoverageFileProvider provider = suite.getCoverageDataFileProvider();
-      if (provider instanceof DefaultCoverageFileProvider &&
-          Comparing.strEqual(((DefaultCoverageFileProvider)provider).getSourceProvider(), DefaultCoverageFileProvider.class.getName())) {
-        if (!provider.ensureFileExists()) continue;
+      CheckedTreeNode treeNode = new CheckedTreeNode(suite);
+      treeNode.setChecked(isSuiteActive(suite));
+      parent.add(treeNode);
+    }
+  }
+
+  private static boolean isLocalProvider(String providerKey) {
+    return Comparing.strEqual(providerKey, DefaultCoverageFileProvider.DEFAULT_LOCAL_PROVIDER_KEY);
+  }
+
+  private boolean isSuiteActive(CoverageSuite suite) {
+    return ContainerUtil.exists(myCoverageManager.activeSuites(), bundle -> bundle.contains(suite));
+  }
+
+  private static void groupSuites(HashMap<CoverageRunner, Map<String, List<CoverageSuite>>> grouped,
+                                  CoverageSuite[] suites) {
+    for (CoverageSuite suite : suites) {
+      CoverageFileProvider provider = suite.getCoverageDataFileProvider();
+      if (provider instanceof DefaultCoverageFileProvider defaultProvider &&
+          isLocalProvider(defaultProvider.getSourceProvider())
+          && !provider.ensureFileExists()) {
+        continue;
       }
-      final CoverageRunner runner = suite.getRunner();
-      Map<String, List<CoverageSuite>> byProviders = grouped.get(runner);
-      if (byProviders == null) {
-        byProviders = new HashMap<>();
-        grouped.put(runner, byProviders);
-      }
-      final String sourceProvider = provider instanceof DefaultCoverageFileProvider
-                                    ? ((DefaultCoverageFileProvider)provider).getSourceProvider()
-                                    : provider.getClass().getName();
-      List<CoverageSuite> list = byProviders.get(sourceProvider);
-      if (list == null) {
-        list = new ArrayList<>();
-        byProviders.put(sourceProvider, list);
-      }
+      Map<String, List<CoverageSuite>> byProviders = grouped.computeIfAbsent(suite.getRunner(), (unused) -> new HashMap<>());
+      String sourceProvider = provider instanceof DefaultCoverageFileProvider defaultProvider
+                              ? defaultProvider.getSourceProvider()
+                              : provider.getClass().getName();
+      List<CoverageSuite> list = byProviders.computeIfAbsent(sourceProvider, (unused) -> new ArrayList<>());
       list.add(suite);
     }
-  }
-
-  private void updateTree() {
-    ((DefaultTreeModel)mySuitesTree.getModel()).reload();
-    TreeUtil.expandAll(mySuitesTree);
   }
 
   private static class SuitesRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof CheckedTreeNode) {
-        final Object userObject = ((CheckedTreeNode)value).getUserObject();
+      if (value instanceof CheckedTreeNode checkedTreeNode) {
+        final Object userObject = checkedTreeNode.getUserObject();
         if (userObject instanceof CoverageSuite suite) {
           getTextRenderer().append(suite.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           final String date = " (" + DateFormatUtil.formatPrettyDateTime(suite.getLastCoverageTimeStamp()) + ")";
           getTextRenderer().append(date, SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
-      else if (value instanceof DefaultMutableTreeNode) {
-        final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-        if (userObject instanceof String) {
-          getTextRenderer().append((String)userObject);
+      else if (value instanceof DefaultMutableTreeNode defaultNode) {
+        final Object userObject = defaultNode.getUserObject();
+        if (userObject instanceof @Nls String name) {
+          getTextRenderer().append(name);
         }
       }
     }
   }
 
-  private class NoCoverageAction extends DialogWrapperAction {
+  class NoCoverageAction extends DialogWrapperAction {
     NoCoverageAction() {
       super(CoverageBundle.message("coverage.data.no.coverage.button"));
     }
 
     @Override
     protected void doAction(ActionEvent e) {
-      myCoverageManager.chooseSuitesBundle(null);
+      for (CoverageSuitesBundle suitesBundle : myCoverageManager.activeSuites()) {
+        myCoverageManager.closeSuitesBundle(suitesBundle);
+      }
       CoverageSuiteChooserDialog.this.close(DialogWrapper.OK_EXIT_CODE);
     }
   }
@@ -298,54 +298,53 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
             continue;
           }
 
-          final CoverageSuite coverageSuite = myCoverageManager
-            .addExternalCoverageSuite(file.getName(), file.getTimeStamp(), coverageRunner,
-                                      new DefaultCoverageFileProvider(file.getPath()));
+          CoverageSuite coverageSuite = myCoverageManager.addExternalCoverageSuite(file.getName(), file.getTimeStamp(), coverageRunner,
+                                                                                   new DefaultCoverageFileProvider(file.getPath()));
 
-          final String coverageRunnerTitle = getCoverageRunnerTitle(coverageRunner);
-          DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(myRootNode, coverageRunnerTitle);
-          if (node == null) {
-            node = new DefaultMutableTreeNode(coverageRunnerTitle);
-            myRootNode.add(node);
-          }
-          if (node.getChildCount() > 0) {
-            final TreeNode childNode = node.getChildAt(0);
-            if (!(childNode instanceof CheckedTreeNode)) {
-              if (LOCAL.equals(((DefaultMutableTreeNode)childNode).getUserObject())) {
-                node = (DefaultMutableTreeNode)childNode;
-              }
-              else {
-                final DefaultMutableTreeNode localNode = new DefaultMutableTreeNode(LOCAL);
-                node.add(localNode);
-                node = localNode;
-              }
-            }
-          }
-          final CheckedTreeNode suiteNode = new CheckedTreeNode(coverageSuite);
-          suiteNode.setChecked(true);
-          node.add(suiteNode);
-          TreeUtil.sort(node, (o1, o2) -> {
-            if (o1 instanceof CheckedTreeNode && o2 instanceof CheckedTreeNode) {
-              final Object userObject1 = ((CheckedTreeNode)o1).getUserObject();
-              final Object userObject2 = ((CheckedTreeNode)o2).getUserObject();
-              if (userObject1 instanceof CoverageSuite && userObject2 instanceof CoverageSuite) {
-                final String presentableName1 = ((CoverageSuite)userObject1).getPresentableName();
-                final String presentableName2 = ((CoverageSuite)userObject2).getPresentableName();
-                return presentableName1.compareToIgnoreCase(presentableName2);
-              }
-            }
-            return 0;
-          });
-          updateTree();
-          TreeUtil.selectNode(mySuitesTree, suiteNode);
+          List<CoverageSuite> currentlySelected = collectSelectedSuites();
+          currentlySelected.add(coverageSuite);
+          initTree();
+          selectSuites(currentlySelected);
+          ((DefaultTreeModel)mySuitesTree.getModel()).reload();
+          TreeUtil.expandAll(mySuitesTree);
         }
       }
     }
   }
 
+  private class RemoveSuiteAction extends AnAction {
+    RemoveSuiteAction() {
+      super(CommonBundle.message("button.remove"), CommonBundle.message("button.remove"), PlatformIcons.DELETE_ICON);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final CheckedTreeNode[] selectedNodes = mySuitesTree.getSelectedNodes(CheckedTreeNode.class, null);
+      for (CheckedTreeNode selectedNode : selectedNodes) {
+        final Object userObject = selectedNode.getUserObject();
+        if (userObject instanceof CoverageSuite selectedSuite) {
+          myCoverageManager.unregisterCoverageSuite(selectedSuite);
+          TreeUtil.removeLastPathComponent(mySuitesTree, new TreePath(selectedNode.getPath()));
+        }
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      final CheckedTreeNode[] selectedSuites = mySuitesTree.getSelectedNodes(CheckedTreeNode.class, null);
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(selectedSuites.length > 0);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+  }
+
   private class DeleteSuiteAction extends AnAction {
     DeleteSuiteAction() {
-      super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), PlatformIcons.DELETE_ICON);
+      super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), AllIcons.Actions.GC);
       registerCustomShortcutSet(CommonShortcuts.getDelete(), mySuitesTree);
     }
 
@@ -373,39 +372,10 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         if (userObject instanceof CoverageSuite selectedSuite) {
           if (selectedSuite.canRemove()) {
             presentation.setEnabled(true);
+            return;
           }
         }
       }
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-  }
-
-  private class SwitchEngineAction extends ComboBoxAction {
-    @NotNull
-    @Override
-    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
-      final DefaultActionGroup engChooser = new DefaultActionGroup();
-      for (final CoverageEngine engine : collectEngines()) {
-        engChooser.add(new AnAction(engine.getPresentableText()) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            myEngine = engine;
-            initTree();
-            updateTree();
-          }
-        });
-      }
-      return engChooser;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setVisible(collectEngines().size() > 1);
     }
 
     @Override

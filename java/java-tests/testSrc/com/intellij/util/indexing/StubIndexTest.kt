@@ -13,24 +13,24 @@ class StubIndexTest : JavaCodeInsightFixtureTestCase() {
     val clazz = myFixture.addClass("class Foo {}")
     val file = clazz.containingFile
 
-    val indexQueryResultOptimized =
-      JavaShortClassNameIndex.getInstance().get("Foo", myFixture.project, GlobalSearchScope.fileScope(file))
+    val indexQueryResultOptimized = JavaShortClassNameIndex.getInstance().getClasses("Foo", myFixture.project,
+                                                                                         GlobalSearchScope.fileScope(file))
     assertEquals(clazz, assertOneElement(indexQueryResultOptimized))
 
-    val indexQueryResultNotOptimized =
-      JavaShortClassNameIndex.getInstance().get("Foo", myFixture.project, GlobalSearchScope.allScope(myFixture.project))
+    val indexQueryResultNotOptimized = JavaShortClassNameIndex.getInstance().getClasses("Foo", myFixture.project,
+                                                                                            GlobalSearchScope.allScope(myFixture.project))
     assertEquals(clazz, assertOneElement(indexQueryResultNotOptimized))
   }
 
   fun `test stub index query for single file without matching key`() {
     val file = myFixture.addClass("class Foo {}").containingFile
 
-    val indexQueryResultOptimized =
-      JavaShortClassNameIndex.getInstance().get("Bar", myFixture.project, GlobalSearchScope.fileScope(file))
+    val indexQueryResultOptimized = JavaShortClassNameIndex.getInstance().getClasses("Bar", myFixture.project,
+                                                                                         GlobalSearchScope.fileScope(file))
     assertEmpty(indexQueryResultOptimized)
 
-    val indexQueryResultNotOptimized =
-      JavaShortClassNameIndex.getInstance().get("Bar", myFixture.project, GlobalSearchScope.allScope(myFixture.project))
+    val indexQueryResultNotOptimized = JavaShortClassNameIndex.getInstance().getClasses("Bar", myFixture.project,
+                                                                                            GlobalSearchScope.allScope(myFixture.project))
     assertEmpty(indexQueryResultNotOptimized)
   }
 }

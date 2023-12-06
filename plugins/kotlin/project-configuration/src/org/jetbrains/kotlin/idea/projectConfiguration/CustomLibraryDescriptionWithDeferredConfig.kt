@@ -45,7 +45,7 @@ abstract class CustomLibraryDescriptionWithDeferredConfig(
     fun finishLibConfiguration(
         module: Module,
         rootModel: ModifiableRootModel,
-        isNewProject: Boolean
+        isNewProject: Boolean = true
     ) {
         configureKotlinSettings(module.project, rootModel.sdk)
 
@@ -55,28 +55,28 @@ abstract class CustomLibraryDescriptionWithDeferredConfig(
                 languageVersionView = VersionView.Specific(bundledLanguageVersion)
                 apiVersionView = VersionView.Specific(bundledLanguageVersion)
             }
-        }
 
-        val library = rootModel.orderEntries().findLibrary { library ->
-            val libraryPresentationManager = LibraryPresentationManager.getInstance()
-            val classFiles = library.getFiles(OrderRootType.CLASSES).toList()
+            val library = rootModel.orderEntries().findLibrary { library ->
+                val libraryPresentationManager = LibraryPresentationManager.getInstance()
+                val classFiles = library.getFiles(OrderRootType.CLASSES).toList()
 
-            libraryPresentationManager.isLibraryOfKind(classFiles, libraryKind)
-        } as? LibraryEx ?: return
+                libraryPresentationManager.isLibraryOfKind(classFiles, libraryKind)
+            } as? LibraryEx ?: return
 
-        val model = library.modifiableModel
-        try {
-            val collector = NotificationMessageCollector.create(module.project)
+            val model = library.modifiableModel
+            try {
+                val collector = NotificationMessageCollector.create(module.project)
 
-            // Now that we know the SDK which is going to be set for the module, we can add jre 7/8 if required
-            val descriptorWithSdk = configurator.libraryJarDescriptor
-            if (descriptorWithSdk.findExistingJar(library) != null) {
-                configurator.configureLibraryJar(module.project, model, descriptorWithSdk, collector)
+                // Now that we know the SDK which is going to be set for the module, we can add jre 7/8 if required
+                val descriptorWithSdk = configurator.libraryJarDescriptor
+                if (descriptorWithSdk.findExistingJar(library) != null) {
+                    configurator.configureLibraryJar(module.project, model, descriptorWithSdk, collector) // Updates KotlinJavaRuntime.xml
+                }
+
+                collector.showNotification()
+            } finally {
+                model.commit()
             }
-
-            collector.showNotification()
-        } finally {
-            model.commit()
         }
     }
 

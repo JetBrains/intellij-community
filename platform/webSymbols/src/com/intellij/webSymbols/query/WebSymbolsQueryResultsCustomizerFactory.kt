@@ -13,11 +13,12 @@ interface WebSymbolsQueryResultsCustomizerFactory {
   fun create(location: PsiElement, context: WebSymbolsContext): WebSymbolsQueryResultsCustomizer?
 
   companion object {
-    private val EP_NAME = ExtensionPointName.create<WebSymbolsQueryResultsCustomizerFactory>("com.intellij.webSymbols.queryResultsCustomizerFactory")
+    private val EP_NAME = ExtensionPointName.create<WebSymbolsQueryResultsCustomizerFactory>(
+      "com.intellij.webSymbols.queryResultsCustomizerFactory")
 
     @JvmStatic
-    fun getScope(location: PsiElement?,
-                 context: WebSymbolsContext): WebSymbolsQueryResultsCustomizer =
+    fun getQueryResultsCustomizer(location: PsiElement?,
+                                  context: WebSymbolsContext): WebSymbolsQueryResultsCustomizer =
       if (location == null) {
         WebSymbolsCompoundQueryResultsCustomizer(emptyList())
       }

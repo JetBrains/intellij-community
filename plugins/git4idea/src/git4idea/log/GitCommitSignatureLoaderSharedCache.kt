@@ -10,7 +10,7 @@ import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
 import git4idea.commit.signature.GitCommitSignature
 import java.time.Duration
 
-@Service
+@Service(Service.Level.APP)
 internal class GitCommitSignatureLoaderSharedCache : Disposable {
 
   private val cache = Caffeine.newBuilder()

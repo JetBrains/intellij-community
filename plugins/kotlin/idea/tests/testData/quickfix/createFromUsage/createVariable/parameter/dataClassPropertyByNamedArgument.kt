@@ -9,3 +9,5 @@ data class MyDto(
 fun main(args: Array<String>) {
     println(MyDto(parameter1 = "value1", <caret>parameter4 = "value4"))
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix

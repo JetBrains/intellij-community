@@ -1,65 +1,64 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
-import com.intellij.diagnostic.ThreadDumper
-import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.concurrency.captureThreadContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters.Companion.isOpenedInBulk
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.ui.EditorNotifications
-import com.intellij.util.cancelOnDispose
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
-import java.util.concurrent.*
-import java.util.concurrent.CancellationException
-import java.util.concurrent.atomic.AtomicBoolean
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.*
+import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JComponent
+import javax.swing.event.ChangeEvent
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
-class AsyncEditorLoader internal constructor(private val textEditor: TextEditorImpl,
-                                             private val editorComponent: TextEditorComponent,
-                                             private val provider: TextEditorProvider) {
-  private val editor: Editor = textEditor.editor
-  private val project: Project = textEditor.myProject
-  private val delayedActions = ArrayList<Runnable>()
-  private var delayedState: TextEditorState? = null
-  private val loadingFinished = AtomicBoolean()
+private val ASYNC_LOADER = Key.create<AsyncEditorLoader>("ASYNC_LOADER")
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val dispatcher = Dispatchers.Default.limitedParallelism(2)
-
-  init {
-    editor.putUserData(ASYNC_LOADER, this)
-    editorComponent.editor.component.isVisible = false
-  }
+class AsyncEditorLoader internal constructor(private val project: Project,
+                                             private val provider: TextEditorProvider,
+                                             @JvmField val coroutineScope: CoroutineScope) {
+  private val delayedActions = ArrayDeque<Runnable>()
+  private val delayedScrollState = AtomicReference<DelayedScrollState?>()
 
   companion object {
-    private val ASYNC_LOADER = Key.create<AsyncEditorLoader>("ASYNC_LOADER")
-    private const val SYNCHRONOUS_LOADING_WAITING_TIME_MS = 200
-    private const val DOCUMENT_COMMIT_WAITING_TIME_MS = 5000L
-    private val LOG = logger<AsyncEditorLoader>()
+    internal val OPENED_IN_BULK = Key.create<Boolean>("EditorSplitters.opened.in.bulk")
 
-    private fun <T> resultInTimeOrNull(future: CompletableFuture<T>): T? {
-      try {
-        return future.get(SYNCHRONOUS_LOADING_WAITING_TIME_MS.toLong(), TimeUnit.MILLISECONDS)
-      }
-      catch (ignored: InterruptedException) {
-      }
-      catch (ignored: TimeoutException) {
-      }
-      return null
-    }
+    @Internal
+    fun isOpenedInBulk(file: VirtualFile): Boolean = file.getUserData(OPENED_IN_BULK) != null
 
     @JvmStatic
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
       val loader = editor.getUserData(ASYNC_LOADER)
-      loader?.delayedActions?.add(runnable) ?: runnable.run()
+      loader?.delayedActions?.add(captureThreadContext(runnable)) ?: runnable.run()
+    }
+
+    internal suspend fun waitForLoaded(editor: Editor) {
+      if (editor.getUserData(ASYNC_LOADER) != null) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          suspendCoroutine {
+            performWhenLoaded(editor) { it.resume(Unit) }
+          }
+        }
+      }
     }
 
     @JvmStatic
@@ -68,139 +67,141 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
     }
   }
 
+  // executed in the same EDT task where TextEditorImpl is created
+  @Internal
   @RequiresEdt
-  fun start() {
-    @Suppress("DEPRECATION")
-    val asyncLoading = project.coroutineScope.async(dispatcher) {
-      doLoad()
-    }
-    asyncLoading.cancelOnDispose(editorComponent)
+  fun start(textEditor: TextEditorImpl, tasks: List<Deferred<*>>) {
+    val editor = textEditor.editor
+    editor.putUserData(ASYNC_LOADER, this)
 
-    // we can't return the result of async call because it's only finished on EDT later,
-    // but we need to get the result of bg calculation in the same EDT event, if it's quick
-    if (worthWaiting()) {
-      /*
-       * Possible alternatives:
-       * 1. show "Loading" from the beginning, then it'll be always noticeable at least in fade-out phase
-       * 2. show a gray screen for some time and then "Loading" if it's still loading; it'll produce quick background blinking for all editors
-       * 3. show non-highlighted and unfolded editor as "Loading" background and allow it to relayout at the end of loading phase
-       * 4. freeze EDT a bit and hope that for small editors it'll suffice and for big ones show "Loading" after that.
-       * This strategy seems to produce minimal blinking annoyance.
-       */
-      resultInTimeOrNull(asyncLoading.asCompletableFuture())?.let {
-        loadingFinished(it)
-        return
-      }
-    }
-
-    editorComponent.startLoading()
-    @Suppress("DEPRECATION")
-    project.coroutineScope.async(dispatcher) {
-      val continuation = asyncLoading.await()
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        loadingFinished(continuation)
-      }
-    }
-  }
-
-  private suspend fun doLoad(): Runnable? {
-    waitForCommit()
-
-    try {
-      return readAction { textEditor.loadEditorInBackground() }
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: IndexOutOfBoundsException) {
-      // EA-232290 investigation
-      val filePathAttachment = Attachment("filePath.txt", textEditor.file.toString())
-      val threadDumpAttachment = Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString())
-      threadDumpAttachment.isIncluded = true
-      LOG.error("Error during async editor loading", e, filePathAttachment, threadDumpAttachment)
-      return null
-    }
-    catch (e: Exception) {
-      LOG.error("Error during async editor loading", e)
-      return null
-    }
-  }
-
-  private suspend fun waitForCommit() {
-    val document = editor.document
-    val psiDocumentManager = PsiDocumentManager.getInstance(project)
-    if (psiDocumentManager.isCommitted(document)) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      startInTests(tasks = tasks, editor = editor)
       return
     }
 
-    val deferred = CompletableDeferred<Unit>()
-    psiDocumentManager.performForCommittedDocument(document) { deferred.complete(Unit) }
-    withTimeoutOrNull(DOCUMENT_COMMIT_WAITING_TIME_MS) {
-      deferred.join()
+    coroutineScope.launch(CoroutineName("AsyncEditorLoader.wait")) {
+      // don't show another loading indicator on project open - use 3-second delay yet
+      val indicatorJob = showLoadingIndicator(
+        startDelay = if (isOpenedInBulk(textEditor.file)) 3_000.milliseconds else 300.milliseconds,
+        addUi = textEditor.component::addLoadingDecoratorUi
+      )
+      // await instead of join to get errors here
+      tasks.awaitAll()
+
+      indicatorJob.cancel()
+
+      withContext(Dispatchers.EDT + CoroutineName("execute delayed actions")) {
+        editor.putUserData(ASYNC_LOADER, null)
+        editor.scrollingModel.disableAnimation()
+        try {
+          while (true) {
+            (delayedActions.pollFirst() ?: break).run()
+          }
+        }
+        finally {
+          editor.scrollingModel.enableAnimation()
+        }
+      }
+      EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
     }
   }
 
-  private val isDone: Boolean
-    get() = loadingFinished.get()
-
-  private fun worthWaiting(): Boolean {
-    // cannot perform commitAndRunReadAction in parallel to EDT waiting
-    return !isOpenedInBulk(textEditor.myFile) &&
-           !PsiDocumentManager.getInstance(project).hasUncommitedDocuments() &&
-           !ApplicationManager.getApplication().isWriteAccessAllowed
-  }
-
-  private fun loadingFinished(continuation: Runnable?) {
-    if (!loadingFinished.compareAndSet(false, true)) {
-      return
+  private fun startInTests(tasks: List<Deferred<*>>, editor: EditorEx) {
+    runWithModalProgressBlocking(project, "") {
+      // required for switch to
+      withRawProgressReporter {
+        tasks.awaitAll()
+      }
     }
     editor.putUserData(ASYNC_LOADER, null)
-    if (editorComponent.isDisposed) {
-      return
+
+    while (true) {
+      (delayedActions.pollFirst() ?: break).run()
     }
-    if (continuation != null) {
-      try {
-        continuation.run()
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-    }
-    editorComponent.loadingFinished()
-    if (delayedState != null && PsiDocumentManager.getInstance(project).isCommitted(editor.document)) {
-      val state = TextEditorState()
-      state.RELATIVE_CARET_POSITION = Int.MAX_VALUE // don't do any scrolling
-      state.foldingState = delayedState!!.foldingState
-      provider.setStateImpl(project, editor, state, true)
-      delayedState = null
-    }
-    for (runnable in delayedActions) {
-      editor.scrollingModel.disableAnimation()
-      runnable.run()
-    }
-    delayedActions.clear()
-    editor.scrollingModel.enableAnimation()
-    EditorNotifications.getInstance(project).updateNotifications(textEditor.myFile)
   }
 
-  fun getEditorState(level: FileEditorStateLevel): TextEditorState {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    val state = provider.getStateImpl(project, editor, level)
-    val delayedState = delayedState
-    if (!isDone && delayedState != null) {
-      state.setDelayedFoldState { delayedState.foldingState }
-    }
-    return state
+  @RequiresReadLock
+  fun getEditorState(level: FileEditorStateLevel, editor: Editor): TextEditorState {
+    return provider.getStateImpl(project, editor, level)
   }
 
-  fun setEditorState(state: TextEditorState, exactState: Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    if (!isDone) {
-      delayedState = state
+  @RequiresEdt
+  fun setEditorState(state: TextEditorState, exactState: Boolean, editor: EditorEx) {
+    provider.setStateImpl(project = project, editor = editor, state = state, exactState = exactState)
+
+    if (!isEditorLoaded(editor)) {
+      delayedScrollState.set(DelayedScrollState(relativeCaretPosition = state.relativeCaretPosition, exactState = exactState))
+      coroutineScope.launch(Dispatchers.EDT) {
+        val delayedScrollState = delayedScrollState.getAndSet(null) ?: return@launch
+        restoreCaretPosition(editor = editor, delayedScrollState = delayedScrollState, coroutineScope = coroutineScope)
+      }
     }
-    provider.setStateImpl(project, editor, state, exactState)
+  }
+
+  internal fun dispose() {
+    coroutineScope.cancel()
+  }
+}
+
+private class DelayedScrollState(@JvmField val relativeCaretPosition: Int, @JvmField val exactState: Boolean)
+
+@RequiresEdt
+private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedScrollState, coroutineScope: CoroutineScope) {
+  fun doScroll() {
+    scrollToCaret(editor = editor,
+                  exactState = delayedScrollState.exactState,
+                  relativeCaretPosition = delayedScrollState.relativeCaretPosition)
+  }
+
+  val viewport = editor.scrollPane.viewport
+
+  fun isReady(): Boolean {
+    val extentSize = viewport.extentSize?.takeIf { it.width != 0 && it.height != 0 } ?: viewport.preferredSize
+    return extentSize.width != 0 && extentSize.height != 0
+  }
+
+  if (viewport.isShowing && isReady()) {
+    doScroll()
+  }
+  else {
+    var listenerHandle: DisposableHandle? = null
+    val listener = object : javax.swing.event.ChangeListener {
+      override fun stateChanged(e: ChangeEvent) {
+        if (!viewport.isShowing || !isReady()) {
+          return
+        }
+
+        viewport.removeChangeListener(this)
+        listenerHandle?.dispose()
+
+        doScroll()
+      }
+    }
+    listenerHandle = coroutineScope.coroutineContext.job.invokeOnCompletion {
+      viewport.removeChangeListener(listener)
+    }
+    viewport.addChangeListener(listener)
+  }
+}
+
+private fun CoroutineScope.showLoadingIndicator(startDelay: Duration, addUi: (component: JComponent) -> Unit): Job {
+  require(startDelay >= Duration.ZERO)
+
+  val scheduleTime = System.currentTimeMillis()
+  return launch {
+    delay((startDelay.inWholeMilliseconds - (System.currentTimeMillis() - scheduleTime)).coerceAtLeast(0))
+
+    val processIcon = withContext(Dispatchers.EDT) {
+      val processIcon = AsyncProcessIcon.createBig(/* coroutineScope = */ this@launch)
+      addUi(processIcon)
+      processIcon
+    }
+
+    awaitCancellationAndInvoke {
+      withContext(Dispatchers.EDT) {
+        processIcon.suspend()
+        processIcon.parent.remove(processIcon)
+      }
+    }
   }
 }

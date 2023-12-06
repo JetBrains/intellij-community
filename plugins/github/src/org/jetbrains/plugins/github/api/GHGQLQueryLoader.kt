@@ -3,12 +3,14 @@ package org.jetbrains.plugins.github.api
 
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.collaboration.api.graphql.CachingGraphQLQueryLoader
-import com.intellij.util.io.isDirectory
+import com.intellij.collaboration.api.graphql.GraphQLQueryLoader
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.stream.Collectors
+import kotlin.io.path.isDirectory
 
-object GHGQLQueryLoader: CachingGraphQLQueryLoader() {
+object GHGQLQueryLoader : GraphQLQueryLoader
+                          by CachingGraphQLQueryLoader({ GHGQLQueryLoader::class.java.classLoader.getResourceAsStream(it) }) {
   @VisibleForTesting
   fun findAllQueries(): List<String> {
     val url = GHGQLQueryLoader::class.java.classLoader.getResource("graphql/query")!!

@@ -1,13 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import io.opentelemetry.api.metrics.BatchCallback;
-import io.opentelemetry.api.metrics.Meter;
-import io.opentelemetry.api.metrics.ObservableDoubleMeasurement;
-import io.opentelemetry.api.metrics.ObservableLongMeasurement;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import io.opentelemetry.api.metrics.*;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.SingleWriterRecorder;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.EDT;
 import static java.util.concurrent.TimeUnit.HOURS;
 
 /**
@@ -23,10 +20,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class OtelReportingEventWatcher implements EventWatcher, Disposable {
-  private final @NotNull Meter otelMeter;
-
-
+public final class OtelReportingEventWatcher implements EventWatcher, Disposable {
   private final SingleWriterRecorder waitingTimesHistogram = new SingleWriterRecorder(2);
   private final SingleWriterRecorder queueSizesHistogram = new SingleWriterRecorder(2);
   private final SingleWriterRecorder executionTimeHistogram = new SingleWriterRecorder(2);
@@ -77,41 +71,43 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
   private final ObservableLongMeasurement awtDispatchTime90PNs;
   private final ObservableLongMeasurement awtDispatchTimeMaxNs;
 
+  //Sum of times spent on AWT
+  private final LongCounter awtTotalTimeNs;
 
   private final BatchCallback batchCallback;
 
-
   public OtelReportingEventWatcher() {
-    this(TraceManager.INSTANCE.getMeter("EDT"));
+    this(TelemetryManager.getInstance().getMeter(EDT));
   }
 
-  public OtelReportingEventWatcher(final @NotNull Meter meter) {
-    otelMeter = meter;
+  public OtelReportingEventWatcher(@NotNull Meter meter) {
+    //RC: by the nature this should be 'counter', not 'gauge' (since it is additive metrics), but counters have to
+    //    be reported as cumulative sum, while with current data collecting approach it is much more natural to report increments
+    tasksExecutedCounter = meter.gaugeBuilder("FlushQueue.tasksExecuted").ofLongs().buildObserver();
+
+    waitingTimeAvgNs = meter.gaugeBuilder("FlushQueue.waitingTimeAvgNs").setUnit("ns").buildObserver();
+    waitingTime90PNs = meter.gaugeBuilder("FlushQueue.waitingTime90PNs").setUnit("ns").ofLongs().buildObserver();
+    waitingTimeMaxNs = meter.gaugeBuilder("FlushQueue.waitingTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
+
+    executionTimeAvgNs = meter.gaugeBuilder("FlushQueue.executionTimeAvgNs").setUnit("ns").buildObserver();
+    executionTime90PNs = meter.gaugeBuilder("FlushQueue.executionTime90PNs").setUnit("ns").ofLongs().buildObserver();
+    executionTimeMaxNs = meter.gaugeBuilder("FlushQueue.executionTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
+
+    queueSizeAvg = meter.gaugeBuilder("FlushQueue.queueSizeAvg").buildObserver();
+    queueSize90P = meter.gaugeBuilder("FlushQueue.queueSize90P").ofLongs().buildObserver();
+    queueSizeMax = meter.gaugeBuilder("FlushQueue.queueSizeMax").ofLongs().buildObserver();
 
     //RC: by the nature this should be 'counter', not 'gauge' (since it is additive metrics), but counters have to
     //    be reported as cumulative sum, while with current data collecting approach it is much more natural to report increments
-    tasksExecutedCounter = otelMeter.gaugeBuilder("FlushQueue.tasksExecuted").ofLongs().buildObserver();
+    awtEventsDispatchedCounter = meter.gaugeBuilder("AWTEventQueue.eventsDispatched").ofLongs().buildObserver();
 
-    waitingTimeAvgNs = otelMeter.gaugeBuilder("FlushQueue.waitingTimeAvgNs").setUnit("ns").buildObserver();
-    waitingTime90PNs = otelMeter.gaugeBuilder("FlushQueue.waitingTime90PNs").setUnit("ns").ofLongs().buildObserver();
-    waitingTimeMaxNs = otelMeter.gaugeBuilder("FlushQueue.waitingTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
+    awtDispatchTimeAvgNs = meter.gaugeBuilder("AWTEventQueue.dispatchTimeAvgNs").setUnit("ns").buildObserver();
+    awtDispatchTime90PNs = meter.gaugeBuilder("AWTEventQueue.dispatchTime90PNs").setUnit("ns").ofLongs().buildObserver();
+    awtDispatchTimeMaxNs = meter.gaugeBuilder("AWTEventQueue.dispatchTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
 
-    executionTimeAvgNs = otelMeter.gaugeBuilder("FlushQueue.executionTimeAvgNs").setUnit("ns").buildObserver();
-    executionTime90PNs = otelMeter.gaugeBuilder("FlushQueue.executionTime90PNs").setUnit("ns").ofLongs().buildObserver();
-    executionTimeMaxNs = otelMeter.gaugeBuilder("FlushQueue.executionTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
-
-    queueSizeAvg = otelMeter.gaugeBuilder("FlushQueue.queueSizeAvg").buildObserver();
-    queueSize90P = otelMeter.gaugeBuilder("FlushQueue.queueSize90P").ofLongs().buildObserver();
-    queueSizeMax = otelMeter.gaugeBuilder("FlushQueue.queueSizeMax").ofLongs().buildObserver();
-
-    //RC: by the nature this should be 'counter', not 'gauge' (since it is additive metrics), but counters have to
-    //    be reported as cumulative sum, while with current data collecting approach it is much more natural to report increments
-    awtEventsDispatchedCounter = otelMeter.gaugeBuilder("AWTEventQueue.eventsDispatched").ofLongs().buildObserver();
-
-    awtDispatchTimeAvgNs = otelMeter.gaugeBuilder("AWTEventQueue.dispatchTimeAvgNs").setUnit("ns").buildObserver();
-    awtDispatchTime90PNs = otelMeter.gaugeBuilder("AWTEventQueue.dispatchTime90PNs").setUnit("ns").ofLongs().buildObserver();
-    awtDispatchTimeMaxNs = otelMeter.gaugeBuilder("AWTEventQueue.dispatchTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
-
+    //TODO: this metrics could be calculated as AWTEventQueue.dispatchTimeAvgNs * .eventsDispatched.
+    //      it is only needed because startup performance benchmarking needed it
+    awtTotalTimeNs = meter.counterBuilder("AWTEventQueue.dispatchTimeTotalNS").setUnit("ns").build();
     //MAYBE RC: 1 minute (default batchCallback period) is quite coarse scale, it averages a lot, and short spikes of waiting
     //     time could sink in noise on that scale. But it generates small amount of data, and could be always-on.
     //     We could try to report metrics more frequently (say, each second), with push-style api, with own executor. This
@@ -155,13 +151,11 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
     }
   }
 
-
   private long awtEventExecutionStartedNs = -1;
 
-  @RequiresEdt
   @Override
-  public void edtEventStarted(final @NotNull AWTEvent event,
-                              final long startedAtMs) {
+  public void edtEventStarted(@NotNull AWTEvent event, long startedAtMs) {
+    com.intellij.util.ui.EDT.assertIsEdt();
     this.awtEventExecutionStartedNs = System.nanoTime();
   }
 
@@ -176,6 +170,7 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
       return;// _likely_ missed call to .edtEventStarted()
     }
     awtEventDispatchTimeHistogram.recordValue(awtEventExecutionDurationNs);
+    awtTotalTimeNs.add(awtEventExecutionDurationNs);
   }
 
   @Override

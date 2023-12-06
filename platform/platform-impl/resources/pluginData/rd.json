@@ -1,0 +1,72 @@
+[
+  {
+    "builtIn": true,
+    "ideaName": "C#",
+    "vsCodeId": "ms-dotnettools.csharp"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "C#",
+    "vsCodeId": "jchannon.csharpextensions"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "C#",
+    "vsCodeId": "ms-dotnettools.csdevkit"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "C#",
+    "vsCodeId": "kreativ-software.csharpextensions"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "NuGet",
+    "vsCodeId": "jmrog.vscode-nuget-package-manager"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "Test Explorer",
+    "vsCodeId": "formulahendry.dotnet-test-explorer"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "Run Configurations",
+    "vsCodeId": "formulahendry.dotnet"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "Unity",
+    "vsCodeId": "unity.unity-debug"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "Unity",
+    "vsCodeId": "tobiah.unity-tools"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "Unity",
+    "vsCodeId": "kleber-swf.unity-code-snippets"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "Live Templates",
+    "vsCodeId": "jorgeserrano.vscode-csharp-snippets"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "C#",
+    "vsCodeId": "fudge.auto-using"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "C#",
+    "vsCodeId": "k--kato.docomment"
+  },
+  {
+    "builtIn": true,
+    "ideaName": ".NET Decompiler",
+    "vsCodeId": "icsharpcode.ilspy-vscode"
+  }
+]

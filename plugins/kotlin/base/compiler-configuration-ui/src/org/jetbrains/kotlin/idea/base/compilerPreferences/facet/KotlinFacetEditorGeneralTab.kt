@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab
-import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
@@ -121,8 +119,11 @@ class KotlinFacetEditorGeneralTab(
             }
 
         fun initialize() {
+            class CommonCompilerArgumentsHolder: CommonCompilerArguments() {
+                override fun copyOf(): Freezable = copyCommonCompilerArguments(this, CommonCompilerArgumentsHolder())
+            }
             if (isMultiEditor) {
-                editableCommonArguments = object : CommonCompilerArguments() {}
+                editableCommonArguments = CommonCompilerArgumentsHolder()
                 editableJvmArguments = K2JVMCompilerArguments()
                 editableJsArguments = K2JSCompilerArguments()
                 editableCompilerSettings = CompilerSettings()
@@ -288,11 +289,11 @@ class KotlinFacetEditorGeneralTab(
                 )
             }
             val argumentClass = primaryArguments.javaClass
-            val additionalArguments = argumentClass.newInstance().apply {
+            val additionalArguments = argumentClass.getDeclaredConstructor().newInstance().apply {
                 parseCommandLineArguments(splitArgumentString(editor.compilerConfigurable.additionalArgsOptionsField.text), this)
                 validateArguments(errors)?.let { message -> return ValidationResult(message) }
             }
-            val emptyArguments = argumentClass.newInstance()
+            val emptyArguments = argumentClass.getDeclaredConstructor().newInstance()
             val fieldNamesToCheck = getExposedFacetFields(platform.idePlatformKind)
 
             val propertiesToCheck = collectProperties(argumentClass.kotlin, false).filter { it.name in fieldNamesToCheck }
@@ -372,7 +373,7 @@ class KotlinFacetEditorGeneralTab(
         }
     }
 
-    fun initializeIfNeeded() {
+    private fun initializeIfNeeded() {
         if (isInitialized) return
 
         editor.initialize()
@@ -387,8 +388,6 @@ class KotlinFacetEditorGeneralTab(
             reportWarningsCheckBox.validateOnChange()
             additionalArgsOptionsField.textField.validateOnChange()
             generateSourceMapsCheckBox.validateOnChange()
-            outputPrefixFile.textField.validateOnChange()
-            outputPostfixFile.textField.validateOnChange()
             outputDirectory.textField.validateOnChange()
             copyRuntimeFilesCheckBox.validateOnChange()
             moduleKindComboBox.validateOnChange()
@@ -404,10 +403,6 @@ class KotlinFacetEditorGeneralTab(
         isInitialized = true
 
         reset()
-    }
-
-    override fun onTabEntering() {
-        initializeIfNeeded()
     }
 
     override fun isModified(): Boolean {
@@ -461,7 +456,6 @@ class KotlinFacetEditorGeneralTab(
     }
 
     override fun apply() {
-        initializeIfNeeded()
         validateOnce {
             editor.compilerConfigurable.apply()
             with(configuration.settings) {
@@ -496,6 +490,7 @@ class KotlinFacetEditorGeneralTab(
     override fun getDisplayName() = KotlinBaseCompilerConfigurationUiBundle.message("facet.name.general")
 
     override fun createComponent(): JComponent {
+        initializeIfNeeded()
         return editor
     }
 

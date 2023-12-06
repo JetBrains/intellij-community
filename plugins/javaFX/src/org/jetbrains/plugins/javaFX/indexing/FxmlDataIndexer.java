@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.indexing;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,14 +19,12 @@ import java.util.Map;
 
 public class FxmlDataIndexer implements DataIndexer<String, Void, FileContent> {
   @Override
-  @NotNull
-  public Map<String, Void> map(@NotNull final FileContent inputData) {
+  public @NotNull Map<String, Void> map(final @NotNull FileContent inputData) {
     final Map<String, Void> map = getIds(inputData.getContentAsText());
     return map != null ? map : Collections.emptyMap();
   }
 
-  @Nullable
-  private Map<String, Void> getIds(@NotNull CharSequence content) {
+  private @Nullable Map<String, Void> getIds(@NotNull CharSequence content) {
     if (!StringUtil.contains(content, JavaFxNamespaceDataProvider.JAVAFX_NAMESPACE)) {
       return null;
     }
@@ -51,5 +49,5 @@ public class FxmlDataIndexer implements DataIndexer<String, Void, FileContent> {
     };
   }
 
-  protected static class StopException extends RuntimeException {}
+  protected static final class StopException extends RuntimeException {}
 }

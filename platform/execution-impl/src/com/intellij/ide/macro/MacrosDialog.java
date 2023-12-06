@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -45,12 +46,13 @@ public final class MacrosDialog extends DialogWrapper {
   private final DefaultListModel<Item> myMacrosModel = new DefaultListModel<>();
   private final JBList<Item> myMacrosList = new JBList<>(myMacrosModel);
   private final JTextArea myPreviewTextarea = new JTextArea();
+  private final DataContext myDataContext;
 
   public MacrosDialog(@NotNull Component parent,
                       @NotNull Predicate<? super Macro> filter,
                       @Nullable Map<String, String> userMacros) {
     super(parent, true);
-    MacroManager.getInstance().cacheMacrosPreview(DataManager.getInstance().getDataContext(parent));
+    myDataContext = MacroManager.getCorrectContext(DataManager.getInstance().getDataContext(parent));
     init(filter, userMacros);
   }
 
@@ -155,7 +157,7 @@ public final class MacrosDialog extends DialogWrapper {
         return name1.compareToIgnoreCase(name2);
       }
 
-      private final String ZERO = new String(new char[]{0});
+      private static final String ZERO = new String(new char[]{0});
     });
 
     if (userMacros != null && !userMacros.isEmpty()) {
@@ -186,7 +188,7 @@ public final class MacrosDialog extends DialogWrapper {
     }));
 
     addListeners();
-    if (myMacrosModel.size() > 0) {
+    if (!myMacrosModel.isEmpty()) {
       myMacrosList.setSelectedIndex(0);
     }
     else {
@@ -253,8 +255,7 @@ public final class MacrosDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  public static HashMap<String, String> getPathMacros(boolean addModuleMacros) {
+  public static @NotNull HashMap<String, String> getPathMacros(boolean addModuleMacros) {
     final HashMap<String, String> macros = new HashMap<>(PathMacros.getInstance().getUserMacros());
     if (addModuleMacros) {
       macros.put(PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacros.getInstance().getValue(PathMacroUtil.MODULE_DIR_MACRO_NAME));
@@ -275,7 +276,7 @@ public final class MacrosDialog extends DialogWrapper {
     @NotNull String toString();
   }
 
-  private static final class MacroWrapper implements Item {
+  private final class MacroWrapper implements Item {
     private final Macro myMacro;
 
     MacroWrapper(Macro macro) {
@@ -289,7 +290,7 @@ public final class MacrosDialog extends DialogWrapper {
 
     @Override
     public @NotNull String getPreview() {
-      return StringUtil.notNullize(myMacro.preview());
+      return StringUtil.notNullize(myMacro.preview(myDataContext));
     }
 
     public @NotNull String toString() {

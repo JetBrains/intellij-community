@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.reference.SoftReference;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -28,20 +27,22 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.reference.SoftReference.dereference;
+
 public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance(JavaFxRedundantPropertyValueInspection.class);
 
   private static Reference<Map<String, Map<String, String>>> ourDefaultPropertyValues;
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new XmlElementVisitor() {
@@ -103,8 +104,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
     };
   }
 
-  @Nullable
-  private static String getDefaultValue(@NotNull String propertyName, @Nullable PsiClass containingClass) {
+  private static @Nullable String getDefaultValue(@NotNull String propertyName, @Nullable PsiClass containingClass) {
     for (PsiClass psiClass = containingClass; psiClass != null; psiClass = psiClass.getSuperClass()) {
       final String qualifiedName = psiClass.getQualifiedName();
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) break;
@@ -142,8 +142,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
     }
   }
 
-  @Nullable
-  private static String getDefaultPropertyValue(String classQualifiedName, String propertyName) {
+  private static @Nullable String getDefaultPropertyValue(String classQualifiedName, String propertyName) {
     final Map<String, String> values = getDefaultPropertyValues(classQualifiedName);
     return values != null ? values.get(propertyName) : null;
   }
@@ -151,9 +150,8 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
   /**
    * Load property values resource. The resource is produced with the script JavaFxGenerateDefaultPropertyValuesScript (can be found in tests)
    */
-  @Nullable
-  private static Map<String, String> getDefaultPropertyValues(String classQualifiedName) {
-    Map<String, Map<String, String>> values = SoftReference.dereference(ourDefaultPropertyValues);
+  private static @Nullable Map<String, String> getDefaultPropertyValues(String classQualifiedName) {
+    Map<String, Map<String, String>> values = dereference(ourDefaultPropertyValues);
     if (values == null) {
       values = loadDefaultPropertyValues(JavaFxRedundantPropertyValueInspection.class.getSimpleName() + "8.txt");
       ourDefaultPropertyValues = new SoftReference<>(values);
@@ -164,8 +162,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
   /**
    * The file format is {@code ClassName#propertyName:type=value} per line, line with leading double dash (--) is commented out
    */
-  @NotNull
-  private static Map<String, Map<String, String>> loadDefaultPropertyValues(@NotNull String resourceName) {
+  private static @NotNull Map<String, Map<String, String>> loadDefaultPropertyValues(@NotNull String resourceName) {
     final URL resource = JavaFxRedundantPropertyValueInspection.class.getResource(resourceName);
     if (resource == null) {
       LOG.warn("Resource not found: " + resourceName);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 
-public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements DumbAware {
+public final class ShowErrorDescriptionAction extends BaseCodeInsightAction implements DumbAware {
   private boolean myRequestFocus;
 
   public ShowErrorDescriptionAction() {
@@ -21,9 +21,8 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
     setEnabledInModalContext(true);
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new ShowErrorDescriptionHandler(myRequestFocus);
   }
 

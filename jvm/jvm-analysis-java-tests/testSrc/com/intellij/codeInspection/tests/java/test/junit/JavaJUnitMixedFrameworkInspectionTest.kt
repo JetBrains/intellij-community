@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestBase() {
   fun `test no highlighting`() {
@@ -55,7 +55,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
   }
 
   fun `test junit 3 test case with junit 4 test remove before each annotation quickfix`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.jupiter.api.BeforeEach
         public void do<caret>Something() { }
@@ -64,12 +64,12 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void doSomething() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@BeforeEach' annotation")
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@BeforeEach' annotation", testPreview = true)
   }
 
 
   fun `test junit 3 test case with junit 4 test remove test annotation without rename quickfix`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.Test
         public void test<caret>Foo() { }
@@ -78,11 +78,11 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation")
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation", testPreview = true)
   }
 
   fun `test junit 3 test case with junit 4 test remove test annotation and rename quickfix`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.Test
         public void f<caret>oo() { }
@@ -91,11 +91,11 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation")
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation", testPreview = true)
   }
 
   fun `test junit 3 test case with junit 4 test remove ignore annotation and rename quickfix`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.Ignore
         public void test<caret>Foo() { }
@@ -104,7 +104,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void _testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Ignore' annotation")
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Ignore' annotation", testPreview = true)
   }
 
   fun `test highlighting junit 4 test case with junit 5 test`() {
@@ -153,15 +153,15 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
     """.trimIndent(), """
       import org.junit.jupiter.api.Test;
       
-      public class MyTest {
+      class MyTest {
         @Test
-        public void testFoo() { }
+        void testFoo() { }
         
         @org.junit.jupiter.api.Test
-        public void testBar() { }
+        void testBar() { }
         
         @org.junit.jupiter.api.Test
-        public void testFooBar() { }
+        void testFooBar() { }
       }
     """.trimIndent(), fileName = "MyTest", hint = "Migrate to JUnit 5")
   }

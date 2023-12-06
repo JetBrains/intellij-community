@@ -2,7 +2,7 @@
 package com.intellij.ui.list
 
 import com.intellij.navigation.LocationPresentation
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.*
@@ -10,6 +10,7 @@ import com.intellij.util.ui.UIUtil
 import java.util.function.Function
 import javax.swing.JList
 
+@Deprecated("Use GotoTargetRendererNew.createTargetPresentationRenderer instead")
 internal class TargetPresentationMainRenderer<T>(
   private val presentationProvider: Function<in T, out TargetPresentation>
 ) : ColoredListCellRenderer<T>() {

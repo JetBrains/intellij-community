@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -21,8 +21,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * See also {@link UiDslUnnamedConfigurable.Simple} for more flexible alternative.
+ * @deprecated Use identical {@link BeanConfigurable} for replacement
  */
+@Deprecated(forRemoval = true)
 public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simple
   implements UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private @NlsContexts.BorderTitle String myTitle;
@@ -87,8 +88,7 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
       return myComponent;
     }
 
-    @NotNull
-    protected abstract C createComponent();
+    protected abstract @NotNull C createComponent();
 
     boolean isModified() {
       final Object componentValue = getComponentValue();
@@ -117,8 +117,7 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
       myTitle = title;
     }
 
-    @NotNull
-    private String getTitle() {
+    private @NotNull String getTitle() {
       return myTitle;
     }
 
@@ -130,9 +129,8 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
       return myAccessor.getValue();
     }
 
-    @NotNull
     @Override
-    protected JCheckBox createComponent() {
+    protected @NotNull JCheckBox createComponent() {
       return new JCheckBox(myTitle);
     }
 
@@ -156,8 +154,7 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
     setTitle(title);
   }
 
-  @Nullable
-  public String getTitle() {
+  public @Nullable String getTitle() {
     return myTitle;
   }
 
@@ -191,9 +188,8 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
                                @NotNull Supplier<? extends V> componentGetter,
                                @NotNull Setter<? super V> componentSetter) {
     BeanField<JComponent, V> field = new BeanField<>(new CallbackAccessor<>(beanGetter, beanSetter)) {
-      @NotNull
       @Override
-      protected JComponent createComponent() {
+      protected @NotNull JComponent createComponent() {
         return component;
       }
 
@@ -210,10 +206,9 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
     myFields.add(field);
   }
 
-  @NotNull
   @Override
-  public List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
-                                                      @NotNull Function<? super String, @NlsContexts.Command String> nameConverter) {
+  public @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
+                                                               @NotNull Function<? super String, @NlsContexts.Command String> nameConverter) {
     List<ConfigurableBuilder.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
       @Override
@@ -233,8 +228,7 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
     ConfigurableBuilderHelper.buildFieldsPanel$intellij_platform_ide_impl(builder, myTitle, myFields);
   }
 
-  @Nullable
-  public static String getConfigurableTitle(@NotNull UnnamedConfigurable configurable) {
+  public static @Nullable String getConfigurableTitle(@NotNull UnnamedConfigurable configurable) {
     if (configurable instanceof BeanConfigurable<?>) {
       return ((BeanConfigurable<?>)configurable).getTitle();
     }

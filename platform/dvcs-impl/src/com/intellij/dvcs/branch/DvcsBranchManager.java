@@ -1,17 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
+import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class DvcsBranchManager {
+public abstract class DvcsBranchManager<T extends Repository> {
+  private final AbstractRepositoryManager<T> myRepositoryManager;
+
   @NotNull private final DvcsBranchSettings myBranchSettings;
   @NotNull private final Map<BranchType, Collection<String>> myPredefinedFavoriteBranches = new HashMap<>();
   @NotNull private final Project myProject;
@@ -19,10 +24,13 @@ public abstract class DvcsBranchManager {
   @NotNull public static final Topic<DvcsBranchManagerListener> DVCS_BRANCH_SETTINGS_CHANGED =
     Topic.create("Branch settings changed", DvcsBranchManagerListener.class);
 
-  protected DvcsBranchManager(@NotNull Project project, @NotNull DvcsBranchSettings settings,
-                              BranchType @NotNull [] branchTypes) {
+  protected DvcsBranchManager(@NotNull Project project,
+                              @NotNull DvcsBranchSettings settings,
+                              BranchType @NotNull [] branchTypes,
+                              @NotNull AbstractRepositoryManager<T> repositoryManager) {
     myProject = project;
     myBranchSettings = settings;
+    myRepositoryManager = repositoryManager;
     for (BranchType type : branchTypes) {
       Collection<String> predefinedFavoriteBranches = myPredefinedFavoriteBranches.computeIfAbsent(type, __ -> new HashSet<>());
 
@@ -44,6 +52,50 @@ public abstract class DvcsBranchManager {
     if (myBranchSettings.getFavorites().contains(branchTypeName, repository, branchName)) return true;
     if (myBranchSettings.getExcludedFavorites().contains(branchTypeName, repository, branchName)) return false;
     return isPredefinedAsFavorite(branchType, branchName);
+  }
+
+  public @NotNull Map<T, Set<String>> getFavoriteBranches(@NotNull BranchType branchType) {
+    Map<T, List<String>> favorites = collectBranchesByRoot(myBranchSettings.getFavorites(), branchType);
+    Map<T, List<String>> excludedFavorites = collectBranchesByRoot(myBranchSettings.getExcludedFavorites(), branchType);
+    Collection<String> predefinedFavorites = myPredefinedFavoriteBranches.get(branchType);
+
+    Map<T, Set<String>> result = new HashMap<>();
+    for (T repo : myRepositoryManager.getRepositories()) {
+      HashSet<String> branches = new HashSet<>();
+
+      if (predefinedFavorites != null) {
+        branches.addAll(predefinedFavorites);
+      }
+
+      List<String> repoExcludedFavorites = ContainerUtil.notNullize(excludedFavorites.get(repo));
+      for (String repoExcludedFavorite : repoExcludedFavorites) {
+        branches.remove(repoExcludedFavorite);
+      }
+
+      List<String> repoFavorites = ContainerUtil.notNullize(favorites.get(repo));
+      branches.addAll(repoFavorites);
+
+      result.put(repo, branches);
+    }
+    return result;
+  }
+
+  private @NotNull Map<T, List<String>> collectBranchesByRoot(@NotNull BranchStorage storage, @NotNull BranchType branchType) {
+    List<DvcsBranchInfo> infos = ContainerUtil.notNullize(storage.getBranches().get(branchType.getName()));
+
+    Map<String, List<String>> infoByPath = new HashMap<>();
+    for (DvcsBranchInfo info : infos) {
+      List<String> list = infoByPath.computeIfAbsent(info.repoPath, key -> new ArrayList<>());
+      list.add(info.sourceName);
+    }
+
+    Map<T, List<String>> infoByRepo = new HashMap<>();
+    infoByPath.forEach((repoPath, list) -> {
+      T repo = myRepositoryManager.getRepositoryForRootQuick(VcsUtil.getFilePath(repoPath, true));
+      if (repo == null) return;
+      infoByRepo.put(repo, list);
+    });
+    return infoByRepo;
   }
 
   private boolean isPredefinedAsFavorite(@NotNull BranchType type, @NotNull String branchName) {
@@ -102,6 +154,7 @@ public abstract class DvcsBranchManager {
 
   public interface DvcsBranchManagerListener {
     default void branchFavoriteSettingsChanged() { }
+
     default void branchGroupingSettingsChanged(@NotNull GroupingKey key, boolean state) { }
   }
 }

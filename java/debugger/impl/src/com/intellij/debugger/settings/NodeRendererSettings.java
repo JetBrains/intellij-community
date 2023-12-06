@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -243,11 +244,14 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     });
 
     if (Registry.is("debugger.renderers.annotations")) {
-      ReadAction.run(() -> addAnnotationRenderers(allRenderers, project));
+      addAnnotationRenderers(allRenderers, project);
     }
 
     // plugins registered renderers come after that
-    CompoundRendererProvider.EP_NAME.getExtensionList().stream().map(CompoundRendererProvider::createRenderer).forEach(allRenderers::add);
+    CompoundRendererProvider.EP_NAME.getExtensionList().stream()
+      .filter(provider -> provider.isApplicable(project))
+      .map((provider) -> provider.createRenderer())
+      .forEach(allRenderers::add);
     allRenderers.addAll(NodeRenderer.EP_NAME.getExtensionList());
 
     // now all predefined stuff
@@ -366,7 +370,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   public CompoundReferenceRenderer createCompoundReferenceRenderer(
-    @NonNls final String rendererName, @NonNls final String className, final ValueLabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
+    @NonNls final String rendererName,
+    @NonNls final String className,
+    final ValueLabelRenderer labelRenderer,
+    final ChildrenRenderer childrenRenderer
   ) {
     CompoundReferenceRenderer renderer = new CompoundReferenceRenderer(this, rendererName, labelRenderer, childrenRenderer);
     renderer.setClassName(className);
@@ -387,7 +394,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
     childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", JavaFileType.INSTANCE));
     if (childrenExpandableText != null) {
-      childrenRenderer.setChildrenExpandable(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, childrenExpandableText, "", JavaFileType.INSTANCE));
+      childrenRenderer.setChildrenExpandable(
+        new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, childrenExpandableText, "", JavaFileType.INSTANCE));
     }
     return childrenRenderer;
   }
@@ -423,12 +431,15 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     private MapEntryLabelRenderer() {
       super("java.util.Map$Entry");
-      myKeyExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getKey()", "", JavaFileType.INSTANCE));
-      myValueExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()", "", JavaFileType.INSTANCE));
+      myKeyExpression.setReferenceExpression(
+        new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getKey()", "", JavaFileType.INSTANCE));
+      myValueExpression.setReferenceExpression(
+        new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()", "", JavaFileType.INSTANCE));
     }
 
     @Override
-    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+      throws EvaluateException {
       if (!isShowValue(descriptor, evaluationContext)) {
         descriptor.putUserData(RENDERER_MUTED, true);
         return "";
@@ -578,16 +589,21 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  static void visitAnnotatedElements(String annotationFqn, Project project, BiConsumer<? super PsiModifierListOwner, ? super PsiAnnotation> consumer) {
-    JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(annotationFqn), project, GlobalSearchScope.allScope(project))
-      .forEach(annotation -> {
-        PsiElement parent = annotation.getContext();
-        if (annotationFqn.equals(annotation.getQualifiedName()) && parent instanceof PsiModifierList) {
-          PsiElement owner = parent.getParent();
-          if (owner instanceof PsiModifierListOwner) {
-            consumer.accept((PsiModifierListOwner)owner, annotation);
-          }
+  static void visitAnnotatedElements(String annotationFqn,
+                                     Project project,
+                                     BiConsumer<? super PsiModifierListOwner, ? super PsiAnnotation> consumer) {
+    Collection<PsiAnnotation> annotations =
+      ReadAction.compute(
+        () -> JavaAnnotationIndex.getInstance().getAnnotations(StringUtil.getShortName(annotationFqn), project, GlobalSearchScope.allScope(project)));
+    annotations.forEach(annotation -> ReadAction.run(() -> {
+      if (!annotation.isValid()) return;
+      PsiElement parent = annotation.getContext();
+      if (parent instanceof PsiModifierList) {
+        PsiElement owner = parent.getParent();
+        if (owner instanceof PsiModifierListOwner && annotationFqn.equals(annotation.getQualifiedName())) {
+          consumer.accept((PsiModifierListOwner)owner, annotation);
         }
-      });
+      }
+    }));
   }
 }

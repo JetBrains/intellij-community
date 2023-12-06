@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArraySet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -12,7 +14,8 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -21,11 +24,27 @@ public class InvertedNameIndexTest {
 
   private static final int ENOUGH_MAPPINGS = 100_000;
 
+  private InvertedNameIndex invertedNameIndex;
+
+
+  @Before
+  public void setUp() throws Exception {
+    invertedNameIndex = new InvertedNameIndex();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    if (invertedNameIndex != null) {
+      invertedNameIndex.checkConsistency();
+      invertedNameIndex.clear();
+    }
+  }
+
   @Test
   public void singleFileIdMappedToNameIdCouldBeListedBack() {
     final int fileId = 1;
     final int nameId = 42;
-    InvertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+    invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
 
     final IntArraySet fileIds = fileIdsByNameId(nameId);
     assertTrue(
@@ -39,7 +58,7 @@ public class InvertedNameIndexTest {
     final int[] fileIds = new int[]{1, 2, 3, 4, 5};
     final int nameId = 42;
     for (int fileId : fileIds) {
-      InvertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+      invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
     }
 
     final IntArraySet fileIdsReported = fileIdsByNameId(nameId);
@@ -56,9 +75,9 @@ public class InvertedNameIndexTest {
     final int fileId = 1;
     final int nameId = 11;
     //add fileId -> nameId mapping
-    InvertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+    invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
     //remove fileId -> nameId mapping
-    InvertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
+    invertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
 
     final IntArraySet fileIds = fileIdsByNameId(nameId);
 
@@ -81,7 +100,7 @@ public class InvertedNameIndexTest {
           "It should be no fileId(" + fileId + ")->nameId(" + nameId + ") mapping yet",
           fileIdsByNameId(nameId).contains(fileId));
 
-        InvertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+        invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
 
         assertTrue(
           "It should be fileId(" + fileId + ")->nameId(" + nameId + ") mapping now",
@@ -100,7 +119,7 @@ public class InvertedNameIndexTest {
           fileIdsByNameId(nameId).contains(fileId));
 
         //remove mapping (map fileId -> NULL instead of nameId)
-        InvertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
+        invertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
 
         assertFalse(
           "It should be NO fileId(" + fileId + ")->nameId(" + nameId + ") mapping in the index anymore",
@@ -110,24 +129,14 @@ public class InvertedNameIndexTest {
   }
 
 
-  @Before
-  public void setUp() throws Exception {
-    InvertedNameIndex.clear();
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    InvertedNameIndex.checkConsistency();
-    InvertedNameIndex.clear();
-  }
 
   /* ============================ infrastructure ===================================================== */
 
   @NotNull
-  private static IntArraySet fileIdsByNameId(final int nameId) {
+  private IntArraySet fileIdsByNameId(final int nameId) {
     final IntArraySet nameIds = new IntArraySet(new int[]{nameId});
     final IntArraySet fileIds = new IntArraySet();
-    InvertedNameIndex.forEachFileIds(nameIds, fId -> {
+    invertedNameIndex.forEachFileIds(nameIds, fId -> {
       fileIds.add(fId);
       return true;
     });

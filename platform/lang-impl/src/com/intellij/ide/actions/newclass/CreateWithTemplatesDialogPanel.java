@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.newclass;
 
 import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
@@ -79,7 +79,7 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
     myTemplatesList.setSelectedIndex(0);
   }
 
-  private static class TemplateListCellRenderer implements ListCellRenderer<TemplatePresentation> {
+  private static final class TemplateListCellRenderer implements ListCellRenderer<TemplatePresentation> {
     private final ListCellRenderer<TemplatePresentation> delegateRenderer =
       SimpleListCellRenderer.create((@NotNull JBLabel label, TemplatePresentation value, int index) -> {
         if (value != null) {
@@ -95,20 +95,10 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
       JComponent delegate = (JComponent) delegateRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      delegate.setBorder(JBUI.Borders.empty(JBUIScale.scale(3), JBUIScale.scale(1)));
-      if (index == 0 && ExperimentalUI.isNewUI()) {
-        JPanel wrapper = new JPanel(new BorderLayout()) {
-          @Override
-          public AccessibleContext getAccessibleContext() {
-            return delegate.getAccessibleContext();
-          }
-        };
-        wrapper.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-        //noinspection UseDPIAwareBorders
-        wrapper.setBorder(new EmptyBorder(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth(), 0, 0, 0));
-        wrapper.add(delegate, BorderLayout.CENTER);
-        return wrapper;
-      }
+      delegate.setBorder(JBUI.Borders.empty(JBUIScale.scale(3),
+                                            JBUIScale.scale(6),
+                                            JBUIScale.scale(3),
+                                            JBUIScale.scale(1)));
       return delegate;
     }
   }

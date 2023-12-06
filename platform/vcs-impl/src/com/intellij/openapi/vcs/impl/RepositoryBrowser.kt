@@ -51,6 +51,7 @@ object RepositoryBrowser {
       val component = content.component as? RepositoryBrowserPanel ?: continue
       if (component.root == root) {
         repoToolWindow.contentManager.setSelectedContent(content)
+        repoToolWindow.activate(null)
         return
       }
     }
@@ -159,7 +160,7 @@ class RepositoryBrowserPanel(
 
   private fun getLocalFilePath(file: VcsVirtualFile): FilePath {
     val localFile = File(localRoot.path, file.path)
-    return VcsUtil.getFilePath(localFile)
+    return VcsUtil.getFilePath(localFile, file.isDirectory)
   }
 }
 

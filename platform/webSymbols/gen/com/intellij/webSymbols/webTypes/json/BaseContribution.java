@@ -25,7 +25,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
     "doc-url",
     "icon",
     "source",
+    "since",
     "deprecated",
+    "deprecated-since",
+    "obsolete",
+    "obsolete-since",
     "experimental",
     "priority",
     "proximity",
@@ -79,10 +83,48 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("source")
     @JsonPropertyDescription("Allows to specify the source of the entity. For Vue.js component this may be for instance a class.")
     private SourceBase source;
+    /**
+     * Version since this symbol is available.
+     * 
+     */
+    @JsonProperty("since")
+    @JsonPropertyDescription("Version since this symbol is available.")
+    private String since;
+    /**
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
     @JsonProperty("deprecated")
-    private Boolean deprecated = false;
+    @JsonPropertyDescription("Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.")
+    private Deprecated deprecated = null;
+    /**
+     * Version in which this symbol was first deprecated.
+     * 
+     */
+    @JsonProperty("deprecated-since")
+    @JsonPropertyDescription("Version in which this symbol was first deprecated.")
+    private String deprecatedSince;
+    /**
+     * Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
+    @JsonProperty("obsolete")
+    @JsonPropertyDescription("Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.")
+    private Obsolete obsolete = null;
+    /**
+     * Version in which this symbol was first made obsolete.
+     * 
+     */
+    @JsonProperty("obsolete-since")
+    @JsonPropertyDescription("Version in which this symbol was first made obsolete.")
+    private String obsoleteSince;
+    /**
+     * Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.
+     * 
+     */
     @JsonProperty("experimental")
-    private Boolean experimental = false;
+    @JsonPropertyDescription("Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.")
+    private Experimental experimental = null;
     @JsonProperty("priority")
     private BaseContribution.Priority priority;
     @JsonProperty("proximity")
@@ -125,11 +167,11 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonPropertyDescription("Contains contributions to HTML namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - HTML elements and HTML attributes. There are also 2 deprecated kinds: tags (which is equivalent to 'elements') and 'events' (which was moved to JS namespace)")
     private Html html;
     /**
-     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.
+     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
      * 
      */
     @JsonProperty("css")
-    @JsonPropertyDescription("Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.")
+    @JsonPropertyDescription("Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.")
     private Css css;
     /**
      * Contains contributions to JS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - properties and events.
@@ -247,23 +289,111 @@ public abstract class BaseContribution implements GenericContributionsHost
         this.source = source;
     }
 
+    /**
+     * Version since this symbol is available.
+     * 
+     */
+    @JsonProperty("since")
+    public String getSince() {
+        return since;
+    }
+
+    /**
+     * Version since this symbol is available.
+     * 
+     */
+    @JsonProperty("since")
+    public void setSince(String since) {
+        this.since = since;
+    }
+
+    /**
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
     @JsonProperty("deprecated")
-    public Boolean getDeprecated() {
+    public Deprecated getDeprecated() {
         return deprecated;
     }
 
+    /**
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
     @JsonProperty("deprecated")
-    public void setDeprecated(Boolean deprecated) {
+    public void setDeprecated(Deprecated deprecated) {
         this.deprecated = deprecated;
     }
 
+    /**
+     * Version in which this symbol was first deprecated.
+     * 
+     */
+    @JsonProperty("deprecated-since")
+    public String getDeprecatedSince() {
+        return deprecatedSince;
+    }
+
+    /**
+     * Version in which this symbol was first deprecated.
+     * 
+     */
+    @JsonProperty("deprecated-since")
+    public void setDeprecatedSince(String deprecatedSince) {
+        this.deprecatedSince = deprecatedSince;
+    }
+
+    /**
+     * Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
+    @JsonProperty("obsolete")
+    public Obsolete getObsolete() {
+        return obsolete;
+    }
+
+    /**
+     * Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
+    @JsonProperty("obsolete")
+    public void setObsolete(Obsolete obsolete) {
+        this.obsolete = obsolete;
+    }
+
+    /**
+     * Version in which this symbol was first made obsolete.
+     * 
+     */
+    @JsonProperty("obsolete-since")
+    public String getObsoleteSince() {
+        return obsoleteSince;
+    }
+
+    /**
+     * Version in which this symbol was first made obsolete.
+     * 
+     */
+    @JsonProperty("obsolete-since")
+    public void setObsoleteSince(String obsoleteSince) {
+        this.obsoleteSince = obsoleteSince;
+    }
+
+    /**
+     * Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.
+     * 
+     */
     @JsonProperty("experimental")
-    public Boolean getExperimental() {
+    public Experimental getExperimental() {
         return experimental;
     }
 
+    /**
+     * Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.
+     * 
+     */
     @JsonProperty("experimental")
-    public void setExperimental(Boolean experimental) {
+    public void setExperimental(Experimental experimental) {
         this.experimental = experimental;
     }
 
@@ -388,7 +518,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     /**
-     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.
+     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
      * 
      */
     @JsonProperty("css")
@@ -397,7 +527,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     /**
-     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.
+     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
      * 
      */
     @JsonProperty("css")

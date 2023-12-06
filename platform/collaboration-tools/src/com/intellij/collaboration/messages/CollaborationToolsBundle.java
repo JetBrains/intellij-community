@@ -9,22 +9,19 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class CollaborationToolsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.CollaborationToolsBundle";
-  private static final CollaborationToolsBundle INSTANCE = new CollaborationToolsBundle();
+public final class CollaborationToolsBundle {
+  private static final @NonNls String BUNDLE = "messages.CollaborationToolsBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(CollaborationToolsBundle.class, BUNDLE);
 
   private CollaborationToolsBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                                     Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

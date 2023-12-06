@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.idea.IdeaLogger;
@@ -234,7 +233,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
                                         ApplicationManager.getApplication() == null ||
                                         ApplicationManager.getApplication() instanceof MockApplication);
 
-    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(CodeStyle::getDefaultSettings) : null;
+    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(() -> CodeStyle.getDefaultSettings()) : null;
     ourTestCase = this;
     if (myProject != null) {
       CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
@@ -325,14 +324,16 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return doCreateRealModuleIn(moduleName, myProject, getModuleType());
   }
 
-  protected final @NotNull Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, @NotNull ModuleType<?> moduleType) {
+  protected static @NotNull Module doCreateRealModuleIn(@NotNull String moduleName,
+                                                        @NotNull Project project,
+                                                        @NotNull ModuleType<?> moduleType) {
     return createModuleAt(moduleName, project, moduleType, ProjectKt.getStateStore(project).getProjectBasePath());
   }
 
-  protected final @NotNull Module createModuleAt(@NotNull String moduleName,
-                                                 @NotNull Project project,
-                                                 @NotNull ModuleType<?> moduleType,
-                                                 @NotNull Path path) {
+  protected static @NotNull Module createModuleAt(@NotNull String moduleName,
+                                                  @NotNull Project project,
+                                                  @NotNull ModuleType<?> moduleType,
+                                                  @NotNull Path path) {
     Path moduleFile = path.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     return WriteAction.computeAndWait(() -> ModuleManager.getInstance(project).newModule(moduleFile, moduleType.getId()));
   }
@@ -612,15 +613,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     else {
       runnable.run();
     }
-  }
-
-  /**
-   * @deprecated do not use. instead, start write action where necessary for the shortest time possible
-   */
-  @Deprecated(forRemoval = true)
-  protected boolean isRunInWriteAction() {
-    PluginException.reportDeprecatedUsage("this method", "do not use. instead, start write action where necessary for the shortest time possible");
-    return false;
   }
 
   @Override

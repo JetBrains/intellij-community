@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -10,7 +10,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
@@ -217,7 +216,6 @@ class PluginDescriptorTest {
     assertThat(descriptor.isLicenseOptional).isTrue()
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `use newer plugin`() {
     writeDescriptor("foo_1-0", """
@@ -244,7 +242,6 @@ class PluginDescriptorTest {
     assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `use newer plugin if disabled`() {
     writeDescriptor("foo_3-0", """
@@ -273,7 +270,6 @@ class PluginDescriptorTest {
     assertThat(foo.pluginId.idString).isEqualTo("foo")
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `prefer bundled if custom is incompatible`() {
     // names are important - will be loaded in alphabetical order
@@ -311,7 +307,6 @@ class PluginDescriptorTest {
     assertThat(result.getIdMap().get(foo.pluginId)).isSameAs(foo)
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `select compatible plugin if both versions provided`() {
     writeDescriptor("foo_1-0", """
@@ -342,7 +337,6 @@ class PluginDescriptorTest {
     assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `use first plugin if both versions the same`() {
     PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDirPath.resolve("foo_1-0"))
@@ -359,7 +353,6 @@ class PluginDescriptorTest {
     assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun classLoader() {
     PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
@@ -367,7 +360,6 @@ class PluginDescriptorTest {
     checkClassLoader()
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `classLoader - optional dependency`() {
     writeDescriptor("foo", """
@@ -533,66 +525,6 @@ class PluginDescriptorTest {
   }
 
   @Test
-  fun testLoadOnDemandPlugin() {
-    PluginBuilder()
-      .noDepends()
-      .id("foo")
-      .onDemand()
-      .build(pluginDirPath.resolve("foo"))
-
-    PluginBuilder()
-      .noDepends()
-      .id("bar")
-      .pluginDependency("foo")
-      .build(pluginDirPath.resolve("bar"))
-
-    assertThat(PluginSetTestBuilder(pluginDirPath).build().enabledPlugins).hasSize(2)
-
-    withOnDemandEnabled {
-      assertThat(PluginSetTestBuilder(pluginDirPath).build().enabledPlugins).isEmpty()
-    }
-  }
-
-  @Test
-  fun testDisabledOnDemandPlugin() = withOnDemandEnabled {
-    PluginBuilder()
-      .noDepends()
-      .id("foo")
-      .onDemand()
-      .build(pluginDirPath.resolve("foo"))
-
-    PluginBuilder()
-      .noDepends()
-      .id("bar")
-      .onDemand()
-      .pluginDependency("foo")
-      .build(pluginDirPath.resolve("bar"))
-
-    val pluginSet = PluginSetTestBuilder(pluginDirPath)
-      .withDisabledPlugins("foo")
-      .withEnabledOnDemandPlugins("bar")
-      .build()
-    assertThat(pluginSet.enabledPlugins).isEmpty()
-  }
-
-  @Test
-  fun testLoadEnabledOnDemandPlugin() = withOnDemandEnabled {
-    PluginBuilder()
-      .noDepends()
-      .id("foo")
-      .onDemand()
-      .build(pluginDirPath.resolve("foo"))
-
-    val enabledPlugins = PluginSetTestBuilder(pluginDirPath)
-      .withEnabledOnDemandPlugins("foo")
-      .build()
-      .enabledPlugins
-
-    assertThat(enabledPlugins).hasSize(1)
-    assertThat(enabledPlugins.single().pluginId.idString).isEqualTo("foo")
-  }
-
-  @Test
   fun testExpiredPluginNotLoaded() {
     PluginBuilder()
       .noDepends()
@@ -662,7 +594,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
   result.readExternal(
     raw = raw,
     isSub = false,
-    context = DescriptorListLoadingContext(disabledPlugins = emptySet()),
+    context = DescriptorListLoadingContext(customDisabledPlugins = emptySet()),
     pathResolver = pathResolver,
     dataLoader = dataLoader,
   )
@@ -689,15 +621,4 @@ fun createFromDescriptor(path: Path,
                       isSub = false,
                       dataLoader = dataLoader)
   return result
-}
-
-private fun withOnDemandEnabled(runnable: ThrowableRunnable<Throwable>) {
-  val defaultValue = isOnDemandPluginEnabled
-  isOnDemandPluginEnabled = true
-  try {
-    runnable.run()
-  }
-  finally {
-    isOnDemandPluginEnabled = defaultValue
-  }
 }

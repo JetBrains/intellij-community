@@ -11,13 +11,14 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.*;
 import java.io.DataOutputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
+import static com.intellij.util.io.DigestUtilKt.sha256Hex;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -220,7 +221,7 @@ public class PersistentHashMapCanonicalizationTest {
     for (File file : entry.directory.listFiles()) {
       sb.append(file.getName())
         .append(": ")
-        .append(DigestUtil.sha256Hex(file.toPath()))
+        .append(sha256Hex(file.toPath()))
         .append('\n');
     }
     return sb.toString();

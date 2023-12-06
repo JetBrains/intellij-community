@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP;
 import com.intellij.testFramework.TestDataPath;
@@ -26,6 +27,7 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(Project.class));
+    moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(ConfigurableEP.class));
     moduleBuilder.addLibrary("platform-core-impl", PathUtil.getJarPathForClass(PsiReferenceContributorEP.class));
     moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(IntentionActionBean.class));
     moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(IncorrectOperationException.class));
@@ -37,6 +39,14 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(PluginXmlExtensionRegistrationInspection.class);
+  }
+
+  public void testStatusBarWidgetFactoryEP() {
+    myFixture.testHighlighting("statusBarWidgetFactory.xml");
+  }
+
+  public void testConfigurableEP() {
+    myFixture.testHighlighting("configurableEP.xml", "bundle.properties");
   }
 
   public void testLanguageExtensions() {
@@ -52,7 +62,7 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
     myFixture.checkResultByFile("languageAddLanguageTagFix_after.xml");
   }
 
-   public void testLanguageAddLanguageAttributeForCompletionContributorEPFix() {
+  public void testLanguageAddLanguageAttributeForCompletionContributorEPFix() {
     IntentionAction action =
       myFixture.getAvailableIntention("Define language attribute",
                                       "addLanguageAttributeForCompletionContributorEPFix.xml");
@@ -76,5 +86,4 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
   public void testRedundantServiceInterfaceClass() {
     myFixture.testHighlighting("redundantServiceInterfaceClass.xml");
   }
-
 }

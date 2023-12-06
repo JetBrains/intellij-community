@@ -1,18 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInsight.intention.CustomizableIntentionAction.RangeToHighlight;
 
 /**
  * QuickFix based on {@link ProblemDescriptor ProblemDescriptor}
@@ -77,6 +82,29 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
     return IntentionPreviewInfo.DIFF;
   }
 
+  /**
+   * Highlight specified ranges when the quick-fix is selected in intention popup
+   * 
+   * @param project current project
+   * @param descriptor problem descriptor
+   * @return list of ranges to highlight, along with highlight attributes; empty list if no specific highlighting should be done
+   */
+  default @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(Project project, ProblemDescriptor descriptor) {
+    return List.of();
+  }
+
+  /**
+   * Called to apply the fix. It's expected that before this method is called, PSI and document for all the files
+   * are synchronized, because the quick fix is free to modify either PSI or document.
+   * <p>
+   * Please call {@link com.intellij.profile.codeInspection.ProjectInspectionProfileManager#fireProfileChanged()}
+   * if inspection profile is changed as result of fix.
+   *
+   * @param project    {@link Project}
+   * @param descriptor problem reported by the tool which provided this quick fix action
+   */
+  @Override
+  void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
 
   /**
    * @return an array with a single element {@code fix} or an empty array if the argument is null
@@ -91,5 +119,17 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
     List<LocalQuickFix> result = new ArrayList<>(fixes.length);
     ContainerUtil.addAllNotNull(result, fixes);
     return result.isEmpty() ? LocalQuickFix.EMPTY_ARRAY : result.toArray(EMPTY_ARRAY);
+  }
+
+  /**
+   * @param action action to adapt to quick-fix
+   * @return the action adapted to {@link LocalQuickFix} interface. The adapter is not perfect. In particular,
+   * its {@link LocalQuickFix#getName()} simply returns the result of {@link #getFamilyName()}. If the client
+   * of the quick-fix is ModCommand-aware, it can use {@link ModCommandService#unwrap(LocalQuickFix)} to get
+   * this ModCommandAction back.
+   */
+  @Contract("null -> null; !null -> !null")
+  static @Nullable LocalQuickFix from(@Nullable ModCommandAction action) {
+    return action == null ? null : ModCommandService.getInstance().wrapToQuickFix(action);
   }
 }

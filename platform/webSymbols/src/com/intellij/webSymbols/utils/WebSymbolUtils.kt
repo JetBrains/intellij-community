@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WebSymbolUtils")
 
 package com.intellij.webSymbols.utils
@@ -7,22 +7,20 @@ import com.intellij.model.Pointer
 import com.intellij.navigation.EmptyNavigatable
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
-import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
-import com.intellij.webSymbols.impl.toCodeCompletionItems
-import com.intellij.webSymbols.query.WebSymbolMatch
-import com.intellij.webSymbols.query.WebSymbolNamesProvider
-import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
-import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.patterns.impl.applyIcons
+import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import java.util.*
 import javax.swing.Icon
@@ -45,20 +43,27 @@ inline fun <T : Any, P : Any> T.applyIfNotNull(param: P?, block: T.(P) -> T): T 
 fun List<WebSymbol>.hasOnlyExtensions(): Boolean =
   all { it.extension }
 
-fun List<WebSymbol>.asSingleSymbol(): WebSymbol? =
+fun List<WebSymbol>.asSingleSymbol(force: Boolean = false): WebSymbol? =
   if (isEmpty())
     null
   else if (size == 1)
     this[0]
   else {
     val first = this[0]
-    WebSymbolMatch.create(first.name, listOf(WebSymbolNameSegment(0, first.name.length, sortSymbolsByPriority())),
-                          first.namespace, first.kind, first.origin)
+    if (!force && any { it.namespace != first.namespace || it.kind != first.kind })
+      null
+    else
+      WebSymbolMatch.create(first.name, listOf(WebSymbolNameSegment(0, first.name.length, sortSymbolsByPriority())),
+                            first.namespace, first.kind, first.origin)
   }
 
 fun WebSymbol.withMatchedName(matchedName: String) =
   if (matchedName != name) {
-    WebSymbolMatch.create(matchedName, listOf(WebSymbolNameSegment(0, matchedName.length, this)), namespace, kind, origin)
+    val nameSegment = if (this is WebSymbolMatch && nameSegments.size == 1)
+      nameSegments[0].withRange(0, matchedName.length)
+    else
+      WebSymbolNameSegment(0, matchedName.length, this)
+    WebSymbolMatch.create(matchedName, listOf(nameSegment), namespace, kind, origin)
   }
   else this
 
@@ -98,8 +103,8 @@ fun WebSymbol.unwrapMatchedSymbols(): Sequence<WebSymbol> =
   }
 
 fun WebSymbol.match(nameToMatch: String,
-                    context: Stack<WebSymbolsScope>,
-                    params: WebSymbolsNameMatchQueryParams): List<WebSymbol> {
+                    params: WebSymbolsNameMatchQueryParams,
+                    context: Stack<WebSymbolsScope>): List<WebSymbol> {
   pattern?.let { pattern ->
     context.push(this)
     try {
@@ -111,7 +116,7 @@ fun WebSymbol.match(nameToMatch: String,
           }
           else {
             WebSymbolMatch.create(nameToMatch, matchResult.segments,
-                                  this.namespace, kind, this.origin)
+                                  namespace, kind, origin)
           }
         }
     }
@@ -120,18 +125,44 @@ fun WebSymbol.match(nameToMatch: String,
     }
   }
 
-  val queryExecutor = params.queryExecutor
-  val queryNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind,
-                                                        nameToMatch, WebSymbolNamesProvider.Target.NAMES_QUERY)
-  val symbolNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind, this.name,
-                                                         WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
-  return if (queryNames.any { symbolNames.contains(it) }) {
+  return if (nameMatches(nameToMatch, params.queryExecutor)) {
     listOf(this.withMatchedName(nameToMatch))
   }
   else {
     emptyList()
   }
 }
+
+fun WebSymbol.toCodeCompletionItems(name: String,
+                                    params: WebSymbolsCodeCompletionQueryParams,
+                                    context: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+  pattern?.let { pattern ->
+    context.push(this)
+    try {
+      pattern.complete(this, context, name, params)
+        .applyIcons(this)
+    }
+    finally {
+      context.pop()
+    }
+  }
+  ?: params.queryExecutor.namesProvider
+    .getNames(WebSymbolQualifiedName(namespace, kind, this.name), WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+    .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }
+
+fun WebSymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor): Boolean {
+  val queryNames = queryExecutor.namesProvider.getNames(
+    WebSymbolQualifiedName(this.namespace, this.kind, name), WebSymbolNamesProvider.Target.NAMES_QUERY)
+  val symbolNames = queryExecutor.namesProvider.getNames(
+    WebSymbolQualifiedName(this.namespace, this.kind, this.name), WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
+  return queryNames.any { symbolNames.contains(it) }
+}
+
+val WebSymbol.qualifiedName: WebSymbolQualifiedName
+  get() = WebSymbolQualifiedName(namespace, kind, name)
+
+val WebSymbol.qualifiedKind: WebSymbolQualifiedKind
+  get() = WebSymbolQualifiedKind(namespace, kind)
 
 fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =
   when (problem) {
@@ -155,6 +186,47 @@ val WebSymbol.nameSegments: List<WebSymbolNameSegment>
           ?: pattern?.let { listOf(WebSymbolNameSegment(0, 0, this)) }
           ?: listOf(WebSymbolNameSegment(this))
 
+val WebSymbol.nameSegmentsWithProblems: Sequence<WebSymbolNameSegment>
+  get() =
+    Sequence {
+      object : Iterator<WebSymbolNameSegment> {
+        private var next: WebSymbolNameSegment? = null
+        val fifo = LinkedList<WebSymbolNameSegment>()
+        val visitedSymbols = mutableSetOf<WebSymbol>()
+
+        init {
+          addNameSegmentsToQueue(this@nameSegmentsWithProblems)
+          advance()
+        }
+
+        private fun addNameSegmentsToQueue(symbol: WebSymbol) {
+          if (symbol is CompositeWebSymbol && visitedSymbols.add(symbol)) {
+            fifo.addAll(symbol.nameSegments)
+          }
+        }
+
+        private fun advance() {
+          while (fifo.isNotEmpty()) {
+            val segment = fifo.removeFirst()
+            segment.symbols.forEach {
+              addNameSegmentsToQueue(it)
+            }
+            if (segment.problem != null) {
+              next = segment
+              return
+            }
+          }
+          next = null
+        }
+
+        override fun hasNext(): Boolean =
+          next != null
+
+        override fun next(): WebSymbolNameSegment =
+          next!!.also { advance() }
+      }
+    }
+
 internal val WebSymbol.matchedNameOrName: String
   get() = (this as? WebSymbolMatch)?.matchedName ?: name
 
@@ -169,6 +241,34 @@ fun List<WebSymbolNameSegment>.withOffset(offset: Int): List<WebSymbolNameSegmen
   if (offset != 0) map { it.withOffset(offset) }
   else this
 
+fun WebSymbolApiStatus?.coalesceWith(other: WebSymbolApiStatus?): WebSymbolApiStatus =
+  when (this) {
+    null -> other ?: WebSymbolApiStatus.Stable
+    is WebSymbolApiStatus.Obsolete -> this
+    is WebSymbolApiStatus.Deprecated -> when (other) {
+      is WebSymbolApiStatus.Obsolete -> other
+      else -> this
+    }
+    is WebSymbolApiStatus.Experimental -> when (other) {
+      is WebSymbolApiStatus.Obsolete,
+      is WebSymbolApiStatus.Deprecated -> other
+      else -> this
+    }
+    is WebSymbolApiStatus.Stable -> when (other) {
+      is WebSymbolApiStatus.Obsolete,
+      is WebSymbolApiStatus.Deprecated,
+      is WebSymbolApiStatus.Experimental -> other
+      else -> this
+    }
+  }
+
+fun <T : Any> coalesceApiStatus(collection: Iterable<T>?, mapper: (T) -> WebSymbolApiStatus?): WebSymbolApiStatus =
+  coalesceApiStatus(collection?.asSequence(), mapper)
+
+
+fun <T : Any> coalesceApiStatus(sequence: Sequence<T>?, mapper: (T) -> WebSymbolApiStatus?): WebSymbolApiStatus =
+  sequence?.map(mapper)?.reduceOrNull { a, b -> a.coalesceWith(b) } ?: WebSymbolApiStatus.Stable
+
 fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue? {
   var kind: WebSymbolHtmlAttributeValue.Kind? = null
   var type: WebSymbolHtmlAttributeValue.Type? = null
@@ -178,7 +278,7 @@ fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue?
 
   for (value in this) {
     if (value == null) continue
-    if (kind == null) {
+    if (kind == null || kind == WebSymbolHtmlAttributeValue.Kind.PLAIN) {
       kind = value.kind
     }
     if (type == null) {
@@ -193,9 +293,6 @@ fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue?
     if (langType == null) {
       langType = value.langType
     }
-    if (kind != null && type != null && required != null) {
-      break
-    }
   }
   return if (kind != null
              || type != null
@@ -209,7 +306,7 @@ fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue?
 fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWithinElement: Int): Navigatable {
   val vf = element.containingFile.virtualFile
            ?: return EmptyNavigatable.INSTANCE
-  val targetPresentation = this.presentation()
+  val targetPresentation = this.computePresentation()
   val descriptor = OpenFileDescriptor(
     element.project, vf, element.textRange.startOffset + offsetWithinElement)
 
@@ -245,13 +342,16 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
   }
 }
 
-fun WebSymbolsScope.getDefaultCodeCompletions(namespace: SymbolNamespace,
-                                              kind: SymbolKind,
-                                              name: String?,
+fun WebSymbolsScope.getDefaultCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                               params: WebSymbolsCodeCompletionQueryParams,
                                               scope: Stack<WebSymbolsScope>) =
-  getSymbols(namespace, kind, null, WebSymbolsNameMatchQueryParams(params.queryExecutor), scope)
-    .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(name, params, scope) ?: emptyList() }
+  getSymbols(qualifiedName.qualifiedKind,
+             WebSymbolsListSymbolsQueryParams(
+               params.queryExecutor,
+               expandPatterns = false,
+               virtualSymbols = params.virtualSymbols
+             ), scope)
+    .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(qualifiedName.name, params, scope) ?: emptyList() }
 
 internal val List<WebSymbolsScope>.lastWebSymbol: WebSymbol?
   get() = this.lastOrNull { it is WebSymbol } as? WebSymbol

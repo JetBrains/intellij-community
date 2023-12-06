@@ -54,10 +54,7 @@ private fun lazyApiAvailable(call: PsiElement): Boolean {
   val linkedProjectPath = call.getLinkedGradleProjectPath() ?: return false
   val gradleVersion = GradleSettings.getInstance(call.project).getLinkedProjectSettings(linkedProjectPath)?.resolveGradleVersion()
                       ?: return false
-  if (gradleVersion < GradleVersion.version("4.9")) {
-    return false
-  }
-  return true
+  return gradleVersion >= GradleVersion.version("4.9")
 }
 
 private fun processNamedDomainObjectCollection(method: PsiMethod,

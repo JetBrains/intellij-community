@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.vcs.commit.CommitProgressPanel
-import com.intellij.vcs.commit.EditedCommitDetails
+import com.intellij.vcs.commit.EditedCommitPresentation
 import com.intellij.vcs.commit.NonModalCommitPanel
 import git4idea.i18n.GitBundle
 import git4idea.index.ContentVersion
@@ -26,22 +26,30 @@ private fun GitStageTracker.State.getStaged(): Set<GitFileStatus> =
 private fun GitStageTracker.RootState.getStaged(): Set<GitFileStatus> =
   statuses.values.filterTo(mutableSetOf()) { it.getStagedStatus() != null }
 
+private fun GitStageTracker.State.getChanged(): Set<GitFileStatus> =
+  rootStates.values.flatMapTo(mutableSetOf()) { it.getChanged() }
+
+private fun GitStageTracker.RootState.getChanged(): Set<GitFileStatus> =
+  statuses.values.filterTo(mutableSetOf()) { it.getStagedStatus() != null || it.getUnStagedStatus() != null }
+
 private fun GitStageTracker.RootState.getStagedChanges(project: Project): List<Change> =
   getStaged().mapNotNull { createChange(project, root, it, ContentVersion.HEAD, ContentVersion.STAGED) }
 
-class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
+class GitStageCommitPanel(project: Project, private val settings: GitStageUiSettings) : NonModalCommitPanel(project) {
   private val progressPanel = GitStageCommitProgressPanel()
   override val commitProgressUi: GitStageCommitProgressPanel get() = progressPanel
 
   @Volatile
-  private var state: InclusionState = InclusionState(emptySet(), GitStageTracker.State.EMPTY)
+  private var state: InclusionState = InclusionState(emptySet(), GitStageTracker.State.EMPTY, settings.isCommitAllEnabled)
 
   val rootsToCommit get() = state.rootsToCommit
   val includedRoots get() = state.includedRoots
   val conflictedRoots get() = state.conflictedRoots
 
+  val isCommitAll get() = state.isCommitAll
+
   private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
-  override var editedCommit: EditedCommitDetails? by observable(null) { _, _, _ ->
+  override var editedCommit: EditedCommitPresentation? by observable(null) { _, _, _ ->
     editedCommitListeners.forEach { it() }
   }
 
@@ -54,20 +62,27 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
     bottomPanel.add(progressPanel.component)
     bottomPanel.add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
     bottomPanel.add(commitActionsPanel)
+
+    settings.addListener(object : GitStageUiSettingsListener {
+      override fun settingsChanged() {
+        setState(state.includedRoots, state.trackerState, settings.isCommitAllEnabled)
+      }
+    }, this)
   }
 
   fun setIncludedRoots(includedRoots: Collection<VirtualFile>) {
-    setState(includedRoots, state.trackerState)
+    setState(includedRoots.toSet(), state.trackerState, state.isCommitAllEnabled)
   }
 
   fun setTrackerState(trackerState: GitStageTracker.State) {
-    setState(state.includedRoots, trackerState)
+    setState(state.includedRoots, trackerState, state.isCommitAllEnabled)
   }
 
-  private fun setState(includedRoots: Collection<VirtualFile>, trackerState: GitStageTracker.State) {
-    val newState = InclusionState(includedRoots, trackerState)
-    if (state != newState) {
-      state = newState
+  private fun setState(includedRoots: Set<VirtualFile>, trackerState: GitStageTracker.State, isCommitAllEnabled: Boolean) {
+    val newState = InclusionState(includedRoots, trackerState, isCommitAllEnabled)
+    val inclusionChanged = newState.isInclusionChangedFrom(state)
+    state = newState
+    if (inclusionChanged) {
       fireInclusionChanged()
     }
   }
@@ -83,34 +98,33 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
   override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
 
-  private inner class InclusionState(val includedRoots: Collection<VirtualFile>, val trackerState: GitStageTracker.State) {
+  private inner class InclusionState(val includedRoots: Set<VirtualFile>,
+                                     val trackerState: GitStageTracker.State,
+                                     val isCommitAllEnabled: Boolean) {
     private val stagedStatuses: Set<GitFileStatus> = trackerState.getStaged()
-    val conflictedRoots: Set<VirtualFile> = trackerState.rootStates.filter { it.value.hasConflictedFiles() }.keys
+
+    private val changedRoots: Set<VirtualFile> = trackerState.changedRoots
+    val conflictedRoots: Set<VirtualFile> = trackerState.conflictedRoots
+
     val stagedChanges by lazy {
       trackerState.rootStates.filterKeys {
         includedRoots.contains(it)
       }.values.flatMap { it.getStagedChanges(project) }
     }
-    val rootsToCommit get() = trackerState.stagedRoots.intersect(includedRoots)
+    val isCommitAll = isCommitAllEnabled && trackerState.stagedRoots.isEmpty() && trackerState.changedRoots.isNotEmpty()
+    val rootsToCommit: Set<VirtualFile>
+      get() {
+        if (isCommitAll) {
+          return trackerState.changedRoots.intersect(includedRoots)
+        }
+        return trackerState.stagedRoots.intersect(includedRoots)
+      }
 
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (javaClass != other?.javaClass) return false
-
-      other as InclusionState
-
-      if (includedRoots != other.includedRoots) return false
-      if (stagedStatuses != other.stagedStatuses) return false
-      if (conflictedRoots != other.conflictedRoots) return false
-
-      return true
-    }
-
-    override fun hashCode(): Int {
-      var result = includedRoots.hashCode()
-      result = 31 * result + stagedStatuses.hashCode()
-      result = 31 * result + conflictedRoots.hashCode()
-      return result
+    fun isInclusionChangedFrom(other: InclusionState): Boolean {
+      if (includedRoots != other.includedRoots || conflictedRoots != other.conflictedRoots) return true
+      if (isCommitAll != other.isCommitAll) return true
+      if (isCommitAll && changedRoots != other.changedRoots) return true
+      return stagedStatuses != other.stagedStatuses
     }
   }
 }
@@ -118,6 +132,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 class GitStageCommitProgressPanel : CommitProgressPanel() {
   var isEmptyRoots by stateFlag()
   var isUnmerged by stateFlag()
+  var isCommitAll by stateFlag()
 
   override fun clearError() {
     super.clearError()
@@ -129,7 +144,9 @@ class GitStageCommitProgressPanel : CommitProgressPanel() {
     when {
       isEmptyRoots -> GitBundle.message("error.no.selected.roots.to.commit")
       isUnmerged -> GitBundle.message("error.unresolved.conflicts")
+      isEmptyChanges && isCommitAll && isEmptyMessage -> GitBundle.message("error.no.changed.files.no.commit.message")
       isEmptyChanges && isEmptyMessage -> GitBundle.message("error.no.staged.changes.no.commit.message")
+      isEmptyChanges && isCommitAll -> GitBundle.message("error.no.changed.files.to.commit")
       isEmptyChanges -> GitBundle.message("error.no.staged.changes.to.commit")
       isEmptyMessage -> VcsBundle.message("error.no.commit.message")
       else -> null

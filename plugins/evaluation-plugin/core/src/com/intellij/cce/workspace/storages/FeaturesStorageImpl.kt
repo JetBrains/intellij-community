@@ -1,11 +1,10 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.workspace.storages
 
 import com.google.gson.Gson
 import com.intellij.cce.core.Session
 import com.intellij.cce.workspace.FeaturesSerializer
 import java.io.File
-import java.io.FileReader
-import java.io.FileWriter
 import java.nio.file.Paths
 
 class FeaturesStorageImpl(storageDir: String) : StorageWithMetadataBase(storageDir), FeaturesStorage {

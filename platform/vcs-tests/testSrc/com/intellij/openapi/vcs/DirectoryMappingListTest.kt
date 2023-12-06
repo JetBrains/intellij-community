@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
@@ -17,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcsUtil.VcsUtil
 import java.io.File
 import java.io.IOException
@@ -472,7 +472,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   fun testRootMappingAppliedInSync1() {
-    ApplicationManager.getApplication().assertIsDispatchThread() // updateVcsMappings is sync from BGT
+    ThreadingAssertions.assertEventDispatchThread() // updateVcsMappings is sync from BGT
 
     val children = listOf(
       "$rootPath/parent/child1",
@@ -494,7 +494,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   fun testRootMappingAppliedInSync2() {
-    ApplicationManager.getApplication().assertIsDispatchThread() // updateVcsMappings is sync from BGT
+    ThreadingAssertions.assertEventDispatchThread() // updateVcsMappings is sync from BGT
 
     val children = listOf(
       "$rootPath/parent/child1",

@@ -42,12 +42,6 @@ val KtSimpleNameExpression.mainReferenceCompat: KtSimpleNameReference
 val KtReferenceExpression.mainReferenceCompat: KtReference
     get() = mainReference
 
-@get:ApiStatus.ScheduledForRemoval
-@get:Deprecated("For binary compatibility with AS, see KT-42061", replaceWith = ReplaceWith("mainReference"))
-@get:JvmName("getMainReference")
-val KDocName.mainReferenceCompat: KDocReference
-    get() = mainReference
-
 @Deprecated("For binary compatibility with AS, see KT-42061", replaceWith = ReplaceWith("mainReference"))
 @get:JvmName("getMainReference")
 val KtElement.mainReferenceCompat: KtReference?

@@ -6,10 +6,11 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.layout.*
-import com.intellij.ui.layout.migLayout.patched.*
+import com.intellij.ui.layout.LCFlags
+import com.intellij.ui.layout.LayoutBuilderImpl
+import com.intellij.ui.layout.SpacingConfiguration
+import com.intellij.ui.layout.migLayout.patched.MigLayout
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
 import net.miginfocom.layout.*
 import org.jetbrains.annotations.ApiStatus
@@ -55,9 +56,8 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
    * Map of component to constraints shared among rows (since components are unique)
    */
   internal val componentConstraints: MutableMap<Component, CC> = CollectionFactory.createWeakIdentityMap(4, 0.8f)
-  override val rootRow = MigLayoutRow(parent = null, builder = this, indent = 0)
+  override val rootRow: MigLayoutRow = MigLayoutRow(parent = null, builder = this, indent = 0)
 
-  private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
   override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = linkedMapOf()
@@ -66,47 +66,13 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   override var resetCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
   override var isModifiedCallbacks: MutableMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf()
 
-  internal val topButtonGroup: ButtonGroup?
-    get() = buttonGroupStack.lastOrNull()
+  internal var hideableRowNestingLevel: Int = 0
 
-  internal var hideableRowNestingLevel = 0
-
-  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
-    buttonGroupStack.add(buttonGroup)
-    try {
-      body()
-
-      resetCallbacks.getOrPut(null, { SmartList() }).add {
-        selectRadioButtonInGroup(buttonGroup)
-      }
-
-    }
-    finally {
-      buttonGroupStack.removeAt(buttonGroupStack.size - 1)
-    }
-  }
-
-  private fun selectRadioButtonInGroup(buttonGroup: ButtonGroup) {
-    if (buttonGroup.selection == null && buttonGroup.buttonCount > 0) {
-      val e = buttonGroup.elements
-      while (e.hasMoreElements()) {
-        val radioButton = e.nextElement()
-        if (radioButton.getClientProperty(UNBOUND_RADIO_BUTTON) != null) {
-          buttonGroup.setSelected(radioButton.model, true)
-          return
-        }
-      }
-
-      buttonGroup.setSelected(buttonGroup.elements.nextElement().model, true)
-    }
-  }
-
-
-  internal val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
+  internal val defaultComponentConstraintCreator: DefaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
   // keep in mind - MigLayout always creates one more than need column constraints (i.e. for 2 will be 3)
   // it doesn't lead to any issue.
-  internal val columnConstraints = AC()
+  internal val columnConstraints: AC = AC()
 
   // MigLayout in any case always creates CC, so, create instance even if it is not required
   private val Component.constraints: CC

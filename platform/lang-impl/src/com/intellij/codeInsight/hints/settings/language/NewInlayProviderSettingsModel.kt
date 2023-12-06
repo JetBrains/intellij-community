@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.hints.*
@@ -15,8 +15,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.ResourceUtil
 import com.intellij.util.xmlb.SerializationFilter
+import javax.swing.JComponent
 
-class NewInlayProviderSettingsModel<T : Any>(
+internal class NewInlayProviderSettingsModel<T : Any>(
   private val providerWithSettings: ProviderWithSettings<T>,
   private val config: InlayHintsSettings
 ) : InlayProviderSettingsModel(
@@ -37,13 +38,14 @@ class NewInlayProviderSettingsModel<T : Any>(
   override val description: String?
     get() = providerWithSettings.provider.description
 
-  override val component by lazy {
+  override val component: JComponent by lazy {
     providerWithSettings.configurable.createComponent(onChangeListener!!)
   }
 
   override fun collectData(editor: Editor, file: PsiFile) : Runnable {
     providerWithSettings.provider.preparePreview(editor, file, providerWithSettings.settings)
-    val collectorWrapper = providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language) ?: return Runnable {}
+    val inlaySink = InlayHintsSinkImpl(editor)
+    val collectorWrapper = providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language, inlaySink) ?: return Runnable {}
     val case = CASE_KEY.get(editor)
     val enabled = case?.value ?: isEnabled
     val backup = cases.map { it.value }

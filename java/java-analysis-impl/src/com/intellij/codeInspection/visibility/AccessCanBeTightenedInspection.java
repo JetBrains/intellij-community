@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool {
+public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AccessCanBeTightenedInspection.class);
   private final VisibilityInspection myVisibilityInspection;
 
@@ -178,7 +178,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         }
         // If class will be subclassed by some framework then it could apply some specific requirements for methods visibility
         // so we just skip it here (IDEA-182709, IDEA-160602)
-        for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
+        for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensionList()) {
           if (!subclassProvider.isApplicableTo(memberClass)) continue;
           ImplicitSubclassProvider.SubclassingInfo info = subclassProvider.getSubclassingInfo(memberClass);
           if (info == null) continue;

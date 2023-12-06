@@ -64,6 +64,7 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     }
 
     add(delegateRenderer, BorderLayout.CENTER);
+    setToolTipText(delegateRenderer.getToolTipText());
     setBorder(delegateRenderer.getBorder());
     delegateRenderer.setBorder(null);
 

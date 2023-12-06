@@ -16,6 +16,7 @@ class GradleTaskData(val node: DataNode<TaskData>, private val gradleModulePath:
   val description = data.description
   val group = data.group
   val isTest = data.isTest
+  val isJvmTest = data.isJvmTest
   val isInherited = data.isInherited
 
   val isFromIncludedBuild by lazy {

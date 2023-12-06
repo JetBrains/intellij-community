@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -199,7 +201,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     return (PsiField)resolved;
   }
 
-  private static class MoveFieldAssignmentToInitializerFix implements LocalQuickFix {
+  private static class MoveFieldAssignmentToInitializerFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -208,8 +210,8 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiAssignmentExpression assignment = ObjectUtils.tryCast(descriptor.getStartElement(), PsiAssignmentExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiAssignmentExpression assignment = ObjectUtils.tryCast(element, PsiAssignmentExpression.class);
       if (assignment == null) return;
       PsiField field = getAssignedField(assignment);
       if (field == null) return;
@@ -258,8 +260,8 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       }
 
       // Delete empty initializer left after fix
-      if (owner instanceof PsiClassInitializer) {
-        PsiCodeBlock body = ((PsiClassInitializer)owner).getBody();
+      if (owner instanceof PsiClassInitializer initializer) {
+        PsiCodeBlock body = initializer.getBody();
         if(body.isEmpty() && !ContainerUtil.exists(body.getChildren(), PsiComment.class::isInstance)) {
           new CommentTracker().deleteAndRestoreComments(owner);
         }

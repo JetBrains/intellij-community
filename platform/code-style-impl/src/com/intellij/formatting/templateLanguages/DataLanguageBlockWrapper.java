@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.*;
@@ -19,7 +19,7 @@ import java.util.Map;
 
 public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithParent {
   private final Block myOriginal;
-  @Nullable private final Language myLanguage;
+  private final @Nullable Language myLanguage;
   private List<Block> myBlocks;
   private List<TemplateLanguageBlock> myTlBlocks;
   private BlockWithParent myParent;
@@ -27,7 +27,7 @@ public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockW
   private Spacing mySpacing;
   private Map<Pair<Block, Block>, Spacing> myChildDataBorderSpacings;
 
-  private DataLanguageBlockWrapper(@NotNull final Block original) {
+  private DataLanguageBlockWrapper(final @NotNull Block original) {
     assert !(original instanceof DataLanguageBlockWrapper) && !(original instanceof TemplateLanguageBlock);
     myOriginal = original;
 
@@ -43,14 +43,12 @@ public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockW
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myOriginal.getTextRange();
   }
 
   @Override
-  @NotNull
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     if (myBlocks == null) {
       myBlocks = buildBlocks();
       initSpacings();
@@ -69,8 +67,7 @@ public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockW
     }
   }
 
-  @Nullable
-  private Spacing calcChildSpacing(int index2, @Nullable Block block1, @NotNull Block block2) {
+  private @Nullable Spacing calcChildSpacing(int index2, @Nullable Block block1, @NotNull Block block2) {
     if (block1 instanceof TemplateLanguageBlock) {
       Spacing spacing = ((TemplateLanguageBlock)block1).getRightNeighborSpacing(block2, this, index2 - 1);
       if (spacing != null) return spacing;
@@ -88,9 +85,8 @@ public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockW
     myChildDataBorderSpacings.put(new Pair<>(block1, block2), spacing);
   }
 
-  @Nullable
   @Override
-  public Language getLanguage() {
+  public @Nullable Language getLanguage() {
     // Use base language code style settings for the template blocks.
     return myLanguage;
   }
@@ -125,8 +121,7 @@ public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockW
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(final int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
     return myOriginal.getChildAttributes(newChildIndex);
   }
 
@@ -141,8 +136,7 @@ public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockW
   }
 
   @Override
-  @Nullable
-  public Spacing getSpacing(Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof DataLanguageBlockWrapper && child2 instanceof DataLanguageBlockWrapper) {
       return myOriginal.getSpacing(((DataLanguageBlockWrapper)child1).myOriginal, ((DataLanguageBlockWrapper)child2).myOriginal);
     }
@@ -181,15 +175,13 @@ public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockW
     return tlBlocksInfo + myOriginal.toString();
   }
 
-  @Nullable
-  public static DataLanguageBlockWrapper create(@NotNull final Block original, @Nullable final Indent indent) {
+  public static @Nullable DataLanguageBlockWrapper create(final @NotNull Block original, final @Nullable Indent indent) {
     final boolean doesntNeedWrapper = original instanceof ASTBlock && ((ASTBlock)original).getNode() instanceof OuterLanguageElement;
     return doesntNeedWrapper ? null : new DataLanguageBlockWrapper(original);
   }
 
   @Override
-  @Nullable
-  public ASTNode getNode() {
+  public @Nullable ASTNode getNode() {
     return myOriginal instanceof ASTBlock ? ((ASTBlock)myOriginal).getNode() : null;
   }
 
@@ -208,8 +200,7 @@ public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockW
     mySpacing = spacing;
   }
 
-  @Nullable
-  public Spacing getRightHandSpacing(DataLanguageBlockWrapper rightHandWrapper) {
+  public @Nullable Spacing getRightHandSpacing(DataLanguageBlockWrapper rightHandWrapper) {
     return myRightHandWrapper == rightHandWrapper ? mySpacing : null;
   }
 }

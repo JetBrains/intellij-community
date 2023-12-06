@@ -4,13 +4,13 @@
     <option name="jvmTarget" value="17" />
   </component>
   <component name="KotlinCommonCompilerArguments">
-    <option name="apiVersion" value="1.8" />
-    <option name="languageVersion" value="1.8" />
+    <option name="apiVersion" value="1.9" />
+    <option name="languageVersion" value="1.9" />
   </component>
   <component name="KotlinCompilerSettings">
     <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction" />
   </component>
   <component name="KotlinJpsPluginSettings">
-    <option name="version" value="1.8.0" />
+    <option name="version" value="1.9.21" />
   </component>
 </project>

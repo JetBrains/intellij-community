@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
-import com.intellij.util.PairFunction;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.Nls;
@@ -28,6 +27,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import static com.intellij.credentialStore.CredentialPromptDialog.getTrimmedChars;
 import static com.intellij.openapi.ui.Messages.*;
@@ -99,7 +99,7 @@ public class MessagesServiceImpl implements MessagesService {
                                            int defaultOptionIndex,
                                            int focusedOptionIndex,
                                            Icon icon,
-                                           PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
+                                           BiFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
     if (isApplicationInUnitTestOrHeadless()) {
       return TestDialogManager.getTestImplementation().show(message);
     }

@@ -20,6 +20,29 @@ import org.junit.runner.RunWith;
 @TestMetadata("testData/highlighterMetaInfo")
 public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1HighlightingMetaInfoTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/highlighterMetaInfo/diagnostics")
+    public static class Diagnostics extends AbstractK1HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("classRedeclaration.kt")
+        public void testClassRedeclaration() throws Exception {
+            runTest("testData/highlighterMetaInfo/diagnostics/classRedeclaration.kt");
+        }
+
+        @TestMetadata("javaCodeInKotlinFile1.kt")
+        public void testJavaCodeInKotlinFile1() throws Exception {
+            runTest("testData/highlighterMetaInfo/diagnostics/javaCodeInKotlinFile1.kt");
+        }
+
+        @TestMetadata("mppIsNotEnabled.kt")
+        public void testMppIsNotEnabled() throws Exception {
+            runTest("testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/dsl")
     public static class Dsl extends AbstractK1HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -117,9 +140,19 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/Annotations.kt");
         }
 
+        @TestMetadata("AnnotationsInDumbMode.kt")
+        public void testAnnotationsInDumbMode() throws Exception {
+            runTest("testData/highlighterMetaInfo/AnnotationsInDumbMode.kt");
+        }
+
         @TestMetadata("AutoCreatedItParameter.kt")
         public void testAutoCreatedItParameter() throws Exception {
             runTest("testData/highlighterMetaInfo/AutoCreatedItParameter.kt");
+        }
+
+        @TestMetadata("deprecation.kt")
+        public void testDeprecation() throws Exception {
+            runTest("testData/highlighterMetaInfo/deprecation.kt");
         }
 
         @TestMetadata("Destructuring.kt")
@@ -150,6 +183,21 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("InvokeCall.kt")
         public void testInvokeCall() throws Exception {
             runTest("testData/highlighterMetaInfo/InvokeCall.kt");
+        }
+
+        @TestMetadata("javaFields.kt")
+        public void testJavaFields() throws Exception {
+            runTest("testData/highlighterMetaInfo/javaFields.kt");
+        }
+
+        @TestMetadata("JavaRecord.kt")
+        public void testJavaRecord() throws Exception {
+            runTest("testData/highlighterMetaInfo/JavaRecord.kt");
+        }
+
+        @TestMetadata("javaStaticFields.kt")
+        public void testJavaStaticFields() throws Exception {
+            runTest("testData/highlighterMetaInfo/javaStaticFields.kt");
         }
 
         @TestMetadata("JavaTypes.kt")
@@ -197,6 +245,16 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/PropertiesWithPropertyDeclarations.kt");
         }
 
+        @TestMetadata("PropertiesWithPropertyDeclarationsInDumbMode.kt")
+        public void testPropertiesWithPropertyDeclarationsInDumbMode() throws Exception {
+            runTest("testData/highlighterMetaInfo/PropertiesWithPropertyDeclarationsInDumbMode.kt");
+        }
+
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("testData/highlighterMetaInfo/script.kts");
+        }
+
         @TestMetadata("Suspend.kt")
         public void testSuspend() throws Exception {
             runTest("testData/highlighterMetaInfo/Suspend.kt");
@@ -230,6 +288,29 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("VariablesAsFunctions.kt")
         public void testVariablesAsFunctions() throws Exception {
             runTest("testData/highlighterMetaInfo/VariablesAsFunctions.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/highlighterMetaInfo/unresolved")
+    public static class Unresolved extends AbstractK1HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("unresolvedImport.kt")
+        public void testUnresolvedImport() throws Exception {
+            runTest("testData/highlighterMetaInfo/unresolved/unresolvedImport.kt");
+        }
+
+        @TestMetadata("unresolvedLabel.kt")
+        public void testUnresolvedLabel() throws Exception {
+            runTest("testData/highlighterMetaInfo/unresolved/unresolvedLabel.kt");
+        }
+
+        @TestMetadata("unresolvedReference.kt")
+        public void testUnresolvedReference() throws Exception {
+            runTest("testData/highlighterMetaInfo/unresolved/unresolvedReference.kt");
         }
     }
 }

@@ -151,6 +151,10 @@ fun interface StackTraceMirrorProvider {
     fun getStackTrace(): List<MirrorOfStackTraceElement>?
 }
 
+fun interface JobMirrorProvider {
+    fun getJob(): MirrorOfJob?
+}
+
 class DebugCoroutineInfoImpl(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfCoroutineInfo>("kotlinx.coroutines.debug.internal.DebugCoroutineInfoImpl", context) {
     private val stackTraceElement = StackTraceElement(context)
@@ -250,6 +254,8 @@ class CoroutineInfo private constructor(
         )
     }
 
+    fun getContextRef(value: ObjectReference) = contextFieldRef.value(value)
+
     fun getLastObservedStackTrace(value: ObjectReference, context: DefaultExecutionContext) =
         lastObservedStackTraceMethod.value(value, context)
 
@@ -262,6 +268,5 @@ class CoroutineInfo private constructor(
     private fun getEnhancedStackTraceProvider(value: ObjectReference, context: DefaultExecutionContext) =
         StackTraceMirrorProvider {
             debugProbesImplMirror.enhanceStackTraceWithThreadDump(context, value, this)
-       }
+        }
 }
-

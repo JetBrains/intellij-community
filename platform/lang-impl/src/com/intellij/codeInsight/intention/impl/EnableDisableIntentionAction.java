@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class EnableDisableIntentionAction extends AbstractEditIntentionSettingsAction {
+public final class EnableDisableIntentionAction extends AbstractEditIntentionSettingsAction {
   private final IntentionAction myAction;
 
   public EnableDisableIntentionAction(@NotNull IntentionAction action) {

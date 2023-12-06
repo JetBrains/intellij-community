@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class SplitEditorToolbar extends EditorHeaderComponent {
+public final class SplitEditorToolbar extends EditorHeaderComponent {
 
   private final ActionToolbar myRightToolbar;
   private final boolean myLeftToolbarEmpty;

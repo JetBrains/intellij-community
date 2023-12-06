@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -50,6 +51,9 @@ import java.util.List;
 import static com.intellij.idea.LoggerFactory.LOG_FILE_NAME;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
+
+  private static final Logger LOG = Logger.getInstance(PluginRunConfiguration.class);
+
   private static final String NAME = "name";
   private static final String MODULE = "module";
   private static final String ALTERNATIVE_PATH_ELEMENT = "alternative-path";
@@ -145,7 +149,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
           else {
             try {
-              usedIdeaJdk = (Sdk)usedIdeaJdk.clone();
+              usedIdeaJdk = usedIdeaJdk.clone();
             }
             catch (CloneNotSupportedException e) {
               throw new ExecutionException(e.getMessage());
@@ -156,46 +160,58 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
         String ideaJdkHome = usedIdeaJdk.getHomePath();
-        boolean fromIdeaProject = PsiUtil.isPathToIntelliJIdeaSources(ideaJdkHome);
+        assert ideaJdkHome != null;
 
-        if (!fromIdeaProject) {
-          String bootPath = "/lib/boot.jar";
-          String bootJarPath = ideaJdkHome + FileUtil.toSystemDependentName(bootPath);
-          if (new File(bootJarPath).exists()) {
-            //there is no need to add boot.jar in modern IDE builds (181.*)
-            vm.add("-Xbootclasspath/a:" + bootJarPath);
-          }
-        }
+        boolean fromIdeaProject = PsiUtil.isPathToIntelliJIdeaSources(ideaJdkHome);
 
         vm.defineProperty(PathManager.PROPERTY_CONFIG_PATH, canonicalSandbox + File.separator + "config");
         vm.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, canonicalSandbox + File.separator + "system");
         vm.defineProperty(PathManager.PROPERTY_PLUGINS_PATH, canonicalSandbox + File.separator + "plugins");
-        vm.defineProperty("idea.classpath.index.enabled", "false");
 
+        if (!vm.hasProperty("idea.classpath.index.enabled")) {
+          vm.defineProperty("idea.classpath.index.enabled", "false");
+        }
         if (!vm.hasProperty("jdk.module.illegalAccess.silent")) {
           vm.defineProperty("jdk.module.illegalAccess.silent", "true");
         }
 
-        String buildNumber = IdeaJdk.getBuildNumber(ideaJdkHome);
-        if (buildNumber != null) {
-          String versionString = StringUtil.substringAfter(buildNumber, "-");
-          if (versionString != null) {
-            Version version = Version.parseVersion(versionString);
-            if (version != null && version.isOrGreaterThan(221)) {
-              vm.defineProperty(JUnitDevKitPatcher.SYSTEM_CL_PROPERTY, "com.intellij.util.lang.PathClassLoader");
+        // use product-info.json values if found, otherwise fallback to defaults
+        ProductInfo productInfo = ProductInfoKt.loadProductInfo(ideaJdkHome);
+
+        if (productInfo != null && !productInfo.getAdditionalJvmArguments().isEmpty()) {
+          productInfo.getAdditionalJvmArguments().forEach(vm::add);
+        }
+        else {
+          String buildNumber = IdeaJdk.getBuildNumber(ideaJdkHome);
+          if (buildNumber != null) {
+            String versionString = StringUtil.substringAfter(buildNumber, "-");
+            if (versionString != null) {
+              Version version = Version.parseVersion(versionString);
+              if (version != null && version.isOrGreaterThan(221)) {
+                vm.defineProperty(JUnitDevKitPatcher.SYSTEM_CL_PROPERTY, "com.intellij.util.lang.PathClassLoader");
+              }
             }
           }
-        }
 
-        Sdk internalJavaSdk = ObjectUtils.chooseNotNull(IdeaJdk.getInternalJavaSdk(usedIdeaJdk), usedIdeaJdk);
-        var sdkVersion = ((JavaSdk)internalJavaSdk.getSdkType()).getVersion(jdk);
-        if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
-          try (InputStream stream = PluginRunConfiguration.class.getResourceAsStream("OpenedPackages.txt")) {
-            assert stream != null;
-            JavaModuleOptions.readOptions(stream, OS.CURRENT).forEach(vm::add);
+          if (!vm.hasProperty(PlatformUtils.PLATFORM_PREFIX_KEY)) {
+            if (buildNumber != null) {
+              String prefix = IntelliJPlatformProduct.fromBuildNumber(buildNumber).getPlatformPrefix();
+              if (prefix != null) {
+                vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
+              }
+            }
           }
-          catch (IOException e) {
-            throw new RuntimeException(e);
+
+          Sdk internalJavaSdk = ObjectUtils.chooseNotNull(IdeaJdk.getInternalJavaSdk(usedIdeaJdk), usedIdeaJdk);
+          var sdkVersion = ((JavaSdk)internalJavaSdk.getSdkType()).getVersion(jdk);
+          if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
+            try (InputStream stream = PluginRunConfiguration.class.getResourceAsStream("/META-INF/OpenedPackages.txt")) {
+              assert stream != null;
+              JavaModuleOptions.readOptions(stream, OS.CURRENT).forEach(vm::add);
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
           }
         }
 
@@ -207,22 +223,12 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         }
 
         if (SystemInfo.isMac) {
-          vm.defineProperty("apple.laf.useScreenMenuBar", "true");
           vm.defineProperty("apple.awt.fileDialogForDirectories", "true");
         }
 
-        if (SystemInfo.isXWindow) {
+        if (SystemInfo.isUnix && !SystemInfo.isMac) {
           if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) {
             vm.defineProperty("sun.awt.disablegrab", "true"); // See http://devnet.jetbrains.net/docs/DOC-1142
-          }
-        }
-
-        if (!vm.hasProperty(PlatformUtils.PLATFORM_PREFIX_KEY)) {
-          if (buildNumber != null) {
-            String prefix = IntelliJPlatformProduct.fromBuildNumber(buildNumber).getPlatformPrefix();
-            if (prefix != null) {
-              vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
-            }
           }
         }
 
@@ -241,12 +247,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
         else {
-          final List<String> jars = List.of(
-            // log4j, jdom and trove4j needed for running on branch 202 and older
-            "log4j.jar", "jdom.jar", "trove4j.jar",
-            "openapi.jar", "util.jar", "util_rt.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar",
-            "3rd-party-rt.jar", "jna.jar");
-          for (String path : jars) {
+          for (String path : getJarFileNames(productInfo)) {
             params.getClassPath().add(ideaJdkHome + FileUtil.toSystemDependentName("/lib/" + path));
           }
         }
@@ -255,6 +256,18 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         params.setMainClass("com.intellij.idea.Main");
 
         return params;
+      }
+
+      private static List<String> getJarFileNames(@Nullable ProductInfo productInfo) {
+        if (productInfo != null && !productInfo.getBootClassPathJarNames().isEmpty()) {
+          return productInfo.getBootClassPathJarNames();
+        }
+
+        return List.of(
+          // log4j, jdom and trove4j needed for running on branch 202 and older
+          "log4j.jar", "jdom.jar", "trove4j.jar",
+          "openapi.jar", "util.jar", "util_rt.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar",
+          "3rd-party-rt.jar", "jna.jar");
       }
     };
   }

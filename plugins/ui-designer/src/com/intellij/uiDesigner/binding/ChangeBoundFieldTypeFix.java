@@ -1,64 +1,37 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class ChangeBoundFieldTypeFix implements IntentionAction {
-  @SafeFieldForPreview private final PsiField myField;
-  @SafeFieldForPreview private final PsiType myTypeToSet;
+public class ChangeBoundFieldTypeFix extends PsiUpdateModCommandAction<PsiField> {
+  private final PsiType myTypeToSet;
 
   public ChangeBoundFieldTypeFix(PsiField field, PsiType typeToSet) {
-    myField = field;
+    super(field);
     myTypeToSet = typeToSet;
   }
 
   @Override
   @NotNull
-  public String getText() {
+  public String getFamilyName() {
     return QuickFixBundle.message("uidesigner.change.bound.field.type");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return getText();
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    CommandProcessor.getInstance().executeCommand(myField.getProject(), () -> {
-      try {
-        final PsiManager manager = myField.getManager();
-        myField.getTypeElement().replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeElement(myTypeToSet));
-      }
-      catch (final IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myField.getProject(),
-                                                                                   QuickFixBundle.message("cannot.change.field.exception", myField.getName(), e.getLocalizedMessage()),
-                                                                                   CommonBundle.getErrorTitle()));
-      }
-    }, getText(), null);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiField field, @NotNull ModPsiUpdater updater) {
+    PsiTypeElement element = field.getTypeElement();
+    if (element == null) return;
+    element.replace(JavaPsiFacade.getInstance(context.project()).getElementFactory().createTypeElement(myTypeToSet));
   }
 }

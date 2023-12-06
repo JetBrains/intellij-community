@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Adam Juraszek
  */
-public class CustomLogProcessor extends AbstractLogProcessor {
+public final class CustomLogProcessor extends AbstractLogProcessor {
 
   public CustomLogProcessor() {
     super(LombokClassNames.CUSTOM_LOG);

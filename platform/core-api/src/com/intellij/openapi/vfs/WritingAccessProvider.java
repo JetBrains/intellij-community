@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,32 +12,21 @@ import javax.swing.event.HyperlinkListener;
 import java.util.Collection;
 
 public abstract class WritingAccessProvider {
-  /**
-   * @deprecated Use {@link #EP}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final ExtensionPointName<WritingAccessProvider> EP_NAME = ExtensionPointName.create("com.intellij.writingAccessProvider");
-
   public static final ProjectExtensionPointName<WritingAccessProvider> EP = new ProjectExtensionPointName<>("com.intellij.writingAccessProvider");
 
   /**
    * @param files files to be checked
    * @return set of files that cannot be accessed
    */
-  @NotNull
-  public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
+  public @NotNull Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
     return requestWriting(files.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String getReadOnlyMessage() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getReadOnlyMessage() {
     return CoreBundle.message("editing.read.only.file.hint");
   }
 
-  @Nullable
-  public HyperlinkListener getHyperlinkListener() {
+  public @Nullable HyperlinkListener getHyperlinkListener() {
     return null;
   }
 

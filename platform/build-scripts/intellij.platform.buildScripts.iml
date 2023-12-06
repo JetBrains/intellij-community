@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="1.8" />
-            <stringArg name="languageVersion" arg="1.8" />
+            <stringArg name="apiVersion" arg="1.9" />
+            <stringArg name="languageVersion" arg="1.9" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -53,6 +53,7 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.jps" />
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
     <orderEntry type="module" module-name="intellij.tools.jps.antTasks" scope="RUNTIME" />
@@ -65,25 +66,26 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="library" name="okhttp" level="project" />
     <orderEntry type="library" name="zstd-jni" level="project" />
     <orderEntry type="library" name="zstd-jni-windows-aarch64" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="library" name="blockmap" level="project" />
-    <orderEntry type="library" name="SSHJ" level="project" />
-    <orderEntry type="library" name="jsch-agent-proxy" level="project" />
-    <orderEntry type="library" name="jsch-agent-proxy-sshj" level="project" />
     <orderEntry type="library" name="commons-io" level="project" />
     <orderEntry type="library" name="ktor-client-auth" level="project" />
-    <orderEntry type="library" name="ktor-client-cio" level="project" />
-    <orderEntry type="library" name="ktor-client-encoding" level="project" />
     <orderEntry type="library" name="bouncy-castle-provider" level="project" />
     <orderEntry type="module-library">
       <library name="jetbrains.format.ripper" type="repository">
         <properties maven-id="com.jetbrains.format-ripper:format-ripper:1.1.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1.jar">
+              <sha256sum>c5edac7046453d487daf26bfce1ebb0ccb2d51e07167d01878a13ffdb9b66b8e</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.jetbrains:annotations" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
@@ -102,21 +104,44 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="jackson-datatype-joda" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="commons-codec" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-stdlib" level="project" />
     <orderEntry type="library" name="ktor-serialization-kotlinx-json" level="project" />
-    <orderEntry type="library" name="ktor-client" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
     <orderEntry type="library" name="ktor-client-content-negotiation" level="project" />
-    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module-library">
       <library name="jetbrains.apple.notary.api.kotlin.client" type="repository">
-        <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:1.0.0-2.0.0">
+        <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:1.0.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.2/apple-notary-api-kotlin-client-1.0.2.jar">
+              <sha256sum>25ac259e3506b4d80d038131445643d80bffc097488da73a9cbea05a2f14270b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431.jar">
+              <sha256sum>45b24b098dcaec230fde72b4e0568dab464cf7d8afd8b83fb9ac628778c67df9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431.jar">
+              <sha256sum>ffc62a11ad6a454d150a28c66c98e0300186faa53ec34d1c58c7dc5e2f7a3011</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431.jar">
+              <sha256sum>e17a93342d623ecd58449b6142db53c5ec9d1fb7a6a40d6266e56ed796e06fdf</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.0.2/ion-java-1.0.2.jar">
+              <sha256sum>0d127b205a1fce0abc2a3757a041748651bc66c15cf4c059bac5833b27d471a5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431.jar">
+              <sha256sum>238630e244b369b57238bb35e9a23382be65771b04a0f36d85df07b61b4ae2b9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0.jar">
+              <sha256sum>25a2353a1789870d960c0a9d8878a62eb1873116a2299d74f278451697676a67</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.jetbrains:annotations" />
             <dependency maven-id="org.slf4j:slf4j-api" />
@@ -153,21 +178,46 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.0-2.0.0/apple-notary-api-kotlin-client-1.0.0-2.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.302/aws-java-sdk-s3-1.12.302.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.302/aws-java-sdk-kms-1.12.302.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.302/aws-java-sdk-core-1.12.302.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.2/apple-notary-api-kotlin-client-1.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.0.2/ion-java-1.0.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.302/jmespath-java-1.12.302.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.0.0/java-jwt-4.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.2/apple-notary-api-kotlin-client-1.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.0.2/ion-java-1.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="jetbrains.intellij.plugins.structure" type="repository">
         <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.247">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.247/structure-intellij-3.247.jar">
+              <sha256sum>92bf25de8508be9d8dc84f65fd1b08c348a3f54a726fae389f0a92797e8816ce</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.247/structure-base-3.247.jar">
+              <sha256sum>80f807bca6b0c01ec2d9c126f65906172698ba67897286574aff17d52cfae792</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar">
+              <sha256sum>ac0192fd110a0363732b17ea94fd1ce8cfd85790c8e1551e14f866908b5d80e1</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar">
+              <sha256sum>0b20f45e3a0fd8f0d12cdc5316b06776e902b1365db00118876f9175c60f302c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.14.1/jackson-module-kotlin-2.14.1.jar">
+              <sha256sum>8d83e6fe0ee319266dde031126da7c67024151b7c6a56410c3abb065fcd1ee7c</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
@@ -199,7 +249,13 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.14.1/jackson-module-kotlin-2.14.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.247/structure-intellij-3.247-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.247/structure-base-3.247-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.14.1/jackson-module-kotlin-2.14.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="jaxb-api" level="project" />
@@ -207,6 +263,81 @@
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="jsoup" level="project" />
+    <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module-library">
+      <library name="spdx.tools.java" type="repository">
+        <properties maven-id="org.spdx:tools-java:1.1.7">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.7/tools-java-1.1.7.jar">
+              <sha256sum>4cf3ef5db8c8466224b436a1242e7d13c469a2582dd7a055ec65130c89a82ae8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/java-spdx-library/1.1.6/java-spdx-library-1.1.6.jar">
+              <sha256sum>a16f0e6ec5915ed7b0f63b51f91d2fc8208dbed0d9abc38f8307e5594eb14acd</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/spdx-jackson-store/1.1.6/spdx-jackson-store-1.1.6.jar">
+              <sha256sum>c0707395e4e63f67ea3533388ec6b5f403055b7a701449a35468a1c4966ac7af</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.15.0/jackson-dataformat-xml-2.15.0.jar">
+              <sha256sum>e3137c89b08d0c3d9f7dfeae11d5b941b310f5f7bfdea90063f29c0b3b1f6807</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.15.0/jackson-dataformat-yaml-2.15.0.jar">
+              <sha256sum>691a0a605de15ea610180317331957fe6f7e91f45471ee45cbf9832d74291c31</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.spdx:spdx-rdf-store" />
+            <dependency maven-id="org.spdx:spdx-spreadsheet-store" />
+            <dependency maven-id="org.spdx:spdx-tagvalue-store" />
+            <dependency maven-id="org.apache.logging.log4j:log4j-slf4j18-impl" />
+            <dependency maven-id="org.apache.commons:commons-lang3" />
+            <dependency maven-id="org.jsoup:jsoup" />
+            <dependency maven-id="com.google.code.gson:gson" />
+            <dependency maven-id="com.google.code.findbugs:jsr305" />
+            <dependency maven-id="org.apache.jena:jena-core" />
+            <dependency maven-id="org.apache.jena:jena-arq" />
+            <dependency maven-id="org.apache.jena:jena-base" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
+            <dependency maven-id="org.codehaus.woodstox:stax2-api" />
+            <dependency maven-id="com.fasterxml.woodstox:woodstox-core" />
+            <dependency maven-id="org.yaml:snakeyaml" />
+            <dependency maven-id="org.apache.poi:poi" />
+            <dependency maven-id="com.opencsv:opencsv" />
+            <dependency maven-id="org.apache.poi:poi-ooxml" />
+            <dependency maven-id="org.apache.ws.xmlschema:xmlschema-core" />
+            <dependency maven-id="com.google.guava:guava" />
+            <dependency maven-id="com.github.java-json-tools:jackson-coreutils-equivalence" />
+            <dependency maven-id="com.github.java-json-tools:jackson-coreutils" />
+            <dependency maven-id="com.github.java-json-tools:uri-template" />
+            <dependency maven-id="com.github.java-json-tools:json-schema-validator" />
+            <dependency maven-id="com.github.java-json-tools:json-schema-core" />
+            <dependency maven-id="org.mozilla:rhino" />
+            <dependency maven-id="org.json:json" />
+            <dependency maven-id="com.sun.mail:mailapi" />
+            <dependency maven-id="joda-time:joda-time" />
+            <dependency maven-id="com.googlecode.libphonenumber:libphonenumber" />
+            <dependency maven-id="net.sf.jopt-simple:jopt-simple" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.7/tools-java-1.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/java-spdx-library/1.1.6/java-spdx-library-1.1.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/spdx-jackson-store/1.1.6/spdx-jackson-store-1.1.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.15.0/jackson-dataformat-xml-2.15.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.15.0/jackson-dataformat-yaml-2.15.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.7/tools-java-1.1.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/java-spdx-library/1.1.6/java-spdx-library-1.1.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/spdx-jackson-store/1.1.6/spdx-jackson-store-1.1.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.15.0/jackson-dataformat-xml-2.15.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.15.0/jackson-dataformat-yaml-2.15.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="hash4j" level="project" />
   </component>
 </module>

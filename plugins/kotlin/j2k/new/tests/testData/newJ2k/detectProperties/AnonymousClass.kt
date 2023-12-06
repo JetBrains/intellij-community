@@ -1,7 +1,7 @@
 class X {
     fun foo() {
         val runnable: Runnable = object : Runnable {
-            var value = 10
+            var value: Int = 10
 
             override fun run() {
                 println(value)

@@ -1,6 +1,7 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.workspace
 
-import com.intellij.cce.actions.*
+import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.NamedFilter
@@ -10,8 +11,10 @@ import kotlin.io.path.absolute
 
 data class Config private constructor(
   val projectPath: String,
+  val projectName: String,
   val language: String,
   val outputDir: String,
+  val strategy: EvaluationStrategy,
   val actions: ActionsGeneration,
   val interpret: ActionsInterpretation,
   val reorder: ReorderElements,
@@ -32,17 +35,14 @@ data class Config private constructor(
   }
 
   data class ActionsGeneration internal constructor(
-    val evaluationRoots: List<String>,
-    val strategy: CompletionStrategy)
+    val evaluationRoots: List<String>
+  )
 
   data class ActionsInterpretation internal constructor(
-    val completionType: CompletionType,
     val experimentGroup: Int?,
     val sessionsLimit: Int?,
-    val completeTokenProbability: Double,
-    val completeTokenSeed: Long?,
-    val emulationSettings: UserEmulator.Settings?,
-    val completionGolfSettings: CompletionGolfEmulation.Settings?,
+    val sessionProbability: Double,
+    val sessionSeed: Long?,
     val saveLogs: Boolean,
     val saveFeatures: Boolean,
     val saveContent: Boolean,
@@ -63,24 +63,19 @@ data class Config private constructor(
 
   class Builder internal constructor(private val projectPath: String, private val language: String) {
     var evaluationRoots = mutableListOf<String>()
+    var projectName = projectPath.split('/').last()
     var outputDir: String = Paths.get(projectPath, "completion-evaluation").toAbsolutePath().toString()
+    var strategy: EvaluationStrategy = EvaluationStrategy.defaultStrategy
     var saveLogs = false
     var saveFeatures = true
     var saveContent = false
     var logLocationAndItemText = false
     var trainTestSplit: Int = 70
-    var completionType: CompletionType = CompletionType.BASIC
-    var evaluationTitle: String = completionType.name
-    var prefixStrategy: CompletionPrefix = CompletionPrefix.NoPrefix
-    var contextStrategy: CompletionContext = CompletionContext.ALL
+    var evaluationTitle: String = "BASIC"
     var experimentGroup: Int? = null
     var sessionsLimit: Int? = null
-    var emulateUser: Boolean = false
-    var completionGolfMode: CompletionGolfMode? = null
-    var emulationSettings: UserEmulator.Settings? = null
-    var completionGolfSettings: CompletionGolfEmulation.Settings? = null
-    var completeTokenProbability: Double = 1.0
-    var completeTokenSeed: Long? = null
+    var sessionProbability: Double = 1.0
+    var sessionSeed: Long? = null
     var useReordering: Boolean = false
     var reorderingTitle: String = evaluationTitle
     var featuresForReordering = mutableListOf<String>()
@@ -91,22 +86,17 @@ data class Config private constructor(
 
     constructor(config: Config) : this(config.projectPath, config.language) {
       outputDir = config.outputDir
+      strategy = config.strategy
       evaluationRoots.addAll(config.actions.evaluationRoots)
-      prefixStrategy = config.actions.strategy.prefix
-      contextStrategy = config.actions.strategy.context
-      emulateUser = config.actions.strategy.emulateUser
-      filters.putAll(config.actions.strategy.filters)
       saveLogs = config.interpret.saveLogs
       saveFeatures = config.interpret.saveFeatures
       saveContent = config.interpret.saveContent
       logLocationAndItemText = config.interpret.logLocationAndItemText
       trainTestSplit = config.interpret.trainTestSplit
-      completionType = config.interpret.completionType
       experimentGroup = config.interpret.experimentGroup
       sessionsLimit = config.interpret.sessionsLimit
-      emulationSettings = config.interpret.emulationSettings
-      completeTokenProbability = config.interpret.completeTokenProbability
-      completeTokenSeed = config.interpret.completeTokenSeed
+      sessionProbability = config.interpret.sessionProbability
+      sessionSeed = config.interpret.sessionSeed
       useReordering = config.reorder.useReordering
       reorderingTitle = config.reorder.title
       featuresForReordering.addAll(config.reorder.features)
@@ -130,20 +120,18 @@ data class Config private constructor(
 
     fun build(): Config = Config(
       Paths.get(projectPath).absolute().toString(),
+      projectName,
       language,
       outputDir,
+      strategy,
       ActionsGeneration(
-        evaluationRoots,
-        CompletionStrategy(prefixStrategy, contextStrategy, emulateUser, completionGolfMode, filters)
+        evaluationRoots
       ),
       ActionsInterpretation(
-        completionType,
         experimentGroup,
         sessionsLimit,
-        completeTokenProbability,
-        completeTokenSeed,
-        emulationSettings,
-        completionGolfSettings,
+        sessionProbability,
+        sessionSeed,
         saveLogs,
         saveFeatures,
         saveContent,

@@ -1,26 +1,25 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Abstract
-import org.jetbrains.deft.annotations.Open
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Abstract
+import com.intellij.platform.workspace.storage.annotations.Open
 
 @Abstract
 interface GrandParentEntity : WorkspaceEntity {
   val data1: String
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder<T : GrandParentEntity> : GrandParentEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  @GeneratedCodeApiVersion(2)
+  interface Builder<T : GrandParentEntity> : GrandParentEntity, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var data1: String
   }
 
-  companion object : Type<GrandParentEntity, Builder<GrandParentEntity>>() {
+  companion object : EntityType<GrandParentEntity, Builder<GrandParentEntity>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -42,14 +41,14 @@ interface ParentEntity : GrandParentEntity {
   val data2: String
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder<T : ParentEntity> : ParentEntity, GrandParentEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  @GeneratedCodeApiVersion(2)
+  interface Builder<T : ParentEntity> : ParentEntity, GrandParentEntity.Builder<T>, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var data1: String
     override var data2: String
   }
 
-  companion object : Type<ParentEntity, Builder<ParentEntity>>(GrandParentEntity) {
+  companion object : EntityType<ParentEntity, Builder<ParentEntity>>(GrandParentEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -72,15 +71,15 @@ interface ChildEntity: ParentEntity {
   val data3: String
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder : ChildEntity, ParentEntity.Builder<ChildEntity>, WorkspaceEntity.Builder<ChildEntity>, ObjBuilder<ChildEntity> {
+  @GeneratedCodeApiVersion(2)
+  interface Builder : ChildEntity, ParentEntity.Builder<ChildEntity>, WorkspaceEntity.Builder<ChildEntity> {
     override var entitySource: EntitySource
     override var data1: String
     override var data2: String
     override var data3: String
   }
 
-  companion object : Type<ChildEntity, Builder>(ParentEntity) {
+  companion object : EntityType<ChildEntity, Builder>(ParentEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

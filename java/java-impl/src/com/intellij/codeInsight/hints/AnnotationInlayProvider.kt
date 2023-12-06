@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.MakeInferredAnnotationExplicit
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
@@ -14,7 +15,6 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.psi.*
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.SmartList
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
@@ -41,7 +41,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     val document = PsiDocumentManager.getInstance(project).getDocument(file)
     return object : FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-        if (file.project.service<DumbService>().isDumb) return false
+        if (DumbService.getInstance(file.project).isDumb) return false
         if (file.project.isDefault) return false
         val presentations = SmartList<InlayPresentation>()
         if (element is PsiModifierListOwner) {
@@ -224,10 +224,11 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project ?: return
       prop.set(!prop.get())
       val storage = InlayHintsSettings.instance()
       storage.storeSettings(ourKey, JavaLanguage.INSTANCE, settings)
-      InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+      InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
     }
 
   }

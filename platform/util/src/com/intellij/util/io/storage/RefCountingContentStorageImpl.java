@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -14,10 +14,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,17 +25,19 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 @ApiStatus.Internal
-public class RefCountingContentStorageImpl extends AbstractStorage implements RefCountingContentStorage {
+public final class RefCountingContentStorageImpl extends AbstractStorage implements RefCountingContentStorage {
   private final Map<Integer, Future<?>> myPendingWriteRequests = new ConcurrentHashMap<>();
   private int myPendingWriteRequestsSize;
   private final ExecutorService myWriteRequestExecutor;
+
+  /**Basically, it means "never delete records" */
   private final boolean myUseContentHashes;
 
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
 
   private final IntObjectMap<RecordData> myCurrentRecords = ContainerUtil.createConcurrentIntObjectMap();
 
-  private static class RecordData {
+  private static final class RecordData {
     private final int compressedSize;
     private final int compressedHash;
 
@@ -49,9 +48,9 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
   }
 
   public RefCountingContentStorageImpl(@NotNull Path path,
-                                   @Nullable CapacityAllocationPolicy capacityAllocationPolicy,
-                                   @NotNull ExecutorService writeRequestExecutor,
-                                   boolean useContentHashes) throws IOException {
+                                       @Nullable CapacityAllocationPolicy capacityAllocationPolicy,
+                                       @NotNull ExecutorService writeRequestExecutor,
+                                       boolean useContentHashes) throws IOException {
     super(path, capacityAllocationPolicy);
 
     myWriteRequestExecutor = writeRequestExecutor;
@@ -106,7 +105,7 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
     }
   }
 
-  private static class CustomInflaterInputStream extends InflaterInputStream {
+  private static final class CustomInflaterInputStream extends InflaterInputStream {
     CustomInflaterInputStream(byte[] compressedData) {
       super(new UnsyncByteArrayInputStream(compressedData), new Inflater(), 1);
       // force to directly use compressed data, this ensures less round trips with native extraction code and copy streams
@@ -128,11 +127,21 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
     }
   }
 
-  private void waitForPendingWriteForRecord(int record) {
+  private void waitForPendingWriteForRecord(int record) throws InterruptedIOException {
     Future<?> future = myPendingWriteRequests.get(record);
     if (future != null) {
       try {
         future.get();
+      }
+      catch (InterruptedException ie) {
+        //RC: need to throw something recognizable as Interrupted, but InterruptedException is checked,
+        //    and not a part of IStorage API, hence we can't just rethrow it. InterruptedIOException
+        //    seems like a good candidate for a wrapper: it carries very similar meaning (i.e. it is
+        //    clear why we catch it somewhere up the stack), but it is also an IOException, which _is_
+        //    a part of IStorage API
+        final InterruptedIOException wrapperException = new InterruptedIOException();
+        wrapperException.addSuppressed(ie);
+        throw wrapperException;
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -146,14 +155,15 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
   }
 
   @Override
-  public void writeBytes(final int record, final ByteArraySequence bytes, final boolean fixedSize) throws IOException {
+  public void writeBytes(final int record, final @NotNull ByteArraySequence bytes, final boolean fixedSize) throws IOException {
     waitForPendingWriteForRecord(record);
 
     withWriteLock(() -> {
       myPendingWriteRequestsSize += bytes.getLength();
       if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {
         zipAndWrite(bytes, record, fixedSize);
-      } else {
+      }
+      else {
         myPendingWriteRequests.put(record, myWriteRequestExecutor.submit(() -> {
           zipAndWrite(bytes, record, fixedSize);
           return null;
@@ -180,7 +190,8 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
   }
 
   @Override
-  protected RefCountingRecordsTable createRecordsTable(@NotNull StorageLockContext storageLockContext, @NotNull Path recordsFile) throws IOException {
+  protected RefCountingRecordsTable createRecordsTable(@NotNull StorageLockContext storageLockContext, @NotNull Path recordsFile)
+    throws IOException {
     return new RefCountingRecordsTable(recordsFile, storageLockContext);
   }
 
@@ -248,10 +259,11 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
   }
 
   private void flushPendingWrites() {
-    for(Map.Entry<Integer, Future<?>> entry:myPendingWriteRequests.entrySet()) {
+    for (Map.Entry<Integer, Future<?>> entry : myPendingWriteRequests.entrySet()) {
       try {
         entry.getValue().get();
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         throw new RuntimeException(e);
       }
     }

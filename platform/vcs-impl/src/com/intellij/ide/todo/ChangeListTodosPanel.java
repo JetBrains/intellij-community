@@ -18,12 +18,12 @@ public abstract class ChangeListTodosPanel extends TodoPanel {
 
   private final Alarm myAlarm;
 
-  public ChangeListTodosPanel(@NotNull Project project,
+  public ChangeListTodosPanel(@NotNull TodoView todoView,
                               @NotNull TodoPanelSettings settings,
                               @NotNull Content content) {
-    super(project, settings, false, content);
+    super(todoView, settings, false, content);
 
-    ChangeListManager.getInstance(project).addChangeListListener(new MyChangeListManagerListener(), this);
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListManagerListener(), this);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   }
 

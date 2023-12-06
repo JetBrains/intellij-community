@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -14,6 +14,6 @@ public final class SpellcheckerIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, SpellcheckerIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Dictionary = load("icons/dictionary.svg", 2079766939, 2);
-  /** 16x16 */ public static final @NotNull Icon Spellcheck = load("icons/spellcheck.svg", -1198004126, 2);
+  /** 16x16 */ public static final @NotNull Icon Dictionary = load("icons/dictionary.svg", -2094657776, 2);
+  /** 16x16 */ public static final @NotNull Icon Spellcheck = load("icons/spellcheck.svg", 1919442669, 2);
 }

@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.AppTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -64,10 +63,14 @@ public final class EncodingUtil {
   // returns ABSOLUTELY if bytes on disk, converted to text with the charset, converted back to bytes matched
   // returns NO_WAY if the new encoding is incompatible (bytes on disk will differ)
   // returns WELL_IF_YOU_INSIST if the bytes on disk remain the same but the text will change
-  @NotNull
-  static Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytes, @NotNull Charset charset) {
+  static @NotNull Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytes, @NotNull Charset charset) {
     // file has BOM but the charset hasn't
-    byte[] bom = virtualFile.getBOM();
+    byte[] bom = null;
+    try {
+      bom = getBOMFromBytes(virtualFile.contentsToByteArray());
+    }
+    catch (IOException ignored) {
+    }
     if (bom != null && !CharsetToolkit.canHaveBom(charset, bom)) return Magic8.NO_WAY;
 
     // the charset has mandatory BOM (e.g. UTF-xx) but the file hasn't or has wrong
@@ -99,8 +102,18 @@ public final class EncodingUtil {
     return !Arrays.equals(bytesToSave, bytes) ? Magic8.NO_WAY : StringUtil.equals(loaded, text) ? Magic8.ABSOLUTELY : Magic8.WELL_IF_YOU_INSIST;
   }
 
-  @NotNull
-  static Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytesOnDisk, @NotNull Charset charset) {
+  private static byte[] getBOMFromBytes(byte @NotNull [] contents) {
+    Charset charset = CharsetToolkit.guessFromBOM(contents);
+    if (charset == null) {
+      return null;
+    }
+    if (charset.equals(StandardCharsets.UTF_8)) {
+      return CharsetToolkit.UTF8_BOM;
+    }
+    return CharsetToolkit.getMandatoryBom(charset);
+  }
+  
+  static @NotNull Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytesOnDisk, @NotNull Charset charset) {
     try {
       String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, null);
       CharSequence textToSave = lineSeparator.equals("\n") ? text : StringUtilRt.convertLineSeparators(text, lineSeparator);
@@ -162,7 +175,7 @@ public final class EncodingUtil {
 
     final Disposable disposable = Disposer.newDisposable();
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(disposable);
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    connection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void beforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
         if (!file.equals(virtualFile)) return;
@@ -177,7 +190,7 @@ public final class EncodingUtil {
     // if file was modified, the user will be asked here
     try {
       VFileContentChangeEvent event =
-        new VFileContentChangeEvent(null, virtualFile, 0, 0, false);
+        new VFileContentChangeEvent(null, virtualFile, 0, 0);
       EncodingProjectManagerImpl.suppressReloadDuring(() -> ((FileDocumentManagerImpl)documentManager).contentsChanged(event));
     }
     finally {
@@ -210,8 +223,7 @@ public final class EncodingUtil {
     return checkCanReload(virtualFile, null) == null;
   }
 
-  @Nullable
-  static FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<? super Charset> current) {
+  static @Nullable FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<? super Charset> current) {
     if (virtualFile.isDirectory()) {
       return FailReason.IS_DIRECTORY;
     }
@@ -237,16 +249,14 @@ public final class EncodingUtil {
     return result;
   }
 
-  @Nullable
-  private static FailReason fileTypeDescriptionError(@NotNull VirtualFile virtualFile) {
+  private static @Nullable FailReason fileTypeDescriptionError(@NotNull VirtualFile virtualFile) {
     if (virtualFile.getFileType().isBinary()) return FailReason.IS_BINARY;
 
     boolean hardcoded = checkHardcodedCharsetFileType(virtualFile);
     return hardcoded ? FailReason.BY_FILETYPE : null;
   }
 
-  @Nullable("null means enabled, notnull means disabled and contains error message")
-  static FailReason checkCanConvert(@NotNull VirtualFile virtualFile) {
+  static @Nullable("null means enabled, notnull means disabled and contains error message") FailReason checkCanConvert(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) {
       return FailReason.IS_DIRECTORY;
     }
@@ -255,15 +265,13 @@ public final class EncodingUtil {
     return charsetFromContent != null ? FailReason.BY_FILE : fileTypeDescriptionError(virtualFile);
   }
 
-  @Nullable
-  static FailReason checkCanConvertAndReload(@NotNull VirtualFile selectedFile) {
+  static @Nullable FailReason checkCanConvertAndReload(@NotNull VirtualFile selectedFile) {
     FailReason result = checkCanConvert(selectedFile);
     if (result == null) return null;
     return checkCanReload(selectedFile, null);
   }
 
-  @Nullable
-  public static Pair<Charset, String> getCharsetAndTheReasonTooltip(@NotNull VirtualFile file) {
+  public static @Nullable Pair<Charset, String> getCharsetAndTheReasonTooltip(@NotNull VirtualFile file) {
     FailReason r1 = checkCanConvert(file);
     if (r1 == null) return null;
     Ref<Charset> current = Ref.create();
@@ -273,8 +281,7 @@ public final class EncodingUtil {
     return Pair.create(current.get(), errorDescription);
   }
 
-  @NotNull
-  static @Nls String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
+  static @NotNull @Nls String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
     return switch (reason) {
       case IS_DIRECTORY -> IdeBundle.message("no.charset.set.reason.disabled.for.directory");
       case IS_BINARY -> IdeBundle.message("no.charset.set.reason.disabled.for.binary.file");

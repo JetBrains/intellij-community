@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentListener;
 import java.awt.event.ActionListener;
 
 public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextField> implements TextAccessor {
@@ -63,6 +64,10 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     listener.setOwnerComponent(this);
     addActionListener(listener);
     installPathCompletion(listener.getFileChooserDescriptor());
+  }
+
+  public void addDocumentListener(@NotNull DocumentListener listener) {
+    getTextField().getDocument().addDocumentListener(listener);
   }
 
   protected void installPathCompletion(FileChooserDescriptor fileChooserDescriptor) {

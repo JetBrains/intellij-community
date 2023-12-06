@@ -24,9 +24,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -91,12 +89,12 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   }
 
   public MethodCallInstruction(@NotNull PsiCall call, @Nullable DfaValue precalculatedReturnValue, List<? extends MethodContract> contracts) {
-    super(call instanceof PsiExpression ? new JavaExpressionAnchor((PsiExpression)call) : null);
+    super(call instanceof PsiExpression expr ? new JavaExpressionAnchor(expr) : null);
     myContext = call;
     myContracts = Collections.unmodifiableList(contracts);
     final PsiExpressionList argList = call.getArgumentList();
     PsiExpression[] args = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
-    myType = call instanceof PsiCallExpression ? ((PsiCallExpression)call).getType() : null;
+    myType = call instanceof PsiExpression expr ? expr.getType() : null;
 
     JavaResolveResult result = call.resolveMethodGenerics();
     myTargetMethod = (PsiMethod)result.getElement();
@@ -369,8 +367,14 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         if (value != null) {
           if (myPrecalculatedReturnValue != null) {
             if (!state.applyCondition(myPrecalculatedReturnValue.eq(value))) {
-              throw new IllegalStateException("Precalculated value " + myPrecalculatedReturnValue + 
-                                              " mismatches with method handler result " + value);
+              throw new IllegalStateException("Precalculated value " +
+                                              myPrecalculatedReturnValue +
+                                              " mismatches with method handler result " +
+                                              value +
+                                              "; method = " +
+                                              PsiFormatUtil.formatMethod(myTargetMethod, PsiSubstitutor.EMPTY,
+                                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                                         PsiFormatUtilBase.SHOW_NAME, PsiFormatUtilBase.SHOW_TYPE));
             }
           }
           return myPrecalculatedReturnValue instanceof DfaVariableValue var && !var.isFlushableByCalls()

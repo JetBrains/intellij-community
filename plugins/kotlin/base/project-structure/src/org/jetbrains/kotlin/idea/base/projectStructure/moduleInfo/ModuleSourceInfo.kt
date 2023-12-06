@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.serviceContainer.AlreadyDisposedException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
 import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -32,6 +33,7 @@ interface ModuleSourceInfo : OldModuleSourceInfo, IdeaModuleInfo, TrackableModul
         get() = module.platform
 
     @Suppress("DEPRECATION_ERROR")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(
         message = "This accessor is deprecated and will be removed soon, use API from 'org.jetbrains.kotlin.platform.*' packages instead",
         replaceWith = ReplaceWith("platform"),

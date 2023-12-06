@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.codeInsight.CallTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
 import org.jetbrains.kotlin.idea.base.codeInsight.process
+import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -27,6 +28,7 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
     override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
+        if (!KotlinLineMarkerOptions.recursiveOption.isEnabled) return
         KotlinCallProcessor.process(elements) { target ->
             val symbol = target.symbol
             val targetDeclaration = target.symbol.psi as? KtDeclaration ?: return@process
@@ -51,7 +53,8 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         }
     }
 
-    private fun KtAnalysisSession.isRecursiveCall(target: CallTarget, targetDeclaration: PsiElement): Boolean {
+    context(KtAnalysisSession)
+    private fun isRecursiveCall(target: CallTarget, targetDeclaration: PsiElement): Boolean {
         for (parent in target.caller.parents) {
             when (parent) {
                 targetDeclaration -> return checkDispatchReceiver(target)
@@ -68,7 +71,8 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         return false
     }
 
-    private fun KtAnalysisSession.checkDispatchReceiver(target: CallTarget): Boolean {
+    context(KtAnalysisSession)
+private fun checkDispatchReceiver(target: CallTarget): Boolean {
         var dispatchReceiver = target.partiallyAppliedSymbol.dispatchReceiver ?: return true
         while (dispatchReceiver is KtSmartCastedReceiverValue) {
             dispatchReceiver = dispatchReceiver.original

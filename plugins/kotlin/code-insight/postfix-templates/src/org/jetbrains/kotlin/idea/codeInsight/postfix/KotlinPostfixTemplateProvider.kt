@@ -34,15 +34,17 @@ internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
             KotlinNullPostfixTemplate(this),
             KotlinTryPostfixTemplate(this),
             KotlinWhenPostfixTemplate(this),
-            KotlinNotPostfixTemplate(this)
+            KotlinNotPostfixTemplate(this),
+            KotlinIntroduceVariablePostfixTemplate("val", this),
+            KotlinIntroduceVariablePostfixTemplate("var", this),
         )
     }
 
-    override fun getTemplates() = templateSet
+    override fun getTemplates(): Set<PostfixTemplate> = templateSet
 
-    override fun isTerminalSymbol(currentChar: Char) = currentChar == '.' || currentChar == '!'
+    override fun isTerminalSymbol(currentChar: Char): Boolean = currentChar == '.' || currentChar == '!'
 
-    override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int) = copyFile
+    override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int): PsiFile = copyFile
 
     override fun preExpand(file: PsiFile, editor: Editor) {}
     override fun afterExpand(file: PsiFile, editor: Editor) {}

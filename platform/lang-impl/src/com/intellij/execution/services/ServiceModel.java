@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.diagnostic.PluginException;
@@ -61,7 +61,6 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   private final Project myProject;
   private final Invoker myInvoker = Invoker.forBackgroundThreadWithoutReadAction(this);
   private final List<ServiceViewItem> myRoots = new CopyOnWriteArrayList<>();
-  private volatile boolean myRootsInitialized;
   private final List<ServiceModelEventListener> myListeners = new CopyOnWriteArrayList<>();
 
   ServiceModel(@NotNull Project project) {
@@ -88,36 +87,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
 
   @NotNull
   List<? extends ServiceViewItem> getRoots() {
-    return myRootsInitialized ? myRoots : Collections.emptyList();
-  }
-
-  CancellablePromise<?> initRoots() {
-    return getInvoker().invoke(() -> {
-      if (!myRootsInitialized) {
-        myRoots.addAll(doGetRoots());
-        myRootsInitialized = true;
-      }
-    });
-  }
-
-  private List<? extends ServiceViewItem> doGetRoots() {
-    List<ServiceViewItem> result = new ArrayList<>();
-    for (ServiceViewContributor<?> contributor : CONTRIBUTOR_EP_NAME.getExtensionList()) {
-      try {
-        ContributorNode root = new ContributorNode(myProject, contributor);
-        root.loadChildren();
-        if (!root.getChildren().isEmpty()) {
-          result.add(root);
-        }
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        PluginException.logPluginError(LOG, "Failed to init service view contributor " + contributor.getClass(), e, contributor.getClass());
-      }
-    }
-    return result;
+    return myRoots;
   }
 
   private JBIterable<ServiceViewItem> doFindItems(Condition<? super ServiceViewItem> visitChildrenCondition,
@@ -181,20 +151,26 @@ final class ServiceModel implements Disposable, InvokerSupplier {
         case SERVICE_ADDED -> addService(e);
         case SERVICE_REMOVED -> removeService(e);
         case SERVICE_CHANGED -> serviceChanged(e);
+        case SERVICE_CHILDREN_CHANGED -> serviceChildrenChanged(e);
         case SERVICE_STRUCTURE_CHANGED -> serviceStructureChanged(e);
         case SERVICE_GROUP_CHANGED -> serviceGroupChanged(e);
         case GROUP_CHANGED -> groupChanged(e);
         default -> reset(e.contributorClass);
       }
-      for (ServiceModelEventListener listener : myListeners) {
-        listener.eventProcessed(e);
-      }
+      notifyListeners(e);
+      LOG.debug("Event handled: " + e);
     };
     if (e.type != ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
-      return getInvoker().invoke(handler);
+      return getInvoker().invokeLater(handler);
     }
     handler.run();
     return Promises.resolvedCancellablePromise(null);
+  }
+
+  void notifyListeners(ServiceEvent e) {
+    for (ServiceModelEventListener listener : myListeners) {
+      listener.eventProcessed(e);
+    }
   }
 
   private void reset(Class<?> contributorClass) {
@@ -346,6 +322,12 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     ((ServiceViewItem)node).setViewDescriptor(viewDescriptor);
   }
 
+  private void serviceChildrenChanged(ServiceEvent e) {
+    ServiceViewItem item = findItem(e.target, e.contributorClass);
+    if (item instanceof ServiceNode node) {
+      node.reloadChildren();
+    }
+  }
   private void serviceStructureChanged(ServiceEvent e) {
     ServiceViewItem item = findItem(e.target, e.contributorClass);
     if (item instanceof ServiceNode node) {
@@ -660,7 +642,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     }
   }
 
-  static class ContributorNode extends ServiceViewItem {
+  static final class ContributorNode extends ServiceViewItem {
     private final Project myProject;
 
     ContributorNode(@NotNull Project project, @NotNull ServiceViewContributor<?> contributor) {
@@ -677,7 +659,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     }
   }
 
-  static class ServiceNode extends ServiceViewItem {
+  static final class ServiceNode extends ServiceViewItem {
     private final Project myProject;
     private final ServiceViewContributor<?> myProvidingContributor;
     private volatile boolean myChildrenInitialized;
@@ -747,7 +729,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     }
   }
 
-  static class ServiceGroupNode extends ServiceViewItem {
+  static final class ServiceGroupNode extends ServiceViewItem {
     ServiceGroupNode(@NotNull Object group, @Nullable ServiceViewItem parent, @NotNull ServiceViewContributor<?> contributor,
                      @NotNull ServiceViewDescriptor viewDescriptor) {
       super(group, parent, contributor, viewDescriptor);

@@ -23,6 +23,26 @@ public class JvmWithLibBasicCompletionTestGenerated extends AbstractJvmWithLibBa
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("JavaAnnotationWithDefaultArgumentAtFirstPosition.kt")
+    public void testJavaAnnotationWithDefaultArgumentAtFirstPosition() throws Exception {
+        runTest("../testData/basic/withLib/JavaAnnotationWithDefaultArgumentAtFirstPosition.kt");
+    }
+
+    @TestMetadata("JavaAnnotationWithDefaultArgumentAtSecondPosition.kt")
+    public void testJavaAnnotationWithDefaultArgumentAtSecondPosition() throws Exception {
+        runTest("../testData/basic/withLib/JavaAnnotationWithDefaultArgumentAtSecondPosition.kt");
+    }
+
+    @TestMetadata("JavaAnnotationWithoutDefaultMethod.kt")
+    public void testJavaAnnotationWithoutDefaultMethod() throws Exception {
+        runTest("../testData/basic/withLib/JavaAnnotationWithoutDefaultMethod.kt");
+    }
+
+    @TestMetadata("JavaFinalStaticFieldAsAnnotationArgument.kt")
+    public void testJavaFinalStaticFieldAsAnnotationArgument() throws Exception {
+        runTest("../testData/basic/withLib/JavaFinalStaticFieldAsAnnotationArgument.kt");
+    }
+
     @TestMetadata("NamedArgumentsJava.kt")
     public void testNamedArgumentsJava() throws Exception {
         runTest("../testData/basic/withLib/NamedArgumentsJava.kt");
@@ -31,6 +51,21 @@ public class JvmWithLibBasicCompletionTestGenerated extends AbstractJvmWithLibBa
     @TestMetadata("NamedArgumentsKotlin.kt")
     public void testNamedArgumentsKotlin() throws Exception {
         runTest("../testData/basic/withLib/NamedArgumentsKotlin.kt");
+    }
+
+    @TestMetadata("NonShadowingExtensionFromDefaultImport.kt")
+    public void testNonShadowingExtensionFromDefaultImport() throws Exception {
+        runTest("../testData/basic/withLib/NonShadowingExtensionFromDefaultImport.kt");
+    }
+
+    @TestMetadata("NonShadowingExtensionFromPackage.kt")
+    public void testNonShadowingExtensionFromPackage() throws Exception {
+        runTest("../testData/basic/withLib/NonShadowingExtensionFromPackage.kt");
+    }
+
+    @TestMetadata("NonShadowingExtensionFromStarImport.kt")
+    public void testNonShadowingExtensionFromStarImport() throws Exception {
+        runTest("../testData/basic/withLib/NonShadowingExtensionFromStarImport.kt");
     }
 
     @TestMetadata("OverrideJava.kt")
@@ -46,6 +81,11 @@ public class JvmWithLibBasicCompletionTestGenerated extends AbstractJvmWithLibBa
     @TestMetadata("SamAdapterAndGenerics.kt")
     public void testSamAdapterAndGenerics() throws Exception {
         runTest("../testData/basic/withLib/SamAdapterAndGenerics.kt");
+    }
+
+    @TestMetadata("ShadowingExtensionFromExplicitSimpleImport.kt")
+    public void testShadowingExtensionFromExplicitSimpleImport() throws Exception {
+        runTest("../testData/basic/withLib/ShadowingExtensionFromExplicitSimpleImport.kt");
     }
 
     @TestMetadata("TopLevelNonImportedExtFun.kt")

@@ -3,6 +3,7 @@ package com.intellij.diff.tools.fragmented;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.EditorDiffViewer;
 import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
@@ -44,7 +45,6 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -65,23 +65,26 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
-public class UnifiedDiffViewer extends ListenerDiffViewerBase implements DifferencesLabel.DifferencesCounter {
+public class UnifiedDiffViewer extends ListenerDiffViewerBase implements DifferencesLabel.DifferencesCounter, EditorDiffViewer {
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
-  @NotNull private final UnifiedDiffPanel myPanel;
+  @NotNull protected final UnifiedDiffPanel myPanel;
   @NotNull private final OnesideContentPanel myContentPanel;
 
   @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
@@ -96,7 +99,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
 
   @NotNull protected Side myMasterSide = Side.RIGHT;
 
-  @NotNull private final UnifiedDiffModel myModel = new UnifiedDiffModel(this);
+  @NotNull protected final UnifiedDiffModel myModel = new UnifiedDiffModel(this);
 
   private final boolean[] myForceReadOnlyFlags;
   private boolean myReadOnlyLockSet = false;
@@ -249,11 +252,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>();
 
-    if (isEditable(Side.RIGHT, false)) {
-      group.add(new ReplaceSelectedChangesAction(Side.LEFT));
-      group.add(new ReplaceSelectedChangesAction(Side.RIGHT));
-    }
-
+    group.add(new ReplaceSelectedChangesAction(Side.LEFT));
+    group.add(new ReplaceSelectedChangesAction(Side.RIGHT));
     group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
 
@@ -332,15 +332,15 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
 
     final List<LineFragment> fragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 
-    UnifiedFragmentBuilder builder = ReadAction.compute(() -> {
+    UnifiedDiffState builder = ReadAction.compute(() -> {
       indicator.checkCanceled();
-      return new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide).exec();
+      return new SimpleUnifiedFragmentBuilder(document1, document2, myMasterSide).exec(fragments);
     });
 
     return apply(builder, texts, indicator);
   }
 
-  private void clearDiffPresentation() {
+  protected void clearDiffPresentation() {
     myPanel.resetNotifications();
     myStatusPanel.setBusy(false);
     destroyChangedBlockData();
@@ -383,7 +383,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
   }
 
   @NotNull
-  protected Runnable apply(@NotNull UnifiedFragmentBuilder builder,
+  protected Runnable apply(@NotNull UnifiedDiffState builder,
                            CharSequence @NotNull [] texts,
                            @NotNull ProgressIndicator indicator) {
     final DocumentContent content1 = getContent1();
@@ -427,13 +427,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
         myPanel.addNotification(TextDiffViewerUtil.createEqualContentsNotification(getContents()));
       }
 
-      IntUnaryOperator foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
-      IntUnaryOperator contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
-      IntUnaryOperator contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
-      IntUnaryOperator merged1 = mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor);
-      IntUnaryOperator merged2 = mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor);
-      myEditor.getGutter().setLineNumberConverter(merged1 == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged1),
-                                                  merged2 == null ? null : new LineNumberConverterAdapter(merged2));
+      IntPredicate foldingLinePredicate = myFoldingModel.hideLineNumberPredicate(0);
+      IntUnaryOperator merged1 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent1()),
+                                                              convertor1.createConvertor());
+      IntUnaryOperator merged2 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent2()),
+                                                              convertor2.createConvertor());
+      myEditor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(foldingLinePredicate, merged1),
+                                                  new DiffLineNumberConverter(foldingLinePredicate, merged2));
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         myDuringOnesideDocumentModification = true;
@@ -485,12 +485,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     block.setGreedyToLeft(true);
     block.setGreedyToRight(true);
     return block;
-  }
-
-  private static IntUnaryOperator mergeLineConverters(@Nullable IntUnaryOperator contentConvertor,
-                                                      @NotNull IntUnaryOperator unifiedConvertor,
-                                                      @NotNull IntUnaryOperator foldingConvertor) {
-    return DiffUtil.mergeLineConverters(DiffUtil.mergeLineConverters(contentConvertor, unifiedConvertor), foldingConvertor);
   }
 
   /*
@@ -854,7 +848,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
   }
 
   @NotNull
-  protected List<? extends EditorEx> getEditors() {
+  @Override
+  public List<? extends EditorEx> getEditors() {
     return Collections.singletonList(myEditor);
   }
 
@@ -1103,14 +1098,19 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     @Nullable
     @Override
     protected String getMessage() {
-      ChangedBlockData blockData = myModel.getData();
-      if (blockData == null) return null;
-
-      List<UnifiedDiffChange> allChanges = blockData.getDiffChanges();
-      return DiffUtil.getStatusText(allChanges.size(),
-                                    ContainerUtil.count(allChanges, it -> it.isExcluded()),
-                                    myModel.isContentsEqual());
+      return getStatusTextMessage();
     }
+  }
+
+  @Nullable
+  protected @Nls String getStatusTextMessage() {
+    ChangedBlockData blockData = myModel.getData();
+    if (blockData == null) return null;
+
+    List<UnifiedDiffChange> allChanges = blockData.getDiffChanges();
+    return DiffUtil.getStatusText(allChanges.size(),
+                                  ContainerUtil.count(allChanges, it -> it.isExcluded()),
+                                  myModel.isContentsEqual());
   }
 
   private class MyInitialScrollHelper extends InitialScrollPositionSupport.TwosideInitialScrollHelper {
@@ -1159,7 +1159,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     }
 
     @NotNull
-    private LogicalPosition getPosition(int line, int column) {
+    private static LogicalPosition getPosition(int line, int column) {
       if (line == -1) return new LogicalPosition(0, 0);
       return new LogicalPosition(line, column);
     }
@@ -1246,11 +1246,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       return builder.build(it);
     }
 
-    @NotNull
-    public IntUnaryOperator getLineNumberConvertor() {
-      return getLineConvertor(0);
-    }
-
     public void disposeLineConvertor() {
       myLineNumberConvertor.dispose();
     }
@@ -1306,8 +1301,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     @NotNull private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("UnifiedDiffViewer.MarkupUpdater", 300, true, myPanel, this);
 
-    @NotNull private ProgressIndicator myUpdateIndicator = new EmptyProgressIndicator();
-    private boolean mySuspended;
+    @NotNull private volatile ProgressIndicator myUpdateIndicator = new EmptyProgressIndicator();
+    private volatile boolean mySuspended;
 
     private MarkupUpdater(@NotNull List<? extends DocumentContent> contents) {
       Disposer.register(UnifiedDiffViewer.this, this);
@@ -1354,16 +1349,14 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       myUpdateQueue.sendFlush();
     }
 
-    @RequiresEdt
-    public void scheduleUpdate() {
+    void scheduleUpdate() {
       if (myProject == null) return;
       if (mySuspended) return;
-      if (!getComponent().isShowing()) return;
       myUpdateIndicator.cancel();
-
       myUpdateQueue.queue(new Update("update") {
         @Override
         public void run() {
+          if (!UIUtil.isShowing(getComponent())) return;
           if (myStateIsOutOfDate || !myModel.isValid()) return;
 
           myUpdateIndicator.cancel();
@@ -1409,7 +1402,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       }
 
       @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         scheduleUpdate();
       }
 

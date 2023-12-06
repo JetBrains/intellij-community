@@ -13,17 +13,22 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 
 internal object FirClassifierProvider {
-    fun KtAnalysisSession.getAvailableClassifiersCurrentScope(
+    context(KtAnalysisSession)
+    fun getAvailableClassifiersCurrentScope(
         originalKtFile: KtFile,
         position: KtElement,
         scopeNameFilter: KtScopeNameFilter,
         visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<KtClassifierSymbol> =
-        originalKtFile.getScopeContextForPosition(position).scopes
-            .getClassifierSymbols(scopeNameFilter)
-            .filter { visibilityChecker.isVisible(it) }
+    ): Sequence<KtClassifierSymbolWithContainingScopeKind> =
+        originalKtFile.getScopeContextForPosition(position).scopes.asSequence().flatMap { scopeWithKind ->
+            val classifiers = scopeWithKind.scope.getClassifierSymbols(scopeNameFilter)
+                .filter { visibilityChecker.isVisible(it) }
+                .map { KtClassifierSymbolWithContainingScopeKind(it, scopeWithKind.kind) }
+            classifiers
+        }
 
-    fun KtAnalysisSession.getAvailableClassifiersFromIndex(
+    context(KtAnalysisSession)
+    fun getAvailableClassifiersFromIndex(
         symbolProvider: KtSymbolFromIndexProvider,
         scopeNameFilter: KtScopeNameFilter,
         visibilityChecker: CompletionVisibilityChecker

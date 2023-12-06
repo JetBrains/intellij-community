@@ -30,6 +30,23 @@
             qualifiedName="org.jetbrains.kotlin.scripting.idea.listener"
             interface="org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener"
             area="IDEA_PROJECT" dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionContributor"
+            interface="org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptTemplatesProvider"
+            interface="org.jetbrains.kotlin.script.ScriptTemplatesProvider"
+            area="IDEA_PROJECT"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
+            interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -57,11 +74,8 @@
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.core.script.LoadScriptDefinitionsStartupActivity" order="last"/>
 
-    <java.elementFinder implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder" order="last"/>
-
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
 
-    <additionalLibraryRootsProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptDependenciesLibraryRootProvider"/>
 
     <psi.clsCustomNavigationPolicy implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
 
@@ -72,21 +86,7 @@
     <workspaceModel.cache.version implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptWorkspaceModelCacheVersion"/>
 
     <!--suppress PluginXmlValidity -->
-    <customEntityProjectModelInfoProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptProjectModelInfoProvider"/>
-
-    <indexableIteratorBuilderHandler implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryIndexableIteratorHandler"/>
-
-    <!--suppress PluginXmlValidity -->
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
-
-    <!--suppress PluginXmlValidity -->
-    <indexableEntityProvider implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptDependencyIndexableEntityProvider"/>
-
-    <registryKey
-            key="kotlin.scripts.as.entities"
-            description="Enables explicit script dependencies support"
-            defaultValue="true"
-            restartRequired="true"/>
 
     <registryKey
             key="kotlin.scripting.support.warning"
@@ -113,9 +113,17 @@
             restartRequired="true"/>
 
     <registryKey
-            key="kotlin.script.use.workspace.file.index.contributor.api"
-            description="Use new WorkspaceFileIndexContributor API for custom entities. The flag is temporary, legacy API will be removed in the future."
-            defaultValue="true"/>
+            key="kotlin.scripting.deferred.definition.attempts.num"
+            description="Script definition loading has async nature. In synchronous contexts we use a sync-wrapper waiting for the loading
+              under the hood. This key limits the number of polling attempts (each takes milliseconds)."
+            defaultValue="20"
+            restartRequired="false"/>
+
+    <registryKey
+            key="kotlin.scripting.load.definitions.on.demand"
+            description="Script definitions (as a part of metadata) are loaded lazily and synchronously when value of this key is 'true'."
+            defaultValue="true"
+            restartRequired="true"/>
 
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.script.ScriptDefinitionMarkerFileType"/>
@@ -131,6 +139,6 @@
     <scriptDefinitionContributor
             id="StandardScriptDefinitionContributor"
             order="last"
-            implementation="org.jetbrains.kotlin.idea.core.script.StandardScriptDefinitionContributor"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionContributor"/>
   </extensions>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_ERRORS_ACCUMULATED_OFFSET;
 
 @ApiStatus.Internal
 final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecordsStorage {
@@ -74,13 +76,10 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     }
   }
 
-  @NotNull
-  private final ResizeableMappedFile myFile;
+  private final @NotNull ResizeableMappedFile myFile;
   private final ByteBuffer myPooledWriteBuffer = ByteBuffer.allocateDirect(RECORD_SIZE);
-  @NotNull
-  private final AtomicInteger myGlobalModCount;
-  @NotNull
-  private final AtomicInteger myRecordCount;
+  private final @NotNull AtomicInteger myGlobalModCount;
+  private final @NotNull AtomicInteger myRecordCount;
 
   PersistentFSSynchronizedRecordsStorage(@NotNull ResizeableMappedFile file) throws IOException {
     myFile = file;
@@ -89,7 +88,7 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     final long length = file.length();
 
     final int recordsCount;
-    if (length == 0) {
+    if (length <= RECORD_SIZE) {
       recordsCount = 0;
     }
     else {
@@ -153,6 +152,18 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   }
 
   @Override
+  public int getErrorsAccumulated() throws IOException {
+    return read(() -> myFile.getInt(HEADER_ERRORS_ACCUMULATED_OFFSET));
+  }
+
+  @Override
+  public void setErrorsAccumulated(int errors) throws IOException {
+    write(() -> {
+      myFile.putInt(HEADER_ERRORS_ACCUMULATED_OFFSET, errors);
+    });
+  }
+
+  @Override
   public int getNameId(int id) throws IOException {
     assert id > 0 : id;
     return getRecordInt(id, NAME_OFFSET);
@@ -180,8 +191,7 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   }
 
   @Override
-  @PersistentFS.Attributes
-  public int getFlags(int id) throws IOException {
+  public @PersistentFS.Attributes int getFlags(int id) throws IOException {
     return getRecordInt(id, FLAGS_OFFSET);
   }
 
@@ -216,6 +226,9 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
 
   @Override
   public void setAttributeRecordId(int id, int value) throws IOException {
+    if (value < NULL_ID) {
+      throw new IllegalArgumentException("file[id: " + id + "].attributeRecordId(=" + value + ") must be >=0");
+    }
     putRecordInt(id, ATTR_REF_OFFSET, value);
   }
 
@@ -330,14 +343,12 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   }
 
   @Override
-  public long length() {
-    return read(() -> {
-      return myFile.length();
-    });
+  public int recordsCount() {
+    return myRecordCount.get();
   }
 
   @Override
-  public int recordsCount() {
+  public int maxAllocatedID() {
     return myRecordCount.get();
   }
 
@@ -345,8 +356,23 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   public void close() throws IOException {
     write(() -> {
       saveGlobalModCount();
+      //Newly allocated record could be not yet modified -- and myFile automatically expands only
+      // on modification. To not lose recordCount value -- expand file manually.
+      int recordsCount = myRecordCount.get();
+      if (recordsCount == 0) {
+        myFile.setLogicalSize(PersistentFSHeaders.HEADER_SIZE);
+      }
+      else {
+        int fileSize = (recordsCount + 1) * RECORD_SIZE;
+        myFile.setLogicalSize(fileSize);
+      }
       myFile.close();
     });
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    myFile.closeAndRemoveAllFiles();
   }
 
   @Override
@@ -384,8 +410,10 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
               final int nameId = buffer.getInt(offsetInBuffer + NAME_OFFSET);
               final int flags = buffer.getInt(offsetInBuffer + FLAGS_OFFSET);
               final int parentId = buffer.getInt(offsetInBuffer + PARENT_OFFSET);
+              final int attributeRecordId = buffer.getInt(offsetInBuffer + ATTR_REF_OFFSET);
+              final int contentId = buffer.getInt(offsetInBuffer + CONTENT_OFFSET);
 
-              operator.process(recordId, nameId, flags, parentId, /*corrupted: */ false);
+              operator.process(recordId, nameId, flags, parentId, attributeRecordId, contentId, /*corrupted: */ false);
 
               recordId++;
               positionInFile += RECORD_SIZE;

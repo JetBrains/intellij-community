@@ -14,8 +14,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
-import org.jetbrains.idea.maven.execution.MavenRCSettingsWatcher;
-import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
@@ -24,14 +22,13 @@ import java.util.Objects;
 
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
-public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservable {
+public class MavenGeneralPanel implements PanelWithAnchor {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
   private JComboBox outputLevelCombo;
   private JCheckBox checkboxProduceExceptionErrorMessages;
   private JComboBox checksumPolicyCombo;
   private JComboBox failPolicyCombo;
-  private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
   private JBLabel myMultiProjectBuildFailPolicyLabel;
@@ -40,7 +37,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   private final DefaultComboBoxModel outputLevelComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel checksumPolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel failPolicyComboModel = new DefaultComboBoxModel();
-  private final DefaultComboBoxModel pluginUpdatePolicyComboModel = new DefaultComboBoxModel();
   private JComponent anchor;
 
   private JCheckBox showDialogWithAdvancedSettingsCheckBox;
@@ -99,13 +95,11 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     mavenPathsForm.setData(data);
 
     data.setPrintErrorStackTraces(checkboxProduceExceptionErrorMessages.isSelected());
-    data.setUsePluginRegistry(checkboxUsePluginRegistry.isSelected());
     data.setNonRecursive(!checkboxRecursive.isSelected());
 
     data.setOutputLevel((MavenExecutionOptions.LoggingLevel)ComboBoxUtil.getSelectedValue(outputLevelComboModel));
     data.setChecksumPolicy((MavenExecutionOptions.ChecksumPolicy)ComboBoxUtil.getSelectedValue(checksumPolicyComboModel));
     data.setFailureBehavior((MavenExecutionOptions.FailureMode)ComboBoxUtil.getSelectedValue(failPolicyComboModel));
-    data.setPluginUpdatePolicy((MavenExecutionOptions.PluginUpdatePolicy)ComboBoxUtil.getSelectedValue(pluginUpdatePolicyComboModel));
     data.setAlwaysUpdateSnapshots(alwaysUpdateSnapshotsCheckBox.isSelected());
     data.setThreads(threadsEditor.getText());
 
@@ -125,7 +119,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     mavenPathsForm.initializeFormData(data, project);
 
     checkboxProduceExceptionErrorMessages.setSelected(data.isPrintErrorStackTraces());
-    checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxRecursive.setSelected(!data.isNonRecursive());
     alwaysUpdateSnapshotsCheckBox.setSelected(data.isAlwaysUpdateSnapshots());
     threadsEditor.setText(StringUtil.notNullize(data.getThreads()));
@@ -133,7 +126,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     ComboBoxUtil.select(outputLevelComboModel, data.getOutputLevel());
     ComboBoxUtil.select(checksumPolicyComboModel, data.getChecksumPolicy());
     ComboBoxUtil.select(failPolicyComboModel, data.getFailureBehavior());
-    ComboBoxUtil.select(pluginUpdatePolicyComboModel, data.getPluginUpdatePolicy());
 
     showDialogWithAdvancedSettingsCheckBox.setSelected(data.isShowDialogWithAdvancedSettings());
     useMavenConfigCheckBox.setSelected(data.isUseMavenConfig());
@@ -159,22 +151,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   @ApiStatus.Internal
   public void applyTargetEnvironmentConfiguration(@NotNull Project project, @Nullable String targetName) {
     mavenPathsForm.apply(project, targetName);
-  }
-
-  @Override
-  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
-    watcher.registerComponent("workOffline", checkboxWorkOffline);
-    mavenPathsForm.registerSettingsWatcher(watcher);
-    watcher.registerComponent("produceExceptionErrorMessages", checkboxProduceExceptionErrorMessages);
-    watcher.registerComponent("usePluginRegistry", checkboxUsePluginRegistry);
-    watcher.registerComponent("recursive", checkboxRecursive);
-    watcher.registerComponent("alwaysUpdateSnapshots", alwaysUpdateSnapshotsCheckBox);
-    watcher.registerComponent("threadsEditor", threadsEditor);
-    watcher.registerComponent("outputLevel", outputLevelCombo);
-    watcher.registerComponent("checksumPolicy", checksumPolicyCombo);
-    watcher.registerComponent("failPolicy", failPolicyCombo);
-    watcher.registerComponent("showDialogWithAdvancedSettings", showDialogWithAdvancedSettingsCheckBox);
-    watcher.registerComponent("useMavenConfigCheckBox", useMavenConfigCheckBox);
   }
 
   private boolean isModifiedNotOverridableData(MavenGeneralSettings data) {

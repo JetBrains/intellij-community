@@ -7,3 +7,4 @@ fun test() {
     for ((foo, bar) in list<caret>) {
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddDataModifierFix

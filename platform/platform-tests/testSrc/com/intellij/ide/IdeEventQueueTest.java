@@ -164,7 +164,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   }
 
   public void testEdtExecutorRunnableMustThrowImmediatelyInTests() {
-    ApplicationManager.getApplication().invokeLater(() -> throwMyException(), ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> throwMyException(), ModalityState.nonModal());
     checkMyExceptionThrownImmediately();
   }
 

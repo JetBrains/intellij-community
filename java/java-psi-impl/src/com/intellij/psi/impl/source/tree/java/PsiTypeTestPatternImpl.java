@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
@@ -48,7 +48,7 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     
     PsiPatternVariable variable = getPatternVariable();
-    if (variable != lastParent) {
+    if (variable != null && variable != lastParent && !variable.isUnnamed()) {
       return processor.execute(variable, state);
     }
     return true;

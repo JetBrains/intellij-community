@@ -1,13 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
@@ -17,12 +18,19 @@ import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 @State(name = "XDebuggerSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)
 public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
   implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState>, Disposable {
+
+  private static final ExtensionPointName<XDebuggerSettings> SETTINGS_EP = ExtensionPointName.create("com.intellij.xdebugger.settings");
+
   private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
   private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
 
@@ -36,7 +44,7 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
     settingsState.setDataViewSettings(myDataViewSettings);
     settingsState.setGeneralSettings(myGeneralSettings);
 
-    for (XDebuggerSettings settings : XDebuggerSettings.EXTENSION_POINT.getExtensionList()) {
+    SETTINGS_EP.forEachExtensionSafe(settings -> {
       Object subState = settings.getState();
       if (subState != null) {
         Element serializedState = XmlSerializer.serialize(subState);
@@ -47,7 +55,7 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
           settingsState.specificStates.add(state);
         }
       }
-    }
+    });
     return settingsState;
   }
 
@@ -66,7 +74,7 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
     myDataViewSettings = state.getDataViewSettings();
     myGeneralSettings = state.getGeneralSettings();
     for (SpecificSettingsState settingsState : state.specificStates) {
-      XDebuggerSettings<?> settings = XDebuggerSettings.EXTENSION_POINT.findFirstSafe(e -> settingsState.id.equals(e.getId()));
+      XDebuggerSettings<?> settings = SETTINGS_EP.findFirstSafe(e -> settingsState.id.equals(e.getId()));
       if (settings != null) {
         ComponentSerializationUtil.loadComponentState(settings, settingsState.configuration);
       }
@@ -75,6 +83,25 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
 
   @Override
   public void dispose() {
+  }
+
+  public void forEachSettings(Consumer<XDebuggerSettings> consumer) {
+    SETTINGS_EP.forEachExtensionSafe(consumer);
+  }
+
+  @Nullable
+  public <T extends XDebuggerSettings<?>> T getSettings(Class<T> aClass) {
+    return SETTINGS_EP.findExtension(aClass);
+  }
+
+  @Nullable
+  public XDebuggerSettings<?> findFirstSettings(Predicate<XDebuggerSettings> predicate) {
+    return SETTINGS_EP.findFirstSafe(predicate);
+  }
+
+  @VisibleForTesting
+  public static ExtensionPointName<XDebuggerSettings> getSettingsEP() {
+    return SETTINGS_EP;
   }
 
   public static class SettingsState {

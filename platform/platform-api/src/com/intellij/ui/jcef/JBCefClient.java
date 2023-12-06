@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,16 +61,16 @@ public final class JBCefClient implements JBCefDisposable {
     }
   }
 
-  @NotNull private final PropertiesHelper myPropertiesHelper = new PropertiesHelper();
+  private final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
 
   private static final int JS_QUERY_POOL_DEFAULT_SIZE = RegistryManager.getInstance().intValue("ide.browser.jcef.jsQueryPoolSize");
   private static final int JS_QUERY_POOL_MAX_SIZE = 10000;
 
-  @NotNull private final CefClient myCefClient;
+  private final @NotNull CefClient myCefClient;
   private final boolean myIsDefault;
-  @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
-  @Nullable private volatile JSQueryPool myJSQueryPool;
-  @NotNull private final AtomicInteger myJSQueryCounter = new AtomicInteger(0);
+  private final @NotNull DisposeHelper myDisposeHelper = new DisposeHelper();
+  private volatile @Nullable JSQueryPool myJSQueryPool;
+  private final @NotNull AtomicInteger myJSQueryCounter = new AtomicInteger(0);
 
   private final HandlerSupport<CefContextMenuHandler> myContextMenuHandler = new HandlerSupport<>();
   private final HandlerSupport<CefDialogHandler> myDialogHandler = new HandlerSupport<>();
@@ -107,8 +107,7 @@ public final class JBCefClient implements JBCefDisposable {
     }
   }
 
-  @NotNull
-  public CefClient getCefClient() {
+  public @NotNull CefClient getCefClient() {
     return myCefClient;
   }
 
@@ -145,8 +144,7 @@ public final class JBCefClient implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
-  @Nullable
-  public Object getProperty(@NotNull String name) {
+  public @Nullable Object getProperty(@NotNull String name) {
     return myPropertiesHelper.getProperty(name);
   }
 
@@ -178,8 +176,7 @@ public final class JBCefClient implements JBCefDisposable {
     private final List<JSQueryFunc> myPool;
     private final int mySizeLimit;
 
-    @Nullable
-    static JSQueryPool create(@NotNull JBCefClient client) {
+    static @Nullable JSQueryPool create(@NotNull JBCefClient client) {
       int poolSize = client.myPropertiesHelper.intValue(Properties.JS_QUERY_POOL_SIZE, JS_QUERY_POOL_DEFAULT_SIZE);
       if (poolSize > 0) {
         poolSize = Math.min(poolSize, JS_QUERY_POOL_MAX_SIZE);
@@ -197,8 +194,7 @@ public final class JBCefClient implements JBCefDisposable {
       }
     }
 
-    @Nullable
-    public JSQueryFunc useFreeSlot() {
+    public @Nullable JSQueryFunc useFreeSlot() {
       if (myPool.isEmpty()) {
         LOG.warn("JavaScript query pool is over [size: " + mySizeLimit + "]", new Throwable());
         return null;
@@ -582,15 +578,14 @@ public final class JBCefClient implements JBCefDisposable {
           });
         }
 
-        @Nullable
         @Override
-        public CefResourceRequestHandler getResourceRequestHandler(CefBrowser browser,
-                                                                   CefFrame frame,
-                                                                   CefRequest request,
-                                                                   boolean isNavigation,
-                                                                   boolean isDownload,
-                                                                   String requestInitiator,
-                                                                   BoolRef disableDefaultHandling)
+        public @Nullable CefResourceRequestHandler getResourceRequestHandler(CefBrowser browser,
+                                                                             CefFrame frame,
+                                                                             CefRequest request,
+                                                                             boolean isNavigation,
+                                                                             boolean isDownload,
+                                                                             String requestInitiator,
+                                                                             BoolRef disableDefaultHandling)
         {
           return myRequestHandler.handle(browser, handler -> {
             return handler.getResourceRequestHandler(browser, frame, request, isNavigation, isDownload, requestInitiator, disableDefaultHandling);
@@ -609,13 +604,6 @@ public final class JBCefClient implements JBCefDisposable {
         {
           return myRequestHandler.handleBoolean(browser, handler -> {
             return handler.getAuthCredentials(browser, origin_url, isProxy, host, port, realm, scheme, callback);
-          });
-        }
-
-        @Override
-        public boolean onQuotaRequest(CefBrowser browser, String origin_url, long new_size, CefCallback callback) {
-          return myRequestHandler.handleBoolean(browser, handler -> {
-            return handler.onQuotaRequest(browser, origin_url, new_size, callback);
           });
         }
 
@@ -650,6 +638,21 @@ public final class JBCefClient implements JBCefDisposable {
 
   public void removeRequestHandler(@NotNull CefRequestHandler handler, @NotNull CefBrowser browser) {
     myRequestHandler.remove(handler, browser, () -> myCefClient.removeRequestHandler());
+  }
+
+  public void removeAllHandlers(CefBrowser browser) {
+    myContextMenuHandler.removeAll(browser);
+    myDialogHandler.removeAll(browser);
+    myDisplayHandler.removeAll(browser);
+    myDownloadHandler.removeAll(browser);
+    myDragHandler.removeAll(browser);
+    myPermissionHandler.removeAll(browser);
+    myFocusHandler.removeAll(browser);
+    myJSDialogHandler.removeAll(browser);
+    myKeyboardHandler.removeAll(browser);
+    myLifeSpanHandler.removeAll(browser);
+    myLoadHandler.removeAll(browser);
+    myRequestHandler.removeAll(browser);
   }
 
   private class HandlerSupport<T> {
@@ -711,13 +714,17 @@ public final class JBCefClient implements JBCefDisposable {
       }
     }
 
-    @Nullable
-    public List<T> get(@NotNull CefBrowser browser) {
+    public void removeAll(CefBrowser browser) {
+      if (myMap != null) {
+        myMap.remove(browser);
+      }
+    }
+
+    public @Nullable List<T> get(@NotNull CefBrowser browser) {
       return myMap != null ? myMap.get(browser) : null;
     }
 
-    @Nullable
-    public <R> R handle(@NotNull CefBrowser browser, @NotNull HandlerCallable<T, R> callable) {
+    public @Nullable <R> R handle(@NotNull CefBrowser browser, @NotNull HandlerCallable<T, R> callable) {
       List<T> list = get(browser);
       if (list == null) {
         return null;

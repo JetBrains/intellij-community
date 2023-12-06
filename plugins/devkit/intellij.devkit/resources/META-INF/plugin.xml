@@ -1,6 +1,5 @@
 <!--suppress PluginXmlValidity -->
-<idea-plugin package="org.jetbrains.idea.devkit.dummy"
-             on-demand="true">
+<idea-plugin package="org.jetbrains.idea.devkit.dummy">
   <id>DevKit</id>
   <name>Plugin DevKit</name>
   <category>Plugin Development</category>
@@ -21,15 +20,35 @@
     <module name="intellij.devkit.intelliLang"/>
     <module name="intellij.devkit.themes"/>
     <module name="intellij.devkit.uiDesigner"/>
-    <module name="intellij.platform.workspaceModel.codegen.impl"/>
     <module name="intellij.devkit.workspaceModel"/>
-    <module name="intellij.java.devkit"/>
-    <module name="intellij.groovy.devkit"/>
     <module name="intellij.kotlin.devkit"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
-    <dependencySupport coordinate="com.jetbrains:ideaIC" kind="java" displayName="IntelliJ Platform Community"/>
-    <dependencySupport coordinate="com.jetbrains:ideaIU" kind="java" displayName="IntelliJ Platform Ultimate"/>
+    <!-- Dependencies created with IntelliJ Platform Gradle Plugin 2.x -->
+    <dependencySupport coordinate="com.jetbrains.intellij.idea:ideaIC" kind="java" displayName="IntelliJ IDEA Community"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.idea:ideaIU" kind="java" displayName="IntelliJ IDEA Ultimate"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.clion:clion" kind="java" displayName="CLion"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.pycharm:pycharmPC" kind="java" displayName="PyCharm Community"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.pycharm:pycharmPY" kind="java" displayName="PyCharm Professional"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.goland:goland" kind="java" displayName="GoLand"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.phpstorm:phpstorm" kind="java" displayName="PhpStorm"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.rider:riderRD" kind="java" displayName="Rider"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.gateway:gateway" kind="java" displayName="JetBrains Gateway"/>
+    <dependencySupport coordinate="com.google.android.studio:android-studio" kind="java" displayName="Android Studio"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.fleetBackend:fleetBackend" kind="java" displayName="Fleet Backend"/>
+
+    <!-- Dependencies created with Gradle IntelliJ Plugin 1.x as intermediate Ivy repository artifacts -->
+    <dependencySupport coordinate="com.jetbrains:ideaIC" kind="java" displayName="IntelliJ IDEA Community"/>
+    <dependencySupport coordinate="com.jetbrains:ideaIU" kind="java" displayName="IntelliJ IDEA Ultimate"/>
+    <dependencySupport coordinate="com.jetbrains:clion" kind="java" displayName="CLion"/>
+    <dependencySupport coordinate="com.jetbrains:pycharmPC" kind="java" displayName="PyCharm Community"/>
+    <dependencySupport coordinate="com.jetbrains:pycharmPY" kind="java" displayName="PyCharm Professional"/>
+    <dependencySupport coordinate="com.jetbrains:goland" kind="java" displayName="GoLand"/>
+    <dependencySupport coordinate="com.jetbrains:phpstorm" kind="java" displayName="PhpStorm"/>
+    <dependencySupport coordinate="com.jetbrains:riderRD" kind="java" displayName="Rider"/>
+    <dependencySupport coordinate="com.jetbrains:JetBrainsGateway" kind="java" displayName="JetBrains Gateway"/>
+    <dependencySupport coordinate="com.jetbrains:android-studio" kind="java" displayName="Android Studio"/>
+    <dependencySupport coordinate="com.jetbrains:fleetBackend" kind="java" displayName="Fleet Backend"/>
   </extensions>
 </idea-plugin>

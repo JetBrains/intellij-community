@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchingProcessStatisticsCollector;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * @author msokolov
  */
-class MixedResultsSearcher implements SESearcher {
+final class MixedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(MixedResultsSearcher.class);
 
@@ -240,7 +241,7 @@ class MixedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class ResultsAccumulator {
+  private static final class ResultsAccumulator {
 
     private final Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> mySections;
     private final SearchListener myListener;
@@ -250,7 +251,7 @@ class MixedResultsSearcher implements SESearcher {
     private final Map<? extends SearchEverywhereContributor<?>, Integer> sectionsLimits;
     private final Map<? extends SearchEverywhereContributor<?>, Condition> conditionsMap;
     private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreMap = new ConcurrentHashMap<>();
-    private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ContainerUtil.newConcurrentSet();
+    private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ConcurrentCollectionFactory.createConcurrentSet();
     private final Lock lock = new ReentrantLock();
     private volatile boolean mySearchFinished = false;
 
@@ -285,7 +286,8 @@ class MixedResultsSearcher implements SESearcher {
       hasMoreMap.put(contributor, hasMore);
     }
 
-    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) throws InterruptedException {
+    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator)
+      throws InterruptedException {
       final var mlService = SearchEverywhereMlService.getInstance();
       final SearchEverywhereFoundElementInfo newElementInfo;
       if (mlService == null) {
@@ -334,15 +336,16 @@ class MixedResultsSearcher implements SESearcher {
         List<SearchEverywhereFoundElementInfo> toRemove = action instanceof SEEqualElementsActionType.Replace
                                                           ? ((SEEqualElementsActionType.Replace)action).getToBeReplaced()
                                                           : Collections.emptyList();
+
         toRemove.forEach(info -> {
           Collection<SearchEverywhereFoundElementInfo> list = mySections.get(info.getContributor());
           Condition listCondition = conditionsMap.get(info.getContributor());
           list.remove(info);
-          LOG.debug(String.format("Element %s for contributor %s is removed", info.getElement().toString(), info.getContributor().getSearchProviderId()));
+          LOG.debug(String.format("Element %s for contributor %s is removed", info.getElement().toString(),
+                                  info.getContributor().getSearchProviderId()));
           listCondition.signal();
         });
         runInNotificationExecutor(() -> myListener.elementsRemoved(toRemove));
-
         if (section.size() >= limit) {
           stopSearchIfNeeded();
         }
@@ -418,7 +421,7 @@ class MixedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
+  private static final class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
 
     private volatile Runnable cancelCallback = () -> {};
 

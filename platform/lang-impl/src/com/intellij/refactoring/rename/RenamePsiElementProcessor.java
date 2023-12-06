@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
@@ -48,7 +48,7 @@ public abstract class RenamePsiElementProcessor extends RenamePsiElementProcesso
     return result;
   }
 
-  private static class MyRenamePsiElementProcessor extends RenamePsiElementProcessor implements DefaultRenamePsiElementProcessor {
+  private static final class MyRenamePsiElementProcessor extends RenamePsiElementProcessor implements DefaultRenamePsiElementProcessor {
     @Override
     public boolean canProcessElement(@NotNull final PsiElement element) {
       return true;

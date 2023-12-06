@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -54,9 +54,9 @@ final class FontFamilyServiceImpl extends FontFamilyService {
 
   // Fira Code requires specific migration due to naming workaround in JBR used earlier
   private static final Map<String, String[]> FIRA_CODE_MIGRATION_MAP = Map.of(
-    "Fira Code Light", new String[] {"Fira Code", "Light", "Light"},
-    "Fira Code Medium", new String[] {"Fira Code", "Medium", "Medium"},
-    "Fira Code Retina", new String[] {"Fira Code", "Retina", "Retina"}
+    "Fira Code Light", new String[]{"Fira Code", "Light", "Light"},
+    "Fira Code Medium", new String[]{"Fira Code", "Medium", "Medium"},
+    "Fira Code Retina", new String[]{"Fira Code", "Retina", "Retina"}
   );
 
   private final SortedMap<String, FontFamily> myFamilies = new TreeMap<>();
@@ -78,7 +78,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
         Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
         String fontName = font.getName();
         String font2DName = font2D.getFontName(null);
-        if (font2DName.startsWith(Font.DIALOG) && !fontName.startsWith(Font.DIALOG)) {
+        if (isUnsupportedFont(fontName, font2DName)) {
           // skip fonts that are declared as available, but cannot be used due to some reason,
           // with JDK substituting them with Dialog logical font (on Windows)
           if (VERBOSE_LOGGING) {
@@ -96,6 +96,10 @@ final class FontFamilyServiceImpl extends FontFamilyService {
       LOG.error(e);
       myFamilies.clear(); // fallback to old behaviour in case of any errors
     }
+  }
+
+  private static boolean isUnsupportedFont(@NotNull String fontName, @NotNull String font2DName) {
+    return font2DName.startsWith(Font.DIALOG) && !fontName.startsWith(Font.DIALOG);
   }
 
   @Override
@@ -144,6 +148,41 @@ final class FontFamilyServiceImpl extends FontFamilyService {
   }
 
   @Override
+  protected @Nullable FontFamilyDescriptor getDescriptorByFontImpl(@NotNull Font font) {
+    if (!isSupportedImpl()) return null;
+    if (GET_FONT_2D_METHOD == null || GET_TYPO_FAMILY_METHOD == null || GET_TYPO_SUBFAMILY_METHOD == null || GET_WEIGHT_METHOD == null) {
+      return null;
+    }
+
+    try {
+      Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
+      String fontName = font.getName();
+      String font2DName = font2D.getFontName(null);
+      if (isUnsupportedFont(fontName, font2DName)) return null;
+
+      String family = (String)GET_TYPO_FAMILY_METHOD.invoke(font2D);
+      String subfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(font2D);
+
+      FontFamilyDescriptor descriptor = new FontFamilyDescriptor(family, subfamily);
+      if (getFontByDescriptorImpl(descriptor) == null) return null;
+
+      return descriptor;
+    }
+    catch (Throwable e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
+
+  @Override
+  protected @Nullable Font getFontByDescriptorImpl(@NotNull FontFamilyDescriptor descriptor) {
+    if (!isSupportedImpl()) return null;
+    FontFamily fontFamily = myFamilies.get(descriptor.getFamily());
+    if (fontFamily == null) return null;
+    return fontFamily.members.get(descriptor.getSubfamily());
+  }
+
+  @Override
   protected String @NotNull [] migrateFontSettingImpl(@NotNull String family) {
     if (!myFamilies.isEmpty()) {
       if (FIRA_CODE_MIGRATION_MAP.containsKey(family)) {
@@ -174,7 +213,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
           }
           else if (!Objects.equals(baseTypoFamily, boldTypoFamily)) {
             LOG.info("Cannot migrate " + family + ": normal and bold variations resolve to different typographic families - "
-                      + baseTypoFamily + ", " + boldTypoFamily);
+                     + baseTypoFamily + ", " + boldTypoFamily);
           }
           else {
             FontFamily fontFamily = myFamilies.get(baseTypoFamily);
@@ -183,15 +222,15 @@ final class FontFamilyServiceImpl extends FontFamilyService {
             }
             else if (!fontFamily.hasSubFamily(baseTypoSubfamily)) {
               LOG.info("Cannot migrate " + family + ": subfamily " + baseTypoSubfamily
-                        + " not found in typographic font family " + baseTypoFamily);
+                       + " not found in typographic font family " + baseTypoFamily);
             }
             else if (!fontFamily.hasSubFamily(boldTypoSubfamily)) {
               LOG.info("Cannot migrate " + family + ": subfamily " + boldTypoSubfamily
-                        + " not found in typographic font family " + baseTypoFamily);
+                       + " not found in typographic font family " + baseTypoFamily);
             }
             else {
-              return new String[] {baseTypoFamily, baseTypoSubfamily,
-                                   Objects.equals(baseTypoSubfamily, boldTypoSubfamily) ? null : boldTypoSubfamily};
+              return new String[]{baseTypoFamily, baseTypoSubfamily,
+                Objects.equals(baseTypoSubfamily, boldTypoSubfamily) ? null : boldTypoSubfamily};
             }
           }
         }
@@ -223,7 +262,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     private Map<String, String> recommendedPlainSubFamilies;
     private Map<String, Font> italics;
 
-    private FontFamily(@NotNull String family) {this.family = family;}
+    private FontFamily(@NotNull String family) { this.family = family; }
 
     private void addFont(@NotNull String subFamily, @NotNull Font font) {
       if (VERBOSE_LOGGING) {
@@ -251,7 +290,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
         }
         OurWeightMap baseSet = nonItalicsByWeight.isEmpty() ? italicsByWeight : nonItalicsByWeight;
 
-        class Candidate {
+        final class Candidate {
           final int desiredWeight;
           String bestSubFamily;
           int bestDistance = Integer.MAX_VALUE;
@@ -389,7 +428,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     }
   }
 
-  private static class OurWeightMap extends MultiMap<Integer, String> {
+  private static final class OurWeightMap extends MultiMap<Integer, String> {
     private OurWeightMap() {
       super(new TreeMap<>());
     }

@@ -11,18 +11,18 @@ import java.util.List;
 
 public class ShFileLexerTest extends LexerTestCase {
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return new ShLexer();
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return PluginPathManager.getPluginHomePath("sh") + "/core/testData/lexer";
   }
 
   @NotNull
   @Override
-  protected String getPathToTestDataFile(String extension) {
+  protected String getPathToTestDataFile(@NotNull String extension) {
     return getDirPath() + "/" + getTestName(true) + extension;
   }
 
@@ -55,7 +55,7 @@ public class ShFileLexerTest extends LexerTestCase {
   public void testIdea278953()           { doFileTest("sh"); } // IDEA-278953
 
   @Override
-  protected void doFileTest(String fileExt) {
+  protected void doFileTest(@NotNull String fileExt) {
     super.doFileTest(fileExt);
     String text = loadTestDataFile("." + fileExt);
     checkCorrectRestart(text);

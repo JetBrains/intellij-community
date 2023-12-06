@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,9 +14,8 @@ public class UnprotectedUserDataHolder implements UserDataHolder, UserDataHolder
 
   private Map<Key, Object> myUserData;
 
-  @Nullable
   @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
+  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
     //noinspection unchecked
     T value = myUserData != null ? (T)myUserData.get(key) : null;
     if (value == null && key instanceof KeyWithDefaultValue) {
@@ -32,9 +31,8 @@ public class UnprotectedUserDataHolder implements UserDataHolder, UserDataHolder
     myUserData.put(key, value);
   }
 
-  @Nullable
   @Override
-  public <T> T getUserDataUnprotected(@NotNull Key<T> key) {
+  public @Nullable <T> T getUserDataUnprotected(@NotNull Key<T> key) {
     return getUserData(key);
   }
 

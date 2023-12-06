@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import com.intellij.diagnostic.LoadingState;
@@ -39,8 +39,7 @@ public class IElementType {
 
   private static short size; // guarded by lock
   private static volatile IElementType @NotNull [] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  @NonNls @SuppressWarnings("StringOperationCanBeSimplified")
-  private static final Object lock = new String("registry lock");
+  @SuppressWarnings("StringOperationCanBeSimplified") private static final @NonNls Object lock = new String("registry lock");
 
   static {
     IElementType[] init = new IElementType[137];
@@ -80,11 +79,8 @@ public class IElementType {
   }
 
   private final short myIndex;
-  @NonNls
-  @NotNull
-  private final String myDebugName;
-  @NotNull
-  private final Language myLanguage;
+  private final @NonNls @NotNull String myDebugName;
+  private final @NotNull Language myLanguage;
 
   /**
    * Creates and registers a new element type for the specified language.
@@ -96,7 +92,7 @@ public class IElementType {
     this(debugName, language, true);
 
     if (!(this instanceof IFileElementType)) {
-      LoadingState.COMPONENTS_LOADED.checkOccurred();
+      LoadingState.COMPONENTS_REGISTERED.checkOccurred();
     }
   }
 
@@ -136,8 +132,7 @@ public class IElementType {
    *
    * @return the associated language.
    */
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 
@@ -165,10 +160,8 @@ public class IElementType {
    * Don't use it directly. Override or call {@link IElementType#toString()}.
    * Note, it should be used only for testing and logging purposes.
    */
-  @NonNls
-  @NotNull
   @ApiStatus.Internal
-  public String getDebugName() {
+  public @NonNls @NotNull String getDebugName() {
     return myDebugName;
   }
 

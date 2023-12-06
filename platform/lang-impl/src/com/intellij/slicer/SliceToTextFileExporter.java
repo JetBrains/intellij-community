@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.ide.ExporterToTextFile;
@@ -9,10 +7,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SliceToTextFileExporter implements ExporterToTextFile {
+public final class SliceToTextFileExporter implements ExporterToTextFile {
   private final SliceTreeBuilder myBuilder;
   @NotNull private final UsageViewSettings myUsageViewSettings;
-  private final String myLineSeparator = System.lineSeparator();
+  private static final String myLineSeparator = System.lineSeparator();
 
   public SliceToTextFileExporter(@NotNull SliceTreeBuilder builder, @NotNull UsageViewSettings usageViewSettings) {
     myBuilder = builder;

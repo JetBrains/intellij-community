@@ -96,6 +96,11 @@ public abstract class SelectExpressionForDebuggerTestWithAnalysisApiGenerated ex
             runTest("testData/selectExpression/disallowMethodCalls/qualifiedExpressionSelector.kt");
         }
 
+        @TestMetadata("stringLiteralRaw.kt")
+        public void testStringLiteralRaw() throws Exception {
+            runTest("testData/selectExpression/disallowMethodCalls/stringLiteralRaw.kt");
+        }
+
         @TestMetadata("super.kt")
         public void testSuper() throws Exception {
             runTest("testData/selectExpression/disallowMethodCalls/super.kt");
@@ -312,6 +317,11 @@ public abstract class SelectExpressionForDebuggerTestWithAnalysisApiGenerated ex
         @TestMetadata("stringLiteral.kt")
         public void testStringLiteral() throws Exception {
             runTest("testData/selectExpression/stringLiteral.kt");
+        }
+
+        @TestMetadata("stringLiteralRaw.kt")
+        public void testStringLiteralRaw() throws Exception {
+            runTest("testData/selectExpression/stringLiteralRaw.kt");
         }
 
         @TestMetadata("super.kt")

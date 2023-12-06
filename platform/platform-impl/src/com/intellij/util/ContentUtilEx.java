@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -103,8 +103,7 @@ public final class ContentUtilEx extends ContentsUtil {
     }
   }
 
-  @Nullable
-  public static TabbedContent findTabbedContent(@NotNull ContentManager manager, @NotNull @NonNls String id) {
+  public static @Nullable TabbedContent findTabbedContent(@NotNull ContentManager manager, @NotNull @NonNls String id) {
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContent) {
         if (((TabbedContent)content).getId().getId().equals(id)) {
@@ -115,9 +114,7 @@ public final class ContentUtilEx extends ContentsUtil {
     return null;
   }
 
-  @NotNull
-  @NlsContexts.TabTitle
-  public static String getFullName(@NotNull @NlsContexts.TabTitle String groupPrefix, @NotNull @NlsContexts.TabTitle String tabName) {
+  public static @NotNull @NlsContexts.TabTitle String getFullName(@NotNull @NlsContexts.TabTitle String groupPrefix, @NotNull @NlsContexts.TabTitle String tabName) {
     if (tabName.isEmpty()) return groupPrefix;
     return groupPrefix + ": " + tabName;
   }
@@ -128,7 +125,7 @@ public final class ContentUtilEx extends ContentsUtil {
    *
    * @return true if the necessary content was found (and thus selected) among content components of the given ContentManager.
    */
-  public static boolean selectContent(@NotNull ContentManager manager, @NotNull final JComponent contentComponent, boolean requestFocus) {
+  public static boolean selectContent(@NotNull ContentManager manager, final @NotNull JComponent contentComponent, boolean requestFocus) {
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContentImpl) {
         boolean found = ((TabbedContentImpl)content).findAndSelectContent(contentComponent);
@@ -149,8 +146,7 @@ public final class ContentUtilEx extends ContentsUtil {
    * Searches through all {@link Content simple} and {@link TabbedContent tabbed} contents of the given ContentManager,
    * trying to find the first one which matches the given condition.
    */
-  @Nullable
-  public static JComponent findContentComponent(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
+  public static @Nullable JComponent findContentComponent(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContent) {
         JComponent component = findContentComponent((TabbedContent)content, condition);
@@ -163,8 +159,7 @@ public final class ContentUtilEx extends ContentsUtil {
     return null;
   }
 
-  @Nullable
-  private static JComponent findContentComponent(@NotNull TabbedContent tabbedContent, @NotNull Condition<? super JComponent> condition) {
+  private static @Nullable JComponent findContentComponent(@NotNull TabbedContent tabbedContent, @NotNull Condition<? super JComponent> condition) {
     for (Pair<String, JComponent> tab : tabbedContent.getTabs()) {
       if (condition.value(tab.second)) {
         return tab.second;

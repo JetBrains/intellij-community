@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ public class Tool implements SchemeElement {
 
   @NonNls public static final String ACTION_ID_PREFIX = "Tool_";
 
-  public static final String DEFAULT_GROUP_NAME = "External Tools";
+  public static final @Nls String DEFAULT_GROUP_NAME = ToolsBundle.message("external.tools");
   protected static final ProcessEvent NOT_STARTED_EVENT = new ProcessEvent(new NopProcessHandler(), -1);
   private @NlsSafe String myName;
   private String myDescription;
@@ -435,7 +436,7 @@ public class Tool implements SchemeElement {
     // in windows, and we will fail to start process with it.
     cmd.setWorkDirectory((String)null);
     // run command in interactive shell so that shell rc files are executed and configure proper environment
-    wslOptions.setShellPath(wsl.getShellPath()).setExecuteCommandInInteractiveShell(true);
+    wslOptions.setExecuteCommandInInteractiveShell(true);
     return wsl.patchCommandLine(cmd, project, wslOptions);
   }
 }

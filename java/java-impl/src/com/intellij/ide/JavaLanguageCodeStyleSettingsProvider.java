@@ -185,6 +185,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "WHILE_ON_NEW_LINE",
                                    "CATCH_ON_NEW_LINE",
                                    "FINALLY_ON_NEW_LINE",
+                                   "SWITCH_EXPRESSIONS_WRAP",
                                    "INDENT_CASE_FROM_SWITCH",
                                    "CASE_STATEMENT_ON_NEW_LINE",
                                    "SPECIAL_ELSE_IF_TREATMENT",
@@ -195,6 +196,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "WRAP_FIRST_METHOD_IN_CALL_CHAIN",
                                    "BUILDER_METHODS",
                                    "KEEP_BUILDER_METHODS_INDENTS");
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "WRAP_SEMICOLON_AFTER_CALL_CHAIN",
+                                JavaBundle.message("wrapping.semicolon.after.call.chain"),
+                                getInstance().WRAPPING_CALL_CHAIN);
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ANNOTATION_PARAMETER_WRAP",
@@ -281,6 +287,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 deconstructionComponentsGroup);
+
+      consumer.renameStandardOption(
+        "SWITCH_EXPRESSIONS_WRAP",
+        JavaBundle.message("wrapping.switch.statement.or.expression")
+      );
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();

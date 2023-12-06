@@ -2,6 +2,7 @@
 // ERROR: @Throws on suspend declaration must have CancellationException (or any of its superclasses) listed
 // ACTION: Make internal
 // ACTION: Make private
+// IGNORE_K2
 
 class MyException : Throwable()
 

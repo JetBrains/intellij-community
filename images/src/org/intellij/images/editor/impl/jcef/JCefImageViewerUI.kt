@@ -15,6 +15,7 @@ import com.intellij.ui.components.ZoomableViewport
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.intellij.images.ImagesBundle
 import org.intellij.images.editor.actionSystem.ImageEditorActions
 import org.intellij.images.editor.impl.jcef.JCefImageViewer.Companion.isDebugMode
@@ -110,7 +111,7 @@ class JCefImageViewerUI(private val myContentComponent: Component,
     }
 
     val toolbarPanel = actionToolbar.component
-    toolbarPanel.background = JBColor.lazy { background }
+    toolbarPanel.background = JBColor.lazy { background ?: UIUtil.getPanelBackground()}
     val topPanel: JPanel = NonOpaquePanel(BorderLayout())
     topPanel.add(toolbarPanel, BorderLayout.WEST)
 
@@ -123,7 +124,7 @@ class JCefImageViewerUI(private val myContentComponent: Component,
     myViewPort.setLayout(CardLayout())
     myViewer.preferredFocusedComponent.addMouseWheelListener(MOUSE_WHEEL_LISTENER)
     myViewPort.add(myContentComponent, IMAGE_PANEL)
-    myContentComponent.background = JBColor.lazy { background }
+    myContentComponent.background = JBColor.lazy { background ?: UIUtil.getPanelBackground()}
 
     val errorLabel = JLabel(
       ImagesBundle.message("error.broken.image.file.format"),

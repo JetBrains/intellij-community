@@ -11,20 +11,26 @@ import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.MultiMap
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbolApiStatus.Companion.getMessage
+import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
 import com.intellij.webSymbols.inspections.WebSymbolsInspectionsPass.Companion.getDefaultProblemMessage
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.impl.WebSymbolMatchImpl
+import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.getProblemKind
 import com.intellij.webSymbols.utils.hasOnlyExtensions
 import com.intellij.webSymbols.utils.nameSegments
+import org.jetbrains.annotations.Nls
 import java.util.*
 
 private const val IJ_IGNORE_REFS = "ij-no-psi-refs"
@@ -51,6 +57,14 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   protected open fun shouldShowProblems(element: T): Boolean = true
 
+  protected fun unresolvedSymbol(qualifiedKind: WebSymbolQualifiedKind, name: String) =
+    WebSymbolMatchImpl.create(
+      name,
+      listOf(WebSymbolNameSegment(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)),
+      qualifiedKind.namespace, qualifiedKind.kind, WebSymbolOrigin.empty(),
+      null, null
+    )
+
   private fun getReferences(element: T): List<PsiSymbolReference> {
     val showProblems = shouldShowProblems(element)
     return getOffsetsToSymbols(element).flatMap { (offset, symbol) ->
@@ -60,7 +74,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   private fun getReferences(element: T, symbolNameOffset: Int, symbol: WebSymbol, showProblems: Boolean): List<PsiSymbolReference> {
     fun WebSymbol.removeZeroLengthSegmentsRecursively(): List<WebSymbol> {
-      if (this !is WebSymbolMatch ) return listOf(this)
+      if (this !is WebSymbolMatch) return listOf(this)
       val nameLength = matchedName.length
       return nameSegments
                .takeIf { it.size > 1 && it.none { segment -> segment.problem != null } }
@@ -110,11 +124,16 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
       .asSequence()
       .mapNotNull { (range, segments) ->
         val problemOnly = problemOnlyRanges[range] ?: false
-        val deprecation = segments.all { segment ->
-          segment.deprecated
-          || segment.symbols.let { it.isNotEmpty() && it.all { symbol -> symbol.deprecated } }
-        }
-        if (showProblems && (deprecation || problemOnly || segments.any { it.problem != null })) {
+        val deprecation = segments.mapNotNull mapSegments@{ segment ->
+          segment.apiStatus.takeIf { it.isDeprecatedOrObsolete() }
+            ?.let { return@mapSegments it }
+          val declarations = segment.symbols.filter { !it.extension }
+          declarations
+            .mapNotNull { decl -> decl.apiStatus.takeIf { it.isDeprecatedOrObsolete() } }
+            .takeIf { it.size == declarations.size }
+            ?.firstOrNull()
+        }.takeIf { it.size == segments.size }?.firstOrNull()
+        if (showProblems && (deprecation != null || problemOnly || segments.any { it.problem != null })) {
           NameSegmentReferenceWithProblem(element, range.shiftRight(symbolNameOffset), segments, deprecation, problemOnly)
         }
         else if (!range.isEmpty && !problemOnly) {
@@ -142,7 +161,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
       nameSegments
         .flatMap { it.symbols }
         .filter { !it.extension }
-        .asSingleSymbol()
+        .asSingleSymbol(force = true)
         ?.let { listOf(it) }
       ?: emptyList()
 
@@ -155,7 +174,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
   private class NameSegmentReferenceWithProblem(element: PsiElement,
                                                 rangeInElement: TextRange,
                                                 nameSegments: Collection<WebSymbolNameSegment>,
-                                                private val deprecation: Boolean,
+                                                private val apiStatus: WebSymbolApiStatus?,
                                                 private val problemOnly: Boolean)
     : NameSegmentReference(element, rangeInElement, nameSegments) {
 
@@ -182,19 +201,43 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
             )
           )
         }.firstOrNull()
-      val deprecationProblem = if (deprecation) {
+      val deprecationProblem = if (apiStatus.isDeprecatedOrObsolete()) {
+        val isDeprecated = apiStatus is WebSymbolApiStatus.Deprecated
         val symbolTypes = nameSegments.flatMapTo(LinkedHashSet()) { it.symbolKinds }
         val toolMapping = symbolTypes.map {
-          WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, WebSymbolReferenceProblem.ProblemKind.DeprecatedSymbol)
+          if (apiStatus is WebSymbolApiStatus.Obsolete)
+            WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.ObsoleteSymbol)
+              ?.let { mapping -> return@map mapping }
+          WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.DeprecatedSymbol)
         }.firstOrNull()
+
+        val cause = apiStatus?.getMessage()
+                      ?.takeIf { it.isNotBlank() }
+                      ?.sanitizeHtmlOutputForProblemMessage()
+                    ?: WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
+
+        @Suppress("HardCodedStringLiteral")
+        val prefix = toolMapping
+                       ?.getProblemMessage(null)
+                       ?.trim()
+                       ?.removeSuffix(".")
+                       ?.let { if (!it.endsWith(",")) "$it," else it }
+                     ?: apiStatus?.since
+                       ?.let {
+                         WebSymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.since"
+                                                  else "web.inspection.message.obsolete.symbol.since", it)
+                       }
+                     ?: WebSymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.message"
+                                                 else "web.inspection.message.obsolete.symbol.message")
+
         WebSymbolReferenceProblem(
           symbolTypes,
-          WebSymbolReferenceProblem.ProblemKind.DeprecatedSymbol,
+          if (isDeprecated) ProblemKind.DeprecatedSymbol else ProblemKind.ObsoleteSymbol,
           inspectionManager.createProblemDescriptor(
             element, rangeInElement,
-            toolMapping?.getProblemMessage(null)
-            ?: WebSymbolReferenceProblem.ProblemKind.DeprecatedSymbol.getDefaultProblemMessage(null),
-            ProblemHighlightType.LIKE_DEPRECATED, true
+            "$prefix ${StringUtil.decapitalize(cause)}",
+            if (isDeprecated) ProblemHighlightType.LIKE_DEPRECATED else ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL,
+            true
           )
 
         )
@@ -219,5 +262,13 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
         result
       else -1
     }
+
+    private fun @Nls String.sanitizeHtmlOutputForProblemMessage(): @Nls String =
+      this.replace(Regex("</?code>"), "`")
+        .replace(Regex("</?[a-zA-Z-]+[^>]*>"), "")
+        .let {
+          @Suppress("HardCodedStringLiteral")
+          StringUtil.unescapeXmlEntities(it)
+        }
   }
 }

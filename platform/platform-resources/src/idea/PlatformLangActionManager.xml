@@ -31,10 +31,6 @@
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/UsageViewActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <xi:include href="/META-INF/statistics-devkit.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
-
   <actions>
     <group id="WelcomeScreen.QuickStart.Platform">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
@@ -78,7 +74,7 @@
       <action id="ProblemsView.QuickFixes"
               icon="AllIcons.Actions.IntentionBulb"
               use-shortcut-of="ShowIntentionActions"
-              class="com.intellij.analysis.problemsView.toolWindow.ShowQuickFixesAction"/>
+              class="com.intellij.analysis.problemsView.toolWindow.ShowProblemsViewQuickFixesAction"/>
       <reference ref="ProblemsView.ShowPreview"/>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>

@@ -15,6 +15,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBDimension;
@@ -172,6 +174,7 @@ public class AnnotationsPanel {
     tablePanel.setPreferredSize(new JBDimension(tablePanel.getPreferredSize().width, 200));
 
     myComponent = new JPanel(new GridBagLayout());
+    myComponent.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.anchor = GridBagConstraints.WEST;
     constraints.weightx = 1;

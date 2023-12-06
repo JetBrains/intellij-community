@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.push.VcsPushOptionValue;
@@ -19,9 +19,9 @@ import java.awt.event.ActionListener;
 
 public class GitPushOptionsPanel extends VcsPushOptionsPanel {
 
-  @NotNull private final JBCheckBox myPushTags;
-  @NotNull private final ComboBox<GitPushTagMode> myPushTagsMode;
-  @NotNull private final JBCheckBox myRunHooks;
+  private final @NotNull JBCheckBox myPushTags;
+  private final @NotNull ComboBox<GitPushTagMode> myPushTagsMode;
+  private final @NotNull JBCheckBox myRunHooks;
 
   public GitPushOptionsPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported, boolean showSkipHookOption) {
     String checkboxText = GitBundle.message("push.dialog.push.tags");
@@ -63,20 +63,21 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
   }
 
   private static int calcStrutWidth(int plannedWidth, @NotNull JComponent leftComponent, @NotNull JComponent rightComponent) {
-    return JBUIScale.scale(plannedWidth) - JBInsets.create(rightComponent.getInsets()).left - JBInsets.create(leftComponent.getInsets()).right;
+    return JBUIScale.scale(plannedWidth) -
+           JBInsets.create(rightComponent.getInsets()).left -
+           JBInsets.create(leftComponent.getInsets()).right;
   }
 
-  @Nullable
   @Override
-  public VcsPushOptionValue getValue() {
+  public @Nullable VcsPushOptionValue getValue() {
     GitPushTagMode selectedTagMode = !myPushTagsMode.isVisible() ? GitPushTagMode.ALL : (GitPushTagMode)myPushTagsMode.getSelectedItem();
     GitPushTagMode tagMode = myPushTags.isSelected() ? selectedTagMode : null;
+
     return new GitVcsPushOptionValue(tagMode, myRunHooks.isVisible() && !myRunHooks.isSelected());
   }
 
-  @NotNull
   @Override
-  public OptionsPanelPosition getPosition() {
+  public @NotNull OptionsPanelPosition getPosition() {
     return OptionsPanelPosition.SOUTH;
   }
 }

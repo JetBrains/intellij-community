@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxPopupState;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -10,14 +11,12 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.GroupedComboBoxRenderer;
-import com.intellij.ui.GroupedElementsRenderer;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,10 +49,9 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     configurePopup();
   }
 
-  @NotNull
-  private static <T> MyBasePopupState<T> popupStateFromContext(@NotNull Context<T> context,
-                                                               @NotNull Consumer<? super T> onItemSelected,
-                                                               @Nullable T selectedItem) {
+  private static @NotNull <T> MyBasePopupState<T> popupStateFromContext(@NotNull Context<T> context,
+                                                                        @NotNull Consumer<? super T> onItemSelected,
+                                                                        @Nullable T selectedItem) {
     MyBasePopupState<T> step = new MyBasePopupState<>(onItemSelected,
                                                       () -> context.getModel(),
                                                       () -> context.getRenderer()) {
@@ -116,15 +114,24 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     moveToFitScreen();
   }
 
-  @NotNull
   @Override
-  protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
+  protected @NotNull WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
     if (step instanceof MyBasePopupState) {
       //noinspection unchecked
       return new ComboBoxPopup<>(myContext, parent, (MyBasePopupState<T>)step, parentValue);
     }
 
     throw new IllegalArgumentException(step.getClass().toString());
+  }
+
+  @Override
+  protected @NotNull JComponent createPopupComponent(JComponent content) {
+    final var component = super.createPopupComponent(content);
+    final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();
+    if (component instanceof JScrollPane scrollPane && isRendererWithInsets(renderer)) {
+      scrollPane.getVerticalScrollBar().setBackground(UIManager.getColor("ComboBox.background"));
+    }
+    return component;
   }
 
   @Override
@@ -141,6 +148,11 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     return new MyDelegateRenderer();
   }
 
+  public static boolean isRendererWithInsets(ListCellRenderer<?> comboRenderer) {
+    return comboRenderer instanceof ExperimentalUI.NewUIComboBoxRenderer
+           || comboRenderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof ExperimentalUI.NewUIComboBoxRenderer;
+  }
+
   private void configurePopup() {
     setMaxRowCount(myContext.getMaximumRowCount());
     setRequestFocus(false);
@@ -151,12 +163,11 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     list.setSelectionForeground(UIManager.getColor("ComboBox.selectionForeground"));
     list.setSelectionBackground(UIManager.getColor("ComboBox.selectionBackground"));
     list.setBorder(null);
-    list.setFocusable(false);
+    list.setFocusable(ScreenReader.isActive());
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();
-    if (renderer instanceof GroupedComboBoxRenderer<?> ||
-        renderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof GroupedComboBoxRenderer<?>) {
+    if (isRendererWithInsets(renderer)) {
       list.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
       mySpeedSearch.addChangeListener(x -> {
         list.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(!mySpeedSearch.getFilter().isBlank(), false)));
@@ -169,7 +180,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     }
   }
 
-  private class MyDelegateRenderer implements ListCellRenderer<T> {
+  private final class MyDelegateRenderer implements ListCellRenderer<T> {
     @Override
     public Component getListCellRendererComponent(JList list,
                                                   Object value,
@@ -203,10 +214,9 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       myGetRenderer = getRenderer;
     }
 
-    @Nullable
     @Override
     @SuppressWarnings("rawtypes")
-    public PopupStep onChosen(T selectedValue, boolean finalChoice) {
+    public @Nullable PopupStep onChosen(T selectedValue, boolean finalChoice) {
       ListModel<T> model = myGetComboboxModel.get();
       if (model instanceof ComboBoxPopupState) {
         //noinspection unchecked
@@ -237,9 +247,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       return true;
     }
 
-    @NotNull
     @Override
-    public String getTextFor(T value) {
+    public @NotNull String getTextFor(T value) {
       final ListCellRenderer<? super T> cellRenderer = myGetRenderer.get();
       Component component = cellRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
       String componentText = component instanceof TitledSeparator || component instanceof JSeparator ? "" :
@@ -253,7 +262,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     @Override
     public boolean isSelectable(T value) {
       Component component = myGetRenderer.get().getListCellRendererComponent(myProxyList, value, -1, false, false);
-      return !(component instanceof TitledSeparator || component instanceof JSeparator);
+      return !((component instanceof ComboBox.SelectableItem selectableItem && !selectableItem.isSelectable())
+               || component instanceof JSeparator);
     }
 
     @Override
@@ -270,8 +280,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     }
   }
 
-  @NotNull
-  private static <T> List<T> copyItemsFromModel(@NotNull ListModel<T> model) {
+  private static @NotNull <T> List<T> copyItemsFromModel(@NotNull ListModel<T> model) {
     ArrayList<T> items = new ArrayList<>(model.getSize());
     for (int i = 0, size = model.getSize(); i < size; i++) {
       items.add(model.getElementAt(i));

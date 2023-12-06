@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpres
 import org.jetbrains.kotlin.idea.j2k.post.processing.diagnosticBasedProcessing
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -25,8 +24,8 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 internal val fixValToVarDiagnosticBasedProcessing =
     diagnosticBasedProcessing(
         Errors.VAL_REASSIGNMENT, Errors.CAPTURED_VAL_INITIALIZATION, Errors.CAPTURED_MEMBER_VAL_INITIALIZATION
-    ) { element: KtSimpleNameExpression, _ ->
-        val property = element.mainReference.resolve() as? KtProperty ?: return@diagnosticBasedProcessing
+    ) { element: KtExpression, _ ->
+        val property = element.unpackedReferenceToProperty() ?: return@diagnosticBasedProcessing
         if (!property.isVar) {
             property.valOrVarKeyword.replace(KtPsiFactory(element.project).createVarKeyword())
         }

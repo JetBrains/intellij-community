@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,7 +52,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   boolean isAbsolutePositioning(MouseEvent event) {
-    return Behavior.JumpToSpot == Behavior.CURRENT.get();
+    return Behavior.JumpToSpot == Behavior.CURRENT.getValue();
   }
 
   @Override
@@ -83,7 +83,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    updateStyle(Style.CURRENT.get());
+    updateStyle(Style.CURRENT.getValue());
     processReferences(this, null, null);
     AWTEventListener listener = MOVEMENT_LISTENER.getAndSet(null); // add only one movement listener
     if (listener != null) Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
@@ -196,9 +196,8 @@ class MacScrollBarUI extends DefaultScrollBarUI {
     NextPage, JumpToSpot;
 
     private static final Native<Behavior> CURRENT = new Native<>() {
-      @NotNull
       @Override
-      public Behavior produce() {
+      public @NotNull Behavior produce() {
         ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
         invoke(defaults, "synchronize");
         ID behavior = invoke(defaults, "boolForKey:", nsString("AppleScrollerPagingBehavior"));
@@ -232,11 +231,11 @@ class MacScrollBarUI extends DefaultScrollBarUI {
     private static final Native<Style> CURRENT = new Native<>() {
       @Override
       public void run() {
-        Style oldStyle = get();
+        Style oldStyle = getValue();
         if (SystemInfoRt.isMac && !Registry.is("ide.mac.disableMacScrollbars", false)) {
           super.run();
         }
-        Style newStyle = get();
+        Style newStyle = getValue();
         if (newStyle != oldStyle) {
           List<MacScrollBarUI> list = new ArrayList<>();
           processReferences(null, null, list);
@@ -246,9 +245,8 @@ class MacScrollBarUI extends DefaultScrollBarUI {
         }
       }
 
-      @NotNull
       @Override
-      public Style produce() {
+      public @NotNull Style produce() {
         ID style = invoke(getObjcClass("NSScroller"), "preferredScrollerStyle");
         Style value = 1 == style.intValue() ? Overlay : Legacy;
         Logger.getInstance(MacScrollBarUI.class).debug("scroll bar style ", value, " from ", style);
@@ -273,7 +271,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
     };
   }
 
-  private static abstract class Native<T> implements Callback, Runnable, NotNullProducer<T> {
+  private abstract static class Native<T> implements Callback, Runnable, NotNullProducer<T> {
     private T myValue;
 
     Native() {
@@ -284,7 +282,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
 
     abstract ID initialize();
 
-    T get() {
+    T getValue() {
       return myValue;
     }
 

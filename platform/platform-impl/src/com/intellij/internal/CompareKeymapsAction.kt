@@ -11,12 +11,14 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JTextArea
 
 internal class CompareKeymapsAction : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val allKeymaps = (KeymapManager.getInstance() as KeymapManagerEx).allKeymaps
@@ -26,10 +28,12 @@ internal class CompareKeymapsAction : AnAction() {
     var keymap2 = allKeymaps[1]
     val comparePanel = panel {
       row("First keymap") {
-        comboBox(keymapsComboBoxModel1, { keymap1 }, { keymap1 = it })
+        comboBox(keymapsComboBoxModel1)
+          .bindItem({ keymap1 }, { keymap1 = it })
       }
       row("Second keymap") {
-        comboBox(keymapsComboBoxModel2, { keymap2 }, { keymap2 = it })
+        comboBox(keymapsComboBoxModel2)
+          .bindItem({ keymap2 }, { keymap2 = it })
       }
     }
     if (!dialog("Compare Keymaps", comparePanel).showAndGet()) return
@@ -62,8 +66,9 @@ internal class CompareKeymapsAction : AnAction() {
     }
     val reportPanel = panel {
       row {
-        scrollPane(JTextArea(report, 20, 50))
-      }
+        scrollCell(JTextArea(report, 20, 50))
+          .align(Align.FILL)
+      }.resizableRow()
     }
     dialog("Compare Keymaps Result", reportPanel).show()
   }
@@ -85,7 +90,7 @@ internal class CompareKeymapsAction : AnAction() {
       val shortcuts2 = keymap2.getShortcuts(actionId)
       if (!shortcuts1.contentEquals(shortcuts2)) {
         val action = ActionManager.getInstance().getAction(actionId)
-        var actionName = action.templateText ?: continue
+        val actionName = action.templateText ?: continue
         if (shortcuts1.all { it in shortcuts2 }) {
           val addedShortcuts = shortcuts2.filter { it !in shortcuts1 }
           result.add(ShortcutDifference(actionId, actionName,

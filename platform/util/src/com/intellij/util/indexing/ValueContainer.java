@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing;
 
@@ -28,8 +28,7 @@ public abstract class ValueContainer<Value> {
     int size();
   }
 
-  @NotNull
-  public abstract ValueIterator<Value> getValueIterator();
+  public abstract @NotNull ValueIterator<Value> getValueIterator();
 
   public interface ValueIterator<Value> extends Iterator<Value> {
     @NotNull IntIterator getInputIdsIterator();
@@ -49,7 +48,7 @@ public abstract class ValueContainer<Value> {
     boolean process(int id, V value) throws T;
   }
 
-  public final boolean forEach(@NotNull ContainerAction<? super Value> action) {
+  public synchronized final boolean forEach(@NotNull ContainerAction<? super Value> action) {
     for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       Value value = valueIterator.next();
       for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {

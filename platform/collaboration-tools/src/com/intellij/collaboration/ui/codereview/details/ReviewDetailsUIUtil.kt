@@ -3,24 +3,28 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.Nls
 import java.awt.Insets
 import javax.swing.Icon
 
 object ReviewDetailsUIUtil {
-  fun getRequestStateText(state: RequestState): @NlsSafe String = when (state) {
-    RequestState.OPENED -> CollaborationToolsBundle.message("review.details.review.state.open")
-    RequestState.CLOSED -> CollaborationToolsBundle.message("review.details.review.state.closed")
-    RequestState.MERGED -> CollaborationToolsBundle.message("review.details.review.state.merged")
-    RequestState.DRAFT -> CollaborationToolsBundle.message("review.details.review.state.draft")
+  fun getRequestStateText(state: ReviewRequestState): @NlsSafe String = when (state) {
+    ReviewRequestState.OPENED -> CollaborationToolsBundle.message("review.details.review.state.open")
+    ReviewRequestState.CLOSED -> CollaborationToolsBundle.message("review.details.review.state.closed")
+    ReviewRequestState.MERGED -> CollaborationToolsBundle.message("review.details.review.state.merged")
+    ReviewRequestState.DRAFT -> CollaborationToolsBundle.message("review.details.review.state.draft")
   }
 
   fun getReviewStateIcon(reviewState: ReviewState): Icon = when (reviewState) {
-    ReviewState.ACCEPTED -> AllIcons.RunConfigurations.TestPassed
-    ReviewState.WAIT_FOR_UPDATES -> AllIcons.RunConfigurations.TestError
-    ReviewState.NEED_REVIEW -> AllIcons.RunConfigurations.TestFailed
+    ReviewState.ACCEPTED -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
+    ReviewState.WAIT_FOR_UPDATES -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
+    ReviewState.NEED_REVIEW -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Warning else AllIcons.RunConfigurations.TestFailed
   }
 
   fun getReviewStateText(reviewState: ReviewState, reviewer: String): @Nls String = when (reviewState) {
@@ -72,6 +76,5 @@ object ReviewDetailsUIUtil {
       newUI = Insets(0, 15, 18, 13),
     )
 
-  val STATUSES_MAX_HEIGHT: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 143, newUI = 143)
-  val COMMIT_INFO_MAX_HEIGHT: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 100, newUI = 100)
+  val STATUSES_MAX_HEIGHT: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 143, newUI = 149)
 }

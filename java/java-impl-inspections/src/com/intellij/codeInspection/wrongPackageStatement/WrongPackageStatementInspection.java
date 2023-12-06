@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -43,6 +44,10 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
     PsiPackageStatement packageStatement = javaFile.getPackageStatement();
 
     String packageName = dirPackage.getQualifiedName();
+
+    SingleFileSourcesTracker singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(file.getProject());
+    String singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(file.getVirtualFile());
+    if (singleFileSourcePackageName != null) packageName = singleFileSourcePackageName;
     if (packageStatement == null) {
       if (!Comparing.strEqual(packageName, "", true)) {
         // highlight the first class in the file only
@@ -77,7 +82,7 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
         String packName = classPackage != null ? classPackage.getQualifiedName() : packageReference.getQualifiedName();
         addMoveToPackageFix(file, packName, availableFixes);
       }
-      if (!availableFixes.isEmpty()){
+      if (!availableFixes.isEmpty()) {
         String description = JavaErrorBundle.message("package.name.file.path.mismatch",
                                                      packageReference.getQualifiedName(),
                                                      packageName);
@@ -86,7 +91,6 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
           manager.createProblemDescriptor(packageStatement.getPackageReference(), description, isOnTheFly,
                                           fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         return new ProblemDescriptor[]{descriptor};
-
       }
     }
     return null;

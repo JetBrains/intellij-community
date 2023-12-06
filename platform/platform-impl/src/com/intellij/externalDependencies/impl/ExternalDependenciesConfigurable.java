@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -38,7 +38,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-public class ExternalDependenciesConfigurable implements SearchableConfigurable {
+public final class ExternalDependenciesConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(ExternalDependenciesConfigurable.class);
   private final ExternalDependenciesManager myDependenciesManager;
   private final CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<>();
@@ -64,15 +64,13 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
     myDependenciesManager.setAllDependencies(myListModel.getItems());
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return IdeBundle.message("configurable.ExternalDependenciesConfigurable.display.name");
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     JBList<ProjectExternalDependency> dependenciesList = new JBList<>();
     dependenciesList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
@@ -128,7 +126,9 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
 
     String text = XmlStringUtil
       .wrapInHtml(IdeBundle.message("settings.required.plugins.title", ApplicationNamesInfo.getInstance().getFullProductName()));
-    return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(dependenciesPanel).addToTop(new JBLabel(text));
+    JBLabel label = new JBLabel(text);
+    label.setBorder(JBUI.Borders.emptyBottom(5));
+    return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(dependenciesPanel).addToTop(label);
   }
 
   public boolean editSelectedDependency(JBList dependenciesList) {
@@ -162,7 +162,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
       myPluginNameById = new HashMap<>();
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
         String idString = descriptor.getPluginId().getIdString();
-        //todo[nik] change 'name' tag of the core plugin instead
+        //todo change 'name' tag of the core plugin instead
         String name = PluginManagerCore.CORE_PLUGIN_ID.equals(idString) ? "IDE Core" : descriptor.getName();
         myPluginNameById.put(idString, name);
       }
@@ -170,14 +170,12 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
     return myPluginNameById;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "preferences.externalDependencies";
   }
 
-  @Nullable
-  private DependencyOnPlugin editPluginDependency(@NotNull JComponent parent, @NotNull final DependencyOnPlugin original) {
+  private @Nullable DependencyOnPlugin editPluginDependency(@NotNull JComponent parent, final @NotNull DependencyOnPlugin original) {
     List<String> pluginIds = new ArrayList<>(getPluginNameByIdMap().keySet());
     if (!original.getPluginId().isEmpty() && !pluginIds.contains(original.getPluginId())) {
       pluginIds.add(original.getPluginId());
@@ -223,9 +221,8 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
     return null;
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return "Required_Plugin";
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -29,6 +28,7 @@ import git4idea.config.GitVcsSettings
 import git4idea.config.UpdateMethod
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.FlatComboBoxUI
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import net.miginfocom.layout.AC
@@ -48,8 +48,6 @@ import javax.swing.JPanel
 import javax.swing.JRadioButton
 
 internal class FixTrackedBranchDialog(private val project: Project) : DialogWrapper(project) {
-
-  private val vcsNotifier = project.service<VcsNotifier>()
 
   private val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
 
@@ -94,8 +92,8 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
         .append(HtmlChunk.br())
         .append(reposNotOnBranch)
         .toString()
-      vcsNotifier.notifyImportantWarning(FIX_TRACKED_NOT_ON_BRANCH,
-                                         GitBundle.message("tracked.branch.fix.dialog.not.on.branch.title"), message)
+      VcsNotifier.getInstance(project).notifyImportantWarning(FIX_TRACKED_NOT_ON_BRANCH,
+                                                              GitBundle.message("tracked.branch.fix.dialog.not.on.branch.title"), message)
     }
 
     for (repository in repositories) {
@@ -173,21 +171,26 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
         updateRemoteField(e.item as GitRepository)
       }
     }
+    ComboboxSpeedSearch.installOn(this)
   }
 
   private fun showRepositoryField() = repositories.size > 1
 
-  private fun createRemoteField() = ComboBox(MutableCollectionComboBoxModel(repositories[0].remotes.toMutableList())).apply {
-    preferredSize = JBDimension(125, 30)
-    renderer = SimpleListCellRenderer.create("") { remote ->
-      remote.name
-    }
-    setUI(FlatComboBoxUI(border = Insets(1, 1, 1, 0),
-                         outerInsets = Insets(BW.get(), if (showRepositoryField()) 0 else BW.get(), BW.get(), 0)))
-    addItemListener { e ->
-      if (e.stateChange == ItemEvent.SELECTED
-          && e.item != null) {
-        updateBranchField()
+  private fun createRemoteField(): ComboBox<GitRemote> {
+    val remotes = repositories.firstOrNull()?.remotes?.toMutableList() ?: mutableListOf<GitRemote>()
+    return ComboBox(
+      MutableCollectionComboBoxModel(remotes)).apply {
+      preferredSize = JBDimension(125, 30)
+      renderer = SimpleListCellRenderer.create("") { remote ->
+        remote.name
+      }
+      setUI(FlatComboBoxUI(border = Insets(1, 1, 1, 0),
+                           outerInsets = Insets(BW.get(), if (showRepositoryField()) 0 else BW.get(), BW.get(), 0)))
+      addItemListener { e ->
+        if (e.stateChange == ItemEvent.SELECTED
+            && e.item != null) {
+          updateBranchField()
+        }
       }
     }
   }

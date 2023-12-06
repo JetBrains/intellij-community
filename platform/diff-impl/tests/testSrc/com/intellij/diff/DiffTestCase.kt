@@ -81,10 +81,10 @@ abstract class DiffTestCase : TestCase() {
         debugData.reset()
       }
       catch (e: Throwable) {
-        println("Seed: " + seed)
-        println("Runs: " + runs)
-        println("I: " + i)
-        println("Current seed: " + lastSeed)
+        println("Seed: $seed")
+        println("Runs: $runs")
+        println("I: $i")
+        println("Current seed: $lastSeed")
         debugData.dump()
         throw e
       }
@@ -280,7 +280,7 @@ abstract class DiffTestCase : TestCase() {
       val lines1 = matching.split('_', '*')
       val lines2 = text.split('\n')
       assertEquals(lines1.size, lines2.size)
-      for (i in 0..lines1.size - 1) {
+      for (i in lines1.indices) {
         assertEquals(lines1[i].length, lines2[i].length, "line $i")
       }
 

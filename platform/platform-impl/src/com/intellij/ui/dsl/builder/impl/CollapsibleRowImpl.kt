@@ -8,7 +8,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.Expandable
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.toUnscaledGaps
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.event.ActionEvent
@@ -31,9 +31,9 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
   private val collapsibleTitledSeparator = CollapsibleTitledSeparatorImpl(title)
   private var registeredKeyStroke: KeyStroke? = null
 
-  override var expanded by collapsibleTitledSeparator::expanded
+  override var expanded: Boolean by collapsibleTitledSeparator::expanded
 
-  override var packWindowHeight = false
+  override var packWindowHeight: Boolean = false
 
   override fun setTitle(title: String) {
     collapsibleTitledSeparator.text = title
@@ -51,8 +51,7 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
   init {
     collapsibleTitledSeparator.setLabelFocusable(true)
     (collapsibleTitledSeparator.label.border as? EmptyBorder)?.borderInsets?.let {
-      collapsibleTitledSeparator.putClientProperty(DslComponentProperty.VISUAL_PADDINGS,
-                                                   Gaps(top = it.top, left = it.left, bottom = it.bottom))
+      collapsibleTitledSeparator.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, it.toUnscaledGaps().copy(right = 0))
     }
 
     collapsibleTitledSeparator.label.putClientProperty(Expandable::class.java, object : Expandable {

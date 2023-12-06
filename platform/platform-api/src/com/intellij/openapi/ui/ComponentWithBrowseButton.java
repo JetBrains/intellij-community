@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +25,8 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
-import com.intellij.ui.dsl.gridLayout.Gaps;
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -97,29 +98,28 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     LazyDisposable.installOn(this);
 
     Insets insets = myComponent.getInsets();
-    Gaps visualPaddings = new Gaps(insets.top, insets.left, insets.bottom, inlineBrowseButton ? insets.right : myBrowseButton.getInsets().right);
+    if (!inlineBrowseButton) {
+      insets.right = myBrowseButton.getInsets().right;
+    }
+    UnscaledGaps visualPaddings = UnscaledGapsKt.toUnscaledGaps(insets);
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, component);
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings);
   }
 
-  @NotNull
-  protected Icon getDefaultIcon() {
+  protected @NotNull Icon getDefaultIcon() {
     return AllIcons.General.OpenDisk;
   }
 
-  @NotNull
-  protected Icon getHoveredIcon() {
+  protected @NotNull Icon getHoveredIcon() {
     return AllIcons.General.OpenDiskHover;
   }
 
-  @NotNull
-  protected @NlsContexts.Tooltip String getIconTooltip() {
+  protected @NotNull @NlsContexts.Tooltip String getIconTooltip() {
     return getTooltip();
   }
 
-  @NotNull
-  public static @NlsContexts.Tooltip String getTooltip() {
+  public static @NotNull @NlsContexts.Tooltip String getTooltip() {
     return UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (" +
            KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)) + ")";
   }
@@ -129,8 +129,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     for (ActionListener listener: myBrowseButton.getActionListeners()) listener.actionPerformed(event);
   }
 
-  @NotNull
-  public final Comp getChildComponent() {
+  public final @NotNull Comp getChildComponent() {
     return myComponent;
   }
 

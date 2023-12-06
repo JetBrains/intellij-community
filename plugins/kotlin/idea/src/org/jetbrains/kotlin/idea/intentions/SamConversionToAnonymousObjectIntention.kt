@@ -8,15 +8,15 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -44,7 +44,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtCallExpression): TextRange? {
         val callee = element.calleeExpression ?: return null
-        val lambda = getLambdaExpression(element) ?: return null
+        val lambda = Holder.getLambdaExpression(element) ?: return null
         val functionLiteral = lambda.functionLiteral
         val bindingContext = functionLiteral.safeAnalyzeNonSourceRootCode()
         val sam = element.getSingleAbstractMethod(bindingContext) ?: return null
@@ -81,13 +81,13 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
     }
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) {
-        val lambda = getLambdaExpression(element) ?: return
+        val lambda = Holder.getLambdaExpression(element) ?: return
         val context = element.analyze(BodyResolveMode.PARTIAL)
         val lambdaFunctionDescriptor = lambda.functionLiteral.functionDescriptor(context) ?: return
         val samDescriptor = element.getSingleAbstractMethod(context) ?: return
         val classDescriptor = samDescriptor.containingDeclaration as? ClassDescriptor
-        val typeParameters = typeParameters(element, context, classDescriptor, samDescriptor, lambdaFunctionDescriptor)
-        convertToAnonymousObject(element, typeParameters, samDescriptor, lambda, lambdaFunctionDescriptor)
+        val typeParameters = Holder.typeParameters(element, context, classDescriptor, samDescriptor, lambdaFunctionDescriptor)
+        Holder.convertToAnonymousObject(element, typeParameters, samDescriptor, lambda, lambdaFunctionDescriptor)
     }
 
     private fun KtCallExpression.getSingleAbstractMethod(context: BindingContext): FunctionDescriptor? {
@@ -107,7 +107,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
         }
     }
 
-    companion object {
+    object Holder {
         fun convertToAnonymousObject(
             call: KtCallExpression,
             typeParameters: Map<TypeConstructor, KotlinType>,
@@ -137,13 +137,13 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
             val functionParameterName: (ValueParameterDescriptor, Int) -> String = { parameter, index ->
                 val name = parameter.name
                 if (name.isSpecial) {
-                    Fe10KotlinNameSuggester.suggestNameByName((samParameters.getOrNull(index)?.name ?: name).asString(), nameValidator)
+                    KotlinNameSuggester.suggestNameByName((samParameters.getOrNull(index)?.name ?: name).asString(), nameValidator)
                 } else {
                     name.asString()
                 }
             }
 
-            LambdaToAnonymousFunctionIntention.convertLambdaToFunction(
+            LambdaToAnonymousFunctionIntention.Holder.convertLambdaToFunction(
                 lambda,
                 functionDescriptor,
                 IdeDescriptorRenderers.SOURCE_CODE_TYPES_FOR_SAM_CONVERSION,

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.java.JavaBundle;
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance(RenamePsiPackageProcessor.class);
@@ -143,7 +144,8 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void findExistingNameConflicts(@NotNull PsiElement element, @NotNull String newName, @NotNull MultiMap<PsiElement,String> conflicts) {
+  public void findExistingNameConflicts(@NotNull PsiElement element, @NotNull String newName,
+                                        @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     final PsiPackage aPackage = (PsiPackage)element;
     final Project project = element.getProject();
     final String qualifiedNameAfterRename = getPackageQualifiedNameAfterRename(aPackage, newName, true);

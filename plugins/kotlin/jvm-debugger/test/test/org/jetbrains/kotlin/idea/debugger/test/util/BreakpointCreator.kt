@@ -85,9 +85,10 @@ internal class BreakpointCreator(
                         }
                     }
                     comment.startsWith("//Breakpoint!") -> {
-                        val ordinal = getPropertyFromComment(comment, "lambdaOrdinal")?.toInt()
+                        val lambdaOrdinal = getPropertyFromComment(comment, "lambdaOrdinal")?.toInt()
+                        val conditionalReturn = getPropertyFromComment(comment, "conditionalReturn").toBoolean()
                         val condition = getPropertyFromComment(comment, "condition")
-                        createLineBreakpoint(breakpointManager, file, lineIndex, ordinal, condition)
+                        createLineBreakpoint(breakpointManager, file, lineIndex, lambdaOrdinal, conditionalReturn, condition)
                     }
                     comment.startsWith("//FunctionBreakpoint!") -> {
                         createFunctionBreakpoint(breakpointManager, file, lineIndex, false)
@@ -117,7 +118,7 @@ internal class BreakpointCreator(
 
             when (kind) {
                 "line" -> createBreakpoint(fileName, lineMarker) { psiFile, lineNumber ->
-                    createLineBreakpoint(breakpointManager, psiFile, lineNumber + 1, ordinal, null)
+                    createLineBreakpoint(breakpointManager, psiFile, lineNumber + 1, ordinal, false, null)
                 }
                 "fun" -> createBreakpoint(fileName, lineMarker) { psiFile, lineNumber ->
                     createFunctionBreakpoint(breakpointManager, psiFile, lineNumber, true)
@@ -182,6 +183,7 @@ internal class BreakpointCreator(
         file: PsiFile,
         lineIndex: Int,
         lambdaOrdinal: Int?,
+        conditionalReturn: Boolean,
         condition: String?
     ) {
         val kotlinLineBreakpointType = findBreakpointType(KotlinLineBreakpointType::class.java)
@@ -192,7 +194,8 @@ internal class BreakpointCreator(
             kotlinLineBreakpointType,
             lineIndex,
             file.virtualFile,
-            updatedLambdaOrdinal
+            updatedLambdaOrdinal,
+            conditionalReturn,
         )
 
         if (javaBreakpoint is LineBreakpoint<*>) {
@@ -217,12 +220,15 @@ internal class BreakpointCreator(
         lineIndex: Int,
         virtualFile: VirtualFile,
         lambdaOrdinal: Int? = null,
+        conditionalReturn: Boolean = false,
     ): Breakpoint<out JavaBreakpointProperties<*>>? {
         if (!breakpointType.canPutAt(virtualFile, lineIndex, project)) return null
         val xBreakpoint = runWriteAction {
             val properties = breakpointType.createBreakpointProperties(virtualFile, lineIndex)
             if (properties is JavaLineBreakpointProperties) {
-                properties.lambdaOrdinal = lambdaOrdinal
+                properties.encodedInlinePosition =
+                  if (lambdaOrdinal == null && !conditionalReturn) null
+                  else JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal ?: -1, conditionalReturn)
             }
 
             breakpointManager.addLineBreakpoint(

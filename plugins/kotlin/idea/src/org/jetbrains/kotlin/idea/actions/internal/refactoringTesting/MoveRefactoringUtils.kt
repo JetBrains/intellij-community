@@ -60,9 +60,3 @@ inline fun edtExecute(crossinline body: () -> Unit) {
         body()
     }
 }
-
-inline fun readAction(crossinline body: () -> Unit) {
-    ApplicationManager.getApplication().runReadAction {
-        body()
-    }
-}

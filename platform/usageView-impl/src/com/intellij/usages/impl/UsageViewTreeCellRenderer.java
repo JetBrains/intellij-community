@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
@@ -27,25 +26,17 @@ import java.awt.*;
 final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final Logger LOG = Logger.getInstance(UsageViewTreeCellRenderer.class);
   private static final Insets STANDARD_IPAD_NOWIFI = JBUI.insets(1, 2);
-  private boolean myRowBoundsCalled;
 
   private final UsageViewPresentation myPresentation;
   private final UsageViewImpl myView;
-  private boolean myCalculated;
-  private int myRowHeight = AllIcons.Nodes.AbstractClass.getIconHeight()+2;
 
   UsageViewTreeCellRenderer(@NotNull UsageViewImpl view) {
     myView = view;
     myPresentation = view.getPresentation();
+    setIpad(STANDARD_IPAD_NOWIFI);
   }
 
   private Dimension cachedPreferredSize;
-
-  @NotNull
-  @Override
-  public Dimension getPreferredSize() {
-    return myCalculated ? super.getPreferredSize() : new Dimension(10, myRowHeight);
-  }
 
   @DirtyUI
   @Override
@@ -66,29 +57,8 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       }
     }
 
-    myCalculated = false;
     if (value instanceof DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
-
-      Rectangle visibleRect = ((JViewport)tree.getParent()).getViewRect();
-      if (row >= 0 && !visibleRect.isEmpty()) {
-        //Protection against SOE on some OSes and JDKs IDEA-120631
-        RowLocation visible = myRowBoundsCalled ? RowLocation.INSIDE_VISIBLE_RECT : isRowVisible(row, visibleRect);
-        myRowBoundsCalled = false;
-        if (visible != RowLocation.INSIDE_VISIBLE_RECT) {
-          // for the node outside visible rect do not compute (expensive) presentation
-          return;
-        }
-        if (!getIpad().equals(STANDARD_IPAD_NOWIFI)) {
-          // for the visible node, return its ipad to the standard value
-          setIpad(STANDARD_IPAD_NOWIFI);
-        }
-      }
-
-      // we can be called recursively via isRowVisible()
-      if (myCalculated) return;
-      myCalculated = true;
-
       if (userObject instanceof UsageTarget usageTarget) {
         LOG.assertTrue(treeNode instanceof Node);
         if (!((Node)treeNode).isValid()) {
@@ -260,13 +230,8 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       pref = cachedPreferredSize;
     }
     pref.width = Math.max(visibleRect.width, pref.width);
-    myRowBoundsCalled = true;
     JTree tree = getTree();
     final Rectangle bounds = tree == null ? null : tree.getRowBounds(row);
-    myRowBoundsCalled = false;
-    if (bounds != null) {
-      myRowHeight = bounds.height;
-    }
     int y = bounds == null ? 0 : bounds.y;
     TextRange vis = TextRange.from(Math.max(0, visibleRect.y - pref.height), visibleRect.height + pref.height * 2);
     boolean inside = vis.contains(y);

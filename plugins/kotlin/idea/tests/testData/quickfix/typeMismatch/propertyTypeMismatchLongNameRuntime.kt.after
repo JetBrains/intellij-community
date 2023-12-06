@@ -6,3 +6,5 @@ import kotlin.properties.Delegates
 fun foo() {
     var f: (Delegates) -> Unit = { x: kotlin.properties.Delegates ->  }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

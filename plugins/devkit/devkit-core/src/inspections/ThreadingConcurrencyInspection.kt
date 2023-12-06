@@ -9,12 +9,11 @@ import com.intellij.codeInspection.options.OptPane.group
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.createAddAnnotationActions
-import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.util.asSafely
-import com.intellij.util.concurrency.annotations.*
+import com.intellij.psi.PsiMethod
+import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.map2Array
-import org.jetbrains.annotations.NotNull
+import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
@@ -43,20 +42,18 @@ internal class ThreadingConcurrencyInspection(
   // skip if ancient platform version
   override fun isAllowed(holder: ProblemsHolder): Boolean {
     return super.isAllowed(holder) &&
-           JavaPsiFacade.getInstance(holder.project).findClass(RequiresEdt::class.java.canonicalName,
-                                                               holder.file.resolveScope) != null
+           DevKitInspectionUtil.isClassAvailable(holder, RequiresEdt::class.java.canonicalName)
   }
 
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
-    if (method.uastBody == null) {
-      return null
-    }
+    val uastBody = method.uastBody ?: return null
 
     val problemsHolder = createProblemsHolder(method, manager, isOnTheFly)
 
     val checkMissingAnnotations = checkMissingAnnotations &&
-                                  method.javaPsi.hasModifier(JvmModifier.PUBLIC)
-    method.uastBody!!.accept(ThreadingVisitor(problemsHolder, method.getThreadingStatuses(), checkMissingAnnotations))
+                                  method.javaPsi.hasModifier(JvmModifier.PUBLIC) &&
+                                  method.javaPsi.findSuperMethods().isEmpty()
+    uastBody.accept(ThreadingVisitor(problemsHolder, method.getThreadingStatuses(), checkMissingAnnotations))
 
     return problemsHolder.resultsArray
   }
@@ -76,7 +73,7 @@ internal class ThreadingConcurrencyInspection(
     }
 
     override fun visitCallExpression(node: UCallExpression): Boolean {
-      val resolvedMethod = node.resolveToUElement()?.asSafely<UMethod>() ?: return true
+      val resolvedMethod = node.resolveToUElementOfType<UMethod>() ?: return true
 
       val threadingStatus = resolvedMethod.getThreadingStatuses()
       if (threadingStatus.isEmpty()) {
@@ -85,6 +82,10 @@ internal class ThreadingConcurrencyInspection(
 
       // check violations, skip missing if found
       if (!methodThreadingStatus.isEmpty()) {
+        if (skipCallExpression(node)) {
+          return true
+        }
+
         if (checkViolations(node, threadingStatus)) {
           return true
         }
@@ -96,6 +97,17 @@ internal class ThreadingConcurrencyInspection(
       }
 
       return false
+    }
+
+    private val EVENT_DISPATCHER = CallMatcher.instanceCall(EventDispatcher::class.java.canonicalName,
+                                                            "getMulticaster")
+
+    private fun skipCallExpression(uCallExpression: UCallExpression): Boolean {
+      val receiver = uCallExpression.receiver as? UQualifiedReferenceExpression ?: return false
+
+      val selector = receiver.selector as? UResolvable ?: return false
+      val psiMethod = selector.resolve() as? PsiMethod ?: return false
+      return EVENT_DISPATCHER.methodMatches(psiMethod)
     }
 
     private fun checkMissingAnnotations(node: UCallExpression,
@@ -132,7 +144,6 @@ internal class ThreadingConcurrencyInspection(
                                 threadingStatus: Set<ThreadingStatus>): Boolean {
       require(methodThreadingStatus.isNotEmpty())
       require(threadingStatus.isNotEmpty())
-
       if (checkViceVersa(node, EnumSet.of(ThreadingStatus.REQUIRES_EDT),
                          threadingStatus,
                          EnumSet.of(ThreadingStatus.REQUIRES_BGT))) {
@@ -190,47 +201,17 @@ internal class ThreadingConcurrencyInspection(
     }
 
     private fun registerThreadingStatusProblem(uElement: UCallExpression,
-                                               @NotNull @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) messageKey: String,
+                                               @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) messageKey: String,
                                                vararg params: ThreadingStatus) {
       registerProblem(uElement, LocalQuickFix.EMPTY_ARRAY, messageKey, *params.map2Array { it.getDisplayName() })
     }
 
     private fun registerProblem(uCallExpression: UCallExpression,
                                 quickFixes: Array<LocalQuickFix> = LocalQuickFix.EMPTY_ARRAY,
-                                @NotNull @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) messageKey: String,
-                                vararg params: Any?) {
-      val uElement = when (uCallExpression.kind) {
-        UastCallKind.CONSTRUCTOR_CALL -> {
-          uCallExpression.classReference
-        }
-        else -> {
-          uCallExpression.methodIdentifier
-        }
-      }
-      val sourcePsi = uElement?.sourcePsi
-      if (sourcePsi == null) return
-
-      problemsHolder.registerProblem(sourcePsi, DevKitBundle.message(messageKey, *params), *quickFixes)
+                                @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) messageKey: String,
+                                vararg params: Any) {
+      problemsHolder.registerUProblem(uCallExpression, DevKitBundle.message(messageKey, *params), *quickFixes)
     }
   }
 
-  private fun UMethod.getThreadingStatuses(): Set<ThreadingStatus> {
-    val threadingStatuses = mutableSetOf<ThreadingStatus>()
-    for (uAnnotation in this.uAnnotations) {
-      ThreadingStatus.values().filterTo(threadingStatuses) { uAnnotation.qualifiedName == it.annotationFqn }
-    }
-
-    return threadingStatuses
-  }
-
-  private enum class ThreadingStatus(val annotationFqn: String) {
-    REQUIRES_BGT(RequiresBackgroundThread::class.java.canonicalName),
-    REQUIRES_EDT(RequiresEdt::class.java.canonicalName),
-    REQUIRES_RL(RequiresReadLock::class.java.canonicalName),
-    REQUIRES_WL(RequiresWriteLock::class.java.canonicalName),
-    REQUIRES_RL_ABSENCE(RequiresReadLockAbsence::class.java.canonicalName);
-
-    fun getDisplayName() = StringUtilRt.getShortName(annotationFqn)
-  }
 }
-

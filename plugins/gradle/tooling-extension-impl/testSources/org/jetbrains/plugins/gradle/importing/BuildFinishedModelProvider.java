@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.importing;
 
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.Model;
-import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder;
@@ -13,10 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class BuildFinishedModelProvider implements ProjectImportModelProvider {
-  @Override
-  public void populateBuildModels(@NotNull BuildController controller,
-                                  @NotNull GradleBuild buildModel,
-                                  @NotNull ProjectImportModelProvider.BuildModelConsumer consumer) { }
 
   @Override
   public void populateProjectModels(@NotNull BuildController controller,

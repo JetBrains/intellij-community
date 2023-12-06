@@ -3,20 +3,16 @@
     <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.devkit.core"/>
-    <module name="intellij.platform.workspaceModel.codegen.impl"/>
   </dependencies>
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
   <actions>
-      <action id="WorkspaceModelGeneration" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerationAction">
-        <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-      </action>
+    <action id="WorkspaceModelGeneration" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerationAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider" 
-                    serviceImplementation="com.intellij.devkit.workspaceModel.metaModel.impl.WorkspaceMetaModelProviderImpl"/>
-    <registryKey key="workspace.model.generator.keep.unknown.fields" defaultValue="false"
-                 description="With this option generator keeps unknown properties at generated interface otherwise it will be skipped"/>
     <localInspection language="kotlin"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
                      runForWholeFile="true"
@@ -24,6 +20,7 @@
                      implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplObsoleteInspection"
                      key="inspection.workspace.obsolete.model.display.name"/>
     <localInspection language="kotlin"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
                      runForWholeFile="true"
@@ -31,6 +28,7 @@
                      implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplAbsentInspection"
                      key="inspection.workspace.absent.model.display.name"/>
     <localInspection language="kotlin"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
                      runForWholeFile="true"

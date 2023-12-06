@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
@@ -11,6 +12,7 @@ import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,20 +25,24 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.DirtyUI;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.FileTypeFilterCollector;
+import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt.createPsiExtendedInfo;
 
 /**
  * @author Konstantin Bulenkov
  * @author Mikhail Sokolov
  */
-public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
+public class FileSearchEverywhereContributor extends AbstractGotoSEContributor implements EssentialContributor,
+                                                                                          SearchEverywherePreviewProvider {
   private static final Logger LOG = Logger.getInstance(FileSearchEverywhereContributor.class);
   private final GotoFileModel myModelForRenderer;
   private final PersistentSearchEverywhereContributorFilter<FileTypeRef> myFilter;
@@ -120,10 +126,13 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
         Pair<Integer, Integer> pos = getLineAndColumn(searchText);
         OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
         if (descriptor.canNavigate()) {
-          descriptor.navigate(true);
-          if (pos.first > 0) {
-            FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.file.line");
-          }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if ((modifiers & InputEvent.SHIFT_MASK) != 0) OpenInRightSplitAction.Companion.openInRightSplit(myProject, file, descriptor, true);
+            else descriptor.navigate(true);
+            if (pos.first > 0) {
+              FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.file.line");
+            }
+          });
           return true;
         }
       }
@@ -156,7 +165,18 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     return super.getItemDescription(element);
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<Object> {
+  @Override
+  public boolean isEmptyPatternSupported() {
+    return true;
+  }
+
+  @Nls
+  @Override
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    return createPsiExtendedInfo();
+  }
+
+  public static final class Factory implements SearchEverywhereContributorFactory<Object> {
     @NotNull
     @Override
     public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
@@ -168,7 +188,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   public static PersistentSearchEverywhereContributorFilter<FileTypeRef> createFileTypeFilter(@NotNull Project project) {
     List<FileTypeRef> items = new ArrayList<>(FileTypeRef.forAllFileTypes());
     items.add(0, GotoFileModel.DIRECTORY_FILE_TYPE_REF);
-    return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileTypeRef::getName,
+    return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileTypeRef::getDisplayName,
                                                              FileTypeRef::getIcon);
   }
 }

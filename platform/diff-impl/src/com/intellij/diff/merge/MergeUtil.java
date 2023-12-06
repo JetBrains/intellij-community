@@ -165,7 +165,7 @@ public final class MergeUtil {
 
   public static void reportProjectFileChangeIfNeeded(@Nullable Project project, @Nullable VirtualFile file) {
     if (project != null && file != null && isProjectFile(file)) {
-      StoreReloadManager.getInstance().saveChangedProjectFile(file, project);
+      StoreReloadManager.Companion.getInstance(project).saveChangedProjectFile(file);
     }
   }
 

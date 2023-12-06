@@ -9,6 +9,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
 import com.intellij.refactoring.suggested._suggestedChangeSignatureNewParameterValuesForTests
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.LanguageLevel
@@ -27,6 +28,7 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
   // PY-42285
   fun testImportedClassRename() {
+    (myFixture as? CodeInsightTestFixtureImpl)?.canChangeDocumentDuringHighlighting(true)
     doRenameImportedTest(
       """
         class A<caret>C:

@@ -20,22 +20,23 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import com.intellij.util.xmlb.annotations.XCollection
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.toBuilder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.TestOnly
@@ -43,7 +44,6 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import java.io.File
 import java.util.concurrent.Future
 
 @State(name = "sourceFolderManager", storages = [Storage(StoragePathMacros.CACHE_FILE)])
@@ -54,7 +54,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private val moduleNamesToSourceFolderState: MultiMap<String, SourceFolderModelState> = MultiMap.create()
   private var isDisposed = false
   private val mutex = Any()
-  private var sourceFolders = UrlPrefixFactory.createMap<SourceFolderModel>()
+  private var sourceFolders = CanonicalPathPrefixTreeFactory.createMap<SourceFolderModel>()
   private var sourceFoldersByModule = HashMap<String, ModuleModel>()
 
   private val operationsStates = mutableListOf<Future<*>>()
@@ -177,7 +177,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     }.asCompletableFuture()
 
     if (application.isUnitTestMode) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       operationsStates.removeIf { it.isDone }
       operationsStates.add(future)
     }
@@ -227,18 +227,18 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 
   private fun batchUpdateModels(project: Project, modules: Collection<Module>, modifier: (ModifiableRootModel) -> Unit) {
-    val diffBuilder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
-    val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
-      val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
-      val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
-                                                                                           false)
-      modifiableRootModel as ModifiableRootModelBridge
-      modifier.invoke(modifiableRootModel)
-      modifiableRootModel.prepareForCommit()
-      modifiableRootModel
-    }.toList()
-
     ApplicationManager.getApplication().invokeAndWait {
+      val diffBuilder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
+      val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
+        val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
+        val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
+                                                                                             false)
+        modifiableRootModel as ModifiableRootModelBridge
+        modifier.invoke(modifiableRootModel)
+        modifiableRootModel.prepareForCommit()
+        modifiableRootModel
+      }.toList()
+
       WriteAction.run<RuntimeException> {
         if (project.isDisposed) return@run
         WorkspaceModel.getInstance(project).updateProjectModel("Source folder manager: batch update models") { updater ->
@@ -276,7 +276,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       if (isDisposed) {
         return
       }
-      sourceFolders = UrlPrefixFactory.createMap()
+      sourceFolders = CanonicalPathPrefixTreeFactory.createMap()
       sourceFoldersByModule = HashMap()
 
       if (state.sourceFolders.isEmpty()) {
@@ -321,7 +321,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   @TestOnly
   @Throws(Exception::class)
   fun consumeBulkOperationsState(stateConsumer: (Future<*>) -> Unit) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     assert(ApplicationManager.getApplication().isUnitTestMode)
     for (operationsState in operationsStates) {
       stateConsumer.invoke(operationsState)
@@ -335,17 +335,6 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       "RESOURCE" to JavaResourceRootType.RESOURCE,
       "TEST_RESOURCE" to JavaResourceRootType.TEST_RESOURCE
     )
-  }
-
-  /**
-   * Don't use outside SourceFolderManagerImpl,
-   * because all file paths which are representing by string should be canonical,
-   * but URL has system dependent presentation.
-   */
-  private object UrlPrefixFactory : AbstractPrefixTreeFactory<String, String>() {
-    override fun convertToList(element: String): List<String> {
-      return element.removeSuffix(File.separator).split(File.separator)
-    }
   }
 }
 

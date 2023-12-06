@@ -7,14 +7,17 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: LibraryTable):
@@ -36,21 +39,16 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
 
     val libraryTableId = LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL)
 
-    val libraryEntity = diff.addLibraryEntity(
-      roots = emptyList(),
-      tableId = libraryTableId,
-      name = name,
-      excludedRoots = emptyList(),
-      source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary()
-    )
+    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(),
+                                                     LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary())
 
     if (type != null) {
-      diff.addLibraryPropertiesEntity(
-        library = libraryEntity,
-        libraryType = type.kindId,
+      diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
+                                             entitySource = libraryEntity.entitySource) {
+        library = libraryEntity
         propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG,
-                                                                                 type.createDefaultProperties())
-      )
+                                                      type.createDefaultProperties())
+      }
     }
 
     val library = LibraryBridgeImpl(

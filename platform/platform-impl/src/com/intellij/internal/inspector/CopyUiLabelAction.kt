@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.awt.RelativePoint
@@ -118,7 +119,7 @@ internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
       }
       is JTable -> {
         val text = mutableListOf<String?>()
-        for (i in 0 until c.rowCount) {
+        for (i in c.selectedRows) {
           val rowText = mutableListOf<String?>()
           for (j in 0 until c.columnCount) {
             val value = c.getValueAt(i, j)
@@ -143,7 +144,7 @@ internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
       }
       is JTree -> {
         val text = mutableListOf<String?>()
-        for (i in 0 until c.rowCount) {
+        for (i in c.selectionRows ?: intArrayOf()) {
           val treePath = c.getPathForRow(i)
           val node = treePath.lastPathComponent as? DefaultMutableTreeNode ?: continue
           val renderer: TreeCellRenderer = c.cellRenderer ?: DefaultTreeCellRenderer()
@@ -154,6 +155,9 @@ internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
       }
       is Breadcrumbs -> {
         c.crumbs.toList().map { it.text }.join(", ")
+      }
+      is ToolbarComboWidget -> {
+        c.text
       }
       is Container -> {
         val text = mutableListOf<String?>()

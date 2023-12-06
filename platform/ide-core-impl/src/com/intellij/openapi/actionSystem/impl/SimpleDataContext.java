@@ -7,6 +7,9 @@ import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,13 +18,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public final class SimpleDataContext extends CustomizedDataContext {
+public final class SimpleDataContext extends CustomizedDataContext implements UserDataHolder {
   private final Map<String, Object> myMap;
   private final DataContext myParent;
+  private final UserDataHolder myDataHolder;
 
-  private SimpleDataContext(@NotNull Map<String, Object> map, @Nullable DataContext parent) {
+  private SimpleDataContext(@NotNull Map<String, Object> map,
+                            @Nullable DataContext parent) {
     myMap = map;
     myParent = Objects.requireNonNullElse(parent, DataContext.EMPTY_CONTEXT);
+    myDataHolder = new UserDataHolderBase();
   }
 
   @Override
@@ -33,6 +39,16 @@ public final class SimpleDataContext extends CustomizedDataContext {
   public @Nullable Object getRawCustomData(@NotNull String dataId) {
     return myMap.containsKey(dataId) ?
            Objects.requireNonNullElse(myMap.get(dataId), EXPLICIT_NULL) : null;
+  }
+
+  @Override
+  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
+    return myDataHolder.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myDataHolder.putUserData(key, value);
   }
 
   /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object, DataContext)} instead. */
@@ -54,18 +70,12 @@ public final class SimpleDataContext extends CustomizedDataContext {
     return new SimpleDataContext(dataId2data, parent);
   }
 
-  /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object)} instead. */
-  @Deprecated(forRemoval = true)
-  public static @NotNull DataContext getSimpleContext(@NotNull String dataId, @NotNull Object data) {
-    return getSimpleContext(dataId, data, null);
-  }
-
   public static @NotNull <T> DataContext getSimpleContext(@NotNull DataKey<? super T> dataKey, @NotNull T data) {
     return getSimpleContext(dataKey, data, null);
   }
 
   public static @NotNull DataContext getProjectContext(@NotNull Project project) {
-    return getSimpleContext(CommonDataKeys.PROJECT.getName(), project);
+    return getSimpleContext(CommonDataKeys.PROJECT, project);
   }
 
   public static @NotNull Builder builder() {

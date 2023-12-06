@@ -219,17 +219,29 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-23859
-  public void testUnreachableCodeReportedAfterSelfFailInClassContainingTestInName() {
+  public void testUnreachableCodeReportedAfterSelfFail() {
     doTest();
   }
 
-  // PY-23859
-  public void testCodeNotReportedAsUnreachableAfterSelfFailInClassNotContainingTestInName() {
+  // PY-24273
+  public void testUnreachableCodeReportedAfterNoReturnFunction() {
     doTest();
   }
 
-  public void testUnreachableCodeReportedAfterPytestFail() {
+  public void testUnreachableCodeReportedAfterNoReturnWithQuotesFunction() {
     doTest();
+  }
+
+  // PY-24273
+  public void testUnreachableCodeReportedAfterImportedNoReturnFunction() {
+    doMultiFileTest();
+  }
+
+  // PY-53703
+  public void testUnreachableCodeReportedAfterNever() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTest();
+    });
   }
 
   @NotNull

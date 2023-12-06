@@ -1,6 +1,7 @@
 class C {
     private var x = ""
     var other: C? = null
+
     fun getX(): String {
         return x
     }

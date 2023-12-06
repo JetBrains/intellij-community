@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.liveTemplates;
 
 import com.intellij.codeInsight.template.FileTypeBasedContextType;
@@ -10,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin.Ulitin
  */
-public class JsonContextType extends FileTypeBasedContextType {
-  protected JsonContextType() {
+public final class JsonContextType extends FileTypeBasedContextType {
+  private JsonContextType() {
     super(JsonBundle.message("json.template.context.type"), JsonFileType.INSTANCE);
   }
 

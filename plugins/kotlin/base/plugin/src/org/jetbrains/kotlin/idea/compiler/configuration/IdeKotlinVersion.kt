@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.JarUtil
-import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.FsRoot
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -73,19 +74,20 @@ class IdeKotlinVersion private constructor(
 
         @JvmStatic
         fun fromManifest(jarFile: VirtualFile): IdeKotlinVersion? {
-            val ioFile = VfsUtilCore.virtualToIoFile(jarFile)
-            val unprocessedVersion = JarUtil.getJarAttribute(ioFile, Attributes.Name.IMPLEMENTATION_VERSION) ?: return null
+            val jarRoot = if (jarFile is FsRoot) jarFile else JarFileSystem.getInstance().getJarRootForLocalFile(jarFile) ?: return null
+            val unprocessedVersion =
+                JarVersionDetectionUtil.getMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) ?: return null
             // "Implementation-Version" in MANIFEST.MF is sometimes written as '1.5.31-release-548(1.5.31)'
             val rawVersion = unprocessedVersion.substringBefore('(').trim()
             return opt(rawVersion)
         }
 
-        private fun parseKind(kindSuffix: String, prefix: String, factory: (Int) -> Kind): Kind? {
+        private fun parseKind(kindSuffix: String, prefix: String, factory: (Int?) -> Kind): Kind? {
             check(kindSuffix.startsWith(prefix)) { "Prefix \"$prefix\" not found in kind suffix \"$kindSuffix\"" }
 
             val numberString = kindSuffix.drop(prefix.length).removeSuffix("-release")
             if (numberString.isEmpty()) {
-                return factory(1)
+                return factory(null)
             } else {
                 val number = numberString.toIntOrNull() ?: return null
                 return factory(number)
@@ -139,10 +141,11 @@ class IdeKotlinVersion private constructor(
 
     sealed class Kind(val artifactSuffix: String?) {
         object Release : Kind(artifactSuffix = null)
-        data class ReleaseCandidate(val number: Int) : Kind(artifactSuffix = if (number == 1) "RC" else "RC$number")
-        data class Beta(val number: Int) : Kind(artifactSuffix = if (number == 1) "Beta" else "Beta$number")
-        data class Milestone(val number: Int) : Kind(artifactSuffix = "M$number")
-        data class Eap(val number: Int) : Kind(artifactSuffix = if (number == 1) "eap" else "eap$number")
+        data class ReleaseCandidate(val number: Int?) : Kind(artifactSuffix = if (number == null) "RC" else "RC$number")
+        data class Beta(val number: Int?) : Kind(artifactSuffix = if (number == null) "Beta" else "Beta$number")
+        // M should always have a number, so default to M1
+        data class Milestone(val number: Int?) : Kind(artifactSuffix = if (number == null) "M1" else "M$number")
+        data class Eap(val number: Int?) : Kind(artifactSuffix = if (number == null) "eap" else "eap$number")
         object Dev : Kind(artifactSuffix = "dev")
         object Snapshot : Kind(artifactSuffix = "SNAPSHOT")
 
@@ -179,6 +182,12 @@ class IdeKotlinVersion private constructor(
 
     val languageVersionSettings: LanguageVersionSettings
         get() = LanguageVersionSettingsImpl(languageVersion, apiVersion)
+
+    fun withoutBuildNumber(): IdeKotlinVersion {
+        return if (buildNumber != null) {
+            parse(rawVersion.substringBeforeLast('-')).getOrDefault(this)
+        } else this
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -3,7 +3,7 @@ class Test {
   void test(Number n) {
       n = 1;
       switch (n) {
-        case <caret>Integer i && i == 1 -> System.out.println(i);
+        case <caret>Integer i when i == 1 -> System.out.println(i);
         case Long s -> System.out.println(s);
         default -> System.out.println();
       }

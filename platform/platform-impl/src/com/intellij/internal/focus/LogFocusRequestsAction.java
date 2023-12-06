@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.focus;
 
-import com.intellij.diagnostic.DebugLogManager;
+import com.intellij.diagnostic.logs.DebugLogLevel;
+import com.intellij.diagnostic.logs.LogCategory;
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -35,16 +37,12 @@ final class LogFocusRequestsAction extends ToggleAction implements DumbAware {
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    DebugLogManager dlm = DebugLogManager.getInstance();
-    List<DebugLogManager.Category> categories = new ArrayList<>(dlm.getSavedCategories());
-    dlm.clearCategories(categories);
-
-    categories.removeIf(c -> LOGGER_NAME.equals(c.getCategory()));
+    LogLevelConfigurationManager logsManager = LogLevelConfigurationManager.Companion.getInstance();
+    List<LogCategory> logsCategories = new ArrayList<>(logsManager.getState().categories);
+    logsCategories.removeIf(c -> LOGGER_NAME.equals(c.getCategory()));
     if (state) {
-      categories.add(new DebugLogManager.Category(LOGGER_NAME, DebugLogManager.DebugLogLevel.DEBUG));
+      logsCategories.add(new LogCategory(LOGGER_NAME, DebugLogLevel.DEBUG));
     }
-
-    dlm.applyCategories(categories);
-    dlm.saveCategories(categories);
+    logsManager.setCategories(logsCategories);
   }
 }

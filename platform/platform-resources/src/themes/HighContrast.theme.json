@@ -1,10 +1,10 @@
 {
-  "name": "High contrast",
+  "name": "High Contrast",
   "dark": true,
   "author": "JetBrains",
-
-  "editorScheme": "/themes/highContrastScheme.xml",
-
+  "parentTheme": "Darcula",
+  "nameKey": "high.contrast.theme.name",
+  "editorScheme": "High contrast",
   "ui": {
     "*": {
       "background": "#000000",
@@ -142,8 +142,6 @@
       "selectedForeground": "#FFFFFF",
       "selectedBackground": "#0e5d73",
       "inactiveMaskColor": "#000000FF",
-
-      "unselectedBlend": "0.7",
 
       "underlineColor": "#1AEBFF",
       "underlineHeight": 4,
@@ -504,9 +502,12 @@
         "borderInsets": "12,6,12,6",
         "background": "#000000",
         "hoverBackground": "#3333FF",
-        "pressedBackground": "#3333FF"
+        "pressedBackground": "#3333FF",
+        "transparentHoverBackground": "#3333FF"
       }
     },
+
+    "TitlePane.Button.hoverBackground": "#3333FF",
 
     "Window.border" : "1,1,1,1,E6E6E6",
 
@@ -514,12 +515,60 @@
 
     "RunWidget" : {
       "foreground": "#ffffff",
-      "disabledForeground": "#FFFFFF66",
-      "background": "#3369d6",
       "runningBackground": "#599e5e",
       "hoverBackground": "#00000019",
-      "pressedBackground": "#00000028",
-      "separatorColor": "#FFFFFF40"
+      "pressedBackground": "#00000028"
+    },
+    "Profiler": {
+      "ChartSlider": {
+        "foreground": "#FEFEFE",
+        "lineColor": "#1AEBFF"
+      },
+      "CpuChart": {
+        "background": "#6296554D",
+        "borderColor": "#629655",
+        "inactiveBackground": "#62965533",
+        "inactiveBorderColor": "#314B2A",
+        "pointBackground": "#629625",
+        "pointBorderColor": "#FFFFFF"
+      },
+      "MemoryChart": {
+        "background": "#589DF680",
+        "borderColor": "#589DF6",
+        "inactiveBackground": "#589DF633",
+        "inactiveBorderColor": "#2C4E7B",
+        "pointBackground": "#196AD0",
+        "pointBorderColor": "#FFFFFF"
+      },
+      "Timer": {
+        "foreground": "#FFFFFF",
+        "disabledForeground": "#6E6E6E",
+        "background": "#323232"
+      },
+      "LiveChart": {
+        "horizontalAxisColor": "#E6E6E6"
+      }
+    },
+    "FlameGraph.Tooltip": {
+      "scaleBackground": "#555454",
+      "scaleColor": "#402FF6",
+      "foreground": "#FFFFFF"
+    },
+    "LineProfiler" : {
+      "Line" : {
+        "labelBackground" : "#43474A",
+        "foreground" : "#787878",
+        "hoverBackground" : "#4A4E52"
+      },
+      "HotLine" : {
+        "labelBackground" : "#593D41",
+        "foreground" : "#FF5261",
+        "hoverBackground" : "#704745"
+      },
+      "IgnoredLine" : {
+        "labelBackground" : "#43474A",
+        "foreground" : "#5F5F5F"
+      }
     }
   },
 

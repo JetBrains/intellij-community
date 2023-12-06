@@ -3,8 +3,11 @@ package org.intellij.plugins.markdown.ui.preview.html
 
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
+@ApiStatus.Obsolete
+@ApiStatus.Internal
 data class MarkdownCodeFencePluginCacheCollector(val file: VirtualFile) {
   private data class CachedFile(val file: File, val expires: Long)
 

@@ -1,26 +1,32 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logArtifactIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logGroupIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logVersionChanged
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
-import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.validation.*
+import com.intellij.openapi.ui.validation.CHECK_ARTIFACT_ID
+import com.intellij.openapi.ui.validation.CHECK_GROUP_ID
+import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.text.nullize
 import java.util.Comparator.comparing
 import java.util.function.Function
@@ -38,7 +44,6 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
 
   final override val parentProperty = propertyGraph.lazyProperty(::suggestParentByPath)
   final override val groupIdProperty = propertyGraph.lazyProperty(::suggestGroupIdByParent)
-    .bindStorage(GROUP_ID_PROPERTY_NAME)
   final override val artifactIdProperty = propertyGraph.lazyProperty(::suggestArtifactIdByName)
   final override val versionProperty = propertyGraph.lazyProperty(::suggestVersionByParent)
 
@@ -74,24 +79,38 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
         comboBox(parentComboBoxModel, ParentRenderer())
           .bindItem(parentProperty)
           .columns(COLUMNS_MEDIUM)
-          .whenItemSelectedFromUi { logParentChanged(!it.isPresent) }
+          .whenItemSelectedFromUi { logParentChanged(!parent.isPresent) }
+          .onApply { logParentFinished(!parent.isPresent) }
       }.bottomGap(BottomGap.SMALL)
     }
   }
 
   protected fun setupGroupIdUI(builder: Panel) {
-    builder.row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
+    builder.row {
+      layout(RowLayout.LABEL_ALIGNED)
+      label(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label"))
+        .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+        .applyToComponent { icon = AllIcons.General.ContextHelp }
+        .applyToComponent { toolTipText = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.help") }
       textField()
         .bindText(groupIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID)
         .validationInfo { validateGroupId() }
         .whenTextChangedFromUi { logGroupIdChanged() }
+        .onApply {
+          setPersistentValue(GROUP_ID_PROPERTY_NAME, groupId)
+        }
     }
   }
 
   protected fun setupArtifactIdUI(builder: Panel) {
-    builder.row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
+    builder.row {
+      layout(RowLayout.LABEL_ALIGNED)
+      label(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label"))
+        .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+        .applyToComponent { icon = AllIcons.General.ContextHelp }
+        .applyToComponent { toolTipText = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.help", context.presentationName) }
       textField()
         .bindText(artifactIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
@@ -171,10 +190,18 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
       override val location: String = ""
       override val icon: Nothing get() = throw UnsupportedOperationException()
       override val presentationName: String = "<None>"
-      override val groupId: String = "org.example"
+      override val groupId: String get() = getPersistentValue(GROUP_ID_PROPERTY_NAME, "org.example")
       override val version: String = "1.0-SNAPSHOT"
 
       override val isPresent: Boolean = false
+    }
+
+    private fun getPersistentValue(property: String, defaultValue: String): String {
+      return PropertiesComponent.getInstance().getValue(property, defaultValue)
+    }
+
+    private fun setPersistentValue(property: String, value: String?) {
+      return PropertiesComponent.getInstance().setValue(property, value)
     }
   }
 }

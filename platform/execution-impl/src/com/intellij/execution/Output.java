@@ -19,7 +19,7 @@ package com.intellij.execution;
 /**
  * @author oleg
  */
-public class Output {
+public final class Output {
   private final String stdout;
   private final String stderr;
   private final int exitCode;

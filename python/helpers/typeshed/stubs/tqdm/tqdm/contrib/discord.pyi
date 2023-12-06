@@ -15,7 +15,7 @@ class DiscordIO(MonoWorker):
 
 _T = TypeVar("_T")
 
-class tqdm_discord(Generic[_T], tqdm_auto[_T]):
+class tqdm_discord(tqdm_auto[_T], Generic[_T]):
     dio: Incomplete
     @overload
     def __init__(
@@ -23,14 +23,14 @@ class tqdm_discord(Generic[_T], tqdm_auto[_T]):
         iterable: Iterable[_T],
         desc: str | None = ...,
         total: float | None = ...,
-        leave: bool = ...,
+        leave: bool | None = ...,
         file: SupportsWrite[str] | None = ...,
         ncols: int | None = ...,
         mininterval: float = ...,
         maxinterval: float = ...,
         miniters: float | None = ...,
         ascii: bool | str | None = ...,
-        disable: bool = ...,
+        disable: bool | None = ...,
         unit: str = ...,
         unit_scale: bool | float = ...,
         dynamic_ncols: bool = ...,
@@ -51,17 +51,17 @@ class tqdm_discord(Generic[_T], tqdm_auto[_T]):
     @overload
     def __init__(
         self: tqdm_discord[NoReturn],
-        iterable: None = ...,
+        iterable: None = None,
         desc: str | None = ...,
         total: float | None = ...,
-        leave: bool = ...,
+        leave: bool | None = ...,
         file: SupportsWrite[str] | None = ...,
         ncols: int | None = ...,
         mininterval: float = ...,
         maxinterval: float = ...,
         miniters: float | None = ...,
         ascii: bool | str | None = ...,
-        disable: bool = ...,
+        disable: bool | None = ...,
         unit: str = ...,
         unit_scale: bool | float = ...,
         dynamic_ncols: bool = ...,

@@ -14,14 +14,12 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinSourceDepe
     val dependencyNode = findModuleDependencyNode(dependency.kotlinSourceSetModuleId) ?: run create@{
         /* Create module dependency */
         val projectNode = ExternalSystemApiUtil.findParent(this, ProjectKeys.PROJECT) ?: return null
-        val dependencyNode = projectNode.findSourceSetNode(dependency.kotlinSourceSetModuleId) ?: return null
+        val dependencyNode = projectNode.findSourceSetDataNode(dependency.kotlinSourceSetModuleId) ?: return null
 
         val moduleDependencyData = ModuleDependencyData(this.data, dependencyNode.data)
         moduleDependencyData.scope = DependencyScope.COMPILE
         createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
     }
-
-    dependencyNode.kotlinDependencies.add(dependency)
 
     kotlinSourceSetData?.sourceSetInfo?.let { kotlinSourceSetInfo ->
         when (dependency.type) {

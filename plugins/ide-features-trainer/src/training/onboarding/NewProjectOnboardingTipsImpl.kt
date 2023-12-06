@@ -1,24 +1,32 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package training.onboarding
 
+import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.OnboardingTipsInstallationInfo
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil.getDelegateChainRootAction
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -30,6 +38,7 @@ import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import training.learn.LearnBundle
 import training.ui.LearningUiUtil
@@ -44,72 +53,106 @@ private var onboardingGenerationShowDisableMessage: Boolean
   get() = PropertiesComponent.getInstance().getBoolean("onboarding.generation.show.disable.message", true)
   set(value) { PropertiesComponent.getInstance().setValue("onboarding.generation.show.disable.message", value, true) }
 
-private var Project.onboardingTipsDebugPath: String?
+var Project.filePathWithOnboardingTips: String?
+  @ApiStatus.Internal
   get() = PropertiesComponent.getInstance(this).getValue("onboarding.tips.debug.path")
+  @ApiStatus.Internal
   set(value) { PropertiesComponent.getInstance(this).setValue("onboarding.tips.debug.path", value) }
+
+
+val renderedOnboardingTipsEnabled: Boolean
+  @ApiStatus.Internal
+  get() = Registry.`is`("doc.onboarding.tips.render")
 
 private val RESET_TOOLTIP_SAMPLE_TEXT = Key.create<String>("reset.tooltip.sample.text")
 
 internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
                                       IdeActions.ACTION_SHOW_INTENTION_ACTIONS,
                                       IdeActions.ACTION_DEFAULT_RUNNER,
+                                      "RunClass",
                                       IdeActions.ACTION_DEFAULT_DEBUGGER,
+                                      "DebugClass",
                                       IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)
+
+// The presence of this data means that we need to install onboarding tips on the first editor in the new created project
+private val onboardingTipsInstallationInfoKey = Key<OnboardingTipsInstallationInfo>("onboardingTipsInstallationInfo")
 
 private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   @RequiresEdt
-  override fun installTips(project: Project, simpleSampleText: String) {
-    OnboardingTipsStatistics.logOnboardingTipsInstalled(project, onboardingGenerationNumber)
+  override fun installTips(project: Project, info: OnboardingTipsInstallationInfo) {
+    project.putUserData(onboardingTipsInstallationInfoKey, info)
+  }
+}
 
-    // Set this option explicitly, because its default depends on number of empty projects.
-    PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, true)
+private fun installTipsInFirstEditor(editor: Editor, project: Project, info: OnboardingTipsInstallationInfo) {
+  OnboardingTipsStatistics.logOnboardingTipsInstalled(project, onboardingGenerationNumber)
 
-    val fileEditorManager = FileEditorManager.getInstance(project)
+  // Set this option explicitly, because its default depends on the number of empty projects.
+  PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, true)
 
-    val textEditor = fileEditorManager.selectedEditor as? TextEditor ?: return
+  val file = editor.virtualFile ?: return
 
-    val document = textEditor.editor.document
-    // need to generalize this code in the future
-    val offset = document.charsSequence.indexOf("System.out.println").takeIf { it >= 0 } ?: return
+  val offset = info.offsetForBreakpoint(editor.document.charsSequence)
 
-    val file = textEditor.file
+  if (offset != null) {
     val position = XDebuggerUtil.getInstance().createPositionByOffset(file, offset) ?: return
 
-    XBreakpointUtil.toggleLineBreakpoint(project, position, textEditor.editor, false, false, true)
+    XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, true)
+  }
 
-    val pathToRunningFile = file.path
-    project.onboardingTipsDebugPath = pathToRunningFile
+  val pathToRunningFile = file.path
+  project.filePathWithOnboardingTips = pathToRunningFile
+  installDebugListener(project, pathToRunningFile)
+  installActionListener(project, pathToRunningFile)
+
+  val number = onboardingGenerationNumber
+  if (number != 0 && onboardingGenerationShowDisableMessage) {
+    RESET_TOOLTIP_SAMPLE_TEXT.set(file, info.simpleSampleText)
+  }
+  onboardingGenerationNumber = number + 1
+}
+
+private class InstallOnboardingTooltip : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    val pathToRunningFile = project.filePathWithOnboardingTips ?: return
     installDebugListener(project, pathToRunningFile)
-    installActionsListener(project, pathToRunningFile)
-
-    val number = onboardingGenerationNumber
-    if (number != 0 && onboardingGenerationShowDisableMessage) {
-      RESET_TOOLTIP_SAMPLE_TEXT.set(file, simpleSampleText)
-    }
-    onboardingGenerationNumber = number + 1
   }
 }
 
-private class InstallOnboardingTooltip : StartupActivity {
-  override fun runActivity(project: Project) {
-    val pathToRunningFile = project.onboardingTipsDebugPath
-    if (pathToRunningFile != null) {
-      installDebugListener(project, pathToRunningFile)
+private class InstallOnboardingTipsEditorListener : EditorFactoryListener {
+  override fun editorCreated(event: EditorFactoryEvent) {
+    val editor = event.editor
+    val project = editor.project ?: return
+
+    val info = onboardingTipsInstallationInfoKey.get(project)
+
+    if (info != null) {
+      if (editor.virtualFile?.name != info.fileName) return
+      project.putUserData(onboardingTipsInstallationInfoKey, null)
+      installTipsInFirstEditor(editor, project, info)
+    } else {
+      val pathToRunningFile = project.filePathWithOnboardingTips ?: return
+      if (editor.virtualFile?.path != pathToRunningFile) return
     }
+    DocRenderManager.setDocRenderingEnabled(editor, true)
   }
 }
 
-private fun installActionsListener(project: Project, pathToRunningFile: @NonNls String) {
+private fun installActionListener(project: Project, pathToRunningFile: @NonNls String) {
   val connection = project.messageBus.connect()
   val actionsMapReported = promotedActions.associateWith { false }.toMutableMap()
   connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
     override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-      val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-      if (editor.virtualFile.path != pathToRunningFile) return
-      val actionId = ActionManager.getInstance().getId(action)
-      val reported = actionsMapReported[actionId] ?: return
+      val virtualFile = event.getData(CommonDataKeys.EDITOR)?.virtualFile ?: return
+      if (virtualFile.path != pathToRunningFile) {
+        return
+      }
+
+      val original = getDelegateChainRootAction(action)
+      val actionId = ActionManager.getInstance().getId(original) ?: return
+      val reported = actionsMapReported.get(actionId) ?: return
       if (!reported) {
-        actionsMapReported[actionId] = true
+        actionsMapReported.put(actionId, true)
         // usage count increased in the beforeActionPerformed listener,
         // so here we use afterActionPerformed event to avoid question about listeners order
         val usageCount = service<ActionsLocalSummary>().getActionStatsById(actionId)?.usageCount ?: return
@@ -146,7 +189,6 @@ private fun installDebugListener(project: Project, pathToRunningFile: @NonNls St
                   .withHeader(LearnBundle.message("onboarding.debug.got.it.header"))
                   .withPosition(Balloon.Position.above)
                   .show(targetComponent, GotItTooltip.TOP_MIDDLE)
-                project.onboardingTipsDebugPath = null
                 connection.disconnect()
               }
             }
@@ -169,6 +211,7 @@ private class DoNotGenerateTipsNotification : EditorNotificationProvider {
 
           PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, false)
 
+          project.filePathWithOnboardingTips = null
           val document = (editor as? TextEditor)?.editor?.document ?: return@createActionLabel
           DocumentUtil.writeInRunUndoTransparentAction {
             document.setText(simpleSampleText)

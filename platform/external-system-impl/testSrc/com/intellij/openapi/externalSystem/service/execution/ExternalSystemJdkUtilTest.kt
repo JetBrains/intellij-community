@@ -1,17 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.JavaDependentSdkType
-import com.intellij.openapi.projectRoots.impl.MockSdk
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.RunAll
@@ -21,7 +19,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.lang.JavaVersion
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
@@ -129,10 +126,17 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
   @Test
   fun testGetAvailableJdkPrefersProjectSDKDependency() {
+    SdkType.EP_NAME.point.registerExtension(TestJavaDependentSdkType.getInstance(), testFixture.testRootDisposable)
+
     val sdk8 = createMockJdk(JavaVersion.compose(8))
     val sdk9 = createMockJdk(JavaVersion.compose(9))
 
-    val dependentSDK = TestJavaDependentSdk(sdk8)
+    val dependentSDK = ProjectJdkTable.getInstance().createSdk("TestJavaDependentSdk", TestJavaDependentSdkType.getInstance())
+    val sdkModificator = dependentSDK.sdkModificator
+    sdkModificator.versionString = "1.0"
+    sdkModificator.homePath = "fake/path"
+    sdkModificator.sdkAdditionalData = TestJavaDependentAdditionalData(sdk8.name)
+    ApplicationManager.getApplication().runWriteAction { sdkModificator.commitChanges() }
 
     WriteAction.run<Throwable> {
       with(ProjectJdkTable.getInstance()) {
@@ -168,11 +172,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
   }
 }
 
-class TestJavaDependentSdk(val sdk: Sdk) : MockSdk("TestJavaDependentSdk",
-                                                   "fake/path",
-                                                   "1.0",
-                                                   MultiMap.empty<OrderRootType, VirtualFile>(),
-                                                   TestJavaDependentSdkType.getInstance())
+class TestJavaDependentAdditionalData(val dependentSdkName: String) : SdkAdditionalData
 
 class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName) {
   companion object {
@@ -201,7 +201,9 @@ class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName)
   }
 
   override fun getBinPath(sdk: Sdk): String {
-    return (sdk as? TestJavaDependentSdk)?.let { JavaSdk.getInstance().getBinPath(it.sdk) }!!
+    val additionalData = sdk.sdkAdditionalData as TestJavaDependentAdditionalData
+    val dependentSdk = ProjectJdkTable.getInstance().findJdk(additionalData.dependentSdkName)!!
+    return JavaSdk.getInstance().getBinPath(dependentSdk)
   }
 
   override fun getToolsPath(sdk: Sdk): String {
@@ -213,7 +215,10 @@ class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName)
   }
 
   override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    additional.setAttribute("dependentSdkName", (additionalData as TestJavaDependentAdditionalData).dependentSdkName)
   }
 
+  override fun loadAdditionalData(additional: Element): SdkAdditionalData {
+    return TestJavaDependentAdditionalData(additional.getAttributeValue("dependentSdkName") ?: "")
+  }
 }

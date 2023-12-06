@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.CtrlMouseAction;
 import com.intellij.codeInsight.navigation.CtrlMouseData;
-import com.intellij.codeInsight.navigation.CtrlMouseInfo;
 import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil;
 import com.intellij.find.actions.ShowUsagesAction;
@@ -17,7 +16,6 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -35,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +69,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
   }
 
   static @NotNull List<@NotNull EventPair<?>> getCurrentEventData() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return Objects.requireNonNull(ourCurrentEventData);
   }
 
@@ -78,12 +77,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
   @Override
   protected CodeInsightActionHandler getHandler() {
     return GotoDeclarationOrUsageHandler2.INSTANCE;
-  }
-
-  @Deprecated
-  @Override
-  public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    return GotoDeclarationOrUsageHandler2.getCtrlMouseInfo(editor, file, offset);
   }
 
   @Override
@@ -107,7 +100,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     if (DumbService.getInstance(project).isDumb()) {
       AnAction action = ActionManager.getInstance().getAction(ShowUsagesAction.ID);
       String name = action.getTemplatePresentation().getText();
-      DumbService.getInstance(project).showDumbModeNotification(ActionUtil.getUnavailableMessage(name, false));
+      DumbService.getInstance(project).showDumbModeNotificationForAction(ActionUtil.getUnavailableMessage(name, false),
+                                                                         ShowUsagesAction.ID);
     }
     else {
       RelativePoint popupPosition = point != null ? point : JBPopupFactory.getInstance().guessBestPopupLocation(editor);

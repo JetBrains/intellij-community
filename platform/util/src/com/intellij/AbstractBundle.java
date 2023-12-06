@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
@@ -77,7 +77,8 @@ public class AbstractBundle {
   }
 
   public @NotNull Supplier<@Nls String> getLazyMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    Object[] actualParams = params.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : params; // do not capture new empty Object[] arrays here
+    // do not capture new empty Object[] arrays here
+    Object[] actualParams = params.length == 0 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : params;
     return () -> getMessage(key, actualParams);
   }
 
@@ -186,8 +187,8 @@ public class AbstractBundle {
   // https://docs.oracle.com/javase/8/docs/api/java/util/PropertyResourceBundle.html for more details
 
   // For all Java version - use getResourceAsStream instead of "getResource -> openConnection" for performance reasons
-  private final static class MyResourceControl extends ResourceBundle.Control {
-    final static MyResourceControl INSTANCE = new MyResourceControl();
+  private static final class MyResourceControl extends ResourceBundle.Control {
+    static final MyResourceControl INSTANCE = new MyResourceControl();
 
     @Override
     public List<String> getFormats(String baseName) {

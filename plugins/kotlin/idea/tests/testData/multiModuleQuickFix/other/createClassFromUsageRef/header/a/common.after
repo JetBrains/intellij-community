@@ -1,4 +1,5 @@
 // "Create class 'ClassG'" "true"
+// IGNORE_K2
 
 package a
 

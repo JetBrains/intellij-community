@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -9,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -93,7 +95,8 @@ public final class DebuggerUIUtil {
   public static RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
     if (line > -1) {
       Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
-      if (editor.getScrollingModel().getVisibleArea().contains(p)) {
+      boolean isRemoteEditor = !ClientId.isLocal(ClientEditorManager.getClientId(editor));
+      if (isRemoteEditor || editor.getScrollingModel().getVisibleArea().contains(p)) {
         return new RelativePoint(editor.getContentComponent(), p);
       }
     }
@@ -132,11 +135,8 @@ public final class DebuggerUIUtil {
                                     @NotNull MouseEvent event,
                                     @NotNull Project project,
                                     @Nullable Editor editor) {
-    if (evaluator instanceof CustomComponentEvaluator) {
-      JPanel panel = new JPanel(new CardLayout());
-      final MultiContentTypeCallback callback = new MultiContentTypeCallback(panel, (CustomComponentEvaluator)evaluator, project);
-      showValuePopup(event, project, editor, panel, callback::setObsolete);
-      evaluator.startEvaluation(callback); /*to make it really cancellable*/
+    if (evaluator instanceof CustomComponentEvaluator customComponentEvaluator) {
+      customComponentEvaluator.show(event, project, editor);
     }
     else {
       EditorTextField textArea = createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
@@ -257,7 +257,7 @@ public final class DebuggerUIUtil {
                                                   @Nullable final Point point,
                                                   final JComponent component,
                                                   final boolean showAllOptions,
-                                                  final XBreakpoint breakpoint) {
+                                                  @NotNull final XBreakpoint breakpoint) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     final XLightBreakpointPropertiesPanel propertiesPanel =
       new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
@@ -434,66 +434,6 @@ public final class DebuggerUIUtil {
       AppUIUtil.invokeOnEdt(() -> {
         myTextArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
         myTextArea.setText(errorMessage);
-      });
-    }
-
-    private void setObsolete() {
-      myObsolete.set(true);
-    }
-
-    @Override
-    public boolean isObsolete() {
-      return myObsolete.get();
-    }
-  }
-
-  private static class MultiContentTypeCallback implements XFullValueEvaluator.XFullValueEvaluationCallback {
-    private final AtomicBoolean myObsolete = new AtomicBoolean(false);
-    private final JPanel myPanel;
-    private CustomComponentEvaluator myEvaluator;
-
-    private Project myProject;
-
-    MultiContentTypeCallback(final JPanel panel, CustomComponentEvaluator evaluator, Project project) {
-      myPanel = panel;
-      myEvaluator = evaluator;
-      myProject = project;
-    }
-
-    @Override
-    public void evaluated(@NotNull final String fullValue) {
-      evaluated(fullValue, null);
-    }
-
-    @Override
-    public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
-      AppUIUtil.invokeOnEdt(() -> {
-        try {
-          myPanel.removeAll();
-          JComponent component = myEvaluator.createComponent(fullValue);
-          if (component == null) {
-            EditorTextField textArea = createTextViewer(fullValue, myProject);
-            if (font != null) {
-              textArea.setFont(font);
-            }
-            component = textArea;
-          }
-          myPanel.add(component);
-          myPanel.revalidate();
-          myPanel.repaint();
-        } catch (Exception e) {
-          errorOccurred(e.toString());
-        }
-      });
-    }
-
-    @Override
-    public void errorOccurred(@NotNull final String errorMessage) {
-      AppUIUtil.invokeOnEdt(() -> {
-        myPanel.removeAll();
-        EditorTextField textArea = createTextViewer(errorMessage, myProject);
-        textArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
-        myPanel.add(textArea);
       });
     }
 

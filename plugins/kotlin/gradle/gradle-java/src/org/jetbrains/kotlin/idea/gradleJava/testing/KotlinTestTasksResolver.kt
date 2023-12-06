@@ -13,9 +13,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Consumer
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
@@ -80,7 +80,7 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
         ideModule.children.filter { it.data in replacementMap }.forEach { it.clear(true) }
         replacementMap.values.forEach { ideModule.createChild(ProjectKeys.TASK, it) }
 
-        return originalTaskData.mapTo(arrayListOf<TaskData>()) { replacementMap[it] ?: it }
+        return originalTaskData.mapTo(arrayListOf()) { replacementMap[it] ?: it }
     }
 
     override fun enhanceTaskProcessing(
@@ -91,9 +91,9 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
         if (!Registry.`is`(ENABLED_REGISTRY_KEY))
             return
 
-        val testExecutionExpected = parameters[GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY]
+        val isRunAsTest = parameters[GradleProjectResolverExtension.IS_RUN_AS_TEST_KEY]
 
-        if (java.lang.Boolean.valueOf(testExecutionExpected)) {
+        if (java.lang.Boolean.valueOf(isRunAsTest)) {
             try {
                 val addTestListenerScript = javaClass
                     .getResourceAsStream("/org/jetbrains/kotlin/idea/gradle/testing/addKotlinMppTestListener.groovy")

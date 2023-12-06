@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("DebuggerUtil")
 
@@ -6,7 +6,9 @@ package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.StackFrameProxyImpl
@@ -14,8 +16,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionSymbol
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -34,8 +35,6 @@ import org.jetbrains.kotlin.psi.*
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
-
-const val CONTEXT_RECEIVER_PREFIX = "_context_receiver_"
 
 fun Location.isInKotlinSources(): Boolean {
     return declaringType().isInKotlinSources()
@@ -68,9 +67,20 @@ fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STR
 fun ReferenceType.containsKotlinStrataAsync(): CompletableFuture<Boolean> =
     DebuggerUtilsAsync.availableStrata(this).thenApply { it.contains(KOTLIN_STRATA_NAME) }
 
-fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debugProcess: DebugProcessImpl): Boolean {
-    val visibleVariables = location.visibleVariables(debugProcess)
-    val markerLocalVariables = visibleVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
+fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debugProcess: DebugProcessImpl): Boolean =
+  isInlinedArgument(location.visibleVariables(debugProcess), inlineArgument)
+
+/**
+ * Check whether [inlineArgument] is a lambda that is inlined in bytecode
+ * by looking for a marker inline variable corresponding to this lambda.
+ *
+ * For crossinline lambdas inlining depends on whether the lambda is passed further to a non-inline context.
+ */
+fun isInlinedArgument(inlineArgument: KtFunction, location: Location): Boolean =
+  isInlinedArgument(location.method().safeVariables() ?: emptyList(), inlineArgument)
+
+private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtFunction): Boolean {
+    val markerLocalVariables = localVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
 
     return runReadAction {
         val lambdaOrdinal = lambdaOrdinalByArgument(inlineArgument)
@@ -93,32 +103,31 @@ fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debug
 
 fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) -> T?): T? {
     var result: T? = null
-    val command: DebuggerCommandImpl = object : DebuggerCommandImpl() {
-        override fun action() {
-            result = f(debuggerContext)
-        }
+    if (DebuggerManagerThreadImpl.isManagerThread()) {
+        managerThread.invoke(object : DebuggerCommandImpl() {
+            override fun action() {
+                result = f(debuggerContext)
+            }
+        })
     }
-
-    when {
-        DebuggerManagerThreadImpl.isManagerThread() ->
-            managerThread.invoke(command)
-        else ->
-            managerThread.invokeAndWait(command)
+    else {
+        managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debuggerContext) {
+            override fun threadAction(suspendContext: SuspendContextImpl) {
+                result = f(debuggerContext)
+            }
+        })
     }
-
     return result
 }
 
 private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
     val className = ClassNameCalculator.getClassName(elementAt) ?: return 0
-    return className.substringAfterLast("$").toInt()
+    return className.substringAfterLast("$").toIntOrNull() ?: 0
 }
 
-private fun functionNameByArgument(elementAt: KtFunction): String? =
-    analyze(elementAt) {
-        val parentCall = KtPsiUtil.getParentCallIfPresent(elementAt) as? KtCallExpression ?: return null
-        val call = parentCall.resolveCall().successfulFunctionCallOrNull() ?: return null
-        val function = call.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
+private fun functionNameByArgument(argument: KtFunction): String? =
+    analyze(argument) {
+        val function = getFunctionSymbol(argument) as? KtFunctionSymbol ?: return null
         return function.name.asString()
     }
 

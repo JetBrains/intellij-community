@@ -8,88 +8,80 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
 
-class VcsStatisticsCollector : CounterUsagesCollector() {
-  companion object {
-    @JvmField
-    val GROUP = EventLogGroup("vcs", 12)
+object VcsStatisticsCollector : CounterUsagesCollector() {
+  val GROUP = EventLogGroup("vcs", 13)
 
-    @JvmField
-    val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
+  @JvmField
+  val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
+  val FETCH_ACTIVITY = GROUP.registerIdeActivity("fetch")
+  val COMMIT_ACTIVITY = GROUP.registerIdeActivity("commit")
 
-    @JvmField
-    val FETCH_ACTIVITY = GROUP.registerIdeActivity("fetch")
+  private val WAS_UPDATING_BEFORE = EventFields.Boolean("wasUpdatingBefore")
+  private val CHANGES_DELTA = EventFields.Int("changesDelta")
+  private val UNVERSIONED_DELTA = EventFields.Int("unversionedDelta")
+  private val CHANGES_VIEW_REFRESH = GROUP.registerVarargEvent("changes.view.refresh", WAS_UPDATING_BEFORE, CHANGES_DELTA,
+                                                               UNVERSIONED_DELTA)
 
-    @JvmField
-    val COMMIT_ACTIVITY = GROUP.registerIdeActivity("commit")
+  val NON_MODAL_COMMIT_STATE_CHANGED = GROUP.registerEvent("non.modal.commit.state.changed", EventFields.Enabled)
 
-    private val WAS_UPDATING_BEFORE = EventFields.Boolean("wasUpdatingBefore")
-    private val CHANGES_DELTA = EventFields.Int("changesDelta")
-    private val UNVERSIONED_DELTA = EventFields.Int("unversionedDelta")
-    private val CHANGES_VIEW_REFRESH = GROUP.registerVarargEvent("changes.view.refresh", WAS_UPDATING_BEFORE, CHANGES_DELTA,
-                                                                 UNVERSIONED_DELTA)
+  val CLONE = GROUP.registerEvent("clone.invoked", EventFields.Class("clone_dialog_extension"))
 
-    val NON_MODAL_COMMIT_STATE_CHANGED = GROUP.registerEvent("non.modal.commit.state.changed", EventFields.Enabled)
-    val NON_MODAL_COMMIT_PROMOTION_SHOWN = GROUP.registerEvent("non.modal.commit.promotion.shown")
-    val NON_MODAL_COMMIT_PROMOTION_ACCEPTED = GROUP.registerEvent("non.modal.commit.promotion.accepted")
-    val NON_MODAL_COMMIT_PROMOTION_REJECTED = GROUP.registerEvent("non.modal.commit.promotion.rejected")
+  @JvmField
+  val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
 
-    @JvmField
-    val CLONE = GROUP.registerEvent("clone.invoked", EventFields.Class("clone_dialog_extension"))
+  private val VCS_FIELD = EventFields.StringValidatedByEnum("vcs", "vcs")
+  private val IS_FULL_REFRESH_FIELD = EventFields.Boolean("is_full_refresh")
+  private val CLM_REFRESH = GROUP.registerIdeActivity(activityName = "clm.refresh",
+                                                      startEventAdditionalFields = arrayOf(VCS_FIELD, IS_FULL_REFRESH_FIELD))
 
-    @JvmField
-    val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
+  @JvmStatic
+  fun logRefreshActionPerformed(project: Project,
+                                changesBefore: Collection<Change>,
+                                changesAfter: Collection<Change>,
+                                unversionedBefore: Collection<FilePath>,
+                                unversionedAfter: Collection<FilePath>,
+                                wasUpdatingBefore: Boolean) {
+    val changesDelta = computeDelta(changesBefore, changesAfter)
+    val unversionedDelta = computeDelta(unversionedBefore, unversionedAfter)
 
-    private val VCS_FIELD = EventFields.StringValidatedByEnum("vcs", "vcs")
-    private val IS_FULL_REFRESH_FIELD = EventFields.Boolean("is_full_refresh")
-    private val CLM_REFRESH = GROUP.registerIdeActivity(activityName = "clm.refresh",
-                                                        startEventAdditionalFields = arrayOf(VCS_FIELD, IS_FULL_REFRESH_FIELD))
+    CHANGES_VIEW_REFRESH.log(project,
+                             WAS_UPDATING_BEFORE.with(wasUpdatingBefore),
+                             CHANGES_DELTA.with(changesDelta),
+                             UNVERSIONED_DELTA.with(unversionedDelta))
+  }
 
-    @JvmStatic
-    fun logRefreshActionPerformed(project: Project,
-                                  changesBefore: Collection<Change>,
-                                  changesAfter: Collection<Change>,
-                                  unversionedBefore: Collection<FilePath>,
-                                  unversionedAfter: Collection<FilePath>,
-                                  wasUpdatingBefore: Boolean) {
-      val changesDelta = computeDelta(changesBefore, changesAfter)
-      val unversionedDelta = computeDelta(unversionedBefore, unversionedAfter)
-
-      CHANGES_VIEW_REFRESH.log(project,
-                               WAS_UPDATING_BEFORE.with(wasUpdatingBefore),
-                               CHANGES_DELTA.with(changesDelta),
-                               UNVERSIONED_DELTA.with(unversionedDelta))
-    }
-
-    @JvmStatic
-    fun logClmRefresh(project: Project, vcs: AbstractVcs, everythingDirty: Boolean): StructuredIdeActivity {
-      return CLM_REFRESH.started(project) {
-        listOf(VCS_FIELD.with(vcs.name),
-               IS_FULL_REFRESH_FIELD.with(everythingDirty))
-      }
-    }
-
-    private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {
-      val beforeSet = before.toHashSet()
-      val afterSet = after.toHashSet()
-
-      var result = 0
-      for (value in beforeSet) {
-        if (!afterSet.contains(value)) {
-          result++
-        }
-      }
-      for (value in afterSet) {
-        if (!beforeSet.contains(value)) {
-          result++
-        }
-      }
-      return result
+  @JvmStatic
+  fun logClmRefresh(project: Project, vcs: AbstractVcs, everythingDirty: Boolean): StructuredIdeActivity {
+    return CLM_REFRESH.started(project) {
+      listOf(VCS_FIELD.with(vcs.name),
+             IS_FULL_REFRESH_FIELD.with(everythingDirty))
     }
   }
 
-  override fun getGroup(): EventLogGroup {
-    return GROUP
+  fun logNonModalCommitStateChanged(project: Project?) {
+    NON_MODAL_COMMIT_STATE_CHANGED.log(project, VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES)
   }
+
+  private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {
+    val beforeSet = before.toHashSet()
+    val afterSet = after.toHashSet()
+
+    var result = 0
+    for (value in beforeSet) {
+      if (!afterSet.contains(value)) {
+        result++
+      }
+    }
+    for (value in afterSet) {
+      if (!beforeSet.contains(value)) {
+        result++
+      }
+    }
+    return result
+  }
+
+  override fun getGroup(): EventLogGroup = GROUP
 }

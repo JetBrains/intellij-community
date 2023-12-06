@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.lang.LanguageExtension;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated V2 implementation doesn't allow customization of the tool window in plugins.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface DocToolWindowManager {
 
   DocToolWindowLanguageManager LANGUAGE_MANAGER = new DocToolWindowLanguageManager();

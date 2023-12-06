@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ComponentStoreImpl
@@ -8,8 +8,8 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.platform.util.progress.rawProgressReporter
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
 
@@ -26,7 +26,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     }
     else {
       LOG.info("Wait for auto sync future")
-      coroutineContext.progressSink?.text(IcsBundle.message("autosync.progress.text"))
+      coroutineContext.rawProgressReporter?.text(IcsBundle.message("autosync.progress.text"))
       autoFuture.join()
     }
   }
@@ -100,7 +100,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
 
     val updater = repositoryManager.fetch()
     // we merge in EDT non-modal to ensure that new settings will be properly applied
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       catchAndLog {
         val updateResult = updater.merge()
         if (!app.isDisposed &&

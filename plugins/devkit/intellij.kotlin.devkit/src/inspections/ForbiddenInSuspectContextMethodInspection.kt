@@ -5,14 +5,12 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.toArray
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
+import org.jetbrains.idea.devkit.util.isInspectionForBlockingContextAvailable
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
@@ -29,9 +27,10 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
-private val REQUIRES_SUSPEND_CONTEXT_ANNOTATION = RequiresBlockingContext::class.java.canonicalName
 private const val PROGRESS_MANAGER_CHECKED_CANCELED = "com.intellij.openapi.progress.ProgressManager.checkCanceled"
 private const val APPLICATION_INVOKE_AND_WAIT = "com.intellij.openapi.application.Application.invokeAndWait"
 private const val INVOKE_AND_WAIT_IF_NEEDED = "com.intellij.openapi.application.invokeAndWaitIfNeeded"
@@ -43,7 +42,6 @@ private const val RESTRICTS_SUSPENSION = "kotlin.coroutines.RestrictsSuspension"
 private const val INTELLIJ_EDT_DISPATCHER = "com.intellij.openapi.application.EDT"
 private const val LAUNCH = "kotlinx.coroutines.launch"
 
-private val requiresSuspendContextAnnotation = FqName(REQUIRES_SUSPEND_CONTEXT_ANNOTATION)
 private val progressManagerCheckedCanceledName = FqName(PROGRESS_MANAGER_CHECKED_CANCELED)
 private val applicationInvokeAndWaitName = FqName(APPLICATION_INVOKE_AND_WAIT)
 private val invokeAndWaitIfNeeded = FqName(INVOKE_AND_WAIT_IF_NEEDED)
@@ -62,12 +60,12 @@ private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
 
 internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    if (!DevKitInspectionUtil.isAllowed(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
-
-    val facade = JavaPsiFacade.getInstance(holder.project)
-    if (facade.findClass(REQUIRES_SUSPEND_CONTEXT_ANNOTATION, holder.file.resolveScope) == null) return PsiElementVisitor.EMPTY_VISITOR
-
-    return createFileVisitor(holder)
+    return if (isInspectionForBlockingContextAvailable(holder)) {
+      createFileVisitor(holder)
+    }
+    else {
+      PsiElementVisitor.EMPTY_VISITOR
+    }
   }
 
   private fun createFileVisitor(holder: ProblemsHolder): PsiElementVisitor {
@@ -100,19 +98,19 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
     }
   }
 
-  class BlockingContextMethodsCallsVisitor(
+  private class BlockingContextMethodsCallsVisitor(
     private val holder: ProblemsHolder,
-  ) : KtTreeVisitorVoid() {
+  ) : BlockingContextFunctionBodyVisitor() {
     private val visitedSymbols = mutableSetOf<KtSymbol>()
     private var callingElement: KtCallExpression? = null
 
     override fun visitCallExpression(expression: KtCallExpression) {
       analyze(expression) {
-        val functionCall = expression.resolveCall().singleFunctionCallOrNull()
+        val functionCall = expression.resolveCall()?.singleFunctionCallOrNull()
         val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
         if (calledSymbol !is KtNamedSymbol) return
-        val hasAnnotation = calledSymbol.hasAnnotation(ClassId.topLevel(requiresSuspendContextAnnotation))
+        val hasAnnotation = calledSymbol.hasAnnotation(requiresBlockingContextAnnotationId)
 
         if (!hasAnnotation) {
           if (calledSymbol is KtFunctionSymbol) {
@@ -121,7 +119,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
           if (calledSymbol is KtFunctionSymbol && calledSymbol.isInline) {
             checkInlineLambdaArguments(functionCall)
           }
-          return
+          return super.visitCallExpression(expression)
         }
 
         when (calledSymbol.callableIdIfNonLocal?.asSingleFqName()) {
@@ -164,19 +162,6 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
               *generalFixes()
             )
           }
-        }
-      }
-    }
-
-    private fun checkInlineLambdaArguments(call: KtFunctionCall<*>) {
-      for ((psi, descriptor) in call.argumentMapping) {
-        if (
-          descriptor.returnType is KtFunctionalType &&
-          !descriptor.symbol.isCrossinline &&
-          !descriptor.symbol.isNoinline &&
-          psi is KtLambdaExpression
-        ) {
-          psi.bodyExpression?.accept(this)
         }
       }
     }
@@ -227,14 +212,6 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
           add(ReplaceInvokeLaterWithLaunchQuickFix(callExpression))
         }
       }.toArray(LocalQuickFix.EMPTY_ARRAY)
-    }
-
-    override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression): Unit = Unit
-
-    override fun visitDeclaration(dcl: KtDeclaration) {
-      if (dcl is KtVariableDeclaration) {
-        dcl.initializer?.accept(this)
-      }
     }
 
     private class ReplaceProgressManagerCheckCanceledQuickFix(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
@@ -362,8 +339,6 @@ private fun replaceMethodInCallWithLambda(callExpression: KtCallExpression, newC
 
   ShortenReferencesFacility.getInstance().shorten(resultExpression as KtElement)
 }
-
-private fun extractElementToHighlight(expression: KtCallExpression): KtElement = expression.getCallNameExpression() ?: expression
 
 private fun isImported(name: FqName, file: KtFile): Boolean {
   if (name.parent() == file.packageFqName) return true

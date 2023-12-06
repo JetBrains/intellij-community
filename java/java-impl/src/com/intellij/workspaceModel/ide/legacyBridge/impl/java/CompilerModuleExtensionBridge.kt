@@ -1,26 +1,26 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.legacyBridge.impl.java
 
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.roots.ModuleExtension
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.workspaceModel.ide.toVirtualFileUrl
-import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
-class CompilerModuleExtensionBridge(
+internal class CompilerModuleExtensionBridge(
   private val module: ModuleBridge,
   private val entityStorage: VersionedEntityStorage,
   private val diff: MutableEntityStorage?
@@ -64,9 +64,8 @@ class CompilerModuleExtensionBridge(
 
   override fun getModifiableModel(writable: Boolean): ModuleExtension = throw UnsupportedOperationException()
 
-  override fun commit() = Unit
+  override fun commit(): Unit = Unit
   override fun isChanged(): Boolean = changed
-  override fun dispose() = Unit
 
   private fun updateJavaSettings(updater: JavaModuleSettingsEntity.Builder.() -> Unit) {
     if (diff == null) {
@@ -77,15 +76,15 @@ class CompilerModuleExtensionBridge(
                        ?: error("Could not find entity for $module, ${module.hashCode()}, diff: ${entityStorage.base}")
     val moduleSource = moduleEntity.entitySource
 
-    val oldJavaSettings = javaSettings ?: diff.addJavaModuleSettingsEntity(
-      inheritedCompilerOutput = true,
-      excludeOutput = true,
-      compilerOutputForTests = null,
-      compilerOutput = null,
-      languageLevelId = null,
-      module = moduleEntity,
-      source = moduleSource
-    )
+    val oldJavaSettings = javaSettings ?: (diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true,
+                                                                                   excludeOutput = true,
+                                                                                   entitySource = moduleSource
+    ) {
+      compilerOutput = null
+      compilerOutputForTests = null
+      languageLevelId = null
+      module = moduleEntity
+    })
 
     diff.modifyEntity(JavaModuleSettingsEntity.Builder::class.java, oldJavaSettings, updater)
     changed = true
@@ -158,7 +157,8 @@ class CompilerModuleExtensionBridge(
   class Factory : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
-                                 diff: MutableEntityStorage?): CompilerModuleExtensionBridge =
-      CompilerModuleExtensionBridge(module, entityStorage, diff)
+                                 diff: MutableEntityStorage?): CompilerModuleExtensionBridge {
+      return CompilerModuleExtensionBridge(module = module, entityStorage = entityStorage, diff = diff)
+    }
   }
 }

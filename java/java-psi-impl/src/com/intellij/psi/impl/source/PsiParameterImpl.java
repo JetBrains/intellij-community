@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -17,7 +17,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
@@ -26,7 +25,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.Arrays;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
   private volatile Reference<PsiType> myCachedType;
@@ -129,7 +131,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   public @NotNull PsiType getType() {
     PsiParameterStub stub = getStub();
     if (stub != null) {
-      PsiType type = SoftReference.dereference(myCachedType);
+      PsiType type = dereference(myCachedType);
       if (type == null) {
         type = JavaSharedImplUtil.createTypeFromStub(this, stub.getType());
         myCachedType = new SoftReference<>(type);
@@ -272,6 +274,9 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   public @NotNull SearchScope getUseScope() {
+    if (isUnnamed()) {
+      return LocalSearchScope.EMPTY;
+    }
     PsiElement declarationScope = getDeclarationScope();
     return new LocalSearchScope(declarationScope);
   }

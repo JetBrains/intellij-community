@@ -29,7 +29,10 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES: Boolean = false,
     var MERGE_LST_GUTTER_MARKERS: Boolean = true,
     var ENABLE_ALIGNING_CHANGES_MODE: Boolean = false
-  )
+  ) {
+    @Transient
+    val eventDispatcher: EventDispatcher<TextDiffSettings.Listener> = EventDispatcher.create(TextDiffSettings.Listener::class.java)
+  }
 
   data class PlaceSettings(
     // Diff settings
@@ -58,16 +61,21 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     constructor() : this(SharedSettings(), PlaceSettings(), null)
 
     fun addListener(listener: Listener, disposable: Disposable) {
+      SHARED_SETTINGS.eventDispatcher.addListener(listener, disposable)
       PLACE_SETTINGS.eventDispatcher.addListener(listener, disposable)
     }
 
     // Presentation settings
 
     var isEnableSyncScroll: Boolean = true
+      get()      = field
+      set(value) { field = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.scrollingChanged() }
 
     var isEnableAligningChangesMode: Boolean
       get() = SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE
-      set(value) { SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE = value }
+      set(value) { SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE = value
+                   SHARED_SETTINGS.eventDispatcher.multicaster.alignModeChanged() }
 
     // Diff settings
 
@@ -121,11 +129,13 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     var contextRange: Int
       get()      = SHARED_SETTINGS.CONTEXT_RANGE
-      set(value) { SHARED_SETTINGS.CONTEXT_RANGE = value }
+      set(value) { SHARED_SETTINGS.CONTEXT_RANGE = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.foldingChanged() }
 
     var isExpandByDefault: Boolean
       get()      = PLACE_SETTINGS.EXPAND_BY_DEFAULT
-      set(value) { PLACE_SETTINGS.EXPAND_BY_DEFAULT = value }
+      set(value) { PLACE_SETTINGS.EXPAND_BY_DEFAULT = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.foldingChanged() }
 
     var isReadOnlyLock: Boolean
       get()      = PLACE_SETTINGS.READ_ONLY_LOCK
@@ -153,6 +163,9 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
       fun highlightPolicyChanged() {}
       fun ignorePolicyChanged() {}
       fun breadcrumbsPlacementChanged() {}
+      fun foldingChanged() {}
+      fun scrollingChanged() {}
+      fun alignModeChanged() {}
 
       abstract class Adapter : Listener
     }

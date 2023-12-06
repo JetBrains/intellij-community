@@ -33,12 +33,11 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   private final @NotNull UsageInfo myOriginalUsage;
   private final @NotNull UsageView myUsageView;
 
-  public SimilarUsagesComponent(@NotNull UsageView usageView, @NotNull UsageInfo originalUsage, @NotNull Disposable parent) {
+  public SimilarUsagesComponent(@NotNull UsageView usageView, @NotNull UsageInfo originalUsage) {
     myOriginalUsage = originalUsage;
     myUsageView = usageView;
     setLayout(new VerticalLayout(0));
     setBackground(UIUtil.getTextFieldBackground());
-    Disposer.register(parent, this);
   }
 
   public void renderSimilarUsages(@NotNull Collection<? extends SimilarUsage> similarUsagesGroupUsages) {
@@ -59,10 +58,12 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     if (element == null || file == null || rangeInElement == null) return;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return;
-    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(element, rangeInElement);
+    SnippetRenderingData data = UsageCodeSnippetComponent.calculateSnippetRenderingData(element, rangeInElement);
+    if (data == null) return;
+    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(data);
     Disposer.register(this, codeSnippet);
-    JPanel headerPanelForUsage = getHeaderPanelForUsage(virtualFile, element, codeSnippet.getEditor().getBackgroundColor());
-    if (myOriginalUsage==info) {
+    JPanel headerPanelForUsage = getHeaderPanelForUsage(info, codeSnippet.getEditor().getBackgroundColor());
+    if (myOriginalUsage == info) {
       final SimpleColoredComponent component = new SimpleColoredComponent();
       component.append(UsageViewBundle.message("similar.usages.the.original.usage.label"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       headerPanelForUsage.add(component);
@@ -75,13 +76,14 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     renderUsage(myOriginalUsage);
   }
 
-  public @NotNull JPanel getHeaderPanelForUsage(@NotNull VirtualFile virtualFile,
-                                                @NotNull PsiElement element,
+  public @NotNull JPanel getHeaderPanelForUsage(UsageInfo usageInfo,
                                                 @NotNull Color backGroundColor) {
     final JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT));
     header.setBackground(backGroundColor);
-    final JComponent link = new LocationLinkComponent(this, myUsageView, element, virtualFile).getComponent();
-    header.add(link);
+    final JComponent link = UsagePreviewComponent.Companion.createNavigationLink(this, myUsageView, usageInfo);
+    if (link != null) {
+      header.add(link);
+    }
     final Color color = new JBColor(Gray.xCD, Gray.x51);
     header.setBorder(JBUI.Borders.customLineTop(color));
     return header;

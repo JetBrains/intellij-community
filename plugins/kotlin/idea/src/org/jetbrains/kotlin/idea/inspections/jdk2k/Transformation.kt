@@ -68,19 +68,6 @@ object ToExtensionFunctionWithNonNullableReceiver : Transformation {
             ?.isNullable() == false
 }
 
-object ToExtensionFunctionWithNonNullableArguments : Transformation {
-    override fun invoke(callExpression: KtCallExpression, replacement: Replacement) =
-        ToExtensionFunctionWithNonNullableReceiver(callExpression, replacement)
-
-    override fun isApplicable(callExpression: KtCallExpression): Boolean =
-        ToExtensionFunctionWithNonNullableReceiver.isApplicable(callExpression)
-
-    override fun isApplicableInContext(callExpression: KtCallExpression, context: BindingContext): Boolean =
-        callExpression.valueArguments.all {
-            it.getArgumentExpression()?.getType(context)?.isNullable() == false
-        }
-}
-
 object ToExtensionFunctionWithNullableReceiver : Transformation {
     override fun invoke(callExpression: KtCallExpression, replacement: Replacement) =
         ToExtensionFunctionWithNonNullableReceiver(callExpression, replacement)

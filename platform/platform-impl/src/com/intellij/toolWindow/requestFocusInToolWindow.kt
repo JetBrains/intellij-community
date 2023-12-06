@@ -15,7 +15,7 @@ import javax.swing.SwingUtilities
 private val LOG = logger<FocusTask>()
 
 internal class FocusTask(private val toolWindow: ToolWindowImpl) : Runnable {
-  var startTime = System.currentTimeMillis()
+  var startTime: Long = System.currentTimeMillis()
 
   override fun run() {
     if (System.currentTimeMillis() - startTime > 10000) {
@@ -34,7 +34,7 @@ internal class FocusTask(private val toolWindow: ToolWindowImpl) : Runnable {
       val manager = toolWindow.toolWindowManager
       if (owner !== component) {
         manager.focusManager.requestFocusInProject(component, manager.project)
-        bringOwnerToFront(toolWindow)
+        bringOwnerToFront(toolWindow, true)
       }
       manager.focusManager.doWhenFocusSettlesDown {
         updateToolWindow(toolWindow, component)
@@ -47,12 +47,18 @@ internal class FocusTask(private val toolWindow: ToolWindowImpl) : Runnable {
   }
 }
 
-private fun bringOwnerToFront(toolWindow: ToolWindowImpl) {
+internal fun bringOwnerToFront(toolWindow: ToolWindowImpl, focus: Boolean) {
   val owner = SwingUtilities.getWindowAncestor(toolWindow.component) ?: return
   val activeFrame = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
   if (activeFrame != null && activeFrame !== owner &&
       ProjectUtil.getProjectForWindow(activeFrame) == ProjectUtil.getProjectForWindow(owner)) {
-    owner.toFront()
+    owner.isAutoRequestFocus = focus
+    try {
+      owner.toFront()
+    }
+    finally {
+      owner.isAutoRequestFocus = true
+    }
   }
 }
 

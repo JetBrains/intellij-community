@@ -27,5 +27,3 @@ fun test() {
     val t4 = B().p
     B().p = 1
 }
-
-// FIR_IGNORE

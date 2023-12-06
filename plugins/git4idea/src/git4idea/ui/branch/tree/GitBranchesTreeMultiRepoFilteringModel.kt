@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
+import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -45,8 +46,10 @@ class GitBranchesTreeMultiRepoFilteringModel(
     branchesTreeCache.keys.clear()
     val localBranches = GitBranchUtil.getCommonLocalBranches(repositories)
     val remoteBranches = GitBranchUtil.getCommonRemoteBranches(repositories)
-    commonLocalBranchesTree = LazyBranchesSubtreeHolder(localBranches, repositories, matcher, ::isPrefixGrouping)
-    commonRemoteBranchesTree = LazyBranchesSubtreeHolder(remoteBranches, repositories, matcher, ::isPrefixGrouping)
+    val localFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.LOCAL)
+    val remoteFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.REMOTE)
+    commonLocalBranchesTree = LazyBranchesSubtreeHolder(repositories, localBranches, localFavorites, matcher, ::isPrefixGrouping)
+    commonRemoteBranchesTree = LazyBranchesSubtreeHolder(repositories, remoteBranches, remoteFavorites, matcher, ::isPrefixGrouping)
     repositoriesTree = LazyRepositoryBranchesHolder()
     treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
@@ -76,7 +79,8 @@ class GitBranchesTreeMultiRepoFilteringModel(
       is BranchesPrefixGroup -> {
         branchesTreeCache
           .getOrPut(parent) {
-            getBranchTreeNodes(parent.type, parent.prefix, parent.repository).sortedWith(getSubTreeComparator(repositories))
+            getBranchTreeNodes(parent.type, parent.prefix, parent.repository)
+              .sortedWith(getSubTreeComparator(project.service<GitBranchManager>().getFavoriteBranches(parent.type), repositories))
           }
       }
       is BranchTypeUnderRepository -> {
@@ -105,7 +109,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
     return topLevelActions + localAndRemoteNodes + notEmptyRepositories
   }
 
-  private fun getBranchTreeNodes(branchType: GitBranchType, path: List<String>, repository: GitRepository? = null): List<Any> {
+  private fun getBranchTreeNodes(branchType: BranchType, path: List<String>, repository: GitRepository? = null): List<Any> {
     val branchesMap: Map<String, Any> = when {
       GitBranchType.LOCAL == branchType && repository == null -> commonLocalBranchesTree.tree
       GitBranchType.LOCAL == branchType && repository != null -> repositoriesTree[repository].localBranches.tree
@@ -158,10 +162,16 @@ class GitBranchesTreeMultiRepoFilteringModel(
 
   private inner class LazyRepositoryBranchesSubtreeHolder(repository: GitRepository) {
     val localBranches by lazy {
-      LazyBranchesSubtreeHolder(repository.localBranchesOrCurrent, listOf(repository), branchNameMatcher, ::isPrefixGrouping)
+      LazyBranchesSubtreeHolder(listOf(repository),
+                                repository.localBranchesOrCurrent,
+                                project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.LOCAL), branchNameMatcher,
+                                ::isPrefixGrouping)
     }
     val remoteBranches by lazy {
-      LazyBranchesSubtreeHolder(repository.branches.remoteBranches, listOf(repository), branchNameMatcher, ::isPrefixGrouping)
+      LazyBranchesSubtreeHolder(listOf(repository),
+                                repository.branches.remoteBranches,
+                                project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.REMOTE), branchNameMatcher,
+                                ::isPrefixGrouping)
     }
   }
 }

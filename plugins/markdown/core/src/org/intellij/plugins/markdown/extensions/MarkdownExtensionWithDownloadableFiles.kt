@@ -5,7 +5,8 @@ import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
+@ApiStatus.Internal
 interface MarkdownExtensionWithDownloadableFiles: MarkdownExtensionWithExternalFiles {
   class FileEntry(val filePath: String, val link: Supplier<String?>) {
     constructor(filePath: String, link: String? = null): this(filePath, { link })

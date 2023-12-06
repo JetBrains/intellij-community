@@ -23,15 +23,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StyleSheetUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +50,9 @@ import java.awt.image.ImageObserver;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.createAdditionalStylesForTips;
+import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.unwrapTipsText;
 
 @ApiStatus.Internal
 public final class DocRenderer implements CustomFoldRegionRenderer {
@@ -292,11 +294,17 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   }
 
   private EditorPane createEditorPane(@NotNull Editor editor, @Nls @NotNull String text, boolean reusable) {
+    boolean useTipsKit = false;
+    if (text.startsWith(InlineDocumentationImplKt.START_TIP_PREFIX)) {
+      text = unwrapTipsText(text);
+      text = ShortcutExtension.Companion.patchShortcutTags(text, false);
+      useTipsKit = true;
+    }
     EditorPane pane = new EditorPane(!reusable);
     pane.setEditable(false);
     pane.getCaret().setSelectionVisible(!reusable);
     pane.putClientProperty("caretWidth", 0); // do not reserve space for caret (making content one pixel narrower than component)
-    pane.setEditorKit(createEditorKit(editor));
+    pane.setEditorKit(createEditorKit(editor, useTipsKit));
     pane.setBorder(JBUI.Borders.empty());
     Map<TextAttribute, Object> fontAttributes = new HashMap<>();
     fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(DocumentationComponent.getQuickDocFontSize().getSize()));
@@ -335,24 +343,27 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     return color == null ? scheme.getDefaultForeground() : color;
   }
 
-  private static EditorKit createEditorKit(@NotNull Editor editor) {
+  private static EditorKit createEditorKit(@NotNull Editor editor, boolean useTipsKit) {
     HTMLEditorKit editorKit =
       new HTMLEditorKitBuilder()
-        .withViewFactoryExtensions((element, view) -> view instanceof ImageView ? new MyScalingImageView(element) : null)
+        .withViewFactoryExtensions(useTipsKit ?
+                                   new ShortcutExtension() :
+                                   ((element, view) -> view instanceof ImageView ? new MyScalingImageView(element) : null)
+        )
         .withFontResolver(EditorCssFontResolver.getInstance(editor))
         .build();
-    editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor));
+    editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor, useTipsKit));
     return editorKit;
   }
 
-  private static StyleSheet getStyleSheet(@NotNull Editor editor) {
+  private static StyleSheet getStyleSheet(@NotNull Editor editor, boolean useTipsKit) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color linkColor = colorsScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK);
     if (linkColor == null) linkColor = getTextColor(colorsScheme);
     String linkColorHex = ColorUtil.toHex(linkColor);
-    if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
+    if (useTipsKit || !Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
       String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER;
-      ourCachedStyleSheet = StyleSheetUtil.loadStyleSheet(
+      @Language("CSS") String input =
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +
         "pre {font-family: \"" + editorFontNamePlaceHolder + "\";" +
@@ -370,14 +381,19 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         "td p {padding-top: 0}" +
         ".sections {border-spacing: 0}" +
         ".section {padding-right: 5; white-space: nowrap}" +
-        ".content {padding: 2 0 2 0}"
-      );
-      ourCachedStyleSheetLinkColor = linkColorHex;
+        ".content {padding: 2 0 2 0}" +
+        (useTipsKit ? createAdditionalStylesForTips(editor) : "");
+      StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
+      if (!useTipsKit) {
+        ourCachedStyleSheet = result;
+        ourCachedStyleSheetLinkColor = linkColorHex;
+      }
+      return result;
     }
     return ourCachedStyleSheet;
   }
 
-  private static class ChangeFontSize extends DumbAwareAction {
+  private static final class ChangeFontSize extends DumbAwareAction {
     ChangeFontSize() {
       super(CodeInsightBundle.messagePointer("javadoc.adjust.font.size"));
     }
@@ -391,7 +407,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
-  class EditorPane extends JEditorPane {
+  final class EditorPane extends JEditorPane {
     private final List<Image> myImages = new ArrayList<>();
     private final AtomicBoolean myUpdateScheduled = new AtomicBoolean();
     private final AtomicBoolean myRepaintScheduled = new AtomicBoolean();
@@ -617,7 +633,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
-  private class CopySelection extends DumbAwareAction {
+  private final class CopySelection extends DumbAwareAction {
     CopySelection() {
       super(CodeInsightBundle.messagePointer("doc.render.copy.action.text"), AllIcons.Actions.Copy);
       AnAction copyAction = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
@@ -645,7 +661,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
-  static class ToggleRenderingAction extends DumbAwareAction {
+  static final class ToggleRenderingAction extends DumbAwareAction {
     private final DocRenderItem item;
 
     ToggleRenderingAction(DocRenderItem i) {

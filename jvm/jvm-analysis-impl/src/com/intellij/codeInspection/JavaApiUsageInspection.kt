@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -25,7 +25,12 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
 import org.jdom.Element
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
+
+private val logger = logger<JavaApiUsageInspection>()
+
+private const val EFFECTIVE_LL = "effectiveLL"
 
 /**
  * In order to add the support for new API in the most recent JDK execute:
@@ -40,6 +45,7 @@ import org.jetbrains.uast.*
  *   </li>
  * </ol>
  */
+@VisibleForTesting
 class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.ERROR
 
@@ -60,18 +66,20 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       { value -> effectiveLanguageLevel = if (value == "null") null else LanguageLevel.valueOf(value) }
     )
   }
-  
+
   override fun readSettings(node: Element) {
     val element = node.getChild(EFFECTIVE_LL)
     if (element != null) {
-      effectiveLanguageLevel = element.getAttributeValue("value")?.let { LanguageLevel.valueOf(it) }
+      effectiveLanguageLevel = element.getAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.let {
+        LanguageLevel.valueOf(it)
+      }
     }
   }
 
   override fun writeSettings(node: Element) {
     if (effectiveLanguageLevel != null) {
       val llElement = Element(EFFECTIVE_LL)
-      llElement.setAttribute("value", effectiveLanguageLevel.toString())
+      llElement.setAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, effectiveLanguageLevel.toString())
       node.addContent(llElement)
     }
   }
@@ -84,6 +92,10 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     private val holder: ProblemsHolder,
     private val isOnTheFly: Boolean
   ) : ApiUsageUastVisitor(apiUsageProcessor) {
+
+    private inline val defaultMethods get() = setOf("java.util.Iterator#remove()")
+    private inline val overrideModifierLanguages get() = listOf("kotlin", "scala")
+
     override fun visitClass(node: UClass): Boolean {
       val javaPsi = node.javaPsi
       if (!javaPsi.hasModifierProperty(PsiModifier.ABSTRACT) && javaPsi !is PsiTypeParameter) { // Don't go into classes (anonymous, locals).
@@ -94,14 +106,13 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
           if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_8)) {
             val mSignatures = javaPsi.visibleSignatures.filter { defaultMethods.contains(LanguageLevelUtil.getSignature(it.method)) }
             if (mSignatures.isNotEmpty()) {
-              val toHighlight = node.uastAnchor?.sourcePsi ?: return true
               val jdkName = LanguageLevelUtil.getJdkName(effectiveLanguageLevel)
               val message = if (mSignatures.size == 1) {
                 JvmAnalysisBundle.message("jvm.inspections.1.8.problem.single.descriptor", mSignatures.first().name, jdkName)
               } else {
                 JvmAnalysisBundle.message("jvm.inspections.1.8.problem.descriptor", mSignatures.size, jdkName)
               }
-              holder.registerProblem(toHighlight, message, QuickFixFactory.getInstance().createImplementMethodsFix(javaPsi))
+              holder.registerUProblem(node, message, QuickFixFactory.getInstance().createImplementMethodsFix(javaPsi))
             }
           }
         }
@@ -136,6 +147,10 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   inner class JavaApiUsageProcessor(private val isOnTheFly: Boolean, private val holder: ProblemsHolder) : ApiUsageProcessor {
+
+    private inline val ignored6ClassesApi get() = setOf("java.awt.geom.GeneralPath")
+    private inline val generifiedClasses get() = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
+
     override fun processConstructorInvocation(
       sourceNode: UElement, instantiatedClass: PsiClass, constructor: PsiMethod?, subclassDeclaration: UClass?
     ) {
@@ -212,6 +227,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       logger.error("Unable to get the next language level for $sinceLanguageLevel")
       return
     }
+    if (reference.getUastParentOfType<UComment>() != null) return
     val message = JvmAnalysisBundle.message(
       "jvm.inspections.1.5.problem.descriptor", LanguageLevelUtil.getShortMessage(sinceLanguageLevel)
     )
@@ -226,17 +242,4 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     return effectiveLanguageLevel ?: LanguageLevelUtil.getEffectiveLanguageLevel(module)
   }
 
-  companion object {
-    private val overrideModifierLanguages = listOf("kotlin", "scala")
-
-    private val logger = logger<JavaApiUsageInspection>()
-
-    private const val EFFECTIVE_LL = "effectiveLL"
-
-    private val ignored6ClassesApi = setOf("java.awt.geom.GeneralPath")
-
-    private val generifiedClasses = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
-
-    private val defaultMethods = setOf("java.util.Iterator#remove()")
-  }
 }

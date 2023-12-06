@@ -13,6 +13,7 @@
     <orderEntry type="library" name="commons-codec" level="project" />
     <orderEntry type="library" name="commons-compress" level="project" />
     <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
-    <orderEntry type="library" name="commons-lang" level="project" />
+    <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="library" name="commons-text" level="project" />
   </component>
 </module>

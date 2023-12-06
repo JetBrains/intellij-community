@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.toolwindow
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.util.text.DateFormatUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 
@@ -37,7 +37,8 @@ class StatisticsEventLogMessageBuilder {
       .joinToString(", ")
   }
 
-  private fun valueToString(key: String, value: Any, rawValue: Any?): String = gson.toJson(prepareValue(key, value, rawValue))
+  private fun valueToString(key: String, value: Any, rawValue: Any?): String? =
+    ObjectMapper().writeValueAsString(prepareValue(key, value, rawValue))
 
   private fun prepareValue(key: String, value: Any?, rawValue: Any?): Any? {
     return when (value) {
@@ -68,7 +69,6 @@ class StatisticsEventLogMessageBuilder {
   }
 
   companion object {
-    private val gson = Gson()
     private val systemFields = setOf("last", "created", "system_event_id", "system_headless")
     internal val fieldsToShorten = setOf("project", "file_path", "login_hash", "anonymous_id")
     private const val anonymizedIdPrefixSize = 8

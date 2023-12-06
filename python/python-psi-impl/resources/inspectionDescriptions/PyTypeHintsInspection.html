@@ -2,7 +2,7 @@
 <body>
 <p>Reports invalid usages of type hints.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 from typing import TypeVar
 
 T0 = TypeVar('T1') # Argument of 'TypeVar' must be 'T0'
@@ -16,7 +16,7 @@ def b(p: int) -> int:  # Type specified both in a comment and annotation
 def c(p1, p2): # Type signature has too many arguments
     # type: (int) -> int
     pass
-</pre>
+</code></pre>
 <p>Available quick-fixes offer various actions. You can rename, remove, or move problematic elements. You can also manually modify type declarations to ensure no warning is shown.</p>
 </body>
 </html>

@@ -46,7 +46,7 @@ interface VcsConsoleTabService {
   fun showConsoleTabAndScrollToTheEnd()
 }
 
-class MockVcsConsoleTabService() : VcsConsoleTabService {
+class MockVcsConsoleTabService : VcsConsoleTabService {
   @CalledInAny
   override fun addMessage(message: @Nls String?, contentType: ConsoleViewContentType) {
   }
@@ -100,7 +100,7 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
     line.print(consoleView)
 
     if (Registry.`is`("vcs.showConsole")) {
-      runInEdt(ModalityState.NON_MODAL) {
+      runInEdt(ModalityState.nonModal()) {
         showConsoleTab(false, null)
       }
     }
@@ -153,6 +153,7 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
     panel.toolbar = toolbar.component
 
     val contentTab = ContentImpl(panel, VcsBundle.message("vcs.console.toolwindow.display.name"), true)
+    contentTab.isCloseable = false
     contentTab.setPreferredFocusedComponent { consoleView.preferredFocusableComponent }
 
     contentTab.tabName = ChangesViewContentManager.CONSOLE //NON-NLS

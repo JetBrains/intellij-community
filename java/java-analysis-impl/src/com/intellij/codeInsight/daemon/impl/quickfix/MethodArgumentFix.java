@@ -1,66 +1,57 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class MethodArgumentFix implements IntentionAction {
+public abstract class MethodArgumentFix extends PsiUpdateModCommandAction<PsiExpressionList> {
   private static final Logger LOG = Logger.getInstance(MethodArgumentFix.class);
 
-  protected final SmartPsiElementPointer<PsiExpressionList> myArgList;
   protected final int myIndex;
   protected final ArgumentFixerActionFactory myArgumentFixerActionFactory;
   @NotNull
   protected final PsiType myToType;
 
   protected MethodArgumentFix(@NotNull PsiExpressionList list, int i, @NotNull PsiType toType, @NotNull ArgumentFixerActionFactory fixerActionFactory) {
-    myArgList = SmartPointerManager.createPointer(list);
+    super(list);
     myIndex = i;
     myArgumentFixerActionFactory = fixerActionFactory;
     myToType = toType instanceof PsiEllipsisType ? ((PsiEllipsisType) toType).toArrayType() : toType;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiExpressionList list = myArgList.getElement();
-    if (list != null && myToType.isValid() && PsiTypesUtil.allTypeParametersResolved(list, myToType)) {
-      PsiExpression[] args = list.getExpressions();
-      return args.length > myIndex && args[myIndex] != null && args[myIndex].isValid();
-    }
-    return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList list) {
+    if (!myToType.isValid() || !PsiTypesUtil.allTypeParametersResolved(list, myToType)) return null;
+    PsiExpression[] args = list.getExpressions();
+    if (args.length <= myIndex) return null;
+    PsiExpression arg = args[myIndex];
+    if (arg == null || !arg.isValid()) return null;
+    if (myArgumentFixerActionFactory.getModifiedArgument(arg, myToType) == null) return null;
+    return Presentation.of(getText(list));
   }
 
-  /**
-   * Must be redefined in subclasses, as there's non-safe field {@link #myArgList} which must be remapped to a target file.
-   */
-  @Override
-  public abstract @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target);
+  @IntentionName
+  abstract @NotNull String getText(@NotNull PsiExpressionList list);
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiExpressionList list = myArgList.getElement();
-    if (list == null) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionList list, @NotNull ModPsiUpdater updater) {
     PsiExpression expression = list.getExpressions()[myIndex];
 
     LOG.assertTrue(expression != null && expression.isValid());
     PsiExpression modified = myArgumentFixerActionFactory.getModifiedArgument(expression, myToType);
     LOG.assertTrue(modified != null, myArgumentFixerActionFactory);
     PsiElement newElement = expression.replace(modified);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
+    JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(newElement);
   }
 
   @Override

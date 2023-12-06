@@ -11,16 +11,16 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
+import com.intellij.util.ui.JBDimension
 import java.awt.BorderLayout
-import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.border.Border
 
-internal class UiDslTestAction : DumbAwareAction("Show UI DSL Tests") {
+internal class UiDslTestAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     UiDslTestDialog(e.project).show()
@@ -41,8 +41,8 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
   override fun createCenterPanel(): JComponent {
     val tabbedPane = JBTabbedPane()
-    tabbedPane.minimumSize = Dimension(300, 200)
-    tabbedPane.preferredSize = Dimension(1000, 800)
+    tabbedPane.minimumSize = JBDimension(300, 200)
+    tabbedPane.preferredSize = JBDimension(1000, 800)
     tabbedPane.addTab("Labels", JScrollPane(LabelsPanel().panel))
     tabbedPane.addTab("Text Fields", createTextFields())
     tabbedPane.addTab("Comments", JScrollPane(createCommentsPanel()))
@@ -59,6 +59,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     tabbedPane.addTab("Validation API", ValidationPanel(myDisposable).panel)
     tabbedPane.addTab("Validation Refactoring API", ValidationRefactoringPanel(myDisposable).panel)
     tabbedPane.addTab("OnChange", OnChangePanel().panel)
+    tabbedPane.addTab("ListCellRenderer", JScrollPane(ListCellRendererPanel().panel))
 
     return panel {
       row {
@@ -74,7 +75,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     }
   }
 
-  fun createTextFields(): JPanel {
+  private fun createTextFields(): JPanel {
     val result = panel {
       row("Text field 1:") {
         textField()
@@ -106,7 +107,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     return result
   }
 
-  fun createVisibleEnabled(): JPanel {
+  private fun createVisibleEnabled(): JPanel {
     val entities = mutableMapOf<String, Any>()
 
     return panel {
@@ -156,9 +157,8 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
           for ((name, entity) in entities.toSortedMap()) {
             row(name) {
               checkBox("visible")
-                .applyToComponent {
-                  isSelected = true
-                }.onChanged {
+                .selected(true)
+                .onChanged {
                   when (entity) {
                     is Cell<*> -> entity.visible(it.isSelected)
                     is Row -> entity.visible(it.isSelected)
@@ -166,9 +166,8 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
                   }
                 }
               checkBox("enabled")
-                .applyToComponent {
-                  isSelected = true
-                }.onChanged {
+                .selected(true)
+                .onChanged {
                   when (entity) {
                     is Cell<*> -> entity.enabled(it.isSelected)
                     is Row -> entity.enabled(it.isSelected)
@@ -186,9 +185,9 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
         row {
           checkBoxRow = checkBox("Row")
-            .applyToComponent { isSelected = true }
+            .selected(true)
           checkBoxText = checkBox("textField")
-            .applyToComponent { isSelected = true }
+            .selected(true)
         }
 
         row("visibleIf test row") {
@@ -201,7 +200,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     }
   }
 
-  fun createCellsWithPanels(): JPanel {
+  private fun createCellsWithPanels(): JPanel {
     return panel {
       row("Row") {
         textField()
@@ -235,9 +234,9 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     }
   }
 
-  fun createResizableRows(): JPanel {
+  private fun createResizableRows(): JPanel {
     return panel {
-      for (rowLayout in RowLayout.values()) {
+      for (rowLayout in RowLayout.entries) {
         row(rowLayout.name) {
           textArea()
             .align(Align.FILL)
@@ -247,7 +246,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     }
   }
 
-  fun createCommentsPanel(): JPanel {
+  private fun createCommentsPanel(): JPanel {
     var type = CommentComponentType.CHECKBOX
     val placeholder = JPanel(BorderLayout())
 
@@ -259,7 +258,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
     val result = panel {
       row("Component type") {
-        comboBox(CollectionComboBoxModel(CommentComponentType.values().asList()))
+        comboBox(CollectionComboBoxModel(CommentComponentType.entries))
           .onChanged {
             type = it.item ?: CommentComponentType.CHECKBOX
             applyType()
@@ -275,7 +274,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     return result
   }
 
-  fun createTextMaxLinePanel(): JPanel {
+  private fun createTextMaxLinePanel(): JPanel {
     val longLine = (1..4).joinToString { "A very long string with a <a>link</a>" }
     val string = "$longLine<br>$longLine"
     return panel {
@@ -306,7 +305,7 @@ private class CommentPanelBuilder(val type: CommentComponentType) {
 
   fun build(): DialogPanel {
     return panel {
-      for (rowLayout in RowLayout.values()) {
+      for (rowLayout in RowLayout.entries) {
         val labelAligned = rowLayout == RowLayout.LABEL_ALIGNED
 
         group("rowLayout = $rowLayout") {

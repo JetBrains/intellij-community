@@ -5,29 +5,28 @@ import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowDataKeys
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTabsController
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
-class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer("merge.request.show.action"),
-                                                     GitLabBundle.messagePointer("merge.request.show.action.description"),
-                                                     null) {
+private class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer("merge.request.show.action"),
+                                                     GitLabBundle.messagePointer("merge.request.show.action.description")) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val mergeRequestController = e.getData(ReviewToolwindowDataKeys.REVIEW_TABS_CONTROLLER) as? GitLabReviewTabsController
-    val filesController = e.getData(GitLabMergeRequestsActionKeys.FILES_CONTROLLER)
-    val selection: GitLabMergeRequestId? = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
+    val projectVm = e.getData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as? GitLabToolWindowProjectViewModel
+    val selection: GitLabMergeRequestDetails? = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
 
-    e.presentation.isEnabled = mergeRequestController != null && filesController != null && selection != null
+    e.presentation.isEnabledAndVisible = projectVm != null && selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val mergeRequestController = e.getRequiredData(ReviewToolwindowDataKeys.REVIEW_TABS_CONTROLLER) as GitLabReviewTabsController
-    val filesController = e.getRequiredData(GitLabMergeRequestsActionKeys.FILES_CONTROLLER)
-    val selection: GitLabMergeRequestId = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
+    val projectVm = e.getRequiredData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as GitLabToolWindowProjectViewModel
+    val selection: GitLabMergeRequestDetails = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
 
-    mergeRequestController.openReviewDetails(selection)
-    filesController.openTimeline(selection, false)
+    projectVm.showTab(GitLabReviewTab.ReviewSelected(selection.iid), GitLabStatistics.ToolWindowOpenTabActionPlace.ACTION)
+    projectVm.filesController.openTimeline(selection.iid, false)
   }
 }

@@ -1,14 +1,20 @@
 <component name="libraryTable">
   <library name="rd-swing" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-swing:2023.1.2" />
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-swing:2024.1.1-preview7">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2024.1.1-preview7/rd-swing-2024.1.1-preview7.jar">
+          <sha256sum>8978d216e9a030f03deb5b097ee9597da046616271aba88380a50d9795b3d64a</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2023.1.2/rd-swing-2023.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2024.1.1-preview7/rd-swing-2024.1.1-preview7.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2023.1.2/rd-swing-2023.1.2-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2024.1.1-preview7/rd-swing-2024.1.1-preview7-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2023.1.2/rd-swing-2023.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2024.1.1-preview7/rd-swing-2024.1.1-preview7-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

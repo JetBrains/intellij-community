@@ -46,37 +46,32 @@ public final class EmptySubstitutor implements PsiSubstitutor {
     return JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter);
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor put(@NotNull PsiTypeParameter classParameter, PsiType mapping){
+  public @NotNull PsiSubstitutor put(@NotNull PsiTypeParameter classParameter, PsiType mapping){
     if (mapping != null) {
       PsiUtil.ensureValidType(mapping);
     }
     return PsiSubstitutorFactory.getInstance().createSubstitutor(classParameter, mapping);
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings){
+  public @NotNull PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings){
     if(!parentClass.hasTypeParameters()) return this;
     return PsiSubstitutorFactory.getInstance().createSubstitutor(parentClass, mappings);
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull PsiSubstitutor another) {
+  public @NotNull PsiSubstitutor putAll(@NotNull PsiSubstitutor another) {
     return another;
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
+  public @NotNull PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return map.isEmpty() ? EMPTY : PsiSubstitutorFactory.getInstance().createSubstitutor(map);
   }
 
   @Override
-  @NotNull
-  public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
+  public @NotNull Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return Collections.emptyMap();
   }
 
@@ -93,7 +88,7 @@ public final class EmptySubstitutor implements PsiSubstitutor {
     return "EmptySubstitutor";
   }
   
-  private static class Holder {
+  private static final class Holder {
     private static final EmptySubstitutor INSTANCE = new EmptySubstitutor();
   }
 }

@@ -49,8 +49,12 @@ object TomlParserUtil : GeneratedParserUtilBase() {
 }
 
 private fun isNextAfterNewLine(b: PsiBuilder): Boolean {
-    val prevToken = b.rawLookup(-1)
-    return prevToken == null || prevToken == TokenType.WHITE_SPACE && b.rawLookupText(-1).contains("\n")
+    return when (b.rawLookup(-1)) {
+        null -> true
+        // The previous white space token contains end of line, or it's the first white space in file
+        TokenType.WHITE_SPACE -> b.rawLookupText(-1).contains("\n") || b.rawTokenIndex() == 1
+        else -> false
+    }
 }
 
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -29,18 +15,16 @@ import java.util.Objects;
 
 import static com.intellij.formatting.InitialInfoBuilder.prepareToBuildBlocksSequentially;
 
-public class FormatProcessor {
+public final class FormatProcessor {
   private static final Logger LOG = Logger.getInstance(FormatProcessor.class);
   
   private final WrapBlocksState myWrapState;
   private final boolean myReformatContext;
   private final Document myDocument;
   
-  @NotNull
-  private final FormattingProgressCallback myProgressCallback;
+  private final @NotNull FormattingProgressCallback myProgressCallback;
 
-  @NotNull
-  private final StateProcessor myStateProcessor;
+  private final @NotNull StateProcessor myStateProcessor;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -198,10 +182,9 @@ public class FormatProcessor {
     return current;
   }
 
-  @Nullable
-  private static ChildAttributesInfo getChildAttributesInfo(@NotNull final Block block,
-                                                            final int index,
-                                                            @Nullable AbstractBlockWrapper parent) {
+  private static @Nullable ChildAttributesInfo getChildAttributesInfo(final @NotNull Block block,
+                                                                      final int index,
+                                                                      @Nullable AbstractBlockWrapper parent) {
     if (parent == null) {
       return null;
     }
@@ -257,8 +240,7 @@ public class FormatProcessor {
     }
   }
 
-  @Nullable
-  private static AbstractBlockWrapper getParentFor(final int offset, AbstractBlockWrapper block) {
+  private static @Nullable AbstractBlockWrapper getParentFor(final int offset, AbstractBlockWrapper block) {
     AbstractBlockWrapper current = block;
     while (current != null) {
       if (current.getStartOffset() < offset && current.getEndOffset() >= offset) {
@@ -269,8 +251,7 @@ public class FormatProcessor {
     return null;
   }
 
-  @Nullable
-  private AbstractBlockWrapper getParentFor(final int offset, LeafBlockWrapper block) {
+  private @Nullable AbstractBlockWrapper getParentFor(final int offset, LeafBlockWrapper block) {
     AbstractBlockWrapper previous = getPreviousIncompleteBlock(block, offset);
     if (previous != null) {
       return getLastNestedCompositeBlockForSameRange(previous);
@@ -280,8 +261,7 @@ public class FormatProcessor {
     }
   }
 
-  @Nullable
-  private AbstractBlockWrapper getPreviousIncompleteBlock(final LeafBlockWrapper block, final int offset) {
+  private @Nullable AbstractBlockWrapper getPreviousIncompleteBlock(final LeafBlockWrapper block, final int offset) {
     if (block == null) {
       LeafBlockWrapper lastTokenBlock = myWrapState.getLastBlock();
       if (lastTokenBlock.isIncomplete()) {
@@ -328,8 +308,7 @@ public class FormatProcessor {
     return currentResult;
   }
 
-  @Nullable
-  private static AbstractBlockWrapper getLastChildOf(final AbstractBlockWrapper currentResult) {
+  private static @Nullable AbstractBlockWrapper getLastChildOf(final AbstractBlockWrapper currentResult) {
     AbstractBlockWrapper parentBlockToUse = getLastNestedCompositeBlockForSameRange(currentResult);
     if (!(parentBlockToUse instanceof CompositeBlockWrapper)) return null;
     final List<AbstractBlockWrapper> subBlocks = ((CompositeBlockWrapper)parentBlockToUse).getChildren();
@@ -344,8 +323,7 @@ public class FormatProcessor {
    * @param block   block to check
    * @return        the most nested block of the given one that shares the same text range if any; given block otherwise
    */
-  @NotNull
-  private static AbstractBlockWrapper getLastNestedCompositeBlockForSameRange(@NotNull final AbstractBlockWrapper block) {
+  private static @NotNull AbstractBlockWrapper getLastNestedCompositeBlockForSameRange(final @NotNull AbstractBlockWrapper block) {
     if (!(block instanceof CompositeBlockWrapper)) {
       return block;
     }
@@ -392,7 +370,7 @@ public class FormatProcessor {
     return myWrapState.getLastWhiteSpace();
   }
   
-  public static class FormatOptions {
+  public static final class FormatOptions {
     public CodeStyleSettings mySettings;
     public CommonCodeStyleSettings.IndentOptions myIndentOptions;
 

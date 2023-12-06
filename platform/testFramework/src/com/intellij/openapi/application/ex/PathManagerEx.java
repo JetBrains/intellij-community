@@ -6,8 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath;
+import com.intellij.platform.workspace.jps.serialization.impl.ModulePath;
 import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestFrameworkUtil;
@@ -92,9 +91,9 @@ public final class PathManagerEx {
    * test data relative to IDEA installation path. That relative path may be different for {@code community}
    * and {@code ultimate} tests.
    * <p/>
-   * This collection contains mappings from test group type to relative paths to use, i.e. it's possible to define more than one
-   * relative path for the single test group. It's assumed that path definition algorithm iterates them and checks if
-   * resulting absolute path points to existing directory. The one is returned in case of success; last path is returned otherwise.
+   * This collection contains mappings from a test group type to relative paths to use, i.e. it's possible to define more than one
+   * relative path for the single test group. It's assumed that path definition algorithm iterates them and checks the
+   * resulting absolute path points to existing directory. The one is returned in case of success; the last path is returned otherwise.
    * <p/>
    * Hence, the order of relative paths for the single test group matters.
    */
@@ -126,10 +125,10 @@ public final class PathManagerEx {
    * <p/>
    * <b>Note:</b> this method receives explicit class argument in order to solve the following limitation - we analyze calling
    * stack trace in order to guess test data lookup strategy ({@link #guessTestDataLookupStrategyOnClassLocation()}). However,
-   * there is a possible case that super-class method is called on sub-class object. Stack trace shows super-class then.
+   * there is a possible case that super-class method is called on a subclass object. Stack trace shows super-class then.
    * There is a possible situation that actual test is {@code 'ultimate'} but its abstract super-class is
    * {@code 'community'}, hence, test data lookup is performed incorrectly. So, this method should be called from abstract
-   * base test class if its concrete sub-classes doesn't explicitly occur at stack trace.
+   * base test class if its concrete subclasses don't explicitly occur at stack trace.
    *
    *
    * @param testClass     target test class for which test data should be obtained
@@ -142,14 +141,14 @@ public final class PathManagerEx {
   }
 
   /**
-   * @return path to 'community' project home irrespective of current project
+   * @return path to 'community' project home irrespective of a current project
    */
   public static @NotNull String getCommunityHomePath() {
     return PlatformTestUtil.getCommunityPath();
   }
 
   /**
-   * @return path to 'community' project home if {@code testClass} is located in the community project and path to 'ultimate' project otherwise
+   * @return path to 'community' project home if {@code testClass} is located in the community project and path to 'ultimate' a project otherwise
    */
   public static String getHomePath(Class<?> testClass) {
     TestDataLookupStrategy strategy = isLocatedInCommunity() ? TestDataLookupStrategy.COMMUNITY : determineLookupStrategy(testClass);
@@ -157,9 +156,9 @@ public final class PathManagerEx {
   }
 
   /**
-   * Find file by its path relative to 'community' directory irrespective of current project
+   * Find file by its path relative to 'community' directory irrespective of a current project
    * @param relativePath path to file relative to 'community' directory
-   * @return file under the home directory of 'community' project
+   * @return file under the home directory of 'community' a project
    */
   public static @NotNull File findFileUnderCommunityHome(@NotNull String relativePath) {
     return findFileByRelativePath(getCommunityHomePath(), relativePath).toFile();
@@ -184,15 +183,15 @@ public final class PathManagerEx {
   private static boolean isLocatedInCommunity() {
     FileSystemLocation projectLocation = parseProjectLocation();
     return projectLocation == FileSystemLocation.COMMUNITY;
-    // There is no other options then.
+    // There are no other options then.
   }
 
   /**
-   * Tries to return test data path for the given lookup strategy.
+   * Tries to return a test data path for the given lookup strategy.
    *
    * @param strategy    lookup strategy to use
    * @return            test data path for the given strategy
-   * @throws IllegalStateException    if it's not possible to find valid test data path for the given strategy
+   * @throws IllegalStateException    if it's not possible to find a valid test data path for the given strategy
    */
   public static String getTestDataPath(TestDataLookupStrategy strategy) throws IllegalStateException {
     String homePath = PathManager.getHomePath();
@@ -227,9 +226,11 @@ public final class PathManagerEx {
       return TestDataLookupStrategy.COMMUNITY;
     }
 
-    // The general idea here is to find test class at the bottom of hierarchy and try to resolve test data lookup strategy
-    // against it. Rationale is that there is a possible case that, say, 'ultimate' test class extends basic test class
-    // that remains at 'community'. We want to perform the processing against 'ultimate' test class then.
+    // The general idea here is to find test class at the bottom of the hierarchy and try to resolve test data lookup strategy
+    // against it.
+    // The rationale is that there is a possible case that, say, 'ultimate' test class extends basic test class
+    // that remains at 'community'.
+    // We want to perform the processing against 'ultimate' test class then.
 
     // About special abstract classes processing - there is a possible case that target test class extends abstract base
     // test class and call to this method is rooted from that parent. We need to resolve test data lookup against super
@@ -248,7 +249,7 @@ public final class PathManagerEx {
       if (determineLookupStrategy(clazz) == TestDataLookupStrategy.ULTIMATE) {
         return TestDataLookupStrategy.ULTIMATE;
       }
-      if ((clazz.getModifiers() & Modifier.ABSTRACT) == 0) {
+      if (!Modifier.isAbstract(clazz.getModifiers())) {
         testClass = clazz;
       }
       else {
@@ -298,7 +299,7 @@ public final class PathManagerEx {
   }
 
   private static TestDataLookupStrategy determineLookupStrategy(Class<?> clazz) {
-    // Check if resulting strategy is already cached for the target class.
+    // Check if the resulting strategy is already cached for the target class.
     TestDataLookupStrategy result = CLASS_STRATEGY_CACHE.get(clazz);
     if (result != null) return result;
 
@@ -325,17 +326,11 @@ public final class PathManagerEx {
       throw new IllegalStateException("Classes root " + root + " doesn't exist");
     }
     if (!root.isDirectory()) {
-      //this means that clazz is located in a library, perhaps we should throw exception here
+      //this means that clazz is located in a library; perhaps we should throw exception here
       return FileSystemLocation.ULTIMATE;
     }
 
     String moduleName = root.getName();
-    String chunkPrefix = "ModuleChunk(";
-    if (moduleName.startsWith(chunkPrefix)) {
-      //todo[nik] this is temporary workaround to fix tests on TeamCity which compiles the whole modules cycle to a single output directory
-      moduleName = StringUtil.trimStart(moduleName, chunkPrefix);
-      moduleName = moduleName.substring(0, moduleName.indexOf(','));
-    }
     return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
   }
 
@@ -353,7 +348,7 @@ public final class PathManagerEx {
     try {
       Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), JpsProjectLoader.MODULE_MANAGER_COMPONENT);
       assert element != null;
-      for (ModulePath file : ModulePath.getPathsToModuleFiles(element)) {
+      for (ModulePath file : ModulePath.Companion.getPathsToModuleFiles(element)) {
         ourCommunityModules.add(file.getModuleName());
       }
       return ourCommunityModules;
@@ -364,7 +359,7 @@ public final class PathManagerEx {
   }
 
   /**
-   * Allows to determine project type by its file system location.
+   * Allows determining a project type by its file system location.
    *
    * @return    project type implied by its file system location
    */

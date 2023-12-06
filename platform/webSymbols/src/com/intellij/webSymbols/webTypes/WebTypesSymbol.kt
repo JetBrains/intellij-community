@@ -3,6 +3,7 @@ package com.intellij.webSymbols.webTypes
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.webSymbols.PsiSourcedWebSymbol
+import com.intellij.webSymbols.WebSymbol
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -41,5 +42,11 @@ interface WebTypesSymbol : PsiSourcedWebSymbol {
     val offset: Int,
     override val context: List<VirtualFile>,
   ) : Location, FileLocation
+
+  companion object {
+    val WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS = setOf(
+      WebSymbol.KIND_JS_PROPERTIES, WebSymbol.KIND_JS_STRING_LITERALS
+    )
+  }
 
 }

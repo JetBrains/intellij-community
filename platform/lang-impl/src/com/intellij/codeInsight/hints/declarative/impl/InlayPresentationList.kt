@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.withTranslated
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Inlay
@@ -12,6 +13,8 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GraphicsUtil
 import org.jetbrains.annotations.TestOnly
@@ -26,7 +29,9 @@ class InlayPresentationList(
   private var state: TinyTree<Any?>,
   @TestOnly var hasBackground: Boolean,
   @TestOnly var isDisabled: Boolean,
-  var payloads: Map<String, InlayActionPayload>? = null
+  var payloads: Map<String, InlayActionPayload>? = null,
+  private val providerClass: Class<*>,
+  @NlsContexts.HintText private val tooltip: String?
 ) {
   companion object {
     private const val NOT_COMPUTED = -1
@@ -39,9 +44,11 @@ class InlayPresentationList(
     private const val BACKGROUND_ALPHA: Float = 0.55f
   }
 
-  private var entries: Array<InlayPresentationEntry> = PresentationEntryBuilder(state).buildPresentationEntries()
+  private var entries: Array<InlayPresentationEntry> = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
   private var computedWidth: Int = NOT_COMPUTED
+  private var size: Float = Float.MAX_VALUE
+  private var fontName: String = ""
 
   private fun computePartialSums(fontMetricsStorage: InlayTextMetricsStorage): IntArray {
     var width = 0
@@ -82,11 +89,16 @@ class InlayPresentationList(
     return null
   }
 
+  fun handleHover(e: EditorMouseEvent): LightweightHint? {
+    return if (tooltip == null) null
+    else PresentationFactory(e.editor).showTooltip(e.mouseEvent, tooltip)
+  }
+
   @RequiresEdt
   fun updateState(state: TinyTree<Any?>, disabled: Boolean, hasBackground: Boolean) {
     updateStateTree(state, this.state, 0, 0)
     this.state = state
-    this.entries = PresentationEntryBuilder(state).buildPresentationEntries()
+    this.entries = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
     this.computedWidth = NOT_COMPUTED
     this._partialWidthSums = null
     this.isDisabled = disabled
@@ -133,7 +145,11 @@ class InlayPresentationList(
   }
 
   fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): Int {
-    if (computedWidth == NOT_COMPUTED) {
+    val metrics = textMetricsStorage.getFontMetrics(true)
+    val isActual = metrics.isActual(size, fontName)
+    if (!isActual || computedWidth == NOT_COMPUTED) {
+      size = metrics.font.size2D
+      fontName = metrics.font.family
       val width = entries.sumOf { it.computeWidth(textMetricsStorage) } + LEFT_MARGIN + RIGHT_MARGIN
       computedWidth = width
       return width
@@ -164,8 +180,8 @@ class InlayPresentationList(
 
     g.withTranslated(LEFT_MARGIN + targetRegion.x, targetRegion.y) {
       for (entry in entries) {
-        val hovered = entry.isHovered
-        val finalAttrs = if (hovered) {
+        val hoveredWithCtrl = entry.isHoveredWithCtrl
+        val finalAttrs = if (hoveredWithCtrl) {
           val refAttrs = inlay.editor.colorsScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
           val inlayAttrsWithRefForeground = attrs.clone()
           inlayAttrsWithRefForeground.foregroundColor = refAttrs.foregroundColor

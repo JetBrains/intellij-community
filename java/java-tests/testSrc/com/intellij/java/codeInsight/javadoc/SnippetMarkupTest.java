@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 
@@ -368,7 +369,23 @@ public class SnippetMarkupTest {
       r2 continues yyy
       """);
   }
+
+  @Test
+  public void visitorRegexpTooComplex() {
+    String str = "a".repeat(100000);
+    testVisitor("// @replace regex=\"(a*)*b\" replacement='z':\n" + str, null, true,
+                "Error: @replace: too complex regular expression '(a*)*b'\n" + str);
+  }
   
+  @Test
+  public void visitorRegexpDotAsterisk() {
+    testVisitor("""
+                  // @start region=main
+                  aaaa // @replace regex=".*" replacement="."
+                  // @end region=main
+                  """, null, true, "..\n");
+  }
+
   private static void testParsing(@NotNull String input, @NotNull String expected) {
     assertEquals(expected, SnippetMarkup.parse(input).toString());
   }
@@ -376,7 +393,7 @@ public class SnippetMarkupTest {
   private static void testVisitor(@NotNull String input, @Nullable String region, boolean processReplacements, @NotNull String expected) {
     var visitor = new SnippetMarkup.SnippetVisitor() {
       final StringBuilder sb = new StringBuilder();
-      
+
       @Override
       public void visitPlainText(@NotNull PlainText plainText,
                                  @NotNull List<@NotNull LocationMarkupNode> activeNodes) {

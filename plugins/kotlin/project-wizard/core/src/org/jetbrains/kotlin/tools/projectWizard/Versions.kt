@@ -5,51 +5,60 @@
 
 package org.jetbrains.kotlin.tools.projectWizard
 
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionState
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 
-@Suppress("ClassName", "SpellCheckingInspection")
+@Suppress("ClassName", "SpellCheckingInspection", "Unused")
 object Versions {
-    val KOTLIN = version("1.5.0") // used as fallback version
-    val KOTLIN_FOR_COMPOSE = version("1.7.20")
-    val COMPOSE_COMPILER_EXTENSION = version("1.3.2")
-    val GRADLE = version("7.5")
-    val KTOR = version("2.0.2")
-    val JUNIT = version("4.13.2")
-    val JUNIT5 = version("5.8.2")
+    // Most of the versions in this file are not used anymore in favour of the Dependencies object
+    // However, we are keeping these fields for API compatibility reasons
+
+    private fun loadVersion(default: String, f: (KotlinWizardVersionState).() -> String?): Version {
+        val version = KotlinWizardVersionStore.getInstance().state?.let(f) ?: default
+        return Version.fromString(version)
+    }
+
+    val KOTLIN = loadVersion("1.8.21") { kotlinPluginVersion }
+    val KOTLIN_FOR_COMPOSE = loadVersion("1.7.20") { kotlinForComposeVersion }
+    val COMPOSE_COMPILER_EXTENSION = loadVersion("1.3.2") { composeCompilerExtension }
+    val GRADLE = Version.fromString("8.1.1")
+    val JUNIT = Dependencies.JUNIT.version
+    val JUNIT5 = Dependencies.JUNIT5.version
 
     object ANDROID {
-        val ANDROID_MATERIAL = version("1.5.0")
-        val ANDROIDX_APPCOMPAT = version("1.4.1")
-        val ANDROIDX_CONSTRAINTLAYOUT = version("2.1.3")
-        val ANDROIDX_COMPOSE = version("1.2.1")
-        val ANDROIDX_ACTIVITY = version("1.5.1")
+        val ANDROID_MATERIAL = Dependencies.ANDROID.MATERIAL.version
+        val ANDROIDX_APPCOMPAT = Dependencies.ANDROID.APP_COMPAT.version
+        val ANDROIDX_CONSTRAINTLAYOUT = Dependencies.ANDROID.CONSTRAINT_LAYOUT.version
+        val ANDROIDX_COMPOSE = Dependencies.ANDROID.COMPOSE_UI.version
+        val ANDROIDX_ACTIVITY = Dependencies.ANDROID.ACTIVITY.version
     }
 
     object KOTLINX {
-        val KOTLINX_HTML = version("0.7.2")
-        val KOTLINX_NODEJS: Version = version("0.0.7")
+        val KOTLINX_HTML = Dependencies.KOTLINX.KOTLINX_HTML.version
+        val KOTLINX_NODEJS = Dependencies.KOTLINX.KOTLINX_NODEJS.version
     }
 
     object JS_WRAPPERS {
-        val KOTLIN_REACT = wrapperVersion("18.2.0")
-        val KOTLIN_REACT_DOM = KOTLIN_REACT
-        val KOTLIN_EMOTION = wrapperVersion("11.9.3")
-        val KOTLIN_REACT_ROUTER_DOM = wrapperVersion("6.3.0")
-        val KOTLIN_REDUX = wrapperVersion("4.1.2")
-        val KOTLIN_REACT_REDUX = wrapperVersion("7.2.6")
-
-        private fun wrapperVersion(version: String): Version =
-            version("$version-pre.346")
+        val KOTLIN_REACT = Dependencies.JS_WRAPPERS.KOTLIN_REACT.version
+        val KOTLIN_REACT_DOM = Dependencies.JS_WRAPPERS.KOTLIN_REACT_DOM.version
+        val KOTLIN_EMOTION = Dependencies.JS_WRAPPERS.KOTLIN_EMOTION.version
+        val KOTLIN_REACT_ROUTER_DOM = Dependencies.JS_WRAPPERS.KOTLIN_REACT_ROUTER_DOM.version
+        val KOTLIN_REDUX = Dependencies.JS_WRAPPERS.KOTLIN_REDUX.version
+        val KOTLIN_REACT_REDUX = Dependencies.JS_WRAPPERS.KOTLIN_REACT_REDUX.version
     }
 
     object GRADLE_PLUGINS {
-        val ANDROID = version("7.3.1")
+        val ANDROID = loadVersion("7.3.1") { gradleAndroidVersion }
+
+        val MIN_GRADLE_FOOJAY_VERSION = loadVersion("7.6") { minGradleFoojayVersion }
+        val MIN_KOTLIN_FOOJAY_VERSION = loadVersion("1.5.30") { minKotlinFoojayVersion }
+        val FOOJAY_VERSION = loadVersion("0.5.0") { foojayVersion }
     }
 
     object MAVEN_PLUGINS {
-        val SUREFIRE = version("2.22.2")
-        val FAILSAFE = SUREFIRE
+        val SUREFIRE = loadVersion("2.22.2") { surefireVersion }
+        val FAILSAFE = loadVersion("2.22.2") { failsafeVersion }
+        val CODEHAUS_MOJO_EXEC = loadVersion("1.6.0") { codehausMojoExecVersion }
     }
 }
-
-private fun version(version: String) = Version.fromString(version)

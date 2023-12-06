@@ -21,7 +21,7 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.selected
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser
 import org.jetbrains.idea.devkit.module.PluginModuleType
@@ -53,7 +53,7 @@ class NewThemeAction : AnAction() {
           .addValidationRule(DevKitThemesBundle.message("new.theme.dialog.name.empty")) { name.component.text.isBlank() }
       }
       row("") {
-        isDark = checkBox(DevKitThemesBundle.message("new.theme.dialog.is.dark.checkbox.text")).applyToComponent { isSelected = true }
+        isDark = checkBox(DevKitThemesBundle.message("new.theme.dialog.is.dark.checkbox.text")).selected(true)
       }
     }
 

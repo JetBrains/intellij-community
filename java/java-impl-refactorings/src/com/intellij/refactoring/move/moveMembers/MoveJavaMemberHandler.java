@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -72,7 +74,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
                                     @NotNull PsiClass targetClass,
                                     @NotNull Set<PsiMember> membersToMove,
                                     @NotNull MoveMembersOptions moveMembersOptions,
-                                    @NotNull MultiMap<PsiElement, String> conflicts) {
+                                    @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     final PsiElement element = usageInfo.getElement();
     if (element == null) return;
 
@@ -110,7 +112,8 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
                member.hasModifierProperty(PsiModifier.FINAL) &&
                PsiUtil.isAccessedForWriting((PsiExpression)usageInfo.reference) &&
                !RefactoringHierarchyUtil.willBeInTargetClass(usageInfo.reference, membersToMove, targetClass, true)) {
-      conflicts.putValue(usageInfo.member, JavaBundle.message("move.member.final.initializer.conflict"));
+      conflicts.putValue(usageInfo.member, JavaBundle.message("move.member.final.initializer.conflict",
+                                                              RefactoringUIUtil.getDescription(member, true)));
     }
 
     if (toBeConvertedToEnum(moveMembersOptions, member, targetClass) && !isEnumAcceptable(element, targetClass)) {
@@ -141,11 +144,29 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
                                      @Nullable PsiModifierList modifierListCopy,
                                      @NotNull PsiClass targetClass,
                                      @NotNull Set<PsiMember> membersToMove,
-                                     @NotNull MultiMap<PsiElement, String> conflicts) {
-    if (member instanceof PsiMethod && hasMethod(targetClass, (PsiMethod)member) ||
-        member instanceof PsiField && hasField(targetClass, (PsiField)member)) {
+                                     @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
+    if (member instanceof PsiMethod method && hasMethod(targetClass, method) ||
+        member instanceof PsiField field && hasField(targetClass, field)) {
       String message = RefactoringBundle.message("0.already.exists.in.the.target.class", RefactoringUIUtil.getDescription(member, false));
       conflicts.putValue(member, StringUtil.capitalize(message));
+    }
+    else if (member instanceof PsiEnumConstant && !targetClass.isEnum()) {
+      String message = JavaRefactoringBundle.message("dialog.message.enum.constant.0.won.t.be.compilable.in.1",
+                                                     RefactoringUIUtil.getDescription(member, true),
+                                                     RefactoringUIUtil.getDescription(targetClass, true));
+      conflicts.putValue(member, StringUtil.capitalize(message));
+    }
+    else if (member instanceof PsiField && targetClass.isInterface()) {
+      boolean constant = member.hasModifierProperty(PsiModifier.STATIC) && ((PsiField)member).hasInitializer();
+      if (!constant) {
+        String message = JavaRefactoringBundle.message("dialog.message.non.constant.will.not.be.compilable.in.interface",
+                                                       RefactoringUIUtil.getDescription(member, true));
+        conflicts.putValue(member, message);
+      }
+    }
+    else if (member instanceof PsiClassInitializer && targetClass.isInterface()) {
+      String message = JavaRefactoringBundle.message("dialog.message.static.class.initializers.are.not.allowed.in.interfaces");
+      conflicts.putValue(member, message);
     }
 
     RefactoringConflictsUtilImpl.analyzeUsedElementsAfterMove(member, member, membersToMove, null, targetClass, targetClass, conflicts);

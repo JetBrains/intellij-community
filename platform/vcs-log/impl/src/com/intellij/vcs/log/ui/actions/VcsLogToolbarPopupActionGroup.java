@@ -7,18 +7,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
 public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup implements DumbAware {
-
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -27,12 +23,10 @@ public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup implements
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.getDataContext(),
                                                                           JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
                                                                           ActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
     popup.setShowSubmenuOnHover(true);
-    myPopupState.prepareToShow(popup);
     PopupUtil.showForActionButtonEvent(popup, e);
   }
 

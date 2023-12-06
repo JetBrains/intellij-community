@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.io.DataExternalizer;
@@ -23,14 +23,13 @@ public final class ValueContainerExternalizer<T> implements DataExternalizer<Upd
   }
 
   @Override
-  public void save(@NotNull final DataOutput out, @NotNull final UpdatableValueContainer<T> container) throws IOException {
+  public void save(final @NotNull DataOutput out, final @NotNull UpdatableValueContainer<T> container) throws IOException {
     container.saveTo(out, myValueExternalizer);
   }
 
-  @NotNull
   @Override
-  public UpdatableValueContainer<T> read(@NotNull final DataInput in) throws IOException {
-    final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
+  public @NotNull UpdatableValueContainer<T> read(final @NotNull DataInput in) throws IOException {
+    final ValueContainerImpl<T> valueContainer = ValueContainerImpl.createNewValueContainer();
     valueContainer.readFrom((DataInputStream)in, myValueExternalizer, myInputRemapping);
     return valueContainer;
   }

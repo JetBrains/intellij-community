@@ -33,25 +33,37 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 fun KotlinType.isFunctionOfAnyKind() = constructor.declarationDescriptor?.getFunctionTypeKind() != null
 
 fun KotlinType?.isMap(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean {
-    val classDescriptor = this?.constructor?.declarationDescriptor as? ClassDescriptor ?: return false
+    val classDescriptor = classDescriptor() ?: return false
     return classDescriptor.name.asString().endsWith("Map") && classDescriptor.isSubclassOf(builtIns.map)
 }
 
 fun KotlinType?.isIterable(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean {
-    val classDescriptor = this?.constructor?.declarationDescriptor as? ClassDescriptor ?: return false
+    val classDescriptor = classDescriptor() ?: return false
     return classDescriptor.isListOrSet(builtIns) || classDescriptor.isSubclassOf(builtIns.iterable)
 }
 
 fun KotlinType?.isCollection(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean {
-    val classDescriptor = this?.constructor?.declarationDescriptor as? ClassDescriptor ?: return false
+    val classDescriptor = classDescriptor() ?: return false
     return classDescriptor.isListOrSet(builtIns) || classDescriptor.isSubclassOf(builtIns.collection)
 }
 
-private fun ClassDescriptor.isListOrSet(builtIns: KotlinBuiltIns): Boolean {
-    val className = name.asString()
-    return className.endsWith("List") && isSubclassOf(builtIns.list)
-            || className.endsWith("Set") && isSubclassOf(builtIns.set)
-}
+fun KotlinType?.isList(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean =
+    classDescriptor()?.isList(builtIns) == true
+
+fun KotlinType?.isSet(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean =
+    classDescriptor()?.isSet(builtIns) == true
+
+private fun ClassDescriptor.isListOrSet(builtIns: KotlinBuiltIns): Boolean =
+    isList(builtIns) || isSet(builtIns)
+
+private fun ClassDescriptor.isList(builtIns: KotlinBuiltIns): Boolean =
+    name.asString().endsWith("List") && isSubclassOf(builtIns.list)
+
+private fun ClassDescriptor.isSet(builtIns: KotlinBuiltIns): Boolean =
+    name.asString().endsWith("Set") && isSubclassOf(builtIns.set)
+
+private fun KotlinType?.classDescriptor(): ClassDescriptor? =
+    this?.constructor?.declarationDescriptor as? ClassDescriptor
 
 fun KtCallExpression.isCalling(fqName: FqName, context: BindingContext? = null): Boolean {
     return isCalling(listOf(fqName), context)

@@ -89,11 +89,18 @@ class VariableView(override val variableName: String, private val variable: Vari
       override fun startEvaluation(callback: XFullValueEvaluationCallback) {
         var valueModifier = variable.valueModifier
         var nonProtoContext = context
-        while (nonProtoContext is VariableView && nonProtoContext.variableName == PROTOTYPE_PROP) {
+        while (nonProtoContext is VariableView && isPrototypeVariable(nonProtoContext.variableName)) {
           valueModifier = nonProtoContext.variable.valueModifier
           nonProtoContext = nonProtoContext.parent
         }
-        valueModifier!!.evaluateGet(variable, evaluateContext)
+        // Internal properties do not have a valueModifier (e.g. [[Prototype]]),
+        // so if we fail to get a valueModifier, we simply use context as the valueModifier
+        if (valueModifier == null) {
+          val context = nonProtoContext as VariableView
+          // Scope is always an object, so maybe safe cast is useless here
+          valueModifier = context.variable.value as? ValueModifier ?: return
+        }
+        valueModifier.evaluateGet(variable, evaluateContext)
           .onSuccess(node) {
             callback.evaluated("")
             setEvaluatedValue(it, null, node)
@@ -113,7 +120,7 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   private fun computePresentation(value: Value, node: XValueNode) {
-    if (variable is ObjectProperty && variable.name == PROTOTYPE_PROP && value.type != ValueType.NULL) {
+    if (variable is ObjectProperty && isPrototypeVariable(variable.name) && value.type != ValueType.NULL) {
       setObjectPresentation(value as ObjectValue, icon, node)
       return
     }
@@ -538,4 +545,8 @@ private class ArrayPresentation(length: Int, className: String?) : XValuePresent
   }
 }
 
-const val PROTOTYPE_PROP = "__proto__"
+const val PROTO_PROP = "__proto__"
+const val PROTOTYPE_PROP = "[[Prototype]]"
+
+// Function that checks is either variable have name proto or prototype
+fun isPrototypeVariable(variableName: String) = variableName == PROTO_PROP || variableName == PROTOTYPE_PROP

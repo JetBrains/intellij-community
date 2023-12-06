@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.patterns.compiler;
 
@@ -104,15 +104,14 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
     invoke, invoke_end
   }
 
-  private static class Frame {
+  private static final class Frame {
     State state = State.init;
     Object target;
     String methodName;
     ArrayList<Object> params = new ArrayList<>();
   }
 
-  @Nullable
-  private static <T> T processElementPatternText(final String text, final Function<? super Frame, Object> executor) {
+  private static @Nullable <T> T processElementPatternText(final String text, final Function<? super Frame, Object> executor) {
     final Stack<Frame> stack = new Stack<>();
     int curPos = 0;
     Frame curFrame = new Frame();
@@ -285,7 +284,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
     return s;
   }
 
-  private static Object invokeMethod(@Nullable final Object target, final String methodName, final Object[] arguments, final Collection<Method> staticMethods) throws Throwable {
+  private static Object invokeMethod(final @Nullable Object target, final String methodName, final Object[] arguments, final Collection<Method> staticMethods) throws Throwable {
     final Ref<Boolean> convertVarArgs = Ref.create(Boolean.FALSE);
     final Collection<Method> methods = target == null ? staticMethods : Arrays.asList(target.getClass().getMethods());
     final Method method = findMethod(methodName, arguments, methods, convertVarArgs);
@@ -310,8 +309,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
     throw new NoSuchMethodException("unknown symbol: " + methodName + "(" + StringUtil.join(arguments, o -> String.valueOf(o), ", ") + ")");
   }
 
-  @Nullable
-  private static Method findMethod(final String methodName, final Object[] arguments, final Collection<Method> methods, Ref<? super Boolean> convertVarArgs) {
+  private static @Nullable Method findMethod(final String methodName, final Object[] arguments, final Collection<Method> methods, Ref<? super Boolean> convertVarArgs) {
     main: for (Method method : methods) {
       if (!methodName.equals(method.getName())) continue;
       if (method.getParameterCount() != arguments.length && !method.isVarArgs()) continue;
@@ -513,20 +511,20 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private record Node(@Nullable Node target, @Nullable String method, Object @Nullable [] args) {
   }
 
-  private static class FalsePattern extends InitialPatternCondition<Object> implements ElementPattern<Object> {
+  private static final class FalsePattern extends InitialPatternCondition<Object> implements ElementPattern<Object> {
     private final ElementPatternCondition<Object> myCondition = new ElementPatternCondition<>(this);
 
-    protected FalsePattern() {
+    private FalsePattern() {
       super(Object.class);
     }
 
     @Override
-    public boolean accepts(@Nullable final Object o) {
+    public boolean accepts(final @Nullable Object o) {
       return false;
     }
 
     @Override
-    public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+    public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
       return false;
     }
 
@@ -537,7 +535,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
 
-  public static class LazyPresentablePattern<T> implements ElementPattern<T> {
+  public static final class LazyPresentablePattern<T> implements ElementPattern<T> {
 
     private final Node myNode;
     private final Set<Method> myStaticMethods;
@@ -552,12 +550,12 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
     }
 
     @Override
-    public boolean accepts(@Nullable final Object o) {
+    public boolean accepts(final @Nullable Object o) {
       return getCompiledPattern().accepts(o, new ProcessingContext());
     }
 
     @Override
-    public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+    public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
       return getCompiledPattern().accepts(o, context);
     }
 

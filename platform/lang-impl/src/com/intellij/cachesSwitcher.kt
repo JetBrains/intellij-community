@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij
 
 import com.intellij.openapi.application.ApplicationManager
@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.indexing.FileBasedIndexTumbler
 import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.IndexingFlag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
@@ -36,6 +37,7 @@ object CacheSwitcher {
         }
 
         ID.reloadEnumFile()
+        IndexingFlag.reloadAttributes()
       }
     }
   }

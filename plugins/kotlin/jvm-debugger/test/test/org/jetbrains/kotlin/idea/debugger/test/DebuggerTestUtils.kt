@@ -4,8 +4,18 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
+import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.isStableOrReadyForPreview
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 
 @JvmField
 val DEBUGGER_TESTDATA_PATH_BASE: String =
     KotlinRoot.DIR.resolve("jvm-debugger").resolve("test").resolve("testData").path
+
+internal fun chooseLanguageVersionForCompilation(useK2: Boolean): LanguageVersion {
+    return if (useK2) {
+        LanguageVersion.values().last { it.usesK2 && it.isStableOrReadyForPreview() }
+    } else {
+        LanguageVersion.KOTLIN_1_9 // the latest K1 LV
+    }
+}

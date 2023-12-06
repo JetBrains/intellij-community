@@ -480,7 +480,9 @@ public class JBZipFile implements Closeable {
     }
 
     if (myIsZip64) {
-      assert !isZip64.equals(ThreeState.NO);
+      if (isZip64.equals(ThreeState.NO)) {
+        throw new IOException("Non ZIP64 archive was requested but it is a ZIP64 archive");
+      }
 
       myArchive.skipBytes(ZIP64_EOCDL_LOCATOR_OFFSET - WORD);
       myArchive.seek(ZipUInt64.getLongValue(readBytes(DWORD)));
@@ -495,7 +497,9 @@ public class JBZipFile implements Closeable {
       myArchive.seek(value);
     }
     else {
-      assert !isZip64.equals(ThreeState.YES);
+      if (isZip64.equals(ThreeState.YES)) {
+        throw new IOException("ZIP64 archive was requested but it is not a ZIP64 archive");
+      }
 
       myArchive.seek(off + CFD_LOCATOR_OFFSET);
       byte[] cfdOffset = new byte[WORD];

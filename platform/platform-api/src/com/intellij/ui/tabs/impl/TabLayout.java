@@ -4,6 +4,7 @@ package com.intellij.ui.tabs.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,10 @@ public abstract class TabLayout {
     return false;
   }
 
+  public boolean isScrollable() {
+    return false;
+  }
+
   public boolean isWithScrollBar() {
     return false;
   }
@@ -39,6 +44,10 @@ public abstract class TabLayout {
   }
 
   public void scroll(int units) {
+  }
+
+  public boolean isTabHidden(@NotNull TabInfo info) {
+    return false;
   }
 
   public static double getDragOutMultiplier() {
@@ -58,6 +67,8 @@ public abstract class TabLayout {
     return JBUI.scale(50);
   }
 
+
+  public static final int DEADZONE_FOR_DECLARE_TAB_HIDDEN = 10;
 
   public static boolean showPinnedTabsSeparately() {
     return UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow() &&

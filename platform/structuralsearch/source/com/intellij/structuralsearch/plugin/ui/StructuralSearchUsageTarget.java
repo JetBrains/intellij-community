@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.navigation.ItemPresentation;
@@ -59,21 +59,6 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
   @Override
   public ItemPresentation getPresentation() {
     return this;
-  }
-
-  @Override
-  public void navigate(boolean requestFocus) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
   }
 
   @Override

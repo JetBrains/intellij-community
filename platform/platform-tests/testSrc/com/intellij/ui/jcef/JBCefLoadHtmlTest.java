@@ -2,13 +2,11 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandler;
 import org.cef.network.CefRequest;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -17,12 +15,11 @@ import org.junit.Test;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.CountDownLatch;
 
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -38,19 +35,22 @@ public class JBCefLoadHtmlTest {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
-  static final String JS_FILE_PATH = PlatformTestUtil.getPlatformTestDataPath() + "ui/jcef/JBCefLoadHtmlTest.js";
+  static final String HTML_URL = "file://page.html";
+  static final String JS_URL = "file://script.js";
   static final String HTML = """
     <html>
     <body>
 
     === JBCefLoadHtmlTest ===
-    <script src="JBCefLoadHtmlTest.js"></script>
+    <script src="#script_url#"></script>
 
     </body>
-    </html>""";
+    </html>""".replaceAll("#script_url#", JS_URL);
 
   static final CountDownLatch LATCH = new CountDownLatch(1);
   static volatile boolean testPassed;
+
+  JBCefBrowser browser;
 
   @Before
   public void before() {
@@ -63,41 +63,44 @@ public class JBCefLoadHtmlTest {
   }
 
   @Test
-  public void test() {
-    JBCefBrowser browser = new JBCefBrowser();
+  public void test() throws InterruptedException, InvocationTargetException {
+    SwingUtilities.invokeAndWait(() -> {
+      browser = new JBCefBrowser();
+      browser.getJBCefClient().addLoadHandler(new CefLoadHandler() {
+        @Override
+        public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
+          System.out.println("JBCefLoadHtmlTest.onLoadingStateChange");
+        }
 
-    browser.getJBCefClient().addLoadHandler(new CefLoadHandler() {
-      @Override
-      public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
-        System.out.println("JBCefLoadHtmlTest.onLoadingStateChange");
-      }
+        @Override
+        public void onLoadStart(CefBrowser browser, CefFrame frame, CefRequest.TransitionType transitionType) {
+          System.out.println("JBCefLoadHtmlTest.onLoadStart");
+        }
 
-      @Override
-      public void onLoadStart(CefBrowser browser, CefFrame frame, CefRequest.TransitionType transitionType) {
-        System.out.println("JBCefLoadHtmlTest.onLoadStart");
-      }
+        @Override
+        public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+          System.out.println("JBCefLoadHtmlTest.onLoadEnd");
+        }
 
-      @Override
-      public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
-        System.out.println("JBCefLoadHtmlTest.onLoadEnd");
-      }
+        @Override
+        public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+          System.out.println("JBCefLoadHtmlTest.onLoadError");
+        }
+      }, browser.getCefBrowser());
 
-      @Override
-      public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
-        System.out.println("JBCefLoadHtmlTest.onLoadError");
-      }
-    }, browser.getCefBrowser());
+      JBCefJSQuery jsQuery = JBCefJSQuery.create(browser);
 
-    JBCefJSQuery jsQuery = JBCefJSQuery.create(browser);
+      jsQuery.addHandler(result -> {
+        System.out.println("JS callback result: " + result);
+        testPassed = true;
+        LATCH.countDown();
+        return null;
+      });
 
-    jsQuery.addHandler(result -> {
-      System.out.println("JS callback result: " + result);
-      testPassed = true;
-      LATCH.countDown();
-      return null;
+      JBCefFileSchemeHandlerFactory.registerLoadHTMLRequest(browser.myCefBrowser, jsQuery.inject("'hello'"), JS_URL);
     });
+    assertNotNull(browser);
 
-    writeJS(jsQuery.inject("'hello'"));
 
     invokeAndWaitForLatch(LATCH, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
@@ -107,23 +110,12 @@ public class JBCefLoadHtmlTest {
       frame.addWindowListener(new WindowAdapter() {
         @Override
         public void windowOpened(WindowEvent e) {
-          // on MS Windows the path should start with a slash, like "/c:/path"
-          browser.loadHTML(HTML, "file://" + new File(JS_FILE_PATH).toURI().getPath());
+          browser.loadHTML(HTML, HTML_URL);
         }
       });
       frame.setVisible(true);
     });
 
     assertTrue(testPassed);
-  }
-
-  private static void writeJS(@NotNull String javascript) {
-    //noinspection ImplicitDefaultCharsetUsage
-    try (FileWriter fileWriter = new FileWriter(JS_FILE_PATH)) {
-      fileWriter.write(javascript);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 }

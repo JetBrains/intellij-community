@@ -1,25 +1,35 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.impl.TabCharacterPaintMode
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.options.advanced.AdvancedSettingBean
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
 private class RegistryToAdvancedSettingsMigration : ProjectActivity {
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override suspend fun execute(project: Project) {
     val propertyName = "registry.to.advanced.settings.migration.build"
-    val lastMigratedVersion = PropertiesComponent.getInstance().getValue(propertyName)
+    val propertyManager = serviceAsync<PropertiesComponent>()
+    val lastMigratedVersion = propertyManager.getValue(propertyName)
     val currentVersion = ApplicationInfo.getInstance().build.asString()
     if (currentVersion == lastMigratedVersion) {
       return
     }
 
     val userProperties = Registry.getInstance().userProperties
-    for (setting in AdvancedSettingBean.EP_NAME.extensions) {
+    for (setting in AdvancedSettingBean.EP_NAME.extensionList) {
       if (setting.id == "editor.tab.painting") {
         migrateEditorTabPainting(userProperties, setting)
         continue
@@ -39,7 +49,7 @@ private class RegistryToAdvancedSettingsMigration : ProjectActivity {
         continue
       }
     }
-    PropertiesComponent.getInstance().setValue(propertyName, currentVersion)
+    propertyManager.setValue(propertyName, currentVersion)
   }
 
   private fun migrateEditorTabPainting(userProperties: MutableMap<String, String>, setting: AdvancedSettingBean) {

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.documentation.DocumentationLinkHandler
 import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.codeInsight.documentation.DocumentationScrollPane
+import com.intellij.codeInsight.hint.DefinitionSwitcher
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
@@ -16,18 +17,19 @@ import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationPage
 import com.intellij.lang.documentation.ide.impl.DocumentationPageContent
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
-import com.intellij.ui.FontSizeModel
+import com.intellij.platform.util.coroutines.flow.collectLatestUndispatched
 import com.intellij.ui.PopupHandler
-import com.intellij.util.flow.collectLatestUndispatched
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
@@ -39,6 +41,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JScrollPane
 
 internal class DocumentationUI(
@@ -48,7 +51,8 @@ internal class DocumentationUI(
 
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
-  val fontSize: FontSizeModel = DocumentationFontSizeModel()
+  val fontSize: DocumentationFontSizeModel = DocumentationFontSizeModel()
+  val switcherToolbarComponent: JComponent?
 
   private val icons = mutableMapOf<String, Icon>()
   private var imageResolver: DocumentationImageResolver? = null
@@ -56,6 +60,8 @@ internal class DocumentationUI(
   private val cs = CoroutineScope(Dispatchers.EDT)
   private val myContentUpdates = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val contentUpdates: SharedFlow<Unit> = myContentUpdates.asSharedFlow()
+  private val myContentSizeUpdates = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  val contentSizeUpdates: SharedFlow<String> = myContentSizeUpdates.asSharedFlow()
 
   init {
     scrollPane = DocumentationScrollPane()
@@ -66,6 +72,9 @@ internal class DocumentationUI(
     scrollPane.setViewportView(editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
+    switcherToolbarComponent = createSwitcherIfNeeded()?.createToolbar()?.component?.apply {
+      border = JBUI.Borders.emptyTop(5)
+    }
 
     browser.ui = this
     Disposer.register(this, browser)
@@ -93,6 +102,12 @@ internal class DocumentationUI(
     cs.launch(CoroutineName("DocumentationUI font size update"), start = CoroutineStart.UNDISPATCHED) {
       fontSize.updates.collect {
         editorPane.applyFontProps(it)
+        myContentSizeUpdates.emit("font change")
+      }
+    }
+    cs.launch(CoroutineName("DocumentationUI content size update emission"), start = CoroutineStart.UNDISPATCHED) {
+      myContentUpdates.collect {
+        myContentSizeUpdates.emit("content change")
       }
     }
   }
@@ -250,6 +265,14 @@ internal class DocumentationUI(
       if (ScreenReader.isActive()) {
         editorPane.caretPosition = 0
       }
+    }
+  }
+
+  private fun createSwitcherIfNeeded(): DefinitionSwitcher<DocumentationRequest>? {
+    val requests = browser.page.requests
+    if (requests.size < 2) return null
+    return DefinitionSwitcher(requests.toTypedArray(), scrollPane) {
+      browser.resetBrowser(it)
     }
   }
 }

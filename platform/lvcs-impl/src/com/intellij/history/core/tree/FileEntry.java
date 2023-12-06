@@ -26,7 +26,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 
-public class FileEntry extends Entry {
+public final class FileEntry extends Entry {
   private long myTimestamp;
   private boolean isReadOnly;
   private Content myContent;
@@ -84,9 +84,8 @@ public class FileEntry extends Entry {
     return true;
   }
 
-  @NotNull
   @Override
-  public FileEntry copy() {
+  public @NotNull FileEntry copy() {
     return new FileEntry(getNameId(), myContent, myTimestamp, isReadOnly);
   }
 

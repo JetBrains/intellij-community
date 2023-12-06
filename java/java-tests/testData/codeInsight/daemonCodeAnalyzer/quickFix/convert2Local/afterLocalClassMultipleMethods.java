@@ -5,7 +5,7 @@ class Outer {
     class Local {
 
         void foo() {
-          String s = "1";
+            String s = "1";
         System.out.println(s);
       }
 

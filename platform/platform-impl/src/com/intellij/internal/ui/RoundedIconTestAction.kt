@@ -1,12 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.ui.Gray
 import com.intellij.ui.RoundedIcon
 import com.intellij.ui.components.JBLabel
@@ -24,18 +25,19 @@ import java.awt.geom.Ellipse2D
 import java.awt.image.BufferedImage
 import javax.swing.*
 import javax.swing.event.ChangeListener
+import kotlin.math.min
 
 internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project, null, true, IdeModalityType.IDE, false) {
-
-      private val myLabel = JBLabel("Some text").apply {
+      private val label = JBLabel("Some text").apply {
         horizontalAlignment = SwingConstants.CENTER
         horizontalTextPosition = SwingConstants.LEFT
       }
+
       private val iconChooser = JCheckBox("Splash", true).apply { isOpaque = false }
       private val formChooser = JCheckBox("Superellipse", true).apply { isOpaque = false }
       val slider = JSlider(0, 100).apply {
@@ -46,9 +48,12 @@ internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
         majorTickSpacing = 10
         isOpaque = false
       }
-      val splashIcon: Icon? by lazy { IconLoader.findIcon(ApplicationInfoImpl.getShadowInstanceImpl().splashImageUrl, ApplicationInfoImpl::class.java.classLoader) }
-      val generatedIcon: Icon? by lazy {
-        IconUtil.createImageIcon((createRandomImage(splashIcon!!.iconWidth, splashIcon!!.iconHeight) as Image))
+      val splashIcon: Icon by lazy {
+        findIconUsingNewImplementation(path = ApplicationInfoImpl.getShadowInstanceImpl().splashImageUrl!!,
+                                       classLoader = ApplicationInfo::class.java.classLoader)!!
+      }
+      val generatedIcon: Icon by lazy {
+        IconUtil.createImageIcon((createRandomImage(splashIcon.iconWidth, splashIcon.iconHeight) as Image))
       }
 
       init {
@@ -85,7 +90,7 @@ internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
         iconChooser.addActionListener(actionListener)
         formChooser.addActionListener(actionListener)
 
-        panel.add(myLabel, CENTER)
+        panel.add(label, CENTER)
         val southPanel = NonOpaquePanel(BorderLayout())
         val chooserPanel = NonOpaquePanel(GridLayout(2, 1))
         chooserPanel.add(iconChooser)
@@ -97,9 +102,9 @@ internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
       }
 
       fun updateIcon() {
-        myLabel.icon = RoundedIcon(if (iconChooser.isSelected) splashIcon!! else generatedIcon!!,
-                                   (slider.value * 0.01),
-                                   formChooser.isSelected)
+        label.icon = RoundedIcon(/* source = */ if (iconChooser.isSelected) splashIcon else generatedIcon,
+                                 /* arcRatio = */ (slider.value * 0.01),
+                                 /* superEllipse = */ formChooser.isSelected)
       }
 
       override fun createActions() = emptyArray<Action>()
@@ -121,7 +126,7 @@ internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
       RectanglePainter.FILL.paint(g, 0, 0, width, height, null)
       for (i in 0 until 100) {
         g.color = randomColor()
-        val r = Math.random() * Math.min(width, height) / Math.PI
+        val r = Math.random() * min(width, height) / Math.PI
         g.fill(Ellipse2D.Double(Math.random() * width, Math.random() * height, r, r))
       }
       g.color = Color(0, 0, 0, 85) //mark center of a picture

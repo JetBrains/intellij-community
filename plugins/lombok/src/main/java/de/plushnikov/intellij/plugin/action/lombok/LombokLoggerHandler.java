@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.action.lombok;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
@@ -8,26 +7,27 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.rename.RenameProcessor;
 import de.plushnikov.intellij.plugin.LombokBundle;
-import de.plushnikov.intellij.plugin.processor.clazz.log.*;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
+import de.plushnikov.intellij.plugin.processor.clazz.log.AbstractLogProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class LombokLoggerHandler extends BaseLombokHandler {
-
+public final class LombokLoggerHandler extends BaseLombokHandler {
   @Override
   protected void processClass(@NotNull PsiClass psiClass) {
+    LombokProcessorManager manager = LombokProcessorManager.getInstance();
     final Collection<AbstractLogProcessor> logProcessors = Arrays.asList(
-      ApplicationManager.getApplication().getService(CommonsLogProcessor.class),
-      ApplicationManager.getApplication().getService(JBossLogProcessor.class),
-      ApplicationManager.getApplication().getService(Log4jProcessor.class),
-      ApplicationManager.getApplication().getService(Log4j2Processor.class),
-      ApplicationManager.getApplication().getService(LogProcessor.class),
-      ApplicationManager.getApplication().getService(Slf4jProcessor.class),
-      ApplicationManager.getApplication().getService(XSlf4jProcessor.class),
-      ApplicationManager.getApplication().getService(FloggerProcessor.class),
-      ApplicationManager.getApplication().getService(CustomLogProcessor.class));
+      manager.getCommonsLogProcessor(),
+      manager.getJBossLogProcessor(),
+      manager.getLog4jProcessor(),
+      manager.getLog4j2Processor(),
+      manager.getLogProcessor(),
+      manager.getSlf4jProcessor(),
+      manager.getXSlf4jProcessor(),
+      manager.getFloggerProcessor(),
+      manager.getCustomLogProcessor());
 
     final String lombokLoggerName = AbstractLogProcessor.getLoggerName(psiClass);
     final boolean lombokLoggerIsStatic = AbstractLogProcessor.isLoggerStatic(psiClass);

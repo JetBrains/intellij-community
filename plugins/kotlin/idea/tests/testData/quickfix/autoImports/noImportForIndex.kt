@@ -1,4 +1,6 @@
 // "Import" "false"
+// ACTION: Create extension function 'Some.get'
+// ACTION: Create member function 'Some.get'
 // ERROR: Unresolved reference: some[12]
 // ERROR: No get method providing array access
 

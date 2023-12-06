@@ -30,6 +30,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   private var lastEventCreatedTime: Long = 0
   private val eventMergeTimeoutMs: Long = if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) 500L else 10000L
   private var lastEventFlushFuture: ScheduledFuture<CompletableFuture<Void>>? = null
+  private val escapeCharsInData: Boolean = StatisticsRecorderUtil.isCharsEscapingRequired(recorderId)
 
   override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
@@ -40,9 +41,10 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         if (!validator.isGroupAllowed(group)) return@Runnable
         val data = dataProvider() ?: return@Runnable
         val event = LogEvent(sessionId, build, bucket, eventTime,
-          LogEventGroup(group.id, group.version.toString()),
-          recorderVersion,
-          LogEventAction(eventId, isState, HashMap(data))).escape()
+                             LogEventGroup(group.id, group.version.toString()),
+                             recorderVersion,
+                             LogEventAction(eventId, isState, HashMap(data)))
+          .also { if (escapeCharsInData) it.escape() else it.escapeExceptData() }
         val validatedEvent = validator.validateEvent(event)
         if (validatedEvent != null) {
           log(validatedEvent, System.currentTimeMillis(), eventId, data)

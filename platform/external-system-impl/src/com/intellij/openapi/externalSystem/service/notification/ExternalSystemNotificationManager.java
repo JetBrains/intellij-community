@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.build.issue.BuildIssueQuickFix;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.errorTreeView.*;
 import com.intellij.notification.Notification;
@@ -41,7 +42,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -56,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 /**
  * {@link ExternalSystemNotificationManager} provides creation and managements of user-friendly notifications for external system integration-specific events.
@@ -81,9 +83,9 @@ public final class ExternalSystemNotificationManager implements Disposable {
 
   public ExternalSystemNotificationManager(final @NotNull Project project) {
     myProject = project;
-    myNotifications = ContainerUtil.newConcurrentSet();
+    myNotifications = ConcurrentCollectionFactory.createConcurrentSet();
     myUniqueNotifications = new ConcurrentHashMap<>();
-    initializedExternalSystem = ContainerUtil.newConcurrentSet();
+    initializedExternalSystem = ConcurrentCollectionFactory.createConcurrentSet();
     myMessageCounter = new MessageCounter();
     myUpdateQueue = new MergingUpdateQueue(getClass() + " updates", 500, true, null, this, null, false);
   }
@@ -97,11 +99,43 @@ public final class ExternalSystemNotificationManager implements Disposable {
    *
    * @return {@link NotificationData} or null for not user-friendly errors.
    */
-  public @Nullable NotificationData createNotification(@NotNull @NotificationTitle String title,
-                                                       @NotNull Throwable error,
-                                                       @NotNull ProjectSystemId externalSystemId,
-                                                       @NotNull Project project,
-                                                       @NotNull DataContext dataContext) {
+  public static @Nullable NotificationData createNotification(
+    @NotNull @NotificationTitle String title,
+    @NotNull Throwable error,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull String externalProjectPath,
+    @NotNull DataContext dataContext
+  ) {
+    return doCreateNotification(title, error, externalSystemId, project, dataContext, (extension, notificationData) ->
+      extension.customize(notificationData, project, externalProjectPath, error)
+    );
+  }
+
+  /**
+   * @deprecated use {@link #createNotification(String, Throwable, ProjectSystemId, Project, String, DataContext)} instead
+   */
+  @Deprecated
+  public @Nullable NotificationData createNotification(
+    @NotNull @NotificationTitle String title,
+    @NotNull Throwable error,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull DataContext dataContext
+  ) {
+    return doCreateNotification(title, error, externalSystemId, project, dataContext, (extension, notificationData) ->
+      extension.customize(notificationData, project, error)
+    );
+  }
+
+  private static @Nullable NotificationData doCreateNotification(
+    @NotNull @NotificationTitle String title,
+    @NotNull Throwable error,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull DataContext dataContext,
+    @NotNull BiConsumer<ExternalSystemNotificationExtension, NotificationData> customise
+  ) {
     if (isInternalError(error, externalSystemId)) {
       return null;
     }
@@ -140,7 +174,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
       if (!externalSystemId.equals(targetExternalSystemId) && !targetExternalSystemId.equals(ProjectSystemId.IDE)) {
         continue;
       }
-      extension.customize(notificationData, project, error);
+      customise.accept(extension, notificationData);
     }
     return notificationData;
   }
@@ -272,7 +306,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
         final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
         if (toolWindow == null) return;
 
-        final MessageView messageView = project.getService(MessageView.class);
+        final MessageView messageView = MessageView.getInstance(project);
         UIUtil.invokeLaterIfNeeded(() -> {
           if (project.isDisposed()) return;
           for (Content content: messageView.getContentManager().getContents()) {
@@ -371,7 +405,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
   public @NotNull NewErrorTreeViewPanel prepareMessagesView(final @NotNull ProjectSystemId externalSystemId,
                                                             final @NotNull NotificationSource notificationSource,
                                                             boolean activateView) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     final NewErrorTreeViewPanel errorTreeView;
     final String contentDisplayName = getContentDisplayName(notificationSource, externalSystemId);
@@ -379,7 +413,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     Content targetContent = findContent(contentIdPair, contentDisplayName);
 
     assert myProject != null;
-    final MessageView messageView = myProject.getService(MessageView.class);
+    final MessageView messageView = MessageView.getInstance(myProject);
     if (targetContent == null || !contentIdPair.equals(targetContent.getUserData(CONTENT_ID_KEY))) {
       errorTreeView = new NewEditableErrorTreeViewPanel(myProject, null, true, true, null);
       targetContent = ContentFactory.getInstance().createContent(errorTreeView, contentDisplayName, true);
@@ -404,7 +438,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
   private @Nullable Content findContent(@NotNull Pair<NotificationSource, ProjectSystemId> contentIdPair, @NotNull String contentDisplayName) {
     Content targetContent = null;
     assert myProject != null;
-    final MessageView messageView = myProject.getService(MessageView.class);
+    final MessageView messageView = MessageView.getInstance(myProject);
     for (Content content: messageView.getContentManager().getContents()) {
       if (contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))
           && StringUtil.equals(content.getDisplayName(), contentDisplayName) && !content.isPinned()) {
@@ -414,7 +448,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     return targetContent;
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull @Nls String getContentDisplayName(
     final @NotNull NotificationSource notificationSource,
     final @NotNull ProjectSystemId externalSystemId

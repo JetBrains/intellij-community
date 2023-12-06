@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -23,8 +25,10 @@ import org.jetbrains.kotlin.types.Variance
 
 internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclarationNavigationPolicy {
     override fun getNavigationElement(declaration: KtDeclaration): KtElement {
-        val project = declaration.project
-        when (val ktModule = declaration.getKtModule(project)) {
+        val ktFile = declaration.containingKtFile
+        if (!ktFile.isCompiled) return declaration
+        val project = ktFile.project
+        when (val ktModule = ProjectStructureProvider.getModule(project, ktFile, null)) {
             is KtLibraryModule -> {
                 val librarySource = ktModule.librarySources ?: return declaration
                 val scope = librarySource.getContentScopeWithCommonDependencies()
@@ -36,8 +40,10 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     }
 
     override fun getOriginalElement(declaration: KtDeclaration): KtElement {
-        val project = declaration.project
-        when (val ktModule = declaration.getKtModule(project)) {
+        val ktFile = declaration.containingKtFile
+        if (ktFile.isCompiled) return declaration
+        val project = ktFile.project
+        when (val ktModule = ProjectStructureProvider.getModule(project, ktFile, null)) {
             is KtLibrarySourceModule -> {
                 val libraryBinary = ktModule.binaryLibrary
                 val scope = libraryBinary.getContentScopeWithCommonDependencies()
@@ -62,10 +68,18 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                 correspondingOwner.typeParameters.firstOrNull { it.name == declaration.name }
             }
 
+            is KtEnumEntry -> getCorrespondingEnumEntry(declaration, scope, project)
             is KtClassLikeDeclaration -> getCorrespondingClassLikeDeclaration(declaration, scope, project)
             is KtCallableDeclaration -> getCorrespondingCallableDeclaration(declaration, scope, project)
             else -> null
         }
+    }
+
+    private fun getCorrespondingEnumEntry(declaration: KtEnumEntry, scope: GlobalSearchScope, project: Project): KtEnumEntry? {
+        val enumClass = declaration.containingClassOrObject ?: return null
+        val classLikeDeclaration = getCorrespondingClassLikeDeclaration(enumClass, scope, project) as? KtClass ?: return null
+        val enumEntryName = declaration.name
+        return classLikeDeclaration.declarations.firstOrNull { it is KtEnumEntry && it.name == enumEntryName } as? KtEnumEntry
     }
 
     private fun getCorrespondingClassLikeDeclaration(
@@ -82,19 +96,19 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         declaration: KtCallableDeclaration,
         scope: GlobalSearchScope,
         project: Project
-    ): KtCallableDeclaration? {
+    ): KtElement? {
         val declarationName = declaration.name ?: return null
         when (declaration) {
             is KtParameter -> {
                 val owner = declaration.getOwningCallable() ?: return null
-                val correspondingOwner = getCorrespondingCallableDeclaration(owner, scope, project) ?: return null
+                val correspondingOwner = getCorrespondingCallableDeclaration(owner, scope, project) as? KtCallableDeclaration ?: return null
                 return correspondingOwner.valueParameters.firstOrNull { it.name == declarationName }
             }
             is KtPrimaryConstructor -> {
                 val containingClass = declaration.containingClassOrObject ?: return null
                 val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, project) as? KtClassOrObject
                     ?: return null
-                return correspondingOwner.primaryConstructor
+                return correspondingOwner.primaryConstructor ?: correspondingOwner
             }
             else -> {
                 val candidates = when (val containingClass = declaration.containingClassOrObject) {
@@ -111,6 +125,9 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                     else -> {
                         val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, project) as? KtClassOrObject
                             ?: return null
+                        if (declaration is KtProperty && correspondingOwner.isData() && !declaration.isExtensionDeclaration() && declaration.typeParameters.isEmpty()) {
+                            correspondingOwner.primaryConstructor?.valueParameters?.firstOrNull { it.name == declarationName }?.let { return it }
+                        }
                         correspondingOwner.declarations
                     }
                 }
@@ -211,15 +228,18 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     // Maybe called from EDT by IJ Platfrom :(
     @OptIn(KtAllowAnalysisOnEdt::class)
     private fun renderTypesForComparasion(declaration: KtCallableDeclaration) = allowAnalysisOnEdt {
-        analyze(declaration) {
-            buildString {
-                val symbol = declaration.getSymbol() as KtCallableSymbol
-                symbol.receiverType?.let { receiverType ->
-                    append(receiverType.render(renderer, position = Variance.INVARIANT))
-                    append('.')
-                }
-                if (symbol is KtFunctionLikeSymbol) {
-                    symbol.valueParameters.joinTo(this) { it.returnType.render(renderer, position = Variance.INVARIANT) }
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        allowAnalysisFromWriteAction {
+            analyze(declaration) {
+                buildString {
+                    val symbol = declaration.getSymbol() as KtCallableSymbol
+                    symbol.receiverType?.let { receiverType ->
+                        append(receiverType.render(renderer, position = Variance.INVARIANT))
+                        append('.')
+                    }
+                    if (symbol is KtFunctionLikeSymbol) {
+                        symbol.valueParameters.joinTo(this) { it.returnType.render(renderer, position = Variance.INVARIANT) }
+                    }
                 }
             }
         }

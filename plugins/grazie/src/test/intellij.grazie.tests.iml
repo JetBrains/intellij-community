@@ -13,50 +13,92 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
     <orderEntry type="module-library">
       <library name="org.languagetool:languagetool-core" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:6.0" />
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:6.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1.jar">
+              <sha256sum>0214cac9c32594e6754023069dbc9715ef1cf1662e0142cada300d1e8ff3eded</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.0/languagetool-core-6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.languagetool:language-ru" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:6.0" />
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:6.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.1/language-ru-6.1.jar">
+              <sha256sum>79070a899b8d63acfde91f1f4f0772cc4f20a4c3f3d6d3dd5067821cb9215e70</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.0/language-ru-6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.1/language-ru-6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.1/language-ru-6.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.languagetool:language-de" type="repository">
-        <properties maven-id="org.languagetool:language-de:6.0">
+        <properties maven-id="org.languagetool:language-de:6.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.1/language-de-6.1.jar">
+              <sha256sum>6ab71360ab27c94a0098cdd746e00a81605883c30c0d651b10fc17fe513f7215</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar">
+              <sha256sum>56f0b00adb704cbc1e86776b45f6890efe90685ab370a34b5b299593cdcaae22</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.5/jwordsplitter-4.5.jar">
+              <sha256sum>5904e500073c3ed1dadcf56c9bf2712f7b222762d3072421b1c2d83e04795f43</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
+              <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.languagetool:languagetool-core" />
             <dependency maven-id="org.apache.commons:commons-lang3" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.0/language-de-6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.1/language-de-6.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.5/jwordsplitter-4.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.1/language-de-6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.5/jwordsplitter-4.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.languagetool:language-it" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:6.0" />
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:6.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.1/language-it-6.1.jar">
+              <sha256sum>f2489582ada5e325870aa0904a8ba53701854b05e85d9896d7ae3d09d00a5a2b</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.0/language-it-6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.1/language-it-6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.1/language-it-6.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
@@ -64,8 +106,11 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="module" module-name="intellij.markdown.plugin" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.grazie.markdown" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
   </component>
 </module>

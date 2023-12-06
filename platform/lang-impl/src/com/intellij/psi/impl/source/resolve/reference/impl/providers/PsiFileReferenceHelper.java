@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.ide.util.PlatformPackageUtil;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -17,7 +16,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
@@ -36,8 +34,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 public class PsiFileReferenceHelper extends FileReferenceHelper {
-  @NotNull
-  public static PsiFileReferenceHelper getInstance() {
+  public static @NotNull PsiFileReferenceHelper getInstance() {
     return Objects.requireNonNull(FileReferenceHelper.EP_NAME.findExtension(PsiFileReferenceHelper.class));
   }
 
@@ -47,7 +44,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  public PsiFileSystemItem findRoot(final @NotNull Project project, @NotNull final VirtualFile file) {
+  public PsiFileSystemItem findRoot(final @NotNull Project project, final @NotNull VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile contentRootForFile = index.getSourceRootForFile(file);
     if (contentRootForFile == null) contentRootForFile = index.getContentRootForFile(file);
@@ -59,14 +56,12 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  @NotNull
-  public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
+  public @NotNull Collection<PsiFileSystemItem> getRoots(final @NotNull Module module) {
     return getContextsForModule(module, "", module.getModuleWithDependenciesScope());
   }
 
-  @NotNull
   @Override
-  public Collection<FileTargetContext> getTargetContexts(@NotNull Project project, @NotNull VirtualFile file, boolean isAbsoluteReference) {
+  public @NotNull Collection<FileTargetContext> getTargetContexts(@NotNull Project project, @NotNull VirtualFile file, boolean isAbsoluteReference) {
     List<PsiFileSystemItem> contexts;
     if (isAbsoluteReference) {
       ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
@@ -134,8 +129,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
     return path;
   }
 
-  @NotNull
-  private static List<SourceFolder> getMissingTargetFolders(@NotNull Module module, @NotNull Collection<? extends PsiFileSystemItem> contextsForModule) {
+  private static @NotNull List<SourceFolder> getMissingTargetFolders(@NotNull Module module, @NotNull Collection<? extends PsiFileSystemItem> contextsForModule) {
     // find additional source folders that can be used to create a file, e.g. they do not have the exact package, but it can be created
     ModuleRootModel model = ModuleRootManager.getInstance(module);
 
@@ -155,8 +149,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
       .collect(Collectors.toCollection(SmartList::new));
   }
 
-  @NotNull
-  private List<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file, boolean includeMissingPackages) {
+  private @NotNull List<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file, boolean includeMissingPackages) {
     PsiFileSystemItem item = getPsiFileSystemItem(project, file);
     if (item != null) {
       PsiFileSystemItem parent = item.getParent();
@@ -181,8 +174,6 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
               }
 
               List<PsiFileSystemItem> contextsForModule =
-                ModelBranch.getPsiBranch(item) != null ?
-                getContextsForScope(project, path, item.getResolveScope().intersectWith(ProjectScope.getContentScope(project))) :
                 getContextsForModule(module, path, module.getModuleWithDependenciesScope());
               if (!includeMissingPackages) {
                 return contextsForModule;
@@ -198,11 +189,10 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
     return emptyList();
   }
 
-  @NotNull
-  private static List<PsiFileSystemItem> getAdditionalContexts(@NotNull VirtualFile parentFile,
-                                                               @NotNull VirtualFile root,
-                                                               @NotNull Module module,
-                                                               @NotNull List<PsiFileSystemItem> contextsForModule) {
+  private static @NotNull List<PsiFileSystemItem> getAdditionalContexts(@NotNull VirtualFile parentFile,
+                                                                        @NotNull VirtualFile root,
+                                                                        @NotNull Module module,
+                                                                        @NotNull List<PsiFileSystemItem> contextsForModule) {
     // here we try to find source roots that are not present in contextsForModule, but could be used to create a package and file
 
     List<SourceFolder> additionalSourceFolders = getMissingTargetFolders(module, contextsForModule);
@@ -239,13 +229,11 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  @NotNull
-  public Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
     return getContexts(project, file, false);
   }
 
-  @NotNull
-  private static String getSourceRootPackagePrefix(@Nullable OrderEntry orderEntry, @NotNull VirtualFile sourceRootOfFile) {
+  private static @NotNull String getSourceRootPackagePrefix(@Nullable OrderEntry orderEntry, @NotNull VirtualFile sourceRootOfFile) {
     if (orderEntry instanceof ModuleSourceOrderEntry) {
       for (ContentEntry e : ((ModuleSourceOrderEntry)orderEntry).getRootModel().getContentEntries()) {
         for (SourceFolder sf : e.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
@@ -262,14 +250,13 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  public boolean isMine(final @NotNull Project project, @NotNull final VirtualFile file) {
+  public boolean isMine(final @NotNull Project project, final @NotNull VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     return index.isInSourceContent(file);
   }
 
   @Override
-  @NotNull
-  public String trimUrl(@NotNull String url) {
+  public @NotNull String trimUrl(@NotNull String url) {
     return url.trim();
   }
 
@@ -284,10 +271,9 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
       .toList();
   }
 
-  @NotNull
-  static List<PsiFileSystemItem> getContextsForScope(@NotNull Project project,
-                                                     @NotNull String packageName,
-                                                     @NotNull GlobalSearchScope scope) {
+  static @NotNull List<PsiFileSystemItem> getContextsForScope(@NotNull Project project,
+                                                              @NotNull String packageName,
+                                                              @NotNull GlobalSearchScope scope) {
     Query<VirtualFile> query = PlatformPackageUtil.getDirectoriesByPackageName(packageName, scope, project);
     Collection<VirtualFile> files = ContainerUtil.reverse(ContainerUtil.sorted(query.findAll(), scope::compare));
     return ContainerUtil.mapNotNull(files, PsiManager.getInstance(project)::findDirectory);
@@ -303,9 +289,8 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
       myPathToCreate = pathToCreate;
     }
 
-    @Nullable
     @Override
-    public PsiFileSystemItem getParent() {
+    public @Nullable PsiFileSystemItem getParent() {
       return myRoot;
     }
 
@@ -332,9 +317,8 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
       return false;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myPathToCreate.length == 0 ? myRoot.getName() : myPathToCreate[myPathToCreate.length - 1];
     }
 

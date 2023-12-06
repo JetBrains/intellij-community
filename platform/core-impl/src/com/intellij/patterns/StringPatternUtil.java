@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,8 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public final class StringPatternUtil {
-  @NotNull
-  public static StringPattern matchesBrics(StringPattern pattern, @NonNls @NotNull final String s) {
+  public static @NotNull StringPattern matchesBrics(StringPattern pattern, final @NonNls @NotNull String s) {
     final String escaped = StringUtil.escapeToRegexp(s);
     if (escaped.equals(s)) {
       return pattern.equalTo(s);

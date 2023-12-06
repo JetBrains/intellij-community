@@ -2,8 +2,8 @@
 package org.jetbrains.uast.test.java
 
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.test.common.asIdentifiers
-import org.jetbrains.uast.test.common.asRefNames
+import com.intellij.platform.uast.testFramework.common.asIdentifiers
+import com.intellij.platform.uast.testFramework.common.asRefNames
 import com.intellij.testFramework.assertEqualsToFile
 import java.io.File
 

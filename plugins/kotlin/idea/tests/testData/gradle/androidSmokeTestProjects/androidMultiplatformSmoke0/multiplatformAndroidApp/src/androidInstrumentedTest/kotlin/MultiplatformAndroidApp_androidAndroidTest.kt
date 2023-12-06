@@ -1,2 +1,0 @@
-object MultiplatformAndroidApp_androidAndroidTest {
-}

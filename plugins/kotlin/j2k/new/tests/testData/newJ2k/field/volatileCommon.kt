@@ -4,5 +4,5 @@ import kotlin.concurrent.Volatile
 // COMPILER_ARGUMENTS: -opt-in=kotlin.ExperimentalStdlibApi
 internal class A {
     @Volatile
-    var field1 = 0
+    var field1: Int = 0
 }

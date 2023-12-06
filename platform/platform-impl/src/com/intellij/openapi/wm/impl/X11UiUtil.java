@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,8 @@ import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
@@ -32,11 +36,32 @@ public final class X11UiUtil {
   private static final int FORMAT_BYTE = 8;
   private static final int FORMAT_LONG = 32;
   private static final long EVENT_MASK = (3L << 19);
+  private static final long NET_WM_STATE_REMOVE = 0;
   private static final long NET_WM_STATE_ADD = 1;
   private static final long NET_WM_STATE_TOGGLE = 2;
 
+  /**
+   * List of all known tile WM, can be updated later
+   */
+  private static final Set<String> TILE_WM = Set.of(
+    "awesome",
+    "bspwm",
+    "dwm",
+    "frankenwm",
+    "herbstluftwm",
+    "i3",
+    "leftwm",
+    "notion",
+    "qtile",
+    "ratpoison",
+    "snapwm",
+    "spectrwm",
+    "stumpwm",
+    "xmonad"
+  );
+
   @SuppressWarnings("SpellCheckingInspection")
-  private static class Xlib {
+  private static final class Xlib {
     private Unsafe unsafe;
     private Method XGetWindowProperty;
     private Method XFree;
@@ -54,12 +79,14 @@ public final class X11UiUtil {
     private long NET_WM_STATE;
     private long NET_WM_ACTION_FULLSCREEN;
     private long NET_WM_STATE_FULLSCREEN;
+    private long NET_WM_STATE_MAXIMIZED_VERT;
+    private long NET_WM_STATE_MAXIMIZED_HORZ;
     private long NET_WM_STATE_DEMANDS_ATTENTION;
     private long NET_ACTIVE_WINDOW;
 
     private static @Nullable Xlib getInstance() {
       Class<? extends Toolkit> toolkitClass = Toolkit.getDefaultToolkit().getClass();
-      if (!SystemInfoRt.isXWindow || !"sun.awt.X11.XToolkit".equals(toolkitClass.getName())) {
+      if (!StartupUiUtil.isXToolkit()) {
         return null;
       }
 
@@ -89,6 +116,8 @@ public final class X11UiUtil {
         x11.NET_WM_STATE = (Long)atom.get(get.invoke(null, "_NET_WM_STATE"));
         x11.NET_WM_ACTION_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_ACTION_FULLSCREEN"));
         x11.NET_WM_STATE_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_FULLSCREEN"));
+        x11.NET_WM_STATE_MAXIMIZED_VERT = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_MAXIMIZED_VERT"));
+        x11.NET_WM_STATE_MAXIMIZED_HORZ = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_MAXIMIZED_HORZ"));
         x11.NET_WM_STATE_DEMANDS_ATTENTION = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_DEMANDS_ATTENTION"));
         x11.NET_ACTIVE_WINDOW = (Long)atom.get(get.invoke(null, "_NET_ACTIVE_WINDOW"));
 
@@ -224,7 +253,9 @@ public final class X11UiUtil {
 
   private static final @Nullable Xlib X11 = Xlib.getInstance();
 
-  // full-screen support
+  public static boolean isInitialized() {
+    return X11 != null;
+  }
 
   public static boolean isFullScreenSupported() {
     if (X11 == null) return false;
@@ -241,6 +272,36 @@ public final class X11UiUtil {
 
   public static boolean isInFullScreenMode(JFrame frame) {
     return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_FULLSCREEN);
+  }
+
+  public static boolean isMaximizedVert(JFrame frame) {
+    return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_MAXIMIZED_VERT);
+  }
+
+  public static boolean isMaximizedHorz(JFrame frame) {
+    return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_MAXIMIZED_HORZ);
+  }
+
+  public static void setMaximized(JFrame frame, boolean maximized) {
+    if (X11 == null) return;
+
+    if (maximized) {
+      X11.sendClientMessage(frame, "set Maximized mode", X11.NET_WM_STATE, NET_WM_STATE_ADD,
+                            X11.NET_WM_STATE_MAXIMIZED_HORZ, X11.NET_WM_STATE_MAXIMIZED_VERT);
+    }
+    else {
+      X11.sendClientMessage(frame, "reset Maximized mode", X11.NET_WM_STATE, NET_WM_STATE_REMOVE,
+                            X11.NET_WM_STATE_MAXIMIZED_HORZ, X11.NET_WM_STATE_MAXIMIZED_VERT);
+    }
+  }
+
+  public static boolean isWSL() {
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && System.getenv("WSL_DISTRO_NAME") != null;
+  }
+
+  public static boolean isTileWM() {
+    String desktop = System.getenv("XDG_CURRENT_DESKTOP");
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
   }
 
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
@@ -265,6 +326,17 @@ public final class X11UiUtil {
   public static void toggleFullScreenMode(JFrame frame) {
     if (X11 == null) return;
     X11.sendClientMessage(frame, "toggle mode", X11.NET_WM_STATE, NET_WM_STATE_TOGGLE, X11.NET_WM_STATE_FULLSCREEN);
+  }
+
+  public static void setFullScreenMode(JFrame frame, boolean fullScreen) {
+    if (X11 == null) return;
+
+    if (fullScreen) {
+      X11.sendClientMessage(frame, "set FullScreen mode", X11.NET_WM_STATE, NET_WM_STATE_ADD, X11.NET_WM_STATE_FULLSCREEN);
+    }
+    else {
+      X11.sendClientMessage(frame, "reset FullScreen mode", X11.NET_WM_STATE, NET_WM_STATE_REMOVE, X11.NET_WM_STATE_FULLSCREEN);
+    }
   }
 
   /**

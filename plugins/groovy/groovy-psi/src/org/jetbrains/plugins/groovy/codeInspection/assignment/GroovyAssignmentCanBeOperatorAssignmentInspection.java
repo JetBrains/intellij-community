@@ -15,14 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SideEffectChecker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -97,19 +98,15 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
-    return new ReplaceAssignmentWithOperatorAssignmentFix(
-        (GrAssignmentExpression) location);
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
+    return new ReplaceAssignmentWithOperatorAssignmentFix((GrAssignmentExpression) location);
   }
 
-  private static final class ReplaceAssignmentWithOperatorAssignmentFix
-      extends GroovyFix {
+  private static final class ReplaceAssignmentWithOperatorAssignmentFix extends PsiUpdateModCommandQuickFix {
 
     private final @IntentionName String m_name;
 
-    private ReplaceAssignmentWithOperatorAssignmentFix(
-        GrAssignmentExpression expression) {
-      super();
+    private ReplaceAssignmentWithOperatorAssignmentFix(GrAssignmentExpression expression) {
       final GrExpression rhs = expression.getRValue();
       final GrBinaryExpression binaryExpression =
           (GrBinaryExpression)PsiUtil.skipParentheses(rhs, false);
@@ -138,16 +135,10 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
     }
 
     @Override
-    public void doFix(@NotNull Project project,
-                      @NotNull ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof GrAssignmentExpression expression)) {
-        return;
-      }
-      final String newExpression =
-          calculateReplacementExpression(expression);
-      replaceExpression(expression, newExpression);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (!(element instanceof GrAssignmentExpression expression)) return;
+      final String newExpression = calculateReplacementExpression(expression);
+      GrInspectionUtil.replaceExpression(expression, newExpression);
     }
   }
 

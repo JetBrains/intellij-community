@@ -2,8 +2,8 @@
 package com.intellij.openapi.project.impl.navigation
 
 import com.intellij.navigation.LocationInFile
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -24,7 +24,6 @@ import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import org.junit.Rule
 import org.junit.rules.TestName
 import java.nio.file.Path
@@ -45,13 +44,8 @@ abstract class NavigationTestBase {
     runBlocking {
       createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
         setUpProject(project)
+        navigationAction()
         withContext(Dispatchers.EDT) {
-          navigationAction()
-          yield()
-        }
-        yield()
-        withContext(Dispatchers.EDT) {
-          yield()
           checkAction()
         }
       }
@@ -63,20 +57,20 @@ abstract class NavigationTestBase {
     val basePath = Path.of(project.basePath!!)
     val moduleManager = ModuleManager.getInstance(project)
     val projectManager = ProjectRootManagerEx.getInstanceEx(project)
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
-        projectManager.mergeRootsChangesDuring {
-          val newModule = moduleManager.newModule(basePath.resolve("navigationModule.iml").systemIndependentPath,
-                                                  EmptyModuleType.EMPTY_MODULE)
-          FileUtil.copyDir(Paths.get(testDataPath, sanitizeFileName(testName.methodName)).toFile(), basePath.toFile())
+    writeAction {
+      projectManager.mergeRootsChangesDuring {
+        val newModule = moduleManager.newModule(
+          basePath.resolve("navigationModule.iml").systemIndependentPath,
+          EmptyModuleType.EMPTY_MODULE
+        )
+        FileUtil.copyDir(Paths.get(testDataPath, sanitizeFileName(testName.methodName)).toFile(), basePath.toFile())
 
-          val baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath.systemIndependentPath)!!
-          val moduleModel = ModuleRootManager.getInstance(newModule).modifiableModel
-          moduleModel.addContentEntry(baseDir).addSourceFolder(baseDir, false)
-          moduleModel.commit()
+        val baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath.systemIndependentPath)!!
+        val moduleModel = ModuleRootManager.getInstance(newModule).modifiableModel
+        moduleModel.addContentEntry(baseDir).addSourceFolder(baseDir, false)
+        moduleModel.commit()
 
-          VfsTestUtil.createDir(baseDir, Project.DIRECTORY_STORE_FOLDER)
-        }
+        VfsTestUtil.createDir(baseDir, Project.DIRECTORY_STORE_FOLDER)
       }
     }
   }

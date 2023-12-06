@@ -29,7 +29,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   }
 
   @Override
-  protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+  public boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
     return isFrameworkApplicable(clazz, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION) ||
            //check explicit jupiter to support library with broken dependency       
            isFrameworkApplicable(clazz, JUnitUtil.TEST5_ANNOTATION);
@@ -55,6 +55,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     if (canBePotential) return isUnderTestSources(clazz);
+    if (!isFrameworkAvailable(clazz)) return false;
     return JUnitUtil.isJUnit5TestClass(clazz, false);
   }
 
@@ -132,8 +133,11 @@ public class JUnit5Framework extends JUnitTestFramework {
 
   @Override
   public boolean isIgnoredMethod(PsiElement element) {
-    final PsiMethod testMethod = element instanceof PsiMethod ? JUnitUtil.getTestMethod(element) : null;
-    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, "org.junit.jupiter.api.Disabled", 0);
+    if (element instanceof PsiMethod method) {
+      final PsiMethod ignoredTestMethod = AnnotationUtil.isAnnotated(method, "org.junit.jupiter.api.Disabled", 0) ? JUnitUtil.getTestMethod(element) : null;
+      return ignoredTestMethod != null;
+    }
+    return false;
   }
 
   @Override

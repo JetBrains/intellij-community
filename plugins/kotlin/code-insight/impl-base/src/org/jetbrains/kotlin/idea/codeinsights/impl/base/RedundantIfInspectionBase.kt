@@ -2,20 +2,23 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 /**
  * A parent class for K1 and K2 RedundantIfInspection.
@@ -34,22 +37,37 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         val returnAfterIf: KtExpression?,
     )
 
+    @JvmField
+    var ignoreChainedIf = true
+
+    override fun getOptionsPane(): OptPane {
+        return pane(
+            checkbox("ignoreChainedIf", KotlinBundle.message("redundant.if.option.ignore.chained")),
+        )
+    }
+
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return ifExpressionVisitor { expression ->
             if (expression.condition == null) return@ifExpressionVisitor
             val (redundancyType, branchType, returnAfterIf) = RedundancyType.of(expression)
             if (redundancyType == RedundancyType.NONE) return@ifExpressionVisitor
 
-            val highlightRange = TextRange(
-                expression.ifKeyword.startOffset,
-                (expression.rightParenthesis ?: expression).endOffset
-            ).shiftLeft(expression.startOffset)
-            holder.registerProblem(
+            val isChainedIf = expression.getPrevSiblingIgnoringWhitespaceAndComments() is KtIfExpression ||
+                    expression.parent.let { it is KtContainerNodeForControlStructureBody && it.expression == expression }
+
+            val hasConditionWithFloatingPointType = expression.hasConditionWithFloatingPointType()
+            val bothBranchesHaveComments = bothBranchesHaveComments(expression.then, expression.`else`, returnAfterIf)
+            val highlightType =
+                if ((isChainedIf && ignoreChainedIf) || hasConditionWithFloatingPointType || bothBranchesHaveComments) INFORMATION
+                else GENERIC_ERROR_OR_WARNING
+
+            holder.registerProblemWithoutOfflineInformation(
                 expression,
                 KotlinBundle.message("redundant.if.statement"),
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                highlightRange,
-                RemoveRedundantIf(redundancyType, branchType, returnAfterIf)
+                isOnTheFly,
+                highlightType,
+                expression.ifKeyword.textRangeInParent,
+                RemoveRedundantIf(redundancyType, branchType, returnAfterIf, hasConditionWithFloatingPointType)
             )
         }
     }
@@ -60,6 +78,42 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
      * Called from read action and from modal window, so it's safe to use resolve here.
      */
     abstract fun isBooleanExpression(expression: KtExpression): Boolean
+
+    abstract fun invertEmptinessCheck(condition: KtExpression): KtExpression?
+
+    abstract fun KtIfExpression.hasConditionWithFloatingPointType(): Boolean
+
+    protected fun KtIfExpression.inequalityCondition(): KtBinaryExpression? {
+        return (condition as? KtBinaryExpression)
+            ?.takeIf { it.left != null && it.right != null }
+            ?.takeIf {
+                val operation = it.operationToken
+                operation == KtTokens.LT || operation == KtTokens.LTEQ || operation == KtTokens.GT || operation == KtTokens.GTEQ
+            }
+    }
+
+    private fun bothBranchesHaveComments(
+        thenExpression: KtExpression?,
+        elseExpression: KtExpression?,
+        returnAfterIf: KtExpression?
+    ): Boolean =
+        thenExpression.hasComments() &&
+            (elseExpression.hasComments(thenExpression) || returnAfterIf.hasComments(thenExpression))
+
+    private fun PsiElement?.hasComments(prevExpression: KtExpression? = null): Boolean {
+        fun Sequence<PsiElement>.comments(): Sequence<PsiComment> =
+            takeWhile { it is PsiWhiteSpace || it is PsiComment }.filterIsInstance<PsiComment>()
+
+        if (this == null) return false
+
+        val lineNumber = getLineNumber()
+        val prevExpressionLineNumber = prevExpression?.getLineNumber()
+        val hasPrevComment = prevLeafs.comments().any { it.getLineNumber() != prevExpressionLineNumber }
+        val ifExpressionHasPrevComment = (parent?.parent as? KtIfExpression)?.prevLeafs?.comments()?.any() == true
+        val hasTailComment = nextLeafs.comments().any { it.getLineNumber() == lineNumber }
+
+        return hasPrevComment || ifExpressionHasPrevComment || hasTailComment || anyDescendantOfType<PsiComment>()
+    }
 
     private sealed class BranchType {
         object Simple : BranchType()
@@ -135,10 +189,14 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         private val redundancyType: RedundancyType,
         private val branchType: BranchType,
         returnAfterIf: KtExpression?,
+        private val mayChangeSemantics: Boolean,
     ) : LocalQuickFix {
         val returnExpressionAfterIf: SmartPsiElementPointer<KtExpression>? = returnAfterIf?.let(SmartPointerManager::createPointer)
 
-        override fun getName() = KotlinBundle.message("remove.redundant.if.text")
+        override fun getName(): String =
+            if (mayChangeSemantics) KotlinBundle.message("remove.redundant.if.may.change.semantics.with.floating.point.types")
+            else KotlinBundle.message("remove.redundant.if.text")
+
         override fun getFamilyName() = name
 
         override fun startInWriteAction(): Boolean = false
@@ -150,9 +208,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             val condition = when (redundancyType) {
                 RedundancyType.NONE -> return
                 RedundancyType.THEN_TRUE -> element.condition
-                RedundancyType.ELSE_TRUE -> element.condition?.negate(
-                    optionalBooleanExpressionCheck = ::checkIsBooleanExpressionFromModalWindow
-                )
+                RedundancyType.ELSE_TRUE -> negate(element.condition)
             } ?: return
             val factory = KtPsiFactory(project)
             val newExpressionOnlyWithCondition = when (branchType) {
@@ -169,14 +225,18 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                  * See the code and comment in [RedundancyType.of].
                  */
                 returnExpressionAfterIf?.element?.let {
-                    val prev = it.prevSibling
-                    if (prev is PsiWhiteSpace && prev.prevSibling == element) prev.delete()
-                    it.delete()
+                    it.parent.deleteChildRange(it.prevSibling as? PsiWhiteSpace ?: it, it)
                 }
 
                 val replaced = element.replace(newExpressionOnlyWithCondition)
                 commentSaver.restore(replaced)
             }
+        }
+
+        private fun negate(expression: KtExpression?): KtExpression? {
+            if (expression == null) return null
+            invertEmptinessCheck(expression)?.let { return it }
+            return expression.negate(optionalBooleanExpressionCheck = ::checkIsBooleanExpressionFromModalWindow)
         }
 
         private fun checkIsBooleanExpressionFromModalWindow(expression: KtExpression): Boolean =

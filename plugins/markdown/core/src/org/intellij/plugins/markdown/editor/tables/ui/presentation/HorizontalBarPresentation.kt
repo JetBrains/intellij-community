@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.executeCommand
@@ -29,11 +30,12 @@ import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionPlaces
 import org.intellij.plugins.markdown.editor.tables.selectColumn
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearOvalOverEditor
+import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.useCopy
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import org.intellij.plugins.markdown.ui.floating.FloatingToolbar
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
@@ -78,9 +80,11 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     if (isInvalid) {
       return
     }
-    GraphicsUtil.setupAntialiasing(graphics)
-    GraphicsUtil.setupRoundedBorderAntialiasing(graphics)
-    paintBars(graphics)
+    graphics.useCopy { local ->
+      GraphicsUtil.setupAntialiasing(local)
+      GraphicsUtil.setupRoundedBorderAntialiasing(local)
+      paintBars(local)
+    }
   }
 
   override fun toString() = "HorizontalBarPresentation"
@@ -138,7 +142,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
   private fun calculatePositions(header: MarkdownTableRow, document: Document, fontMetrics: FontMetrics): List<Int> {
     require(barHeight % 2 == 0) { "barHeight value should be even" }
     val separators = header.firstChild.siblings(forward = true, withSelf = true)
-      .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }
+      .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) && it !is MarkdownTableSeparatorRow }
       .map { it.startOffset }
     val separatorWidth = fontMetrics.charWidth('|')
     val firstOffset = separators.firstOrNull() ?: return emptyList()
@@ -180,7 +184,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
 
   private fun showToolbar(columnIndex: Int) {
     val targetComponent = TableActionKeys.createDataContextComponent(editor, createDataProvider(table, columnIndex))
-    FloatingToolbar.createImmediatelyUpdatedToolbar(
+    ToolbarUtils.createImmediatelyUpdatedToolbar(
       group = columnActionGroup,
       place = TableActionPlaces.TABLE_INLAY_TOOLBAR,
       targetComponent,

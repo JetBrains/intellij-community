@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
-import com.intellij.build.events.ProgressBuildEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.*;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
+import com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.execution.NotSupportedException;
 import com.intellij.openapi.externalSystem.service.notification.*;
@@ -19,7 +16,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,20 +112,14 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   @Override
   public void execute(@NotNull final ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     indicator.setIndeterminate(true);
-    ExternalSystemTaskNotificationListenerAdapter adapter = new ExternalSystemTaskNotificationListenerAdapter() {
-      @Override
-      public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-        updateProgressIndicator(event, indicator);
-      }
-    };
     final ExternalSystemTaskNotificationListener[] ls;
+    ExternalSystemTaskNotificationListener progressIndicatorListener = getProgressIndicatorListener(indicator);
     if (listeners.length > 0) {
-      ls = ArrayUtil.append(listeners, adapter);
+      ls = ArrayUtil.append(listeners, progressIndicatorListener);
     }
     else {
-      ls = new ExternalSystemTaskNotificationListener[]{adapter};
+      ls = new ExternalSystemTaskNotificationListener[]{progressIndicatorListener};
     }
-
     execute(ls);
   }
 
@@ -137,8 +127,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   public void execute(ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     if (!compareAndSetState(ExternalSystemTaskState.NOT_STARTED, ExternalSystemTaskState.IN_PROGRESS)) return;
 
-    ExternalSystemProgressNotificationManager progressManager =
-      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
+    ExternalSystemProgressNotificationManager progressManager = ExternalSystemProgressNotificationManager.getInstance();
     for (ExternalSystemTaskNotificationListener listener : listeners) {
       progressManager.addNotificationListener(getId(), listener);
     }
@@ -191,8 +180,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     ExternalSystemTaskState currentTaskState = getState();
     if (currentTaskState.isStopped()) return true;
 
-    ExternalSystemProgressNotificationManager progressManager =
-      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
+    ExternalSystemProgressNotificationManager progressManager = ExternalSystemProgressNotificationManager.getInstance();
     for (ExternalSystemTaskNotificationListener listener : listeners) {
       progressManager.addNotificationListener(getId(), listener);
     }
@@ -221,7 +209,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
 
   @NotNull
   protected @NlsContexts.ProgressText String wrapProgressText(@NotNull String text) {
-    return ExternalSystemBundle.message("progress.update.text", getExternalSystemId(), text);
+    return ExternalSystemBundle.message("progress.update.text", getExternalSystemId().getReadableName(), text);
   }
 
   @Override
@@ -243,43 +231,6 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     return String.format("%s task %s: %s", myExternalSystemId.getReadableName(), myId, myState);
   }
 
-  private void updateProgressIndicator(@NotNull ExternalSystemTaskNotificationEvent event, @NotNull ProgressIndicator indicator) {
-    long total;
-    long progress;
-    String unit;
-    if (event instanceof ExternalSystemBuildEvent &&
-        ((ExternalSystemBuildEvent)event).getBuildEvent() instanceof ProgressBuildEvent) {
-      ProgressBuildEvent progressEvent = (ProgressBuildEvent)((ExternalSystemBuildEvent)event).getBuildEvent();
-      total = progressEvent.getTotal();
-      progress = progressEvent.getProgress();
-      unit = progressEvent.getUnit();
-    }
-    else if (event instanceof ExternalSystemTaskExecutionEvent &&
-             ((ExternalSystemTaskExecutionEvent)event).getProgressEvent() instanceof ExternalSystemStatusEvent) {
-      ExternalSystemStatusEvent<?> progressEvent = (ExternalSystemStatusEvent<?>)((ExternalSystemTaskExecutionEvent)event).getProgressEvent();
-      total = progressEvent.getTotal();
-      progress = progressEvent.getProgress();
-      unit = progressEvent.getUnit();
-    } else {
-      return;
-    }
-
-    String sizeInfo;
-    if (total <= 0) {
-      indicator.setIndeterminate(true);
-      sizeInfo = "bytes".equals(unit) ? (StringUtil.formatFileSize(progress) + " / ?") : "";
-    }
-    else {
-      indicator.setIndeterminate(false);
-      indicator.setFraction((double)progress / total);
-      sizeInfo = "bytes".equals(unit) ? (StringUtil.formatFileSize(progress) +
-                                         " / " +
-                                         StringUtil.formatFileSize(total)) : "";
-    }
-    String description = event.getDescription();
-    indicator.setText(wrapProgressText(description) + (sizeInfo.isEmpty() ? "" : "  (" + sizeInfo + ')'));
-  }
-
   @NotNull
   protected static ExternalSystemTaskNotificationListener wrapWithListener(@NotNull ExternalSystemProgressNotificationManagerImpl manager) {
     return new ExternalSystemTaskNotificationListenerAdapter() {
@@ -291,6 +242,22 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
         manager.onTaskOutput(id, text, stdOut);
+      }
+    };
+  }
+
+  private @NotNull ExternalSystemTaskNotificationListener getProgressIndicatorListener(@NotNull ProgressIndicator indicator) {
+    final ExternalSystemTaskProgressIndicatorUpdater updater =
+      ExternalSystemTaskProgressIndicatorUpdater.getInstanceOrDefault(myExternalSystemId);
+    return new ExternalSystemTaskNotificationListenerAdapter() {
+      @Override
+      public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+        updater.updateIndicator(event, indicator, text -> wrapProgressText(text));
+      }
+
+      @Override
+      public void onEnd(@NotNull ExternalSystemTaskId id) {
+          updater.onTaskEnd(id);
       }
     };
   }

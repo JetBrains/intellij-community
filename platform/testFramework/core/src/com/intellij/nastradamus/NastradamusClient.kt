@@ -43,20 +43,44 @@ class NastradamusClient(
     val bucketsNumber: Int = buildProperties.firstOrNull { (it.findValue("name")?.asText() ?: "") == "system.pass.idea.test.runners.count" }
                                ?.findValue("value")?.asInt() ?: 0
 
-    val testResultEntities = tests.map { json ->
-      TestResultEntity(
+    val testResultEntities = mutableMapOf<String, TestClassResultEntity>()
+
+    tests.map { json ->
+      val testResult = TestResultEntity(
         name = json.findValue("name").asText(),
         status = TestStatus.fromString(json.findValue("status").asText()),
         runOrder = json.findValue("runOrder").asInt(),
-        duration = json.findValue("duration")?.asLong() ?: 0,
-        buildStatusMessage = build.findValue("statusText").asText(),
-        isMuted = json.findValue("currentlyMuted")?.asBoolean() ?: false,
-        bucketId = bucketId,
-        bucketsNumber = bucketsNumber
+        durationMs = json.findValue("duration")?.asLong() ?: 0,
+        currentlyInvestigated = json.findValue("currentlyInvestigated")?.asBoolean() ?: false,
+        isMuted = json.findValue("currentlyMuted")?.asBoolean() ?: false
       )
+
+      val parsedTestName = json.findValue("test").findValue("parsedTestName")
+      val packageName = parsedTestName.findValue("testPackage").asText()
+      val shortClassName = parsedTestName.findValue("testClass").asText()
+      val fullClassName = "$packageName.$shortClassName"
+
+      testResultEntities.computeIfPresent(fullClassName) { _, oldClassResult ->
+        oldClassResult.copy(
+          durationMs = oldClassResult.durationMs + testResult.durationMs,
+          testResults = oldClassResult.testResults.toMutableSet().apply { add(testResult) }
+        )
+      }
+
+      testResultEntities.computeIfAbsent(fullClassName) {
+        TestClassResultEntity(
+          fullName = fullClassName,
+          durationMs = testResult.durationMs,
+          testResults = mutableSetOf(testResult),
+          bucketId = bucketId,
+          bucketsNumber = bucketsNumber
+        )
+      }
     }
 
-    return TestResultRequestEntity(buildInfo = getBuildInfo(), testRunResults = testResultEntities)
+    return TestResultRequestEntity(buildInfo = getBuildInfo(),
+                                   testRunResults = testResultEntities.values.toList(),
+                                   changes = getTeamCityChangesDetails())
   }
 
   fun sendTestRunResults(testResultRequestEntity: TestResultRequestEntity, wasNastradamusDataUsed: Boolean) {
@@ -161,6 +185,7 @@ class NastradamusClient(
   private fun getTeamCityChangesetPatch(): List<String> {
     println("Fetching changesets patches from TeamCity ...")
 
+    @Suppress("RAW_RUN_BLOCKING")
     val changesets = runBlocking {
       teamCityClient.getChanges().mapConcurrently(maxConcurrency = 5) { change ->
         val modificationId = change.findValue("id").asText()
@@ -178,6 +203,7 @@ class NastradamusClient(
     println("Getting changes details from TeamCity ...")
 
     // across all changes - get their details
+    @Suppress("RAW_RUN_BLOCKING")
     val changeDetails = runBlocking {
       val changes = teamCityClient.getChanges()
       changes.mapConcurrently(maxConcurrency = 5) { change ->
@@ -197,13 +223,17 @@ class NastradamusClient(
     val aggregatorBuildId: String = if (triggeredByBuild == null) teamCityClient.buildId
     else triggeredByBuild.findValue("id").asText(teamCityClient.buildId)
 
-    val branchName = teamCityClient.getBuildInfo().findValue("branchName")?.asText("") ?: ""
+    val buildInfo = teamCityClient.getBuildInfo()
+    val branchName = buildInfo.findValue("branchName")?.asText("") ?: ""
 
     return BuildInfo(buildId = teamCityClient.buildId,
                      aggregatorBuildId = aggregatorBuildId,
                      branchName = branchName,
                      os = teamCityClient.os,
-                     buildType = teamCityClient.buildTypeId)
+                     buildType = teamCityClient.buildTypeId,
+                     status = buildInfo.findValue("status")?.asText("") ?: "",
+                     buildStatusMessage = buildInfo.findValue("statusText")?.asText("") ?: ""
+    )
   }
 
   fun getRankedClasses(): Map<Class<*>, Int> {

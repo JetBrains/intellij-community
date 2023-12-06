@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
+import org.jetbrains.intellij.build.images.generateIconClasses
+import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import java.nio.file.Path
 
 internal fun report(context: Context, skipped: Int): String {
@@ -48,7 +50,7 @@ internal fun Map<Path, Collection<CommitInfo>>.commitMessage(): String =
     it.subject + "\n" + "Origin commit: ${it.hash}"
   }
 
-internal fun commit(context: Context) {
+internal fun generateIconClassesAndCommit(context: Context) {
   if (context.iconsCommitsToSync.isEmpty()) {
     return
   }
@@ -58,10 +60,17 @@ internal fun commit(context: Context) {
     log("Nothing to commit")
     context.byDesigners.clear()
   }
-  else {
+  else try {
     val user = triggeredBy()
     val branch = head(context.devRepoRoot)
+    log("Generating classes..")
+    generateIconClasses()
+    val classes = gitStatus(context.devRepoRoot, includeUntracked = true).all().filter { it.endsWith(".java") }
+    stageFiles(classes, context.devRepoRoot)
     commit(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), context.devRepoRoot)
+  }
+  finally {
+    shutdownAppScheduledExecutorService()
   }
 }
 

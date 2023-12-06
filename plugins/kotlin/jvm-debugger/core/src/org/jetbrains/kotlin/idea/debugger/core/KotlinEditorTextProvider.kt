@@ -8,7 +8,7 @@ import com.intellij.debugger.impl.EditorTextProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -110,7 +110,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
     private tailrec fun calculateCandidate(originalElement: PsiElement?, allowMethodCalls: Boolean): PsiElement? {
         val candidate = originalElement?.getParentOfType<KtExpression>(strict = false) ?: return null
 
-        if (!isAcceptedAsCodeFragmentContext(candidate)) {
+        if (!isAcceptedAsCandidate(candidate)) {
             return null
         }
 
@@ -121,6 +121,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
             is KtDeclaration, is KtFile -> null
             is KtIfExpression -> if (candidate.`else` != null) candidate else null
             is KtStatementExpression, is KtLabeledExpression -> null
+            is KtStringTemplateExpression -> if (isStringTemplateAllowed(candidate, allowMethodCalls)) candidate else null
             is KtConstantExpression -> calculateCandidate(candidate.parent, allowMethodCalls)
             else -> when (val parent = candidate.parent) {
                 is KtThisExpression -> parent
@@ -181,17 +182,35 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
         }
     }
 
-    private val NOT_ACCEPTED_AS_CONTEXT_TYPES = arrayOf(
+    private fun isStringTemplateAllowed(candidate: KtStringTemplateExpression, allowMethodCalls: Boolean) =
+        !candidate.text.startsWith("\"\"\"") || allowMethodCalls
+
+
+    private val FORBIDDEN_PARENT_TYPES = setOf(
         KtUserType::class.java,
         KtImportDirective::class.java,
         KtPackageDirective::class.java,
         KtValueArgumentName::class.java,
         KtTypeAlias::class.java,
-        KtAnnotationEntry::class.java
+        KtAnnotationEntry::class.java,
+        KtDeclarationModifierList::class.java
     )
 
+    private fun isAcceptedAsCandidate(element: PsiElement): Boolean {
+        return isAccepted(element, FORBIDDEN_PARENT_TYPES)
+    }
+
     override fun isAcceptedAsCodeFragmentContext(element: PsiElement): Boolean {
-        return !NOT_ACCEPTED_AS_CONTEXT_TYPES.contains(element::class.java as Class<*>)
-                && PsiTreeUtil.getParentOfType(element, *NOT_ACCEPTED_AS_CONTEXT_TYPES) == null
+        return isAccepted(element, FORBIDDEN_PARENT_TYPES)
+    }
+
+    private fun isAccepted(element: PsiElement, forbiddenTypes: Set<Class<*>>): Boolean {
+        for (parent in element.parents(withSelf = true)) {
+            if (parent::class.java in forbiddenTypes) {
+                return false
+            }
+        }
+
+        return true
     }
 }

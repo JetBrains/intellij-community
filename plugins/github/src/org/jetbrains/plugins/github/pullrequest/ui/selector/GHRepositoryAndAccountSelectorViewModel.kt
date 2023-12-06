@@ -5,12 +5,14 @@ import com.intellij.collaboration.async.combineState
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModelBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
-internal class GHRepositoryAndAccountSelectorViewModel(
+@ApiStatus.Experimental
+class GHRepositoryAndAccountSelectorViewModel internal constructor(
   scope: CoroutineScope,
   repositoriesManager: GHHostedRepositoriesManager,
   accountManager: GHAccountManager,

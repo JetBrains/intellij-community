@@ -3,13 +3,14 @@ package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.options.FontSize
 import com.intellij.ui.FontSizeModel
 import java.awt.event.MouseWheelEvent
 import java.awt.event.MouseWheelListener
 import kotlin.math.abs
 
 internal class FontSizeMouseWheelListener(
-  private val model: FontSizeModel,
+  private val model: FontSizeModel<FontSize>,
 ) : MouseWheelListener {
 
   override fun mouseWheelMoved(e: MouseWheelEvent) {

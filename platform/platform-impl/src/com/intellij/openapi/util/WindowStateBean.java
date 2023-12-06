@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.wm.IdeFrame;
@@ -6,11 +6,7 @@ import com.intellij.openapi.wm.impl.FrameInfoHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Window;
+import java.awt.*;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -29,8 +25,7 @@ final class WindowStateBean implements ModificationTracker, WindowState {
 
 
   @Override
-  @Nullable
-  public Point getLocation() {
+  public @Nullable Point getLocation() {
     return apply(Point::new, myLocation);
   }
 
@@ -42,8 +37,7 @@ final class WindowStateBean implements ModificationTracker, WindowState {
 
 
   @Override
-  @Nullable
-  public Dimension getSize() {
+  public @Nullable Dimension getSize() {
     return apply(Dimension::new, mySize);
   }
 
@@ -118,11 +112,12 @@ final class WindowStateBean implements ModificationTracker, WindowState {
 
 
   private static boolean isFullScreen(@NotNull Window window) {
-    return window instanceof IdeFrame && FrameInfoHelper.isFullScreenSupportedInCurrentOs() && ((IdeFrame)window).isInFullScreen();
+    return window instanceof IdeFrame &&
+           FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs$intellij_platform_ide_impl() &&
+           ((IdeFrame)window).isInFullScreen();
   }
 
-  @Nullable
-  private static <T, R> R apply(@NotNull Function<? super T, ? extends R> function, @Nullable T value) {
+  private static @Nullable <T, R> R apply(@NotNull Function<? super T, ? extends R> function, @Nullable T value) {
     return value == null ? null : function.apply(value);
   }
 }

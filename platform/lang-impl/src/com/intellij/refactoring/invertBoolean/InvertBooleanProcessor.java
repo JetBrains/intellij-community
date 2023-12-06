@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +22,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class InvertBooleanProcessor extends BaseRefactoringProcessor {
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
+public final class InvertBooleanProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InvertBooleanProcessor.class);
   private final InvertBooleanDelegate myDelegate;
 
@@ -64,7 +66,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     final UsageInfo[] usageInfos = refUsages.get();
     myDelegate.findConflicts(usageInfos, conflicts);
 

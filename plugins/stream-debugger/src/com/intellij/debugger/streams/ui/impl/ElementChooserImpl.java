@@ -80,7 +80,7 @@ public class ElementChooserImpl<T extends ChooserOption> implements ElementChoos
       .setMovable(true)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(() -> callBack.chosen(list.getSelectedValue()))
+      .setItemChosenCallback(() -> callBack.chosen(list.getSelectedValue()))
       .addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {

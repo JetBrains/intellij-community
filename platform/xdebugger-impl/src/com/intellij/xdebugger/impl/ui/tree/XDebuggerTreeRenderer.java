@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.ide.HelpTooltipManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -18,19 +19,24 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
 
-class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
+public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private final MyColoredTreeCellRenderer myLink = new MyColoredTreeCellRenderer();
+  private final Project myProject;
   private boolean myHaveLink;
   private int myLinkOffset;
   private int myLinkWidth;
   private Object myIconTag;
 
+  private Supplier<String> myLinkShortcutSupplier = null;
+
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
-  XDebuggerTreeRenderer() {
+  public XDebuggerTreeRenderer(@NotNull Project project) {
+    myProject = project;
     getIpad().right = 0;
     myLink.getIpad().left = 0;
     myUsedCustomSpeedSearchHighlighting = true;
@@ -72,7 +78,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
           Rectangle screen = ScreenUtil.getScreenRectangle(treeRightSideOnScreen);
           // text may fit the screen in ExpandableItemsHandler
           if (screen.x + screen.width < treeRightSideOnScreen.x + notFittingWidth) {
-            myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
+            myLongTextLink.setupComponent(rawValue, myProject);
             append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
             setupLinkDimensions(treeVisibleRect, rowX);
             myLinkWidth = 0;
@@ -81,7 +87,40 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
-    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)this, false, selected);
+    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, this, false, selected);
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    // shortcut should not be shown when there is no link
+    if (!myHaveLink && myLinkShortcutSupplier != null) {
+      Supplier<String> supplier = ClientProperty.get(myTree, HelpTooltipManager.SHORTCUT_PROPERTY);
+      if (supplier == myLinkShortcutSupplier) {
+        ClientProperty.remove(myTree, HelpTooltipManager.SHORTCUT_PROPERTY);
+        myLinkShortcutSupplier = null;
+      }
+    }
+
+    String toolTip = myLink.getToolTipText();
+    if (isInLinkArea(event.getX()) && toolTip != null) {
+      return toolTip;
+    }
+
+    return super.getToolTipText(event);
+  }
+
+  private boolean isInLinkArea(int x) {
+    int linkXCoordinate = x - myLinkOffset;
+    if (linkXCoordinate < 0) {
+      return false;
+    }
+
+    int index = myLink.findFragmentAt(linkXCoordinate);
+    if (index == SimpleColoredComponent.FRAGMENT_ICON) {
+      return true;
+    }
+
+    return index >= 0 && myLink.getFragmentTag(index) != null;
   }
 
   private void updateIcon(XDebuggerTreeNode node) {
@@ -101,9 +140,25 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-    if (tag instanceof XDebuggerTreeNodeHyperlink && ((XDebuggerTreeNodeHyperlink)tag).alwaysOnScreen()) {
+    if (tag instanceof XDebuggerTreeNodeHyperlink tagValue && ((XDebuggerTreeNodeHyperlink)tag).alwaysOnScreen()) {
       myHaveLink = true;
       myLink.append(fragment, attributes, tag);
+
+      Icon icon = tagValue.getLinkIcon();
+      if (icon != null) {
+        myLink.setIcon(icon);
+      }
+
+      String tooltipText = tagValue.getLinkTooltip();
+      if (tooltipText != null) {
+        myLink.setToolTipText(tooltipText);
+
+        Supplier<String> shortcutSupplier = tagValue.getShortcutSupplier();
+        if (shortcutSupplier != null) {
+          myLinkShortcutSupplier = shortcutSupplier;
+          ClientProperty.put(myTree, HelpTooltipManager.SHORTCUT_PROPERTY, myLinkShortcutSupplier);
+        }
+      }
     }
     else {
       super.append(fragment, attributes, tag);
@@ -116,7 +171,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       Graphics2D textGraphics = (Graphics2D)g.create(0, 0, myLinkOffset, getHeight());
       try {
         super.doPaint(textGraphics);
-      } finally {
+      }
+      finally {
         textGraphics.dispose();
       }
       g.translate(myLinkOffset, 0);
@@ -171,7 +227,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
                                       boolean expanded,
                                       boolean leaf,
                                       int row,
-                                      boolean hasFocus) {}
+                                      boolean hasFocus) { }
 
     @Override
     protected void doPaint(Graphics2D g) {

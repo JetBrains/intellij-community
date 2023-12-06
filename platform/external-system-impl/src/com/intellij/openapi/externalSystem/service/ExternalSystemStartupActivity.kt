@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.ExternalSystemManager
@@ -9,18 +11,26 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectRenameAware
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
+import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.platform.backend.observation.trackActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal class ExternalSystemStartupActivity : ProjectActivity {
-  override suspend fun execute(project: Project) {
+
+  override suspend fun execute(project: Project) = project.trackActivity(ExternalSystemActivityKey) {
+    project.serviceAsync<ExternalSystemInProgressService>().externalSystemActivityStarted()
+    val esProjectsManager = readAction {
+      ExternalProjectsManagerImpl.getInstance(project)
+    }
     blockingContext {
-      ExternalProjectsManagerImpl.getInstance(project).init()
+      esProjectsManager.init()
     }
 
     // do not compute in EDT

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
+import kotlin.math.min
 
 private val LOG = logger<GitFetchSupportImpl>()
 private val PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*)") // x [deleted]  (none) -> origin/branch
@@ -174,7 +175,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       config > 0 -> config
       config == -1 -> Runtime.getRuntime().availableProcessors()
       config == -2 -> numberOfRemotes
-      config == -3 -> Math.min(numberOfRemotes, Runtime.getRuntime().availableProcessors() * 2)
+      config == -3 -> min(numberOfRemotes, Runtime.getRuntime().availableProcessors() * 2)
       else -> 1
     }
 
@@ -182,7 +183,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       return 1
     }
 
-    return Math.min(maxThreads, MAX_SSH_CONNECTIONS)
+    return min(maxThreads, MAX_SSH_CONNECTIONS)
   }
 
   private fun isStoreCredentialsHelperUsed(repositories: Collection<GitRepository>): Boolean {

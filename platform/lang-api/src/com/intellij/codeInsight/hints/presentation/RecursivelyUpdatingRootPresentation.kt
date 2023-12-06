@@ -69,6 +69,10 @@ open class RecursivelyUpdatingRootPresentation(private var current: InlayPresent
     this.current.mouseClicked(event, translated)
   }
 
+  override fun mousePressed(event: MouseEvent, translated: Point) {
+    this.current.mousePressed(event, translated)
+  }
+
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     this.current.mouseMoved(event, translated)
   }

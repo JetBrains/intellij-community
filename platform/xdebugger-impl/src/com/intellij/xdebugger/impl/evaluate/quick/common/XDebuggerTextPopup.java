@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.idea.ActionsBundle;
@@ -18,6 +18,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
@@ -59,7 +60,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   protected final @Nullable Runnable myHideRunnable;
   protected final @NotNull TextViewer myTextViewer;
 
-  protected @Nullable JBPopup myPopup;
+  private @Nullable JBPopup myPopup;
   protected boolean myTreePopupIsShown = false;
   protected @Nullable Tree myTree;
   private boolean mySetValueModeEnabled = false;
@@ -124,8 +125,10 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       }).createPopup();
   }
 
-  public void show(@NotNull String initialText) {
+  public JBPopup show(@NotNull String initialText) {
     myTextViewer.setPreferredSize(new Dimension(0, 0));
+    myMainPanel.setBorder(JBUI.Borders.empty(10));
+    myMainPanel.setBackground(myTextViewer.getBackground());
     setContent(myTextViewer, getToolbarActions(), ACTION_PLACE, null);
 
     XFullValueEvaluator evaluator = myEvaluator != null ? myEvaluator : new ImmediateFullValueEvaluator(initialText);
@@ -136,18 +139,15 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       }
     };
 
-    Runnable afterEvaluation = () -> {
-      resizePopup();
-    };
-
-    myPopup = createPopup(evaluator, afterEvaluation, hideTextPopupRunnable);
+    myPopup = createPopup(evaluator, this::resizePopup, hideTextPopupRunnable);
 
     myTree = myTreeCreator.createTree(myInitialItem);
     registerTreeDisposable(myPopup, myTree);
 
-    setAutoResizeUntilToolbarNotFull(() -> resizePopup(), myPopup);
+    setAutoResizeUntilToolbarNotFull(this::resizePopup, myPopup);
 
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
+    return myPopup;
   }
 
   private void updatePopupWidth(@NotNull Window popupWindow) {
@@ -327,7 +327,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       }
     }
 
-    private void setTextValue(@NotNull XValueNodeImpl node, @NotNull String text) {
+    private static void setTextValue(@NotNull XValueNodeImpl node, @NotNull String text) {
       @NotNull XValue value = node.getValueContainer();
       @Nullable XValueModifier modifier = value.getModifier();
       if (modifier instanceof XStringValueModifier) {

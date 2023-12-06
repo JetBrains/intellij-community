@@ -46,7 +46,6 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
         }.bottomGap(BottomGap.SMALL)
 
         if (ExperimentalUI.isNewUI()) {
-          @Suppress("DialogTitleCapitalization")
           buttonsGroup(message("button.group.title.show.tabs.in")) {
             lateinit var singleRowButton: JBRadioButton
             row {
@@ -61,33 +60,28 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
             }.bind(ui::hideTabsIfNeeded)
               .enabledIf(tabsPlacedHorizontally and singleRowButton.selected)
 
-            row { radioButton(message("radio.multiple.rows"), value = false).enabledIf(tabsPlacedOnTop) }.bottomGap(BottomGap.SMALL)
-
-            myEditorTabPlacement.addActionListener {
-              // move selection to single row, because it is the only one option in the bottom placement
-              if (myEditorTabPlacement.selectedItem == SwingConstants.BOTTOM) {
-                singleRowButton.isSelected = true
-              }
-            }
+            row { radioButton(message("radio.multiple.rows"), value = false).enabledIf(tabsPlacedHorizontally) }.bottomGap(BottomGap.SMALL)
           }.bind(ui::scrollTabLayoutInEditor)
         }
         else {
           lateinit var myOneRowCheckbox: JCheckBox
-          row { myOneRowCheckbox = checkBox(showTabsInOneRow).enabledIf(tabsPlacedOnTop).component }
+          row { myOneRowCheckbox = checkBox(showTabsInOneRow).enabledIf(tabsPlacedHorizontally).component }
           indent {
             row { checkBox(hideTabsIfNeeded).enabledIf(tabsPlacedHorizontally and myOneRowCheckbox.selected) }
           }
         }
 
-        row { checkBox(showPinnedTabsInASeparateRow).enabledIf(tabsPlacedOnTop
-                                                                 and AdvancedSettingsPredicate("editor.keep.pinned.tabs.on.left", disposable!!)) }
+        row {
+          checkBox(showPinnedTabsInASeparateRow).enabledIf(tabsPlacedHorizontally
+                                                             and AdvancedSettingsPredicate("editor.keep.pinned.tabs.on.left", disposable!!))
+        }
         row { checkBox(useSmallFont).enableIfTabsVisible() }.visible(!ExperimentalUI.isNewUI())
         row { checkBox(showFileIcon).enableIfTabsVisible() }
         row { checkBox(showFileExtension).enableIfTabsVisible() }
         row { checkBox(showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }
         row { checkBox(markModifiedTabsWithAsterisk).enableIfTabsVisible() }
         row { checkBox(showTabsTooltips).enableIfTabsVisible() }
-        row(CLOSE_BUTTON_POSITION + ":") {
+        row("$CLOSE_BUTTON_POSITION:") {
           closeButtonPositionComboBox()
         }.enabledIf((myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }))
           .topGap(TopGap.SMALL)
@@ -129,9 +123,6 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
 
   private val tabsPlacedHorizontally: ComponentPredicate
     get() = myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
-
-  private val tabsPlacedOnTop: ComponentPredicate
-    get() = myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)
 
   private fun <T : JComponent> Cell<T>.enableIfTabsVisible() {
     enabledIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE })

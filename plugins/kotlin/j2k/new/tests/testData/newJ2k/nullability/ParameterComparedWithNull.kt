@@ -1,3 +1,5 @@
 fun foo(s: String?) {
-    s?.let { zoo(it) }
+    if (s != null) {
+        zoo(s)
+    }
 }

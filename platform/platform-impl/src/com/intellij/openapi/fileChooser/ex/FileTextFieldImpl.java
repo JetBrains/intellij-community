@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -16,7 +16,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -26,10 +25,11 @@ import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.ui.update.LazyUiDisposable;
+import com.intellij.util.ui.update.LazyUiDisposableKt;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,13 +130,10 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
 
     myCancelAction = new CancelAction();
 
-    LazyUiDisposable<FileTextFieldImpl> disposable = new LazyUiDisposable<>(parent, field, this) {
-      @Override
-      protected void initialize(@NotNull Disposable parent, @NotNull FileTextFieldImpl child, @Nullable Project project) {
-        Disposer.register(child, myUiUpdater);
-      }
-    };
-    disposable.setupListeners();
+    LazyUiDisposableKt.lazyUiDisposable(parent, field, this, (child, project) -> {
+      Disposer.register(child, myUiUpdater);
+      return Unit.INSTANCE;
+    });
   }
 
   @SuppressWarnings("unused") //used by rider
@@ -209,7 +206,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
 
   private void selectCompletionRemoveText(CompletionResult result, boolean selectReplacedText) {
     int pos = myPathTextField.getCaretPosition();
-    if (result.variants.size() > 0 && selectReplacedText) {
+    if (!result.variants.isEmpty() && selectReplacedText) {
       myPathTextField.setCaretPosition(myPathTextField.getText().length());
       myPathTextField.moveCaretPosition(pos);
     }
@@ -242,12 +239,12 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
             }
           }
 
-          if (myCurrentCompletion.kidsAfterSeparator.indexOf(file) == 0 && myCurrentCompletion.siblings.size() > 0) {
+          if (myCurrentCompletion.kidsAfterSeparator.indexOf(file) == 0 && !myCurrentCompletion.siblings.isEmpty()) {
             LookupFile parent = file.getParent();
             return parent != null ? parent.getName() : "";
           }
 
-          if (myCurrentCompletion.macros.size() > 0 && fileIndex == 0) {
+          if (!myCurrentCompletion.macros.isEmpty() && fileIndex == 0) {
             return getPathVariablesSeparatorText();
           }
 
@@ -272,7 +269,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
 
     myCurrentCompletion = result;
 
-    if (result.variants.size() == 0) {
+    if (result.variants.isEmpty()) {
       showNoSuggestions(isExplicit);
       return;
     }
@@ -327,7 +324,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getField(), true));
         return Boolean.TRUE;
       })
-      .setItemChoosenCallback(() -> processChosenFromCompletion(false))
+      .setItemChosenCallback(() -> processChosenFromCompletion(false))
       .setCancelKeyEnabled(false)
       .setAlpha(0.1f)
       .setFocusOwners(new Component[]{myPathTextField})
@@ -569,7 +566,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
     return pos < text.length() ? text.substring(0, pos) : text;
   }
 
-  private class CancelAction implements ActionListener {
+  private final class CancelAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
       if (myCurrentPopup != null) {

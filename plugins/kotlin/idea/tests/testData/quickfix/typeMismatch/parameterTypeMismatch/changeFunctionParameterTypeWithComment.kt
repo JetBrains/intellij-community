@@ -6,3 +6,5 @@ fun test() {
         <caret>1 // comment
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing
+/* IGNORE_K2 */

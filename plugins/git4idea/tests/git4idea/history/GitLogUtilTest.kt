@@ -1,16 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.util.CollectConsumer
-import com.intellij.util.Consumer
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
-import git4idea.GitCommit
 import git4idea.config.GitVersion
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits
-import git4idea.history.GitCommitRequirements.DiffRenameLimit
+import git4idea.history.GitCommitRequirements.DiffRenames
 import git4idea.test.*
 import junit.framework.TestCase
 import org.junit.Assume.assumeTrue
@@ -27,7 +24,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
     GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details))
 
-    val lastCommit = ContainerUtil.getFirstItem(details)
+    val lastCommit = details.firstOrNull()
     assertNotNull(lastCommit)
     assertEquals(message, lastCommit!!.fullMessage)
   }
@@ -52,7 +49,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     expected.reverse()
 
     val actualHashes = mutableListOf<String>()
-    GitLogUtil.readFullDetails(project, repo.root, Consumer<GitCommit> { actualHashes.add(it.id.asString()) }, "--max-count=$commitCount")
+    GitLogUtil.readFullDetails(project, repo.root, { actualHashes.add(it.id.asString()) }, "--max-count=$commitCount")
     assertEquals(expected, actualHashes)
   }
 
@@ -65,8 +62,8 @@ class GitLogUtilTest : GitSingleRepoTest() {
     repo.addCommit("Rename fileToRename.txt")
 
     GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
-                                                                  GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NoRenames), false)
-    val lastCommit = ContainerUtil.getFirstItem(details)
+                                                                  GitCommitRequirements(diffRenames = DiffRenames.NoRenames), false)
+    val lastCommit = details.firstOrNull()
     assertNotNull(lastCommit)
     assertTrue(lastCommit!!.changes.all { !it.isRenamed })
   }
@@ -110,17 +107,17 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
     val details = mutableListOf<VcsFullCommitDetails>()
     GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
-                                                              GitCommitRequirements(diffInMergeCommits = diffInMergeCommits), false)
-    val lastCommit = ContainerUtil.getFirstItem(details)
+                                                                  GitCommitRequirements(diffInMergeCommits = diffInMergeCommits), false)
+    val lastCommit = details.firstOrNull()
 
     assertNotNull(lastCommit)
 
     when (diffInMergeCommits) {
-      DiffInMergeCommits.NO_DIFF -> TestCase.assertTrue(lastCommit.changes.isEmpty())
+      DiffInMergeCommits.NO_DIFF -> TestCase.assertTrue(lastCommit!!.changes.isEmpty())
       DiffInMergeCommits.COMBINED_DIFF -> TestCase.assertEquals(listOf(conflictedFile),
-                                                                ChangesUtil.getPaths(lastCommit.changes).map { it.name })
+                                                                ChangesUtil.getPaths(lastCommit!!.changes).map { it.name })
       DiffInMergeCommits.DIFF_TO_PARENTS -> {
-        TestCase.assertEquals(listOf(conflictedFile), ChangesUtil.getPaths(lastCommit.changes).map { it.name })
+        TestCase.assertEquals(listOf(conflictedFile), ChangesUtil.getPaths(lastCommit!!.changes).map { it.name })
         TestCase.assertEquals(setOf(file1, conflictedFile),
                               ChangesUtil.getPaths(lastCommit.getChanges(0)).mapTo(mutableSetOf()) { it.name })
         TestCase.assertEquals(setOf(file2, conflictedFile),

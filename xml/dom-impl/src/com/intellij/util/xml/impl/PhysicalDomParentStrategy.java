@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -16,7 +16,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
   private XmlElement myElement;
   private final DomManagerImpl myDomManager;
 
-  public PhysicalDomParentStrategy(@NotNull final XmlElement element, DomManagerImpl domManager) {
+  public PhysicalDomParentStrategy(final @NotNull XmlElement element, DomManagerImpl domManager) {
     myElement = element;
     myDomManager = domManager;
   }
@@ -28,32 +28,27 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return myDomManager.getDomHandler(parentTag);
   }
 
-  @Nullable
-  public static XmlTag getParentTag(final XmlElement xmlElement) {
+  public static @Nullable XmlTag getParentTag(final XmlElement xmlElement) {
     return (XmlTag)getParentTagCandidate(xmlElement);
   }
 
-  @Nullable
-  public static PsiElement getParentTagCandidate(final XmlElement xmlElement) {
+  public static @Nullable PsiElement getParentTagCandidate(final XmlElement xmlElement) {
     final PsiElement parent = xmlElement.getParent();
     return parent instanceof XmlEntityRef ? parent.getParent() : parent;
   }
 
   @Override
-  @NotNull
-  public final XmlElement getXmlElement() {
+  public final @NotNull XmlElement getXmlElement() {
     return myElement;
   }
 
   @Override
-  @NotNull
-  public DomParentStrategy refreshStrategy(final DomInvocationHandler handler) {
+  public @NotNull DomParentStrategy refreshStrategy(final DomInvocationHandler handler) {
     return this;
   }
 
   @Override
-  @NotNull
-  public DomParentStrategy setXmlElement(@NotNull final XmlElement element) {
+  public @NotNull DomParentStrategy setXmlElement(final @NotNull XmlElement element) {
     myElement = element;
     return this;
   }
@@ -64,8 +59,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
   }
 
   @Override
-  @NotNull
-  public DomParentStrategy clearXmlElement() {
+  public @NotNull DomParentStrategy clearXmlElement() {
     final DomInvocationHandler parent = getParentHandler();
     assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
     return new VirtualDomParentStrategy(parent);
@@ -128,15 +122,14 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return false;
   }
 
-  @Nullable
-  private static PsiElement findIncluder(PsiElement cur) {
+  private static @Nullable PsiElement findIncluder(PsiElement cur) {
     while (cur != null && !cur.isPhysical()) {
       cur = cur.getParent();
     }
     return cur;
   }
 
-  private static boolean xmlElementsEqual(@NotNull final PsiElement fst, @NotNull final PsiElement snd) {
+  private static boolean xmlElementsEqual(final @NotNull PsiElement fst, final @NotNull PsiElement snd) {
     if (fst.equals(snd)) return true;
 
     if (fst.isValid() && fst.isPhysical() || snd.isValid() && snd.isPhysical()) return false;

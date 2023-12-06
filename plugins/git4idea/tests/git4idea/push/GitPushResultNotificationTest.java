@@ -115,7 +115,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     GitPushNativeResult branchResult = new GitPushNativeResult(UP_TO_DATE, "refs/heads/master");
     GitPushResultNotification notification = notification(convertFromNative(branchResult, Collections.emptyList(),
                                                                             0, from("master"), to("origin/master")));
-    assertPushNotification(NotificationType.INFORMATION, "Everything is up-to-date", "", notification);
+    assertPushNotification(NotificationType.INFORMATION, "Everything is up to date", "", notification);
   }
 
   public void test_only_tags() {
@@ -211,7 +211,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     Ref<GitPushResultNotification> ref = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       ref.set(GitPushResultNotification.create(myProject, new GitPushResult(map, updatedFiles, null, null, Collections.emptyMap()),
-                                               null, map.size() > 1, null));
+                                               null, map.size() > 1, null, Collections.emptyMap()));
     });
     return ref.get();
   }

@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
@@ -21,7 +21,6 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.Function
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -31,6 +30,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlin.properties.Delegates
 
 private val Module.storage: FileBasedStorage
@@ -66,7 +66,7 @@ internal class ModuleStoreRenameTest {
           ModuleRootModificationUtil.addDependency(dependentModule, module)
         }
 
-        projectRule.project.messageBus.connect(module).subscribe(ProjectTopics.MODULES, object : ModuleListener {
+        projectRule.project.messageBus.connect(module).subscribe(ModuleListener.TOPIC, object : ModuleListener {
           override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
             assertThat(modules).containsOnly(module)
             oldModuleNames.add(oldNameProvider.`fun`(module))
@@ -76,12 +76,7 @@ internal class ModuleStoreRenameTest {
 
       // should be invoked after project tearDown
       override fun after() {
-        (ApplicationManager.getApplication().stateStore.storageManager as StateStorageManagerImpl).getVirtualFileTracker()!!.remove {
-          if (it.storageManager.componentManager == module) {
-            throw AssertionError("Storage manager is not disposed, module $module, storage $it")
-          }
-          false
-        }
+        checkStorageIsNotTracked(module)
       }
     },
     DisposeModulesRule(projectRule)
@@ -99,10 +94,8 @@ internal class ModuleStoreRenameTest {
     val oldName = module.name
     val newName = "foo"
 
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
-        projectRule.project.modifyModules { renameModule(module, newName) }
-      }
+    writeAction {
+      projectRule.project.modifyModules { renameModule(module, newName) }
     }
     assertModuleFileRenamed(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
@@ -178,20 +171,17 @@ internal class ModuleStoreRenameTest {
     val storage = module.storage
     val parentVirtualDir = storage.getVirtualFile(StateStorageOperation.WRITE)!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
-        PsiTestUtil.addSourceContentToRoots(module, src, false)
-      }
+    writeAction {
+      PsiTestUtil.addSourceContentToRoots(module, src, false)
     }
+
     saveProjectState()
 
     val rootManager = module.rootManager as ModuleRootManagerEx
     val stateModificationCount = rootManager.modificationCountForTests
 
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
-        src.rename(null, "bar.dot")
-      }
+    writeAction {
+      src.rename(null, "bar.dot")
     }
 
     assertThat(stateModificationCount).isLessThan(rootManager.modificationCountForTests)

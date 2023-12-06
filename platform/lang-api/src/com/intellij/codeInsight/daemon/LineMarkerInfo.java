@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.diagnostic.PluginException;
@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -26,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class LineMarkerInfo<T extends PsiElement> {
@@ -37,14 +37,13 @@ public class LineMarkerInfo<T extends PsiElement> {
   public final int endOffset;
   public Color separatorColor;
   public SeparatorPlacement separatorPlacement;
-  public RangeHighlighter highlighter;
+  public volatile RangeHighlighter highlighter;
 
   public int updatePass;
   private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;
   private final Supplier<@Nls @NotNull String> myAccessibleNameProvider;
   private AnAction myNavigateAction = new NavigateAction<>(this);
-  @NotNull
-  private final GutterIconRenderer.Alignment myIconAlignment;
+  private final @NotNull GutterIconRenderer.Alignment myIconAlignment;
   private final GutterIconNavigationHandler<T> myNavigationHandler;
 
   /**
@@ -264,11 +263,9 @@ public class LineMarkerInfo<T extends PsiElement> {
 
     protected boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer<?> renderer) {
       return
-        myInfo.getElement() != null &&
-        renderer.myInfo.getElement() != null &&
-        myInfo.getElement() == renderer.myInfo.getElement() &&
-        Comparing.equal(myInfo.myTooltipProvider, renderer.myInfo.myTooltipProvider) &&
-        Comparing.equal(myInfo.myIcon, renderer.myInfo.myIcon);
+        myInfo.elementRef.equals(renderer.myInfo.elementRef)
+        && Objects.equals(myInfo.myTooltipProvider, renderer.myInfo.myTooltipProvider)
+        && Objects.equals(myInfo.myIcon, renderer.myInfo.myIcon);
     }
 
     @Override

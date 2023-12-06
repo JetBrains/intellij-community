@@ -76,8 +76,9 @@ public abstract class PyEnvTestCase {
   /**
    * Escape test output to prevent python test be processed as test result
    */
+  @NotNull
   public static String escapeTestMessage(@NotNull final String message) {
-    return message.replace("##", "from test: \\[sharp][sharp]");
+    return message.replace("##teamcity", "from test: \\[sharp][sharp]");
   }
 
   /**
@@ -188,7 +189,11 @@ public abstract class PyEnvTestCase {
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
     EnvTestTagsRequired methodAnnotation = null;
     try {
-      final Method method = getClass().getMethod(myTestName.getMethodName());
+      String methodName = myTestName.getMethodName();
+      if (methodName.contains("[")) {
+        methodName = methodName.substring(0, methodName.indexOf('['));
+      }
+      final Method method = getClass().getMethod(methodName);
       methodAnnotation = method.getAnnotation(EnvTestTagsRequired.class);
     }
     catch (final NoSuchMethodException e) {

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-object BranchedFoldingUtils {
+internal object BranchedFoldingUtils {
     private val KtIfExpression.branches: List<KtExpression?> get() = ifBranchesOrThis()
 
     private fun KtExpression.ifBranchesOrThis(): List<KtExpression?> {
@@ -96,18 +96,19 @@ object BranchedFoldingUtils {
     }
 
     /**
-     * Returns the number of assignments in recursive branches of if, when, or try expression (it checks nested branches as well).
+     * Returns a set of assignments in recursive branches of if, when, or try expression (it checks nested branches as well).
      *
-     * @param expression if, when, or try expression to analyze branches for the number of assignments.
-     * @return null if
+     * @param expression if, when, or try expression to analyze branches for assignments.
+     * @return empty set if
      *   - [expression] is null,
      *   - [expression] has some missing cases (cases that no branches handle), or
      *   - The right expressions of assignments do not match each other
      *     (for the concept of "match", see [collectAssignmentsAndCheck] function below).
      *   Otherwise, the number of all assignments.
      */
-    fun KtAnalysisSession.getNumberOfFoldableAssignmentsOrNull(expression: KtExpression?): Int? {
-        if (expression == null) return null
+    context(KtAnalysisSession)
+    fun getFoldableAssignmentsFromBranches(expression: KtExpression?): Set<KtBinaryExpression> {
+        if (expression == null) return emptySet()
         val assignments = mutableSetOf<KtBinaryExpression>()
 
         /**
@@ -156,13 +157,13 @@ object BranchedFoldingUtils {
         }
 
         // Check if all assignment have right expressions that match each other.
-        if (!collectAssignmentsAndCheck(expression)) return null
-        val firstAssignment = assignments.firstOrNull { it.right?.isNull() != true } ?: assignments.firstOrNull() ?: return 0
-        val leftType = firstAssignment.left?.getKtType() ?: return 0
-        val rightType = firstAssignment.right?.getKtType() ?: return 0
+        if (!collectAssignmentsAndCheck(expression)) return emptySet()
+        val firstAssignment = assignments.firstOrNull { it.right?.isNull() != true } ?: assignments.firstOrNull() ?: return emptySet()
+        val leftType = firstAssignment.left?.getKtType() ?: return emptySet()
+        val rightType = firstAssignment.right?.getKtType() ?: return emptySet()
         val firstOperation = firstAssignment.operationReference.mainReference.resolve()
         if (assignments.any { assignment -> !checkAssignmentsMatch(firstAssignment, assignment, firstOperation, leftType, rightType) }) {
-            return null
+            return emptySet()
         }
 
         // If there is any child element of expression whose type is KtBinaryExpression for an assignment that does not have the right
@@ -176,9 +177,9 @@ object BranchedFoldingUtils {
                     binaryExpression !in assignments
                 }
             })) {
-            return null
+            return emptySet()
         }
-        return assignments.size
+        return assignments
     }
 
     /**
@@ -194,7 +195,8 @@ object BranchedFoldingUtils {
      *          - When [leftType] is a non-nullable type, types of right operands of [first] and [second] are both non-nullable, and
      *            they are the same.
      */
-    private fun KtAnalysisSession.checkAssignmentsMatch(
+    context(KtAnalysisSession)
+    private fun checkAssignmentsMatch(
         first: KtBinaryExpression,
         second: KtBinaryExpression,
         firstOperation: PsiElement?,
@@ -298,7 +300,8 @@ object BranchedFoldingUtils {
      *       return       // cannot be lifted because of the null returned expression
      *     }
      */
-    private fun KtAnalysisSession.getFoldableReturnsFromBranches(branches: List<KtExpression?>): FoldableReturns {
+    context(KtAnalysisSession)
+    private fun getFoldableReturnsFromBranches(branches: List<KtExpression?>): FoldableReturns {
         val foldableReturns = mutableListOf<KtReturnExpression>()
         for (branch in branches) {
             val foldableBranchedReturn = getFoldableBranchedReturn(branch)
@@ -324,7 +327,8 @@ object BranchedFoldingUtils {
      * It returns an empty list with `isFoldable = true` if [expression] is one of [KtBreakExpression], [KtContinueExpression],
      * [KtThrowExpression], and [KtCallExpression].
      */
-    fun KtAnalysisSession.getFoldableReturnsFromBranches(expression: KtExpression): FoldableReturns = when (expression) {
+    context(KtAnalysisSession)
+    fun getFoldableReturnsFromBranches(expression: KtExpression): FoldableReturns = when (expression) {
         is KtWhenExpression -> {
             val entries = expression.entries
             when {

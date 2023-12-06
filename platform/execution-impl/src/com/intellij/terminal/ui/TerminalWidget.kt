@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.TerminalTitle
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.annotations.Nls
@@ -15,11 +16,18 @@ interface TerminalWidget : ComponentContainer {
   val terminalTitle: TerminalTitle
 
   /**
-   * terminal size; null, if the terminal size is 0x0, e.g. the component is not laid out yet
+   * Terminal size in characters according to an underlying UI component;
+   * null, if unavailable, e.g. the component is not shown or not laid out yet
    */
   val termSize: TermSize?
 
-  fun connectToTty(ttyConnector: TtyConnector)
+  /**
+   * Command used to run the session related to this widget
+   * todo: would be great to find better place for it
+   */
+  var shellCommand: List<String>?
+
+  fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize)
 
   val ttyConnectorAccessor: TtyConnectorAccessor
 
@@ -39,6 +47,10 @@ interface TerminalWidget : ComponentContainer {
    */
   fun addNotification(notificationComponent: JComponent, disposable: Disposable)
 
+  @RequiresEdt(generateAssertion = false)
+  fun sendCommandToExecute(shellCommand: String)
+
+  @RequiresEdt(generateAssertion = false)
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
 }
 

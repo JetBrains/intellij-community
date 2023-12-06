@@ -6,11 +6,11 @@ import com.intellij.ide.projectWizard.NewProjectWizardTestCase
 import com.intellij.ide.wizard.Step
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator.NewProjectWizardFactory
@@ -18,14 +18,14 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.closeOpenedProjectsIfFail
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
-import com.intellij.testFramework.utils.vfs.getFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.function.Consumer
 
 abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
@@ -69,24 +69,6 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
-  fun waitForMavenImporting(module: Module) {
-    val pomFile = module.guessModuleDir()!!.getFile("pom.xml")
-    waitForMavenImporting(module.project, pomFile)
-  }
-
-  fun waitForMavenImporting(project: Project, file: VirtualFile) {
-    val manager = MavenProjectsManager.getInstance(project)
-    if (!MavenUtil.isLinearImportEnabled()) {
-      manager.waitForImportCompletion()
-      ApplicationManager.getApplication().invokeAndWait {
-        manager.scheduleImportInTests(listOf(file))
-        manager.importProjects()
-      }
-    }
-    val promise = manager.waitForImportCompletion()
-    PlatformTestUtil.waitForPromise(promise)
-  }
-
   override fun createProject(adjuster: Consumer<in Step>?): Project {
     return closeOpenedProjectsIfFail {
       super.createProject(adjuster)
@@ -96,7 +78,7 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
   fun <R> withWizard(action: () -> R, configure: Step.() -> Unit): R {
     Disposer.newDisposable().use { disposable ->
       val factory = object : NewProjectWizardFactory {
-        override fun create(project: Project?, modulesProvider: ModulesProvider): NewProjectWizard {
+        override fun create(project: Project?, modulesProvider: ModulesProvider, defaultPath: String?): NewProjectWizard {
           return object : NewProjectWizard(project, modulesProvider, null) {
             override fun showAndGet(): Boolean {
               while (true) {
@@ -119,5 +101,23 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
       ApplicationManager.getApplication().replaceService(NewProjectWizardFactory::class.java, factory, disposable)
       return action()
     }
+  }
+
+  suspend fun waitForProjectCreation(createProject: () -> Project): Project {
+    val project = withContext(Dispatchers.EDT) { createProject() }
+
+    // hack to wait for all the pending updates on newly created project
+    MavenProjectsManager.getInstance(project).updateAllMavenProjects(MavenImportSpec(false, false, false))
+
+    return project
+  }
+
+  suspend fun waitForModuleCreation(createModule: () -> Module): Module {
+    val module = withContext(Dispatchers.EDT) { createModule() }
+
+    // hack to wait for all the pending updates
+    MavenProjectsManager.getInstance(module.project).updateAllMavenProjects(MavenImportSpec(false, false, false))
+
+    return module
   }
 }

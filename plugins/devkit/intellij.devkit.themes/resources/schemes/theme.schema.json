@@ -1,5 +1,5 @@
 {
-  "version": "0.6",
+  "version": "0.7",
   "definitions": {
     "color": {
       "type": "string",
@@ -273,16 +273,20 @@
     },
     "editorScheme": {
       "type": "string",
-      "title": "Path to the editor schema xml file starting with '/'",
+      "title": "The editor color scheme id",
       "default": "",
-      "pattern": "^/",
       "examples": [
-        "/editorScheme.xml"
+        "IntelliJ Light"
       ]
     },
-    "additionalEditorSchemes": {
-      "type": "array",
-      "title": "Array of paths to additional editor schemes xml files starting with '/'"
+    "parentTheme": {
+      "type": "string",
+      "title": "Parent theme",
+      "default": null,
+      "examples": [
+        "Dark",
+        "Light"
+      ]
     },
     "ui": {
       "type": "object"

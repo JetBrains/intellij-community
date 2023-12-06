@@ -12,17 +12,54 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.query.impl.SearchMap
 import com.intellij.webSymbols.query.*
+import com.intellij.webSymbols.query.impl.SearchMap
 import com.intellij.webSymbols.utils.psiModificationCount
+import com.intellij.webSymbols.utils.qualifiedName
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(protected val framework: FrameworkId?,
-                                                               protected val project: Project,
-                                                               protected val dataHolder: T,
-                                                               protected val key: K) : WebSymbolsScope {
+/**
+ * Used when implementing a [WebSymbolsScope], which contains many elements.
+ *
+ * Caches the list of symbols and uses efficient cache to speed up queries. When extending the class,
+ * you only need to override the initialize method and provide parameters to the super constructor to specify how results should be cached.
+ */
+abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
+  /**
+   * Allows to optimize for symbols with a particular [WebSymbolOrigin.framework].
+   * If `null` all symbols will be accepted and scope will be queried in all contexts.
+   */
+  protected val framework: FrameworkId?,
+  protected val project: Project,
+  /**
+   * The holder of the scope's cache.
+   */
+  protected val dataHolder: T,
+  /**
+   * Additional discriminator for different scopes on the same `dataHolder`.
+   * You can provide `Unit`, which would mean that there is only one scope of particular class.
+   */
+  protected val key: K
+) : WebSymbolsScope {
+
+  /**
+   * Called within a read action to initialize the scope's cache. Call [consumer] with all the
+   * symbols within the scope.
+   *
+   * The results are cached in [dataHolder] using [CachedValue].
+   * Add all the cache dependencies to [cacheDependencies] set.
+   * If the results are going to be static for a particular [dataHolder]/[key] combination, add
+   * [ModificationTracker.NEVER_CHANGED]. Note that [cacheDependencies] set cannot be empty.
+   */
+  protected abstract fun initialize(consumer: (WebSymbol) -> Unit, cacheDependencies: MutableSet<Any>)
+
+  /**
+   * Override to optimize queries and avoid scope initialization.
+   * Return `false` if particular symbol kind cannot be provided by the scope.
+   */
+  protected open fun provides(qualifiedKind: WebSymbolQualifiedKind): Boolean = true
 
   abstract override fun createPointer(): Pointer<out WebSymbolsScopeWithCache<T, K>>
 
@@ -58,8 +95,6 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(protected val fra
     }
   }
 
-  protected abstract fun initialize(consumer: (WebSymbol) -> Unit, cacheDependencies: MutableSet<Any>)
-
   private fun createCachedSearchMap(namesProvider: WebSymbolNamesProvider): CachedValue<WebSymbolsSearchMap> =
     CachedValuesManager.getManager(project).createCachedValue {
       val dependencies = mutableSetOf<Any>()
@@ -73,29 +108,33 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(protected val fra
       CachedValueProvider.Result.create(map, dependencies.toList())
     }
 
-  protected open fun provides(namespace: SymbolNamespace, kind: SymbolKind): Boolean = true
-
-  override fun getSymbols(namespace: SymbolNamespace,
-                          kind: SymbolKind,
-                          name: String?,
-                          params: WebSymbolsNameMatchQueryParams,
-                          scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+                                  params: WebSymbolsNameMatchQueryParams,
+                                  scope: Stack<WebSymbolsScope>): List<WebSymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
-        && provides(namespace, kind)) {
-      getMap(params.queryExecutor).getSymbols(namespace, kind, name, params, Stack(scope)).toList()
+        && provides(qualifiedName.qualifiedKind)) {
+      getMap(params.queryExecutor).getMatchingSymbols(qualifiedName, params, Stack(scope)).toList()
     }
     else emptyList()
 
-  override fun getCodeCompletions(namespace: SymbolNamespace,
-                                  kind: SymbolKind,
-                                  name: String?,
+  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+                          params: WebSymbolsListSymbolsQueryParams,
+                          scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+    if ((params.queryExecutor.allowResolve || !requiresResolve)
+        && (framework == null || params.framework == framework)
+        && provides(qualifiedKind)) {
+      getMap(params.queryExecutor).getSymbols(qualifiedKind, params).toList()
+    }
+    else emptyList()
+
+  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
-        && provides(namespace, kind)) {
-      getMap(params.queryExecutor).getCodeCompletions(namespace, kind, name, params, Stack(scope)).toList()
+        && provides(qualifiedName.qualifiedKind)) {
+      getMap(params.queryExecutor).getCodeCompletions(qualifiedName, params, Stack(scope)).toList()
     }
     else emptyList()
 
@@ -129,7 +168,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(protected val fra
       assert(symbol.origin.framework == framework) {
         "WebSymbolsScope only accepts symbols with framework: $framework, but symbol with framework ${symbol.origin.framework} was added."
       }
-      add(symbol.namespace, symbol.kind, symbol.name, symbol.pattern, symbol)
+      add(symbol.qualifiedName, symbol.pattern, symbol)
     }
 
   }

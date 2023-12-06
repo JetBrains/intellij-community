@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
@@ -28,7 +28,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
    * so that internal caches related to calculating value sums could be updated.
    */
   void valueUpdated(T marker) {
-    Node node = (Node)lookupNode(marker);
+    Node<T> node = (Node<T>)lookupNode(marker);
     if (node != null) node.recalculateSubTreeSumUp();
   }
 
@@ -51,15 +51,14 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
     return value;
   }
 
-  @NotNull
   @Override
-  protected RMNode<T> createNewNode(@NotNull T key,
-                                    int start,
-                                    int end,
-                                    boolean greedyToLeft,
-                                    boolean greedyToRight,
-                                    boolean stickingToRight,
-                                    int layer) {
+  protected @NotNull RMNode<T> createNewNode(@NotNull T key,
+                                             int start,
+                                             int end,
+                                             boolean greedyToLeft,
+                                             boolean greedyToRight,
+                                             boolean stickingToRight,
+                                             int layer) {
     assert start == end;
     assert !greedyToLeft;
     assert !greedyToRight;
@@ -72,7 +71,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
     ((Node<T>)node).recalculateSubTreeSum();
   }
 
-  static class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
+  static final class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
     private int subtreeSum;
 
     Node(@NotNull RangeMarkerTree<T> rangeMarkerTree,
@@ -117,7 +116,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
     }
 
     private void recalculateSubTreeSumUp() {
-      Node n = this;
+      Node<?> n = this;
       while (n != null) {
         n.recalculateSubTreeSum();
         n = n.getParent();

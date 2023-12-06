@@ -45,17 +45,17 @@ public final class DefaultPatchBaseVersionProvider {
                                            @NotNull VirtualFile file,
                                            @NotNull FilePath pathBeforeRename,
                                            @NotNull Processor<? super String> processor) throws VcsException {
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-    if (vcs == null) return;
-
-    final VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
-    if (historyProvider == null) return;
-
-    String vcsRevisionString = parseVersionAsRevision(versionId, vcs);
-    Date versionDate = parseVersionAsDate(versionId);
-    if (vcsRevisionString == null && versionDate == null) return;
-
     runWithModalProgressIfNeeded(project, message("progress.text.loading.patch.base.revision"), () -> {
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+      if (vcs == null) return;
+
+      final VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
+      if (historyProvider == null) return;
+
+      String vcsRevisionString = parseVersionAsRevision(versionId, vcs);
+      Date versionDate = parseVersionAsDate(versionId);
+      if (vcsRevisionString == null && versionDate == null) return;
+
       VcsRevisionNumber revision = vcsRevisionString != null ? vcs.parseRevisionNumber(vcsRevisionString, pathBeforeRename) : null;
       if (revision == null && versionDate == null) return;
 

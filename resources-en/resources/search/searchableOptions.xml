@@ -2541,11 +2541,6 @@
     <option name="configure" path="ActionManager" hit="Configure Helm Parameters" />
     <option name="helm" path="ActionManager" hit="Configure Helm Parameters" />
     <option name="parameters" path="ActionManager" hit="Configure Helm Parameters" />
-    <option name="configure" path="ActionManager" hit="Configure Kotlin (JavaScript) in Project" />
-    <option name="in" path="ActionManager" hit="Configure Kotlin (JavaScript) in Project" />
-    <option name="javascript" path="ActionManager" hit="Configure Kotlin (JavaScript) in Project" />
-    <option name="kotlin" path="ActionManager" hit="Configure Kotlin (JavaScript) in Project" />
-    <option name="project" path="ActionManager" hit="Configure Kotlin (JavaScript) in Project" />
     <option name="configure" path="ActionManager" hit="Configure Kotlin Plugin Updates" />
     <option name="kotlin" path="ActionManager" hit="Configure Kotlin Plugin Updates" />
     <option name="plugin" path="ActionManager" hit="Configure Kotlin Plugin Updates" />
@@ -33663,13 +33658,6 @@
     <option name="pom" hit="Create IntelliJ IDEA modules for aggregator projects (with 'pom' packaging)" />
     <option name="projects" hit="Create IntelliJ IDEA modules for aggregator projects (with 'pom' packaging)" />
     <option name="with" hit="Create IntelliJ IDEA modules for aggregator projects (with 'pom' packaging)" />
-    <option name="create" hit="Create module groups for multi-module Maven projects" />
-    <option name="for" hit="Create module groups for multi-module Maven projects" />
-    <option name="groups" hit="Create module groups for multi-module Maven projects" />
-    <option name="maven" hit="Create module groups for multi-module Maven projects" />
-    <option name="module" hit="Create module groups for multi-module Maven projects" />
-    <option name="multi-module" hit="Create module groups for multi-module Maven projects" />
-    <option name="projects" hit="Create module groups for multi-module Maven projects" />
     <option name="application" hit="Create run configuration for Spring Boot application" />
     <option name="boot" hit="Create run configuration for Spring Boot application" />
     <option name="configuration" hit="Create run configuration for Spring Boot application" />
@@ -33806,9 +33794,6 @@
     <option name="print" hit="Print exception stack traces" />
     <option name="stack" hit="Print exception stack traces" />
     <option name="traces" hit="Print exception stack traces" />
-    <option name="plugin" hit="Use plugin registry" />
-    <option name="registry" hit="Use plugin registry" />
-    <option name="use" hit="Use plugin registry" />
     <option name="file" hit="User settings file:" />
     <option name="settings" hit="User settings file:" />
     <option name="user" hit="User settings file:" />

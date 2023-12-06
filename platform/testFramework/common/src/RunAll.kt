@@ -14,7 +14,7 @@ import org.jetbrains.annotations.TestOnly
  */
 @TestOnly
 class RunAll(private val actions: List<ThrowableRunnable<*>>) : Runnable {
-
+  @SafeVarargs
   constructor(vararg actions: ThrowableRunnable<Throwable?>) : this(listOf(*actions))
 
   override fun run() {
@@ -23,12 +23,15 @@ class RunAll(private val actions: List<ThrowableRunnable<*>>) : Runnable {
 
   fun run(earlierExceptions: List<Throwable>? = null) {
     val actions = actions.asSequence().actionSequence()
+    val throwable = actions.runAllCatching()
     if (earlierExceptions.isNullOrEmpty()) {
-      actions.runAll()
+      throwable?.let {
+        throw it
+      }
     }
     else {
       val compound = CompoundRuntimeException(earlierExceptions)
-      actions.runAllCatching()?.let {
+      throwable?.let {
         compound.addSuppressed(it)
       }
       throw compound
@@ -37,7 +40,6 @@ class RunAll(private val actions: List<ThrowableRunnable<*>>) : Runnable {
 
   @TestOnly
   companion object {
-
     @JvmStatic // for usage from Java
     fun runAll(vararg actions: ThrowableRunnable<*>) {
       actions.asSequence().actionSequence().runAll()

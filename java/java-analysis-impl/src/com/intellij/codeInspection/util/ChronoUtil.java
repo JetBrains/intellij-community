@@ -1,9 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.callMatcher.CallHandler;
+import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +15,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -25,6 +30,11 @@ public final class ChronoUtil {
   public static final String CHRONO_FIELD = "java.time.temporal.ChronoField";
   public static final String CHRONO_UNIT = "java.time.temporal.ChronoUnit";
 
+  private static final CallMatcher FORMAT_PATTERN_METHOD_MATCHER = CallMatcher.anyOf(
+    CallMatcher.instanceCall("java.text.SimpleDateFormat", "applyPattern", "applyLocalizedPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
+    CallMatcher.staticCall("java.time.format.DateTimeFormatter", "ofPattern"),
+    CallMatcher.instanceCall("java.time.format.DateTimeFormatterBuilder", "appendPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING)
+  );
   public static final CallMatcher CHRONO_GET_MATCHERS = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_TIME_LOCAL_DATE, "get").parameterTypes(TEMPORAL_FIELD),
     CallMatcher.instanceCall(CommonClassNames.JAVA_TIME_LOCAL_DATE_TIME, "get").parameterTypes(TEMPORAL_FIELD),
@@ -68,6 +78,31 @@ public final class ChronoUtil {
   private static final Map<String, ChronoUnit> chronoUnitMap = Arrays.stream(ChronoUnit.values())
     .collect(Collectors.toMap(t -> t.name(), t -> t));
 
+  private static final CallMapper<ArgumentMatcher> SKIP_ARGUMENT_METHOD_HANDLER = new CallMapper<>(
+    CallHandler.of(FORMAT_PATTERN_METHOD_MATCHER, methodCall -> argumentNumber(0, methodCall))
+  );
+
+  private static final Map<String, BiPredicate<PsiNewExpression, PsiElement>> SKIP_ARGUMENT_CONSTRUCTOR_HANDLER =
+    Map.ofEntries(
+      Map.entry("java.text.SimpleDateFormat", (expression, psiElement) -> argumentNumber(0, expression).test(psiElement))
+    );
+
+  private interface ArgumentMatcher extends Predicate<PsiElement> { }
+
+  private static ArgumentMatcher argumentNumber(@SuppressWarnings("SameParameterValue") int number, @NotNull PsiCall callExpression) {
+    return psiElement -> {
+      PsiExpressionList argumentList = callExpression.getArgumentList();
+      if (argumentList == null) {
+        return false;
+      }
+      PsiExpression[] expressions = argumentList.getExpressions();
+      if (number < 0 || number >= expressions.length) {
+        return false;
+      }
+      return PsiTreeUtil.isAncestor(expressions[number], psiElement, false);
+    };
+  }
+
   /**
    * @return {@code ChronoField} enum constant with the same name or null if enum constant is not found
    */
@@ -107,10 +142,51 @@ public final class ChronoUtil {
     return true;
   }
 
+  /**
+   * @return true if {@code literalExpression} is used as pattern for date formatters (SimpleDateFormat,  DateTimeFormatter)
+   */
+  public static boolean isPatternForDateFormat(@NotNull PsiLiteralExpression literalExpression) {
+    PsiType type = literalExpression.getType();
+    if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      return false;
+    }
+    PsiElement element = ExpressionUtils.getPassThroughParent(literalExpression);
+    if (element == null) {
+      return false;
+    }
+    if (!(element instanceof PsiExpressionList expressionList)) {
+      return false;
+    }
+
+    if (!(expressionList.getParent() instanceof PsiCall psiCall)) {
+      return false;
+    }
+
+    if (psiCall instanceof PsiMethodCallExpression callExpression) {
+      ArgumentMatcher matcher = SKIP_ARGUMENT_METHOD_HANDLER.mapFirst(callExpression);
+      if (matcher == null) {
+        return false;
+      }
+      return matcher.test(literalExpression);
+    }
+    if (psiCall instanceof PsiNewExpression newExpression) {
+      PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
+      if (reference == null) {
+        return false;
+      }
+      BiPredicate<PsiNewExpression, PsiElement> predicate =
+        SKIP_ARGUMENT_CONSTRUCTOR_HANDLER.get(reference.getQualifiedName());
+      if (predicate == null) {
+        return false;
+      }
+      return predicate.test(newExpression, literalExpression);
+    }
+    return false;
+  }
+
   @Nullable
   public static String getQualifiedName(@NotNull PsiMethod method) {
-    return Optional.of(method)
-      .map(m -> m.getContainingClass())
+    return Optional.ofNullable(method.getContainingClass())
       .map(c -> c.getQualifiedName())
       .orElse(null);
   }

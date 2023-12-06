@@ -44,12 +44,23 @@ object Text {
     return TextRange(start.coerceAtLeast(0), end.coerceAtMost(text.length))
   }
 
+  private const val id = "[a-zA-Z_$][a-zA-Z0-9_$]*"
   private const val assignment = "= ['\"]"
-  private const val idChain = "\\p{L}\\.\\p{L}+\\.\\p{L}"
-  private val codeLikePattern = Regex("$assignment|$idChain")
+  private const val idChain = "$id\\.$id\\.$id"
+  private const val pyFString = "\\bf\""
+  private const val call = "$id\\(.*\\)"
+  private const val commonCharEscape = "\\\\[ntbru]"
+  private const val keyColonValue = "\n *[a-zA-Z0-9_\$'\"-]+: *[a-zA-Z0-9_\$'\"-]+"
+
+  private const val cSharpTypeOrValueTuple = "($id|\\($id(, *$id)+\\))"
+  private const val cSharpGenericTypeParameter = "(((in|out) +)?$cSharpTypeOrValueTuple)"
+  private const val cSharpGenericMethod = "$id\\<$cSharpGenericTypeParameter(, *$cSharpGenericTypeParameter)*\\>\\("
+  private val codeLikePattern = Regex("$assignment|$idChain|$pyFString|$call|$commonCharEscape|$keyColonValue|$cSharpGenericMethod")
 
   fun CharSequence.looksLikeCode(): Boolean {
     if (codeLikePattern.find(this) != null) return true
+
+    if (this.any { it.code > 127 }) return false
 
     var codeChars = 0
     var textTokens = 0
@@ -67,7 +78,7 @@ object Text {
         }
       }
     }
-    return codeChars > 0 && textTokens / codeChars < 2
+    return codeChars > 0 && textTokens < codeChars
   }
 
   /** @return all non-intersecting occurrences of the given pattern in the given text */

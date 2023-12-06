@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTest
 import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestClassGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducerTestCase
+import org.jetbrains.plugins.gradle.execution.test.producer.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.util.findChildByType
@@ -209,7 +209,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
         }
 
         createBuildFile {
-            withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.lastStable.toString())
+            withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.latestStable.toString())
             withPrefix {
                 code(
                     """

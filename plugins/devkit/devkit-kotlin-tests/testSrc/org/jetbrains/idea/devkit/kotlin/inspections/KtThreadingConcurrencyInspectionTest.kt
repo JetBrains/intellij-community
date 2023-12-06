@@ -84,6 +84,31 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     }
   }
 
+  fun testWithCheckUnannotatedMethodsNotInOverridingMethod() {
+    myFixture.addClass("""
+      public class Parent {
+        public void method() {}
+      }
+    """.trimIndent())
+
+    runWithCheckUnannotatedMethodsEnabled {
+      myFixture.configureByText("Subclass.kt", """
+        import com.intellij.util.concurrency.annotations.*
+
+        class Subclass : Parent() {
+          override fun method() {
+            edt()
+          }
+          
+          @RequiresEdt 
+          fun edt() {}
+        }
+      """.trimIndent())
+
+      myFixture.checkHighlighting()
+    }
+  }
+
   fun testWithCheckUnannotatedMethodCallsAnnotatedMethodFix() {
     runWithCheckUnannotatedMethodsEnabled {
       doTestHighlighting("""    
@@ -97,17 +122,21 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
 
       val intention = myFixture.findSingleIntention("Annotate as @RequiresEdt")
       myFixture.checkPreviewAndLaunchAction(intention)
-      myFixture.checkResult("""    import com.intellij.util.concurrency.annotations.*
+      myFixture.checkResult("""
+        import com.intellij.util.concurrency.annotations.*
 
-    class A {
-      @RequiresEdt
-      fun checkUnannotated() {
-    edt()
-}
+        class A {
 
-@RequiresEdt
-fun edt() {}
-    }""".trimIndent(), true)
+            @RequiresEdt
+            fun checkUnannotated() {
+                edt()
+            }
+
+            @RequiresEdt
+            fun edt() {}
+
+        }
+      """.trimIndent(), true)
     }
   }
 
@@ -176,15 +205,40 @@ fun edt() {}
       fun edt() {
         object: MyRunnable() {
           override fun run() {
-            bgt();
+            bgt()
           }
-        };
+        }
       }
 
       abstract class MyRunnable: Runnable {}
       
       @RequiresBackgroundThread
       fun bgt() {}
+    """.trimIndent())
+  }
+
+  fun testDoNotCheckEventDispatcherMulticaster() {
+    addEventDispatcherClass()
+
+    doTestHighlighting("""
+      @RequiresBackgroundThread
+      fun testEventDispatcher() {
+        val dispatcher: com.intellij.util.EventDispatcher<MyListener> = com.intellij.util.EventDispatcher()
+        dispatcher.getMulticaster().myCallback()
+        dispatcher.multicaster.myCallback()
+        
+        val listener: MyListener = object : MyListener {
+          @RequiresEdt
+          override fun myCallback() {}
+        }
+        listener.<error descr="Method annotated with '@RequiresEdt' must not be called from method annotated with '@RequiresBackgroundThread'">myCallback</error>()
+      }
+      
+      interface MyListener : java.util.EventListener {
+        
+        @RequiresEdt
+        fun myCallback()
+      }
     """.trimIndent())
   }
 
@@ -306,7 +360,7 @@ fun edt() {}
     import com.intellij.util.concurrency.annotations.*
 
     class A {
-      ${classBody.trimIndent()}
+      ${classBody}
     }
     """.trimIndent())
 

@@ -2,9 +2,9 @@
 package com.intellij.platform.backend.documentation.impl
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 
 internal object EmptyDocumentationTarget : DocumentationTarget, Pointer<EmptyDocumentationTarget> {
 

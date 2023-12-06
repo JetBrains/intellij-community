@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.File;
@@ -6,7 +6,7 @@ import java.util.*;
 
 public final class DiffCalculator {
   public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums) {
-    return calculate(oldChecksums, newChecksums, Collections.emptySet(), Collections.emptySet(), false);
+    return calculate(oldChecksums, newChecksums, Set.of(), Set.of(), false);
   }
 
   public static Result calculate(Map<String, Long> oldChecksums,

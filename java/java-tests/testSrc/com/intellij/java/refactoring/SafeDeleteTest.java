@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -9,6 +9,7 @@ import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -21,6 +22,7 @@ import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,12 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 public class SafeDeleteTest extends MultiFileTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -47,7 +55,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertTrue(message, message.startsWith("constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
+      assertTrue(message, message.startsWith("Constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
     }
   }
 
@@ -58,7 +66,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertTrue(message, message.startsWith("constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
+      assertTrue(message, message.startsWith("Constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
     }
   }
 
@@ -187,6 +195,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("UserFlags");
   }
 
+  public void testSafeDeleteOfFieldAndParameterOfConstructor() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testSafeDeleteStaticImports() {
     doTest("A");
   }
@@ -218,7 +230,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertEquals("method <b><code>Super.foo()</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Method <b><code>Super.foo()</code></b> has 1 usage that is not safe to delete.", message);
     }
   }
 
@@ -230,7 +242,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertEquals("interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
     }
   }
 
@@ -242,7 +254,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertEquals("interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
     }
   }
 
@@ -285,7 +297,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertEquals("local variable <b><code>varName</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Local variable <b><code>varName</code></b> has 1 usage that is not safe to delete.", message);
     }
   }
 
@@ -296,7 +308,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertEquals("parameter <b><code>i</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Parameter <b><code>i</code></b> has 1 usage that is not safe to delete.", message);
     }
   }
 
@@ -356,7 +368,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertEquals("class <b><code>Test.Foo</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Class <b><code>Test.Foo</code></b> has 1 usage that is not safe to delete.", message);
     }
   }
 
@@ -452,7 +464,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertEquals("class <b><code>foo.Parent</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Class <b><code>foo.Parent</code></b> has 1 usage that is not safe to delete.", message);
     }
   }
 

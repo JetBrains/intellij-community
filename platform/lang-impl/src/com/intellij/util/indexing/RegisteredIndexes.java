@@ -1,24 +1,27 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.SmartList;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 
 public final class RegisteredIndexes {
   @NotNull
@@ -28,11 +31,11 @@ public final class RegisteredIndexes {
   @NotNull
   private final Future<IndexConfiguration> myStateFuture;
 
-  private final List<ID<?, ?>> myIndicesForDirectories = new SmartList<>();
+  private final List<ID<?, ?>> myIndicesForDirectories = new CopyOnWriteArrayList<>();
 
-  private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<>();
-  private final Set<ID<?, ?>> myRequiringContentIndices = new HashSet<>();
-  private final Set<FileType> myNoLimitCheckTypes = new HashSet<>();
+  private final Set<ID<?, ?>> myNotRequiringContentIndices = ConcurrentHashMap.newKeySet();
+  private final Set<ID<?, ?>> myRequiringContentIndices = ConcurrentHashMap.newKeySet();
+  private final Set<FileType> myNoLimitCheckTypes = ConcurrentHashMap.newKeySet();
 
   private volatile boolean myExtensionsRelatedDataWasLoaded;
 
@@ -45,11 +48,13 @@ public final class RegisteredIndexes {
 
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
-  RegisteredIndexes(@NotNull FileDocumentManager fileDocumentManager,
-                    @NotNull FileBasedIndexImpl fileBasedIndex) {
+  private volatile RequiredIndexesEvaluator myRequiredIndexesEvaluator;
+
+  RegisteredIndexes(@NotNull FileDocumentManager fileDocumentManager, @NotNull FileBasedIndexImpl fileBasedIndex) {
     myFileDocumentManager = fileDocumentManager;
     myFileBasedIndex = fileBasedIndex;
-    myStateFuture = IndexDataInitializer.submitGenesisTask(new FileBasedIndexDataInitialization(fileBasedIndex, this));
+    myStateFuture = IndexDataInitializer.submitGenesisTask(fileBasedIndex.coroutineScope,
+                                                           new FileBasedIndexDataInitialization(fileBasedIndex, this));
   }
 
   boolean performShutdown() {
@@ -68,7 +73,10 @@ public final class RegisteredIndexes {
     IndexConfiguration state = myState; // memory barrier
     if (state == null) {
       try {
-        myState = state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+        myState = state = awaitWithCheckCanceled(myStateFuture);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
       }
       catch (Throwable t) {
         throw new RuntimeException(t);
@@ -79,11 +87,11 @@ public final class RegisteredIndexes {
 
   void waitUntilAllIndicesAreInitialized() {
     waitUntilIndicesAreInitialized();
-    await(myAllIndicesInitializedFuture);
+    awaitWithCheckCanceled(myAllIndicesInitializedFuture);
   }
 
   void waitUntilIndicesAreInitialized() {
-    await(myStateFuture);
+    awaitWithCheckCanceled((Future<?>)myStateFuture);
   }
 
   void extensionsDataWasLoaded() {
@@ -92,10 +100,15 @@ public final class RegisteredIndexes {
 
   void markInitialized() {
     myInitialized = true;
+    myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
+  }
+
+  void resetHints() {
+    myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
   }
 
   void ensureLoadedIndexesUpToDate() {
-    myAllIndicesInitializedFuture = IndexDataInitializer.submitGenesisTask(() -> {
+    myAllIndicesInitializedFuture = IndexDataInitializer.submitGenesisTask(myFileBasedIndex.coroutineScope, () -> {
       if (!myShutdownPerformed.get()) {
         myFileBasedIndex.ensureStaleIdsDeleted();
         myFileBasedIndex.getChangedFilesCollector().ensureUpToDateAsync();
@@ -177,17 +190,14 @@ public final class RegisteredIndexes {
     }
   }
 
-  private static void await(@NotNull Future<?> future) {
-    if (ProgressManager.getInstance().isInNonCancelableSection()) {
-      try {
-        future.get();
-      }
-      catch (InterruptedException | ExecutionException e) {
-        FileBasedIndexImpl.LOG.error(e);
-      }
-    }
-    else {
-      ProgressIndicatorUtils.awaitWithCheckCanceled(future);
-    }
+  @NotNull
+  List<ID<?, ?>> getRequiredIndexes(@NotNull IndexedFile indexedFile) {
+    return myRequiredIndexesEvaluator.getRequiredIndexes(indexedFile);
+  }
+
+  @TestOnly
+  @NotNull
+  public Pair<List<ID<?, ?>>, List<ID<?, ?>>> getRequiredIndexesForFileType(@NotNull FileType fileType) {
+    return myRequiredIndexesEvaluator.getRequiredIndexesForFileType(fileType);
   }
 }

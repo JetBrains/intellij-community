@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.application.options.ModulesComboBox;
@@ -32,7 +32,6 @@ import com.intellij.psi.search.PredefinedSearchScopeProviderImpl;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.Scopes;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -43,6 +42,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * A scope panel in the style of the one in the Find in Files dialog.
@@ -57,7 +57,7 @@ public class ScopePanel extends JPanel {
 
   private final Project myProject;
   @NotNull private SearchScope myScope;
-  private NullableConsumer<? super SearchScope> myConsumer;
+  private Consumer<? super SearchScope> myConsumer;
   private Scopes.Type myScopeType;
   private boolean myUpdating = false;
 
@@ -267,7 +267,7 @@ public class ScopePanel extends JPanel {
     });
   }
 
-  public void setScopeConsumer(@Nullable NullableConsumer<? super SearchScope> consumer) {
+  public void setScopeConsumer(@Nullable Consumer<? super SearchScope> consumer) {
     myConsumer = consumer;
   }
 
@@ -296,7 +296,7 @@ public class ScopePanel extends JPanel {
         myScope = namedScope;
       }
     }
-    if (myConsumer != null) myConsumer.consume(myScope);
+    if (myConsumer != null) myConsumer.accept(myScope);
   }
 
   private void showScope(@NotNull Scopes.Type scopeType) {

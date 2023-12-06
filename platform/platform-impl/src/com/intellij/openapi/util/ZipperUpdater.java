@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -30,11 +30,11 @@ public final class ZipperUpdater {
     myAlarm = new Alarm(threadToUse, parentDisposable);
   }
 
-  public void queue(@NotNull final Runnable runnable) {
+  public void queue(final @NotNull Runnable runnable) {
     queue(runnable, false, false);
   }
 
-  public void queue(@NotNull final Runnable runnable, final boolean urgent, final boolean anyModality) {
+  public void queue(final @NotNull Runnable runnable, final boolean urgent, final boolean anyModality) {
     synchronized (myLock) {
       if (myAlarm.isDisposed()) return;
       final boolean wasRaised = myRaised;
@@ -69,7 +69,7 @@ public final class ZipperUpdater {
         myAlarm.addRequest(request, delay, ModalityState.any());
       }
       else if (!ApplicationManager.getApplication().isDispatchThread()) {
-        myAlarm.addRequest(request, delay, ModalityState.NON_MODAL);
+        myAlarm.addRequest(request, delay, ModalityState.nonModal());
       }
       else {
         myAlarm.addRequest(request, delay);

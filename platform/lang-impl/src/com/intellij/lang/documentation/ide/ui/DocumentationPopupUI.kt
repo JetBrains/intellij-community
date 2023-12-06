@@ -3,7 +3,6 @@ package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE
-import com.intellij.codeInsight.documentation.PopupDragListener
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.ide.DataManager
@@ -13,19 +12,19 @@ import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
 import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager.Companion.TOOL_WINDOW_ID
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.DimensionService
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.addPropertyChangeListener
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -44,25 +43,20 @@ internal class DocumentationPopupUI(
   private val ui: DocumentationUI get() = requireNotNull(_ui) { "already detached" }
   val browser: DocumentationBrowser get() = ui.browser
 
-  private val toolbarComponent: JComponent
   private val corner: JComponent
 
   val component: JComponent
   val preferableFocusComponent: JComponent get() = ui.editorPane
 
   val coroutineScope: CoroutineScope = CoroutineScope(Job())
-  private val popupUpdateFlow = MutableSharedFlow<Any?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val popupUpdateFlow = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private lateinit var myPopup: AbstractPopup
 
   init {
     val editorPane = ui.editorPane
 
-    editorPane.addPropertyChangeListener(this, "font") {
-      popupUpdateFlow.tryEmit("font change")
-    }
-
-    val primaryActions: List<AnAction> = primaryActions()
+    val primaryActions = primaryActions().toMutableList()
     val secondaryActions = ArrayList<AnAction>()
     val openInToolwindowAction = OpenInToolwindowAction()
     secondaryActions.add(openInToolwindowAction)
@@ -70,33 +64,32 @@ internal class DocumentationPopupUI(
     secondaryActions.add(ToggleShowDocsOnHoverAction())
     secondaryActions.add(ActionManager.getInstance().getAction(TOGGLE_AUTO_SHOW_ACTION_ID))
     secondaryActions.add(AdjustFontSizeAction())
-    secondaryActions.add(ShowToolbarAction())
     secondaryActions.add(RestoreDefaultSizeAction())
 
-    val toolbarActionGroup = DefaultActionGroup()
-    toolbarActionGroup.addAll(primaryActions)
-    for (secondaryAction in secondaryActions) {
-      toolbarActionGroup.addAction(secondaryAction).setAsSecondary(true)
+    val editSourceAction = ActionManager.getInstance().getAction(EDIT_SOURCE_ACTION_ID)
+    val navigationGroup = ActionManager.getInstance().getAction(NAVIGATION_GROUP_ID)
+    primaryActions[primaryActions.indexOf(navigationGroup)] = DefaultActionGroup().apply {
+      copyFromGroup(navigationGroup as DefaultActionGroup)
+      remove(editSourceAction)
     }
 
-    val gearActions: DefaultActionGroup = DefaultActionGroup().also { it.isPopup = true }
+    val gearActions: DefaultActionGroup = MoreActionGroup()
     gearActions.addAll(secondaryActions)
     gearActions.addSeparator()
     gearActions.addAll(primaryActions)
 
-    toolbarComponent = toolbarComponent(toolbarActionGroup, editorPane)
-    corner = actionButton(gearActions, editorPane)
+    corner = toolbarComponent(DefaultActionGroup(editSourceAction, gearActions), editorPane).apply {
+      border = JBUI.Borders.emptyBottom(5)
+      isOpaque = false
+    }
     component = DocumentationPopupPane(ui.scrollPane).also {
-      it.add(toolbarComponent, BorderLayout.NORTH)
       it.add(scrollPaneWithCorner(this, ui.scrollPane, corner), BorderLayout.CENTER)
     }
+    ui.switcherToolbarComponent?.let { component.add(ui.switcherToolbarComponent, BorderLayout.NORTH) }
 
     openInToolwindowAction.registerCustomShortcutSet(component, this)
-
-    showToolbar(Registry.get("documentation.show.toolbar").asBoolean())
-
     coroutineScope.launch {
-      popupUpdateFlow.emitAll(ui.contentUpdates)
+      popupUpdateFlow.emitAll(ui.contentSizeUpdates)
     }
   }
 
@@ -113,7 +106,6 @@ internal class DocumentationPopupUI(
     // TODO ? separate DocumentationJointHoverUI class
     val bg = UIUtil.getToolTipActionBackground()
     Disposer.register(this, ui.setBackground(bg))
-    toolbarComponent.background = bg
     component.background = bg
     component.border = IdeBorderFactory.createBorder(UIUtil.getTooltipSeparatorColor(), SideBorder.TOP)
   }
@@ -133,7 +125,6 @@ internal class DocumentationPopupUI(
 
     val editorPane = ui.editorPane
     editorPane.setHint(popup)
-    PopupDragListener.dragPopupByComponent(popup, toolbarComponent)
   }
 
   fun updatePopup(updater: suspend () -> Unit) {
@@ -165,28 +156,6 @@ internal class DocumentationPopupUI(
       val documentationUI = detachUI()
       myPopup.cancel()
       DocumentationToolWindowManager.instance(project).showInToolWindow(documentationUI)
-    }
-  }
-
-  private fun showToolbar(value: Boolean) {
-    toolbarComponent.isVisible = value
-    corner.isVisible = !value
-    popupUpdateFlow.tryEmit("toolbar")
-  }
-
-  private inner class ShowToolbarAction : ToggleAction(
-    CodeInsightBundle.messagePointer("javadoc.show.toolbar"),
-  ), ActionToIgnore {
-
-    override fun isSelected(e: AnActionEvent): Boolean {
-      return Registry.get("documentation.show.toolbar").asBoolean()
-    }
-
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      Registry.get("documentation.show.toolbar").setValue(state)
-      showToolbar(state)
     }
   }
 

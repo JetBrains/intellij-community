@@ -33,12 +33,18 @@ public class JavaOverrideMethodsHandler implements ContextAwareActionHandler, La
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
     if (aClass == null) return;
 
-    ReadAction.nonBlocking(() -> OverrideImplementExploreUtil.getMethodSignaturesToOverride(aClass).isEmpty())
-      .finishOnUiThread(ModalityState.defaultModalityState(), empty -> {
-      if (empty) {
+    ReadAction.nonBlocking(() -> {
+        boolean empty = OverrideImplementExploreUtil.getMethodSignaturesToOverride(aClass).isEmpty();
+        if (empty) {
+          return null;
+        }
+        return OverrideImplementUtil.prepareChooser(aClass, false);
+      })
+      .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
+      if (container==null) {
         HintManager.getInstance().showErrorHint(editor, JavaBundle.message("override.methods.error.no.methods"));
       } else {
-        OverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
+        OverrideImplementUtil.showAndPerform(project, editor, aClass, false, container);
       }
     })
       .expireWhen(() -> !aClass.isValid())

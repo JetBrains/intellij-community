@@ -26,6 +26,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
@@ -43,10 +44,8 @@ import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -167,12 +166,12 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
     }
 
     @Override
-    public PsiElement matchElement(@NotNull PsiElement element) {
+    public RefinerMatchResult matchElement(@NotNull PsiElement element) {
       if (myMethodName.equals("requireNonNull") && myClassName.equals(CommonClassNames.JAVA_UTIL_OBJECTS)) {
         // Since Java 9 Objects.requireNonNull(x) is used by javac instead of x.getClass() for generated null-check (JDK-8074306)
-        PsiExpression expression = NullPointerExceptionInfo.matchCompilerGeneratedNullCheck(element);
-        if (expression != null) {
-          return expression;
+        RefinerMatchResult result = NullPointerExceptionInfo.matchCompilerGeneratedNullCheck(element);
+        if (result != null) {
+          return result;
         }
       }
       if (!(element instanceof PsiIdentifier)) return null;
@@ -183,11 +182,13 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
             parent = parent.getParent();
           }
           if (parent instanceof PsiAnonymousClass) {
-            return isTargetClass(parent) || isTargetClass(((PsiAnonymousClass)parent).getSuperClass()) ? element : null;
+            return isTargetClass(parent) || isTargetClass(((PsiAnonymousClass)parent).getSuperClass())
+                   ? RefinerMatchResult.of(element)
+                   : null;
           }
           if (parent instanceof PsiNewExpression) {
             PsiJavaCodeReferenceElement ref = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
-            return ref != null && isTargetClass(ref.resolve()) ? element : null;
+            return ref != null && isTargetClass(ref.resolve()) ? RefinerMatchResult.of(element) : null;
           }
         }
       }
@@ -195,7 +196,9 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiReferenceExpression) {
           PsiElement target = ((PsiReferenceExpression)parent).resolve();
-          return target instanceof PsiMethod && isTargetClass(((PsiMethod)target).getContainingClass()) ? element : null;
+          return target instanceof PsiMethod && isTargetClass(((PsiMethod)target).getContainingClass())
+                 ? RefinerMatchResult.of(element)
+                 : null;
         }
       }
       return null;
@@ -254,13 +257,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
         targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
       }
 
-      //test only
-      if (ApplicationManager.getApplication().isUnitTestMode() && info.myAction instanceof FindMethodHandler action) {
-        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
-        return;
-      }
-
-      if (info.myAction != null) {
+      if (info.myAction != null && !ApplicationManager.getApplication().isUnitTestMode()) {
         displayAnalysisAction(project, info, targetEditor);
       }
     }
@@ -273,53 +270,33 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
                                                @Nullable Editor originalEditor) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) return null;
-      PsiElement target = getExceptionOrigin(psiFile, lineStart, lineEnd);
-      if (target == null || !validate(target, myMethod, myClassName)) {
-        return FindMethodHandler.createLinkInfo(psiFile, myClassName, myMethod, myElementMatcher, targetEditor);
+      Set<ExceptionLineRefiner.RefinerMatchResult> matchResults = getExceptionOrigin(psiFile, lineStart, lineEnd);
+      if (matchResults.size() == 0) {
+        return FindDivergedExceptionLineHandler.createLinkInfo(psiFile, myClassName, myMethod, myElementMatcher, lineStart, lineEnd,
+                                                               targetEditor);
       }
-      else {
-        AnAction action = findAnalysisAction(project, target, originalEditor);
-        return new LinkInfo(psiFile, target, action, finder -> finder.myAnalysisWasActivated = true);
+      else if (matchResults.size() == 1) {
+        ExceptionLineRefiner.RefinerMatchResult matchResult = matchResults.iterator().next();
+        AnAction action = findAnalysisAction(project, matchResult.reason(), originalEditor);
+        return new LinkInfo(psiFile, matchResult.target(), matchResult.reason(), action, finder -> finder.myAnalysisWasActivated = true);
       }
+      return null;
     }
 
-    private static boolean validate(@Nullable PsiElement target,
-                                    @Nullable String methodName,
-                                    @Nullable String className) {
-      if (methodName == null || className == null ||
-          methodName.contains("$") ||
-          methodName.contains("<init>") ||
-          className.contains("$")) {
-        return true;
-      }
-      if (target == null) {
-        return false;
-      }
-      PsiMethod method = PsiTreeUtil.getParentOfType(target, PsiMethod.class);
-      if (method == null || !methodName.equals(method.getName())) {
-        return false;
-      }
-      PsiClass psiClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
-      if (psiClass == null || !className.equals(psiClass.getQualifiedName())) {
-        return false;
-      }
-      return true;
-    }
-
-    private @Nullable PsiElement getExceptionOrigin(@NotNull PsiFile file, int lineStart, int lineEnd) {
-      if (!file.isValid()) return null;
+    private @NotNull Set<ExceptionLineRefiner.RefinerMatchResult> getExceptionOrigin(@NotNull PsiFile file, int lineStart, int lineEnd) {
+      if (!file.isValid()) return Set.of();
       PsiElement element = file.findElementAt(lineStart);
-      List<PsiElement> candidates = new ArrayList<>();
+      Set<ExceptionLineRefiner.RefinerMatchResult> candidates = new HashSet<>();
       while (element != null && element.getTextRange().getStartOffset() < lineEnd) {
         PsiElement finalElement = element;
-        PsiElement matched = myElementMatcher.matchElement(finalElement);
+        ExceptionLineRefiner.RefinerMatchResult matched = myElementMatcher.matchElement(finalElement);
         if (matched != null) {
           candidates.add(matched);
-          if (candidates.size() > 1) return null;
+          if (candidates.size() > 1) return candidates;
         }
         element = PsiTreeUtil.nextLeaf(element);
       }
-      return ContainerUtil.getOnlyItem(candidates);
+      return candidates;
     }
 
     private void displayAnalysisAction(@NotNull Project project, @NotNull LinkInfo linkInfo, @NotNull Editor editor) {
@@ -351,7 +328,19 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       EditorUtil.disposeWithEditor(editor, balloon);
       ref.set(balloon);
       RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-      balloon.show(point, Balloon.Position.below);
+      if (linkInfo.myReason instanceof Navigatable navigatable) {
+        int previousOffset = editor.getCaretModel().getOffset();
+        navigatable.navigate(true);
+        point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+        editor.getCaretModel().moveToOffset(previousOffset);
+      }
+      if (getLine(editor, linkInfo.myReason) < getLine(editor, linkInfo.myTarget)) {
+        Point previousPoint = point.getPoint();
+        balloon.show(new RelativePoint(point.getComponent(), new Point(previousPoint.x, previousPoint.y - editor.getLineHeight())), Balloon.Position.above);
+      }
+      else {
+        balloon.show(point, Balloon.Position.below);
+      }
       editor.getScrollingModel().addVisibleAreaListener(e -> {
         //skip when IDEA opens a new file and redraws it
         if (e.getNewRectangle().equals(e.getOldRectangle())) {
@@ -359,6 +348,18 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
         }
         Disposer.dispose(balloon);
       }, balloon);
+    }
+
+    private static long getLine(@NotNull Editor editor, @Nullable PsiElement psiElement) {
+      if (psiElement == null) {
+        return -1;
+      }
+      Document document = editor.getDocument();
+      TextRange range = psiElement.getTextRange();
+      if (range == null) {
+        return -1;
+      }
+      return document.getLineNumber(range.getStartOffset());
     }
 
     @Nullable
@@ -411,7 +412,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
     }
 
     @Override
-    public PsiElement matchElement(@NotNull PsiElement element) {
+    public RefinerMatchResult matchElement(@NotNull PsiElement element) {
       if (!(element instanceof PsiIdentifier)) return null;
       if (myMethodName != null && !element.textMatches(myMethodName)) return null;
       PsiElement parent = element.getParent();
@@ -421,20 +422,23 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       PsiMethod target = call.resolveMethod();
       if (target == null) return null;
       if (LambdaUtil.getFunctionalInterfaceMethod(target.getContainingClass()) != target) return null;
-      return element;
+      return RefinerMatchResult.of(element);
     }
   }
 
   static class LinkInfo {
     @NotNull final PsiFile myPsiFile;
     final @Nullable PsiElement myTarget;
+
+    final @Nullable PsiElement myReason;
     final @Nullable AnAction myAction;
     final @NotNull Consumer<ExceptionFinder> prepare;
 
-    LinkInfo(@NotNull PsiFile file, @Nullable PsiElement target, @Nullable AnAction action,
+    LinkInfo(@NotNull PsiFile file, @Nullable PsiElement target, @Nullable PsiElement reason, @Nullable AnAction action,
              @NotNull Consumer<ExceptionFinder> callback) {
       myPsiFile = file;
       this.myTarget = target;
+      this.myReason = reason;
       this.myAction = action;
       this.prepare = callback;
     }

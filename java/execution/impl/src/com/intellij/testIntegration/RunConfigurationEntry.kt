@@ -61,7 +61,7 @@ class SuiteEntry(val suiteUrl: String,
                  override val runDate: Date,
                  var runConfiguration: RunnerAndConfigurationSettings) : RecentTestsPopupEntry {
 
-  val tests: HashSet<SingleTestEntry> = hashSetOf<SingleTestEntry>()
+  val tests: HashSet<SingleTestEntry> = hashSetOf()
   val suiteName: String = VirtualFileManager.extractPath(suiteUrl)
   
   var runConfigurationEntry: RunConfigurationEntry? = null
@@ -88,7 +88,7 @@ class SuiteEntry(val suiteUrl: String,
 
 class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings) : RecentTestsPopupEntry {
 
-  val suites: ArrayList<SuiteEntry> = arrayListOf<SuiteEntry>()
+  val suites: ArrayList<SuiteEntry> = arrayListOf()
   
   override val runDate: Date
     get() {

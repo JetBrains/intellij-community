@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
+import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,7 +47,11 @@ public class WslPathTest {
     checkParse(prefix.replace('\\', '/') + "Ubuntu/etc/hosts", new WslPath(prefix, "Ubuntu", "/etc/hosts"));
   }
 
-  private static void checkParse(String windowsPath, @Nullable WslPath expectedWslPath) {
-    assertEquals(expectedWslPath, WslPath.parseWindowsUncPath(windowsPath));
+  private static void checkParse(@NotNull String windowsPath, @Nullable WslPath expectedWslPath) {
+    WslPath actualWslPath = WslPath.parseWindowsUncPath(windowsPath);
+    assertEquals(expectedWslPath, actualWslPath);
+    if (actualWslPath != null) {
+      assertEquals(FileUtil.toSystemDependentName(windowsPath), actualWslPath.toWindowsUncPath());
+    }
   }
 }

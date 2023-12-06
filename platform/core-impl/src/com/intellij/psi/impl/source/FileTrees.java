@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -9,11 +9,11 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.stubs.*;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Objects;
@@ -21,6 +21,9 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static com.intellij.reference.SoftReference.deref;
+import static com.intellij.reference.SoftReference.dereference;
 
 final class FileTrees {
   private static final Logger LOG = Logger.getInstance(FileTrees.class);
@@ -44,12 +47,12 @@ final class FileTrees {
 
   @Nullable
   StubTree derefStub() {
-    return SoftReference.dereference(myStub);
+    return dereference(myStub);
   }
 
   @Nullable
   FileElement derefTreeElement() {
-    return SoftReference.deref(myTreeElementPointer);
+    return deref(myTreeElementPointer);
   }
 
   FileTrees switchToStrongRefs() {
@@ -101,7 +104,7 @@ final class FileTrees {
       for (int i = firstNonFilePsiIndex; i < refToPsi.length; i++) {
         StubBasedPsiElementBase<?> psi = (StubBasedPsiElementBase<?>)Objects.requireNonNull(spine.get(i));
         psi.setSubstrateRef(new SpineRef(myFile, i));
-        StubBasedPsiElementBase<?> existing = SoftReference.dereference(refToPsi[i]);
+        StubBasedPsiElementBase<?> existing = dereference(refToPsi[i]);
         if (existing != null) {
           assert existing == psi : "Duplicate PSI found";
         }
@@ -134,18 +137,18 @@ final class FileTrees {
     return new FileTrees(myFile, null, myTreeElementPointer, null);
   }
 
-  FileTrees withAst(@NotNull Supplier<? extends FileElement> ast) {
+  FileTrees withAst(@NotNull Supplier<? extends FileElement> ast) throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
     return new FileTrees(myFile, myStub, ast, myRefToPsi).reconcilePsi(derefStub(), ast.get(), true);
   }
 
-  FileTrees withStub(@NotNull StubTree stub, @Nullable FileElement ast) {
+  FileTrees withStub(@NotNull StubTree stub, @Nullable FileElement ast) throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
     assert derefTreeElement() == ast;
     return new FileTrees(myFile, new SoftReference<>(stub), myTreeElementPointer, myRefToPsi)
       .reconcilePsi(stub, ast, false);
   }
 
   static FileTrees noStub(@Nullable FileElement ast, @NotNull PsiFileImpl file) {
-    return new FileTrees(file, null, () -> ast, null);
+    return new FileTrees(file, null, ast == null ? null : () -> ast, null);
   }
 
   /**
@@ -153,7 +156,8 @@ final class FileTrees {
    * In case several sources already have PSI (e.g. created during AST parsing), overwrites them with the "correct" one,
    * which is taken from {@link #myRefToPsi} if exists, otherwise from either stubs or AST depending on {@code takePsiFromStubs}.
    */
-  private FileTrees reconcilePsi(@Nullable StubTree stubTree, @Nullable FileElement astRoot, boolean takePsiFromStubs) {
+  private FileTrees reconcilePsi(@Nullable StubTree stubTree, @Nullable FileElement astRoot, boolean takePsiFromStubs)
+    throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
     assert stubTree != null || astRoot != null;
 
     if ((stubTree == null || astRoot == null) && !hasCachedPsi()) {
@@ -187,7 +191,7 @@ final class FileTrees {
     catch (Throwable e) {
       myFile.clearContent(PsiFileImpl.STUB_PSI_MISMATCH);
       myFile.rebuildStub();
-      throw StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, myFile, e);
+      throw StubTreeLoader.getInstance().createCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, myFile, e);
     }
   }
 
@@ -203,7 +207,7 @@ final class FileTrees {
   private void bindSubstratesToCachedPsi(List<StubElement<?>> stubList, List<? extends CompositeElement> nodeList) {
     assert myRefToPsi != null;
     for (int i = firstNonFilePsiIndex; i < myRefToPsi.length; i++) {
-      StubBasedPsiElementBase<?> cachedPsi = SoftReference.dereference(myRefToPsi[i]);
+      StubBasedPsiElementBase<?> cachedPsi = dereference(myRefToPsi[i]);
       if (cachedPsi != null) {
         if (stubList != null) {
           // noinspection unchecked

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.WriteCommandAction
@@ -78,7 +79,7 @@ class ExtractKotlinFunctionHandler(
         }
     }
 
-    class InplaceExtractionHelper(private val allContainersEnabled: Boolean) : ExtractionEngineHelper(EXTRACT_FUNCTION) {
+    open class InplaceExtractionHelper(private val allContainersEnabled: Boolean) : ExtractionEngineHelper(EXTRACT_FUNCTION) {
         override fun configureAndRun(
             project: Project,
             editor: Editor,
@@ -100,13 +101,18 @@ class ExtractKotlinFunctionHandler(
             val commonParent = descriptor.extractionData.commonParent
             val container = commonParent.takeIf { commonParent != elements.firstOrNull() } ?: commonParent.parent
             val callRangeProvider: () -> TextRange? = createSmartRangeProvider(container, callTextRange)
-            val editorState = EditorState(editor)
+            val editorState = EditorState(project, editor)
             val disposable = Disposer.newDisposable()
             WriteCommandAction.writeCommandAction(project).run<Throwable> {
                 val startMarkAction = StartMarkAction.start(editor, project, EXTRACT_FUNCTION)
                 Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
             }
-            fun afterFinish(extraction: ExtractionResult){
+            fun afterFinish(extraction: ExtractionResult) {
+                // Templates do not work well in injected editors, see InlayModelWindow
+                if (editor is EditorWindow) {
+                    Disposer.dispose(disposable)
+                    return
+                }
                 val callRange: TextRange = callRangeProvider.invoke() ?: throw IllegalStateException()
                 val callIdentifier = findSingleCallExpression(file, callRange)?.calleeExpression ?: throw IllegalStateException()
                 val methodIdentifier = extraction.declaration.nameIdentifier ?: throw IllegalStateException()
@@ -152,11 +158,11 @@ class ExtractKotlinFunctionHandler(
             return RefactoringBundle.message("inplace.refactoring.advertisement.text", KeymapUtil.getShortcutText(shortcut))
         }
 
-        private fun rangeOf(element: PsiElement): TextRange {
+        protected fun rangeOf(element: PsiElement): TextRange {
             return (element as? KtExpression)?.extractableSubstringInfo?.contentRange ?: element.textRange
         }
 
-        private fun createSmartRangeProvider(container: PsiElement, range: TextRange): () -> TextRange? {
+        protected fun createSmartRangeProvider(container: PsiElement, range: TextRange): () -> TextRange? {
             val offsetFromStart = range.startOffset - container.textRange.startOffset
             val offsetFromEnd = container.textRange.endOffset - range.endOffset
             val pointer = SmartPointerManager.createPointer(container)
@@ -180,7 +186,7 @@ class ExtractKotlinFunctionHandler(
             }
         }
 
-        private fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {
+        protected fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {
             if (range == null) return null
             val container = PsiTreeUtil.findCommonParent(file.findElementAt(range.startOffset), file.findElementAt(range.endOffset))
             val callExpressions = PsiTreeUtil.findChildrenOfType(container, KtCallExpression::class.java)

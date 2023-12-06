@@ -118,11 +118,6 @@ public final class DiffIterableUtil {
   }
 
   @NotNull
-  public static DiffIterable subiterable(@NotNull DiffIterable iterable, int start1, int end1, int start2, int end2) {
-    return new SubiterableDiffIterable(iterable, start1, end1, start2, end2);
-  }
-
-  @NotNull
   public static DiffIterable expandedIterable(@NotNull DiffIterable iterable, int offset1, int offset2, int length1, int length2) {
     assert offset1 + iterable.getLength1() <= length1 &&
            offset2 + iterable.getLength2() <= length2;

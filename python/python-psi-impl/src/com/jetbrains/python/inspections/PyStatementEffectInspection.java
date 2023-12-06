@@ -16,10 +16,12 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -30,6 +32,8 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class PyStatementEffectInspection extends PyInspection {
 
@@ -73,13 +77,13 @@ public class PyStatementEffectInspection extends PyInspection {
           return;
         }
       }
-      if (expression instanceof PyReferenceExpression && !((PyReferenceExpression)expression).isQualified()) {
-        registerProblem(expression, PyPsiBundle.message("INSP.statement.effect.statement.seems.to.have.no.effect"));
+      List<LocalQuickFix> quickFixes = new SmartList<>(getQuickFixesFromExtensions(node));
+      if (!(expression instanceof PyReferenceExpression reference) || reference.isQualified()) {
+        quickFixes.add(new StatementEffectIntroduceVariableQuickFix());
       }
-      else {
-        registerProblem(expression, PyPsiBundle.message("INSP.statement.effect.statement.seems.to.have.no.effect"),
-                        new StatementEffectIntroduceVariableQuickFix());
-      }
+      registerProblem(expression,
+                      PyPsiBundle.message("INSP.statement.effect.statement.seems.to.have.no.effect"),
+                      quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
 
     private boolean hasEffect(@Nullable PyExpression expression) {
@@ -156,5 +160,11 @@ public class PyStatementEffectInspection extends PyInspection {
       }
       return false;
     }
+  }
+
+  @NotNull
+  private static List<LocalQuickFix> getQuickFixesFromExtensions(@NotNull PyExpressionStatement expressionStatement) {
+    return ContainerUtil.mapNotNull(PyStatementEffectQuickFixProvider.EP_NAME.getExtensionList(),
+                                    extension -> extension.getQuickFix(expressionStatement));
   }
 }

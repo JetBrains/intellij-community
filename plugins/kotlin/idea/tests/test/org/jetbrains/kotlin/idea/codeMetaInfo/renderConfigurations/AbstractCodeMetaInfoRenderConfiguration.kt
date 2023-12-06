@@ -5,11 +5,15 @@ package org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations
 import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
 
 
-open class LineMarkerConfiguration(var renderDescription: Boolean = true) : AbstractCodeMetaInfoRenderConfiguration() {
+open class LineMarkerConfiguration(
+    private val renderDescription: Boolean = true,
+    private val renderTargetIcons: Boolean = false,
+) : AbstractCodeMetaInfoRenderConfiguration() {
     override fun asString(codeMetaInfo: CodeMetaInfo): String {
         if (codeMetaInfo !is LineMarkerCodeMetaInfo) return ""
         return getTag() + getPlatformsString(codeMetaInfo) + getParamsString(codeMetaInfo)
@@ -21,9 +25,31 @@ open class LineMarkerConfiguration(var renderDescription: Boolean = true) : Abst
         if (!renderParams) return ""
         val params = mutableListOf<String>()
 
+        val lineMarker = lineMarkerCodeMetaInfo.lineMarker
+
         if (renderDescription) {
-            lineMarkerCodeMetaInfo.lineMarker.lineMarkerTooltip?.apply {
+            lineMarker.lineMarkerTooltip?.apply {
                 params.add("descr='${sanitizeLineMarkerTooltip(this)}'")
+            }
+        }
+
+        (lineMarker.navigationHandler as? TestableLineMarkerNavigator)?.getTargetsPopupDescriptor(lineMarker.element)?.let { navigator ->
+            val targets = navigator.targets.map { target ->
+                val presentation = navigator.renderer.getPresentation(target)
+                buildString {
+                    append("(text=")
+                    append(presentation.presentableText)
+                    presentation.containerText?.let{ append("; container=").append(it) }
+                    if (renderTargetIcons) {
+                        append("; icon=")
+                        append(presentation.icon.toString())
+                    }
+                    append(")")
+                }
+            }
+
+            if (targets.size > 1) {
+                params.add(targets.joinToString(prefix = "targets=[", postfix = "]", separator = "; "))
             }
         }
 
@@ -45,6 +71,7 @@ open class HighlightingConfiguration(
     val renderSeverityOption: SeverityRenderingOption = SeverityRenderingOption.ALWAYS,
     val severityLevel: HighlightSeverity = HighlightSeverity.INFORMATION,
     val checkNoError: Boolean = false,
+    val renderHighlightingAttributesKey: Boolean = false,
 ) : AbstractCodeMetaInfoRenderConfiguration() {
 
     enum class DescriptionRenderingOption {
@@ -98,6 +125,13 @@ open class HighlightingConfiguration(
                 val keyName = this.externalName
                 params.add("textAttributesKey='$keyName'")
             }
+
+        if (renderHighlightingAttributesKey) {
+            highlightingCodeMetaInfo.highlightingInfo.type.attributesKey.apply {
+                val keyName = this.externalName
+                params.add("highlightingTextAttributesKey='$keyName'")
+            }
+        }
 
         params.add(getAdditionalParams(highlightingCodeMetaInfo))
         val paramsString = params.filter { it.isNotEmpty() }.joinToString("; ")

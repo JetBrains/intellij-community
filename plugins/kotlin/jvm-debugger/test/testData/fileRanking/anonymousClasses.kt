@@ -20,3 +20,4 @@ class Some {
         })
     }
 }
+// PRODUCED_CLASS_NAMES: a.AKt, a.R, a.Some, a.Some$foo$1

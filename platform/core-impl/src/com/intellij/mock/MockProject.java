@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.pico.DefaultPicoContainer;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NonNls;
@@ -99,8 +98,7 @@ public class MockProject extends MockComponentManager implements Project {
 
   public @NotNull <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType) {
     List<T> result = new ArrayList<>();
-    DefaultPicoContainer container = (DefaultPicoContainer)getPicoContainer();
-    container.getComponentAdapters().forEach(componentAdapter -> {
+    getPicoContainer().getComponentAdapters().forEach(componentAdapter -> {
       Class<?> descendant = componentAdapter.getComponentImplementation();
       if (componentType == descendant || componentType.isAssignableFrom(descendant)) {
         //noinspection unchecked

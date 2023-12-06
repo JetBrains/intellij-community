@@ -8,13 +8,11 @@ import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.filterByQueryParams
-import com.intellij.webSymbols.impl.toCodeCompletionItems
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.query.WebSymbolNamesProvider
-import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
-import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.query.WebSymbolsQueryParams
+import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.utils.match
+import com.intellij.webSymbols.utils.toCodeCompletionItems
+import com.intellij.webSymbols.utils.withMatchedName
 import java.util.*
 
 internal abstract class SearchMap<T> internal constructor(
@@ -25,15 +23,13 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal abstract fun Sequence<T>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<WebSymbol>
 
-  internal fun add(namespace: SymbolNamespace,
-                   kind: SymbolKind,
-                   name: String,
+  internal fun add(qualifiedName: WebSymbolQualifiedName,
                    pattern: WebSymbolsPattern?,
                    item: T) {
     if (pattern == null) {
-      namesProvider.getNames(namespace, kind, name, WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE)
+      namesProvider.getNames(qualifiedName, WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE)
         .forEach {
-          statics.computeIfAbsent(SearchMapEntry(namespace, kind, it)) { SmartList() }.add(item)
+          statics.computeIfAbsent(SearchMapEntry(qualifiedName.qualifiedKind, it)) { SmartList() }.add(item)
         }
 
     }
@@ -46,89 +42,78 @@ internal abstract class SearchMap<T> internal constructor(
           else it
         }
         .forEach {
-          patterns.computeIfAbsent(SearchMapEntry(namespace, kind, it)) { SmartList() }.add(item)
+          patterns.computeIfAbsent(SearchMapEntry(qualifiedName.qualifiedKind, it)) { SmartList() }.add(item)
         }
   }
 
-  internal fun getSymbols(namespace: SymbolNamespace,
-                          kind: SymbolKind,
-                          name: String?,
-                          params: WebSymbolsNameMatchQueryParams,
-                          scope: Stack<WebSymbolsScope>): Sequence<WebSymbol> =
-    if (name == null) {
-      statics.subMap(SearchMapEntry(namespace, kind), SearchMapEntry(namespace, kind, kindExclusive = true))
-        .values.asSequence()
-        .plus(patterns.subMap(SearchMapEntry(namespace, kind), SearchMapEntry(namespace, kind, kindExclusive = true)).values)
-        .distinct()
-        .flatMapWithQueryParameters(params)
-    }
-    else {
-      val names = namesProvider.getNames(namespace, kind, name, WebSymbolNamesProvider.Target.NAMES_QUERY)
-      names.asSequence()
-        .mapNotNull { statics[SearchMapEntry(namespace, kind, it)] }
-        .flatMapWithQueryParameters(params)
-        .plus(collectPatternContributions(namespace, kind, name, params, scope))
-    }
+  internal fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+                                  params: WebSymbolsNameMatchQueryParams,
+                                  scope: Stack<WebSymbolsScope>): Sequence<WebSymbol> =
+    namesProvider.getNames(qualifiedName, WebSymbolNamesProvider.Target.NAMES_QUERY)
+      .asSequence()
+      .mapNotNull { statics[SearchMapEntry(qualifiedName.qualifiedKind, it)] }
+      .flatMapWithQueryParameters(params)
+      .map { it.withMatchedName(qualifiedName.name) }
+      .plus(collectPatternContributions(qualifiedName, params, scope))
 
-  internal fun getCodeCompletions(namespace: SymbolNamespace,
-                                  kind: String,
-                                  name: String?,
+  internal fun getSymbols(qualifiedKind: WebSymbolQualifiedKind, params: WebSymbolsListSymbolsQueryParams): Sequence<WebSymbolsScope> =
+    statics.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true))
+      .values.asSequence()
+      .plus(patterns.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true)).values)
+      .distinct()
+      .flatMapWithQueryParameters(params)
+
+  internal fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): Sequence<WebSymbolCodeCompletionItem> =
-    collectStaticCompletionResults(namespace, kind, name, params, scope)
+    collectStaticCompletionResults(qualifiedName, params, scope)
       .asSequence()
-      .plus(collectPatternCompletionResults(namespace, kind, name, params, scope))
+      .plus(collectPatternCompletionResults(qualifiedName, params, scope))
       .distinct()
 
-  private fun collectStaticCompletionResults(namespace: SymbolNamespace,
-                                             kind: String,
-                                             name: String?,
+  private fun collectStaticCompletionResults(qualifiedName: WebSymbolQualifiedName,
                                              params: WebSymbolsCodeCompletionQueryParams,
                                              scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    statics.subMap(SearchMapEntry(namespace, kind), SearchMapEntry(namespace, kind, kindExclusive = true))
+    statics.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
       .values
       .asSequence()
       .flatMapWithQueryParameters(params)
       .filter { !it.extension && !it.abstract && (!it.virtual || params.virtualSymbols) }
-      .flatMap { it.toCodeCompletionItems(name, params, scope) }
+      .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, scope) }
       .toList()
 
-  private fun collectPatternCompletionResults(namespace: SymbolNamespace,
-                                              kind: String,
-                                              name: String?,
+  private fun collectPatternCompletionResults(qualifiedName: WebSymbolQualifiedName,
                                               params: WebSymbolsCodeCompletionQueryParams,
                                               scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    patterns.subMap(SearchMapEntry(namespace, kind), SearchMapEntry(namespace, kind, kindExclusive = true))
+    patterns.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
       .values.asSequence()
       .flatMap { it.asSequence() }
       .distinct()
       .innerMapAndFilter(params)
       .filter { !it.extension && !it.abstract && (!it.virtual || params.virtualSymbols) }
-      .flatMap { it.toCodeCompletionItems(name, params, scope) }
+      .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, scope) }
       .toList()
 
-  private fun collectPatternContributions(namespace: SymbolNamespace,
-                                          kind: String,
-                                          name: String?,
+  private fun collectPatternContributions(qualifiedName: WebSymbolQualifiedName,
                                           params: WebSymbolsNameMatchQueryParams,
                                           scope: Stack<WebSymbolsScope>): List<WebSymbol> =
-    collectPatternsToProcess(namespace, kind, name ?: "")
+    collectPatternsToProcess(qualifiedName)
       .asSequence()
       .distinct()
       .innerMapAndFilter(params)
       .flatMap { rootContribution ->
-        rootContribution.match(name ?: "", scope, params)
+        rootContribution.match(qualifiedName.name, params, scope)
       }
       .toList()
 
-  private fun collectPatternsToProcess(namespace: SymbolNamespace, kind: String, name: String): Collection<T> {
+  private fun collectPatternsToProcess(qualifiedName: WebSymbolQualifiedName): Collection<T> {
     val toProcess = mutableSetOf<T>()
-    for (p in 0..name.length) {
-      val check = SearchMapEntry(namespace, kind, CharSequenceSubSequence(name, 0, p))
+    for (p in 0..qualifiedName.name.length) {
+      val check = SearchMapEntry(qualifiedName.qualifiedKind, CharSequenceSubSequence(qualifiedName.name, 0, p))
       val entry = patterns.ceilingEntry(check)
       if (entry == null
-          || entry.key.namespace != namespace
-          || entry.key.kind != kind
+          || entry.key.namespace != qualifiedName.namespace
+          || entry.key.kind != qualifiedName.kind
           || !entry.key.name.startsWith(check.name)) break
       if (entry.key.name.length == p) toProcess.addAll(entry.value)
     }
@@ -147,6 +132,9 @@ internal abstract class SearchMap<T> internal constructor(
                                     val kind: SymbolKind,
                                     val name: CharSequence = "",
                                     val kindExclusive: Boolean = false) : Comparable<SearchMapEntry> {
+
+    constructor(qualifiedKind: WebSymbolQualifiedKind, name: CharSequence = "", kindExclusive: Boolean = false) :
+      this(qualifiedKind.namespace, qualifiedKind.kind, name, kindExclusive)
 
     override fun compareTo(other: SearchMapEntry): Int {
       val namespaceCompare = namespace.compareTo(other.namespace)

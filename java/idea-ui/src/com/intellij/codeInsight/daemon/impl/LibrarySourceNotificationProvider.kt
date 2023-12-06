@@ -23,18 +23,18 @@ import com.intellij.util.diff.Diff
 import java.util.function.Function
 import javax.swing.JComponent
 
-class LibrarySourceNotificationProvider : EditorNotificationProvider {
-  private companion object {
-    private val LOG = logger<LibrarySourceNotificationProvider>()
+private val LOG = logger<LibrarySourceNotificationProvider>()
 
-    // Support releases (e.g. "android-30") as well as previews (e.g. "android-tiramisu")
-    private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\w+/android.jar!/.*".toRegex()
+private const val FIELD = SHOW_NAME or SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
+private const val METHOD = SHOW_NAME or SHOW_PARAMETERS or SHOW_RAW_TYPE
+private const val PARAMETER = SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
+private const val CLASS = SHOW_NAME or SHOW_FQ_CLASS_NAMES or SHOW_EXTENDS_IMPLEMENTS or SHOW_RAW_TYPE
 
-    private const val FIELD = SHOW_NAME or SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
-    private const val METHOD = SHOW_NAME or SHOW_PARAMETERS or SHOW_RAW_TYPE
-    private const val PARAMETER = SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
-    private const val CLASS = SHOW_NAME or SHOW_FQ_CLASS_NAMES or SHOW_EXTENDS_IMPLEMENTS or SHOW_RAW_TYPE
-  }
+
+internal class LibrarySourceNotificationProvider : EditorNotificationProvider {
+
+  // Support releases (e.g. "android-30") as well as previews (e.g. "android-tiramisu")
+  private inline val ANDROID_SDK_PATTERN get() = ".*/platforms/android-\\w+/android.jar!/.*".toRegex()
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {

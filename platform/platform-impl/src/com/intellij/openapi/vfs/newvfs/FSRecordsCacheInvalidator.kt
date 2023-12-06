@@ -9,9 +9,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 class FSRecordsCacheInvalidator : CachesInvalidator() {
   override fun getDescription(): String = IdeCoreBundle.message("checkbox.invalidate.caches.invalidates.vfs")
 
-  override fun optionalCheckboxDefaultValue() = Registry.`is`("idea.invalidate.caches.invalidates.vfs")
+  override fun optionalCheckboxDefaultValue(): Boolean = Registry.`is`("idea.invalidate.caches.invalidates.vfs")
 
   override fun invalidateCaches() {
-    FSRecords.invalidateCaches()
+    FSRecords.getInstance().scheduleRebuild("By FSRecordsCacheInvalidator request", /* error: */ null)
   }
 }

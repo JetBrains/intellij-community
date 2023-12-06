@@ -59,7 +59,7 @@ abstract class BarChart<T: Number>: GridChartWrapper<Int, T>() {
 
   private fun getDatasetCount() =  datasets.map { if (it.stacked) 0 else 1 }.sum()
 
-  override fun findMinMax() = if (ranges.isInitialized) ranges else ranges * (ranges + MinMax()).apply {
+  override fun findMinMax(): MinMax<Int, T> = if (ranges.isInitialized) ranges else ranges * (ranges + MinMax()).apply {
     datasets.forEach { it.data.forEachIndexed { i, v -> process(i, v) } }
   }
 

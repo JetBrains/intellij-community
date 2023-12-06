@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.ide.tags.TagManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.ColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
@@ -22,6 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -35,7 +34,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.lang.ref.Reference;
 import java.util.List;
 import java.util.*;
 
@@ -123,7 +121,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   void addTargetsNode(@NotNull Node node, @NotNull DefaultTreeModel treeModel) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     int index;
     synchronized (this) {
       index = getNodeIndex(node, getSwingChildren());
@@ -138,7 +136,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @Override
   public void removeAllChildren() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.removeAllChildren();
     synchronized (this) {
       myChildren.clear();
@@ -165,7 +163,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
 
   int removeUsagesBulk(@NotNull Set<? extends UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     int removed = 0;
     synchronized (this) {
       List<MutableTreeNode> removedNodes = new SmartList<>();
@@ -260,7 +258,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   void incrementUsageCount(int i) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     GroupNode groupNode = this;
     while (true) {
       groupNode.myRecursiveUsageCount += i;
@@ -333,7 +331,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   int getRecursiveUsageCount() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myRecursiveUsageCount;
   }
 
@@ -391,11 +389,11 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return list;
   }
 
-  private volatile Reference<UsageNodePresentation> myCachedPresentation;
+  private volatile UsageNodePresentation myCachedPresentation;
 
   @Override
   public @Nullable UsageNodePresentation getCachedPresentation() {
-    return SoftReference.dereference(myCachedPresentation);
+    return myCachedPresentation;
   }
 
   @Override
@@ -410,16 +408,15 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     FileStatus fileStatus = group.getFileStatus();
     Color foregroundColor = fileStatus != null ? fileStatus.getColor() : null;
     var tagIconAndText = TagManager.getTagIconAndText(element);
-    Icon icon = IconUtil.rowIcon(tagIconAndText.first, group.getIcon());
+    Icon icon = IconUtil.rowIcon(tagIconAndText.icon(), group.getIcon());
     List<TextChunk> chunks = new ArrayList<>();
-    for (ColoredText.Fragment fragment : tagIconAndText.second.fragments()) {
+    for (ColoredText.Fragment fragment : tagIconAndText.coloredText().fragments()) {
       chunks.add(new TextChunk(fragment.fragmentAttributes().toTextAttributes(), fragment.fragmentText()));
     }
     TextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
     attributes.setForegroundColor(foregroundColor);
     chunks.add(new TextChunk(attributes, group.getPresentableGroupText()));
-    UsageNodePresentation presentation = new UsageNodePresentation(icon, chunks.toArray(TextChunk.EMPTY_ARRAY), null);
-    myCachedPresentation = new SoftReference<>(presentation);
+    myCachedPresentation = new UsageNodePresentation(icon, chunks.toArray(TextChunk.EMPTY_ARRAY), null);
   }
 
   @NotNull

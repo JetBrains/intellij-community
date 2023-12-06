@@ -1,18 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -27,34 +27,36 @@ interface ToolWindowManagerState : PersistentStateComponent<Element> {
   val scheduledLayout: AtomicProperty<DesktopLayout?>
   val isEditorComponentActive: Boolean
   var frame: ProjectFrameHelper?
+  var moreButton: ToolWindowAnchor
 }
 
-private const val EDITOR_ELEMENT = "editor"
-private const val ACTIVE_ATTR_VALUE = "active"
 private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 private const val RECENT_TW_TAG = "recentWindows"
+private const val MORE_BUTTON_TAG = "moreButton"
 
 @ApiStatus.Internal
 @State(name = "ToolWindowManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class ToolWindowManagerStateImpl(private val project: Project) : ToolWindowManagerState {
+class ToolWindowManagerStateImpl : ToolWindowManagerState {
   private val isNewUi = ExperimentalUI.isNewUI()
 
-  override var layout = DesktopLayout()
-  override var noStateLoaded = false
+  override var layout: DesktopLayout = DesktopLayout()
+  override var noStateLoaded: Boolean = false
     private set
   override var oldLayout: DesktopLayout? = null
     private set
   override var layoutToRestoreLater: DesktopLayout? = null
-  override val recentToolWindows = LinkedList<String>()
-  override val scheduledLayout = AtomicProperty<DesktopLayout?>(null)
-  private val focusManager: IdeFocusManager
-    get() = IdeFocusManager.getInstance(project)!!
+  override val recentToolWindows: LinkedList<String> = LinkedList<String>()
+  override val scheduledLayout: AtomicProperty<DesktopLayout?> = AtomicProperty(null)
+
   override val isEditorComponentActive: Boolean
     get() {
-      ApplicationManager.getApplication().assertIsDispatchThread()
-      return ComponentUtil.getParentOfType(EditorsSplitters::class.java, focusManager.focusOwner) != null
+      ThreadingAssertions.assertEventDispatchThread()
+      return ComponentUtil.getParentOfType(EditorsSplitters::class.java, IdeFocusManager.getGlobalInstance().focusOwner) != null
     }
+
   override var frame: ProjectFrameHelper? = null
+
+  override var moreButton: ToolWindowAnchor = ToolWindowAnchor.LEFT
 
   override fun getState(): Element? {
     if (frame == null) {
@@ -62,10 +64,6 @@ class ToolWindowManagerStateImpl(private val project: Project) : ToolWindowManag
     }
 
     val element = Element("state")
-    if (isEditorComponentActive) {
-      element.addContent(Element(EDITOR_ELEMENT).setAttribute(ACTIVE_ATTR_VALUE, "true"))
-    }
-
     // save layout of tool windows
     writeLayout(layout, element, isV2 = isNewUi)
 
@@ -83,6 +81,9 @@ class ToolWindowManagerStateImpl(private val project: Project) : ToolWindowManag
         recentState.addContent(Element("value").addContent(it))
       }
       element.addContent(recentState)
+    }
+    if (moreButton != ToolWindowAnchor.LEFT) {
+      element.addContent(Element(MORE_BUTTON_TAG).setAttribute("side", moreButton.toString()))
     }
     return element
   }
@@ -126,6 +127,9 @@ class ToolWindowManagerStateImpl(private val project: Project) : ToolWindowManag
           element.content.forEach {
             recentToolWindows.add(it.value)
           }
+        }
+        MORE_BUTTON_TAG -> {
+          moreButton = ToolWindowAnchor.fromText(element.getAttributeValue("side"))
         }
       }
     }

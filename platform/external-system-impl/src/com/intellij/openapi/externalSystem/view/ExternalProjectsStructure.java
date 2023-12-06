@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author Vladislav.Soroka
@@ -241,6 +242,13 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
+  public <T extends ExternalSystemNode> void visitExistingNodes(@NotNull Class<? extends T> nodeClass,
+                                                                @NotNull Consumer<? super T> consumer) {
+    for (T node : getExistingNodes(nodeClass)) {
+      consumer.consume(node);
+    }
+  }
+
   @Override
   public void dispose() {
     this.myExternalProjectsView = null;
@@ -298,13 +306,25 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
 
   @NotNull
   public <T extends ExternalSystemNode> List<T> getNodes(@NotNull Class<T> nodeClass) {
-    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>());
+    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>(), node -> true);
+  }
+
+  @NotNull
+  public <T extends ExternalSystemNode> List<T> getExistingNodes(@NotNull Class<T> nodeClass) {
+    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>(), node -> {
+      if (node instanceof ExternalSystemNode<?> esNode) {
+        ExternalSystemNode<?>[] cachedNodes = esNode.getCached();
+        return cachedNodes != null && cachedNodes.length > 0;
+      }
+      return true;
+    });
   }
 
   @NotNull
   private static <T extends ExternalSystemNode> List<T> doGetNodes(@NotNull Class<T> nodeClass,
                                                                    SimpleNode[] nodes,
-                                                                   @NotNull List<T> result) {
+                                                                   @NotNull List<T> result,
+                                                                   @NotNull Predicate<SimpleNode> shouldDive) {
     if (nodes == null) return result;
 
     for (SimpleNode node : nodes) {
@@ -312,7 +332,9 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
         //noinspection unchecked
         result.add((T)node);
       }
-      doGetNodes(nodeClass, node.getChildren(), result);
+      if (shouldDive.test(node)) {
+        doGetNodes(nodeClass, node.getChildren(), result, shouldDive);
+      }
     }
     return result;
   }

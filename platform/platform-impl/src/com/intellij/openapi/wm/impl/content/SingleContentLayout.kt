@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -21,8 +22,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.ExperimentalUI.isNewUI
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.NewUiValue
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -45,6 +47,7 @@ import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 /**
@@ -78,11 +81,9 @@ internal class SingleContentLayout(
     tryUpdateContentView()
   }
 
-  private fun Content.getSupplier(): SingleContentSupplier? {
-    return (component as? DataProvider)?.let(SingleContentSupplier.KEY::getData)
-  }
+  private fun Content.getSupplier(): SingleContentSupplier? = SingleContentSupplier.getSupplierFrom(this)
 
-  fun getSupplier() = getSingleContentOrNull()?.getSupplier()
+  fun getSupplier(): SingleContentSupplier? = getSingleContentOrNull()?.getSupplier()
 
   private fun getSingleContentOrNull(): Content? {
     return if (Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
@@ -147,7 +148,7 @@ internal class SingleContentLayout(
       )
     }
 
-    if (!isNewUI()) {
+    if (!NewUiValue.isEnabled()) {
       let {
         val contentActions = DefaultActionGroup()
         contentActions.add(closeCurrentContentAction)
@@ -236,7 +237,6 @@ internal class SingleContentLayout(
 
     if (isSingleContentView) {
       val component = ui.tabComponent
-      component.bounds = component.bounds.apply { width = component.parent.width }
 
       val labelWidth = idLabel.x + idLabel.width  // label is laid out by parent
       var tabsWidth = tabAdapter?.preferredSize?.width ?: 0
@@ -294,6 +294,11 @@ internal class SingleContentLayout(
         title = displayName
       )
       label.toolTipText = displayName
+    }
+    val icon = ui.window.component.getClientProperty(ToolWindowContentUi.HEADER_ICON) as? Icon
+    if (icon != null) {
+      label.icon = icon
+      label.horizontalTextPosition = SwingConstants.LEFT
     }
   }
 
@@ -529,7 +534,7 @@ internal class SingleContentLayout(
       return true
     }
 
-    override fun showMorePopup() {
+    override fun showMorePopup(): JBPopup {
       val contentToShow = labels
         .filter { it.bounds.width <= 0 }
         .map(MyContentTabLabel::getContent)
@@ -545,9 +550,10 @@ internal class SingleContentLayout(
         override fun getTextFor(value: SubContent) = value.displayName
       }
 
-      JBPopupFactory.getInstance()
+      val popup = JBPopupFactory.getInstance()
         .createListPopup(step)
-        .show(RelativePoint.getSouthWestOf(popupToolbar))
+      popup.show(RelativePoint.getSouthWestOf(popupToolbar))
+      return popup
     }
   }
 

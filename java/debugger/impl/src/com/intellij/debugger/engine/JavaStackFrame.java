@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -266,6 +267,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
                               ObjectReference thisObjectReference,
                               Location location) throws EvaluateException {
     final Set<String> visibleLocals = new HashSet<>();
+    int positionOfLocalVariablesAsFields = children.size();
+    final List<FieldDescriptorImpl> outerLocalVariablesAsFields = new SmartList<>();
     if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
       if (thisObjectReference != null && debugProcess.getVirtualMachineProxy().canGetSyntheticAttribute()) {
         final ReferenceType thisRefType = thisObjectReference.referenceType();
@@ -274,7 +277,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
           for (Field field : thisRefType.fields()) {
             if (DebuggerUtils.isSynthetic(field) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
               final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myDescriptor, thisObjectReference, field);
-              children.add(JavaValue.create(fieldDescriptor, evaluationContext, myNodeManager));
+              outerLocalVariablesAsFields.add(fieldDescriptor);
               visibleLocals.add(fieldDescriptor.calcValueName());
             }
           }
@@ -347,6 +350,19 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
       else {
         throw e;
+      }
+    }
+
+    if (!outerLocalVariablesAsFields.isEmpty()) {
+      // Insert all non-yet added fields before other variables preserving the original order, see IDEA-318062.
+      HashSet<String> alreadyAdded = new HashSet<>();
+      for (int i = 0; i < children.size(); i++) {
+        alreadyAdded.add(children.getName(i));
+      }
+      for (FieldDescriptorImpl f : outerLocalVariablesAsFields) {
+        if (!alreadyAdded.contains(f.calcValueName())) {
+          children.add(positionOfLocalVariablesAsFields++, JavaValue.create(f, evaluationContext, myNodeManager));
+        }
       }
     }
   }

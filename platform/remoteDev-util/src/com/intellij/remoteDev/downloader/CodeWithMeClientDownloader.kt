@@ -12,9 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
@@ -22,16 +20,19 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.JetbrainsClientDownloadInfo
-import com.intellij.remoteDev.connection.StunTurnServerInfo
 import com.intellij.remoteDev.util.*
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.EdtScheduledExecutorService
-import com.intellij.util.io.*
+import com.intellij.util.io.BaseOutputReader
+import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.HttpStatusException
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
@@ -43,6 +44,7 @@ import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifier
 import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifierLogger
 import com.jetbrains.infra.pgpVerifier.Sha256ChecksumSignatureVerifier
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reactive.fire
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.WinBase
@@ -61,7 +63,6 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.*
-import kotlin.io.path.exists
 import kotlin.math.min
 
 @ApiStatus.Experimental
@@ -79,10 +80,16 @@ object CodeWithMeClientDownloader {
   val cwmJbrManifestFilter: (Path) -> Boolean = { !it.isDirectory() || isSymlink(it) }
 
   fun getJetBrainsClientManifestFilter(clientBuildNumber: String): (Path) -> Boolean {
-    if (isClientWithBundledJre(clientBuildNumber)) {
-      return { !it.isDirectory() || isSymlink(it) }
+    val universalFilter: (Path) -> Boolean = if (isClientWithBundledJre(clientBuildNumber)) {
+      { !it.isDirectory() || isSymlink(it) }
     } else {
-      return { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
+      { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
+    }
+
+    when {
+      SystemInfoRt.isMac -> return { it.name != ".DS_Store" && universalFilter.invoke(it) }
+      SystemInfoRt.isWindows -> return { !it.name.equals("Thumbs.db", ignoreCase = true) && universalFilter.invoke(it) }
+      else -> return universalFilter
     }
   }
 
@@ -249,13 +256,15 @@ object CodeWithMeClientDownloader {
   @ApiStatus.Experimental
   fun downloadClientAndJdk(clientBuildVersion: String,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    val jdkBuild = if (isClientWithBundledJre(clientBuildVersion)) null else {
+    val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
+    val jdkBuild = if (isClientWithBundledJre(clientBuildVersion)) {
+      jdkBuildProgressIndicator.fraction = 1.0
+      null
+    } else {
       // Obsolete since 2022.3. Now the client has JRE bundled in
-
       LOG.info("Downloading Thin Client jdk-build.txt")
-      val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
       jdkBuildProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.checking")
 
       val clientDistributionName = getClientDistributionName(clientBuildVersion)
@@ -289,18 +298,57 @@ object CodeWithMeClientDownloader {
   fun downloadClientAndJdk(clientBuildVersion: String,
                            jreBuild: String?,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jreBuild, true)
     return downloadClientAndJdk(sessionInfo, progressIndicator)
   }
 
-  /**
-   * @returns Pair(path/to/thin/client, path/to/jre)
-   */
+  fun isClientDownloaded(
+    clientBuildVersion: String,
+  ): Boolean {
+    val clientUrl = createSessionInfo(clientBuildVersion, null, true).compatibleClientUrl
+    val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
+    val guestData = DownloadableFileData.build(
+      url = URI.create(clientUrl),
+      tempDir = tempDir,
+      cachesDir = config.clientCachesDir,
+      includeInManifest = getJetBrainsClientManifestFilter(clientBuildVersion),
+    )
+    return isAlreadyDownloaded(guestData)
+  }
+
+  fun extractedClientData(clientBuildVersion: String): ExtractedJetBrainsClientData? {
+    if (!isClientDownloaded(clientBuildVersion)) {
+      return null
+    }
+    val clientUrl = createSessionInfo(clientBuildVersion, null, true).compatibleClientUrl
+    val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
+    val guestData = DownloadableFileData.build(
+      url = URI.create(clientUrl),
+      tempDir = tempDir,
+      cachesDir = config.clientCachesDir,
+      includeInManifest = getJetBrainsClientManifestFilter(clientBuildVersion),
+    )
+    return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = null, version = clientBuildVersion)
+  }
+
+
+  suspend fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo): ExtractedJetBrainsClientData {
+    return progressStep(1.0, RemoteDevUtilBundle.message("launcher.get.client.info")) {
+      withRawProgressReporter {
+        blockingContext {
+          blockingContextToIndicator {
+            downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
+          }
+        }
+      }
+    }
+  }
+
   fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo,
-                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
     LOG.info("Downloading Thin Client in $tempDir...")
@@ -326,9 +374,7 @@ object CodeWithMeClientDownloader {
 
     val dataList = listOfNotNull(jdkData, guestData)
 
-    val activity: StructuredIdeActivity? =
-      if (dataList.isNotEmpty()) RemoteDevStatisticsCollector.onGuestDownloadStarted()
-      else null
+    val activity: StructuredIdeActivity? = if (dataList.isEmpty()) null else RemoteDevStatisticsCollector.onGuestDownloadStarted()
 
     fun updateStateText() {
       val downloadList = dataList.filter { it.status.get() == DownloadableFileData.DownloadableFileState.Downloading }.joinToString(", ") { it.fileCaption }
@@ -442,7 +488,13 @@ object CodeWithMeClientDownloader {
           FileUtil.delete(data.targetPath)
 
           require(data.targetPath.notExists()) { "Target path \"${data.targetPath}\" for $archivePath already exists" }
-          FileManifestUtil.decompressWithManifest(archivePath, data.targetPath, config.modifiedDateInManifestIncluded, data.includeInManifest)
+          FileManifestUtil.decompressWithManifest(
+            archiveFile = archivePath,
+            targetDir = data.targetPath,
+            includeModifiedDate = config.modifiedDateInManifestIncluded,
+            includeInManifest = data.includeInManifest,
+            progress = dataProgressIndicator.createSubProgress(0.25)
+          )
 
           require(FileManifestUtil.isUpToDate(data.targetPath, config.modifiedDateInManifestIncluded, data.includeInManifest)) {
             "Manifest verification failed for archive: $archivePath -> ${data.targetPath}"
@@ -478,7 +530,7 @@ object CodeWithMeClientDownloader {
     }
     catch(e: ProcessCanceledException) {
       LOG.info("Download was canceled")
-      return null
+      throw e
     }
     catch (e: Throwable) {
       RemoteDevStatisticsCollector.onGuestDownloadFinished(activity, isSucceeded = false)
@@ -496,7 +548,7 @@ object CodeWithMeClientDownloader {
   }
 
   private fun downloadWithRetries(url: URI, path: Path, progressIndicator: ProgressIndicator) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     @Suppress("LocalVariableName")
     val MAX_ATTEMPTS = 5
@@ -516,7 +568,12 @@ object CodeWithMeClientDownloader {
             progressIndicator.text2 = ""
           }
           "file" -> {
-            Files.copy(url.toPath(), path, StandardCopyOption.REPLACE_EXISTING)
+            val source = url.toPath()
+            if (source.isDirectory()) {
+              error("Downloading a directory is not supported. Source: $url, destination: ${path.absolutePathString()}")
+            }
+
+            Files.copy(source, path, StandardCopyOption.REPLACE_EXISTING)
           }
           else -> {
             error("scheme ${url.scheme} is not supported")
@@ -561,12 +618,12 @@ object CodeWithMeClientDownloader {
     error("JetBrains Client home is not found under $guestRoot")
   }
 
-  private fun findLauncher(guestRoot: Path, launcherNames: List<String>): Pair<Path, List<String>> {
+  private fun findLauncher(guestRoot: Path, launcherNames: List<String>): JetBrainsClientLauncherData {
     val launcher = launcherNames.firstNotNullOfOrNull {
       val launcherRelative = Path.of("bin", it)
       val launcher = findLauncher(guestRoot, launcherRelative)
       launcher?.let {
-        launcher to listOf(launcher.toString())
+        JetBrainsClientLauncherData(launcher, listOf(launcher.toString()))
       }
     }
 
@@ -587,7 +644,7 @@ object CodeWithMeClientDownloader {
     return null
   }
 
-  private fun findLauncherUnderCwmGuestRoot(guestRoot: Path): Pair<Path, List<String>> {
+  private fun findLauncherUnderCwmGuestRoot(guestRoot: Path): JetBrainsClientLauncherData {
     when {
       SystemInfo.isWindows -> {
         val batchLaunchers = listOf("intellij_client.bat", "jetbrains_client.bat")
@@ -603,7 +660,7 @@ object CodeWithMeClientDownloader {
         if (SystemInfo.isMac) {
           val app = guestRoot.toFile().listFiles { file -> file.name.endsWith(".app") && file.isDirectory }!!.singleOrNull()
           if (app != null) {
-            return app.toPath() to listOf("open", "-n", "-W", "-a", app.toString(), "--args")
+            return createLauncherDataForMacOs(app.toPath())
           }
         }
 
@@ -615,6 +672,9 @@ object CodeWithMeClientDownloader {
     }
   }
 
+  internal fun createLauncherDataForMacOs(app: Path) =
+    JetBrainsClientLauncherData(app, listOf("open", "-n", "-W", "-a", app.pathString, "--args"))
+
   /**
    * Launches client and returns process's lifetime (which will be terminated on process exit)
    */
@@ -623,7 +683,7 @@ object CodeWithMeClientDownloader {
     url: String,
     extractedJetBrainsClientData: ExtractedJetBrainsClientData
   ): Lifetime {
-    val (executable, fullLauncherCmd) = findLauncherUnderCwmGuestRoot(extractedJetBrainsClientData.clientDir)
+    val launcherData = findLauncherUnderCwmGuestRoot(extractedJetBrainsClientData.clientDir)
 
     if (extractedJetBrainsClientData.jreDir != null) {
       createSymlinkToJdkFromGuest(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir)
@@ -636,24 +696,42 @@ object CodeWithMeClientDownloader {
       }
     }
 
-    val parameters =  listOf("thinClient", url)
+    return runJetBrainsClientProcess(launcherData, 
+                                     workingDirectory = extractedJetBrainsClientData.clientDir,
+                                     clientVersion = extractedJetBrainsClientData.version, 
+                                     url, lifetime)
+  }
+
+  internal fun runJetBrainsClientProcess(launcherData: JetBrainsClientLauncherData,
+                                         workingDirectory: Path,
+                                         clientVersion: String,
+                                         url: String,
+                                         lifetime: Lifetime): Lifetime {
+    val parameters = listOf("thinClient", url)
     val processLifetimeDef = lifetime.createNested()
 
     val vmOptionsFile = if (SystemInfoRt.isMac) {
       // macOS stores vmoptions file inside .app file – we can't edit it
       Paths.get(
-        PathManager.getDefaultConfigPathFor(PlatformUtils.JETBRAINS_CLIENT_PREFIX + extractedJetBrainsClientData.version),
+        PathManager.getDefaultConfigPathFor(PlatformUtils.JETBRAINS_CLIENT_PREFIX + clientVersion),
         "jetbrains_client.vmoptions"
       )
-    } else if (SystemInfoRt.isWindows) executable.resolveSibling("jetbrains_client64.exe.vmoptions")
-    else executable.resolveSibling("jetbrains_client64.vmoptions")
+    } else if (SystemInfoRt.isWindows) launcherData.executable.resolveSibling("jetbrains_client64.exe.vmoptions")
+    else launcherData.executable.resolveSibling("jetbrains_client64.vmoptions")
     service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile, URI(url))
 
+    val clientEnvironment = mutableMapOf<String, String>()
+    val separateConfigOption = ClientVersionUtil.computeSeparateConfigEnvVariableValue(clientVersion)
+    if (separateConfigOption != null) {
+      clientEnvironment["JBC_SEPARATE_CONFIG"] = separateConfigOption
+    }
+
     if (SystemInfo.isWindows) {
-      val hProcess = WindowsFileUtil.windowsShellExecute(
-        executable = executable,
-        workingDirectory = extractedJetBrainsClientData.clientDir,
-        parameters = parameters
+      val hProcess = WindowsFileUtil.windowsCreateProcess(
+        executable = launcherData.executable,
+        workingDirectory = workingDirectory,
+        parameters = parameters,
+        environment = clientEnvironment
       )
 
       @Suppress("LocalVariableName")
@@ -689,7 +767,9 @@ object CodeWithMeClientDownloader {
       var lastProcessStartTime: Long
 
       fun doRunProcess() {
-        val commandLine = GeneralCommandLine(fullLauncherCmd + parameters)
+        val commandLine = GeneralCommandLine(launcherData.commandLine + parameters)
+          .withEnvironment(clientEnvironment)
+
         config.modifyClientCommandLine(commandLine)
 
         LOG.info("Starting JetBrains Client process (attempts left: $attemptCount): ${commandLine}")
@@ -717,7 +797,7 @@ object CodeWithMeClientDownloader {
               }
             } else {
               // if process exited abnormally but took longer than 10 seconds, it's likely to be an issue with connection instead of Mac-specific bug
-              if ((System.currentTimeMillis() - lastProcessStartTime) < 10_000 ) {
+              if ((System.currentTimeMillis() - lastProcessStartTime) < 10_000 && lifetime.isAlive) {
                 if (attemptCount > 0) {
                   LOG.info("Previous attempt to start guest process failed, will try again in one second")
                   EdtScheduledExecutorService.getInstance().schedule({ doRunProcess() }, ModalityState.any(), 1, TimeUnit.SECONDS)
@@ -885,3 +965,8 @@ object CodeWithMeClientDownloader {
     }
   }
 }
+
+data class JetBrainsClientLauncherData(
+  val executable: Path,
+  val commandLine: List<String>
+)

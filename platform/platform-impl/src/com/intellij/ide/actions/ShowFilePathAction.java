@@ -3,12 +3,12 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -43,7 +43,7 @@ import java.util.function.Consumer;
  *
  * @see RevealFileAction
  */
-public class ShowFilePathAction extends DumbAwareAction {
+public final class ShowFilePathAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Disabled {
   @Override
   public void update(@NotNull AnActionEvent e) {
     var visible = RevealFileAction.isSupported();
@@ -65,7 +65,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     var file = getFile(e);
     if (file != null) {
-      var asyncContext = Utils.wrapToAsyncDataContext(e.getDataContext());
+      var asyncContext = Utils.createAsyncDataContext(e.getDataContext());
       show(file, popup -> popup.showInBestPositionFor(asyncContext));
     }
   }
@@ -107,7 +107,7 @@ public class ShowFilePathAction extends DumbAwareAction {
         if (vFile.isDirectory()) return AllIcons.Nodes.Folder;
         return FileTypeManager.getInstance().getFileTypeByFile(vFile).getIcon();
       }))
-      .finishOnUiThread(ModalityState.NON_MODAL, icons -> action.accept(createPopup(files, icons)))
+      .finishOnUiThread(ModalityState.nonModal(), icons -> action.accept(createPopup(files, icons)))
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
@@ -138,9 +138,6 @@ public class ShowFilePathAction extends DumbAwareAction {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link RevealFileAction#FILE_SELECTING_LISTENER} */
-  @Deprecated(forRemoval = true)
-  public static final NotificationListener FILE_SELECTING_LISTENER = RevealFileAction.FILE_SELECTING_LISTENER;
 
   /** @deprecated use {@link RevealFileAction#getFileManagerName} */
   @Deprecated(forRemoval = true)
@@ -152,12 +149,6 @@ public class ShowFilePathAction extends DumbAwareAction {
   @Deprecated(forRemoval = true)
   public static void openFile(@NotNull File file) {
     RevealFileAction.openFile(file);
-  }
-
-  /** @deprecated use {@link RevealFileAction#openDirectory}  */
-  @Deprecated(forRemoval = true)
-  public static void openDirectory(@NotNull File directory) {
-    RevealFileAction.openDirectory(directory);
   }
 
   /** @deprecated use {@link RevealFileAction#findLocalFile} */

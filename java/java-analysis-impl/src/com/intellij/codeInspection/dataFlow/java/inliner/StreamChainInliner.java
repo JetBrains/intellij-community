@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
@@ -56,6 +42,8 @@ public class StreamChainInliner implements CallInliner {
       "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet"};
   private static final CallMatcher TERMINAL_CALL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, TERMINALS);
 
+  private static final CallMatcher FOR_COLLECTION_TERMINAL = instanceCall(JAVA_LANG_ITERABLE, "forEach").parameterCount(1);
+  private static final CallMatcher COLLECTION_SOURCE = anyOf(staticCall(JAVA_UTIL_LIST, "of"), staticCall(JAVA_UTIL_ARRAYS, "asList"));
   private static final CallMatcher FOR_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "forEach", "forEachOrdered").parameterCount(1);
   private static final CallMatcher MATCH_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "anyMatch", "allMatch",
                                                                  "noneMatch").parameterCount(1);
@@ -824,6 +812,14 @@ public class StreamChainInliner implements CallInliner {
 
   @Override
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
+    if (FOR_COLLECTION_TERMINAL.test(call)) {
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (qualifierCall == null || !InheritanceUtil.isInheritor(qualifierCall.getType(), JAVA_UTIL_COLLECTION)) return false;
+      Step terminalStep = new LambdaTerminalStep(call);
+      startStreamFromCollection(builder, terminalStep, qualifierCall);
+      terminalStep.pushResult(builder);
+      return true;
+    }
     if (TERMINAL_CALL.test(call)) {
       return inlineCompleteStream(builder, call);
     }
@@ -916,35 +912,90 @@ public class StreamChainInliner implements CallInliner {
         .chain(firstStep::iteration);
       return;
     }
-    PsiExpression qualifierExpression = null;
-    SpecialField sizeField = null;
     if (array) {
-      qualifierExpression = sourceCall.getArgumentList().getExpressions()[0];
-      sizeField = SpecialField.ARRAY_LENGTH;
+      PsiExpression arrayExpression = sourceCall.getArgumentList().getExpressions()[0];
+      startStreamFromContainer(builder, firstStep, arrayExpression, SpecialField.ARRAY_LENGTH, inType);
+      return;
     }
     else if (COLLECTION_STREAM.test(sourceCall)) {
-      qualifierExpression = sourceCall.getMethodExpression().getQualifierExpression();
-      sizeField = SpecialField.COLLECTION_SIZE;
-    }
-    if (qualifierExpression != null) {
-      builder.pushExpression(qualifierExpression)
-        .chain(firstStep::before)
-        .unwrap(sizeField)
-        .push(DfTypes.intValue(0))
-        .ifCondition(RelationType.GT);
-    } else {
-      if (!originalQualifierAlreadyChecked) {
-        builder
-          .pushExpression(originalQualifier)
-          .chain(b -> checkAndMarkConsumed(b, originalQualifier))
-          .pop();
+      PsiExpression collectionExpression = sourceCall.getMethodExpression().getQualifierExpression();
+      if (collectionExpression != null) {
+        startStreamFromCollection(builder, firstStep, collectionExpression);
+        return;
       }
+    }
+    if (OPTIONAL_STREAM.test(sourceCall)) {
+      PsiExpression qualifierExpression = sourceCall.getMethodExpression().getQualifierExpression();
+      if (qualifierExpression != null) {
+        PsiType optValueType = PsiUtil.substituteTypeParameter(qualifierExpression.getType(), JAVA_UTIL_OPTIONAL, 0, false);
+        if (optValueType != null) {
+          builder
+            .pushForWrite(builder.createTempVariable(qualifierExpression.getType()))// optValueVar
+            .pushExpression(qualifierExpression) //optValueVar optVar
+            .unwrap(SpecialField.OPTIONAL_VALUE) //optValueVar optVar.value
+            .assign() //optValueVar
+            .dup() //optValueVar optValueVar
+            .chain(firstStep::before)
+            .ifNull() //optValueVar
+            // skip loop at all
+              .pop() //..
+            .elseBranch() //optValueVar
+              .chain(firstStep::iteration)
+            .end();
+          return;
+        }
+      }
+    }
+    startStreamUnknown(builder, firstStep, originalQualifier, originalQualifierAlreadyChecked, inType);
+  }
+
+  private static void startStreamFromCollection(CFGBuilder builder, Step firstStep, PsiExpression collectionExpression) {
+    PsiType elementType = PsiUtil.substituteTypeParameter(collectionExpression.getType(), JAVA_UTIL_COLLECTION, 0, false);
+    if (collectionExpression instanceof PsiMethodCallExpression call &&
+        COLLECTION_SOURCE.matches(call)) {
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length == 1 && !MethodCallUtils.isVarArgCall(call)) {
+        startStreamFromContainer(builder, firstStep, args[0], SpecialField.ARRAY_LENGTH, elementType);
+      } else {
+        builder
+          .chain(firstStep::before)
+          .loopOver(args, builder.createTempVariable(elementType), elementType)
+          .chain(firstStep::iteration).end();
+      }
+    } else {
+      startStreamFromContainer(builder, firstStep, collectionExpression, SpecialField.COLLECTION_SIZE, elementType);
+    }
+  }
+
+  private static void startStreamUnknown(@NotNull CFGBuilder builder,
+                                         @NotNull Step firstStep,
+                                         @NotNull PsiExpression originalQualifier,
+                                         boolean originalQualifierAlreadyChecked,
+                                         @Nullable PsiType inType) {
+    if (!originalQualifierAlreadyChecked) {
       builder
-        .chain(firstStep::before)
-        .pushUnknown()
-        .ifConditionIs(true);
+        .pushExpression(originalQualifier)
+        .chain(b -> checkAndMarkConsumed(b, originalQualifier))
+        .pop();
     }
     builder
+      .chain(firstStep::before)
+      .pushUnknown()
+      .ifConditionIs(true)
+      .chain(b -> makeMainLoop(b, firstStep, inType))
+      .end();
+  }
+
+  private static void startStreamFromContainer(@NotNull CFGBuilder builder,
+                                               @NotNull Step firstStep,
+                                               @NotNull PsiExpression collectionExpression,
+                                               @NotNull SpecialField sizeField,
+                                               @Nullable PsiType inType) {
+    builder.pushExpression(collectionExpression)
+      .chain(firstStep::before)
+      .unwrap(sizeField)
+      .push(DfTypes.intValue(0))
+      .ifCondition(RelationType.GT)
       .chain(b -> makeMainLoop(b, firstStep, inType))
       .end();
   }

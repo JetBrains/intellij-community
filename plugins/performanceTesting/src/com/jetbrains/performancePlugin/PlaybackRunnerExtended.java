@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackCommand;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.messages.MessageBusConnection;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.concurrent.CompletableFuture;
 
 public final class PlaybackRunnerExtended extends PlaybackRunner {
   public static final String NOTIFICATION_GROUP = "PerformancePlugin";
@@ -41,10 +41,10 @@ public final class PlaybackRunnerExtended extends PlaybackRunner {
   public void setProject(@Nullable Project project) {
     myProject = project;
 
-    if (project != null && !project.isDefault()) {
+    if (project != null && !project.isDefault() && !project.isDisposed()) {
       Disposer.register(project, () -> {
         if (project == myProject) {
-          Disposer.dispose(myOnStop);
+          Disposer.dispose(onStop);
         }
       });
     }
@@ -91,11 +91,11 @@ public final class PlaybackRunnerExtended extends PlaybackRunner {
   }
 
   @Override
-  public ActionCallback run() {
+  public CompletableFuture<?> run() {
     if (myStopped) {
       throw new IllegalStateException("PlaybackRunnerExtended can be run only once.");
     }
-    ActionCallback callback = super.run();
+    CompletableFuture<?> callback = super.run();
     RunCallbackHandler.applyPatchesToCommandCallback(myProject, callback);
     return callback;
   }

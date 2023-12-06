@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -232,7 +234,7 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
     return null;
   }
 
-  private static class ReplaceCastWithVariableFix implements LocalQuickFix {
+  private static class ReplaceCastWithVariableFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull String myText;
     private final @NotNull String myVariableName;
 
@@ -256,8 +258,7 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiTypeCastExpression typeCastExpression) {
         final PsiElement toReplace =
           typeCastExpression.getParent() instanceof PsiParenthesizedExpression ? typeCastExpression.getParent() : typeCastExpression;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ide.IdeEventQueue;
@@ -6,10 +6,10 @@ import com.intellij.ide.IdePopupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 public final class OwnerOptional {
   private static Window findOwnerByComponent(Component component) {
@@ -63,21 +63,21 @@ public final class OwnerOptional {
 
   public OwnerOptional ifDialog(Consumer<? super Dialog> consumer) {
     if (myPermanentOwner instanceof Dialog) {
-      consumer.consume((Dialog)myPermanentOwner);
+      consumer.accept((Dialog)myPermanentOwner);
     }
     return this;
   }
 
   public OwnerOptional ifNull(Consumer<? super Frame> consumer) {
     if (myPermanentOwner == null) {
-      consumer.consume(null);
+      consumer.accept(null);
     }
     return this;
   }
 
   public OwnerOptional ifWindow(Consumer<? super Window> consumer) {
     if (myPermanentOwner != null) {
-      consumer.consume(myPermanentOwner);
+      consumer.accept(myPermanentOwner);
     }
     return this;
   }
@@ -87,7 +87,7 @@ public final class OwnerOptional {
       if (myPermanentOwner instanceof IdeFrame.Child ideFrameChild) {
         myPermanentOwner = WindowManager.getInstance().getFrame(ideFrameChild.getProject());
       }
-      consumer.consume((Frame)this.myPermanentOwner);
+      consumer.accept((Frame)this.myPermanentOwner);
     }
     return this;
   }

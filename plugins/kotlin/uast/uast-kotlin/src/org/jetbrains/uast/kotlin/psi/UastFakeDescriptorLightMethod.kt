@@ -3,7 +3,10 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.psi.*
-import com.intellij.psi.impl.light.*
+import com.intellij.psi.impl.light.LightModifierList
+import com.intellij.psi.impl.light.LightParameterListBuilder
+import com.intellij.psi.impl.light.LightReferenceListBuilder
+import com.intellij.psi.impl.light.LightTypeParameterBuilder
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.classes.toLightAnnotation
@@ -16,100 +19,118 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
 import org.jetbrains.uast.kotlin.TypeOwnerKind
-import org.jetbrains.uast.kotlin.lz
 import org.jetbrains.uast.kotlin.toPsiType
 
 internal class UastFakeDescriptorLightMethod(
-    original: SimpleFunctionDescriptor,
-    containingClass: PsiClass,
+    private val originalDescriptor: SimpleFunctionDescriptor,
+    private val containingClass: PsiClass,
     context: KtElement,
-) : UastFakeDescriptorLightMethodBase<SimpleFunctionDescriptor>(original, containingClass, context) {
+) : UastFakeDescriptorLightMethodBase<SimpleFunctionDescriptor>(originalDescriptor, containingClass, context) {
 
-    private val _buildTypeParameterList by lz {
-        KotlinLightTypeParameterListBuilder(this).also { paramList ->
-            for ((i, p) in original.typeParameters.withIndex()) {
-                paramList.addParameter(
-                    object : LightTypeParameterBuilder(
-                        p.name.identifier,
-                        this,
-                        i
-                    ) {
-                        private val myExtendsList by lz {
-                            super.getExtendsList().apply {
-                                p.upperBounds.forEach { bound ->
-                                    val psiType =
-                                        bound.toPsiType(
-                                            this@UastFakeDescriptorLightMethod,
-                                            context,
-                                            PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
-                                        )
-                                    (psiType as? PsiClassType)?.let { addReference(it) }
+    private val buildTypeParameterListPart = UastLazyPart<PsiTypeParameterList>()
+    private val paramsListPart = UastLazyPart<PsiParameterList>()
+
+    private val _buildTypeParameterList: PsiTypeParameterList
+        get() = buildTypeParameterListPart.getOrBuild {
+            KotlinLightTypeParameterListBuilder(this).also { paramList ->
+                for ((i, p) in originalDescriptor.typeParameters.withIndex()) {
+                    paramList.addParameter(
+                        object : LightTypeParameterBuilder(
+                            p.name.identifier,
+                            this,
+                            i
+                        ) {
+                            private val myExtendsListPart = UastLazyPart<LightReferenceListBuilder>()
+
+                            override fun getExtendsList(): LightReferenceListBuilder {
+                                return myExtendsListPart.getOrBuild {
+                                    super.getExtendsList().apply {
+                                        for (bound in p.upperBounds) {
+                                            val psiType =
+                                                bound.toPsiType(
+                                                    this@UastFakeDescriptorLightMethod,
+                                                    this@UastFakeDescriptorLightMethod.context,
+                                                    PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
+                                                )
+                                            (psiType as? PsiClassType)?.let { addReference(it) }
+                                        }
+                                    }
                                 }
                             }
                         }
-
-                        override fun getExtendsList(): LightReferenceListBuilder = myExtendsList
-                    }
-                )
+                    )
+                }
             }
         }
-    }
 
     override fun getTypeParameterList(): PsiTypeParameterList = _buildTypeParameterList
 
-    private val paramsList: PsiParameterList by lz {
-        object : LightParameterListBuilder(containingClass.manager, containingClass.language) {
-            override fun getParent(): PsiElement = this@UastFakeDescriptorLightMethod
-            override fun getContainingFile(): PsiFile = parent.containingFile
+    private val paramsList: PsiParameterList
+        get() = paramsListPart.getOrBuild {
+            object : LightParameterListBuilder(containingClass.manager, containingClass.language) {
+                override fun getParent(): PsiElement = this@UastFakeDescriptorLightMethod
+                override fun getContainingFile(): PsiFile = parent.containingFile
 
-            init {
-                val parameterList = this
+                init {
+                    val parameterList = this
 
-                original.extensionReceiverParameter?.let { receiver ->
-                    this.addParameter(
-                        UastDescriptorLightParameterBase(
-                            "\$this\$${original.name.identifier}",
-                            receiver.type.toPsiType(
-                                this@UastFakeDescriptorLightMethod,
-                                context,
-                                PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
-                            ),
-                            parameterList,
-                            receiver
+                    originalDescriptor.extensionReceiverParameter?.let { receiver ->
+                        this.addParameter(
+                            UastDescriptorLightParameterBase(
+                                "\$this\$${originalDescriptor.name.identifier}",
+                                receiver.type.toPsiType(
+                                    this@UastFakeDescriptorLightMethod,
+                                    this@UastFakeDescriptorLightMethod.context,
+                                    PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
+                                ),
+                                parameterList,
+                                receiver
+                            )
                         )
-                    )
-                }
+                    }
 
-                for (p in original.valueParameters) {
-                    this.addParameter(
-                        UastDescriptorLightParameter(
-                            p.name.identifier,
-                            p.type.toPsiType(
-                                this@UastFakeDescriptorLightMethod,
-                                context,
-                                PsiTypeConversionConfiguration(
-                                    TypeOwnerKind.DECLARATION,
-                                    typeMappingMode = KtTypeMappingMode.VALUE_PARAMETER
-                                )
-                            ),
-                            parameterList,
-                            p
+                    for (p in originalDescriptor.valueParameters) {
+                        this.addParameter(
+                            UastDescriptorLightParameter(
+                                p.name.identifier,
+                                p.type.toPsiType(
+                                    this@UastFakeDescriptorLightMethod,
+                                    this@UastFakeDescriptorLightMethod.context,
+                                    PsiTypeConversionConfiguration(
+                                        TypeOwnerKind.DECLARATION,
+                                        typeMappingMode = KtTypeMappingMode.VALUE_PARAMETER
+                                    )
+                                ),
+                                parameterList,
+                                p
+                            )
                         )
-                    )
+                    }
+
+                    if (isSuspendFunction()) {
+                        this.addParameter(
+                            UastDescriptorLightSuspendContinuationParameter.create(
+                                this@UastFakeDescriptorLightMethod,
+                                originalDescriptor,
+                                this@UastFakeDescriptorLightMethod.context
+                            )
+                        )
+                    }
                 }
             }
         }
-    }
 
     override fun getParameterList(): PsiParameterList = paramsList
 }
 
-internal abstract class UastFakeDescriptorLightMethodBase<T: CallableMemberDescriptor>(
-    private val original: T,
+internal abstract class UastFakeDescriptorLightMethodBase<T : CallableMemberDescriptor>(
+    protected val original: T,
     containingClass: PsiClass,
-    private val context: KtElement,
+    protected val context: KtElement,
 ) : UastFakeLightMethodBase(
     containingClass.manager,
     containingClass.language,
@@ -125,11 +146,21 @@ internal abstract class UastFakeDescriptorLightMethodBase<T: CallableMemberDescr
         }
     }
 
+    private val returnTypePart = UastLazyPart<PsiType?>()
+
+    override fun isSuspendFunction(): Boolean {
+        return (original as? FunctionDescriptor)?.isSuspend == true
+    }
+
     override fun isUnitFunction(): Boolean {
         return original is FunctionDescriptor && _returnType == PsiTypes.voidType()
     }
 
     override fun computeNullability(): KtTypeNullability? {
+        if (isSuspendFunction()) {
+            // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
+            return KtTypeNullability.NULLABLE
+        }
         return when (original.returnType?.nullability()) {
             null -> null
             TypeNullability.NOT_NULL -> KtTypeNullability.NON_NULLABLE
@@ -148,16 +179,21 @@ internal abstract class UastFakeDescriptorLightMethodBase<T: CallableMemberDescr
         return original is ConstructorDescriptor
     }
 
-    private val _returnType: PsiType? by lz {
-        original.returnType?.toPsiType(
-            this,
-            context,
-            PsiTypeConversionConfiguration(
-                TypeOwnerKind.DECLARATION,
-                typeMappingMode = KtTypeMappingMode.RETURN_TYPE
+    private val _returnType: PsiType?
+        get() = returnTypePart.getOrBuild {
+            if (isSuspendFunction()) {
+                // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
+                return@getOrBuild PsiType.getJavaLangObject(context.manager, context.resolveScope)
+            }
+            original.returnType?.toPsiType(
+                this,
+                context,
+                PsiTypeConversionConfiguration(
+                    TypeOwnerKind.DECLARATION,
+                    typeMappingMode = KtTypeMappingMode.RETURN_TYPE
+                )
             )
-        )
-    }
+        }
 
     override fun getReturnType(): PsiType? {
         return _returnType
@@ -169,9 +205,7 @@ internal abstract class UastFakeDescriptorLightMethodBase<T: CallableMemberDescr
 
         other as UastFakeDescriptorLightMethodBase<*>
 
-        if (original != other.original) return false
-
-        return true
+        return original == other.original
     }
 
     override fun hashCode(): Int = original.hashCode()

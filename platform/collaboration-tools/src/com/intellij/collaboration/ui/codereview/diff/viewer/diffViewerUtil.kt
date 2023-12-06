@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.diff.viewer
 
-import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
+import com.intellij.collaboration.ui.codereview.editor.EditorMapped
+import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -9,101 +12,100 @@ import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.Side
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JComponent
 
 /**
- * Subscribe to [vmsFlow] and show components created via [componentFactory] as inlays on proper lines in viewer editors
+ * Subscribe to [vmsFlow] and show inlays with renderers from [rendererFactory] on proper lines in viewer editors
  *
  * @param VM - inlay viemodel
  */
 @ApiStatus.Experimental
-fun <VM : Any> DiffViewerBase.controlInlaysIn(
+fun <VM : DiffMapped> DiffViewerBase.controlInlaysIn(
   cs: CoroutineScope,
-  vmsFlow: Flow<Collection<DiffMappedValue<VM>>>,
+  vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  componentFactory: (CoroutineScope, VM) -> JComponent
+  rendererFactory: CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
 ) {
   when (this) {
-    is SimpleOnesideDiffViewer -> {
-      controlInlaysIn(cs, vmsFlow, vmKeyExtractor, componentFactory)
-    }
-    is UnifiedDiffViewer -> {
-      controlInlaysIn(cs, vmsFlow, vmKeyExtractor, componentFactory)
-    }
-    is TwosideTextDiffViewer -> {
-      controlInlaysIn(cs, vmsFlow, vmKeyExtractor, componentFactory)
-    }
+    is SimpleOnesideDiffViewer -> controlInlaysIn(cs, vmsFlow, vmKeyExtractor, rendererFactory)
+    is UnifiedDiffViewer -> controlInlaysIn(cs, vmsFlow, vmKeyExtractor, rendererFactory)
+    is TwosideTextDiffViewer -> controlInlaysIn(cs, vmsFlow, vmKeyExtractor, rendererFactory)
     else -> return
   }
 }
 
 
 @ApiStatus.Experimental
-private fun <VM : Any> SimpleOnesideDiffViewer.controlInlaysIn(
+private fun <VM : DiffMapped> SimpleOnesideDiffViewer.controlInlaysIn(
   cs: CoroutineScope,
-  vmsFlow: Flow<Collection<DiffMappedValue<VM>>>,
+  vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  componentFactory: (CoroutineScope, VM) -> JComponent
+  rendererFactory: CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
 ) {
   val viewerReady = viewerReadyFlow()
-  val vmsByLine = combine(viewerReady, vmsFlow) { ready, vms ->
+  val vmsForEditor = combine(viewerReady, vmsFlow) { ready, vms ->
     if (ready) vms else emptyList()
   }.map { vms ->
-    vms
-      .filter { it.side == side }
-      .groupBy({ it.lineIndex }, { it.value })
+    vms.map { vm ->
+      Wrapper(vm) { loc ->
+        loc.takeIf { it.first == side }?.second
+      }
+    }
   }
-  editor.controlInlaysIn(cs, vmsByLine, vmKeyExtractor, componentFactory)
+  editor.controlInlaysIn(cs, vmsForEditor, { vmKeyExtractor(it.vm) }, { rendererFactory(it.vm) })
 }
 
-private fun <VM : Any> UnifiedDiffViewer.controlInlaysIn(
+private fun <VM : DiffMapped> UnifiedDiffViewer.controlInlaysIn(
   cs: CoroutineScope,
-  vmsFlow: Flow<Collection<DiffMappedValue<VM>>>,
+  vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  componentFactory: (CoroutineScope, VM) -> JComponent
+  rendererFactory: CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
 ) {
   val viewerReady = viewerReadyFlow { isContentGood }
-  val vmsByLine = combine(viewerReady, vmsFlow) { ready, vms ->
+  val vmsForEditor = combine(viewerReady, vmsFlow) { ready, vms ->
     if (ready) vms else emptyList()
   }.map { vms ->
-    vms
-      .groupBy({ transferLineToOneside(it.side, it.lineIndex) }, { it.value })
-      .filterKeys { it >= 0 }
+    vms.map { vm ->
+      Wrapper(vm) { loc ->
+        transferLineToOneside(loc.first, loc.second).takeIf { it >= 0 }
+      }
+    }
   }
-  editor.controlInlaysIn(cs, vmsByLine, vmKeyExtractor, componentFactory)
+  editor.controlInlaysIn(cs, vmsForEditor, { vmKeyExtractor(it.vm) }, { rendererFactory(it.vm) })
 }
 
-private fun <VM : Any> TwosideTextDiffViewer.controlInlaysIn(
+private fun <VM : DiffMapped> TwosideTextDiffViewer.controlInlaysIn(
   cs: CoroutineScope,
-  vmsFlow: Flow<Collection<DiffMappedValue<VM>>>,
+  vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  componentFactory: (CoroutineScope, VM) -> JComponent
+  rendererFactory: CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
 ) {
   val viewerReady = viewerReadyFlow()
 
-  val vmsByLine1 = combine(viewerReady, vmsFlow) { ready, vms ->
+  val vmsForEditor1 = combine(viewerReady, vmsFlow) { ready, vms ->
     if (ready) vms else emptyList()
   }.map { vms ->
-    vms
-      .filter { it.side == Side.LEFT }
-      .groupBy({ it.lineIndex }, { it.value })
+    vms.map { vm ->
+      Wrapper(vm) { loc ->
+        loc.takeIf { it.first == Side.LEFT }?.second
+      }
+    }
   }
-  editor1.controlInlaysIn(cs, vmsByLine1, vmKeyExtractor, componentFactory)
+  editor1.controlInlaysIn(cs, vmsForEditor1, { vmKeyExtractor(it.vm) }, { rendererFactory(it.vm) })
 
-  val vmsByLine2 = combine(viewerReady, vmsFlow) { ready, vms ->
+  val vmsForEditor2 = combine(viewerReady, vmsFlow) { ready, vms ->
     if (ready) vms else emptyList()
   }.map { vms ->
-    vms
-      .filter { it.side == Side.RIGHT }
-      .groupBy({ it.lineIndex }, { it.value })
+    vms.map { vm ->
+      Wrapper(vm) { loc ->
+        loc.takeIf { it.first == Side.RIGHT }?.second
+      }
+    }
   }
-  editor2.controlInlaysIn(cs, vmsByLine2, vmKeyExtractor, componentFactory)
+  editor2.controlInlaysIn(cs, vmsForEditor2, { vmKeyExtractor(it.vm) }, { rendererFactory(it.vm) })
 }
 
 private fun <V : DiffViewerBase> V.viewerReadyFlow(
@@ -125,4 +127,14 @@ private fun <V : DiffViewerBase> V.viewerReadyFlow(
   awaitClose {
     removeListener(listener)
   }
+}.flowOn(Dispatchers.Main)
+
+interface DiffMapped {
+  val location: Flow<DiffLineLocation?>
+  val isVisible: Flow<Boolean>
+}
+
+private class Wrapper<VM : DiffMapped>(val vm: VM, val mapper: (DiffLineLocation) -> Int?) : EditorMapped {
+  override val line: Flow<Int?> = vm.location.map { it?.let(mapper) }
+  override val isVisible: Flow<Boolean> = vm.isVisible
 }

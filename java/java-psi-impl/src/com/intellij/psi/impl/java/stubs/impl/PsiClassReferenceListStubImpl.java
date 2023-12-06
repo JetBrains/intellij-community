@@ -21,7 +21,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   private volatile PsiClassType [] myTypes;
 
   public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, String @NotNull [] names) {
-    this(type, parent, ContainerUtil.map2Array(names, TypeInfo.class, TypeInfo::new));
+    this(type, parent, ContainerUtil.map2Array(names, TypeInfo.class, text -> TypeInfo.fromString(text)));
   }
 
   public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, 
@@ -29,9 +29,9 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     super(parent, type);
     for (TypeInfo info : infos) {
       if (info == null) throw new IllegalArgumentException();
-      if (info.text == null) throw new IllegalArgumentException();
+      if (info.text() == null) throw new IllegalArgumentException();
     }
-    myInfos = infos;
+    myInfos = infos.length == 0 ? TypeInfo.EMPTY_ARRAY : infos;
   }
 
   @Override
@@ -40,12 +40,12 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     if (types == null) {
       myTypes = types = createTypes();
     }
-    return types.clone();
+    return types.length == 0 ? PsiClassType.EMPTY_ARRAY : types.clone();
   }
   
   private boolean shouldSkipSoleObject() {
     final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
-    return compiled && myInfos.length == 1 && myInfos[0].text.equals(CommonClassNames.JAVA_LANG_OBJECT) &&
+    return compiled && myInfos.length == 1 && myInfos[0].getKind() == TypeInfo.TypeKind.JAVA_LANG_OBJECT &&
            myInfos[0].getTypeAnnotations().isEmpty();
   }
 
@@ -58,7 +58,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       for (int i = 0; i < types.length; i++) {
         TypeInfo info = myInfos[i];
         TypeAnnotationContainer annotations = info.getTypeAnnotations();
-        ClsJavaCodeReferenceElementImpl reference = new ClsJavaCodeReferenceElementImpl(getPsi(), info.text, annotations);
+        ClsJavaCodeReferenceElementImpl reference = new ClsJavaCodeReferenceElementImpl(getPsi(), info.text(), annotations);
         types[i] = new PsiClassReferenceType(reference, null).annotate(annotations.getProvider(reference));
       }
     }
@@ -69,7 +69,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       final PsiReferenceList psi = getPsi();
       for (int i = 0; i < types.length; i++) {
         try {
-          final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(myInfos[i].text, psi);
+          final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(myInfos[i].text(), psi);
           ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.Kind.CLASS_NAME_KIND);
           types[i] = factory.createType(ref);
         }
@@ -94,7 +94,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   @Override
   public String @NotNull [] getReferencedNames() {
     if (myInfos.length == 0 || shouldSkipSoleObject()) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return ContainerUtil.map2Array(myInfos, String.class, info -> info.text);
+    return ContainerUtil.map2Array(myInfos, String.class, info -> info.text());
   }
 
   @Override

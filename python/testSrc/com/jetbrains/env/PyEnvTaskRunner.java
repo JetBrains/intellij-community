@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.net.URL;
 import java.util.*;
 
 public class PyEnvTaskRunner {
@@ -57,13 +56,10 @@ public class PyEnvTaskRunner {
 
     final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiredByTest));
 
-    for (String root : myRoots) {
-
-      List<String> envTags = PyEnvTestCase.loadEnvTags(root);
-      final boolean suitableForTask = isSuitableForTask(envTags, requiredTags);
+    for (String root : getMinimalSetOfTestEnvs(requiredTags)) {
       final boolean shouldRun = shouldRun(root, testTask);
-      if (!suitableForTask || !shouldRun) {
-        LOG.warn(String.format("Skipping %s (compatible with tags: %s, should run:%s)", root, suitableForTask, shouldRun));
+      if (!shouldRun) {
+        LOG.warn(String.format("Skipping %s (should run: %s)", root, shouldRun));
         continue;
       }
 
@@ -139,12 +135,12 @@ public class PyEnvTaskRunner {
     }
 
     if (!wasExecuted) {
-      throw new RuntimeException("test" +
+      throw new RuntimeException("test " +
                                  testName +
                                  " was not executed.\n" +
                                  joinStrings(myRoots, "All roots: ") +
                                  "\n" +
-                                 joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
+                                 joinStrings(requiredTags, "Required tags in tags.txt in root: "));
     }
   }
 
@@ -182,8 +178,50 @@ public class PyEnvTaskRunner {
     return "local";
   }
 
-  private static boolean isSuitableForTask(List<String> availableTags, @NotNull final Set<String> requiredTags) {
-    return isSuitableForTags(availableTags, requiredTags);
+  /**
+   * Given the path to a test environment root folder, collects and provides information about this environment.
+   * <p>
+   *  Instances of this class are ordered by the number of tags they provide. Typically, fewer tags
+   *  mean fewer packages installed inside the environment. If two environments have the same Python version
+   *  and both are suitable for a test, we prefer the one with less number of packages
+   *  since it can improve performance when code inside is involved.
+   */
+  private static class EnvInfo implements Comparable<EnvInfo> {
+    @NotNull final String root;
+    @NotNull final List<String> tags;
+    @Nullable final String pythonVersion;
+
+    EnvInfo(@NotNull String root) {
+      this.root = root;
+      tags = PyEnvTestCase.loadEnvTags(root);
+      pythonVersion = ContainerUtil.find(tags, tag -> tag.matches("^python\\d\\.\\d+$"));
+    }
+
+    @Override
+    public int compareTo(@NotNull PyEnvTaskRunner.EnvInfo o) {
+      return Integer.compare(tags.size(), o.tags.size());
+    }
+  }
+
+  private @NotNull List<String> getMinimalSetOfTestEnvs(@NotNull Set<String> requiredTags) {
+    var pq = new PriorityQueue<>(ContainerUtil.map(myRoots, root -> new EnvInfo(root)));
+    var addedPythonVersions = new HashSet<String>();
+    var result = new ArrayList<String>();
+    while (!pq.isEmpty()) {
+      var envInfo = pq.poll();
+      if (isSuitableForTags(envInfo.tags, requiredTags)) {
+        if (envInfo.pythonVersion == null) {
+          result.add(envInfo.root);
+        }
+        else {
+          if (!addedPythonVersions.contains(envInfo.pythonVersion)) {
+            addedPythonVersions.add(envInfo.pythonVersion);
+            result.add(envInfo.root);
+          }
+        }
+      }
+    }
+    return result;
   }
 
   public static boolean isSuitableForTags(List<String> envTags, Set<String> taskTags) {

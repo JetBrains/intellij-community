@@ -39,7 +39,6 @@ import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import com.jetbrains.performancePlugin.utils.ResultsToFileProcessor;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -54,10 +53,17 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 
+/**
+ * Command runs code inspection using custom tool.
+ * <p>
+ * Syntax: %InspectCodeEx [parameters]
+ * Example: %InspectCodeEx -directory app -toolShortName RubyResolve
+ */
 public class InspectionCommandEx extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "InspectCodeEx";
   private static final Logger LOGGER = Logger.getInstance(InspectionCommandEx.class);
@@ -79,7 +85,8 @@ public class InspectionCommandEx extends AbstractCommand {
     if (StringUtil.isNotEmpty(myOptions.downloadFileUrl)) {
       if (StringUtil.isEmpty(myOptions.toolShortName)) {
         LOGGER.error("myOptions.toolShortName cannot be null if you want to download file for test");
-      } else {
+      }
+      else {
         downloadTestRequiredFile(myOptions.toolShortName, myOptions.downloadFileUrl);
       }
     }
@@ -146,8 +153,8 @@ public class InspectionCommandEx extends AbstractCommand {
             final InspectionResultsView view = getView();
 
             if (view != null) {
-              ExportToXMLAction.Companion.dumpToXml(view.getCurrentProfile(), view.getTree(), view.getProject(),
-                                                    view.getGlobalInspectionContext(), tempDirectory.toPath());
+              ExportToXMLAction.Util.dumpToXml(view.getCurrentProfile(), view.getTree(), view.getProject(),
+                                               view.getGlobalInspectionContext(), tempDirectory.toPath());
 
               File[] files = tempDirectory.listFiles();
               if (files != null) {
@@ -166,7 +173,7 @@ public class InspectionCommandEx extends AbstractCommand {
                   Path path = file.toPath();
                   context.message(path.toString(), getLine());
                   long warningCount;
-                  try(Stream<String> lines = Files.lines(path).filter(line -> line.contains("<problem>"))) {
+                  try (Stream<String> lines = Files.lines(path).filter(line -> line.contains("<problem>"))) {
                     warningCount = lines.count();
                   }
                   if (ApplicationManagerEx.isInIntegrationTest()) {
@@ -265,12 +272,13 @@ public class InspectionCommandEx extends AbstractCommand {
   private static String buildIdentifier(@NotNull final String inspectionResultFilename,
                                         final String @Nullable [] inspectionTrueFields,
                                         @NotNull Project project) {
-    return StreamEx.of(project.getName(),
-                       StringUtil.trimExtensions(inspectionResultFilename),
-                       ArrayUtil.isEmpty(inspectionTrueFields) ? null : StringUtil.join(inspectionTrueFields, "-"),
-                       "warning-count")
+
+    return Stream.of(project.getName(),
+                     StringUtil.trimExtensions(inspectionResultFilename),
+                     ArrayUtil.isEmpty(inspectionTrueFields) ? null : StringUtil.join(inspectionTrueFields, "-"),
+                     "warning-count")
       .filter(nonNull())
-      .joining("-");
+      .collect(Collectors.joining("-"));
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

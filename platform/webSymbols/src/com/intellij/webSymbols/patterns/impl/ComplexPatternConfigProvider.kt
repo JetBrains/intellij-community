@@ -5,12 +5,13 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
 internal interface ComplexPatternConfigProvider {
 
   fun getPatterns(): List<WebSymbolsPattern>
 
-  fun getOptions(params: MatchParameters, scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions
+  fun getOptions(queryExecutor: WebSymbolsQueryExecutor, scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions
 
   val isStaticAndRequired: Boolean
 

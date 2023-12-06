@@ -47,7 +47,7 @@ interface IdePlatformKindResolution {
     ): PackageFragmentProvider? = null
 
     companion object : ApplicationExtensionDescriptor<IdePlatformKindResolution>(
-        "org.jetbrains.kotlin.idePlatformKindResolution", IdePlatformKindResolution::class.java
+        IDE_PLATFORM_KIND_RESOLUTION_EXTENSION_POINT_NAME, IdePlatformKindResolution::class.java
     ) {
         private val CACHED_RESOLUTION_SUPPORT by lazy {
             val allPlatformKinds = IdePlatformKind.ALL_KINDS
@@ -70,6 +70,8 @@ interface IdePlatformKindResolution {
         }
     }
 }
+
+const val IDE_PLATFORM_KIND_RESOLUTION_EXTENSION_POINT_NAME = "org.jetbrains.kotlin.idePlatformKindResolution"
 
 val IdePlatformKind.resolution: IdePlatformKindResolution
     get() = IdePlatformKindResolution.getResolution(this)

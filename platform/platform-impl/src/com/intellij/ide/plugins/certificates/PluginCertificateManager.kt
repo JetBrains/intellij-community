@@ -11,14 +11,15 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.net.ssl.*
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
 import java.awt.CardLayout
 import java.security.cert.X509Certificate
@@ -33,25 +34,23 @@ class PluginCertificateManager :
 
   private val myTree: Tree = Tree()
 
-  private val myCertificatesListPanel: JPanel = panel {
+  private val myDetailsPanel: JPanel = JPanel(CardLayout())
+
+  val myRootPanel: DialogPanel = panel {
     row {
       val decorator = ToolbarDecorator.createDecorator(myTree)
         .disableUpDownActions()
         .setAddAction { chooseFileAndAdd() }
         .setRemoveAction { removeSelectedCertificates() }
         .createPanel()
-      decorator(growX)
-    }
-  }
-  private val myDetailsPanel: JPanel = JPanel(CardLayout())
-
-  val myRootPanel = panel {
+      cell(decorator)
+        .label(IdeBundle.message("settings.trusted.certificates"), LabelPosition.TOP)
+        .align(Align.FILL)
+    }.resizableRow()
     row {
-      myCertificatesListPanel()
-    }
-    row {
-      myDetailsPanel(growX)
-    }
+      cell(myDetailsPanel)
+        .align(Align.FILL)
+    }.resizableRow()
   }
 
   private val myEmptyPanel = panel {
@@ -155,16 +154,13 @@ class PluginCertificateManager :
     myTree.emptyText.text = IdeBundle.message("settings.certificate.no.certificates")
     myTree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
     myTree.isRootVisible = false
+    myTree.visibleRowCount = 10
     myTree.addTreeSelectionListener {
       val certificate = myTreeBuilder.getFirstSelectedCertificate(true)
       if (certificate != null) {
         showCard(getCardName(certificate))
       }
     }
-
-    myCertificatesListPanel.border = IdeBorderFactory.createTitledBorder(
-      IdeBundle.message("settings.trusted.certificates"), false, JBUI.insetsTop(8)
-    ).setShowLine(false)
   }
 
   private fun chooseFileAndAdd() {
@@ -219,9 +215,10 @@ class PluginCertificateManager :
 
   private fun addCertificatePanel(certificate: X509Certificate) {
     val uniqueName = getCardName(certificate)
-    val infoPanel: JPanel = CertificateInfoPanel(certificate)
+    val infoPanel = CertificateInfoPanel(certificate)
     UIUtil.addInsets(infoPanel, UIUtil.PANEL_REGULAR_INSETS)
     val scrollPane = JBScrollPane(infoPanel)
+    scrollPane.preferredSize = JBDimension(300, 100)
     myDetailsPanel.add(scrollPane, uniqueName)
   }
 

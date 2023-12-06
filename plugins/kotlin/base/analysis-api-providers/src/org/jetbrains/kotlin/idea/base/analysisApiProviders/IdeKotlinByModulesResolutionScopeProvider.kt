@@ -3,11 +3,12 @@ package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
 import org.jetbrains.kotlin.analysis.providers.KotlinResolutionScopeProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
 import org.jetbrains.kotlin.idea.base.projectStructure.collectDependencies
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
@@ -24,12 +25,21 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
                 @OptIn(Frontend10ApiUsage::class)
                 val moduleInfo = module.moduleInfo as ModuleSourceInfo
                 val includeTests = moduleInfo is ModuleTestSourceInfo
-                return excludeIgnoredModulesByKotlinProjectModel(moduleInfo, module, includeTests)
+                val scope = excludeIgnoredModulesByKotlinProjectModel(moduleInfo, module, includeTests)
+                return if (module is KtSourceModuleByModuleInfoForOutsider) {
+                    module.adjustContentScope(scope)
+                } else {
+                    scope
+                }
             }
 
             else -> {
                 val allModules = buildList {
-                    add(module)
+                    if (module is KtLibrarySourceModule) {
+                        add(module.binaryLibrary)
+                    } else {
+                        add(module)
+                    }
                     addAll(module.allDirectDependencies())
                 }
                 GlobalSearchScope.union(allModules.map { it.contentScope })

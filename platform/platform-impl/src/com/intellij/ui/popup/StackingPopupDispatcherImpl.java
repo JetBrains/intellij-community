@@ -6,8 +6,8 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -131,14 +132,9 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
           needStopFurtherEventProcessing = true;
         }
         popup.cancel(mouseEvent);
-        JComponent clickSource = popup.getClickSource();
-        Component target = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-        if (clickSource != null && SwingUtilities.isDescendingFrom(target, clickSource)) {
-          needStopFurtherEventProcessing = true;
-        }
       }
 
-      if (myStack.isEmpty()) {
+      if (myStack.isEmpty() || needStopFurtherEventProcessing) {
         return needStopFurtherEventProcessing;
       }
 
@@ -178,14 +174,12 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
   }
 
   @Override
-  @Nullable
-  public Component getComponent() {
+  public @Nullable Component getComponent() {
     return myStack.isEmpty() || myStack.peek().isDisposed() ? null : myStack.peek().getContent();
   }
 
-  @NotNull
   @Override
-  public Stream<JBPopup> getPopupStream() {
+  public @NotNull Stream<JBPopup> getPopupStream() {
     return myStack.stream();
   }
 
@@ -263,10 +257,14 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
     if (popup.isDisposed()) {
       return false;
     }
-    if (mouseEvent.getButton() != MouseEvent.BUTTON1) { // on right mouse in most cases we can customize corresponding toolbar
+    int modifiers = mouseEvent.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK |
+                                                   InputEvent.CTRL_DOWN_MASK |
+                                                   InputEvent.ALT_DOWN_MASK |
+                                                   InputEvent.META_DOWN_MASK);
+    if (mouseEvent.getButton() != MouseEvent.BUTTON1 || modifiers != 0) { // on right mouse in most cases we can customize corresponding toolbar
       return false;
     }
-    Component toggleButton = PopupImplUtil.getPopupToggleButton(popup);
+    Component toggleButton = PopupUtil.getPopupToggleComponent(popup);
     Component c = mouseEvent.getComponent();
     if (toggleButton == null || c == null) {
       return false;

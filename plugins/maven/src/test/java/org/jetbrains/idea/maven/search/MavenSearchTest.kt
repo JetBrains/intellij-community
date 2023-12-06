@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.search
 
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.maven.testFramework.MavenImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,10 +11,14 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.runBlocking
+import org.junit.Test
 
-class MavenSearchTest : MavenImportingTestCase() {
+class MavenSearchTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true
 
-  fun `test searching POM files by module name`() {
+  @Test
+  fun `test searching POM files by module name`() = runBlocking {
     createProjectPom("""<groupId>test</groupId>
                      <artifactId>p1</artifactId>
                      <packaging>pom</packaging>
@@ -41,7 +45,7 @@ class MavenSearchTest : MavenImportingTestCase() {
                     <groupId>test</groupId>
                     <artifactId>module2</artifactId>
                     <version>1</version>""")
-    importProject()
+    importProjectAsync()
 
     val m1Psi = PsiManager.getInstance(myProject).findFile(m1File)
     val m2Psi = PsiManager.getInstance(myProject).findFile(m2File)

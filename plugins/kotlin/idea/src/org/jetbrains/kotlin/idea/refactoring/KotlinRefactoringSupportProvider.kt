@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.Kotlin
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinIntroducePropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeParameter.KotlinIntroduceTypeParameterHandler
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHandler
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownHandler
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.canDeleteElement
@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.KtElement
 class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun isSafeDeleteAvailable(element: PsiElement) = element.canDeleteElement()
 
-    override fun getIntroduceVariableHandler() = KotlinIntroduceVariableHandler
+    override fun getIntroduceVariableHandler() = K1IntroduceVariableHandler
 
     override fun getIntroduceParameterHandler() = KotlinIntroduceParameterHandler()
 

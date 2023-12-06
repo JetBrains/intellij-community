@@ -8,6 +8,7 @@ object J {
         println(l)
         println(f)
         println(d)
+
         if (obj is Boolean) {
             println("Boolean: " + obj)
         } else if (obj is Char) {

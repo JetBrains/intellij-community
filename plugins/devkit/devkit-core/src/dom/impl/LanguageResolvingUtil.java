@@ -39,7 +39,6 @@ import org.jetbrains.uast.*;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
@@ -364,8 +363,7 @@ public final class LanguageResolvingUtil {
       this.type = clazz instanceof PsiAnonymousClass
                   ? ((PsiAnonymousClass)clazz).getBaseClassReference().getQualifiedName()
                   : clazz.getQualifiedName();
-      this.icon = IconManager.getInstance().createDeferredIcon(EmptyIcon.ICON_16, iconSupplier,
-                                                               (Function<Supplier<? extends Icon>, Icon>)supplier -> supplier.get());
+      this.icon = IconManager.getInstance().createDeferredIcon(EmptyIcon.ICON_16, iconSupplier, supplier -> supplier.get());
       this.displayName = displayName;
     }
 

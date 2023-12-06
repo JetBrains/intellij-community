@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -6,18 +6,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
-import com.intellij.vcs.log.data.index.IndexDiagnostic.getFirstCommits
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.data.index.IndexDiagnostic.pickCommits
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
 import java.util.*
@@ -55,12 +55,10 @@ abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.Actio
     val report = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
       val detailsList = logManager.dataManager.commitDetailsGetter.getCommitDetails(commitIds)
       return@ThrowableComputable dataGetter.getDiffFor(commitIds, detailsList)
-    }, VcsLogBundle.message("vcs.log.index.diagnostic.progress.title"), false, project)
+    }, VcsLogBundle.message("vcs.log.index.diagnostic.progress.title"), true, project)
     if (report.isBlank()) {
-      VcsBalloonProblemNotifier.showOverVersionControlView(project,
-                                                           VcsLogBundle.message("vcs.log.index.diagnostic.success.message",
-                                                                                commitIds.size),
-                                                           MessageType.INFO)
+      VcsNotifier.getInstance(project).notifyInfo(null, "", VcsLogBundle.message("vcs.log.index.diagnostic.success.message",
+                                                                                 commitIds.size))
       return
     }
 
@@ -93,9 +91,8 @@ class CheckSelectedCommits :
 
     val selectedIndexedCommits = selectedCommits.filter { vcsLogData.index.isIndexed(it) }
     if (selectedIndexedCommits.isEmpty() && reportNotIndexed) {
-      VcsBalloonProblemNotifier.showOverVersionControlView(vcsLogData.project,
-                                                           VcsLogBundle.message("vcs.log.index.diagnostic.selected.non.indexed.warning.message"),
-                                                           MessageType.WARNING)
+      VcsNotifier.getInstance(vcsLogData.project).notifyWarning(null, "",
+                                                                VcsLogBundle.message("vcs.log.index.diagnostic.selected.non.indexed.warning.message"))
     }
     return selectedIndexedCommits
   }
@@ -108,7 +105,7 @@ class CheckSelectedCommits :
 class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messagePointer("vcs.log.index.diagnostic.action.title")) {
 
   override fun update(e: AnActionEvent, logManager: VcsLogManager) {
-    val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(logManager.dataManager.logProviders)
+    val rootsForIndexing = logManager.dataManager.index.indexingRoots
     if (rootsForIndexing.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -119,13 +116,13 @@ class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messagePointer("v
   }
 
   override fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<Int> {
-    val indexedRoots = VcsLogPersistentIndex.getRootsForIndexing(logManager.dataManager.logProviders).filter {
+    val indexedRoots = logManager.dataManager.index.indexingRoots.filter {
       logManager.dataManager.index.isIndexed(it)
     }
     if (indexedRoots.isEmpty()) return emptyList()
     val dataPack = logManager.dataManager.dataPack
     if (!dataPack.isFull) return emptyList()
 
-    return dataPack.getFirstCommits(logManager.dataManager.storage, indexedRoots)
+    return dataPack.pickCommits(logManager.dataManager.storage, indexedRoots, true).toList()
   }
 }

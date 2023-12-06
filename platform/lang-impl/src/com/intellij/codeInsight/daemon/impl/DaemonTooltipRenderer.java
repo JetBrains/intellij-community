@@ -21,15 +21,14 @@ import java.awt.*;
 import java.util.List;
 
 class DaemonTooltipRenderer extends LineTooltipRenderer {
-  @NonNls private static final String END_MARKER = "<!-- end marker -->";
+  private static final @NonNls String END_MARKER = "<!-- end marker -->";
 
   DaemonTooltipRenderer(@Tooltip @Nullable String text, int width, Object @NotNull [] comparable) {
     super(text, width, comparable);
   }
 
-  @NotNull
   @Override
-  protected @Tooltip String dressDescription(@NotNull Editor editor, @NotNull @Tooltip String tooltipText, boolean expand) {
+  protected @NotNull @Tooltip String dressDescription(@NotNull Editor editor, @NotNull @Tooltip String tooltipText, boolean expand) {
     if (!expand) {
       return super.dressDescription(editor, tooltipText, false);
     }
@@ -51,7 +50,7 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
             .append(ColorUtil.toHex(getDescriptionTitleColor()))
             .append("\">")
             .append(TooltipLinkHandlerEP.getDescriptionTitle(ref, editor))
-            .append(":</span>")
+            .append(":</span> ")
             .append(description)
             .append(UIUtil.BORDER_LINE);
         }
@@ -66,20 +65,17 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
     return super.dressDescription(editor, tooltipText, true);
   }
 
-  @NotNull
-  protected List<@Tooltip String> getProblems(@NotNull @Tooltip String tooltipText) {
+  protected @NotNull List<@Tooltip String> getProblems(@NotNull @Tooltip String tooltipText) {
     return StringUtil.split(UIUtil.getHtmlBody(new Html(tooltipText).setKeepFont(true)), UIUtil.BORDER_LINE);
   }
 
-  @NotNull
-  protected @Tooltip String getHtmlForProblemWithLink(@NotNull @Tooltip String problem) {
+  protected @NotNull @Tooltip String getHtmlForProblemWithLink(@NotNull @Tooltip String problem) {
     Html html = new Html(problem).setKeepFont(true);
     return UIUtil.getHtmlBody(html)
                  .replace(DaemonBundle.message("inspection.extended.description"), DaemonBundle.message("inspection.collapse.description"));
   }
 
-  @Nullable
-  protected static String getLinkRef(@NonNls String text) {
+  protected static @Nullable String getLinkRef(@NonNls String text) {
     final String linkWithRef = "<a href=\"";
     int linkStartIdx = text.indexOf(linkWithRef);
     if (linkStartIdx >= 0) {
@@ -92,14 +88,12 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
     return null;
   }
 
-  @NotNull
-  protected Color getDescriptionTitleColor() {
+  protected @NotNull Color getDescriptionTitleColor() {
     return JBColor.namedColor("ToolTip.infoForeground", new JBColor(0x919191, 0x919191));
   }
 
-  @NotNull
   @Override
-  public LineTooltipRenderer createRenderer(@Nullable String text, int width) {
+  public @NotNull LineTooltipRenderer createRenderer(@Nullable String text, int width) {
     return new DaemonTooltipRenderer(text, width, getEqualityObjects());
   }
 }

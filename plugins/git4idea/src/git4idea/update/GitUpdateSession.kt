@@ -62,15 +62,22 @@ class GitUpdateSession(private val project: Project,
 
   override fun showNotification() {
     if (notificationData != null) {
-      val notification = prepareNotification(notificationData.updatedFilesCount, notificationData.receivedCommitsCount,
+      val notification = prepareNotification(notificationData.updatedFilesCount,
+                                             notificationData.receivedCommitsCount,
                                              notificationData.filteredCommitsCount)
+
       notification.addAction(NotificationAction.createSimple(Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") },
                                                              notificationData.viewCommitAction))
+
+      GitPostUpdateHandler.getActions(project, notificationData.ranges).forEach { notification.addAction(it) }
+
       VcsNotifier.getInstance(project).notify(notification)
     }
   }
 
-  private fun prepareNotification(updatedFilesNumber: Int, updatedCommitsNumber: Int, filteredCommitsNumber: Int?): Notification {
+  private fun prepareNotification(updatedFilesNumber: Int,
+                                  updatedCommitsNumber: Int,
+                                  filteredCommitsNumber: Int?): Notification {
     val title: String
     var content: String?
     val type: NotificationType

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.pico;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -85,7 +85,8 @@ public class DefaultPicoContainer implements MutablePicoContainer {
       result.add(cacheHit);
     }
 
-    for (ComponentAdapter adapter : componentKeyToAdapter.values()) {// exclude services
+    for (ComponentAdapter adapter : componentKeyToAdapter.values()) {
+      // exclude services
       if (adapter.getComponentKey() instanceof String) {
         continue;
       }

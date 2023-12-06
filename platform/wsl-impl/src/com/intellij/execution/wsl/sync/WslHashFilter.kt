@@ -10,7 +10,7 @@ abstract class WslHashFilter protected constructor(private val operator: WslHash
    * @return true if [fileName] matches, false otherwise.
    */
   fun matches(fileName: String): Boolean {
-    return matcher.matches(fileName);
+    return matcher.matches(fileName)
   }
 
   /**

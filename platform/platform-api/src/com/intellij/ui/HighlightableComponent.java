@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
 import com.intellij.ui.paint.LinePainter2D;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -24,8 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HighlightableComponent extends JComponent implements Accessible {
-  @Nls
-  protected String myText = "";
+  protected @Nls String myText = "";
   protected Icon myIcon;
   protected int myIconTextGap;
   protected ArrayList<HighlightedRegion> myHighlightedRegions;
@@ -41,10 +40,12 @@ public class HighlightableComponent extends JComponent implements Accessible {
     setOpaque(true);
     updateUI();
     setAlignmentX(LEFT_ALIGNMENT);
+    updateDslVisualPaddings();
   }
 
   @Override public void updateUI() {
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
+    UISettings.setupComponentAntialiasing(this);
+    UISettings.setupFractionalMetrics(this);
   }
 
   public void setText(@Nullable @Nls String text) {
@@ -67,12 +68,17 @@ public class HighlightableComponent extends JComponent implements Accessible {
     }
   }
 
+  public @NotNull String getText() {
+    return myText;
+  }
+
   public @Nullable Icon getIcon() {
     return myIcon;
   }
 
   public void setIcon(@Nullable Icon icon) {
     myIcon = icon;
+    updateDslVisualPaddings();
     invalidate();
     repaint();
   }
@@ -87,7 +93,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
     if (startOffset >= endOffset) return;
 
-    if (myHighlightedRegions.size() == 0){
+    if (myHighlightedRegions.isEmpty()){
       myHighlightedRegions.add(new HighlightedRegion(startOffset, endOffset, attributes));
     }
     else{
@@ -254,7 +260,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     }
     // center text inside the component:
     final int yOffset = (getHeight() - defFontMetrics.getMaxAscent() - defFontMetrics.getMaxDescent()) / 2 + defFontMetrics.getMaxAscent();
-    if (myHighlightedRegions.size() == 0){
+    if (myHighlightedRegions.isEmpty()){
       g.setColor(fgColor);
       g.drawString(myText, textOffset, yOffset/*defFontMetrics.getMaxAscent()*/);
     }
@@ -267,7 +273,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
         // draw plain text
 
-        if (text.length() != 0) {
+        if (!text.isEmpty()) {
           g.setColor(fgColor);
           g.setFont(defFontMetrics.getFont());
 
@@ -319,7 +325,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
       String text = myText.substring(endIndex);
 
-      if (text.length() != 0){
+      if (!text.isEmpty()){
         g.setColor(fgColor);
         g.setFont(defFontMetrics.getFont());
 
@@ -352,14 +358,13 @@ public class HighlightableComponent extends JComponent implements Accessible {
     return isIconAtRight() ? getWidth() - myIcon.getIconWidth() : 0;
   }
 
-  @Nullable
-  public HighlightedRegion findRegionByX(int x) {
+  public @Nullable HighlightedRegion findRegionByX(int x) {
     FontMetrics defFontMetrics = getFontMetrics(getFont());
 
     int width = getTextOffset();
     if (width > x) return null;
 
-    if (myText.length() != 0 && myHighlightedRegions.size() != 0) {
+    if (!myText.isEmpty() && !myHighlightedRegions.isEmpty()) {
       int endIndex = 0;
       for (HighlightedRegion hRegion : myHighlightedRegions) {
         width += getStringWidth(myText.substring(endIndex, hRegion.startOffset), defFontMetrics);
@@ -377,8 +382,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     return null;
   }
 
-  @NotNull
-  public Map<String, Rectangle> getHighlightedRegionsBoundsMap() {
+  public @NotNull Map<String, Rectangle> getHighlightedRegionsBoundsMap() {
 
     HashMap<String, Rectangle> map = new HashMap<>();
     FontMetrics defFontMetrics = getFontMetrics(getFont());
@@ -386,7 +390,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     int pivot = getTextOffset();
     int start, end;
 
-    if (myText.length() != 0 && myHighlightedRegions.size() != 0) {
+    if (!myText.isEmpty() && !myHighlightedRegions.isEmpty()) {
       int endIndex = 0;
       for (HighlightedRegion hRegion : myHighlightedRegions) {
         pivot += getStringWidth(myText.substring(endIndex, hRegion.startOffset), defFontMetrics);
@@ -410,8 +414,8 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
     int width = getTextOffset();
 
-    if (myText.length() != 0){
-      if (myHighlightedRegions.size() == 0){
+    if (!myText.isEmpty()){
+      if (myHighlightedRegions.isEmpty()){
         width += getStringWidth(myText, defFontMetrics);
       }
       else{
@@ -479,6 +483,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
   public void setIconAtRight(boolean iconAtRight) {
     myIconAtRight = iconAtRight;
+    updateDslVisualPaddings();
   }
 
   protected class AccessibleHighlightable extends JComponent.AccessibleJComponent {
@@ -491,5 +496,10 @@ public class HighlightableComponent extends JComponent implements Accessible {
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.LABEL;
     }
+  }
+
+  private void updateDslVisualPaddings() {
+    int left = myIcon == null || isIconAtRight() ? getTextOffset() : 0;
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGapsKt.UnscaledGaps(0, left, 0 ,0));
   }
 }

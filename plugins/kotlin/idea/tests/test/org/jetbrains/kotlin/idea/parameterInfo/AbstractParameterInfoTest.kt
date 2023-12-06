@@ -66,18 +66,14 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
                     KtTokens.EOL_COMMENT -> lastChild.text.substring(2).trim()
                     else -> error("Unexpected last file child")
                 }.lines()
-                when (isFirPlugin) {
-                    true -> {
-                        if (lines.any { it.startsWith(TextK2) })
-                            lines.filter { it.startsWith(TextK2) }.joinToString(separator = "\n") { it.replace(TextK2, "Text") }
-                        else
-                            lines.joinToString(separator = "\n")
+                lines.mapNotNull { line ->
+                    when {
+                      isFirPlugin && line.startsWith(TextK2) -> line.removePrefix(TextK2)
+                      !isFirPlugin && line.startsWith(TextK1) -> line.removePrefix(TextK1)
+                      !line.startsWith(TextK1) && !line.startsWith(TextK2) -> line
+                      else -> null
                     }
-
-                    false -> {
-                        lines.filterNot { it.startsWith(TextK2) }.joinToString(separator = "\n")
-                    }
-                }
+                }.joinToString(separator = "\n")
             }
 
             val context = ShowParameterInfoContext(editor, project, file, editor.caretModel.offset, -1, true)
@@ -122,6 +118,7 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
     }
 
     companion object {
-        private const val TextK2 = "Text_K2"
+        private const val TextK1 = "Text_K1: "
+        private const val TextK2 = "Text_K2: "
     }
 }

@@ -5,6 +5,8 @@ import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -12,8 +14,6 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -26,7 +26,8 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
                   includeExternalSets: Boolean,
-                  includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo
+                  includeExternalSourceSets: Boolean,
+                  includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
 
   /**
    * Holds references to the currently stored data.
@@ -80,15 +81,6 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   
   @TestOnly
   fun reset()
-
-  companion object {
-    /**
-     * WorkspaceFileIndex is now always enabled. Usages of this constant will be inlined later.
-     */
-    @Suppress("MayBeConstant")
-    @JvmField
-    val IS_ENABLED: Boolean = true
-  }
 }
 
 /**
@@ -116,6 +108,8 @@ sealed interface WorkspaceFileInternalInfo {
    * Returns a file set stored in this instance which satisfies the given [condition], or `null` if no such file set found.
    */
   fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>?
+  
+  abstract override fun toString(): String
 }
 
 internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {
@@ -131,5 +125,5 @@ interface WorkspaceFileSetVisitor {
 
 @ApiStatus.Internal
 interface VfsChangeApplier: AsyncFileListener.ChangeApplier {
-  val entitiesToReindex: List<EntityReference<WorkspaceEntity>>
+  val entitiesToReindex: Set<EntityReference<WorkspaceEntity>>
 }

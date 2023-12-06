@@ -653,6 +653,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
             public void testWithAlias2() throws Exception {
                 runTest("../idea/tests/testData/editor/optimizeImports/common/WithAlias2.kt");
             }
+
+            @TestMetadata("WithoutFormatter.kt")
+            public void testWithoutFormatter() throws Exception {
+                runTest("../idea/tests/testData/editor/optimizeImports/common/WithoutFormatter.kt");
+            }
         }
     }
 }

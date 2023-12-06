@@ -9,6 +9,7 @@ class B {
 }
 
 fun main(args: Array<String>) {
+    println(args)
     val a = A
     B.Named
 }

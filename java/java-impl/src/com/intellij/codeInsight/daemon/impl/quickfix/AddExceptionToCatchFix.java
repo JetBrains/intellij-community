@@ -1,17 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,7 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class AddExceptionToCatchFix extends BaseIntentionAction {
+public class AddExceptionToCatchFix implements ModCommandAction {
   private static final Logger LOG = Logger.getInstance(AddExceptionToCatchFix.class);
   private final boolean myUncaughtOnly;
 
@@ -36,22 +33,22 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    int offset = context.offset();
 
-    PsiElement element = findElement(file, offset);
-    if (element == null) return;
+    PsiElement element = findElement(context.file(), offset);
+    if (element == null) return ModCommand.nop();
 
     PsiTryStatement tryStatement = (PsiTryStatement)element.getParent();
     List<PsiClassType> unhandledExceptions = new ArrayList<>(getExceptions(element, null));
-    if (unhandledExceptions.isEmpty()) return;
+    if (unhandledExceptions.isEmpty()) return ModCommand.nop();
 
     ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);
-
-    if (file.isPhysical()) {
-      IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    }
-
+    return ModCommand.psiUpdate(tryStatement, (ts, updater) -> invoke(ts, unhandledExceptions, updater));
+  }
+  
+  private static void invoke(@NotNull PsiTryStatement tryStatement, @NotNull List<PsiClassType> unhandledExceptions, @NotNull ModPsiUpdater updater) {
+    PsiFile file = tryStatement.getContainingFile();
     PsiCodeBlock catchBlockToSelect = null;
 
     try {
@@ -72,11 +69,9 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
       LOG.error(e);
     }
     if (catchBlockToSelect != null) {
+      catchBlockToSelect = (PsiCodeBlock)CodeStyleManager.getInstance(file.getProject()).reformat(catchBlockToSelect);
       TextRange range = SurroundWithUtil.getRangeToSelect(catchBlockToSelect);
-      editor.getCaretModel().moveToOffset(range.getStartOffset());
-
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      updater.select(range);
     }
   }
 
@@ -157,16 +152,14 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    PsiFile file = context.file();
+    if (!(file instanceof PsiJavaFile)) return null;
 
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = findElement(file, offset);
-
-    if (element == null) return false;
-
-    setText(QuickFixBundle.message("add.catch.clause.text"));
-    return true;
+    PsiElement element = findElement(file, context.offset());
+    if (element == null) return null;
+    
+    return Presentation.of(QuickFixBundle.message("add.catch.clause.text"));
   }
 
   @Nullable

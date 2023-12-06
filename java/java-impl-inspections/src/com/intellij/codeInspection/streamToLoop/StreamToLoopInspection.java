@@ -1,12 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.codeInspection.TrivialFunctionalExpressionUsageInspection;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -16,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -242,7 +248,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     return null;
   }
 
-  static class ReplaceStreamWithLoopFix implements LocalQuickFix {
+  static class ReplaceStreamWithLoopFix extends PsiUpdateModCommandQuickFix {
     private final @IntentionName String myMessage;
 
     ReplaceStreamWithLoopFix(@IntentionName String message) {
@@ -262,8 +268,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if(!(element instanceof PsiMethodCallExpression terminalCall)) return;
       CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(terminalCall);
       if (surrounder == null) return;
@@ -290,24 +295,26 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         for (OperationRecord or : StreamEx.ofReversed(operations)) {
           replacement = or.myOperation.wrap(or.myInVar, or.myOutVar, replacement, context);
         }
-        PsiElement firstAdded = null;
+        PsiElement previous = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
+        PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         for (PsiStatement addedStatement : ((PsiBlockStatement)factory.createStatementFromText("{" + replacement + "}", statement))
           .getCodeBlock().getStatements()) {
-          PsiElement res = addStatement(project, statement, addedStatement);
-          if (firstAdded == null) {
-            firstAdded = res;
-          }
+          addStatement(statement, addedStatement);
         }
         PsiElement result = context.makeFinalReplacement();
-        if(result != null) {
-          result = normalize(project, result);
-          if (firstAdded == null) {
-            firstAdded = result;
-          }
+        if (result != null) {
+          normalize(result);
         }
-        if (firstAdded != null) {
-          ct.insertCommentsBefore(firstAdded);
+        if (previous != null) {
+          PsiElement firstAdded = PsiTreeUtil.skipWhitespacesAndCommentsForward(previous);
+          if (firstAdded != null) {
+            ct.insertCommentsBefore(firstAdded);
+            JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+            for (PsiElement e = firstAdded; e != null && e != next; e = e.getNextSibling()) {
+              codeStyleManager.shortenClassReferences(e);
+            }
+          }
         }
       }
       catch (Exception ex) {
@@ -315,16 +322,15 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       }
     }
 
-    private static PsiElement addStatement(@NotNull Project project, PsiStatement statement, PsiStatement context) {
+    private static void addStatement(PsiStatement statement, PsiStatement context) {
       PsiElement element = statement.getParent().addBefore(context, statement);
-      return normalize(project, element);
+      normalize(element);
     }
 
-    private static PsiElement normalize(@NotNull Project project, PsiElement element) {
-      element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
+    private static void normalize(@NotNull PsiElement element) {
       RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(element);
       RedundantCastUtil.getRedundantCastsInside(element).forEach(RemoveRedundantCastUtil::removeCast);
-      return element;
+      TrivialFunctionalExpressionUsageInspection.simplifyAllLambdas(element);
     }
 
     private static StreamEx<OperationRecord> allOperations(List<OperationRecord> operations) {

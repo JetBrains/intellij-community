@@ -93,16 +93,24 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
         val newName = suggestionsName.first()
         suggestedImportAliasNames = suggestionsName
         project.executeCommand(KotlinBundle.message("intention.add.import.alias.group.name"), groupId = null) {
-            val newDirective = runWriteAction { ImportInsertHelperImpl.addImport(project, file, fqName, false, Name.identifier(newName)) }
+            val newDirectivePointer = runWriteAction {
+                ImportInsertHelperImpl.addImport(project, file, fqName, false, Name.identifier(newName)).createSmartPointer()
+            }
 
             replaceUsages(usages, newName)
             runWriteAction {
                 cleanImport(file, fqName)
             }
 
-            if (elementInImportDirective) editor.moveCaret(newDirective.alias?.nameIdentifier?.textOffset ?: newDirective.endOffset)
+            val restoredNewDirective = newDirectivePointer.element ?: return@executeCommand
+            if (elementInImportDirective) {
+                editor.moveCaret(restoredNewDirective.alias?.nameIdentifier?.textOffset ?: restoredNewDirective.endOffset)
+            }
 
-            invokeRename(project, editor, newDirective.alias, suggestionsName)
+            val alias = restoredNewDirective.alias ?: return@executeCommand
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+            val rename = VariableInplaceRenamer(alias, editor, project)
+            rename.performInplaceRefactoring(LinkedHashSet(suggestionsName))
         }
     }
 
@@ -122,19 +130,6 @@ private data class UsageContext(val pointer: SmartPsiElementPointer<PsiElement>,
 
 private fun cleanImport(file: KtFile, fqName: FqName) {
     file.importDirectives.find { it.alias == null && fqName == it.importedFqName }?.delete()
-}
-
-private fun invokeRename(
-    project: Project,
-    editor: Editor,
-    elementToRename: PsiNamedElement?,
-    suggestionsName: Collection<String>
-) {
-    val pointer = if (elementToRename != null) SmartPointerManager.createPointer(elementToRename) else null
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-    val element = pointer?.element ?: return
-    val rename = VariableInplaceRenamer(element, editor, project)
-    rename.performInplaceRefactoring(LinkedHashSet(suggestionsName))
 }
 
 private fun replaceUsages(usages: List<UsageContext>, newName: String) {

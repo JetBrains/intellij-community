@@ -2,11 +2,11 @@
 package com.intellij.jarRepository
 
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 
 private class RepositoryLibraryChangeListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
@@ -30,8 +30,8 @@ private class RepositoryLibraryChangeListener(private val project: Project) : Wo
 
     val settings = RepositoryLibrarySettings.getInstanceOrDefaults(project)
     val utils = RepositoryLibraryUtils.getInstance(project)
-    utils.computePropertiesForLibraries(libraries = changedLibraryEntities.filterNotNull().toSet(),
-                                        buildSha256Checksum = settings.isSha256ChecksumAutoBuildEnabled(),
-                                        guessAndBindRemoteRepository = settings.isJarRepositoryAutoBindEnabled())
+    utils.computeExtendedPropertiesFor(libraries = changedLibraryEntities.filterNotNull().toSet(),
+                                       buildSha256Checksum = settings.isSha256ChecksumAutoBuildEnabled(),
+                                       guessAndBindRemoteRepository = settings.isJarRepositoryAutoBindEnabled())
   }
 }

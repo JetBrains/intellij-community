@@ -7,4 +7,4 @@ fun foo() {
 }
 
 // ELEMENT: to
-// TAIL_TEXT: "(that: B) (<root>) for A"
+// TAIL_TEXT: "(that: B) for A in <root>"

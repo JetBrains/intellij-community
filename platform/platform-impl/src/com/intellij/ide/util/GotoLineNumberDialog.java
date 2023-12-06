@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -41,12 +41,11 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
     return null;
   }
 
-  private String getText() {
+  protected String getText() {
     return myField.getText();
   }
 
-  @Nullable
-  protected final Coordinates getCoordinates() {
+  protected @Nullable Coordinates getCoordinates() {
     Matcher m = myPattern.matcher(getText());
     if (!m.matches()) return null;
 
@@ -60,12 +59,11 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
   protected abstract int getOffset();
   protected abstract int getMaxOffset();
   protected abstract int coordinatesToOffset(@NotNull Coordinates coordinates);
-  @NotNull
-  protected abstract Coordinates offsetToCoordinates(int offset);
+  protected abstract @NotNull Coordinates offsetToCoordinates(int offset);
 
   @Override
   protected JComponent createNorthPanel() {
-    class MyTextField extends JTextField {
+    final class MyTextField extends JTextField {
       MyTextField() {
         super("");
         addFocusListener(new FocusAdapter() {

@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColorUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.ui.ColorHexUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -14,16 +16,16 @@ import java.awt.*;
 /**
  * This class is intended to read a value from the value element
  * that is the element, which value is defined in the {@code value} attribute.
- * Also it may have the following platform-specific attributes:
+ * Also, it may have the following platform-specific attributes:
  * {@code windows}, {@code mac}, {@code linux}.  If one of them is set,
  * it should be used instead of the default one.
  */
 class ValueElementReader {
-  @NonNls private static final String VALUE = "value";
-  @NonNls private static final String MAC = "mac";
-  @NonNls private static final String LINUX = "linux";
-  @NonNls private static final String WINDOWS = "windows";
-  private static final String OS = SystemInfo.isWindows ? WINDOWS : SystemInfo.isMac ? MAC : LINUX;
+  private static final @NonNls String VALUE = "value";
+  private static final @NonNls String MAC = "mac";
+  private static final @NonNls String LINUX = "linux";
+  private static final @NonNls String WINDOWS = "windows";
+  private static final String OS = SystemInfoRt.isWindows ? WINDOWS : SystemInfoRt.isMac ? MAC : LINUX;
   private static final Logger LOG = Logger.getInstance(ValueElementReader.class);
 
   private String myAttribute;
@@ -35,7 +37,7 @@ class ValueElementReader {
    * @param attribute the priority attribute
    */
   public void setAttribute(String attribute) {
-    myAttribute = StringUtil.isEmpty(attribute) ? null : attribute;
+    myAttribute = Strings.isEmpty(attribute) ? null : attribute;
   }
 
   /**
@@ -46,8 +48,7 @@ class ValueElementReader {
    * @param <T>     the result type
    * @return a value or {@code null} if it cannot be read
    */
-  @Nullable
-  public <T> T read(Class<T> type, Element element) {
+  public @Nullable <T> T read(Class<T> type, Element element) {
     T value = null;
     if (element != null) {
       if (myAttribute != null) {
@@ -78,14 +79,18 @@ class ValueElementReader {
     if (value != null) {
       value = value.trim();
       if (value.isEmpty()) {
-        if (LOG.isDebugEnabled()) LOG.debug("empty attribute: " + attribute);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("empty attribute: " + attribute);
+        }
       }
       else {
         try {
           return convert(type, value);
         }
         catch (Exception exception) {
-          if (LOG.isDebugEnabled()) LOG.debug("wrong attribute: " + attribute, exception);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("wrong attribute: " + attribute, exception);
+          }
         }
       }
     }
@@ -100,7 +105,7 @@ class ValueElementReader {
    * @param value a string value to convert
    * @param <T>   the result type
    */
-  protected <T> T convert(Class<T> type, String value) {
+  protected <T> T convert(@NotNull Class<T> type, @NotNull String value) {
     if (String.class.equals(type)) {
       //noinspection unchecked
       return (T)value;
@@ -119,7 +124,7 @@ class ValueElementReader {
     }
     if (Enum.class.isAssignableFrom(type)) {
       //noinspection unchecked
-      return (T)toEnum((Class<Enum>)type, value);
+      return (T)toEnum((Class<Enum<?>>)type, value);
     }
     if (Boolean.class.equals(type)) {
       //noinspection unchecked
@@ -128,7 +133,7 @@ class ValueElementReader {
     throw new IllegalArgumentException("unsupported " + type);
   }
 
-  private static <T extends Enum> T toEnum(Class<T> type, String value) {
+  private static <T extends Enum<?>> T toEnum(Class<T> type, String value) {
     for (T field : type.getEnumConstants()) {
       if (value.equalsIgnoreCase(field.name()) || value.equals(String.valueOf(field.ordinal()))) {
         return field;
@@ -137,13 +142,18 @@ class ValueElementReader {
     throw new IllegalArgumentException(value);
   }
 
-  private static Color toColor(String value) {
+  private static Color toColor(@NotNull String value) {
     try {
-      if (6 <= value.length()) return ColorUtil.fromHex(value);
+      if (value.length() >= 6) {
+        return ColorHexUtil.fromHex(value);
+      }
       LOG.debug("short color value: ", value);
     }
     catch (Exception exception) {
       LOG.debug("wrong color value: ", value);
+    }
+    if (!StringUtil.isHexDigit(value.charAt(0))) {
+      return null;
     }
     int rgb;
     try {

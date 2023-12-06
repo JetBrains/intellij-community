@@ -5,7 +5,7 @@ import org.intellij.lang.annotations.Language
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
-class SqlStatementPool<T : Binder>(
+class SqlStatementPool<T : Binder> internal constructor(
   @Language("SQLite") sql: String,
   private val connection: SqliteConnection,
   private val binderProducer: () -> T,
@@ -53,12 +53,12 @@ class SqlStatementPool<T : Binder>(
     }
   }
 
-  fun close() {
+  internal fun close(db: NativeDB) {
     // prevent adding a new statements
     size.set(Int.MAX_VALUE)
     while (true) {
       val item = pool.poll() ?: break
-      item.first.close()
+      item.first.close(db)
     }
   }
 }

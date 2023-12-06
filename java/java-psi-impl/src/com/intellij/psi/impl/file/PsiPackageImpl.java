@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +23,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -34,8 +32,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Queryable {
   private static final Logger LOG = Logger.getInstance(PsiPackageImpl.class);
@@ -53,11 +54,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   protected Collection<PsiDirectory> getAllDirectories(GlobalSearchScope scope) {
-    if (!scope.getModelBranchesAffectingScope().isEmpty()) {
-      return ContainerUtil.mapNotNull(PackageIndex.getInstance(getProject()).getDirsByPackageName(getQualifiedName(), scope).findAll(),
-                                      getManager()::findDirectory);
-    }
-
     if (scope.isForceSearchingInLibrarySources()) {
       if (myDirectoriesWithLibSources == null) {
         myDirectoriesWithLibSources = createCachedDirectories(true);
@@ -175,11 +171,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return getCachedClassesInDumbMode(name, scope);
     }
 
-    if (!scope.getModelBranchesAffectingScope().isEmpty()) {
-      return findAllClasses(name, scope);
-    }
-
-    Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
+    Map<String, PsiClass[]> map = dereference(myClassCache);
     if (map == null) {
       myClassCache = new SoftReference<>(map = ContainerUtil.createConcurrentSoftValueMap());
     }
@@ -203,7 +195,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   private PsiClass @NotNull [] getCachedClassesInDumbMode(String name, GlobalSearchScope scope) {
-    Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = SoftReference.dereference(myDumbModeFullCache);
+    Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = dereference(myDumbModeFullCache);
     if (scopeMap == null) {
       myDumbModeFullCache = new SoftReference<>(scopeMap = new ConcurrentHashMap<>());
     }
@@ -235,7 +227,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return PsiClass.EMPTY_ARRAY;
     }
 
-    Map<Pair<GlobalSearchScope, String>, PsiClass[]> partial = SoftReference.dereference(myDumbModePartialCache);
+    Map<Pair<GlobalSearchScope, String>, PsiClass[]> partial = dereference(myDumbModePartialCache);
     if (partial == null) {
       myDumbModePartialCache = new SoftReference<>(partial = new ConcurrentHashMap<>());
     }

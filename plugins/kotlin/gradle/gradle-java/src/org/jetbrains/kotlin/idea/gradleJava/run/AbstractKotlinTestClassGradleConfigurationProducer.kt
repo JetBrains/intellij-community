@@ -139,8 +139,8 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
         if (GradleConstants.SYSTEM_ID != configuration.settings.externalSystemId) return false
         if (sourceElement.isNull) return false
 
-        configuration.isScriptDebugEnabled = false
-        configuration.isForceTestExecution = true
+        configuration.isDebugServerProcess = false
+        configuration.isRunAsTest = true
         return doSetupConfigurationFromContext(configuration, context, sourceElement)
     }
 
@@ -158,11 +158,6 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
         return checkShouldReplace(self, other) || super.shouldReplace(self, other)
     }
 
-    private fun checkShouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
-        if (self.isProducedBy(javaClass) && other.isProducedBy(TestClassGradleConfigurationProducer::class.java)) {
-            return true
-        }
-
-        return false
-    }
+    private fun checkShouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean =
+        self.isProducedBy(javaClass) && other.isProducedBy(TestClassGradleConfigurationProducer::class.java)
 }

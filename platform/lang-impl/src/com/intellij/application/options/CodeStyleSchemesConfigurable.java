@@ -3,8 +3,6 @@ package com.intellij.application.options;
 
 import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.application.options.codeStyle.CodeStyleSchemesModelListener;
-import com.intellij.application.options.codeStyle.CodeStyleSchemesPanel;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProvider;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProviderFactory;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -26,7 +24,6 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
 
   public static final String CONFIGURABLE_ID = "preferences.sourceCode";
 
-  private CodeStyleSchemesPanel myRootSchemesPanel;
   private @NotNull final CodeStyleSchemesModel myModel;
   private List<Configurable> myPanels;
   private boolean myResetCompleted = false;
@@ -42,31 +39,7 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
 
   @Override
   public JComponent createComponent() {
-    initSchemesPanel(myModel);
     return myPanels == null || myPanels.isEmpty() ? null : myPanels.get(0).createComponent();
-  }
-
-  private void initSchemesPanel(@NotNull final CodeStyleSchemesModel model) {
-    myRootSchemesPanel = new CodeStyleSchemesPanel(model, 0);
-
-    model.addListener(new CodeStyleSchemesModelListener() {
-      @Override
-      public void currentSchemeChanged(final Object source) {
-        if (source != myRootSchemesPanel) {
-          myRootSchemesPanel.onSelectedSchemeChanged();
-        }
-      }
-
-      @Override
-      public void schemeListChanged() {
-        myRootSchemesPanel.resetSchemesCombo();
-      }
-
-      @Override
-      public void schemeChanged(final CodeStyleScheme scheme) {
-        if (scheme == model.getSelectedScheme()) myRootSchemesPanel.onSelectedSchemeChanged();
-      }
-    });
   }
 
   @Override
@@ -85,7 +58,6 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
       }
       finally {
         myPanels = null;
-        myRootSchemesPanel = null;
         myResetCompleted = false;
         myRevertCompleted = false;
         myInitResetInvoked = false;

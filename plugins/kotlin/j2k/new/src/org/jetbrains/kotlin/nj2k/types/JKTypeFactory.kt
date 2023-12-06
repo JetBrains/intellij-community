@@ -6,8 +6,9 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.j2k.ast.Nullability
-import org.jetbrains.kotlin.j2k.ast.Nullability.*
-import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
+import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.ast.Nullability.Nullable
+import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
@@ -44,7 +45,6 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         val double = typeByFqName(StandardNames.FqNames._double)
 
         val string = typeByFqName(StandardNames.FqNames.string)
-        val possiblyNullString = typeByFqName(StandardNames.FqNames.string, nullability = Default)
 
         val unit = typeByFqName(StandardNames.FqNames.unit)
         val nothing = typeByFqName(StandardNames.FqNames.nothing)
@@ -138,7 +138,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                 )
 
             else -> JKClassType(
-                symbolProvider.provideClassSymbol(type.getJetTypeFqName(false)), //TODO constructor fqName
+                symbolProvider.provideClassSymbol(type.getKotlinTypeFqName(false)), //TODO constructor fqName
                 type.arguments.map { typeArgument ->
                     if (typeArgument.isStarProjection) JKStarProjectionTypeImpl
                     else fromKotlinType(typeArgument.type)

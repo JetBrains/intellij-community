@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.util.containers.JBTreeTraverser;
@@ -29,7 +29,7 @@ public final class ComponentTreeEventDispatcher<T extends EventListener> {
     return new ComponentTreeEventDispatcher<>(root, listenerClass);
   }
 
-  private ComponentTreeEventDispatcher(@Nullable final Component root, @NotNull Class<T> listenerClass) {
+  private ComponentTreeEventDispatcher(final @Nullable Component root, @NotNull Class<T> listenerClass) {
     myListenerClass = listenerClass;
     myMulticaster = EventDispatcher.createMulticaster(listenerClass, null, () -> {
       JBTreeTraverser<Component> traverser = uiTraverser(root);
@@ -38,8 +38,7 @@ public final class ComponentTreeEventDispatcher<T extends EventListener> {
     });
   }
 
-  @NotNull
-  public T getMulticaster() {
+  public @NotNull T getMulticaster() {
     return myMulticaster;
   }
 

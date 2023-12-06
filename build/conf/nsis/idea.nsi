@@ -12,13 +12,9 @@ SetCompressor lzma
 !include "version.nsi"
 !include WinVer.nsh
 !include x64.nsh
-;admin users
-;!define Environment '"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
-;users
 !define Environment 'Environment'
 
 ; Product with version (IntelliJ IDEA #xxxx).
-
 ; Used in registry to put each build info into the separate subkey
 ; Add&Remove programs doesn't understand subkeys in the Uninstall key,
 ; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
@@ -313,14 +309,13 @@ FunctionEnd
 
 
 Function OnDirectoryPageLeave
-  ;check
-  ; - if there are no files into $INSTDIR (recursively)
+  ;check if there are no files into $INSTDIR (recursively)
   StrCpy $9 "$INSTDIR"
   Call instDirEmpty
   StrCmp $9 "not empty" abort skip_abort
 abort:
   ${LogText} "ERROR: installation dir is not empty: $INSTDIR"
-  MessageBox MB_OK|MB_ICONEXCLAMATION "$INSTDIR is not empty.$\n$(empty_or_upgrade_folder)"
+  MessageBox MB_OK|MB_ICONEXCLAMATION "$(choose_empty_folder)"
   Abort
 skip_abort:
 FunctionEnd
@@ -334,7 +329,7 @@ Function instDirEmpty
   ClearErrors
   FindFirst $1 $2 "$9\*.*"
   IfErrors done 0
-next_elemement:
+next_element:
   ;is the element a folder?
   StrCmp $2 "." get_next_element
   StrCmp $2 ".." get_next_element
@@ -354,7 +349,7 @@ next_file:
   ${EndIf}
 get_next_element:
   FindNext $1 $2
-  IfErrors 0 next_elemement
+  IfErrors 0 next_element
 done:
   ClearErrors
   FindClose $1
@@ -365,7 +360,7 @@ FunctionEnd
 
 
 Function getInstallationOptionsPositions
-  !insertmacro INSTALLOPTIONS_READ $launcherShortcut "Desktop.ini" "Settings" "DesktopShortcutToLauncher"
+  !insertmacro INSTALLOPTIONS_READ $launcherShortcut "Desktop.ini" "Settings" "DesktopShortcut"
   !insertmacro INSTALLOPTIONS_READ $addToPath "Desktop.ini" "Settings" "AddToPath"
   !insertmacro INSTALLOPTIONS_READ $updateContextMenu "Desktop.ini" "Settings" "UpdateContextMenu"
 FunctionEnd
@@ -376,7 +371,16 @@ Function ConfirmDesktopShortcut
 
   Call getInstallationOptionsPositions
 
+  IntOp $0 $launcherShortcut - 1
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $0" "Text" "$(create_desktop_shortcut)"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Text" "${MUI_PRODUCT}"
+  IntOp $0 $addToPath - 1
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $0" "Text" "$(update_path_var_group)"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "Text" "$(update_path_var_label)"
+  IntOp $0 $updateContextMenu - 1
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $0" "Text" "$(update_context_menu_group)"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "Text" "$(update_context_menu_label)"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field ${INSTALL_OPTION_ELEMENTS}" "Text" "$(create_associations_group)"
 
   Call customPreInstallActions
 
@@ -429,10 +433,6 @@ FunctionEnd
 !insertmacro MUI_PAGE_WELCOME
 Page custom uninstallOldVersionDialog
 
-!ifdef LICENSE_FILE
-!insertmacro MUI_PAGE_LICENSE "$(myLicenseData)"
-!endif
-
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE OnDirectoryPageLeave
 !define MUI_PAGE_HEADER_TEXT "$(choose_install_location)"
 !insertmacro MUI_PAGE_DIRECTORY
@@ -459,7 +459,6 @@ Page custom ConfirmDesktopShortcut
 !insertmacro MUI_PAGE_FINISH
 
 !define MUI_UNINSTALLER
-;!insertmacro MUI_UNPAGE_CONFIRM
 UninstPage custom un.ConfirmDeleteSettings
 !insertmacro MUI_UNPAGE_INSTFILES
 
@@ -478,12 +477,9 @@ FunctionEnd
 ; languages
 ;------------------------------------------------------------------------------
 !insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "SimpChinese"
 !include "idea_en.nsi"
-
-!ifdef LICENSE_FILE
-LicenseLangString myLicenseData ${LANG_ENGLISH} "${LICENSE_FILE}.txt"
-LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
-!endif
+!include "idea_cn.nsi"
 
 
 Function .onInstSuccess
@@ -590,12 +586,12 @@ FunctionEnd
 
 
 Function IncorrectSilentInstallParameters
-  !define msg1 "How to run installation in silent mode:$\r$\n"
-  !define msg2 "<installation> /S /CONFIG=<path to silent config with file name> /D=<install dir>$\r$\n$\r$\n"
-  !define msg3 "Examples:$\r$\n"
-  !define msg4 "Installation.exe /S /CONFIG=d:\download\silent.config /D=d:\JetBrains\Product$\r$\n"
-  !define msg5 "Run installation in silent mode with logging:$\r$\n"
-  !define msg6 "Installation.exe /S /CONFIG=d:\download\silent.config /LOG=d:\JetBrains\install.log /D=d:\JetBrains\Product$\r$\n"
+  !define msg1 "How to run installation in silent mode:$\n"
+  !define msg2 "<installation> /S /CONFIG=<path to silent config with file name> /D=<install dir>$\n$\n"
+  !define msg3 "Examples:$\n"
+  !define msg4 "Installation.exe /S /CONFIG=d:\download\silent.config /D=d:\JetBrains\Product$\n"
+  !define msg5 "Run installation in silent mode with logging:$\n"
+  !define msg6 "Installation.exe /S /CONFIG=d:\download\silent.config /LOG=d:\JetBrains\install.log /D=d:\JetBrains\Product$\n"
   MessageBox MB_OK|MB_ICONSTOP "${msg1}${msg2}${msg3}${msg4}${msg5}${msg6}"
   ${LogText} "ERROR: silent installation: incorrect parameters."
   Abort
@@ -795,8 +791,9 @@ complete:
     IntOp $7 $7 + 1
     StrCmp $8 $7 0 +2
       StrCpy $2 ""
-    !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
+    !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" ""
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 2" "Text" "$(uninstall_previous_installations_silent)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
     !insertmacro INSTALLOPTIONS_DISPLAY_RETURN "UninstallOldVersions.ini"
     Pop $9
@@ -1085,9 +1082,9 @@ absent:
 do_not_change_path:
   ${LogText} ""
   ${LogText} "  NOTE: Length of PATH is bigger than 8192 bytes."
-  ${LogText} "  Installer can not update it."
+  ${LogText} "  Installer cannot update it."
   ${LogText} ""
-  MessageBox MB_OK|MB_ICONEXCLAMATION "Length of PATH is bigger than 8192 bytes.$\r$\nInstaller can not update it."
+  MessageBox MB_OK|MB_ICONEXCLAMATION " $(path_var_too_long)"
 done:
 FunctionEnd
 
@@ -1327,7 +1324,14 @@ installdir_is_empty:
   Call OnDirectoryPageLeave
 done:
   ${LogText} "Installation dir: $INSTDIR"
-;  !insertmacro MUI_LANGDLL_DISPLAY
+  ${If} $Language == ${LANG_SIMPCHINESE}
+    System::Call "kernel32::GetUserDefaultUILanguage() h .r10"
+    ${If} $R0 != ${LANG_SIMPCHINESE}
+      ${LogText} "Language override: $R0 != ${LANG_SIMPCHINESE}"
+      StrCpy $Language ${LANG_ENGLISH}
+    ${EndIf}
+  ${EndIf}
+  ;!insertmacro MUI_LANGDLL_DISPLAY
 FunctionEnd
 
 
@@ -1346,7 +1350,7 @@ Function checkAvailableRequiredDiskSpace
   Pop $3
 
   IntCmp $3 1 done
-    MessageBox MB_OK "Error: Not enough disk space!"
+    MessageBox MB_OK|MB_ICONSTOP "$(out_of_disk_space)"
     ${LogText} "ERROR: Not enough disk space!"
     Abort
 done:
@@ -1489,7 +1493,13 @@ end_of_uninstall:
   MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
   Abort
 UAC_Done:
-  !insertmacro MUI_UNGETLANGUAGE
+  ${If} $Language == ${LANG_SIMPCHINESE}
+    System::Call "kernel32::GetUserDefaultUILanguage() h .r10"
+    ${If} $R0 != ${LANG_SIMPCHINESE}
+      StrCpy $Language ${LANG_ENGLISH}
+    ${EndIf}
+  ${EndIf}
+  ;!insertmacro MUI_UNGETLANGUAGE
 FunctionEnd
 
 
@@ -1539,13 +1549,14 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 
 Function un.ConfirmDeleteSettings
-  !insertmacro MUI_HEADER_TEXT "$(uninstall_options)" "$(uninstall_options_prompt)"
+  !insertmacro MUI_HEADER_TEXT "$(uninstall_options)" ""
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 1" "Text" "$(prompt_delete_settings)"
   ${UnStrRep} $R1 $INSTDIR '\' '\\'
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 2" "Text" $R1
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(text_delete_settings)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 4" "Text" "$(confirm_delete_caches)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 6" "Text" "$(share_uninstall_feedback)"
 
   ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
   StrCmp $R0 "${MUI_PRODUCT}" build_tools 0
@@ -1553,7 +1564,7 @@ Function un.ConfirmDeleteSettings
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Text" ""
   Goto feedback_web_page
 build_tools:
-  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Text" "$(confirm_delete_rider_buildtools)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Text" "$(confirm_delete_rider_build_tools)"
   ; do not show feedback web page checkbox for EAP builds.
 feedback_web_page:
   StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" hide_feedback_checkbox feedback_web_page_exists

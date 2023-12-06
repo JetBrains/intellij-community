@@ -17,40 +17,51 @@ class KotlinUObjectLiteralExpression(
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UObjectLiteralExpression, UCallExpression, DelegatedMultiResolve, KotlinUElementWithType {
 
-    override val declaration: UClass by lz {
-        sourcePsi.objectDeclaration.toLightClass()
-            ?.let { languagePlugin?.convertOpt(it, this) }
-            ?: KotlinInvalidUClass("<invalid object code>", sourcePsi, this)
-    }
+    private val declarationPart = UastLazyPart<UClass>()
+    private val classReferencePart = UastLazyPart<UReferenceExpression?>()
+    private val typeArgumentsPart = UastLazyPart<List<PsiType>>()
+    private val superClassConstructorCallPart = UastLazyPart<KtSuperTypeCallEntry?>()
+    private val valueArgumentsPart = UastLazyPart<List<UExpression>>()
+
+    override val declaration: UClass
+        get() = declarationPart.getOrBuild {
+            sourcePsi.objectDeclaration.toLightClass()
+                ?.let { languagePlugin?.convertOpt(it, this) }
+                ?: KotlinInvalidUClass("<invalid object code>", sourcePsi, this)
+        }
 
     override fun getExpressionType() =
         sourcePsi.objectDeclaration.toPsiType()
 
-    private val superClassConstructorCall by lz {
-        sourcePsi.objectDeclaration.superTypeListEntries.firstOrNull { it is KtSuperTypeCallEntry } as? KtSuperTypeCallEntry
-    }
+    private val superClassConstructorCall: KtSuperTypeCallEntry?
+        get() = superClassConstructorCallPart.getOrBuild {
+            sourcePsi.objectDeclaration.superTypeListEntries.firstOrNull { it is KtSuperTypeCallEntry } as? KtSuperTypeCallEntry
+        }
 
-    override val classReference: UReferenceExpression? by lz {
-        superClassConstructorCall?.let { ObjectLiteralClassReference(it, this) }
-    }
+    override val classReference: UReferenceExpression?
+        get() = classReferencePart.getOrBuild {
+            superClassConstructorCall?.let { ObjectLiteralClassReference(it, this) }
+        }
 
     override val valueArgumentCount: Int
         get() = superClassConstructorCall?.valueArguments?.size ?: 0
 
-    override val valueArguments by lz {
-        val psi = superClassConstructorCall ?: return@lz emptyList<UExpression>()
-        psi.valueArguments.map { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it.getArgumentExpression(), this) }
-    }
+    override val valueArguments: List<UExpression>
+        get() = valueArgumentsPart.getOrBuild {
+            val psi = superClassConstructorCall ?: return@getOrBuild emptyList<UExpression>()
+            psi.valueArguments.map { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it.getArgumentExpression(), this) }
+        }
 
     override val typeArgumentCount: Int
         get() = superClassConstructorCall?.typeArguments?.size ?: 0
 
-    override val typeArguments by lz {
-        val psi = superClassConstructorCall ?: return@lz emptyList<PsiType>()
-        psi.typeArguments.map { typeArgument ->
-            typeArgument.typeReference?.let { baseResolveProviderService.resolveToType(it, this, isBoxed = true) } ?: UastErrorType
+    override val typeArguments: List<PsiType>
+        get() = typeArgumentsPart.getOrBuild {
+            val psi = superClassConstructorCall ?: return@getOrBuild emptyList<PsiType>()
+            psi.typeArguments.map { typeArgument ->
+                typeArgument.typeReference?.let { baseResolveProviderService.resolveToType(it, this, isBoxed = true) } ?: UastErrorType
+            }
         }
-    }
 
     override fun resolve() =
         superClassConstructorCall?.let { baseResolveProviderService.resolveCall(it) }
@@ -65,9 +76,9 @@ class KotlinUObjectLiteralExpression(
      */
     val constructorCall: UExpression?
         get() = (this.declaration.methods.asSequence().filterIsInstance<KotlinConstructorUMethod>()
-             .singleOrNull()?.uastBody as? KotlinLazyUBlockExpression)
-             ?.expressions
-             ?.firstOrNull()
+            .singleOrNull()?.uastBody as? KotlinLazyUBlockExpression)
+            ?.expressions
+            ?.firstOrNull()
 
     private class ObjectLiteralClassReference(
         override val sourcePsi: KtSuperTypeCallEntry,

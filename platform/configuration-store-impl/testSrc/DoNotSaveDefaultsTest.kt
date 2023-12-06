@@ -51,9 +51,9 @@ internal class DoNotSaveDefaultsTest {
   private suspend fun doTest(componentManager: ComponentManagerImpl, isTestEmptyState: Boolean = false) {
     // wake up (edt, some configurables want read action)
     withContext(Dispatchers.EDT) {
-      componentManager.processComponentsAndServices(createIfNeeded = true, filter = { aClass ->
+      for (instance in componentManager.instances(createIfNeeded = true) { aClass ->
         if (!PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
-          return@processComponentsAndServices false
+          return@instances false
         }
 
         val className = aClass.name
@@ -63,7 +63,7 @@ internal class DoNotSaveDefaultsTest {
         && className != "com.intellij.lang.javascript.bower.BowerPackagingService"
         && !className.endsWith(".MessDetectorConfigurationManager")
         && className != "org.jetbrains.plugins.groovy.mvc.MvcConsole"
-      }) { instance ->
+      }) {
         if (isTestEmptyState) {
           testEmptyState(instance as PersistentStateComponent<*>)
         }

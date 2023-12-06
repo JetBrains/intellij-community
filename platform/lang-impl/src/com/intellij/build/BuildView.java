@@ -18,6 +18,7 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.RunContentActionsContributor;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
@@ -50,7 +51,8 @@ import java.util.function.Supplier;
  * @author Vladislav.Soroka
  */
 public class BuildView extends CompositeView<ExecutionConsole>
-  implements BuildProgressListener, ConsoleView, DataProvider, Filterable<ExecutionNode>, OccurenceNavigator, ObservableConsoleView {
+  implements BuildProgressListener, ConsoleView, DataProvider, Filterable<ExecutionNode>, OccurenceNavigator, ObservableConsoleView,
+             RunContentActionsContributor {
   public static final String CONSOLE_VIEW_NAME = "consoleView";
   @ApiStatus.Experimental
   public static final DataKey<List<AnAction>> RESTART_ACTIONS = DataKey.create("restart actions");
@@ -181,13 +183,13 @@ public class BuildView extends CompositeView<ExecutionConsole>
     if (executionConsole != null) {
       executionConsole.getComponent(); //create editor to be able to add console editor actions
       if (myViewSettingsProvider.isExecutionViewHidden()) {
-        addViewAndShowIfNeeded(executionConsole, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault());
+        addViewAndShowIfNeeded(executionConsole, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault(), false);
         buildTree = false;
       }
       else if (isShowInDashboard()) {
         ExecutionConsole consoleView =
           executionConsole instanceof ConsoleView ? wrapWithToolbar((ConsoleView)executionConsole) : executionConsole;
-        addViewAndShowIfNeeded(consoleView, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault());
+        addViewAndShowIfNeeded(consoleView, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault(), false);
         if (executionConsole instanceof ConsoleViewImpl consoleViewImpl) {
           consoleViewImpl.getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
         }
@@ -202,7 +204,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
         String eventViewName = BuildTreeConsoleView.class.getName();
         eventView = new BuildTreeConsoleView(myProject, myBuildDescriptor, myExecutionConsole);
         addView(eventView, eventViewName);
-        showView(eventViewName);
+        showView(eventViewName, false);
       }
     }
 
@@ -484,6 +486,23 @@ public class BuildView extends CompositeView<ExecutionConsole>
     return runProfile instanceof RunConfiguration configuration &&
            RunDashboardManager.getInstance(myProject).isShowInDashboard(configuration) &&
            ExecutionManagerImpl.getDelegatedRunProfile(configuration) instanceof RunConfiguration;
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] getActions() {
+    return myExecutionConsole instanceof RunContentActionsContributor c ? c.getActions() : AnAction.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] getAdditionalActions() {
+    return myExecutionConsole instanceof RunContentActionsContributor c ? c.getAdditionalActions() : AnAction.EMPTY_ARRAY;
+  }
+
+  @Override
+  public void hideOriginalActions() {
+    if (myExecutionConsole instanceof RunContentActionsContributor c) c.hideOriginalActions();
   }
 
   private static @NotNull ExecutionConsole wrapWithToolbar(@NotNull ConsoleView executionConsole) {

@@ -69,14 +69,14 @@ class TypeVisitor(
 
     private fun convertTypeArgs(classType: PsiClassType): List<Type> {
         return if (classType.parameterCount == 0) {
-            createTypeArgsForRawTypeUsage(classType, Mutability.Default)
+            createTypeArgsForRawTypeUsage(classType)
         }
         else {
             typeConverter.convertTypes(classType.parameters)
         }
     }
 
-    private fun createTypeArgsForRawTypeUsage(classType: PsiClassType, mutability: Mutability): List<Type> {
+    private fun createTypeArgsForRawTypeUsage(classType: PsiClassType): List<Type> {
         if (classType is PsiClassReferenceType) {
             val targetClass = classType.reference.resolve() as? PsiClass
             if (targetClass != null) {

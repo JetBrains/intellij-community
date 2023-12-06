@@ -4,3 +4,4 @@ fun main() {
     val map = mutableMapOf(1 to "a")<caret>
     map[2] = "b"
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix

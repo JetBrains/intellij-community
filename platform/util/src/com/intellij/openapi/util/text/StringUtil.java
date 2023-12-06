@@ -252,8 +252,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  @NlsSafe
-  public static @NotNull String getPackageName(@NotNull String fqName) {
+  public static @NlsSafe @NotNull String getPackageName(@NotNull String fqName) {
     return getPackageName(fqName, '.');
   }
 
@@ -270,8 +269,7 @@ public class StringUtil extends StringUtilRt {
    * @return the package name of the type or the declarator of the type. The empty string if the given fqName is unqualified
    */
   @Contract(pure = true)
-  @NlsSafe
-  public static @NotNull String getPackageName(@NotNull String fqName, char separator) {
+  public static @NlsSafe @NotNull String getPackageName(@NotNull String fqName, char separator) {
     int lastPointIdx = fqName.lastIndexOf(separator);
     if (lastPointIdx >= 0) {
       return fqName.substring(0, lastPointIdx);
@@ -429,7 +427,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Does not actually convert to title case, but just capitalizes all words.
+   * Does not actually convert to a title case, but just capitalizes all words.
    * This is probably not correct for any language.
    * For actual (English) title case see {@link #wordsToBeginFromUpperCase(String)}.
    */
@@ -747,8 +745,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * @see <a href="https://en.cppreference.com/w/cpp/language/escape">C/C++ escaping</a>
    */
-  @NotNull
-  public static String unescapeAnsiStringCharacters(@NotNull String s) {
+  public static @NotNull String unescapeAnsiStringCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder();
     int length = s.length();
     int count = 0;
@@ -943,6 +940,11 @@ public class StringUtil extends StringUtilRt {
   @Contract(value = "null -> false", pure = true)
   public static boolean isCapitalized(@Nullable String s) {
     return Strings.isCapitalized(s);
+  }
+
+  @Contract(value = "null -> false", pure = true)
+  public static boolean canBeCapitalized(@Nullable String s) {
+    return isNotEmpty(s) && Character.isLowerCase(s.charAt(0));
   }
 
   @Contract(pure = true)
@@ -1216,7 +1218,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to answer if given symbol is white space, tabulation or line feed.
+   * True if given symbol is white space, tabulation or line feed.
    *
    * @param c symbol to check
    * @return {@code true} if given symbol is white space, tabulation or line feed; {@code false} otherwise
@@ -1262,32 +1264,27 @@ public class StringUtil extends StringUtilRt {
 
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> split(@NotNull String s, @NotNull String separator) {
+  public static @Unmodifiable @NotNull List<String> split(@NotNull String s, @NotNull String separator) {
     return split(s, separator, true);
   }
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
+  public static @Unmodifiable @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
     return split(s, separator, true, true);
   }
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator) {
+  public static @Unmodifiable @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator) {
     return split(s, separator, excludeSeparator, true);
   }
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
+  public static @Unmodifiable @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
     //noinspection unchecked,rawtypes
     return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
   }
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
+  public static @Unmodifiable @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
     if (separator.length() == 0) {
       return Collections.singletonList(s);
     }
@@ -1302,6 +1299,39 @@ public class StringUtil extends StringUtilRt {
         result.add(token);
       }
       pos = nextPos;
+    }
+    if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
+      result.add(s.subSequence(pos, s.length()));
+    }
+    return result;
+  }
+
+  @Contract(pure = true)
+  public static @Unmodifiable @NotNull List<String> split(@NotNull String s,
+                                                          @NotNull CharFilter separator,
+                                                          boolean excludeSeparator,
+                                                          boolean excludeEmptyStrings) {
+    //noinspection unchecked,rawtypes
+    return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
+  }
+
+  @Contract(pure = true)
+  public static @Unmodifiable @NotNull List<CharSequence> split(@NotNull CharSequence s,
+                                                                @NotNull CharFilter separator,
+                                                                boolean excludeSeparator,
+                                                                boolean excludeEmptyStrings) {
+    List<CharSequence> result = new ArrayList<>();
+    int pos = 0;
+    int index = 0;
+    while (index < s.length()) {
+      if (separator.accept(s.charAt(index))) {
+        CharSequence token = s.subSequence(pos, excludeSeparator ? index : index + 1);
+        if (token.length() != 0 || !excludeEmptyStrings) {
+          result.add(token);
+        }
+        pos = index + 1;
+      }
+      index++;
     }
     if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
       result.add(s.subSequence(pos, s.length()));
@@ -1377,7 +1407,7 @@ public class StringUtil extends StringUtilRt {
    * @param text text to get word ranges in.
    * @param separatorsSet if not null, only these characters will be considered as separators (i.e., not a part of word).
    *                   Otherwise {@link Character#isJavaIdentifierPart(char)} will be used to determine whether a symbol is part of word.
-   * @return ranges ranges of words in passed text.
+   * @return ranges of words in passed text.
    */
   @Contract(pure = true)
   public static @NotNull List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
@@ -1653,7 +1683,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Find position of the first character accepted by given filter.
+   * Find the position of the first character accepted by given filter.
    *
    * @param s      the string to search
    * @param filter search filter
@@ -1762,7 +1792,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to answer if target symbol is contained at given char sequence at {@code [start; end)} interval.
+   * True if the target symbol {@code c} is contained in the given sequence at {@code [start; end)} interval.
    *
    * @param s     target char sequence to check
    * @param start start offset to use within the given char sequence (inclusive)
@@ -1880,6 +1910,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static @NotNull String substringBeforeLast(@NotNull String text, @NotNull String subString, boolean includeLast) {
+    int i = text.lastIndexOf(subString);
+    if (i == -1) return text;
+    return includeLast ? text.substring(0, i + subString.length()) : text.substring(0, i);
+  }
+
+  @Contract(pure = true)
   public static @Nullable String substringAfter(@NotNull String text, @NotNull String subString) {
     int i = text.indexOf(subString);
     if (i == -1) return null;
@@ -1894,7 +1931,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to retrieve index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
+   * return the index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
    *
    * @param s     target text
    * @param c     target symbol which last occurrence we want to check
@@ -2465,7 +2502,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Splits string by lines. If several line separators are in a row corresponding empty lines
+   * Splits string by lines.
+   * If several line separators are in a row, corresponding empty lines
    * are also added to result if {@code excludeEmptyStrings} is {@code false}.
    *
    * @param string String to split
@@ -2499,7 +2537,6 @@ public class StringUtil extends StringUtilRt {
   public static String @NotNull [] splitByLinesKeepSeparators(@NotNull String string) {
     return Splitters.EOL_SPLIT_KEEP_SEPARATORS.split(string);
   }
-
   @Contract(pure = true)
   public static @NotNull List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
     List<Pair<String, Integer>> res = new ArrayList<>();
@@ -2536,15 +2573,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract("null -> false")
   public static boolean isNotNegativeNumber(@Nullable CharSequence s) {
-    if (s == null) {
-      return false;
-    }
-    for (int i = 0; i < s.length(); i++) {
-      if (!isDecimalDigit(s.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
+    return Strings.isNotNegativeNumber(s);
   }
 
   @Contract(pure = true)
@@ -2558,20 +2587,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int compare(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean ignoreCase) {
-    if (s1 == s2) return 0;
-    if (s1 == null) return -1;
-    if (s2 == null) return 1;
-
-    int length1 = s1.length();
-    int length2 = s2.length();
-    int i = 0;
-    for (; i < length1 && i < length2; i++) {
-      int diff = Strings.compare(s1.charAt(i), s2.charAt(i), ignoreCase);
-      if (diff != 0) {
-        return diff;
-      }
-    }
-    return length1 - length2;
+    return Strings.compare(s1, s2, ignoreCase);
   }
 
   @Contract(pure = true)
@@ -2800,7 +2816,7 @@ public class StringUtil extends StringUtilRt {
    * Equivalent for {@code getShortName(fqName).equals(shortName)}, but could be faster.
    *
    * @param fqName    fully-qualified name (dot-separated)
-   * @param shortName a short name, must not contain dots
+   * @param shortName a short name, which must not contain dots
    * @return true if specified short name is a short name of fully-qualified name
    */
   public static boolean isShortNameOf(@NotNull String fqName, @NotNull String shortName) {
@@ -2829,9 +2845,14 @@ public class StringUtil extends StringUtilRt {
            trimStart(s, className) : s;
   }
 
+  /**
+   * @param sequence original CharSequence
+   * @param delayMillis max delay in milliseconds
+   * @return a wrapped CharSequence that throws {@link ProcessCanceledException} if still accessed after delay.
+   */
   @Contract(pure = true)
-  public static @NotNull CharSequence newBombedCharSequence(@NotNull CharSequence sequence, long delay) {
-    long myTime = System.currentTimeMillis() + delay;
+  public static @NotNull CharSequence newBombedCharSequence(@NotNull CharSequence sequence, long delayMillis) {
+    long myTime = System.currentTimeMillis() + delayMillis;
     return new BombedCharSequence(sequence) {
       @Override
       protected void checkCanceled() {
@@ -2958,9 +2979,31 @@ public class StringUtil extends StringUtilRt {
     protected abstract void checkCanceled();
 
     @Override
-    public @NotNull CharSequence subSequence(int i, int i1) {
+    public @NotNull CharSequence subSequence(int start, int end) {
       check();
-      return delegate.subSequence(i, i1);
+      CharSequence subSequence = delegate.subSequence(start, end);
+      BombedCharSequence bombedParent = this instanceof ChildBombedCharSequence ? ((ChildBombedCharSequence)this).myBombedParent : this;
+      return new ChildBombedCharSequence(subSequence, bombedParent);
+    }
+  }
+
+  private static final class ChildBombedCharSequence extends BombedCharSequence {
+    private final BombedCharSequence myBombedParent;
+
+    ChildBombedCharSequence(@NotNull CharSequence sequence,
+                            @NotNull BombedCharSequence bombedParent) {
+      super(sequence);
+      myBombedParent = bombedParent;
+    }
+
+    @Override
+    protected void check() {
+      myBombedParent.check();
+    }
+
+    @Override
+    protected void checkCanceled() {
+      throw new UnsupportedOperationException();
     }
   }
 
@@ -2997,10 +3040,27 @@ public class StringUtil extends StringUtilRt {
     }
     for (int i = 0; i < str.length(); i++) {
       char c = str.charAt(i);
-      if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || Character.isDigit(c)) {
-        continue;
+      if ((c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && !Character.isDigit(c)) {
+        return false;
       }
+    }
+    return true;
+  }
+
+  /**
+   * @return {@code true} if the passed string is not {@code null} and not empty
+   * and contains only digits; {@code false} otherwise.
+   */
+  @Contract(pure = true)
+  public static boolean isNumeric(@Nullable CharSequence str) {
+    if (isEmpty(str)) {
       return false;
+    }
+
+    for (int i = 0; i < str.length(); i++) {
+      if (!Character.isDigit(str.charAt(i))) {
+        return false;
+      }
     }
     return true;
   }
@@ -3012,8 +3072,9 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * Finds the next position in the supplied CharSequence which is neither a space nor a tab.
+   *
    * @param text text
-   * @param pos starting position
+   * @param pos  starting position
    * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
    * if no non-whitespace character found
    */
@@ -3026,9 +3087,26 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Finds the previous position in the supplied CharSequence which is neither a space nor a tab.
+   * Finds the next position in the supplied CharSequence which is neither a space, a new line nor a tab.
+   *
    * @param text text
-   * @param pos starting position
+   * @param pos  starting position
+   * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
+   * if no non-whitespace character found
+   */
+  public static int skipWhitespaceOrNewLineForward(@NotNull CharSequence text, int pos) {
+    int length = text.length();
+    while (pos < length && isWhitespaceTabOrNewLine(text.charAt(pos))) {
+      pos++;
+    }
+    return pos;
+  }
+
+  /**
+   * Finds the previous position in the supplied CharSequence which is neither a space nor a tab.
+   *
+   * @param text text
+   * @param pos  starting position
    * @return position of the character before or equal to pos which has no space or tab before;
    * or zero if no non-whitespace character found
    */
@@ -3039,22 +3117,26 @@ public class StringUtil extends StringUtilRt {
     return pos;
   }
 
+  /**
+   * Finds the previous position in the supplied CharSequence which is neither a space, a new line nor a tab.
+   *
+   * @param text text
+   * @param pos  starting position
+   * @return position of the character before or equal to pos which has no space or tab before;
+   * or zero if no non-whitespace character found
+   */
+  public static int skipWhitespaceOrNewLineBackward(@NotNull CharSequence text, int pos) {
+    while (pos > 0 && isWhitespaceTabOrNewLine(text.charAt(pos - 1))) {
+      pos--;
+    }
+    return pos;
+  }
+
   private static boolean isWhitespaceOrTab(char c) {
     return c == ' ' || c == '\t';
   }
 
-  /**
-   * @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatAndList(java.util.Collection)} instead to get properly localized concatenation
-   */
-  @SuppressWarnings("HardCodedStringLiteral")
-  @Deprecated
-  @Nls
-  @NotNull
-  public static String naturalJoin(List<String> strings) {
-    if (strings.isEmpty()) return "";
-    if (strings.size() == 1) return strings.get(0);
-    String lastWord = strings.get(strings.size() - 1);
-    String leadingWords = join(strings.subList(0, strings.size() - 1), ", ");
-    return leadingWords + " and " + lastWord;
+  private static boolean isWhitespaceTabOrNewLine(char c) {
+    return c == ' ' || c == '\t' || c == '\n';
   }
 }

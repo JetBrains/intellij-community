@@ -23,21 +23,21 @@ import java.util.*
 
 object ImageLoader {
   @Suppress("unused")
-  const val ALLOW_FLOAT_SCALING = 0x01
+  const val ALLOW_FLOAT_SCALING: Int = 0x01
 
   @Suppress("unused")
-  const val USE_CACHE = 0x02
+  const val USE_CACHE: Int = 0x02
 
   @Suppress("unused")
-  const val USE_DARK = 0x04
+  const val USE_DARK: Int = 0x04
 
   @Suppress("unused")
-  const val USE_SVG = 0x08
+  const val USE_SVG: Int = 0x08
 
   @JvmStatic
   fun loadFromUrl(url: URL): Image? {
     val path = url.toString()
-    return loadImage(path = path, classLoader = null)
+    return loadImage(path = path, classLoader = null, useCache = true)
   }
 
   @JvmStatic
@@ -68,32 +68,33 @@ object ImageLoader {
   @Deprecated("Use {@link #loadFromResource(String, Class)}")
   fun loadFromResource(s: @NonNls String): Image? {
     val callerClass = ReflectionUtil.getGrandCallerClass()
-    return loadFromResource(path = s, aClass = callerClass ?: return null)
+    return loadImage(path = s, resourceClass = callerClass ?: return null, classLoader = null, useCache = true)
   }
 
   @JvmStatic
   fun loadFromResource(path: @NonNls String, aClass: Class<*>): Image? {
-    return loadImage(path = path, resourceClass = aClass, classLoader = null)
+    return loadImage(path = path, resourceClass = aClass, classLoader = null, useCache = true)
   }
 
   @JvmStatic
   fun loadFromBytes(bytes: ByteArray): Image? {
-    return loadFromStream(ByteArrayInputStream(bytes))
+    return loadFromStream(inputStream = ByteArrayInputStream(bytes))
   }
 
   @JvmStatic
   fun loadFromStream(inputStream: InputStream): Image? {
-    // for backward compatibility assume the image is hidpi-aware (includes default SYS_SCALE)
-    val scaleContext = ScaleContext.create()
     try {
       inputStream.use {
-        val originalUserSize = Dimension2DDouble(0.0, 0.0)
+        // for backward compatibility, assume the image is hidpi-aware (includes default SYS_SCALE)
+        val scaleContext = ScaleContext.create()
         val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-        var image: Image? = loadPng(inputStream, scale, originalUserSize)
+        val image = loadRasterImage(inputStream)
         if (StartupUiUtil.isJreHiDPI(scaleContext)) {
           val userScale = scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE)
-          image = JBHiDPIScaledImage(image!!, originalUserSize.width * userScale, originalUserSize.height * userScale,
-                                     BufferedImage.TYPE_INT_ARGB)
+          return HiDPIImage(image = image,
+                            width = (image.width / scale) * userScale,
+                            height = (image.height / scale) * userScale,
+                            type = BufferedImage.TYPE_INT_ARGB)
         }
         return image
       }
@@ -111,8 +112,10 @@ object ImageLoader {
     return loadCustomIcon(url = file.toURI().toURL())
   }
 
+  @Suppress("unused")
+  @Deprecated("Do not use")
   class Dimension2DDouble(var width: Double, var height: Double) {
-    fun setSize(size: Dimension2DDouble) {
+    fun setSize(@Suppress("DEPRECATION") size: Dimension2DDouble) {
       width = size.width
       height = size.height
     }

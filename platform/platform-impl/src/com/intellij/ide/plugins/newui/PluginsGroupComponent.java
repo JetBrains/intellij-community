@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ui.JBColor;
@@ -10,15 +11,18 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -38,6 +42,36 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
 
     setOpaque(true);
     setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
+
+    setFocusTraversalPolicyProvider(true);
+    // Focus traversal policy that makes focus order similar to lists and trees, where Tab doesn't move focus between list items,
+    // but instead moves focus to the next component. It also keeps group header buttons and buttons inside list items focusable.
+    setFocusTraversalPolicy(new ComponentsListFocusTraversalPolicy(true) {
+      @Override
+      protected @NotNull List<Component> getOrderedComponents() {
+        List<Component> orderedComponents = new ArrayList<>();
+        List<ListPluginComponent> selectedComponents = getSelection();
+        Set<PluginsGroup> addedGroups = new HashSet<>();
+
+        for (ListPluginComponent component : selectedComponents) {
+          PluginsGroup group = component.getGroup();
+          if (!addedGroups.contains(group)) {
+            addedGroups.add(group);
+            if (UIUtil.isFocusable(group.rightAction)) {
+              orderedComponents.add(group.rightAction);
+            }
+            else if (!ContainerUtil.isEmpty(group.rightActions)) {
+              orderedComponents.addAll(ContainerUtil.filter(group.rightActions, UIUtil::isFocusable));
+            }
+          }
+
+          orderedComponents.add(component);
+          orderedComponents.addAll(component.getFocusableComponents());
+        }
+
+        return orderedComponents;
+      }
+    });
   }
 
   protected abstract @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group);
@@ -50,7 +84,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.setSelectionListener(listener);
   }
 
-  public final @NotNull List<? extends ListPluginComponent> getSelection() {
+  public final @NotNull List<ListPluginComponent> getSelection() {
     return myEventHandler.getSelection();
   }
 
@@ -58,7 +92,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.setSelection(component);
   }
 
-  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
+  public void setSelection(@NotNull List<ListPluginComponent> components) {
     myEventHandler.setSelection(components);
   }
 
@@ -117,7 +151,27 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     group.ui = uiGroup;
     myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
 
-    OpaquePanel panel = new OpaquePanel(new BorderLayout(), SECTION_HEADER_BACKGROUND);
+    OpaquePanel panel = new OpaquePanel(new BorderLayout(), SECTION_HEADER_BACKGROUND) {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleOpaquePanelComponent();
+        }
+        return accessibleContext;
+      }
+
+      protected class AccessibleOpaquePanelComponent extends AccessibleJComponent {
+        @Override
+        public String getAccessibleName() {
+          return group.title;
+        }
+
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibilityUtils.GROUPED_ELEMENTS;
+        }
+      }
+    };
     panel.setBorder(JBUI.Borders.empty(4, 10));
 
     JLabel title = new JLabel(group.title) {
@@ -293,5 +347,20 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
         scrollRectToVisible(myGroups.get(0).panel.getBounds());
       }
     });
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessiblePluginsGroupComponent();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessiblePluginsGroupComponent extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibilityUtils.GROUPED_ELEMENTS;
+    }
   }
 }

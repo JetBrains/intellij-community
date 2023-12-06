@@ -1,0 +1,3 @@
+version = "1.8.*"
+upstream_repository = "https://github.com/grantjenks/py-tree-sitter-languages"
+requires = ["types-tree-sitter"]

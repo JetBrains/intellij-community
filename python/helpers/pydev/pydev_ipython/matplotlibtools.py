@@ -7,6 +7,7 @@ backends = {'tk': 'TkAgg',
             'qt': 'Qt4Agg', # qt3 not supported
             'qt4': 'Qt4Agg',
             'qt5': 'Qt5Agg',
+            'qt6': 'Qt6Agg',
             'osx': 'MacOSX'}
 
 # We also need a reverse backends2guis mapping that will properly choose which
@@ -16,12 +17,13 @@ backends = {'tk': 'TkAgg',
 backend2gui = dict(zip(backends.values(), backends.keys()))
 backend2gui['Qt4Agg'] = 'qt4'
 backend2gui['Qt5Agg'] = 'qt5'
+backend2gui['Qt6Agg'] = 'qt6'
 # In the reverse mapping, there are a few extra valid matplotlib backends that
 # map to the same GUI support
 backend2gui['GTK'] = backend2gui['GTKCairo'] = 'gtk'
 backend2gui['WX'] = 'wx'
 backend2gui['CocoaAgg'] = 'osx'
-
+backend2gui['QtAgg'] = 'qt'
 
 def do_enable_gui(guiname):
     from _pydev_bundle.pydev_versioncheck import versionok_for_gui
@@ -93,6 +95,9 @@ def activate_matplotlib(enable_gui_function):
     """Set interactive to True for interactive backends.
     enable_gui_function - Function which enables gui, should be run in the main thread.
     """
+    if 'matplotlib' not in sys.modules:
+        return False
+
     matplotlib = sys.modules['matplotlib']
     if not hasattr(matplotlib, 'rcParams'):
         # matplotlib module wasn't fully imported, try later
@@ -157,6 +162,9 @@ def flag_calls(func):
 
 
 def activate_pylab():
+    if 'pylab' not in sys.modules:
+        return False
+
     pylab = sys.modules['pylab']
     pylab.show._needmain = False
     # We need to detect at runtime whether show() is called by the user.
@@ -166,6 +174,9 @@ def activate_pylab():
 
 
 def activate_pyplot():
+    if 'matplotlib.pyplot' not in sys.modules:
+        return False
+
     pyplot = sys.modules['matplotlib.pyplot']
     pyplot.show._needmain = False
     # We need to detect at runtime whether show() is called by the user.

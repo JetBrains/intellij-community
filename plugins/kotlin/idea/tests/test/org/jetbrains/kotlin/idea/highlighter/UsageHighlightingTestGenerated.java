@@ -23,6 +23,16 @@ public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTes
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("class.kt")
+    public void testClass() throws Exception {
+        runTest("testData/usageHighlighter/class.kt");
+    }
+
+    @TestMetadata("classRef.kt")
+    public void testClassRef() throws Exception {
+        runTest("testData/usageHighlighter/classRef.kt");
+    }
+
     @TestMetadata("destructingDeclaration.kt")
     public void testDestructingDeclaration() throws Exception {
         runTest("testData/usageHighlighter/destructingDeclaration.kt");
@@ -31,6 +41,11 @@ public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTes
     @TestMetadata("destructingDeclarationLambdaParams.kt")
     public void testDestructingDeclarationLambdaParams() throws Exception {
         runTest("testData/usageHighlighter/destructingDeclarationLambdaParams.kt");
+    }
+
+    @TestMetadata("functionNameIdentifier.kt")
+    public void testFunctionNameIdentifier() throws Exception {
+        runTest("testData/usageHighlighter/functionNameIdentifier.kt");
     }
 
     @TestMetadata("implicitIt.kt")
@@ -106,5 +121,10 @@ public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTes
     @TestMetadata("localVal.kt")
     public void testLocalVal() throws Exception {
         runTest("testData/usageHighlighter/localVal.kt");
+    }
+
+    @TestMetadata("primaryCtor.kt")
+    public void testPrimaryCtor() throws Exception {
+        runTest("testData/usageHighlighter/primaryCtor.kt");
     }
 }

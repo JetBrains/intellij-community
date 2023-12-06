@@ -1,14 +1,16 @@
 package com.jetbrains.performancePlugin;
 
-import com.intellij.diagnostic.telemetry.IJTracer;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 
 public final class PerformanceTestSpan {
   public static final String SPAN_NAME = "performance_test";
-  public final static IJTracer TRACER = TraceManager.INSTANCE.getTracer("performance-plugin");
+  public final static IJTracer TRACER = TelemetryManager.getInstance().getTracer(
+    new com.intellij.platform.diagnostic.telemetry.Scope("performance-plugin", null));
+  public final static IJTracer WARMUP_TRACER = new WarmupIJTracer(TRACER);
   private static Span performanceTestSpan;
   private static Scope performanceScope;
 
@@ -22,8 +24,12 @@ public final class PerformanceTestSpan {
     if (performanceTestSpan != null) performanceTestSpan.end();
   }
 
-  public static Context getContext(){
+  public static Context getContext() {
     if (performanceTestSpan != null) return Context.current().with(performanceTestSpan);
     return Context.current();
+  }
+
+  public static IJTracer getTracer(boolean noopTracer) {
+    return noopTracer ? WARMUP_TRACER : TRACER;
   }
 }

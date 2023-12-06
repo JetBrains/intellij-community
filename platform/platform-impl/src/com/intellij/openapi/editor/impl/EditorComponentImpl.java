@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -27,10 +27,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -51,6 +48,9 @@ import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
@@ -70,13 +70,14 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.im.InputMethodRequests;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @DirtyUI
-public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible,
-                                                                   UISettingsListener, UiInspectorPreciseContextProvider {
+public final class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible,
+                                                                         UISettingsListener, UiInspectorPreciseContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 
   private final EditorImpl myEditor;
@@ -124,6 +125,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // Remove JTextComponent's mouse/focus listeners added in its ctor.
     for (MouseListener l : getMouseListeners()) removeMouseListener(l);
     for (FocusListener l : getFocusListeners()) removeFocusListener(l);
+
+    setupEditorSwingCaretUpdatesCourierIfRequired();
   }
 
   @Override
@@ -143,8 +146,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     super.paint(g);
   }
 
-  @NotNull
-  public EditorImpl getEditor() {
+  public @NotNull EditorImpl getEditor() {
     return myEditor;
   }
 
@@ -211,7 +213,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
-  protected void fireResized() {
+  void fireResized() {
     processComponentEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
   }
 
@@ -249,9 +251,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     return result;
   }
 
-  @Nullable
   @Override
-  public InputMethodRequests getInputMethodRequests() {
+  public @Nullable InputMethodRequests getInputMethodRequests() {
     return IdeEventQueue.getInstance().isInputMethodEnabled() ? myEditor.getInputMethodRequests() : null;
   }
 
@@ -276,7 +277,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
     AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
     myEditor.paint(gg);
-    if (origTx != null) gg.setTransform(origTx);
+    if (origTx != null) {
+      gg.setTransform(origTx);
+    }
 
     Project project = myEditor.getProject();
     if (project != null) {
@@ -300,11 +303,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @DirtyUI
   @Override
   public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-    if (orientation == SwingConstants.VERTICAL) {
-      return myEditor.getLineHeight();
-    }
-    // if orientation == SwingConstants.HORIZONTAL
-    return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
+    return ReadAction.compute(() -> {
+      if (orientation == SwingConstants.VERTICAL) {
+        return myEditor.getLineHeight();
+      }
+      // if orientation == SwingConstants.HORIZONTAL
+      return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
+    });
   }
 
   @DirtyUI
@@ -340,11 +345,264 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     myEditor.putInfo(info);
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "EditorComponent file=" + myEditor.getVirtualFile();
   }
+
+
+  // -----------------------------------------------------------------------------------------------
+  // Fixes behavior of JTextComponent caret API.
+  // Without this, changes of caret(s) position(s) are not reported to the caret listeners added
+  //   via JTextComponent.addCaretListener.
+  // This is required for proper working of JBR-2460.
+  // -----------------------------------------------------------------------------------------------
+  private EditorSwingCaretUpdatesCourier myEditorSwingCaretUpdatesCourier = null;
+
+  @SuppressWarnings("UnusedReturnValue")
+  @RequiresEdt
+  private boolean setupEditorSwingCaretUpdatesCourierIfRequired() {
+    if ((myEditorSwingCaretUpdatesCourier != null) || (myEditor == null) || (myEditor.isDisposed()) ) {
+      return false;
+    }
+
+    if (ArrayUtil.isEmpty(getCaretListeners())) {
+      return false;
+    }
+
+    myEditorSwingCaretUpdatesCourier = EditorSwingCaretUpdatesCourier.create(this);
+
+    return true;
+  }
+
+  @Override
+  public void addCaretListener(javax.swing.event.CaretListener listener) {
+    super.addCaretListener(listener);
+    setupEditorSwingCaretUpdatesCourierIfRequired();
+  }
+
+  @Override
+  public void removeCaretListener(javax.swing.event.CaretListener listener) {
+    super.removeCaretListener(listener);
+  }
+
+
+  /**
+   * How it works:<br>
+   * 1. if {@link #beforeAllCaretsAction} / {@link #beforeDocumentChange(Document)} gets called, then {@link #fireCaretUpdate}
+   *    will be called ONLY after {@link #afterAllCaretsAction} / {@link #afterDocumentChange(Document)} will have been called respectively
+   *    (if the primary caret position will have been changed)<br>
+   * 2. otherwise, if any of {@link #documentChanged}, {@link #caretPositionChanged}, {@link #caretAdded}, {@link #caretRemoved} gets called,
+   *    {@link #fireCaretUpdate} will be called as well (again, if the primary caret position will have been changed)
+   *
+   * <p/>
+   *
+   * Why we need all these listeners:<br>
+   * -  if we don't install {@link CaretListener}, we'll miss some caret updates which arrive outside of {@link CaretActionListener} events,
+   *    e.g. the test {@link com.intellij.openapi.editor.impl.EditorComponentCaretListenerTest#testCaretNotificationsCausedByUndo testCaretNotificationsCausedByUndo}
+   *    won't get a notification after pasting a text into the editor;<br>
+   * -  if we don't install {@link CaretActionListener}, we'll sometimes get incorrect position for {@link javax.swing.event.CaretEvent#getMark()},
+   *    because position of the caret can be updated a bit earlier than the selection.
+   *    E.g. the test {@link com.intellij.openapi.editor.impl.EditorComponentCaretListenerTest#testCaretNotificationsOfSelectionMovementsWithoutTextModificationsFromTopLeft testCaretNotificationsOfSelectionMovementsWithoutTextModificationsFromTopLeft}
+   *    will get the wrong position of the selection at the first moving of the caret to the right;<br>
+   * -  if we don't install {@link DocumentListener}, we'll miss caret movements caused by document changes. See {@link CaretListener#caretPositionChanged} for more info.
+   *    E.g. the test {@link com.intellij.openapi.editor.impl.EditorComponentCaretListenerTest#testCaretNotificationsCausedByUndo testCaretNotificationsCausedByUndo}
+   *    won't get a notification after undoing the pasting
+   */
+  private final class EditorSwingCaretUpdatesCourier implements CaretListener, CaretActionListener, BulkAwareDocumentListener.Simple {
+    /** true if {@link #beforeAllCaretsAction} has been called, but {@link #afterAllCaretsAction} - has still not */
+    private boolean isInsideCaretsAction = false;
+    private boolean isInsideBulkDocumentUpdate = false;
+    private @NotNull WeakReference<Caret> myLastKnownPrimaryCaret;
+    private int myPrimaryCaretLastKnownDot;
+    private int myPrimaryCaretLastKnownMark;
+
+    @RequiresEdt
+    private static @Nullable EditorSwingCaretUpdatesCourier create(@NotNull EditorComponentImpl parent) {
+      if ( (parent.myEditor == null) || (parent.myEditor.isDisposed()) ) {
+        return null;
+      }
+
+      return parent.new EditorSwingCaretUpdatesCourier();
+    }
+
+    /** Don't use it directly, use {@link #create(EditorComponentImpl)} instead */
+    @RequiresEdt
+    private EditorSwingCaretUpdatesCourier() {
+      assert(myEditor != null);
+      assert(!myEditor.isDisposed());
+
+      final @NotNull var caretModel = myEditor.getCaretModel();
+      final @NotNull var primaryCaret = caretModel.getPrimaryCaret();
+
+      myLastKnownPrimaryCaret = new WeakReference<>(primaryCaret);
+      myPrimaryCaretLastKnownDot = primaryCaret.getOffset();
+      myPrimaryCaretLastKnownMark = primaryCaret.getLeadSelectionOffset();
+
+      caretModel.addCaretActionListener(this, myEditor.getDisposable());
+      caretModel.addCaretListener(this, myEditor.getDisposable());
+      myEditor.getDocument().addDocumentListener(this, myEditor.getDisposable());
+    }
+
+
+    // ---- CaretActionListener ----
+
+    @Override
+    @RequiresEdt
+    public void beforeAllCaretsAction() {
+      isInsideCaretsAction = true;
+    }
+
+    @Override
+    @RequiresEdt
+    public void afterAllCaretsAction() {
+      isInsideCaretsAction = false;
+
+      if (isInsideBulkUpdate()) {
+        return;
+      }
+
+      final var currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+      primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
+    }
+
+
+    // ---- CaretListener ----
+
+    @Override
+    @RequiresEdt
+    public void caretPositionChanged(@NotNull CaretEvent event) {
+      if (isInsideBulkUpdate()) {
+        return;
+      }
+
+      final Caret changedCaret = event.getCaret();
+      final Caret currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+
+      if (changedCaret != currentPrimaryCaret) {
+        // Filter out changes of secondary carets
+        return;
+      }
+
+      primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
+    }
+
+    @Override
+    @RequiresEdt
+    public void caretAdded(@NotNull CaretEvent event) {
+      // Adding a caret may cause a change of the primary caret instance
+
+      if (isInsideBulkUpdate()) {
+        return;
+      }
+
+      final Caret addedCaret = event.getCaret();
+      final Caret currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+
+      if (addedCaret != currentPrimaryCaret) {
+        // The added caret hasn't become primary, so we're not interested in its position
+        return;
+      }
+
+      primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
+    }
+
+    @Override
+    @RequiresEdt
+    public void caretRemoved(@NotNull CaretEvent event) {
+      // Removing a caret may cause a switching of the primary caret
+
+      if (isInsideBulkUpdate()) {
+        return;
+      }
+
+      final var currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+
+      if (myLastKnownPrimaryCaret.refersTo(currentPrimaryCaret)) {
+        // The removal of a caret didn't cause a switching of the primary caret, so its position isn't supposed to have changed
+        return;
+      }
+
+      primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
+    }
+
+
+    // ---- BulkAwareDocumentListener ----
+
+    @Override
+    @RequiresEdt
+    public void beforeDocumentChange(@NotNull DocumentEvent event) {
+      isInsideBulkDocumentUpdate = true;
+    }
+
+    @Override
+    @RequiresEdt
+    public void afterDocumentChange(@NotNull Document document) {
+      isInsideBulkDocumentUpdate = false;
+
+      if (isInsideBulkUpdate()) {
+        return;
+      }
+
+      final Caret currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+      primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
+    }
+
+
+    // ---- implementation details ----
+
+    @RequiresEdt
+    private boolean isInsideBulkUpdate() {
+      return isInsideCaretsAction || isInsideBulkDocumentUpdate;
+    }
+
+    @RequiresEdt // if you're going to remove this requirement, don't forget to make access to the fields thread-safe
+    private void primaryCaretPositionPossiblyChanged(final @NotNull Caret currentPrimaryCaret) {
+      final int currentPrimaryCaretDot = currentPrimaryCaret.getOffset();
+      final int currentPrimaryCaretMark = currentPrimaryCaret.getLeadSelectionOffset();
+
+      if (!myLastKnownPrimaryCaret.refersTo(currentPrimaryCaret)) {
+        myLastKnownPrimaryCaret.clear();
+        myLastKnownPrimaryCaret = new WeakReference<>(currentPrimaryCaret);
+      }
+
+      if (currentPrimaryCaretDot < 0) {
+        LOG.error(
+          "currentPrimaryCaretDot < 0",
+          String.format("currentPrimaryCaretDot == %d", currentPrimaryCaretDot),
+          String.format("currentPrimaryCaret == %s", currentPrimaryCaret)
+        );
+      }
+      else if (currentPrimaryCaretMark < 0) { // I don't think it worth adding almost the same error twice, so it's an else-if
+        LOG.error(
+          "currentPrimaryCaretMark < 0",
+          String.format("currentPrimaryCaretMark == %d", currentPrimaryCaretMark),
+          String.format("currentPrimaryCaret == %s", currentPrimaryCaret)
+        );
+      }
+
+      if ((myPrimaryCaretLastKnownDot == currentPrimaryCaretDot) && (myPrimaryCaretLastKnownMark == currentPrimaryCaretMark)) {
+        // The position hasn't changed
+        return;
+      }
+
+      myPrimaryCaretLastKnownDot = currentPrimaryCaretDot;
+      myPrimaryCaretLastKnownMark = currentPrimaryCaretMark;
+
+      fireCaretUpdate(new javax.swing.event.CaretEvent(EditorComponentImpl.this) {
+        @Override
+        public int getDot() {
+          return currentPrimaryCaretDot;
+        }
+
+        @Override
+        public int getMark() {
+          return currentPrimaryCaretMark;
+        }
+      });
+    }
+  }
+
 
   // -----------------------------------------------------------------------------------------------
   // Accessibility/screen reader support for the editor
@@ -407,46 +665,22 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @DirtyUI
   @Override
   public void updateUI() {
-    // Don't use the default TextUI, BaseTextUI, which does a lot of unnecessary
-    // work. We do however need to provide a TextUI implementation since some
-    // screen reader support code will invoke it
-    setUI(new EditorAccessibilityTextUI());
-    UISettings.setupEditorAntialiasing(this);
-    // myEditor is null when updateUI() is called from parent's constructor
-    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
-    invalidate();
+    ReadAction.run(() -> {
+      // Don't use the default TextUI, BaseTextUI, which does a lot of unnecessary
+      // work. We do however need to provide a TextUI implementation since some
+      // screen reader support code will invoke it
+      setUI(new EditorAccessibilityTextUI());
+      UISettings.setupEditorAntialiasing(this);
+      // myEditor is null when updateUI() is called from parent's constructor
+      putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
+      invalidate();
+    });
   }
 
   @Override
   public String getToolTipText(MouseEvent event) {
     // Undo effect of JTextComponent superclass: this is the default JComponent implementation
     return this.getToolTipText();
-  }
-
-  /** Redispatch an IDE {@link CaretEvent} to a Swing {@link javax.swing.event.CaretListener} */
-  private void fireJTextComponentCaretChange(final CaretEvent event) {
-    javax.swing.event.CaretEvent swingEvent = new javax.swing.event.CaretEvent(this) {
-      @Override
-      public int getDot() {
-        Caret caret = event.getCaret();
-        if (caret != null) {
-          return caret.getOffset();
-        }
-        return 0;
-      }
-
-      @Override
-      public int getMark() {
-        Caret caret = event.getCaret();
-        if (caret != null) {
-          return caret.getLeadSelectionOffset();
-        }
-        return 0;
-      }
-    };
-    for (javax.swing.event.CaretListener listener : getCaretListeners()) {
-      listener.caretUpdate(swingEvent);
-    }
   }
 
   /** Redispatch an IDE {@link DocumentEvent} to a Swing {@link javax.swing.event.DocumentListener} */
@@ -479,9 +713,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         return event.getOldLength() == 0 ? EventType.INSERT : event.getNewLength() == 0 ? EventType.REMOVE : EventType.CHANGE;
       }
 
-      @Nullable
       @Override
-      public ElementChange getChange(Element element) {
+      public @Nullable ElementChange getChange(Element element) {
         return null;
       }
     };
@@ -504,11 +737,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   /** {@linkplain javax.swing.text.PlainDocument} does a lot of work we don't need.
    * This exists simply to be able to send editing events to the screen reader. */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  private class EditorAccessibilityDocument implements javax.swing.text.Document, javax.swing.text.Element {
+  private final class EditorAccessibilityDocument implements javax.swing.text.Document, javax.swing.text.Element {
     private List<javax.swing.event.DocumentListener> myListeners;
 
-    @Nullable
-    public List<javax.swing.event.DocumentListener> getListeners() {
+    public @Nullable List<javax.swing.event.DocumentListener> getListeners() {
       return myListeners;
     }
 
@@ -541,8 +773,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
 
     @Override
-    @Nullable
-    public Object getProperty(Object o) {
+    public @Nullable Object getProperty(Object o) {
       return null;
     }
 
@@ -574,23 +805,20 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       segment.count = s.length;
     }
 
-    @Nullable
     @Override
-    public Position getStartPosition() {
+    public @Nullable Position getStartPosition() {
       notSupported();
       return null;
     }
 
-    @Nullable
     @Override
-    public Position getEndPosition() {
+    public @Nullable Position getEndPosition() {
       notSupported();
       return null;
     }
 
-    @Nullable
     @Override
-    public Position createPosition(int i) {
+    public @Nullable Position createPosition(int i) {
       notSupported();
       return null;
     }
@@ -623,21 +851,18 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       return this;
     }
 
-    @Nullable
     @Override
-    public Element getParentElement() {
+    public @Nullable Element getParentElement() {
       return null;
     }
 
-    @Nullable
     @Override
-    public String getName() {
+    public @Nullable String getName() {
       return null;
     }
 
-    @Nullable
     @Override
-    public AttributeSet getAttributes() {
+    public @Nullable AttributeSet getAttributes() {
       return null;
     }
 
@@ -678,15 +903,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
           return EditorAccessibilityDocument.this;
         }
 
-        @Nullable
         @Override
-        public String getName() {
+        public @Nullable String getName() {
           return null;
         }
 
-        @Nullable
         @Override
-        public AttributeSet getAttributes() {
+        public @Nullable AttributeSet getAttributes() {
           return null;
         }
 
@@ -712,9 +935,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
           return 0;
         }
 
-        @Nullable
         @Override
-        public Element getElement(int i) {
+        public @Nullable Element getElement(int i) {
           return null;
         }
 
@@ -743,7 +965,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   /** Inserts, removes or replaces the given text at the given offset */
-  private void editDocumentSafely(final int offset, final int length, @Nullable final String text) {
+  private void editDocumentSafely(final int offset, final int length, final @Nullable String text) {
     Document document = myEditor.getDocument();
     RangeMarker marker = document.createRangeMarker(offset, offset + length);
 
@@ -772,7 +994,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   /** {@linkplain DefaultCaret} does a lot of work we don't want (listening
    * for focus events etc). This exists simply to be able to send caret events to the screen reader. */
-  private class EditorAccessibilityCaret implements javax.swing.text.Caret {
+  private final class EditorAccessibilityCaret implements javax.swing.text.Caret {
     @Override
     public void install(JTextComponent jTextComponent) {
     }
@@ -815,9 +1037,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     public void setMagicCaretPosition(Point point) {
     }
 
-    @Nullable
     @Override
-    public Point getMagicCaretPosition() {
+    public @Nullable Point getMagicCaretPosition() {
       return null;
     }
 
@@ -875,10 +1096,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   /**
    * Specialized TextUI intended *only* for accessibility usage. Not all the methods are called; only viewToModel, not modelToView.
    */
-  private class EditorAccessibilityTextUI extends TextUI {
-    @Nullable
+  private final class EditorAccessibilityTextUI extends TextUI {
     @Override
-    public Rectangle modelToView(JTextComponent tc, int offset) {
+    public @Nullable Rectangle modelToView(JTextComponent tc, int offset) {
       return modelToView(tc, offset, Position.Bias.Forward);
     }
 
@@ -888,9 +1108,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       return myEditor.logicalPositionToOffset(logicalPosition);
     }
 
-    @Nullable
     @Override
-    public Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) {
+    public @Nullable Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) {
       LogicalPosition pos = myEditor.offsetToLogicalPosition(offset).leanForward(bias == Position.Bias.Forward);
       LogicalPosition posNext = myEditor.offsetToLogicalPosition(bias == Position.Bias.Forward ? offset + 1 : offset - 1)
         .leanForward(bias != Position.Bias.Forward);
@@ -924,16 +1143,14 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       damageRange(t, p0, p1);
     }
 
-    @Nullable
     @Override
-    public EditorKit getEditorKit(JTextComponent t) {
+    public @Nullable EditorKit getEditorKit(JTextComponent t) {
       notSupported();
       return null;
     }
 
-    @Nullable
     @Override
-    public View getRootView(JTextComponent t) {
+    public @Nullable View getRootView(JTextComponent t) {
       notSupported();
       return null;
     }
@@ -954,7 +1171,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
-  private class AccessibleEditorComponentImpl extends AccessibleJComponent
+  private final class AccessibleEditorComponentImpl extends AccessibleJComponent
       implements AccessibleText, AccessibleEditableText, AccessibleExtendedText,
                  CaretListener, DocumentListener {
 
@@ -985,23 +1202,15 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       int dot = caret.getOffset();
       int mark = caret.getLeadSelectionOffset();
       if (myCaretPos != dot) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
         firePropertyChange(ACCESSIBLE_CARET_PROPERTY,
                            Integer.valueOf(myCaretPos), Integer.valueOf(dot));
-
-        if (SystemInfo.isMac) {
-          // For MacOSX we also need to fire a caret event to anyone listening
-          // to our Document, since *that* rather than the accessible property
-          // change is the only way to trigger a speech update
-          //fireJTextComponentCaretChange(dot, mark);
-          fireJTextComponentCaretChange(e);
-        }
 
         myCaretPos = dot;
       }
 
       if (mark != dot) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
         firePropertyChange(ACCESSIBLE_SELECTION_PROPERTY, null,
                            getSelectedText());
       }
@@ -1010,7 +1219,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // ---- Implements DocumentListener ----
 
     @Override
-    public void documentChanged(@NotNull final DocumentEvent event) {
+    public void documentChanged(final @NotNull DocumentEvent event) {
       final Integer pos = event.getOffset();
       if (ApplicationManager.getApplication().isDispatchThread()) {
         firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, null, pos);
@@ -1030,9 +1239,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     // ---- Implements AccessibleContext ----
 
-    @Nullable
     @Override
-    public String getAccessibleName() {
+    public @Nullable String getAccessibleName() {
       if (accessibleName != null) {
         return accessibleName;
       }
@@ -1108,9 +1316,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       return myEditor.getCaretModel().getOffset();
     }
 
-    @Nullable
     @Override
-    public String getAtIndex(
+    public @Nullable String getAtIndex(
       @MagicConstant(intValues = {
         AccessibleText.CHARACTER,
         AccessibleText.WORD,
@@ -1120,18 +1327,16 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       return getTextAtOffset(part, index, HERE);
     }
 
-    @Nullable
     @Override
-    public String getAfterIndex(
+    public @Nullable String getAfterIndex(
       @MagicConstant(intValues = {AccessibleText.CHARACTER, AccessibleText.WORD, AccessibleText.SENTENCE})
       int part,
       int index) {
       return getTextAtOffset(part, index, AFTER);
     }
 
-    @Nullable
     @Override
-    public String getBeforeIndex(
+    public @Nullable String getBeforeIndex(
       @MagicConstant(intValues = {AccessibleText.CHARACTER, AccessibleText.WORD, AccessibleText.SENTENCE})
       int part,
       int index) {
@@ -1153,9 +1358,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       return myEditor.getSelectionModel().getSelectionEnd();
     }
 
-    @Nullable
     @Override
-    public String getSelectedText() {
+    public @Nullable String getSelectedText() {
       return myEditor.getSelectionModel().getSelectedText();
     }
 
@@ -1225,9 +1429,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     /** Looking for text after the given offset */
     private static final int AFTER = 1;
 
-    @Nullable
     @Override
-    public AccessibleTextSequence getTextSequenceAt(
+    public @Nullable AccessibleTextSequence getTextSequenceAt(
       @MagicConstant(intValues = {
         AccessibleText.CHARACTER,
         AccessibleText.WORD,
@@ -1239,9 +1442,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       return getSequenceAtIndex(part, index, HERE);
     }
 
-    @Nullable
     @Override
-    public AccessibleTextSequence getTextSequenceAfter(
+    public @Nullable AccessibleTextSequence getTextSequenceAfter(
       @MagicConstant(intValues = {
         AccessibleText.CHARACTER,
         AccessibleText.WORD,
@@ -1253,9 +1455,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       return getSequenceAtIndex(part, index, AFTER);
     }
 
-    @Nullable
     @Override
-    public AccessibleTextSequence getTextSequenceBefore(
+    public @Nullable AccessibleTextSequence getTextSequenceBefore(
       @MagicConstant(intValues = {
         AccessibleText.CHARACTER,
         AccessibleText.WORD,
@@ -1268,8 +1469,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
 
     @Override
-    @Nullable
-    public Rectangle getTextBounds(int startIndex, int endIndex) {
+    public @Nullable Rectangle getTextBounds(int startIndex, int endIndex) {
       LogicalPosition startPos = myEditor.offsetToLogicalPosition(startIndex);
       Point startPoint = myEditor.logicalPositionToXY(startPos);
       Rectangle rectangle = new Rectangle(startPoint);
@@ -1285,8 +1485,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       return rectangle;
     }
 
-    @Nullable
-    private String getTextAtOffset(
+    private @Nullable String getTextAtOffset(
       @MagicConstant(intValues = {AccessibleText.CHARACTER, AccessibleText.WORD, AccessibleText.SENTENCE})
       int type,
       int offset,
@@ -1338,8 +1537,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     /**
      * Similar to {@link #getTextAtOffset} but returns an {@link AccessibleTextSequence} and can accept a few more types.
      */
-    @Nullable
-    private AccessibleTextSequence getSequenceAtIndex(
+    private @Nullable AccessibleTextSequence getSequenceAtIndex(
         @MagicConstant(intValues = {
           AccessibleText.CHARACTER,
           AccessibleText.WORD,
@@ -1561,7 +1759,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
-  private class EditorAccessibleContextDelegate extends AccessibleContextDelegateWithContextMenu implements AccessibleText {
+  private final class EditorAccessibleContextDelegate extends AccessibleContextDelegateWithContextMenu implements AccessibleText {
     public EditorAccessibleContextDelegate() { super(new AccessibleEditorComponentImpl()); }
 
     @Override

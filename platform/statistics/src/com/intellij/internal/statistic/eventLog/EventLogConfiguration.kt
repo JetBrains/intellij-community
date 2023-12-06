@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.github.benmanes.caffeine.cache.Cache
@@ -18,12 +18,16 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.MathUtil
+import com.intellij.util.applyIf
 import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.bytesToHex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.SecureRandom
@@ -34,7 +38,7 @@ import java.util.prefs.Preferences
 @Service(Service.Level.APP)
 class EventLogConfiguration {
   companion object {
-    internal val LOG: Logger = Logger.getInstance(EventLogConfiguration::class.java)
+    internal val LOG: Logger = logger<EventLogConfiguration>()
 
     internal const val UNDEFINED_DEVICE_ID = "000000000000000-0000-0000-0000-000000000000"
 
@@ -54,12 +58,12 @@ class EventLogConfiguration {
       val md = DigestUtil.sha256()
       md.update(salt)
       md.update(data.toByteArray())
-      return StringUtil.toHexString(md.digest())
+      return bytesToHex(md.digest())
     }
 
     fun getOrGenerateSaltFromPrefs(recorderId: String): ByteArray{
       val companyName = ApplicationInfoImpl.getShadowInstance().shortCompanyName
-      val name = if (StringUtil.isEmptyOrSpaces(companyName)) "jetbrains" else companyName.lowercase(Locale.US)
+      val name = if (companyName.isNullOrBlank()) "jetbrains" else companyName.lowercase(Locale.US)
       val prefs = Preferences.userRoot().node(name)
 
       val saltKey = getSaltPropertyKey(recorderId)
@@ -187,12 +191,23 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
     return MachineId(machineId, revision)
   }
 
-  fun anonymize(data: String): String {
+  fun anonymize(data: String): String = anonymize(data, false)
+
+  fun anonymize(data: String, short: Boolean = false): String {
     if (data.isBlank()) {
       return data
     }
 
-    return anonymizedCache.computeIfAbsent(data) { hashSha256(salt, it) }
+    return anonymizedCache.computeIfAbsent(data) { hashSha256(salt, it).applyIf(short) { this.substring(0, 12) } }
+  }
+
+  @TestOnly
+  fun anonymizeSkipCache(data: String, short: Boolean = false): String {
+    if (data.isBlank()) {
+      return data
+    }
+
+    return hashSha256(salt, data).applyIf(short) { this.substring(0, 12) }
   }
 
   private fun String.asBucket(): Int {

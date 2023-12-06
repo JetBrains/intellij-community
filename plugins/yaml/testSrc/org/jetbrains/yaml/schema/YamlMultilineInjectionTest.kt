@@ -9,31 +9,39 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parents
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.injectionForHost
 import com.intellij.util.asSafely
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import junit.framework.TestCase
+import kotlinx.coroutines.job
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 import org.jetbrains.concurrency.collectResults
 import org.jetbrains.concurrency.runAsync
 import org.jetbrains.yaml.psi.impl.YAMLScalarImpl
+import org.jetbrains.yaml.smart.YamlCoroutineScopeService
 import java.util.function.Predicate
 
-class YamlMultilineInjectionTest : BasePlatformTestCase() {
+class YamlSyncMultilineInjectionTest : AbstractYamlMultilineInjectionTest(false)
+class YamlAsyncMultilineInjectionTest : AbstractYamlMultilineInjectionTest(true)
+
+abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlatformTestCase() {
 
   private val myInjectionFixture: InjectionTestFixture
     get() = InjectionTestFixture(myFixture)
 
   override fun setUp() {
     super.setUp()
+    Registry.get("yaml.injection.async.indent").setValue(async, testRootDisposable)
     registerJsonSchema(myFixture, """
       {
         "properties": {
@@ -164,6 +172,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
     myInjectionFixture.assertInjectedLangAtCaret("XML")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       long:
         long:
@@ -174,6 +183,15 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
                   <caret>
               </xml>
     """.trimIndent())
+  }
+
+  private fun waitForYamlCoroutines() {
+    var i = 0
+    while (YamlCoroutineScopeService.getCoroutineScope(project).coroutineContext.job.children.any()) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+      if (i++ >= 10_000)
+        throw AssertionError("waitForYamlCoroutines took too long")
+    }
   }
 
   fun testNewLineInInjectedYamlCaretMoved() {
@@ -217,6 +235,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
     myInjectionFixture.assertInjectedLangAtCaret("XML")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       long:
         long:
@@ -273,6 +292,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
     myInjectionFixture.assertInjectedLangAtCaret("XML")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       long:
         long:
@@ -314,6 +334,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     PlatformTestUtil.waitForPromise(simultaneouslyRequestedEditorsByOtherThreads.collectResults(), 5000)
     myFixture.performEditorAction(IdeActions.ACTION_UNDO)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       long:
         long:
@@ -345,6 +366,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
     myInjectionFixture.assertInjectedLangAtCaret("JSON")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       myyaml:
         #language=JSON
@@ -394,6 +416,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
     myInjectionFixture.assertInjectedLangAtCaret("JAVA")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       myyaml:
         #language=Java
@@ -466,6 +489,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     assertEquals("literal text should be", "root:\n", literalTextAtTheCaret)
     myInjectionFixture.assertInjectedContent("root:\n")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       |myyaml: |
       |  root:
@@ -475,6 +499,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
     myFixture.type("abc:")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       |myyaml: |
       |  root:
@@ -484,6 +509,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     myInjectionFixture.assertInjectedContent("root:\n  abc:\n    \n")
     myFixture.type("def: 1")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       |myyaml: |
       |  root:
@@ -505,6 +531,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
     myInjectionFixture.assertInjectedLangAtCaret("yaml")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       |myyaml: |
       |  root:
@@ -1018,7 +1045,8 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
         myFixture.type("newkey$i: val$i")
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
       }
-    }.attempts(1)
+      waitForYamlCoroutines()
+    }.warmupIterations(0).attempts(1)
       .assertTiming()
 
     myInjectionFixture.assertInjectedContent("""root:

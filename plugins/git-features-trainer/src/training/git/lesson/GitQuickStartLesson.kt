@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -158,7 +158,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
-      triggerAndBorderHighlight().component { ui: ToolbarComboWidget ->
+      triggerAndBorderHighlight().component { ui: ToolbarComboButton ->
         ui.text == branchName
       }
     }

@@ -3,24 +3,20 @@
 package org.jetbrains.kotlin.idea.completion.test.weighers
 
 import com.intellij.codeInsight.completion.CompletionType
-import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
+import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
+import org.jetbrains.kotlin.idea.completion.test.testWithAutoCompleteSetting
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
-import java.io.File
 
 abstract class AbstractCompletionWeigherTest(val completionType: CompletionType, val relativeTestDataPath: String) :
     KotlinLightCodeInsightFixtureTestCase() {
 
-    protected open fun handleTestPath(path: String): File = File(path)
-
     fun doTest(path: String) {
-        val actualTestFile = handleTestPath(dataFilePath(fileName()))
-        myFixture.configureWithExtraFile(
-            actualTestFile.toRelativeString(File(testDataPath)),
-            ".Data", ".Data1", ".Data2", ".Data3", ".Data4", ".Data5", ".Data6"
-        )
+        val fileSuffixes = arrayOf(".Data", ".Data1", ".Data2", ".Data3", ".Data4", ".Data5", ".Data6")
+        myFixture.configureByFilesWithSuffixes(dataFile(), testDataDirectory, *fileSuffixes)
 
         val text = myFixture.editor.document.text
 
@@ -28,15 +24,19 @@ abstract class AbstractCompletionWeigherTest(val completionType: CompletionType,
         Assert.assertTrue("""Some items should be defined with "// ORDER:" directive""", items.isNotEmpty())
 
         executeTest {
-            withCustomCompilerOptions(text, project, module) {
-                myFixture.complete(completionType, InTextDirectivesUtils.getPrefixedInt(text, "// INVOCATION_COUNT:") ?: 1)
-                myFixture.assertPreferredCompletionItems(InTextDirectivesUtils.getPrefixedInt(text, "// SELECTED:") ?: 0, *items)
+            testWithAutoCompleteSetting(text) {
+                withCustomCompilerOptions(text, project, module) {
+                    myFixture.complete(completionType, InTextDirectivesUtils.getPrefixedInt(text, "// INVOCATION_COUNT:") ?: 1)
+                    myFixture.assertPreferredCompletionItems(InTextDirectivesUtils.getPrefixedInt(text, "// SELECTED:") ?: 0, *items)
+                }
             }
         }
     }
 
     open fun executeTest(test: () -> Unit) {
-        test()
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K1, ".after") {
+            test()
+        }
     }
 }
 

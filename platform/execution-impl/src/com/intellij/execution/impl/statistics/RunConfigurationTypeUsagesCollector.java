@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
+import com.intellij.execution.EnvFilesOptions;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
@@ -34,7 +35,7 @@ import java.util.*;
 
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 14);
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 17);
   public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", RunConfigurationUtilValidator.class);
   public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory",
                                                                                                RunConfigurationUtilValidator.class);
@@ -44,8 +45,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   private static final BooleanEventField SHARED_FIELD = EventFields.Boolean("shared");
   private static final BooleanEventField EDIT_BEFORE_RUN_FIELD = EventFields.Boolean("edit_before_run");
   private static final BooleanEventField ACTIVATE_BEFORE_RUN_FIELD = EventFields.Boolean("activate_before_run");
+  private static final BooleanEventField FOCUS_BEFORE_RUN_FIELD = EventFields.Boolean("focus_before_run");
   private static final BooleanEventField TEMPORARY_FIELD = EventFields.Boolean("temporary");
   private static final BooleanEventField PARALLEL_FIELD = EventFields.Boolean("parallel");
+  private static final IntEventField ENV_FILES_COUNT = EventFields.Int("env_files_count");
   /**
    * Stands for the target specified for the Run Configuration.
    * <p>
@@ -57,7 +60,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP.getId(), CONFIGURED_IN_PROJECT);
   private static final VarargEventId CONFIGURED_IN_PROJECT_EVENT =
     GROUP.registerVarargEvent(CONFIGURED_IN_PROJECT, COUNT_FIELD, ID_FIELD, FACTORY_FIELD, SHARED_FIELD, EDIT_BEFORE_RUN_FIELD,
-                              ACTIVATE_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD, ADDITIONAL_FIELD, TARGET_FIELD);
+                              ACTIVATE_BEFORE_RUN_FIELD, FOCUS_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD, ADDITIONAL_FIELD,
+                              TARGET_FIELD, ENV_FILES_COUNT);
   private static final VarargEventId FEATURE_USED_EVENT =
     GROUP.registerVarargEvent("feature.used", COUNT_FIELD, ID_FIELD, EventFields.PluginInfo, FEATURE_NAME_FIELD);
 
@@ -71,9 +75,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics(@NotNull Project project) {
+  public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     Object2IntMap<Template> templates = new Object2IntOpenHashMap<>();
     if (project.isDisposed()) {
       return Collections.emptySet();
@@ -103,6 +106,9 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
         if (assignedTargetType != null) {
           pairs.add(TARGET_FIELD.with(assignedTargetType));
         }
+      }
+      if (runConfiguration instanceof EnvFilesOptions envFilesOptions) {
+        pairs.add(ENV_FILES_COUNT.with(envFilesOptions.getEnvFilePaths().size()));
       }
     }
     Set<MetricEvent> metrics = new HashSet<>();
@@ -184,6 +190,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     return List.of(SHARED_FIELD.with(settings.isShared()),
                    EDIT_BEFORE_RUN_FIELD.with(settings.isEditBeforeRun()),
                    ACTIVATE_BEFORE_RUN_FIELD.with(settings.isActivateToolWindowBeforeRun()),
+                   FOCUS_BEFORE_RUN_FIELD.with(settings.isFocusToolWindowBeforeRun()),
                    PARALLEL_FIELD.with(runConfiguration.isAllowRunningInParallel()),
                    TEMPORARY_FIELD.with(settings.isTemporary()));
   }
@@ -198,8 +205,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       myEventPairs = pairs;
     }
 
-    @NotNull
-    private MetricEvent createMetricEvent(int count) {
+    private @NotNull MetricEvent createMetricEvent(int count) {
       myEventPairs.add(COUNT_FIELD.with(count));
       return myEventId.metric(myEventPairs);
     }
@@ -219,10 +225,9 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     }
   }
 
-  public static class RunConfigurationUtilValidator extends CustomValidationRule {
-    @NotNull
+  public static final class RunConfigurationUtilValidator extends CustomValidationRule {
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "run_config_id";
     }
 
@@ -231,9 +236,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       return getRuleId().equals(ruleId) || "run_config_factory".equals(ruleId);
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (isThirdPartyValue(data) || "unknown".equals(data)) return ValidationResultType.ACCEPTED;
 
       final String configurationId = getEventDataField(context, ID_FIELD.getName());
@@ -257,9 +261,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       return ValidationResultType.REJECTED;
     }
 
-    @NotNull
-    private static Pair<ConfigurationType, ConfigurationFactory> findConfigurationAndFactory(@NotNull String configurationId,
-                                                                                             @Nullable String factoryId) {
+    private static @NotNull Pair<ConfigurationType, ConfigurationFactory> findConfigurationAndFactory(@NotNull String configurationId,
+                                                                                                      @Nullable String factoryId) {
       final ConfigurationType configuration = findRunConfigurationById(configurationId);
       if (configuration == null) {
         return Pair.empty();
@@ -269,8 +272,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       return Pair.create(configuration, factory);
     }
 
-    @Nullable
-    private static ConfigurationType findRunConfigurationById(@NotNull String configuration) {
+    private static @Nullable ConfigurationType findRunConfigurationById(@NotNull String configuration) {
       final ConfigurationType[] types = ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions();
       for (ConfigurationType type : types) {
         if (StringUtil.equals(type.getId(), configuration)) {
@@ -280,8 +282,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       return null;
     }
 
-    @Nullable
-    private static ConfigurationFactory findFactoryById(@NotNull ConfigurationType configuration, @NotNull String factoryId) {
+    private static @Nullable ConfigurationFactory findFactoryById(@NotNull ConfigurationType configuration, @NotNull String factoryId) {
       for (ConfigurationFactory factory : configuration.getConfigurationFactories()) {
         if (StringUtil.equals(factory.getId(), factoryId)) {
           return factory;

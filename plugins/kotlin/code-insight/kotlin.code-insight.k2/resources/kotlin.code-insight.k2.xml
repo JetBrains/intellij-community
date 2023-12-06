@@ -1,6 +1,19 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight">
   <extensions defaultExtensionNs="com.intellij">
 
+    <structureViewBuilder
+            order="first"
+            key="CLASS"
+            factoryClass="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinFirDecompiledFileStructureViewBuilderProvider"/>
+    <structureViewBuilder
+            order="first"
+            key="kotlin_builtins"
+            factoryClass="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinFirDecompiledFileStructureViewBuilderProvider"/>
+    <structureViewBuilder
+            order="first"
+            key="KNM"
+            factoryClass="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinFirDecompiledFileStructureViewBuilderProvider"/>
+
     <lang.psiStructureViewFactory
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinFirStructureViewFactory"/>
@@ -8,5 +21,26 @@
     <codeInsight.gotoSuper
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2OptimizeImportsFacility"/>
+    <constantExpressionEvaluator
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinFirConstantExpressionEvaluator"/>
+
+    <platform.backend.documentation.psiTargetProvider id="KotlinDocumentationTargetProvider"
+                                                      implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinPsiDocumentationTargetProvider"/>
+    <platform.backend.documentation.linkHandler implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinDocumentationLinkHandler"/>
+    <platform.backend.documentation.targetProvider id="KotlinDocumentationTargetProvider"
+                                                   implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinDocumentationTargetProvider"/>
+    <lang.jvm.actions.jvmElementActionsFactory
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.KotlinElementActionsFactory"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.KotlinCreateFromUsageQuickFixProvider"/>
+
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
+                        serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2ReferenceImporterFacility"/>
   </extensions>
 </idea-plugin>

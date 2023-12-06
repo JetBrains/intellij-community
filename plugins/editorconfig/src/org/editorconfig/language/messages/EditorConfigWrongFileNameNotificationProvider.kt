@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.messages
 
 import com.intellij.ide.util.PropertiesComponent
@@ -24,7 +24,9 @@ import java.io.IOException
 import java.util.function.Function
 import javax.swing.JComponent
 
-class EditorConfigWrongFileNameNotificationProvider : EditorNotificationProvider, DumbAware {
+private const val DISABLE_KEY = "editorconfig.wrong.name.notification.disabled"
+
+internal class EditorConfigWrongFileNameNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
     if (file.extension != EditorConfigFileConstants.FILE_EXTENSION) return null
@@ -32,6 +34,7 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotificationProvider
     val renameRunnable = createRenameRunnable(project, file)
     return Function { createNotificationPanel(file, it, project, renameRunnable) }
   }
+
   private fun createNotificationPanel(file: VirtualFile,
                                       fileEditor: FileEditor,
                                       project: Project,
@@ -76,7 +79,7 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotificationProvider
 
     val hide = EditorConfigBundle["notification.action.hide.once"]
     result.createActionLabel(hide) {
-      editor.putUserData<Boolean>(HIDDEN_KEY, true)
+      editor.putUserData(HIDDEN_KEY, true)
       update(file, project)
     }
 
@@ -99,8 +102,5 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotificationProvider
   private fun nameMatches(file: VirtualFile) = file.nameWithoutExtension == EditorConfigFileConstants.FILE_NAME_WITHOUT_EXTENSION
   private fun update(file: VirtualFile, project: Project) = EditorNotifications.getInstance(project).updateNotifications(file)
 
-  private companion object {
-    private val HIDDEN_KEY = Key.create<Boolean>("editorconfig.wrong.name.notification.hidden")
-    private const val DISABLE_KEY = "editorconfig.wrong.name.notification.disabled"
-  }
+  private val HIDDEN_KEY = Key.create<Boolean>("editorconfig.wrong.name.notification.hidden")
 }

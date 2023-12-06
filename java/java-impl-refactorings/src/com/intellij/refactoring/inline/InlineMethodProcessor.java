@@ -18,7 +18,6 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -52,6 +51,7 @@ import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +60,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class InlineMethodProcessor extends BaseRefactoringProcessor {
@@ -223,7 +224,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myMethod)) return false;
     }
     final UsageInfo[] usagesIn = refUsages.get();
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.run(() -> {
@@ -273,6 +274,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       return false;
     }
 
+    //kotlin j2k fails badly if moved under progress
     myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {
       @Override
       public boolean isOnlyOneReferenceToInline() {
@@ -283,7 +285,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return showConflicts(conflicts, usagesIn);
   }
 
-  private static void processSideEffectsInMethodReferenceQualifier(@NotNull MultiMap<PsiElement, String> conflicts,
+  private static void processSideEffectsInMethodReferenceQualifier(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                                    @NotNull PsiMethodReferenceExpression methodReferenceExpression) {
     final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
     if (qualifierExpression != null) {
@@ -299,7 +301,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return myMethod.isWritable() || myMethod instanceof PsiCompiledElement;
   }
 
-  private void addInaccessibleSuperCallsConflicts(final UsageInfo[] usagesIn, final MultiMap<PsiElement, String> conflicts) {
+  private void addInaccessibleSuperCallsConflicts(UsageInfo[] usagesIn, MultiMap<PsiElement, @DialogMessage String> conflicts) {
 
     myMethod.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -346,10 +348,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     });
   }
 
-  public static void addInaccessibleMemberConflicts(final PsiElement element,
-                                                    final UsageInfo[] usages,
-                                                    final ReferencedElementsCollector collector,
-                                                    final MultiMap<PsiElement, String> conflicts) {
+  public static void addInaccessibleMemberConflicts(PsiElement element,
+                                                    UsageInfo[] usages,
+                                                    ReferencedElementsCollector collector,
+                                                    MultiMap<PsiElement, @DialogMessage String> conflicts) {
     element.accept(collector);
     final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usages, element);
 
@@ -630,7 +632,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           if (parameterIndex >= 0) {
             replacement.put(expression, instanceCreationArguments[parameterIndex]);
           }
-        }  
+        }
       }
     });
     for (Map.Entry<PsiReferenceExpression, PsiExpression> entry : replacement.entrySet()) {
@@ -651,6 +653,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     InlineMethodHelper helper = new InlineMethodHelper(myProject, myMethod, myMethodCopy, methodCall);
     BlockData blockData = prepareBlock(ref, helper);
     ChangeContextUtil.encodeContextInfo(blockData.block, false);
+    helper.substituteTypes(blockData.parmVars);
     InlineUtil.solveVariableNameConflicts(blockData.block, ref, myMethodCopy.getBody());
     helper.initializeParameters(blockData.parmVars);
     addThisInitializer(methodCall, blockData.thisVar);
@@ -794,11 +797,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @Nullable
   private PsiLocalVariable declareThis(PsiSubstitutor callSubstitutor, PsiCodeBlock block) {
     PsiClass containingClass = myMethod.getContainingClass();
-    if (myMethod.hasModifierProperty(PsiModifier.STATIC) || containingClass == null) return null;
+    if (myMethod.hasModifierProperty(PsiModifier.STATIC) || containingClass == null || containingClass instanceof PsiUnnamedClass) return null;
     PsiType thisType = GenericsUtil.getVariableTypeByExpressionType(myFactory.createType(containingClass, callSubstitutor));
-    String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType).names;
-    String thisVarName = names[0];
-    thisVarName = myJavaCodeStyle.suggestUniqueVariableName(thisVarName, myMethod.getFirstChild(), true);
+    String thisVarName = new VariableNameGenerator(myMethod.getFirstChild(), VariableKind.LOCAL_VARIABLE)
+      .byType(thisType).byName("self").generate(true);
     PsiExpression initializer = myFactory.createExpressionFromText("null", null);
     PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(thisVarName, thisType, initializer);
     declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
@@ -847,8 +849,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           if (containingClass != null && parentClass.isInheritor(containingClass, true)) {
             String name = parentClass.getName();
             // We cannot have qualified this reference to an anonymous class, so we leave it unqualified
-            // this might produce incorrect code in extremely rare cases 
-            // when we inline a superclass method in an anonymous class, 
+            // this might produce incorrect code in extremely rare cases
+            // when we inline a superclass method in an anonymous class,
             // and the method body contains a nested class that refers to the outer one
             qualifier = myFactory.createExpressionFromText(name == null ? "this" : name + ".this", null);
           }
@@ -928,18 +930,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       .toArray(new PsiReferenceExpression[0]);
   }
 
-  @Nullable
-  private static PsiExpression getSimpleReturnedExpression(final PsiMethod method) {
-    PsiCodeBlock body = method.getBody();
-    if (body == null) return null;
-    PsiStatement[] psiStatements = body.getStatements();
-    if (psiStatements.length != 1) return null;
-    PsiStatement statement = psiStatements[0];
-    if (!(statement instanceof PsiReturnStatement)) return null;
-    return ((PsiReturnStatement) statement).getReturnValue();
-  }
-
-  public static @NlsContexts.DialogMessage String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, final PsiElement element) {
+  public static @DialogMessage String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, PsiElement element) {
     if (checkUnableToInsertCodeBlock(methodBody, element,
                                      expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)) {
       return JavaRefactoringBundle.message("inline.method.multiline.method.in.ctor.call");
@@ -957,8 +948,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                                       final PsiElement element,
                                                       final Predicate<? super PsiMethodCallExpression> errorCondition) {
     PsiStatement[] statements = methodBody.getStatements();
-    if (statements.length > 1 || statements.length == 1 && 
-                                 !(statements[0] instanceof PsiExpressionStatement) && 
+    if (statements.length > 1 || statements.length == 1 &&
+                                 !(statements[0] instanceof PsiExpressionStatement) &&
                                  !(statements[0] instanceof PsiReturnStatement)) {
       PsiMethodCallExpression expr = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, true, PsiStatement.class);
       while (expr != null) {

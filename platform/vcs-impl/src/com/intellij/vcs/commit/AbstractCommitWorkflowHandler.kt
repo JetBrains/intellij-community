@@ -8,11 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
@@ -37,7 +33,7 @@ private val LOG = logger<AbstractCommitWorkflowHandler<*, *>>()
 
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
 @Nls
-private fun String.fixUnderscoreMnemonic() = replace('_', '&')
+fun String.fixUnderscoreMnemonic() = replace('_', '&')
 
 internal fun CommitWorkflowUi.getDisplayedPaths(): List<FilePath> =
   getDisplayedChanges().map { getFilePath(it) } + getDisplayedUnversionedFiles()
@@ -70,7 +66,10 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   open fun isCommitEmpty(): Boolean = getIncludedChanges().isEmpty() && getIncludedUnversionedFiles().isEmpty()
 
   fun getCommitMessage(): String = ui.commitMessageUi.text
-  fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
+  fun setCommitMessage(text: String?) {
+    VcsConfiguration.getInstance(project).saveCommitMessage(text)
+    ui.commitMessageUi.setText(text)
+  }
 
   protected val commitContext get() = workflow.commitContext
   private val commitHandlers get() = workflow.commitHandlers
@@ -78,7 +77,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected open fun createDataProvider() = DataProvider { dataId ->
     when {
-      COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
+      VcsDataKeys.COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
+      VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId) -> this.ui
       Refreshable.PANEL_KEY.`is`(dataId) -> commitPanel
       else -> null
     }
@@ -207,22 +207,23 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
 
     /**
-     * Commit action name, without mnemonics and ellipsis. Ex: 'Amend Commit Anyway'.
+     * Commit action name, without ellipsis. Ex: 'Amend Comm&it Anyway'.
      */
     fun getActionTextWithoutEllipsis(vcses: Collection<AbstractVcs>,
                                      executor: CommitExecutor?,
                                      isAmend: Boolean,
-                                     isSkipCommitChecks: Boolean): @Nls String {
+                                     isSkipCommitChecks: Boolean,
+                                     removeMnemonic: Boolean): @Nls String {
       if (executor == null) {
         val actionText = getDefaultCommitActionName(vcses, isAmend, isSkipCommitChecks)
-        return cleanActionText(actionText)
+        return cleanActionText(actionText, removeMnemonic = removeMnemonic)
       }
 
       if (executor is CommitExecutorWithRichDescription) {
         val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
         val actionText = executor.getText(state)
         if (actionText != null) {
-          return cleanActionText(actionText)
+          return cleanActionText(actionText, removeMnemonic = removeMnemonic)
         }
       }
 
@@ -230,10 +231,11 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       // Ex: executor might not support this flag.
       val actionText = executor.actionText
       if (isSkipCommitChecks) {
-        return VcsBundle.message("commit.checks.failed.notification.commit.anyway.action", cleanActionText(actionText))
+        return VcsBundle.message("commit.checks.failed.notification.commit.anyway.action",
+                                 cleanActionText(actionText, removeMnemonic = removeMnemonic))
       }
       else {
-        return cleanActionText(actionText)
+        return cleanActionText(actionText, removeMnemonic = removeMnemonic)
       }
     }
 
@@ -302,7 +304,8 @@ class DynamicCommitInfoImpl(
   override val commitMessage: String get() = workflowUi.commitMessageUi.text
 
   override val commitActionText: String
-    get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.isAmendCommitMode, false)
+    get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.isAmendCommitMode,
+                                         isSkipCommitChecks = false, removeMnemonic = false)
 
   override fun asStaticInfo(): StaticCommitInfo {
     return StaticCommitInfo(commitContext, isVcsCommit, executor, commitActionText, committedChanges, affectedVcses, commitMessage)

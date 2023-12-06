@@ -8,6 +8,6 @@
     VibrantInk editor color scheme for all IntelliJ-based IDEs.
   </description>
   <extensions defaultExtensionNs="com.intellij">
-    <bundledColorScheme path="/colorSchemes/vibrant_ink"/>
+    <bundledColorScheme id="VibrantInk" path="/colorSchemes/vibrant_ink"/>
   </extensions>
 </idea-plugin>

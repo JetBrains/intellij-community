@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -9,12 +10,15 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +31,7 @@ import java.util.List;
  * @author Plushnikov Michail
  */
 public final class SetterFieldProcessor extends AbstractFieldProcessor {
-  SetterFieldProcessor() {
+  public SetterFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.SETTER);
   }
 
@@ -43,11 +47,12 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiField psiField,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     final PsiClass psiClass = psiField.getContainingClass();
     if (methodVisibility != null && psiClass != null) {
-      target.add(createSetterMethod(psiField, psiClass, methodVisibility));
+      ContainerUtil.addIfNotNull(target, createSetterMethod(psiField, psiClass, methodVisibility, nameHint));
     }
   }
 
@@ -100,8 +105,10 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     return LombokUtils.toAllSetterNames(accessorsInfo, psiField.getName(), isBoolean);
   }
 
-  @NotNull
-  public static PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
+  @Contract("_,_,_,null -> !null")
+  @Nullable
+  public static PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier,
+                                             @Nullable String nameHint) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
     final PsiAnnotation setterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SETTER);
@@ -109,13 +116,16 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     final String methodName = LombokUtils.getSetterName(psiField, accessorsInfo);
 
+    if (nameHint != null && !nameHint.equals(methodName)) return null;
+
     PsiType returnType = getReturnType(psiField, accessorsInfo.isChain());
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), methodName)
       .withMethodReturnType(returnType)
       .withContainingClass(psiClass)
       .withParameter(fieldName, psiFieldType)
       .withNavigationElement(psiField)
-      .withContract("mutates=\"this\"");
+      .withMutatesThisContract()
+      .withWriteAccess();
     if (StringUtil.isNotEmpty(methodModifier)) {
       methodBuilder.withModifier(methodModifier);
     }
@@ -143,6 +153,10 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
 
     final String codeBlockText = createCodeBlockText(psiField, psiClass, returnType, isStatic, setterParameter);
     methodBuilder.withBodyText(codeBlockText);
+
+    if (!PsiTypes.voidType().equals(returnType)) {
+      LombokAddNullAnnotations.createRelevantNonNullAnnotation(psiClass, methodBuilder);
+    }
 
     return methodBuilder;
   }

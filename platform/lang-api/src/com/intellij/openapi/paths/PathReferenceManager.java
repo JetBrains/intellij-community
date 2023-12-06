@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.paths;
 
@@ -22,8 +22,7 @@ public abstract class PathReferenceManager {
   public static final ExtensionPointName<PathReferenceProvider> PATH_REFERENCE_PROVIDER_EP = ExtensionPointName.create("com.intellij.pathReferenceProvider");
   public static final ExtensionPointName<PathReferenceProvider> ANCHOR_REFERENCE_PROVIDER_EP = ExtensionPointName.create("com.intellij.anchorReferenceProvider");
 
-  @NotNull
-  public static PathReferenceManager getInstance(){
+  public static @NotNull PathReferenceManager getInstance(){
     return ApplicationManager.getApplication().getService(PathReferenceManager.class);
   }
 
@@ -65,19 +64,15 @@ public abstract class PathReferenceManager {
                                                                   boolean soft,
                                                                   PathReferenceProvider... providers);
 
-  @Nullable
-  public abstract PathReference getPathReference(@NotNull String path,
-                                                 @NotNull PsiElement element,
-                                                 PathReferenceProvider... additionalProviders);
+  public abstract @Nullable PathReference getPathReference(@NotNull String path,
+                                                           @NotNull PsiElement element,
+                                                           PathReferenceProvider... additionalProviders);
 
-  @Nullable
-  public abstract PathReference getCustomPathReference(@NotNull String path, @NotNull Module module, @NotNull PsiElement element, PathReferenceProvider... providers);
+  public abstract @Nullable PathReference getCustomPathReference(@NotNull String path, @NotNull Module module, @NotNull PsiElement element, PathReferenceProvider... providers);
 
-  @NotNull
-  public abstract PathReferenceProvider getGlobalWebPathReferenceProvider();
+  public abstract @NotNull PathReferenceProvider getGlobalWebPathReferenceProvider();
 
-  @NotNull
-  public abstract PathReferenceProvider createStaticPathReferenceProvider(final boolean relativePathsAllowed);
+  public abstract @NotNull PathReferenceProvider createStaticPathReferenceProvider(final boolean relativePathsAllowed);
 
   public static PsiReference[] getReferencesFromProvider(@NotNull PathReferenceProvider provider, @NotNull PsiElement psiElement, boolean soft) {
     final ArrayList<PsiReference> references = new ArrayList<>();

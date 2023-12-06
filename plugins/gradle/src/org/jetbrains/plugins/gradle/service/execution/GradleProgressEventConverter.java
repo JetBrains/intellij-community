@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.gradle.tooling.FileComparisonTestAssertionFailure;
 import org.gradle.tooling.events.FailureResult;
 import org.gradle.tooling.events.OperationDescriptor;
 import org.gradle.tooling.events.SkippedResult;
@@ -29,7 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
-import java.util.List;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.StringJoiner;
 
 /**
@@ -39,12 +42,16 @@ public final class GradleProgressEventConverter {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.externalSystem.event-processing");
 
+  private static final Charset FILE_COMPARISON_CONTENT_CHARSET = StandardCharsets.UTF_8;
+
   private static @NotNull String createEventId(@NotNull OperationDescriptor descriptor, @NotNull String operationId) {
     var joiner = new StringJoiner(" > ");
     joiner.add("[" + operationId + "]");
     var currentDescriptor = descriptor;
     while (currentDescriptor != null) {
-      joiner.add("[" + currentDescriptor.getDisplayName() + "]");
+      if (!isSkipped(currentDescriptor)) {
+        joiner.add("[" + currentDescriptor.getDisplayName() + "]");
+      }
       currentDescriptor = currentDescriptor.getParent();
     }
     return joiner.toString();
@@ -55,6 +62,9 @@ public final class GradleProgressEventConverter {
     @NotNull String operationId,
     @NotNull ProgressEvent event
   ) {
+    if (isSkipped(event.getDescriptor())) {
+      return null;
+    }
     if (event instanceof TaskProgressEvent taskProgressEvent) {
       return convertTaskProgressEvent(taskProgressEvent, taskId, operationId);
     }
@@ -113,18 +123,17 @@ public final class GradleProgressEventConverter {
   ) {
     var eventId = createEventId(event.getDescriptor(), operationId);
     var parentEventId = ObjectUtils.doIfNotNull(event.getDescriptor().getParent(), it -> createEventId(it, operationId));
-    var descriptor = convertDescriptor(event);
+    var descriptor = convertTestDescriptor(event);
 
     if (event instanceof TestStartEvent) {
-      return new ExternalSystemTaskExecutionEvent(taskId, new ExternalSystemStartEventImpl<>(eventId, parentEventId, descriptor));
+      var esEvent = new ExternalSystemStartEventImpl<>(eventId, parentEventId, descriptor);
+      return new ExternalSystemTaskExecutionEvent(taskId, esEvent);
     }
     if (event instanceof TestFinishEvent finishEvent) {
       var result = finishEvent.getResult();
       var operationResult = convertTestProgressEventResult(result);
-      if (operationResult != null) {
-        var esEvent = new ExternalSystemFinishEventImpl<>(eventId, parentEventId, descriptor, operationResult);
-        return new ExternalSystemTaskExecutionEvent(taskId, esEvent);
-      }
+      var esEvent = new ExternalSystemFinishEventImpl<>(eventId, parentEventId, descriptor, operationResult);
+      return new ExternalSystemTaskExecutionEvent(taskId, esEvent);
     }
     if (event instanceof TestOutputEvent outputEvent) {
       var outputDescriptor = outputEvent.getDescriptor();
@@ -138,37 +147,70 @@ public final class GradleProgressEventConverter {
     return null;
   }
 
-  private static @Nullable OperationResult convertTestProgressEventResult(@NotNull org.gradle.tooling.events.OperationResult result) {
+  private static @NotNull OperationResult convertTestProgressEventResult(@NotNull TestOperationResult result) {
     var startTime = result.getStartTime();
     var endTime = result.getEndTime();
-    if (result instanceof SuccessResult) {
-      var isUpToDate = result instanceof TaskSuccessResult && ((TaskSuccessResult)result).isUpToDate();
-      return new SuccessResultImpl(startTime, endTime, isUpToDate);
+    if (result instanceof TestSuccessResult) {
+      return new SuccessResultImpl(startTime, endTime, false);
     }
-    if (result instanceof FailureResult) {
-      var failures = convertFailureResult((FailureResult)result);
+    if (result instanceof TestFailureResult failureResult) {
+      var failures = ContainerUtil.map(failureResult.getFailures(), it -> convertTestFailure(it));
       return new FailureResultImpl(startTime, endTime, failures);
     }
-    if (result instanceof SkippedResult) {
+    if (result instanceof TestSkippedResult) {
       return new SkippedResultImpl(startTime, endTime);
     }
-    LOG.warn("Undefined operation result " + result.getClass().getSimpleName() + " " + result);
-    return null;
+    LOG.warn("Undefined test operation result " + result.getClass().getName());
+    return new DefaultOperationResult(startTime, endTime);
   }
 
-  private static @NotNull List<Failure> convertFailureResult(@NotNull FailureResult failure) {
-    return ContainerUtil.map(failure.getFailures(), it -> convertFailure(it));
+  private static @NotNull Failure convertTestFailure(@NotNull org.gradle.tooling.Failure failure) {
+    var message = failure.getMessage();
+    var description = failure.getDescription();
+    var causes = ContainerUtil.map(failure.getCauses(), it -> convertTestFailure(it));
+    if (failure instanceof FileComparisonTestAssertionFailure comparisonFailure) {
+      var exceptionName = comparisonFailure.getClassName();
+      var stackTrace = comparisonFailure.getStacktrace();
+
+      var expectedContent = comparisonFailure.getExpectedContent();
+      var expectedText = expectedContent != null ?
+                         new String(expectedContent, FILE_COMPARISON_CONTENT_CHARSET) :
+                         comparisonFailure.getExpected();
+      var expectedFile = expectedContent != null ?
+                         comparisonFailure.getExpected() :
+                         null;
+
+      var actualContent = comparisonFailure.getActualContent();
+      var actualText = actualContent != null ?
+                       new String(actualContent, FILE_COMPARISON_CONTENT_CHARSET) :
+                       comparisonFailure.getActual();
+      var actualFile = actualContent != null ?
+                       comparisonFailure.getActual() :
+                       null;
+
+      if (expectedText != null && actualText != null) {
+        return new TestAssertionFailure(exceptionName, message, stackTrace, description, causes, expectedText, actualText, expectedFile, actualFile);
+      }
+    }
+    if (failure instanceof org.gradle.tooling.TestAssertionFailure assertionFailure) {
+      var exceptionName = assertionFailure.getClassName();
+      var stackTrace = assertionFailure.getStacktrace();
+      var expectedText = assertionFailure.getExpected();
+      var actualText = assertionFailure.getActual();
+      if (expectedText != null && actualText != null) {
+        return new TestAssertionFailure(exceptionName, message, stackTrace, description, causes, expectedText, actualText);
+      }
+    }
+    if (failure instanceof org.gradle.tooling.TestFailure testFailure) {
+      var exceptionName = testFailure.getClassName();
+      var stackTrace = testFailure.getStacktrace();
+      return new TestFailure(exceptionName, message, stackTrace, description, causes, false);
+    }
+    LOG.warn("Undefined test failure type " + failure.getClass().getName());
+    return new FailureImpl(message, description, Collections.emptyList());
   }
 
-  private static @NotNull Failure convertFailure(@NotNull org.gradle.tooling.Failure failure) {
-    return new FailureImpl(
-      failure.getMessage(),
-      failure.getDescription(),
-      ContainerUtil.map(failure.getCauses(), it -> convertFailure(it))
-    );
-  }
-
-  private static @NotNull TestOperationDescriptor convertDescriptor(@NotNull ProgressEvent event) {
+  private static @NotNull TestOperationDescriptor convertTestDescriptor(@NotNull ProgressEvent event) {
     var descriptor = event.getDescriptor();
     var eventTime = event.getEventTime();
     var displayName = descriptor.getDisplayName();
@@ -181,76 +223,67 @@ public final class GradleProgressEventConverter {
     return new TestOperationDescriptorImpl(displayName, eventTime, null, null, null);
   }
 
-  public static @Nullable ExternalSystemTaskNotificationEvent createProgressBuildEvent(
-    @NotNull ExternalSystemTaskId taskId,
-    @NotNull Object id,
-    @NotNull ProgressEvent event
-  ) {
-    long total = -1;
-    long progress = -1;
-    String unit = "";
-    @NlsSafe String operationName = event.getDescriptor().getName();
-    if (operationName.startsWith("Download ")) {
-      String path = operationName.substring("Download ".length());
-      operationName = GradleBundle.message("progress.title.download", PathUtil.getFileName(path));
-    }
-    else if (event instanceof TaskProgressEvent) {
-      operationName = GradleBundle.message("progress.title.run.tasks");
-    }
-    else if (event instanceof TestProgressEvent) {
-      operationName = GradleBundle.message("progress.title.run.tests");
-    }
-    else if (event.getDisplayName().startsWith("Configure project ") || event.getDisplayName().startsWith("Cross-configure project ")) {
-      operationName = GradleBundle.message("progress.title.configure.projects");
-    }
-    else {
-      return null;
-    }
-    if (event instanceof StatusEvent) {
-      total = ((StatusEvent)event).getTotal();
-      progress = ((StatusEvent)event).getProgress();
-      unit = ((StatusEvent)event).getUnit();
-    }
-    return new ExternalSystemBuildEvent(
-      taskId, new ProgressBuildEventImpl(id, null, event.getEventTime(), operationName + "...", total, progress, unit));
-  }
-
-  public static @Nullable ExternalSystemTaskNotificationEvent legacyCreateProgressBuildEvent(
+  public static @Nullable ExternalSystemTaskNotificationEvent legacyConvertProgressBuildEvent(
     @NotNull ExternalSystemTaskId taskId,
     @NotNull Object id,
     @NotNull String event
   ) {
-    long total = -1;
-    long progress = -1;
-    String unit = "";
-    @NlsSafe String operationName = event;
-    if (operationName.startsWith("Download ")) {
-      String path = operationName.substring("Download ".length());
-      operationName = GradleBundle.message("progress.title.download", PathUtil.getFileName(path));
-    }
-    else if (operationName.startsWith("Task: ")) {
-      operationName = GradleBundle.message("progress.title.run.tasks");
-    }
-    else if (operationName.equals("Build")) {
-      operationName = GradleBundle.message("progress.title.build");
-    }
-    else if (operationName.startsWith("Build model ") || operationName.startsWith("Build parameterized model")) {
-      operationName = GradleBundle.message("progress.title.build.model");
-    }
-    else if (operationName.startsWith("Configure project ") || operationName.startsWith("Cross-configure project ")) {
-      operationName = GradleBundle.message("progress.title.configure.projects");
-    }
-    else {
+    var total = -1L;
+    var progress = -1L;
+    var unit = "";
+    var operationName = legacyConvertBuildEventDisplayName(event);
+    if (operationName == null) {
       return null;
     }
-    return new ExternalSystemBuildEvent(
-      taskId, new ProgressBuildEventImpl(id, null, 0, operationName + "...", total, progress, unit));
+    var esEvent = new ProgressBuildEventImpl(id, null, 0, operationName + "...", total, progress, unit);
+    return new ExternalSystemBuildEvent(taskId, esEvent);
   }
 
-  public static @NotNull ExternalSystemTaskNotificationEvent legacyCreateTaskNotificationEvent(
+  public static @Nullable @NlsSafe String legacyConvertBuildEventDisplayName(@NotNull String eventDescription) {
+    if (eventDescription.startsWith("Download ")) {
+      var path = eventDescription.substring("Download ".length());
+      return GradleBundle.message("progress.title.download", PathUtil.getFileName(path));
+    }
+    if (eventDescription.startsWith("Task: ")) {
+      return GradleBundle.message("progress.title.run.tasks");
+    }
+    if (eventDescription.equals("Build")) {
+      return GradleBundle.message("progress.title.build");
+    }
+    if (eventDescription.startsWith("Build model ")) {
+      return GradleBundle.message("progress.title.build.model");
+    }
+    else if (eventDescription.startsWith("Build parameterized model")) {
+      return GradleBundle.message("progress.title.build.model");
+    }
+    if (eventDescription.startsWith("Configure project ")) {
+      return GradleBundle.message("progress.title.configure.projects");
+    }
+    else if (eventDescription.startsWith("Cross-configure project ")) {
+      return GradleBundle.message("progress.title.configure.projects");
+    }
+    return null;
+  }
+
+  public static @NotNull ExternalSystemTaskNotificationEvent legacyConvertTaskNotificationEvent(
     @NotNull ExternalSystemTaskId taskId,
     @NotNull String event
   ) {
     return new ExternalSystemTaskNotificationEvent(taskId, event);
+  }
+
+  private static boolean isSkipped(@NotNull OperationDescriptor descriptor) {
+    String name = descriptor.getDisplayName();
+    return isMissedProgressEvent(name) || isUnnecessaryTestProgressEvent(name);
+  }
+
+  private static boolean isUnnecessaryTestProgressEvent(@NotNull String name) {
+    return name.startsWith("Gradle Test Executor") || name.startsWith("Gradle Test Run");
+  }
+
+  private static boolean isMissedProgressEvent(@NotNull String name) {
+    return name.startsWith("Execute executeTests for") || name.startsWith("Executing task")
+           || name.startsWith("Run tasks") || name.startsWith("Run main tasks")
+           || name.startsWith("Run build");
   }
 }

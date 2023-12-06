@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide
 
@@ -10,11 +10,10 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.EventWatcher
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.ide.MnemonicUsageCollector.Companion.logMnemonicUsed
+import com.intellij.ide.MnemonicUsageCollector.logMnemonicUsed
 import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
-import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -22,6 +21,7 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.InvocationUtil
+import com.intellij.openapi.application.impl.RwLockHolder
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -39,12 +39,15 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.platform.ide.bootstrap.StartupErrorReporter
+import com.intellij.platform.ide.bootstrap.isImplicitReadOnEDTDisabled
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -52,6 +55,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AppContext
+import sun.awt.PeerEvent
+import sun.awt.SunToolkit
 import java.awt.*
 import java.awt.event.*
 import java.lang.invoke.MethodHandle
@@ -61,6 +66,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.plaf.basic.ComboPopup
@@ -73,6 +79,8 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val lock = Any()
   private val activityListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
 
+  @Internal
+  val rwLockHolder: RwLockHolder = RwLockHolder
   val keyEventDispatcher: IdeKeyEventDispatcher = IdeKeyEventDispatcher(this)
   val mouseEventDispatcher: IdeMouseEventDispatcher = IdeMouseEventDispatcher()
   val popupManager: IdePopupManager = IdePopupManager()
@@ -92,7 +100,10 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @VisibleForTesting
   @JvmField
-  val keyboardEventDispatched = AtomicInteger()
+  val keyboardEventDispatched: AtomicInteger = AtomicInteger()
+
+  private val eventsPosted = AtomicLong()
+  private val eventsReturned = AtomicLong()
 
   private var isInInputEvent = false
   var trueCurrentEvent: AWTEvent = InvocationEvent(this, EmptyRunnable.getInstance())
@@ -124,14 +135,31 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   private var idleTracker: () -> Unit = {}
 
-  @RequiresEdt
-  internal fun setIdleTracker(value: () -> Unit) {
-    EDT.assertIsEdt()
-    idleTracker = value
+
+  private var testMode: Boolean? = null
+
+  init {
+    assert(isDispatchThread()) { Thread.currentThread() }
+    val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
+    assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
+    systemEventQueue.push(this)
+    rwLockHolder.postInit(Thread.currentThread())
+    EDT.updateEdt()
+    replaceDefaultKeyboardFocusManager()
+    addDispatcher(WindowsAltSuppressor(), null)
+    if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
+      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
+      addDispatcher(WindowsUpMaximizer(), null)
+    }
+    addDispatcher(EditingCanceller(), null)
+    //addDispatcher(new UIMouseTracker(), null);
+    abracadabraDaberBoreh(this)
+    if (java.lang.Boolean.parseBoolean(System.getProperty("skip.move.resize.events", "true"))) {
+      postEventListeners.add { skipMoveResizeEvents(it) } // hot path, do not use method reference
+    }
   }
 
   companion object {
-    @JvmStatic
     private val _instance by lazy { IdeEventQueue() }
 
     @JvmStatic
@@ -144,21 +172,27 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  @RequiresEdt
+  internal fun setIdleTracker(value: () -> Unit) {
+    EDT.assertIsEdt()
+    idleTracker = value
+  }
+
   /**
    * Executes given `runnable` after all focus activities are finished.
    *
    * @apiNote be careful with this method. It may run `runnable` synchronously in the context of the current thread, or may queue
    * runnable until the focus events queue is empty. In the latter case, runnable is going to be run while processing the last focus
-   * event from the queue, without any context, e.g. outside the write-safe context. Consider using safer [IdeFocusManager.doWhenFocusSettlesDown]
+   * event from the queue, without any context, e.g., outside the write-safe context. Consider using safer [IdeFocusManager.doWhenFocusSettlesDown]
    */
   fun executeWhenAllFocusEventsLeftTheQueue(runnable: Runnable) {
     ifFocusEventsInTheQueue(
       yes = { e ->
-        var runnables = runnablesWaitingFocusChange[e]
+        var runnables = runnablesWaitingFocusChange.get(e)
         if (runnables == null) {
           runnables = mutableListOf()
           runnables.add(runnable)
-          runnablesWaitingFocusChange[e] = runnables
+          runnablesWaitingFocusChange.put(e, runnables)
         }
         else {
           Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "We have already had a runnable for the event: $e" }
@@ -185,38 +219,22 @@ class IdeEventQueue private constructor() : EventQueue() {
       yes(lastFocusGainedEvent)
     }
     else {
-      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : " + no.javaClass.name }
+      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : ${no.javaClass.name}" }
       EdtInvocationManager.invokeLaterIfNeeded(no)
     }
   }
 
-  @Suppress("SpellCheckingInspection")
-  private fun abracadabraDaberBoreh() {
-    // We need to track if there are KeyBoardEvents in IdeEventQueue
-    // So we want to intercept all events posted to IdeEventQueue and increment counters
-    // However, the regular control flow goes like this:
-    //    PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() -> AAAA we missed event, because postEventPrivate() can't be overridden.
-    // Instead, we do following:
-    //  - create new PostEventQueue holding our IdeEventQueue instead of old EventQueue
-    //  - replace "PostEventQueue" value in AppContext with this new PostEventQueue
-    // After that the control flow goes like this:
-    //    PostEventQueue.flush() -> IdeEventQueue.postEvent() -> We intercepted event, incremented counters.
-    val aClass = Class.forName("sun.awt.PostEventQueue")
-    val constructor = aClass.getDeclaredConstructor(EventQueue::class.java)
-    constructor.isAccessible = true
-    val postEventQueue = constructor.newInstance(this)
-    AppContext.getAppContext().put("PostEventQueue", postEventQueue)
-  }
-
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use IdleFlow and coroutines")
+  @Deprecated("Use IdleTracker and coroutines")
   fun addIdleListener(runnable: Runnable, timeoutMillis: Int) {
+    @Suppress("DEPRECATION")
     IdleTracker.getInstance().addIdleListener(runnable = runnable, timeoutMillis = timeoutMillis)
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use IdleFlow and coroutines")
+  @Deprecated("Use IdleTracker and coroutines")
   fun removeIdleListener(runnable: Runnable) {
+    @Suppress("DEPRECATION")
     IdleTracker.getInstance().removeIdleListener(runnable)
   }
 
@@ -255,6 +273,13 @@ class IdeEventQueue private constructor() : EventQueue() {
     _addProcessor(dispatcher, parent, postProcessors)
   }
 
+  fun addPostprocessor(dispatcher: EventDispatcher, coroutineScope: CoroutineScope) {
+    postProcessors.add(dispatcher)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      postProcessors.remove(dispatcher)
+    }
+  }
+
   fun removePostprocessor(dispatcher: EventDispatcher) {
     postProcessors.remove(dispatcher)
   }
@@ -268,8 +293,8 @@ class IdeEventQueue private constructor() : EventQueue() {
 
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     val startedAt = System.currentTimeMillis()
-    val performanceWatcher = PerformanceWatcher.getInstanceOrNull()
-    val eventWatcher = EventWatcher.getInstanceOrNull()
+    val performanceWatcher = PerformanceWatcher.getInstanceIfCreated()
+    val eventWatcher = if (LoadingState.COMPONENTS_LOADED.isOccurred) EventWatcher.getInstanceOrNull() else null
     try {
       performanceWatcher?.edtEventStarted()
       eventWatcher?.edtEventStarted(event, startedAt)
@@ -292,7 +317,6 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
 
       checkForTimeJump(startedAt)
-      hoverService.process(event)
 
       if (!appIsLoaded()) {
         try {
@@ -303,6 +327,8 @@ class IdeEventQueue private constructor() : EventQueue() {
         }
         return
       }
+
+      hoverService.process(event)
 
       event = mapEvent(event)
       val metaEvent = mapMetaState(event)
@@ -321,20 +347,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       val runnable = InvocationUtil.extractRunnable(event)
       val runnableClass = runnable?.javaClass ?: Runnable::class.java
       val processEventRunnable = Runnable {
-        val app = ApplicationManager.getApplication()
-        val progressManager = if (app != null && !app.isDisposed) {
-          try {
-            ProgressManager.getInstance()
-          }
-          catch (ex: RuntimeException) {
-            Logs.LOG.warn("app services aren't yet initialized", ex)
-            null
-          }
-        }
-        else {
-          null
-        }
-
+        val progressManager = ProgressManager.getInstanceOrNull()
         try {
           runCustomProcessors(finalEvent, preProcessors)
           performActivity(finalEvent) {
@@ -388,6 +401,9 @@ class IdeEventQueue private constructor() : EventQueue() {
     finally {
       Thread.interrupted()
       if (event is WindowEvent || event is FocusEvent || event is InputEvent) {
+        // Increment the activity counter right before notifying listeners
+        // so that the listeners would get data providers with fresh data
+        incrementActivityCountIfNeeded(e)
         processIdleActivityListeners(event)
       }
       performanceWatcher?.edtEventFinished()
@@ -453,12 +469,19 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   override fun getNextEvent(): AWTEvent {
-    val event = if (appIsLoaded()) {
-      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
-    }
-    else {
+    val event = if (isImplicitReadOnEDTDisabled) {
       super.getNextEvent()
     }
+    else {
+      val applicationEx = ApplicationManagerEx.getApplicationEx()
+      if (applicationEx != null && appIsLoaded()) {
+        applicationEx.runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
+      }
+      else {
+        super.getNextEvent()
+      }
+    }
+    eventsReturned.incrementAndGet()
     if (isKeyboardEvent(event) && keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
       throw RuntimeException("$event; posted: $keyboardEventPosted; dispatched: $keyboardEventDispatched")
     }
@@ -475,7 +498,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       // 'bare' ControlFlowException-s are not reported
       t = RuntimeException(t)
     }
-    StartupAbortedException.processException(t)
+    StartupErrorReporter.processException(t)
   }
 
   /**
@@ -485,7 +508,7 @@ class IdeEventQueue private constructor() : EventQueue() {
    * @param e event to be patched
    * @return new 'patched' event if you need, otherwise null
    *
-   * Note: As side effect this method tracks a special flag for 'Windows' key state that is valuable on itself
+   * Note: As a side effect, this method tracks a special flag for 'Windows' key state that is valuable in itself
    */
   private fun mapMetaState(e: AWTEvent): AWTEvent? {
     if (winMetaPressed) {
@@ -525,6 +548,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (e.id == MouseEvent.MOUSE_DRAGGED && appIsLoaded()) {
       (DnDManager.getInstance() as? DnDManagerImpl)?.lastDropHandler = null
     }
+
     eventCount++
     keyboardBusy = e is KeyEvent || keyboardEventPosted.get() > keyboardEventDispatched.get()
     if (e is KeyEvent) {
@@ -536,8 +560,9 @@ class IdeEventQueue private constructor() : EventQueue() {
       return
     }
 
-    // increment the activity counter before performing the action so that they are called with data providers with fresh data
-    ActivityTracker.getInstance().inc()
+    // increment the activity counter before performing the action
+    // so that they are called with data providers with fresh data
+    incrementActivityCountIfNeeded(e)
     if (popupManager.isPopupActive && popupManager.dispatch(e)) {
       if (keyEventDispatcher.isWaitingForSecondKeyStroke) {
         keyEventDispatcher.state = KeyState.STATE_INIT
@@ -555,57 +580,62 @@ class IdeEventQueue private constructor() : EventQueue() {
       return
     }
 
-    val application = ApplicationManager.getApplication()
-    if (e is ComponentEvent && appIsLoaded && !application.isHeadlessEnvironment) {
-      (application.serviceIfCreated<WindowManager>() as WindowManagerEx?)?.dispatchComponentEvent(e)
+    when {
+      e is MouseEvent -> rwLockHolder.runWithImplicitRead { dispatchMouseEvent(e) }
+      e is KeyEvent -> rwLockHolder.runWithImplicitRead { dispatchKeyEvent(e) }
+      appIsLoaded() -> {
+        val app = ApplicationManagerEx.getApplicationEx()
+        if (e is ComponentEvent) {
+          if (!app.isHeadlessEnvironment) {
+            (app.serviceIfCreated<WindowManager>() as? WindowManagerEx)?.dispatchComponentEvent(e)
+          }
+        }
+        rwLockHolder.runWithoutImplicitRead { defaultDispatchEvent(e) }
+      }
+      else -> rwLockHolder.runWithoutImplicitRead { defaultDispatchEvent(e) }
     }
-    when (e) {
-      is KeyEvent -> dispatchKeyEvent(e)
-      is MouseEvent -> dispatchMouseEvent(e)
-      else -> application.withoutImplicitRead { defaultDispatchEvent(e) }
+  }
+
+  private fun isActivityInputEvent(e: AWTEvent): Boolean =
+    KeyEvent.KEY_PRESSED == e.id ||
+    KeyEvent.KEY_TYPED == e.id ||
+    MouseEvent.MOUSE_PRESSED == e.id ||
+    MouseEvent.MOUSE_RELEASED == e.id ||
+    MouseEvent.MOUSE_CLICKED == e.id
+
+  private fun incrementActivityCountIfNeeded(e: AWTEvent) {
+    if (isActivityInputEvent(e) || e is WindowEvent || e is FocusEvent) {
+      ActivityTracker.getInstance().inc()
     }
   }
 
   private fun processIdleActivityListeners(e: AWTEvent) {
-    val isActivityInputEvent = KeyEvent.KEY_PRESSED == e.id ||
-                               KeyEvent.KEY_TYPED == e.id ||
-                               MouseEvent.MOUSE_PRESSED == e.id ||
-                               MouseEvent.MOUSE_RELEASED == e.id ||
-                               MouseEvent.MOUSE_CLICKED == e.id
-    if (isActivityInputEvent || e !is InputEvent) {
-      // Increment the activity counter right before notifying listeners so that the listeners would get data providers with fresh data
-      ActivityTracker.getInstance().inc()
-    }
-
     idleTracker()
-
+    if (!isActivityInputEvent(e)) return
     synchronized(lock) {
-      if (isActivityInputEvent) {
-        lastActiveTime = System.nanoTime()
-        for (activityListener in activityListeners) {
-          activityListener.run()
-        }
+      lastActiveTime = System.nanoTime()
+      for (activityListener in activityListeners) {
+        activityListener.run()
       }
     }
   }
 
-  private fun dispatchKeyEvent(e: AWTEvent) {
-    if (keyEventDispatcher.dispatchKeyEvent(e as KeyEvent)) {
+  private fun dispatchKeyEvent(e: KeyEvent) {
+    if (keyEventDispatcher.dispatchKeyEvent(e)) {
       e.consume()
     }
     defaultDispatchEvent(e)
   }
 
-  private fun dispatchMouseEvent(e: AWTEvent) {
-    val me = e as MouseEvent
+  private fun dispatchMouseEvent(e: MouseEvent) {
     @Suppress("DEPRECATION")
-    if (me.id == MouseEvent.MOUSE_PRESSED && me.modifiers > 0 && me.modifiersEx == 0) {
-      resetGlobalMouseEventTarget(me)
+    if (e.id == MouseEvent.MOUSE_PRESSED && e.modifiers > 0 && e.modifiersEx == 0) {
+      resetGlobalMouseEventTarget(e)
     }
-    if (IdeMouseEventDispatcher.patchClickCount(me) && me.id == MouseEvent.MOUSE_CLICKED) {
-      redispatchLater(me)
+    if (IdeMouseEventDispatcher.patchClickCount(e) && e.id == MouseEvent.MOUSE_CLICKED) {
+      redispatchLater(e)
     }
-    if (!mouseEventDispatcher.dispatchMouseEvent(me)) {
+    if (!mouseEventDispatcher.dispatchMouseEvent(e)) {
       defaultDispatchEvent(e)
     }
   }
@@ -622,7 +652,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private fun redispatchLater(me: MouseEvent) {
     @Suppress("DEPRECATION")
     val toDispatch = MouseEvent(me.component, me.id, System.currentTimeMillis(), me.modifiers, me.x, me.y, 1, me.isPopupTrigger, me.button)
-    SwingUtilities.invokeLater { dispatchEvent(toDispatch) }
+    invokeLater { dispatchEvent(toDispatch) }
   }
 
   private fun dispatchByCustomDispatchers(e: AWTEvent): Boolean {
@@ -636,6 +666,7 @@ class IdeEventQueue private constructor() : EventQueue() {
         processException(t)
       }
     }
+
     for (eachDispatcher in DISPATCHER_EP.extensionsIfPointIsRegistered) {
       try {
         if (eachDispatcher.dispatch(e)) {
@@ -656,7 +687,14 @@ class IdeEventQueue private constructor() : EventQueue() {
       val ke = if (e is KeyEvent) e else null
       val consumed = ke == null || ke.isConsumed
       if (me != null && (me.isPopupTrigger || e.id == MouseEvent.MOUSE_PRESSED) || ke != null && ke.keyCode == KeyEvent.VK_CONTEXT_MENU) {
-        popupTriggerTime = System.currentTimeMillis()
+        popupTriggerTime = System.nanoTime()
+      }
+      val source = e.source
+      if (source is IdeFrameImpl) {
+        when (e.id) {
+          WindowEvent.WINDOW_ACTIVATED -> source.mouseReleaseCountSinceLastActivated = 0
+          MouseEvent.MOUSE_RELEASED -> ++source.mouseReleaseCountSinceLastActivated
+        }
       }
       super.dispatchEvent(e)
       // collect mnemonics statistics only if key event was processed above
@@ -727,7 +765,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val isReady: Boolean
     get() = !keyboardBusy && keyEventDispatcher.isReady
 
-  fun maybeReady() {
+  internal fun maybeReady() {
     if (ready.isNotEmpty() && isReady) {
       invokeReadyHandlers()
     }
@@ -747,7 +785,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       maybeReady()
     }
     else {
-      SwingUtilities.invokeLater {
+      invokeLater {
         ready.add(runnable)
         maybeReady()
       }
@@ -764,7 +802,7 @@ class IdeEventQueue private constructor() : EventQueue() {
            && e is KeyEvent && e.getID() == KeyEvent.KEY_RELEASED) && (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_DOWN)) {
         val parent: Component? = ComponentUtil.getWindow(e.component)
         if (parent is JDialog) {
-          SwingUtilities.invokeLater {
+          invokeLater {
             if (e.keyCode == KeyEvent.VK_UP) {
               MaximizeActiveDialogAction.maximize(parent)
             }
@@ -798,11 +836,18 @@ class IdeEventQueue private constructor() : EventQueue() {
         return false
       }
     }
-    if (event is InvocationEvent && !isCurrentlyUnderLocalId) {
-      // only do wrapping trickery with non-local events to preserve correct behaviour -
+    eventsPosted.incrementAndGet()
+    // We don't 'attach' current client id to PeerEvent instances for two reasons.
+    // First, they are often posted to EventQueue indirectly (first to sun.awt.PostEventQueue, and then to the EventQueue by
+    // SunToolkit.flushPendingEvents), so current client id might be unrelated to the code that created those events.
+    // Second, just wrapping PeerEvent into a new InvocationEvent loses the information about priority kept in the former,
+    // and changes the overall events' processing order.
+    val passClientId = event is InvocationEvent && event !is PeerEvent
+    if (passClientId && !isCurrentlyUnderLocalId) {
+      // only do wrapping trickery with non-local events to preserve correct behavior -
       // local events will get dispatched under local ID anyway
       val clientId = current
-      super.postEvent(InvocationEvent(event.getSource()) { withClientId(clientId).use { dispatchEvent(event) } })
+      super.postEvent(InvocationEvent(event.source) { withClientId(clientId).use { dispatchEvent(event) } })
       return true
     }
     if (event is KeyEvent) {
@@ -817,28 +862,6 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @Deprecated("Does nothing currently")
   fun flushDelayedKeyEvents() {
-  }
-
-  private var testMode: Boolean? = null
-
-  init {
-    assert(isDispatchThread()) { Thread.currentThread() }
-    val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
-    assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
-    systemEventQueue.push(this)
-    EDT.updateEdt()
-    replaceDefaultKeyboardFocusManager()
-    addDispatcher(WindowsAltSuppressor(), null)
-    if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
-      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
-      addDispatcher(WindowsUpMaximizer(), null)
-    }
-    addDispatcher(EditingCanceller(), null)
-    //addDispatcher(new UIMouseTracker(), null);
-    abracadabraDaberBoreh()
-    if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
-      postEventListeners.add(::skipMoveResizeEvents)
-    }
   }
 
   private fun isTestMode(): Boolean {
@@ -877,6 +900,16 @@ class IdeEventQueue private constructor() : EventQueue() {
     Disposer.register(parentDisposable) {
       postEventListeners.remove(listener)
     }
+  }
+
+  fun getPostedEventCount() = eventsPosted.get()
+
+  fun getReturnedEventCount() = eventsReturned.get()
+
+  fun getPostedSystemEventCount() = (AppContext.getAppContext()?.get("jb.postedSystemEventCount") as? AtomicLong)?.get() ?: -1
+
+  fun flushNativeEventQueue() {
+    SunToolkit.flushPendingEvents()
   }
 }
 
@@ -991,12 +1024,12 @@ internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
 }
 
 private fun mapEvent(e: AWTEvent): AWTEvent {
-  return if (SystemInfoRt.isXWindow && e is MouseEvent && e.button > 3) mapXWindowMouseEvent(e) else e
+  return if (StartupUiUtil.isXToolkit() && e is MouseEvent && e.button > 3) mapXWindowMouseEvent(e) else e
 }
 
 private fun mapXWindowMouseEvent(src: MouseEvent): AWTEvent {
   if (src.button < 6) {
-    // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
+    // Convert these events (buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
     @Suppress("DEPRECATION")
     return MouseWheelEvent(src.component, MouseEvent.MOUSE_WHEEL, src.getWhen(),
                            src.modifiers or InputEvent.SHIFT_DOWN_MASK, src.x, src.y,
@@ -1004,7 +1037,7 @@ private fun mapXWindowMouseEvent(src: MouseEvent): AWTEvent {
                            if (src.button == 4) -1 else 1)
   }
   else {
-    // Here we "shift" events with buttons 6 and 7 to similar events with buttons 4 and 5
+    // Here we "shift" events with buttons `6` and `7` to similar events with buttons 4 and 5
     // See java.awt.InputEvent#BUTTON_DOWN_MASK, 1<<14 is 4th physical button, 1<<15 is 5th.
     @Suppress("DEPRECATION")
     return MouseEvent(src.component, src.id, src.getWhen(),
@@ -1026,15 +1059,14 @@ private fun processMouseWheelEvent(e: MouseWheelEvent): Boolean {
 
 private fun processAppActivationEvent(event: WindowEvent) {
   ApplicationActivationStateManager.updateState(event)
-  if (event.id != WindowEvent.WINDOW_DEACTIVATED && event.id != WindowEvent.WINDOW_LOST_FOCUS) {
+
+  if (!LoadingState.COMPONENTS_LOADED.isOccurred ||
+      (event.id != WindowEvent.WINDOW_DEACTIVATED && event.id != WindowEvent.WINDOW_LOST_FOCUS)) {
     return
   }
 
   val eventWindow = event.window
   val focusOwnerInDeactivatedWindow = eventWindow.mostRecentFocusOwner ?: return
-  if (!appIsLoaded()) {
-    return
-  }
 
   val windowManager = ApplicationManager.getApplication().serviceIfCreated<WindowManager>() as WindowManagerEx? ?: return
   val frame = ComponentUtil.findUltimateParent(eventWindow)
@@ -1077,7 +1109,7 @@ internal fun consumeUnrelatedEvent(modalComponent: Component?, event: AWTEvent):
     val s = event.getSource()
     if (s is Component) {
       var c: Component? = s
-      val modalWindow = SwingUtilities.windowForComponent(modalComponent)
+      val modalWindow = SwingUtilities.getWindowAncestor(modalComponent)
       while (c != null && c !== modalWindow) {
         c = c.parent
       }
@@ -1106,6 +1138,14 @@ private object SequencedEventNestedFieldHolder {
       .findVirtual(SEQUENCED_EVENT_CLASS, "dispose", MethodType.methodType(Void.TYPE))
   }
 }
+
+/**
+ * This should've been an item in [IdeEventQueue.dispatchers],
+ * but [IdeEventQueue.dispatchByCustomDispatchers] is run after [IdePopupManager.dispatch]
+ * and after [processAppActivationEvent], which defeats the very purpose of this flag.
+ */
+@Internal
+internal var skipWindowDeactivationEvents: Boolean = false
 
 // we have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
 private class EditingCanceller : IdeEventQueue.EventDispatcher {
@@ -1149,7 +1189,7 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
     val uiSettings = UISettings.instanceOrNull
     if (uiSettings == null ||
         !SystemInfoRt.isWindows ||
-        !Registry.`is`("actionSystem.win.suppressAlt") ||
+        !Registry.`is`("actionSystem.win.suppressAlt", true) ||
         !(uiSettings.hideToolStripes || uiSettings.presentationMode)) {
       return false
     }
@@ -1165,7 +1205,7 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
         dispatch = false
       }
       else if (component != null) {
-        SwingUtilities.invokeLater {
+        EventQueue.invokeLater {
           try {
             val window = ComponentUtil.getWindow(component)
             if (window == null || !window.isActive) {
@@ -1186,4 +1226,22 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
     }
     return !dispatch
   }
+}
+
+@Suppress("SpellCheckingInspection")
+private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
+  // We need to track if there are KeyBoardEvents in IdeEventQueue
+  // So we want to intercept all events posted to IdeEventQueue and increment counters,
+  // However, the regular control flow goes like this:
+  //    PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() -> AAAA we missed event, because postEventPrivate() can't be overridden.
+  // Instead, we do the following:
+  //  - create new PostEventQueue holding our IdeEventQueue instead of old EventQueue
+  //  - replace "PostEventQueue" value in AppContext with this new PostEventQueue
+  // After that the control flow goes like this:
+  //    PostEventQueue.flush() -> IdeEventQueue.postEvent() -> We intercepted event, incremented counters.
+  val aClass = Class.forName("sun.awt.PostEventQueue")
+  val constructor = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
+    .findConstructor(aClass, MethodType.methodType(Void.TYPE, EventQueue::class.java))
+  val postEventQueue = constructor.invoke(eventQueue)
+  AppContext.getAppContext().put("PostEventQueue", postEventQueue)
 }

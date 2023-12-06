@@ -2,41 +2,67 @@
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement2
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.users.LocalUserSettings
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.project.impl.projectAndScopeMethodType
+import com.intellij.openapi.project.impl.projectMethodType
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
+import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.messages.MessageBus
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 
-private val LOG = logger<ClientSessionImpl>()
+private val LOG: Logger
+  get() = logger<ClientSessionImpl>()
 
+@OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Experimental
 @ApiStatus.Internal
 abstract class ClientSessionImpl(
   final override val clientId: ClientId,
   final override val type: ClientType,
   private val sharedComponentManager: ClientAwareComponentManager
-) : ComponentManagerImpl(null, false), ClientSession {
-
-  override val isLightServiceSupported = false
-  override val isMessageBusSupported = false
+) : ComponentManagerImpl(
+  parent = null,
+  parentScope = GlobalScope,
+  additionalContext = clientId.asContextElement2(),
+), ClientSession {
+  final override val isLightServiceSupported: Boolean = false
+  final override val isMessageBusSupported: Boolean = false
 
   init {
     @Suppress("LeakingThis")
     registerServiceInstance(ClientSession::class.java, this, fakeCorePluginDescriptor)
   }
+
+  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    return (lookup.findConstructorOrNull(aClass, sessionConstructorMethodType)?.invoke(this) as T?)
+           ?: super.findConstructorAndInstantiateClass(lookup, aClass)
+  }
+
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    sessionConstructorMethodType,
+  ).addAll(super.supportedSignaturesOfLightServiceConstructors)
 
   fun registerServices() {
     registerComponents()
@@ -55,23 +81,23 @@ abstract class ClientSessionImpl(
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
-  override suspend fun preloadService(service: ServiceDescriptor): Job? {
+  final override suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
     return ClientId.withClientId(clientId) {
-      super.preloadService(service)
+      super.preloadService(service, serviceInterface)
     }
   }
 
-  override fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
+  final override fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
     return descriptor.client?.let { type.matches(it) } ?: false
   }
 
   /**
    * only per-client services are supported (no components, extensions, listeners)
    */
-  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                                  app: Application?,
-                                  precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<in Runnable>?) {
+  final override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
+                                        app: Application?,
+                                        precomputedExtensionModel: PrecomputedExtensionModel?,
+                                        listenerCallbacks: MutableList<in Runnable>?) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)
       executeRegisterTaskForOldContent(rootModule) { module ->
@@ -80,18 +106,24 @@ abstract class ClientSessionImpl(
     }
   }
 
-  override fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
+  final override fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
     LOG.error("components aren't supported")
     return false
   }
 
-  override fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
+  final override fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     return doGetService(serviceClass, createIfNeeded, true)
   }
 
   fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean, fallbackToShared: Boolean): T? {
-    val clientService = ClientId.withClientId(clientId) { super.doGetService(serviceClass, createIfNeeded) }
-    if (clientService != null || !fallbackToShared) return clientService
+    if (!fallbackToShared && !hasComponent(serviceClass)) return null
+
+    val clientService = ClientId.withClientId(clientId) {
+      super.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded)
+    }
+    if (clientService != null || !fallbackToShared) {
+      return clientService
+    }
 
     if (createIfNeeded && !type.isLocal) {
       val sessionsManager = sharedComponentManager.getService(ClientSessionsManager::class.java)
@@ -114,7 +146,7 @@ abstract class ClientSessionImpl(
     }
   }
 
-  override fun getApplication(): Application? {
+  final override fun getApplication(): Application? {
     return sharedComponentManager.getApplication()
   }
 
@@ -122,17 +154,17 @@ abstract class ClientSessionImpl(
     get() = sharedComponentManager.componentStore
 
   @Deprecated("sessions don't have their own message bus", level = DeprecationLevel.ERROR)
-  override fun getMessageBus(): MessageBus {
+  final override fun getMessageBus(): MessageBus {
     error("Not supported")
   }
 
-  override fun toString(): String {
-    return clientId.toString()
+  final override fun toString(): String {
+    return "${javaClass.name}(type=${type}, clientId=$clientId)"
   }
 }
 
 @ApiStatus.Internal
-open class ClientAppSessionImpl(
+abstract class ClientAppSessionImpl(
   clientId: ClientId,
   clientType: ClientType,
   application: ApplicationImpl
@@ -141,12 +173,35 @@ open class ClientAppSessionImpl(
     return pluginDescriptor.appContainerDescriptor
   }
 
+  override val projectSessions: List<ClientProjectSession>
+    get() {
+      return ProjectManager.getInstance().openProjects.mapNotNull {
+        it.service<ClientSessionsManager<*>>().getSession(clientId) as? ClientProjectSession
+      }
+    }
+
   init {
     @Suppress("LeakingThis")
     registerServiceInstance(ClientAppSession::class.java, this, fakeCorePluginDescriptor)
   }
+
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    appSessionConstructorMethodType,
+    appSessionAndScopeConstructorMethodType
+  ).addAll(super.supportedSignaturesOfLightServiceConstructors)
 }
 
+private val sessionConstructorMethodType = MethodType.methodType(Void.TYPE, ClientAppSession::class.java)
+
+private val projectSessionConstructorMethodType = MethodType.methodType(Void.TYPE, ClientProjectSession::class.java)
+private val projectSessionAndScopeConstructorMethodType =
+  MethodType.methodType(Void.TYPE, ClientProjectSession::class.java, CoroutineScope::class.java)
+
+private val appSessionConstructorMethodType = MethodType.methodType(Void.TYPE, ClientAppSession::class.java)
+private val appSessionAndScopeConstructorMethodType =
+  MethodType.methodType(Void.TYPE, ClientAppSession::class.java, CoroutineScope::class.java)
+
+@Suppress("LeakingThis")
 @ApiStatus.Internal
 open class ClientProjectSessionImpl(
   clientId: ClientId,
@@ -154,8 +209,24 @@ open class ClientProjectSessionImpl(
   componentManager: ClientAwareComponentManager,
   final override val project: Project,
 ) : ClientSessionImpl(clientId, clientType, componentManager), ClientProjectSession {
+  constructor(clientId: ClientId, clientType: ClientType, project: ProjectImpl) : this(clientId = clientId,
+                                                                                       clientType = clientType,
+                                                                                       componentManager = project,
+                                                                                       project = project)
 
-  constructor(clientId: ClientId, clientType: ClientType, project: ProjectImpl) : this(clientId, clientType, project, project)
+  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    return ((lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(project)
+            ?: lookup.findConstructorOrNull(aClass, projectSessionConstructorMethodType)?.invoke(this) ) as T?)
+           ?: super.findConstructorAndInstantiateClass(lookup, aClass)
+  }
+
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    projectMethodType,
+    projectAndScopeMethodType,
+    projectSessionConstructorMethodType,
+    projectSessionAndScopeConstructorMethodType,
+  ).addAll(super.supportedSignaturesOfLightServiceConstructors)
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor
@@ -168,4 +239,23 @@ open class ClientProjectSessionImpl(
 
   override val appSession: ClientAppSession
     get() = ClientSessionsManager.getAppSession(clientId)!!
+
+  override val name: String
+    get() = appSession.name
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+open class LocalAppSessionImpl(application: ApplicationImpl) : ClientAppSessionImpl(ClientId.localId, ClientType.LOCAL, application) {
+  override val name: String
+    get() = LocalUserSettings.userName
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+open class LocalProjectSessionImpl(
+  componentManager: ClientAwareComponentManager,
+  project: Project
+) : ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, componentManager, project) {
+  constructor(project: ProjectImpl) : this(componentManager = project, project = project)
 }

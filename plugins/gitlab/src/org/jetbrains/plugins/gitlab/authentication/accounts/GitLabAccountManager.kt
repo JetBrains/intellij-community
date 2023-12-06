@@ -8,9 +8,12 @@ import com.intellij.collaboration.auth.PasswordSafeCredentialsRepository
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.util.GitLabUtil
 
-internal interface GitLabAccountManager : AccountManager<GitLabAccount, String>, Disposable
+internal interface GitLabAccountManager : AccountManager<GitLabAccount, String>, Disposable {
+  fun isAccountUnique(server: GitLabServerPath, accountName: String): Boolean
+}
 
 class PersistentGitLabAccountManager :
   GitLabAccountManager,
@@ -19,8 +22,16 @@ class PersistentGitLabAccountManager :
   override fun accountsRepository(): AccountsRepository<GitLabAccount> = service<GitLabPersistentAccounts>()
 
   override fun credentialsRepository() =
-    PasswordSafeCredentialsRepository<GitLabAccount, String>(GitLabUtil.SERVICE_NAME,
-                                                             PasswordSafeCredentialsRepository.CredentialsMapper.Simple)
+    PasswordSafeCredentialsRepository<GitLabAccount, String>(
+      GitLabUtil.SERVICE_NAME,
+      PasswordSafeCredentialsRepository.CredentialsMapper.Simple
+    )
 
   override fun dispose() = Unit
+
+  override fun isAccountUnique(server: GitLabServerPath, accountName: String): Boolean {
+    return accountsState.value.none { account: GitLabAccount ->
+      account.server == server && account.name == accountName
+    }
+  }
 }

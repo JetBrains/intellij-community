@@ -6,7 +6,9 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
@@ -19,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -48,7 +51,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   private boolean myProcessCanTerminate;
 
-  protected PyConsoleProcessHandler myProcessHandler;
+  protected ProcessHandler myProcessHandler;
   protected PydevConsoleCommunication myCommunication;
 
   private boolean shouldPrintOutput = false;
@@ -58,6 +61,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   private PythonConsoleExecuteActionHandler myExecuteHandler;
 
   private final Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
+
+  private Disposable myThreadLeakDisposable;
 
   public PyConsoleTask() {
     super(null);
@@ -105,7 +110,15 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         throw new RuntimeException(e);
       }
     }, ModalityState.defaultModalityState());
-    super.tearDown();
+
+    try {
+      super.tearDown();
+    } finally {
+      // Stop ignoring thread leaks after `super.tearDown()` finishes thread leaks checking
+      if (myThreadLeakDisposable != null) {
+        Disposer.dispose(myThreadLeakDisposable);
+      }
+    }
   }
 
   /**
@@ -178,8 +191,28 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     return shutdownFuture;
   }
 
+  /**
+   * Returns a boolean value indicating whether thread leaks should be reported during the test run.
+   * By default, Python Console test cases ignore thread leaks to ensure they continue operating normally
+   * even if a thread leak has been introduced. However, to catch any thread leaks that may arise,
+   * there should be separate test cases overriding this method.
+   *
+   * @return true if thread leaks should be reported, false otherwise
+   */
+  protected boolean reportThreadLeaks() {
+    return false;
+  }
+
   @Override
   public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+    if (!reportThreadLeaks()) {
+      // `com.intellij.execution.process.ProcessWaitFor` creates a thread named after the command line,
+      // i.e. `Thread[/path/to/python /path/to/pydevconsole.py <args>]` in the case of Python Console process.
+      // Such threads are indistinguishable by prefix, so an empty prefix is used to ignore all potential leaks.
+      myThreadLeakDisposable = Disposer.newDisposable();
+      ThreadLeakTracker.longRunningThreadCreated(myThreadLeakDisposable, "");
+    }
+
     setProcessCanTerminate(false);
 
     PydevConsoleRunner consoleRunner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(getProject(), myFixture.getModule());

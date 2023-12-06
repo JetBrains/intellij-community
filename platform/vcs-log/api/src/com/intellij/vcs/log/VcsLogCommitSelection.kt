@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log
 
-import com.intellij.util.Consumer
+import java.util.function.Consumer
 
 /**
  * Commit selection in the Vcs Log table.
@@ -9,15 +9,16 @@ import com.intellij.util.Consumer
  * @see VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION
  */
 interface VcsLogCommitSelection {
+
   /**
-   * Selection size.
+   * Selected rows.
    */
-  val size: Int
+  val rows: IntArray
 
   /**
    * Identifiers of the commits selected in the table.
    *
-   * @see com.intellij.vcs.log.data.VcsLogStorage.getCommitIndex
+   * @see VcsLogDataProvider.getCommitIndex
    */
   val ids: List<Int>
 
@@ -48,24 +49,10 @@ interface VcsLogCommitSelection {
   val cachedFullDetails: List<VcsFullCommitDetails>
 
   /**
-   * Returns a lazy list of commit details for this selection.
-   *
-   * @param detailsGetter function which gets commit details by commit id.
-   */
-  fun <T> getDetails(detailsGetter: (Int) -> T): List<T>
-
-  /**
    * Sends a request to load full details of the selected commits in a background thread.
    * After all details are loaded they are provided to the consumer in the EDT.
    *
    * @param consumer called in EDT after all details are loaded.
    */
   fun requestFullDetails(consumer: Consumer<in List<VcsFullCommitDetails>>)
-
-  companion object {
-    @JvmStatic
-    fun VcsLogCommitSelection.isEmpty() = size == 0
-    @JvmStatic
-    fun VcsLogCommitSelection.isNotEmpty() = size != 0
-  }
 }

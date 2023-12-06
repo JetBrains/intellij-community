@@ -132,8 +132,7 @@ final class TokenBuffer {
     size = 0;
   }
 
-  @NotNull
-  static CharSequence getRawText(@NotNull List<? extends TokenInfo> tokens) {
+  static @NotNull CharSequence getRawText(@NotNull List<? extends TokenInfo> tokens) {
     int size = 0;
     for (TokenInfo token : tokens) {
       size += token.getText().length();
@@ -175,9 +174,8 @@ final class TokenBuffer {
     return maxCapacity;
   }
 
-  static class TokenInfo {
-    @NotNull
-    final ConsoleViewContentType contentType;
+  static final class TokenInfo {
+    final @NotNull ConsoleViewContentType contentType;
     private final String text;
     private final HyperlinkInfo myHyperlinkInfo;
 

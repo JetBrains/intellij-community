@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
-import com.google.gson.JsonSyntaxException
+import com.fasterxml.jackson.core.exc.StreamReadException
+import com.fasterxml.jackson.databind.DatabindException
 import com.intellij.internal.statistic.config.EventLogOptions.DEFAULT_ID_REVISION
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
@@ -16,9 +17,9 @@ class LogEventRecordRequest(val recorder: String, val product : String, val devi
     private const val RECORD_SIZE = 1000 * 1000 // 1000KB
 
     fun create(file: File, recorder: String, product: String, deviceId: String, filter: LogEventFilter,
-               internal: Boolean, logger: DataCollectorDebugLogger, machineId: MachineId): LogEventRecordRequest? {
+               internal: Boolean, logger: DataCollectorDebugLogger, machineId: MachineId, escapeData: Boolean = true): LogEventRecordRequest? {
       try {
-        return create(file, recorder, product, deviceId, RECORD_SIZE, filter, internal, logger, machineId)
+        return create(file, recorder, product, deviceId, RECORD_SIZE, filter, internal, logger, machineId, escapeData)
       }
       catch (e: Exception) {
         logger.warn("Failed reading event log file", e)
@@ -34,23 +35,28 @@ class LogEventRecordRequest(val recorder: String, val product : String, val devi
                filter: LogEventFilter,
                internal: Boolean,
                logger: DataCollectorDebugLogger,
-               machineId: MachineId): LogEventRecordRequest? {
+               machineId: MachineId,
+               escapeData: Boolean = true): LogEventRecordRequest? {
       try {
         val deserializer = LogEventDeserializer(logger)
         val records = ArrayList<LogEventRecord>()
         BufferedReader(FileReader(file.path)).use { reader ->
           val sizeEstimator = LogEventRecordSizeEstimator(product, user)
           var events = ArrayList<LogEvent>()
-          var line = fillNextBatch(reader, reader.readLine(), events, deserializer, sizeEstimator, maxRecordSize, filter, machineId)
+          var line = fillNextBatch(reader, reader.readLine(), events, deserializer, sizeEstimator, maxRecordSize, filter, machineId, escapeData)
           while (!events.isEmpty()) {
             records.add(LogEventRecord(events))
             events = ArrayList()
-            line = fillNextBatch(reader, line, events, deserializer, sizeEstimator, maxRecordSize, filter, machineId)
+            line = fillNextBatch(reader, line, events, deserializer, sizeEstimator, maxRecordSize, filter, machineId, escapeData)
           }
         }
         return LogEventRecordRequest(recorder, product, user, records, internal)
       }
-      catch (e: JsonSyntaxException) {
+
+      catch (e: StreamReadException) {
+        logger.warn(e.message ?: "", e)
+      }
+      catch (e: DatabindException) {
         logger.warn(e.message ?: "", e)
       }
       catch (e: IOException) {
@@ -66,7 +72,8 @@ class LogEventRecordRequest(val recorder: String, val product : String, val devi
                               estimator: LogEventRecordSizeEstimator,
                               maxRecordSize: Int,
                               filter: LogEventFilter,
-                              machineId: MachineId): String? {
+                              machineId: MachineId,
+                              escapeData: Boolean = true): String? {
       var recordSize = 0
       var line = firstLine
       while (line != null && recordSize + estimator.estimate(line) < maxRecordSize) {
@@ -74,7 +81,7 @@ class LogEventRecordRequest(val recorder: String, val product : String, val devi
         if (event != null && filter.accepts(event)) {
           recordSize += estimator.estimate(line)
           fillMachineId(event, machineId)
-          events.add(event.escape())
+          events.add(if (escapeData) event.escape() else event.escapeExceptData())
         }
         line = reader.readLine()
       }
@@ -127,9 +134,7 @@ class LogEventRecord(val events: List<LogEvent>) {
 
     other as LogEventRecord
 
-    if (events != other.events) return false
-
-    return true
+    return events == other.events
   }
 
   override fun hashCode(): Int {

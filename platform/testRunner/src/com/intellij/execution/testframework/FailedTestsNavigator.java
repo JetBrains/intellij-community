@@ -117,7 +117,7 @@ public class FailedTestsNavigator implements OccurenceNavigator {
       return this;
     }
 
-    private void collectTests(List<? super AbstractTestProxy> tests, TreeNode node) {
+    private static void collectTests(List<? super AbstractTestProxy> tests, TreeNode node) {
       if (node == null) return;
       Object elementFor = TreeUtil.getUserObject(node);
       if (elementFor instanceof BaseTestProxyNodeDescriptor) {

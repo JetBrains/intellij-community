@@ -1,4 +1,4 @@
-This project creates two tools:
+This project creates three tools:
 
 wslproxy (see wslproxy.svg)
 To avoid connecting from WSL to Windows (such connections may be blocked by firewall) we connect from Windows to WSL instead.
@@ -11,6 +11,9 @@ Calculates hashes and for all files in certain folder to implement custom rsync-
 and also it may be slow: access from WSL to Windows takes a lot of time.
 This tool runs on WSL only, so it is fast. See WslSync.kt
 It also reports symbolic links
+
+ttyfix
+Sets tty size to workaround https://github.com/microsoft/WSL/issues/10701
 
 To build tool use Makefile. We link it statically because WSL may lack glibc. Kernel ABI is backward compatible, so use some old Linux
 

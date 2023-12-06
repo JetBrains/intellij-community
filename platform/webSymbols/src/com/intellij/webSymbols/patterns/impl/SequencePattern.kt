@@ -4,13 +4,17 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.WebSymbolOrigin
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.CompoundInsertHandler
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
+import com.intellij.webSymbols.utils.coalesceWith
 import com.intellij.webSymbols.utils.nameSegments
 import com.intellij.webSymbols.utils.withOffset
 
@@ -52,12 +56,30 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
     }
 
-  override fun getCompletionResults(owner: WebSymbol?,
-                                    scopeStack: Stack<WebSymbolsScope>,
-                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                    params: CompletionParameters,
-                                    start: Int,
-                                    end: Int): CompletionResults {
+  override fun list(owner: WebSymbol?,
+                    scopeStack: Stack<WebSymbolsScope>,
+                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    params: ListParameters): List<ListResult> =
+    process(emptyList()) { matches, pattern, _ ->
+      if (matches.isEmpty()) {
+        pattern.list(null, scopeStack, symbolsResolver, params)
+      }
+      else {
+        matches.flatMap { prevResult ->
+          withPrevMatchScope(scopeStack, prevResult.segments) {
+            pattern.list(null, scopeStack, symbolsResolver, params)
+              .map { it.prefixedWith(prevResult) }
+          }
+        }
+      }
+    }
+
+  override fun complete(owner: WebSymbol?,
+                        scopeStack: Stack<WebSymbolsScope>,
+                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        params: CompletionParameters,
+                        start: Int,
+                        end: Int): CompletionResults {
     val results: MutableList<WebSymbolCodeCompletionItem> = mutableListOf()
     var stop = false
     process(
@@ -271,9 +293,9 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
                                             params: CompletionParameters,
                                             matchStart: Int,
                                             prevResult: MatchResult?) =
-    pattern.getCompletionResults(null, scopeStack, symbolsResolver,
-                                 if (matchResult != null) params else params.withPosition(matchStart),
-                                 matchStart, matchResult?.end ?: matchStart)
+    pattern.complete(null, scopeStack, symbolsResolver,
+                     if (matchResult != null) params else params.withPosition(matchStart),
+                     matchStart, matchResult?.end ?: matchStart)
       .let { completionResults ->
         val lastMatchedSegment = matchResult?.segments?.last()
         val matchedName = lastMatchedSegment?.let { CharSequenceSubSequence(params.name, it.start, it.end) }
@@ -342,7 +364,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
         symbol = symbol,
         proximity = proximity,
         priority = priority,
-        deprecated = required.deprecated || new.deprecated,
+        apiStatus = required.apiStatus.coalesceWith(new.apiStatus),
         icon = new.icon ?: required.icon
       )
     else
@@ -355,7 +377,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
         symbol = symbol,
         proximity = proximity,
         priority = priority,
-        deprecated = required.deprecated || new.deprecated,
+        apiStatus = required.apiStatus.coalesceWith(new.apiStatus),
         icon = new.icon ?: required.icon,
         insertHandler = CompoundInsertHandler.merge(required.insertHandler, new.insertHandler)
       )
@@ -425,10 +447,9 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
   override fun toString(): String =
     patternsProvider().toString()
 
-  data class SequenceCompletionResult(val prevResult: MatchResult?,
-                                      val lastMatched: MatchResult,
-                                      val requiredCompletionChain: WebSymbolCodeCompletionItem?,
-                                      val onlyRequired: Boolean = false)
-
+  private data class SequenceCompletionResult(val prevResult: MatchResult?,
+                                              val lastMatched: MatchResult,
+                                              val requiredCompletionChain: WebSymbolCodeCompletionItem?,
+                                              val onlyRequired: Boolean = false)
 
 }

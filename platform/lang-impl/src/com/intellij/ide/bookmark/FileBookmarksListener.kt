@@ -5,9 +5,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.util.function.Consumer
 
 class FileBookmarksListener(private val consumer: Consumer<VirtualFile>) : BookmarksListener {
-  override fun bookmarkAdded(group: BookmarkGroup, bookmark: Bookmark) = bookmarkTypeChanged(bookmark)
-  override fun bookmarkRemoved(group: BookmarkGroup, bookmark: Bookmark) = bookmarkTypeChanged(bookmark)
-  override fun bookmarkChanged(group: BookmarkGroup, bookmark: Bookmark) = bookmarkTypeChanged(bookmark)
+  override fun bookmarkAdded(group: BookmarkGroup, bookmark: Bookmark): Unit = bookmarkTypeChanged(bookmark)
+  override fun bookmarkRemoved(group: BookmarkGroup, bookmark: Bookmark): Unit = bookmarkTypeChanged(bookmark)
+  override fun bookmarkChanged(group: BookmarkGroup, bookmark: Bookmark): Unit = bookmarkTypeChanged(bookmark)
   override fun bookmarkTypeChanged(bookmark: Bookmark) {
     (bookmark as? FileBookmark)?.let { consumer.accept(it.file) }
   }

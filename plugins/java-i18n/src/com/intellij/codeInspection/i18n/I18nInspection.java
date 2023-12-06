@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.i18n;
 
@@ -9,12 +9,12 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.StringFlowUtil;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.actions.AnnotationRequestsKt;
@@ -22,12 +22,11 @@ import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,16 +36,13 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
-import com.intellij.ui.AddDeleteListPanel;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.FieldPanel;
-import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
@@ -61,16 +57,12 @@ import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.util.UastExpressionUtils;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
   private static final CallMatcher ERROR_WRAPPER_METHODS = CallMatcher.anyOf(
@@ -103,7 +95,6 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
   private static final CallMatcher STRING_EQUALS =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "equals", "equalsIgnoreCase").parameterCount(1);
-  private static final int FIELD_PANEL_COLUMNS = 18;
 
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
@@ -237,188 +228,74 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
-    final JCheckBox assertStatementsCheckbox = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.assert"), ignoreForAssertStatements);
-    assertStatementsCheckbox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForAssertStatements = assertStatementsCheckbox.isSelected();
-      }
-    });
-    final JCheckBox exceptionConstructorCheck =
-      new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.for.exception.constructor.arguments"),
-                    ignoreForExceptionConstructors);
-    exceptionConstructorCheck.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForExceptionConstructors = exceptionConstructorCheck.isSelected();
-      }
-    });
-
-    final JTextField specifiedExceptions = new JTextField(ignoreForSpecifiedExceptionConstructors);
-    specifiedExceptions.getDocument().addDocumentListener(new DocumentAdapter(){
-      @Override
-      protected void textChanged(@NotNull DocumentEvent e) {
-        ignoreForSpecifiedExceptionConstructors = specifiedExceptions.getText();
-      }
-    });
-
-    final JCheckBox junitAssertCheckbox = new JCheckBox(
-      JavaI18nBundle.message("inspection.i18n.option.ignore.for.junit.assert.arguments"), ignoreForJUnitAsserts);
-    junitAssertCheckbox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForJUnitAsserts = junitAssertCheckbox.isSelected();
-      }
-    });
-    final JCheckBox classRef = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.qualified.class.names"), ignoreForClassReferences);
-    classRef.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForClassReferences = classRef.isSelected();
-      }
-    });
-    final JCheckBox propertyRef = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.property.keys"), ignoreForPropertyKeyReferences);
-    propertyRef.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForPropertyKeyReferences = propertyRef.isSelected();
-      }
-    });
-    final JCheckBox nonAlpha = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.nonalphanumerics"), ignoreForNonAlpha);
-    nonAlpha.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForNonAlpha = nonAlpha.isSelected();
-      }
-    });
-    final JCheckBox assignedToConstants = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.assigned.to.constants"), ignoreAssignedToConstants);
-    assignedToConstants.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreAssignedToConstants = assignedToConstants.isSelected();
-      }
-    });
-    final JCheckBox chkToString = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.tostring"), ignoreToString);
-    chkToString.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreToString = chkToString.isSelected();
-      }
-    });
-
-    final JCheckBox ignoreEnumConstants = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.enum"), ignoreForEnumConstants);
-    ignoreEnumConstants.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForEnumConstants = ignoreEnumConstants.isSelected();
-      }
-    });
-
-    final JCheckBox reportRefs = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.report.unannotated.refs"), reportUnannotatedReferences);
-    reportRefs.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        reportUnannotatedReferences = reportRefs.isSelected();
-      }
-    });
-    final JCheckBox ignoreAllButNls = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.nls"), ignoreForAllButNls);
-    ignoreAllButNls.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForAllButNls = ignoreAllButNls.isSelected();
-      }
-    });
-
-    panel.add(ignoreAllButNls);
-    panel.add(reportRefs);
-    panel.add(assertStatementsCheckbox);
-    panel.add(junitAssertCheckbox);
-    panel.add(exceptionConstructorCheck);
-
-    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    panel.addGrowingX(new FieldPanel(specifiedExceptions,
-                             null,
-                             JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
-                             openProjects.length == 0 ? null :
-                             new ActionListener() {
-                               @Override
-                               public void actionPerformed(@NotNull ActionEvent e) {
-                                 createIgnoreExceptionsConfigurationDialog(openProjects[0], specifiedExceptions).show();
-                               }
-                             },
-                             null));
-
-    panel.add(classRef);
-    panel.add(propertyRef);
-    panel.add(assignedToConstants);
-    panel.add(chkToString);
-    panel.add(nonAlpha);
-    panel.add(ignoreEnumConstants);
-
-    final JTextField commentPattern = new JTextField(nonNlsCommentPattern);
-    final FieldPanel nonNlsCommentPatternComponent =
-      new FieldPanel(commentPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.comment.pattern"),
-                     JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null,
-                     () -> setNonNlsCommentPattern(commentPattern.getText()));
-    panel.addGrowingX(nonNlsCommentPatternComponent);
-
-    final JTextField literalPattern = new ExpandableTextField(text -> Collections.singletonList(text),
-                                                              strings -> StringUtil.join(strings, "|"));
-    literalPattern.setText(nonNlsLiteralPattern);
-    final FieldPanel nonNlsStringPatternComponent =
-      new FieldPanel(literalPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.string.pattern"),
-                     JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null,
-                     () -> setNonNlsLiteralPattern(literalPattern.getText()));
-    panel.addGrowingX(nonNlsStringPatternComponent);
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      tabs(
+        tab(JavaI18nBundle.message("inspection.i18n.option.tab.general"),
+            checkbox("ignoreForAllButNls", JavaI18nBundle.message("inspection.i18n.option.ignore.nls"))
+              .description(JavaI18nBundle.message("inspection.i18n.option.ignore.nls.description")),
+            checkbox("reportUnannotatedReferences", JavaI18nBundle.message("inspection.i18n.option.report.unannotated.refs"))
+              .description(JavaI18nBundle.message("inspection.i18n.option.report.unannotated.refs.description")),
+            expandableString("nonNlsCommentPattern", JavaI18nBundle.message("inspection.i18n.option.suppression.comment"), "\n")
+              .description(JavaI18nBundle.message("inspection.i18n.option.suppression.comment.description"))
+        ),
+        tab(JavaI18nBundle.message("inspection.i18n.option.tab.context"),
+            group(JavaI18nBundle.message("inspection.i18n.option.ignore.context"),
+                  checkbox("ignoreForAssertStatements", JavaI18nBundle.message("inspection.i18n.option.ignore.context.assert"))
+                    .description(exampleDescription("assert s.equals(\"Message\");")),
+                  checkbox("ignoreForJUnitAsserts", JavaI18nBundle.message("inspection.i18n.option.ignore.context.junit.assert"))
+                    .description(exampleDescription("assertEquals(s, \"Message\");")),
+                  checkbox("ignoreAssignedToConstants", JavaI18nBundle.message(
+                    "inspection.i18n.option.ignore.context.assigned.to.constants"))
+                    .description(exampleDescription("static final ID = \"Message\"")),
+                  checkbox("ignoreToString", JavaI18nBundle.message("inspection.i18n.option.ignore.context.tostring"))
+                    .description(exampleDescription("""
+                      public String toString() {
+                        return "MyObject: value = " + value;
+                      }""")),
+                  checkbox("ignoreForEnumConstants", JavaI18nBundle.message("inspection.i18n.option.ignore.context.enum"))
+                    .description(exampleDescription("""
+                      enum MyEnum {
+                        VALUE("Message");
+                        MyEnum(String msg) {}
+                      }""")),
+                  checkbox("ignoreForExceptionConstructors", JavaI18nBundle.message(
+                             "inspection.i18n.option.ignore.context.exception.constructor"),
+                     stringList("ignoreForSpecifiedExceptionConstructors", "",
+                                new JavaClassValidator().withSuperClass(CommonClassNames.JAVA_LANG_THROWABLE)))
+            )
+        ),
+        tab(JavaI18nBundle.message("inspection.i18n.option.tab.literals"),
+            group(JavaI18nBundle.message("inspection.i18n.option.no.report.content"),
+                  checkbox("ignoreForClassReferences", JavaI18nBundle.message(
+                    "inspection.i18n.option.no.report.content.qualified.class.names")),
+                  checkbox("ignoreForPropertyKeyReferences", JavaI18nBundle.message(
+                    "inspection.i18n.option.no.report.content.property.keys")),
+                  checkbox("ignoreForNonAlpha", JavaI18nBundle.message("inspection.i18n.option.no.report.content.nonalphanumerics")),
+                  expandableString("nonNlsLiteralPattern", JavaI18nBundle.message("inspection.i18n.option.no.report.content.string.pattern"),
+                                   "\n")
+                  )
+        )
+      )
+    );
   }
 
-  private DialogWrapper createIgnoreExceptionsConfigurationDialog(final Project project, final JTextField specifiedExceptions) {
-    return new DialogWrapper(true) {
-      private AddDeleteListPanel<?> myPanel;
-      {
-        setTitle(JavaI18nBundle.message(
-          "inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"));
-        init();
-      }
+  @NotNull
+  private static HtmlChunk exampleDescription(@NlsSafe String exampleText) {
+    return HtmlChunk.fragment(
+      HtmlChunk.text(JavaI18nBundle.message("tooltip.example")),
+      HtmlChunk.br(),
+      HtmlChunk.tag("pre").addText(exampleText)
+    );
+  }
 
-      @Override
-      protected JComponent createCenterPanel() {
-        final String[] ignored = ignoreForSpecifiedExceptionConstructors.split(",");
-        final List<String> initialList = new ArrayList<>();
-        for (String e : ignored) {
-          if (!e.isEmpty()) initialList.add(e);
-        }
-        myPanel = new AddDeleteListPanel<>(null, initialList) {
-          @Override
-          protected String findItemToAdd() {
-            final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-            TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).
-              createInheritanceClassChooser(
-                JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"), scope,
-                JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_THROWABLE, scope), true, true, null);
-            chooser.showDialog();
-            PsiClass selectedClass = chooser.getSelected();
-            return selectedClass != null ? selectedClass.getQualifiedName() : null;
-          }
-        };
-        return myPanel;
-      }
-
-      @Override
-      protected void doOKAction() {
-        StringBuilder buf = new StringBuilder();
-        final Object[] exceptions = myPanel.getListItems();
-        for (Object exception : exceptions) {
-          buf.append(",").append(exception);
-        }
-        specifiedExceptions.setText(buf.length() > 0 ? buf.substring(1) : buf.toString());
-        super.doOKAction();
-      }
-    };
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onValue("ignoreForSpecifiedExceptionConstructors", () -> StringUtil.split(ignoreForSpecifiedExceptionConstructors, ","),
+               res -> ignoreForSpecifiedExceptionConstructors = StringUtil.join((List<?>)res, ",")) 
+      .onValueSet("nonNlsCommentPattern", pattern -> setNonNlsCommentPattern(pattern.toString()))
+      .onValueSet("nonNlsLiteralPattern", pattern -> setNonNlsLiteralPattern(pattern.toString()));
   }
 
   @Override
@@ -665,15 +542,15 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       myHolder.registerProblem(sourcePsi, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, farr);
     }
 
-    private boolean isSwitchCase(@NotNull UInjectionHost expression) {
-      if (expression.getUastParent() instanceof USwitchClauseExpression) {
-        return ((USwitchClauseExpression)expression.getUastParent()).getCaseValues().stream()
-          .anyMatch(value -> expression.equals(UastLiteralUtils.wrapULiteral(value)));
+    private static boolean isSwitchCase(@NotNull UInjectionHost expression) {
+      if (expression.getUastParent() instanceof USwitchClauseExpression parent) {
+        return ContainerUtil.exists(parent.getCaseValues(),
+                                    value -> expression.equals(UastLiteralUtils.wrapULiteral(value)));
       }
       return false;
     }
 
-    private boolean isNotConstantFieldInitializer(final PsiExpression expression) {
+    private static boolean isNotConstantFieldInitializer(final PsiExpression expression) {
       PsiField parentField = expression.getParent() instanceof PsiField ? (PsiField)expression.getParent() : null;
       return parentField != null && expression == parentField.getInitializer() &&
              parentField.hasModifierProperty(PsiModifier.FINAL) &&
@@ -727,10 +604,10 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     for (UExpression usage : usages) {
       NlsInfo info = NlsInfo.forExpression(usage);
       switch (info.getNlsStatus()) {
-        case YES: {
+        case YES -> {
           return info;
         }
-        case UNSURE: {
+        case UNSURE -> {
           if (ignoreForAllButNls) {
             break;
           }
@@ -743,8 +620,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.NlsUnspecified)info).getAnnotationCandidate());
           return NlsInfo.localized();
         }
-        case NO:
-          break;
+        case NO -> {}
       }
     }
     return NlsInfo.nonLocalized();
@@ -1001,9 +877,9 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (containingClass == null) {
       return false;
     }
-    return InheritanceUtil.isInheritor(containingClass,"org.junit.Assert") ||
-           InheritanceUtil.isInheritor(containingClass,"org.junit.jupiter.api.Assertions") ||
-           InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert");
+    return InheritanceUtil.isInheritor(containingClass,JUnitCommonClassNames.ORG_JUNIT_ASSERT) ||
+           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS) ||
+           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT);
   }
 
   private static boolean isArgOfSpecifiedExceptionConstructor(UExpression expression,

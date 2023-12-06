@@ -1,48 +1,43 @@
-#cargo_features=["strip"]
-
 [package]
 name = "xplat-launcher"
-version = "0.1.0"
+version = "0.9.0"
 edition = "2021"
-rust-version = "1.65.0"
+rust-version = "1.70.0"
 publish = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [profile.release]
-#strip = true  # Automatically strip symbols from the binary.
-opt-level = "z"  # Optimize for size.
+strip = "debuginfo"
+opt-level = "z"  # optimize for size
 lto = true
 codegen-units = 1
-#panic = "abort" # 100KB
-
-[features]
 
 [dependencies]
-log = "0.4.14"
-native-dialog = "0.6.3"
-serde = { version="1.0.136", features = ["derive"] }
-serde_json = "1.0.79"
-simplelog = "0.12.0"
-jni = { version= "0.20.0" }
-libloading = "0.7.3"
-jni-sys = "0.3.0"
-utils = { version = "0.1.0", path = "utils" }
-anyhow = { version = "1.0.62", features = ["std", "backtrace"] }
+log = { version = "0.4.20", features = ["std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+jni = "0.21.1"
+libloading = "0.8.0"
+anyhow = { version = "1", features = ["std", "backtrace"] }
 
-[target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.43.0", features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_System_Environment", "Win32_System_Services", "Win32_Security" ] }
+[target.'cfg(not(all(target_os = "windows", target_arch = "aarch64")))'.dependencies]
+va_list = "0.1.4"
+
+[target.'cfg(target_os = "windows")'.dependencies.windows]
+version = "0.51.1"
+features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_System_Environment", "Win32_System_Services", "Win32_Security"]
+
+[target.'cfg(target_family = "unix")'.dependencies]
+libc = "0.2.142"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.9.3"
 
+[target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
+native-dialog = "0.6.3"
+
 [build-dependencies]
-cargo-deny = "0.13.5" # checks licenses / vulns
-cargo-about = "0.5.1" # generates license report
+cargo-deny = "0.14.2" # checks licenses / vulns
+cargo-about = "0.5.7" # generates license report
 
 [dev-dependencies]
-rstest = "0.15.0"
-tempfile = "3.3.0"
-
-[target.'cfg(target_os = "windows")'.dev-dependencies]
-junction = "0.2.0"
+tempfile = "3"

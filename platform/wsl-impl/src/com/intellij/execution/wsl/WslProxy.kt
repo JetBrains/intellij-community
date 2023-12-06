@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.registry.Registry
 import io.ktor.network.selector.ActorSelectorManager
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
+import io.ktor.network.sockets.*
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.close
@@ -36,6 +36,22 @@ import kotlin.coroutines.coroutineContext
  */
 class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int) : Disposable {
   private companion object {
+    /**
+     * Server might not be opened yet. Since non-blocking Ktor API doesn't wait for it but throws exception instead, we retry
+     */
+    private tailrec suspend fun TcpSocketBuilder.tryConnect(host: String, port: Int, attemptRemains: Int = 10): Socket {
+      try {
+        return connect(host, port)
+      }
+      catch (e: IOException) {
+        if (attemptRemains <= 0) throw e
+        thisLogger().warn("Can't connect to $host $port , will retry", e)
+        delay(100)
+      }
+      return tryConnect(host, port, attemptRemains - 1)
+    }
+
+
     suspend fun connectChannels(source: ByteReadChannel, dest: ByteWriteChannel) {
       val buffer = ByteBuffer.allocate(4096)
       while (coroutineContext.isActive) {
@@ -97,8 +113,13 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
   private suspend fun readPortFromChannel(channel: ByteReadChannel): Int = readToBuffer(channel, 2).short.toUShort().toInt()
 
   init {
-    val wslCommandLine = runBlocking { distro.getTool("wslproxy") }
-    val process = Runtime.getRuntime().exec(wslCommandLine.commandLineString)
+    val args = if (Registry.`is`("wsl.proxy.connect.localhost")) arrayOf("--loopback") else emptyArray()
+    val wslCommandLine = runBlocking { distro.getTool("wslproxy", *args) }
+    val process =
+      if (Registry.`is`("wsl.use.remote.agent.for.launch.processes"))
+        wslCommandLine.createProcess()
+      else
+        Runtime.getRuntime().exec(wslCommandLine.commandLineString)
     val log = Logger.getInstance(WslProxy::class.java)
 
     scope.launch {
@@ -136,10 +157,16 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
 
   private suspend fun clientConnected(linuxEgressPort: Int) {
     val winToLin = scope.async {
-      aSocket(ActorSelectorManager(scope.coroutineContext)).tcp().connect(wslLinuxIp, linuxEgressPort)
+      thisLogger().info("Connecting to WSL: $wslLinuxIp:$linuxEgressPort")
+      val socket = aSocket(ActorSelectorManager(scope.coroutineContext)).tcp().tryConnect(wslLinuxIp, linuxEgressPort)
+      thisLogger().info("Connected to WSL")
+      socket
     }
     val winToWin = scope.async {
-      aSocket(ActorSelectorManager(scope.coroutineContext)).tcp().connect("127.0.0.1", applicationPort)
+      thisLogger().info("Connecting to app: $127.0.0.1:$applicationPort")
+      val socket = aSocket(ActorSelectorManager(scope.coroutineContext)).tcp().tryConnect("127.0.0.1", applicationPort)
+      thisLogger().info("Connected to app")
+      socket
     }
     scope.launch {
       val winToLinSocket = winToLin.await()

@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Runs a process and prints the output in a content tab within the Run toolwindow.
  */
-public class RunContentExecutor implements Disposable {
+public final class RunContentExecutor implements Disposable {
   private final Project myProject;
   private final ProcessHandler myProcess;
   private final List<Filter> myFilterList = new ArrayList<>();
@@ -145,13 +145,10 @@ public class RunContentExecutor implements Disposable {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
     panel.add(view.getComponent(), BorderLayout.CENTER);
-    panel.add(createToolbar(actions), BorderLayout.WEST);
-    return panel;
-  }
-
-  private static JComponent createToolbar(ActionGroup actions) {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("RunContentExecutor", actions, false);
-    return actionToolbar.getComponent();
+    actionToolbar.setTargetComponent(panel);
+    panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
+    return panel;
   }
 
   @Override
@@ -161,13 +158,12 @@ public class RunContentExecutor implements Disposable {
   /**
    * @param console console to use instead of new one. Pass null to always create new
    */
-  @NotNull
-  public RunContentExecutor withConsole(@Nullable ConsoleView console) {
+  public @NotNull RunContentExecutor withConsole(@Nullable ConsoleView console) {
     myUserProvidedConsole = console;
     return this;
   }
 
-  private class RerunAction extends AnAction {
+  private final class RerunAction extends AnAction {
     RerunAction(JComponent consolePanel) {
       super(CommonBundle.message("action.text.rerun"), CommonBundle.message("action.text.rerun"), AllIcons.Actions.Restart);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), consolePanel);
@@ -194,7 +190,7 @@ public class RunContentExecutor implements Disposable {
     }
   }
 
-  private class StopAction extends AnAction implements DumbAware {
+  private final class StopAction extends AnAction implements DumbAware {
   StopAction() {
     super(ExecutionBundle.messagePointer("action.AnAction.text.stop"),
           ExecutionBundle.messagePointer("action.AnAction.description.stop"), AllIcons.Actions.Suspend);

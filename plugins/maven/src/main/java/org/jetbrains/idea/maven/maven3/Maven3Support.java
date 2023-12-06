@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
+import org.jetbrains.idea.maven.project.BundledMaven3;
+import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenServer;
@@ -26,42 +27,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static org.jetbrains.idea.maven.server.MavenServerManager.BUNDLED_MAVEN_3;
-
 final class Maven3Support implements MavenVersionAwareSupportExtension {
   @Override
   public boolean isSupportedByExtension(@Nullable File mavenHome) {
     String version = MavenUtil.getMavenVersion(mavenHome);
-    return StringUtil.compareVersionNumbers(version, "3") >= 0;
+    return StringUtil.compareVersionNumbers(version, "3.1") >= 0 && StringUtil.compareVersionNumbers(version, "4") < 0;
   }
 
   @Override
-  public @Nullable File getMavenHomeFile(@Nullable String mavenHome) {
-    if (mavenHome == null) return null;
-    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
-        StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.title"), mavenHome)) {
+  public @Nullable File getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType) {
+    if (mavenHomeType == null) return null;
+    if (mavenHomeType == BundledMaven3.INSTANCE) {
       return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
     }
     return null;
-  }
-
-  @Override
-  public @Nullable String asMavenHome(DistributionInfo distribution) {
-    if (distribution instanceof Bundled3DistributionInfo) return BUNDLED_MAVEN_3;
-    return null;
-  }
-
-  @Override
-  public @Nullable DistributionInfo asDistributionInfo(String mavenHome) {
-    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome)) {
-      return new Bundled3DistributionInfo(MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion());
-    }
-    return null;
-  }
-
-  @Override
-  public @NotNull List<String> supportedBundles() {
-    return Collections.singletonList(BUNDLED_MAVEN_3);
   }
 
   @Override
@@ -94,20 +73,15 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
     classpath.add(new File(root, "maven3-server-common.jar"));
     addDir(classpath, new File(root, "maven3-server-lib"), f -> true);
 
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-      classpath.add(new File(root, "maven30-server.jar"));
-    }
-    else {
-      classpath.add(new File(root, "maven3-server.jar"));
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-        classpath.add(new File(root, "maven36-server.jar"));
-      }
+    classpath.add(new File(root, "maven3-server.jar"));
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+      classpath.add(new File(root, "maven36-server.jar"));
     }
   }
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-    BundledMavenDownloader.INSTANCE.downloadMavenCommonLibsSync(communityRoot);
+    BundledMavenDownloader.INSTANCE.downloadMaven3LibsSync(communityRoot);
 
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
@@ -115,14 +89,9 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
     classpath.add(new File(root, "intellij.maven.server.m3.common"));
     addDir(classpath, new File(parentFile, "maven3-server-common/lib"), f -> true);
 
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-      classpath.add(new File(root, "intellij.maven.server.m30.impl"));
-    }
-    else {
-      classpath.add(new File(root, "intellij.maven.server.m3.impl"));
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-        classpath.add(new File(root, "intellij.maven.server.m36.impl"));
-      }
+    classpath.add(new File(root, "intellij.maven.server.m3.impl"));
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+      classpath.add(new File(root, "intellij.maven.server.m36.impl"));
     }
   }
 

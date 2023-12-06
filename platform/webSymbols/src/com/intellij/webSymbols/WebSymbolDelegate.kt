@@ -1,20 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
+import com.intellij.find.usages.api.SearchTarget
 import com.intellij.navigation.NavigatableSymbol
-import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
+import com.intellij.webSymbols.refactoring.impl.WebSymbolDelegatedRenameTargetImpl
+import com.intellij.webSymbols.search.WebSymbolSearchTarget
+import com.intellij.webSymbols.search.impl.WebSymbolDelegatedSearchTargetImpl
 import javax.swing.Icon
 
 abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
@@ -27,8 +32,10 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.namespace
   override val kind: SymbolKind
     get() = delegate.kind
+
   override fun getModificationCount(): Long =
     delegate.modificationCount
+
   override val queryScope: List<WebSymbolsScope>
     get() = delegate.queryScope
   override val name: String
@@ -41,10 +48,8 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.docUrl
   override val icon: Icon?
     get() = delegate.icon
-  override val deprecated: Boolean
-    get() = delegate.deprecated
-  override val experimental: Boolean
-    get() = delegate.experimental
+  override val apiStatus: WebSymbolApiStatus
+    get() = delegate.apiStatus
   override val virtual: Boolean
     get() = delegate.virtual
   override val abstract: Boolean
@@ -67,37 +72,45 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.pattern
   override val properties: Map<String, Any>
     get() = delegate.properties
-  override val documentation: WebSymbolDocumentation?
-    get() = delegate.documentation
 
-  override fun getDocumentationTarget(): DocumentationTarget =
-    delegate.documentationTarget
+  override fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+    delegate.createDocumentation(location)
+
+  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget =
+    delegate.getDocumentationTarget(location)
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     (delegate as? NavigatableSymbol)?.getNavigationTargets(project) ?: emptyList()
 
-  override fun getSymbols(namespace: SymbolNamespace,
-                          kind: SymbolKind,
-                          name: String?,
-                          params: WebSymbolsNameMatchQueryParams,
-                          scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
-    delegate.getSymbols(namespace, kind, name, params, scope)
+  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+                                  params: WebSymbolsNameMatchQueryParams,
+                                  scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+    delegate.getMatchingSymbols(qualifiedName, params, scope)
 
-  override fun getCodeCompletions(namespace: SymbolNamespace,
-                                  kind: SymbolKind,
-                                  name: String?,
+
+  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+                          params: WebSymbolsListSymbolsQueryParams,
+                          scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+    delegate.getSymbols(qualifiedKind, params, scope)
+
+  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    delegate.getCodeCompletions(namespace, kind, name, params, scope)
+    delegate.getCodeCompletions(qualifiedName, params, scope)
 
-  override fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
-    delegate.isExclusiveFor(namespace, kind)
+  override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+    delegate.isExclusiveFor(qualifiedKind)
 
-  protected fun renameTargetFromDelegate(): RenameTarget =
-    when (delegate) {
-      is RenameableSymbol -> delegate.renameTarget
-      is RenameTarget -> delegate
-      else -> throw IllegalArgumentException(delegate::class.java.toString())
+  override val searchTarget: WebSymbolSearchTarget?
+    get() = when (delegate) {
+      is SearchTarget -> WebSymbolDelegatedSearchTargetImpl(delegate)
+      else -> delegate.searchTarget
+    }
+
+  override val renameTarget: WebSymbolRenameTarget?
+    get() = when (delegate) {
+      is RenameTarget -> WebSymbolDelegatedRenameTargetImpl(delegate)
+      else -> delegate.renameTarget
     }
 
   companion object {

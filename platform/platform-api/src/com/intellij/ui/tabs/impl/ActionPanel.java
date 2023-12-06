@@ -1,22 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -33,11 +32,16 @@ public final class ActionPanel extends NonOpaquePanel {
     myTabs = tabs;
     myInfo = tabInfo;
     ActionGroup group = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
-    AnAction[] children = group.getChildren(null);
-    if(!UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
-      List<AnAction> list = Arrays.asList(children);
-      Collections.reverse(list);
-      children = list.toArray(AnAction[]::new);
+    ActionManager actionManager = ActionManager.getInstance();
+    // TODO replace with a regular toolbar
+    List<AnAction> children = JBTreeTraverser.<AnAction>of(
+        o -> !(o instanceof DefaultActionGroup) ? AnAction.EMPTY_ARRAY :
+             ((DefaultActionGroup)o).getChildren(null, actionManager))
+      .withRoot(group)
+      .filter(o -> o.getActionUpdateThread() == ActionUpdateThread.EDT)
+      .toList();
+    if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() && !UISettings.getInstance().getCloseTabButtonOnTheRight()) {
+      children = ContainerUtil.reverse(children);
     }
 
     setFocusable(false);
@@ -48,7 +52,7 @@ public final class ActionPanel extends NonOpaquePanel {
     inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
     wrapper.add(inner, BorderLayout.CENTER);
     for (AnAction each : children) {
-      ActionButton eachButton = new ActionButton(tabInfo, each, tabInfo.getTabActionPlace(), pass, hover, tabs.getTabActionsMouseDeadzone()) {
+      ActionButton eachButton = new ActionButton(tabInfo, each, tabInfo.getTabActionPlace(), pass, hover, tabs.getTabActionsMouseDeadZone$intellij_platform_ide()) {
         @Override
         protected void repaintComponent(final Component c) {
           TabLabel tabLabel = (TabLabel) SwingUtilities.getAncestorOfClass(TabLabel.class, c);
@@ -76,7 +80,7 @@ public final class ActionPanel extends NonOpaquePanel {
 
   @Override
   public void paint(Graphics g) {
-    TabLabel label = myTabs.myInfo2Label.get(myInfo);
+    TabLabel label = myTabs.getInfoToLabel().get(myInfo);
     boolean isHovered = label != null && label.isHovered();
     boolean isSelected = myTabs.getSelectedInfo() == myInfo;
     if (ExperimentalUI.isNewUI()
@@ -97,7 +101,7 @@ public final class ActionPanel extends NonOpaquePanel {
     boolean anyModified = false;
     for (ActionButton each : myButtons) {
       changed |= each.update();
-      each.setMouseDeadZone(myTabs.getTabActionsMouseDeadzone());
+      each.setMouseDeadZone(myTabs.getTabActionsMouseDeadZone$intellij_platform_ide());
       anyVisible |= each.getComponent().isVisible();
 
       Boolean markModified = each.getPrevPresentation().getClientProperty(JBEditorTabs.MARK_MODIFIED_KEY);

@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentValue
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -19,20 +20,20 @@ import com.intellij.util.ui.UpdateScaleHelper
 import java.awt.Point
 
 @Service(Service.Level.PROJECT)
-class IdeScaleIndicatorManager(val project: Project) {
+internal class IdeScaleIndicatorManager(private val project: Project) {
   private var balloon: Balloon? = null
   private var indicator: IdeScaleIndicator? = null
   private val alarm = Alarm(project)
-  private val updateScaleHelper = UpdateScaleHelper { UISettingsUtils.instance.currentIdeScale }
+  private val updateScaleHelper = UpdateScaleHelper { UISettingsUtils.getInstance().currentIdeScale }
 
   init {
     setupLafListener()
   }
 
-  fun showIndicator() {
+  private fun showIndicator() {
     cancelCurrentPopup()
     val ideFrame = WindowManager.getInstance().getIdeFrame(project)?.component ?: return
-    val indicator = IdeScaleIndicator(UISettingsUtils.instance.currentIdeScale.percentValue)
+    val indicator = IdeScaleIndicator(UISettingsUtils.getInstance().currentIdeScale.percentValue)
     this.indicator = indicator
 
     val newUI = ExperimentalUI.isNewUI()
@@ -53,7 +54,7 @@ class IdeScaleIndicatorManager(val project: Project) {
   }
 
   private fun scheduleCancellation(delay: Int) {
-    alarm.addRequest({ cancelPopupIfNotHovered() }, delay)
+    alarm.addRequest(::cancelPopupIfNotHovered, delay)
   }
 
   private fun cancelPopupIfNotHovered() {
@@ -85,12 +86,7 @@ class IdeScaleIndicatorManager(val project: Project) {
     private const val POPUP_SHORT_TIMEOUT_MS = 1000
     private var shouldIndicate: Boolean = false
 
-    @JvmStatic
-    fun getInstance(project: Project): IdeScaleIndicatorManager = project.getService(IdeScaleIndicatorManager::class.java)
-    @JvmStatic
-    fun setup(project: Project) {
-      getInstance(project)
-    }
+    fun getInstance(project: Project): IdeScaleIndicatorManager = project.service<IdeScaleIndicatorManager>()
 
     fun indicateIfChanged(update: () -> Unit) {
       shouldIndicate = true

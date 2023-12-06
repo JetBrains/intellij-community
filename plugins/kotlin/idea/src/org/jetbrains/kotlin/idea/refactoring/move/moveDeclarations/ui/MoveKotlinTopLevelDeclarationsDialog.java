@@ -8,8 +8,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,14 +28,14 @@ import com.intellij.util.ui.UIUtil;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.core.util.PhysicalFileSystemUtilsKt;
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionTable;
-import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilsKt;
+import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox;
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog;
 import org.jetbrains.kotlin.idea.util.ExpectActualUtilKt;
@@ -184,7 +182,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
             @NotNull List<KtNamedDeclaration> declarations
     ) {
         //KotlinMemberInfo run resolve on declaration so it is good to place it to the process
-        List<KotlinMemberInfo> memberInfos = MoveUtilsKt.mapWithReadActionInProcess(declarations, myProject, MoveHandler.getRefactoringName(), (declaration) -> {
+        List<KotlinMemberInfo> memberInfos = MoveUtilKt.mapWithReadActionInProcess(declarations, myProject, MoveHandler.getRefactoringName(), (declaration) -> {
             KotlinMemberInfo memberInfo = new KotlinMemberInfo(declaration, false);
             memberInfo.setChecked(elementsToMove.contains(declaration));
             return memberInfo;
@@ -202,7 +200,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
     }
 
     private void updateSuggestedFileName() {
-        tfFileNameInPackage.setText(MoveUtilsKt.guessNewFileName(getSelectedElementsToMove()));
+        tfFileNameInPackage.setText(MoveUtilKt.guessNewFileName(getSelectedElementsToMove()));
     }
 
     private void updateFileNameInPackageField() {
@@ -223,12 +221,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
         ((KotlinDestinationFolderComboBox) destinationFolderCB).setData(
                 myProject,
                 targetDirectory,
-                new Pass<>() {
-                    @Override
-                    public void pass(@NlsSafe String s) {
-                        setErrorText(s);
-                    }
-                },
+                s-> setErrorText(s),
                 classPackageChooser.getChildComponent()
         );
     }
@@ -320,7 +313,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
 
         String initialTargetPath = targetFile != null
                 ? targetFile.getVirtualFile().getPath()
-                : sourceFiles.get(0).getVirtualFile().getParent().getPath() + "/" + MoveUtilsKt.guessNewFileName(elementsToMove);
+                : sourceFiles.get(0).getVirtualFile().getParent().getPath() + "/" + MoveUtilKt.guessNewFileName(elementsToMove);
         fileChooser.setText(initialTargetPath);
     }
 
@@ -349,7 +342,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
         );
     }
 
-    private boolean isMPPDeclarationInList(List<KtNamedDeclaration> declarations) {
+    private static boolean isMPPDeclarationInList(List<KtNamedDeclaration> declarations) {
         for (KtNamedDeclaration element : declarations) {
             if (ExpectActualUtilKt.isEffectivelyActual(element, true) ||
                 ExpectActualUtilKt.isExpectDeclaration(element)) {
@@ -467,14 +460,14 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
             modelResult = getModel().computeModelResult();
         }
         catch (ConfigurationException e) {
-            setErrorText(e.getMessage());
+            setErrorHtml(e.getMessageHtml());
             return;
         }
 
         saveRefactoringSettings();
 
         try {
-            MoveUtilsKt.logFusForMoveRefactoring(
+            MoveUtilKt.logFusForMoveRefactoring(
                     modelResult.getElementsCount(),
                     modelResult.getEntityToMove(),
                     modelResult.getDestination(),

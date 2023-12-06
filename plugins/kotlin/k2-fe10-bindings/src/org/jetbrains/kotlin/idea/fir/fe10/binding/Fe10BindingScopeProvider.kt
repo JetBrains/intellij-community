@@ -193,7 +193,7 @@ private class Fe10BindingLexicalScopeForClassLikeElement(
             }
         }
     
-    private fun collectAllCompanionObjects(skipMine: Boolean) = buildList<KtNamedClassOrObjectSymbol> {
+    private fun collectAllCompanionObjects(skipMine: Boolean): List<KtNamedClassOrObjectSymbol> = buildList {
         var current = ktClassSymbol
         mainLoop@ while (true) {
             if (current is KtNamedClassOrObjectSymbol && (current !== ktClassSymbol || !skipMine)) {

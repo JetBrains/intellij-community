@@ -55,6 +55,20 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
     return processor.found;
   }
 
+  /**
+   * @return list of all controls (recursively) within this pane
+   */
+  public @NotNull List<@NotNull OptControl> allControls() {
+    List<@NotNull OptControl> controls = new ArrayList<>();
+    traverse(components, component -> {
+      if (component instanceof OptControl control) {
+        controls.add(control);
+      }
+      return true;
+    });
+    return controls;
+  }
+
   private static boolean traverse(@NotNull List<? extends @NotNull OptComponent> components, @NotNull Predicate<@NotNull OptComponent> processor) {
     for (OptComponent component : components) {
       if (!processor.test(component) || !traverse(component.children(), processor)) return false;
@@ -223,6 +237,19 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
                                           int width,
                                           @NotNull StringValidator validator) {
     return new OptString(bindId, new PlainMessage(splitLabel), validator, width, null);
+  }
+
+  /**
+   * @param bindId    identifier of binding variable used by inspection; the corresponding variable is expected to be string
+   * @param label     label to display around the control
+   * @param separator separator to split the string by in multi-line mode
+   * @return an expandable edit box to enter a string; in expanded mode the string is being split by separator
+   */
+  @Contract(pure = true)
+  public static OptExpandableString expandableString(@Language("jvm-field-name") @NotNull String bindId,
+                                                     @NotNull @NlsContexts.Label String label,
+                                                     @NotNull String separator) {
+    return new OptExpandableString(bindId, new PlainMessage(label), separator, null);
   }
 
   /**

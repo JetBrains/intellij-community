@@ -1,14 +1,17 @@
-name: Run stubsabot weekly  # TODO: change to daily
+name: Run stubsabot daily
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * 5"  # TODO: change to daily
+    - cron: "0 0 * * *"
 
 permissions:
   contents: write
   issues: write
   pull-requests: write
+
+env:
+  FORCE_COLOR: 1
 
 jobs:
   stubsabot:
@@ -16,16 +19,22 @@ jobs:
     if: github.repository == 'python/typeshed'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          # use an ssh key so that checks automatically run on stubsabot PRs
+          ssh-key: ${{ secrets.STUBSABOT_SSH_PRIVATE_KEY }}
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-tests.txt
       - name: git config
         run: |
           git config --global user.name stubsabot
           git config --global user.email '<>'
       - name: Install dependencies
-        run: pip install aiohttp packaging termcolor tomli tomlkit
+        run: pip install -r requirements-tests.txt
       - name: Run stubsabot
         run: GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} python scripts/stubsabot.py --action-level everything
 
@@ -45,4 +54,4 @@ jobs:
               repo: "typeshed",
               title: `Stubsabot failed on ${new Date().toDateString()}`,
               body: "Stubsabot runs are listed here: https://github.com/python/typeshed/actions/workflows/stubsabot.yml",
-            }
+            })

@@ -1,76 +1,72 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.ProjectTopics
-import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.AutomaticModuleUnloader
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.module.ModuleComponent
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.startup.InitProjectActivity
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
-import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
+import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
+import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ModuleRootListenerBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineScope
 import java.io.IOException
 import java.nio.file.Path
 
-class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerBridgeImpl(project) {
+
+internal class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
+  : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   internal class ModuleManagerInitProjectActivity : InitProjectActivity {
     override suspend fun run(project: Project) {
-      val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
-      var activity = StartUpMeasurer.startActivity("firing modules_added event", ActivityCategory.DEFAULT)
+      val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
       val modules = moduleManager.modules().toList()
-      moduleManager.fireModulesAdded(modules)
-
-      activity = activity.endAndStart("deprecated module component moduleAdded calling")
-      @Suppress("removal", "DEPRECATION")
-      val deprecatedComponents = mutableListOf<com.intellij.openapi.module.ModuleComponent>()
-      for (module in modules) {
-        if (!module.isLoaded) {
-          module.moduleAdded(deprecatedComponents)
+      span("firing modules_added event") {
+        blockingContext {
+          fireModulesAdded(project, modules)
         }
       }
-      if (!deprecatedComponents.isEmpty()) {
-        withContext(Dispatchers.EDT) {
-          ApplicationManager.getApplication().runWriteAction {
+      span("deprecated module component moduleAdded calling") {
+        @Suppress("removal", "DEPRECATION")
+        val deprecatedComponents = mutableListOf<ModuleComponent>()
+        for (module in modules) {
+          if (!module.isLoaded) {
+            module.moduleAdded(deprecatedComponents)
+          }
+        }
+        if (!deprecatedComponents.isEmpty()) {
+          writeAction {
             for (deprecatedComponent in deprecatedComponents) {
               @Suppress("DEPRECATION", "removal")
               deprecatedComponent.moduleAdded()
@@ -78,86 +74,12 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           }
         }
       }
-      activity.end()
     }
   }
 
   init {
-    // default project doesn't have modules
+    // default project doesn't have facets
     if (!project.isDefault) {
-      val busConnection = project.messageBus.connect(this)
-      busConnection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-        override fun projectClosed(eventProject: Project) {
-          if (project == eventProject) {
-            for (module in modules()) {
-              module.projectClosed()
-            }
-          }
-        }
-      })
-
-      val rootsChangeListener = ProjectRootsChangeListener(project)
-      busConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          if (!VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
-            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
-            rootsChangeListener.beforeChanged(event)
-          }
-          val moduleMap = event.storageBefore.moduleMap
-          for (change in event.getChanges(ModuleEntity::class.java)) {
-            if (change is EntityChange.Removed) {
-              val module = moduleMap.getDataByEntity(change.entity)
-              LOG.debug { "Fire 'beforeModuleRemoved' event for module ${change.entity.name}, module = $module" }
-              if (module != null) {
-                fireBeforeModuleRemoved(module)
-              }
-            }
-          }
-        }
-
-        override fun changed(event: VersionedStorageChange) {
-          val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
-          val changes = event.getChanges(ModuleEntity::class.java)
-          if (changes.isNotEmpty() || moduleLibraryChanges.isNotEmpty()) {
-            LOG.debug("Process changed modules and facets")
-            incModificationCount()
-            for (change in moduleLibraryChanges) {
-              when (change) {
-                is EntityChange.Removed -> processModuleLibraryChange(change, event)
-                is EntityChange.Replaced -> processModuleLibraryChange(change, event)
-                is EntityChange.Added -> Unit
-              }
-            }
-
-            val oldModuleNames = mutableMapOf<Module, String>()
-            for (change in changes) {
-              processModuleChange(change, oldModuleNames, event)
-            }
-
-            for (change in moduleLibraryChanges) {
-              if (change is EntityChange.Added) processModuleLibraryChange(change, event)
-            }
-            // After every change processed
-            postProcessModules(oldModuleNames)
-            incModificationCount()
-          }
-          // Roots changed should be sent after syncing with legacy bridge
-          if (!VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
-            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
-            rootsChangeListener.changed(event)
-          }
-        }
-      })
-      busConnection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, object : WorkspaceModelChangeListener {
-        override fun changed(event: VersionedStorageChange) {
-          event.getChanges(ModuleEntity::class.java).forEach { change ->
-            change.oldEntity?.name?.let { unloadedModules.remove(it) }
-            change.newEntity?.let {
-              unloadedModules[it.name] = UnloadedModuleDescriptionBridge.createDescription(it)
-            }
-          }
-        }
-      })
       // Instantiate facet change listener as early as possible
       project.service<FacetEntityChangeListener>()
     }
@@ -215,129 +137,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
   }
 
-  private fun postProcessModules(oldModuleNames: MutableMap<Module, String>) {
-    if (oldModuleNames.isNotEmpty()) {
-      project.messageBus
-        .syncPublisher(ProjectTopics.MODULES)
-        .modulesRenamed(project, oldModuleNames.keys.toList()) { module -> oldModuleNames[module] }
-    }
-
-    if (unloadedModules.isNotEmpty()) {
-      AutomaticModuleUnloader.getInstance(project).setLoadedModules(modules.map { it.name })
-    }
-  }
-
-  private fun processModuleChange(change: EntityChange<ModuleEntity>, oldModuleNames: MutableMap<Module, String>, 
-                                  event: VersionedStorageChange) {
-    when (change) {
-      is EntityChange.Removed -> {
-        // It's possible case then idToModule doesn't contain element e.g. if unloaded module was removed
-        val module = change.entity.findModule(event.storageBefore)
-        if (module != null) {
-          fireEventAndDisposeModule(module)
-        }
-      }
-
-      is EntityChange.Added -> {
-        removeUnloadedModuleWithId(change.entity.symbolicId)
-        val alreadyCreatedModule = change.entity.findModule(event.storageAfter)
-        val module = if (alreadyCreatedModule != null) {
-          alreadyCreatedModule.entityStorage = entityStore
-          alreadyCreatedModule.diff = null
-          alreadyCreatedModule
-        }
-        else {
-          error("Module bridge should already be created")
-        }
-
-        if (project.isOpen) {
-          fireModuleAddedInWriteAction(module)
-        }
-      }
-
-      is EntityChange.Replaced -> {
-        val oldId = change.oldEntity.symbolicId
-        val newId = change.newEntity.symbolicId
-
-        if (oldId != newId) {
-          removeUnloadedModuleWithId(newId)
-          val module = change.oldEntity.findModule(event.storageBefore)
-          if (module != null) {
-            module.rename(newId.name, getModuleVirtualFileUrl(change.newEntity), true)
-            oldModuleNames[module] = oldId.name
-          }
-        }
-        else if (getImlFileDirectory(change.oldEntity) != getImlFileDirectory(change.newEntity)) {
-          val module = change.newEntity.findModule(event.storageBefore)
-          val imlFilePath = getModuleVirtualFileUrl(change.newEntity)
-          if (module != null && imlFilePath != null) {
-            module.onImlFileMoved(imlFilePath)
-          }
-        }
-      }
-    }
-  }
-
-  private fun removeUnloadedModuleWithId(moduleId: ModuleId) {
-    val unloadedEntity = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.resolve(moduleId)
-    if (unloadedEntity != null) {
-      WorkspaceModel.getInstance(project).updateUnloadedEntities("Remove module '${moduleId.name}' from unloaded storage because a module with same name is added") {
-        it.removeEntity(unloadedEntity)
-      }
-    }
-  }
-
-  private fun processModuleLibraryChange(change: EntityChange<LibraryEntity>, event: VersionedStorageChange) {
-    when (change) {
-      is EntityChange.Removed -> {
-        val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
-        if (library != null) {
-          Disposer.dispose(library)
-        }
-      }
-      is EntityChange.Replaced -> {
-        val idBefore = change.oldEntity.symbolicId
-        val idAfter = change.newEntity.symbolicId
-
-        val newLibrary = event.storageAfter.libraryMap.getDataByEntity(change.newEntity) as LibraryBridgeImpl?
-        if (newLibrary != null) {
-          newLibrary.clearTargetBuilder()
-          if (idBefore != idAfter) {
-            newLibrary.entityId = idAfter
-          }
-        }
-      }
-      is EntityChange.Added -> {
-        val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
-        if (library != null) {
-          (library as LibraryBridgeImpl).entityStorage = entityStore
-          library.clearTargetBuilder()
-        }
-      }
-    }
-  }
-
-  private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() = filter { it.isModuleLibrary() }
-
-  private fun fireModuleAddedInWriteAction(module: ModuleEx) {
-    ApplicationManager.getApplication().runWriteAction {
-      if (!module.isLoaded) {
-        @Suppress("removal", "DEPRECATION")
-        val oldComponents = mutableListOf<com.intellij.openapi.module.ModuleComponent>()
-        module.moduleAdded(oldComponents)
-        for (oldComponent in oldComponents) {
-          @Suppress("DEPRECATION", "removal")
-          oldComponent.moduleAdded()
-        }
-        fireModulesAdded(listOf(module))
-      }
-    }
-  }
-
-  private fun fireModulesAdded(modules: List<Module>) {
-    project.messageBus.syncPublisher(ProjectTopics.MODULES).modulesAdded(project, modules)
-  }
-
   override fun registerNonPersistentModuleStore(module: ModuleBridge) {
     (module as ModuleBridgeImpl).registerService(serviceInterface = IComponentStore::class.java,
                                                  implementation = NonPersistentModuleStore::class.java,
@@ -371,19 +170,12 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
   override fun createModule(symbolicId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
                             diff: MutableEntityStorage?): ModuleBridge {
-    return ModuleBridgeImpl(symbolicId, name, project, virtualFileUrl, entityStorage, diff)
-  }
-
-  companion object {
-    private val LOG = logger<ModuleManagerComponentBridge>()
-
-    private fun EntityChange<LibraryEntity>.isModuleLibrary(): Boolean {
-      return when (this) {
-        is EntityChange.Added -> entity.tableId is LibraryTableId.ModuleLibraryTableId
-        is EntityChange.Removed -> entity.tableId is LibraryTableId.ModuleLibraryTableId
-        is EntityChange.Replaced -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
-      }
-    }
+    return ModuleBridgeImpl(moduleEntityId = symbolicId,
+                            name = name,
+                            project = project,
+                            virtualFileUrl = virtualFileUrl,
+                            entityStorage = entityStorage,
+                            diff = diff)
   }
 }
 

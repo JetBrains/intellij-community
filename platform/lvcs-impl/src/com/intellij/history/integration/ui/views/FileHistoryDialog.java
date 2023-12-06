@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.diff.DiffManager;
@@ -33,6 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExcludingTraversalPolicy;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.ProgressBarLoadingDecorator;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -77,8 +78,9 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected void addExtraToolbar(JPanel toolBarPanel) {
+  protected void addExtraToolbar(@NotNull JPanel toolBarPanel) {
     mySearchTextArea = new SearchTextArea(new JTextArea(), true);
+    mySearchTextArea.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     new NextOccurenceAction(true).registerCustomShortcutSet(Utils.shortcutSetOf(ContainerUtil.concat(
       Utils.shortcutsOf(IdeActions.ACTION_FIND_NEXT),
       Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
@@ -123,7 +125,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @RequiresEdt
-  private void applyFilterText(@Nullable String filter, LoadingDecorator decorator) {
+  private void applyFilterText(@Nullable String filter, @NotNull LoadingDecorator decorator) {
     decorator.stopLoading();
     if (myFilterFuture != null) {
       myFilterFuture.cancel(true);
@@ -185,8 +187,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     session.setTextInField(filter);
   }
 
-  @Nullable
-  private Editor findLeftEditor() {
+  private @Nullable Editor findLeftEditor() {
     DiffSplitter splitter = UIUtil.findComponentOfType(myDiffPanel.getComponent(), DiffSplitter.class);
     JComponent editorPanel;
     if (splitter != null) {
@@ -212,7 +213,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected Runnable doUpdateDiffs(final FileHistoryDialogModel model) {
+  protected Runnable doUpdateDiffs(final @NotNull FileHistoryDialogModel model) {
     final FileDifferenceModel diffModel = model.getDifferenceModel();
     return () -> myDiffPanel.setRequest(createDifference(diffModel));
   }
@@ -222,7 +223,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     return "reference.dialogs.showhistory";
   }
 
-  private class NextOccurenceAction extends DumbAwareAction {
+  private final class NextOccurenceAction extends DumbAwareAction {
     private final boolean myForward;
     private NextOccurenceAction(boolean forward) {
       myForward = forward;

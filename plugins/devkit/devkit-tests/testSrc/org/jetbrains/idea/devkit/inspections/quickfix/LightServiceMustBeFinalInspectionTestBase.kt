@@ -8,7 +8,8 @@ abstract class LightServiceMustBeFinalInspectionTestBase : LightDevKitInspection
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(LightServiceMustBeFinalInspection())
-    myFixture.addClass("""
+    myFixture.addClass(
+      """
       package com.intellij.openapi.components;
 
       public @interface Service {}

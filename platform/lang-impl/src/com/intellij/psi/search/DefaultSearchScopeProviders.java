@@ -1,28 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.ide.favoritesTreeView.FavoritesManager;
-import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ColoredItem;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.FileColorManager;
-import com.intellij.util.TreeItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,15 +22,14 @@ import java.util.List;
 public final class DefaultSearchScopeProviders {
   private DefaultSearchScopeProviders() {}
 
-  public static class CustomNamed implements SearchScopeProvider {
+  public static final class CustomNamed implements SearchScopeProvider {
     @Override
     public String getDisplayName() {
       return LangBundle.message("default.search.scope.custom.named.display.name");
     }
 
-    @NotNull
     @Override
-    public List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
+    public @NotNull List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
       List<SearchScope> result = new ArrayList<>();
       NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(project);
       for (NamedScopesHolder holder : holders) {
@@ -52,8 +42,7 @@ public final class DefaultSearchScopeProviders {
     }
   }
 
-  @NotNull
-  public static GlobalSearchScope wrapNamedScope(@NotNull Project project, @NotNull NamedScope namedScope, boolean colored) {
+  public static @NotNull GlobalSearchScope wrapNamedScope(@NotNull Project project, @NotNull NamedScope namedScope, boolean colored) {
     GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(project, namedScope);
     if (!colored && !(namedScope instanceof WeighedItem)) return scope;
     int weight = namedScope instanceof WeighedItem ? ((WeighedItem)namedScope).getWeight() : -1;
@@ -63,7 +52,7 @@ public final class DefaultSearchScopeProviders {
     return new MyWeightedScope(scope, weight, color);
   }
 
-  private static class MyWeightedScope extends DelegatingGlobalSearchScope implements WeighedItem, ColoredItem {
+  private static final class MyWeightedScope extends DelegatingGlobalSearchScope implements WeighedItem, ColoredItem {
     final int weight;
     final Color color;
 
@@ -78,9 +67,8 @@ public final class DefaultSearchScopeProviders {
       return weight;
     }
 
-    @Nullable
     @Override
-    public Color getColor() {
+    public @Nullable Color getColor() {
       return color;
     }
   }

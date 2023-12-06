@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Deprecated. Use {@link java.util.function.Supplier} with {@code @NotNull} annotation on the type parameter instead.
+ * Obsolete, use {@link java.util.function.Supplier} with {@code @NotNull} annotation on the type parameter instead.
  */
+@ApiStatus.Obsolete
 @FunctionalInterface
-public interface NotNullComputable<T> extends Computable<T> {
+public interface NotNullComputable<T> extends Computable<@NotNull T> {
 
   @Override
   @NotNull

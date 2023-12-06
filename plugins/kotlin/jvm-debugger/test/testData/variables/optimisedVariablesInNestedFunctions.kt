@@ -56,4 +56,3 @@ suspend fun suspendUse(value: Any) {
 
 }
 
-// IGNORE_K2

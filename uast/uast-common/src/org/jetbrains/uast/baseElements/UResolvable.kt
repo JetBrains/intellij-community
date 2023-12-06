@@ -17,7 +17,6 @@ package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
-import org.jetbrains.annotations.ApiStatus
 
 interface UResolvable {
   /**
@@ -40,3 +39,5 @@ interface UMultiResolvable {
 }
 
 fun UResolvable.resolveToUElement(): UElement? = resolve().toUElement()
+
+inline fun <reified T : UElement> UResolvable.resolveToUElementOfType(): T? = resolveToUElement() as? T

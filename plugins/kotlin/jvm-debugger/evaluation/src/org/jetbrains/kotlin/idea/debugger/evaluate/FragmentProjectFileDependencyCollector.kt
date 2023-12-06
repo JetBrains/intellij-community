@@ -1,17 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.descriptors.utils.collectReachableInlineDelegatedPropertyAccessors
+import org.jetbrains.kotlin.analysis.api.descriptors.utils.getInlineFunctionAnalyzer
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
+import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.scopes.receivers.ContextClassReceiver
-import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
-import org.jetbrains.kotlin.resolve.scopes.receivers.ThisClassReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.*
 
 /**
  * This traversal collects the files containing the sources of
@@ -22,16 +24,15 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ThisClassReceiver
  *   - local classes constructed by the fragment.
  */
 fun gatherProjectFilesDependedOnByFragment(fragment: KtCodeFragment, bindingContext: BindingContext): Set<KtFile> {
-    val resolutionFacade = getResolutionFacadeForCodeFragment(fragment)
     val result = mutableSetOf<KtFile>()
-
-    analyzeInlinedFunctions(resolutionFacade, fragment, false).let { files ->
-        for (file in files) {
-            result.add(file)
+    analyze(fragment) {
+        result += with(getInlineFunctionAnalyzer(false)) {
+            analyze(fragment)
+            allFiles()
         }
+        analyzeCalls(fragment, bindingContext, result)
+        result.collectReachableInlineDelegatedPropertyAccessors()
     }
-
-    analyzeCalls(fragment, bindingContext, result)
     return result
 }
 
@@ -51,10 +52,11 @@ private fun analyzeCalls(
 
             val descriptor = resolvedCall.resultingDescriptor
 
-            fun processContextClassReceiver(receiver: ReceiverValue?) {
-                if (receiver is ContextClassReceiver) {
+            fun processClassReceiver(receiver: ReceiverValue?) {
+                if (receiver is ContextClassReceiver || receiver is ImplicitClassReceiver && receiver.classDescriptor.visibility == DescriptorVisibilities.LOCAL) {
+                    val declarationDescriptor = (receiver as? ImplicitReceiver)?.declarationDescriptor ?: return
                     val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
-                        project, receiver.declarationDescriptor
+                        project, declarationDescriptor
                     ) ?: return
                     files.add(declaration.containingFile as KtFile)
                 }
@@ -82,12 +84,18 @@ private fun analyzeCalls(
             //   8: return
 
             with(resolvedCall) {
-                processContextClassReceiver(dispatchReceiver)
-                contextReceivers.forEach(::processContextClassReceiver)
+                processClassReceiver(dispatchReceiver)
+                contextReceivers.forEach(::processClassReceiver)
             }
 
             if (descriptor is ReceiverParameterDescriptor) {
-                processContextClassReceiver(descriptor.value)
+                processClassReceiver(descriptor.value)
+            }
+
+            if ((descriptor as? MemberDescriptor)?.isActual == true) {
+                val actualDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)
+                val expectedDeclaration = (actualDeclaration as? KtDeclaration)?.expectedDeclarationIfAny()
+                listOfNotNull(actualDeclaration, expectedDeclaration).forEach { files.add(it.containingFile as KtFile) }
             }
 
             if (descriptor.visibility == DescriptorVisibilities.LOCAL) {

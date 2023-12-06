@@ -8,9 +8,9 @@ import org.jetbrains.annotations.PropertyKey
 private const val PATH_TO_BUNDLE = "messages.SettingsSyncBundle"
 
 @ApiStatus.Internal
-object SettingsSyncBundle : DynamicBundle(PATH_TO_BUNDLE) {
-
+object SettingsSyncBundle {
+  private val bundle = DynamicBundle(SettingsSyncBundle::class.java, PATH_TO_BUNDLE)
   fun message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) key: String, vararg params: Any) : @Nls String {
-    return getMessage(key, *params)
+    return bundle.getMessage(key, *params)
   }
 }

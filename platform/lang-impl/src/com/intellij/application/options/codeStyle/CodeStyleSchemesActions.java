@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.CommonBundle;
@@ -112,36 +112,47 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     if (selectedFile != null) {
       CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
       final SchemeCreator schemeCreator = new SchemeCreator();
-      final CodeStyleScheme
-        schemeImported = importer.importScheme(getModel().getProject(), selectedFile, currentScheme, schemeCreator);
-      if (schemeImported != null) {
-        if (schemeCreator.isSchemeWasCreated()) {
-          getModel().fireSchemeListChanged();
+      CodeStyleScheme importedScheme = null;
+      try {
+        importedScheme = importer.importScheme(getModel().getProject(), selectedFile, currentScheme, schemeCreator);
+        if (importedScheme != null) {
+          if (schemeCreator.isSchemeWasCreated()) {
+            getModel().fireSchemeListChanged();
+          }
+          else {
+            getModel().updateScheme(importedScheme);
+          }
+          return importedScheme;
         }
-        else {
-          getModel().updateScheme(schemeImported);
+      }
+      finally {
+        if (importedScheme == null && schemeCreator.isSchemeWasCreated()) {
+          getModel().removeScheme(schemeCreator.getCreatedScheme());
+          getModel().selectScheme(currentScheme, null);
         }
-        return schemeImported;
       }
     }
     return null;
   }
 
-  private class SchemeCreator implements SchemeFactory<CodeStyleScheme> {
-    private boolean mySchemeWasCreated;
+  private final class SchemeCreator implements SchemeFactory<CodeStyleScheme> {
+    private CodeStyleScheme myCreatedScheme = null;
 
     @NotNull
     @Override
     public CodeStyleScheme createNewScheme(@Nullable String targetName) {
-      mySchemeWasCreated = true;
       if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
-      CodeStyleScheme newScheme = getModel().createNewScheme(targetName, getCurrentScheme());
-      getModel().addScheme(newScheme, true);
-      return newScheme;
+      myCreatedScheme = getModel().createNewScheme(targetName, getCurrentScheme());
+      getModel().addScheme(myCreatedScheme, true);
+      return myCreatedScheme;
     }
 
     boolean isSchemeWasCreated() {
-      return mySchemeWasCreated;
+      return myCreatedScheme != null;
+    }
+
+    CodeStyleScheme getCreatedScheme() {
+      return myCreatedScheme;
     }
   }
 

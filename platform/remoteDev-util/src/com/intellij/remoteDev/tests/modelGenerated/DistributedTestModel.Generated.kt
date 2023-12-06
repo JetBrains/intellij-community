@@ -26,11 +26,14 @@ class DistributedTestModel private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(RdAgentId)
-            serializers.register(RdTestSessionStackTraceElement)
-            serializers.register(RdTestSessionExceptionCause)
-            serializers.register(RdTestSessionException)
-            serializers.register(RdTestSession)
+            val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(552672907393362222), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdAgentInfo"))
+            serializers.register(LazyCompanionMarshaller(RdId(552672907393700794), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdAgentType"))
+            serializers.register(LazyCompanionMarshaller(RdId(-3824320616986309148), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdProductType"))
+            serializers.register(LazyCompanionMarshaller(RdId(-4029698853809470560), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement"))
+            serializers.register(LazyCompanionMarshaller(RdId(3844250127064816121), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause"))
+            serializers.register(LazyCompanionMarshaller(RdId(-6820612235039581104), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException"))
+            serializers.register(LazyCompanionMarshaller(RdId(-3821381997278381377), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSession"))
         }
         
         
@@ -52,7 +55,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 2087951295194916404L
+        const val serializationHash = 5203196433846444594L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -89,6 +92,8 @@ class DistributedTestModel private constructor(
         )
     }
     //contexts
+    //threading
+    override val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 }
 val IProtocol.distributedTestModel get() = getOrCreateExtension(DistributedTestModel::class) { @Suppress("DEPRECATION") DistributedTestModel.create(lifetime, this) }
 
@@ -97,25 +102,32 @@ val IProtocol.distributedTestModel get() = getOrCreateExtension(DistributedTestM
 /**
  * #### Generated from [DistributedTestModel.kt]
  */
-data class RdAgentId (
+data class RdAgentInfo (
     val id: String,
-    val launchNumber: Int
+    val launchNumber: Int,
+    val agentType: RdAgentType,
+    val productType: RdProductType
 ) : IPrintable {
     //companion
     
-    companion object : IMarshaller<RdAgentId> {
-        override val _type: KClass<RdAgentId> = RdAgentId::class
+    companion object : IMarshaller<RdAgentInfo> {
+        override val _type: KClass<RdAgentInfo> = RdAgentInfo::class
+        override val id: RdId get() = RdId(552672907393362222)
         
         @Suppress("UNCHECKED_CAST")
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdAgentId  {
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdAgentInfo  {
             val id = buffer.readString()
             val launchNumber = buffer.readInt()
-            return RdAgentId(id, launchNumber)
+            val agentType = buffer.readEnum<RdAgentType>()
+            val productType = buffer.readEnum<RdProductType>()
+            return RdAgentInfo(id, launchNumber, agentType, productType)
         }
         
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentId)  {
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentInfo)  {
             buffer.writeString(value.id)
             buffer.writeInt(value.launchNumber)
+            buffer.writeEnum(value.agentType)
+            buffer.writeEnum(value.productType)
         }
         
         
@@ -129,10 +141,12 @@ data class RdAgentId (
         if (this === other) return true
         if (other == null || other::class != this::class) return false
         
-        other as RdAgentId
+        other as RdAgentInfo
         
         if (id != other.id) return false
         if (launchNumber != other.launchNumber) return false
+        if (agentType != other.agentType) return false
+        if (productType != other.productType) return false
         
         return true
     }
@@ -141,19 +155,75 @@ data class RdAgentId (
         var __r = 0
         __r = __r*31 + id.hashCode()
         __r = __r*31 + launchNumber.hashCode()
+        __r = __r*31 + agentType.hashCode()
+        __r = __r*31 + productType.hashCode()
         return __r
     }
     //pretty print
     override fun print(printer: PrettyPrinter)  {
-        printer.println("RdAgentId (")
+        printer.println("RdAgentInfo (")
         printer.indent {
             print("id = "); id.print(printer); println()
             print("launchNumber = "); launchNumber.print(printer); println()
+            print("agentType = "); agentType.print(printer); println()
+            print("productType = "); productType.print(printer); println()
         }
         printer.print(")")
     }
     //deepClone
     //contexts
+    //threading
+}
+
+
+/**
+ * #### Generated from [DistributedTestModel.kt]
+ */
+enum class RdAgentType {
+    HOST, 
+    CLIENT, 
+    GATEWAY;
+    
+    companion object : IMarshaller<RdAgentType> {
+        val marshaller = FrameworkMarshallers.enum<RdAgentType>()
+        
+        
+        override val _type: KClass<RdAgentType> = RdAgentType::class
+        override val id: RdId get() = RdId(552672907393700794)
+        
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdAgentType {
+            return marshaller.read(ctx, buffer)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentType)  {
+            marshaller.write(ctx, buffer, value)
+        }
+    }
+}
+
+
+/**
+ * #### Generated from [DistributedTestModel.kt]
+ */
+enum class RdProductType {
+    REMOTE_DEVELOPMENT, 
+    CODE_WITH_ME;
+    
+    companion object : IMarshaller<RdProductType> {
+        val marshaller = FrameworkMarshallers.enum<RdProductType>()
+        
+        
+        override val _type: KClass<RdProductType> = RdProductType::class
+        override val id: RdId get() = RdId(-3824320616986309148)
+        
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdProductType {
+            return marshaller.read(ctx, buffer)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdProductType)  {
+            marshaller.write(ctx, buffer, value)
+        }
+    }
 }
 
 
@@ -161,70 +231,83 @@ data class RdAgentId (
  * #### Generated from [DistributedTestModel.kt]
  */
 class RdTestSession private constructor(
-    val agentId: RdAgentId,
+    val agentInfo: RdAgentInfo,
     val testClassName: String?,
     val testMethodName: String?,
     val traceCategories: List<String>,
+    val debugCategories: List<String>,
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<RdTestSessionException>,
     private val _shutdown: RdSignal<Unit>,
-    private val _dumpThreads: RdSignal<Unit>,
+    private val _showNotification: RdSignal<String>,
     private val _closeProject: RdCall<Unit, Boolean>,
     private val _closeProjectIfOpened: RdCall<Unit, Boolean>,
-    private val _runNextAction: RdCall<Unit, Boolean>,
-    private val _makeScreenshot: RdCall<String, Boolean>
+    private val _runNextAction: RdCall<String, String?>,
+    private val _requestFocus: RdCall<String, Boolean>,
+    private val _makeScreenshot: RdCall<String, Boolean>,
+    private val _isResponding: RdCall<Unit, Boolean>
 ) : RdBindableBase() {
     //companion
     
     companion object : IMarshaller<RdTestSession> {
         override val _type: KClass<RdTestSession> = RdTestSession::class
+        override val id: RdId get() = RdId(-3821381997278381377)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSession  {
             val _id = RdId.read(buffer)
-            val agentId = RdAgentId.read(ctx, buffer)
+            val agentInfo = RdAgentInfo.read(ctx, buffer)
             val testClassName = buffer.readNullable { buffer.readString() }
             val testMethodName = buffer.readNullable { buffer.readString() }
             val traceCategories = buffer.readList { buffer.readString() }
+            val debugCategories = buffer.readList { buffer.readString() }
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, RdTestSessionException)
             val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
-            val _dumpThreads = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
+            val _showNotification = RdSignal.read(ctx, buffer, FrameworkMarshallers.String)
             val _closeProject = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+            val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.String, __StringNullableSerializer)
+            val _requestFocus = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
-            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot).withId(_id)
+            val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _shutdown, _showNotification, _closeProject, _closeProjectIfOpened, _runNextAction, _requestFocus, _makeScreenshot, _isResponding).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
             value.rdid.write(buffer)
-            RdAgentId.write(ctx, buffer, value.agentId)
+            RdAgentInfo.write(ctx, buffer, value.agentInfo)
             buffer.writeNullable(value.testClassName) { buffer.writeString(it) }
             buffer.writeNullable(value.testMethodName) { buffer.writeString(it) }
             buffer.writeList(value.traceCategories) { v -> buffer.writeString(v) }
+            buffer.writeList(value.debugCategories) { v -> buffer.writeString(v) }
             RdProperty.write(ctx, buffer, value._ready)
             RdSignal.write(ctx, buffer, value._sendException)
             RdSignal.write(ctx, buffer, value._shutdown)
-            RdSignal.write(ctx, buffer, value._dumpThreads)
+            RdSignal.write(ctx, buffer, value._showNotification)
             RdCall.write(ctx, buffer, value._closeProject)
             RdCall.write(ctx, buffer, value._closeProjectIfOpened)
             RdCall.write(ctx, buffer, value._runNextAction)
+            RdCall.write(ctx, buffer, value._requestFocus)
             RdCall.write(ctx, buffer, value._makeScreenshot)
+            RdCall.write(ctx, buffer, value._isResponding)
         }
         
         private val __BoolNullableSerializer = FrameworkMarshallers.Bool.nullable()
+        private val __StringNullableSerializer = FrameworkMarshallers.String.nullable()
         
     }
     //fields
     val ready: IProperty<Boolean?> get() = _ready
     val sendException: IAsyncSignal<RdTestSessionException> get() = _sendException
-    val shutdown: ISignal<Unit> get() = _shutdown
-    val dumpThreads: IAsyncSignal<Unit> get() = _dumpThreads
+    val shutdown: IAsyncSignal<Unit> get() = _shutdown
+    val showNotification: ISignal<String> get() = _showNotification
     val closeProject: RdCall<Unit, Boolean> get() = _closeProject
     val closeProjectIfOpened: RdCall<Unit, Boolean> get() = _closeProjectIfOpened
-    val runNextAction: RdCall<Unit, Boolean> get() = _runNextAction
+    val runNextAction: RdCall<String, String?> get() = _runNextAction
+    val requestFocus: RdCall<String, Boolean> get() = _requestFocus
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
+    val isResponding: RdCall<Unit, Boolean> get() = _isResponding
     //methods
     //initializer
     init {
@@ -233,39 +316,51 @@ class RdTestSession private constructor(
     
     init {
         _sendException.async = true
-        _dumpThreads.async = true
+        _shutdown.async = true
+        _closeProject.async = true
+        _closeProjectIfOpened.async = true
+        _runNextAction.async = true
+        _requestFocus.async = true
+        _makeScreenshot.async = true
+        _isResponding.async = true
     }
     
     init {
         bindableChildren.add("ready" to _ready)
         bindableChildren.add("sendException" to _sendException)
         bindableChildren.add("shutdown" to _shutdown)
-        bindableChildren.add("dumpThreads" to _dumpThreads)
+        bindableChildren.add("showNotification" to _showNotification)
         bindableChildren.add("closeProject" to _closeProject)
         bindableChildren.add("closeProjectIfOpened" to _closeProjectIfOpened)
         bindableChildren.add("runNextAction" to _runNextAction)
+        bindableChildren.add("requestFocus" to _requestFocus)
         bindableChildren.add("makeScreenshot" to _makeScreenshot)
+        bindableChildren.add("isResponding" to _isResponding)
     }
     
     //secondary constructor
     constructor(
-        agentId: RdAgentId,
+        agentInfo: RdAgentInfo,
         testClassName: String?,
         testMethodName: String?,
-        traceCategories: List<String>
+        traceCategories: List<String>,
+        debugCategories: List<String>
     ) : this(
-        agentId,
+        agentInfo,
         testClassName,
         testMethodName,
         traceCategories,
+        debugCategories,
         RdProperty<Boolean?>(null, __BoolNullableSerializer),
         RdSignal<RdTestSessionException>(RdTestSessionException),
         RdSignal<Unit>(FrameworkMarshallers.Void),
-        RdSignal<Unit>(FrameworkMarshallers.Void),
+        RdSignal<String>(FrameworkMarshallers.String),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
-        RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool)
+        RdCall<String, String?>(FrameworkMarshallers.String, __StringNullableSerializer),
+        RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
+        RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
     )
     
     //equals trait
@@ -274,39 +369,46 @@ class RdTestSession private constructor(
     override fun print(printer: PrettyPrinter)  {
         printer.println("RdTestSession (")
         printer.indent {
-            print("agentId = "); agentId.print(printer); println()
+            print("agentInfo = "); agentInfo.print(printer); println()
             print("testClassName = "); testClassName.print(printer); println()
             print("testMethodName = "); testMethodName.print(printer); println()
             print("traceCategories = "); traceCategories.print(printer); println()
+            print("debugCategories = "); debugCategories.print(printer); println()
             print("ready = "); _ready.print(printer); println()
             print("sendException = "); _sendException.print(printer); println()
             print("shutdown = "); _shutdown.print(printer); println()
-            print("dumpThreads = "); _dumpThreads.print(printer); println()
+            print("showNotification = "); _showNotification.print(printer); println()
             print("closeProject = "); _closeProject.print(printer); println()
             print("closeProjectIfOpened = "); _closeProjectIfOpened.print(printer); println()
             print("runNextAction = "); _runNextAction.print(printer); println()
+            print("requestFocus = "); _requestFocus.print(printer); println()
             print("makeScreenshot = "); _makeScreenshot.print(printer); println()
+            print("isResponding = "); _isResponding.print(printer); println()
         }
         printer.print(")")
     }
     //deepClone
     override fun deepClone(): RdTestSession   {
         return RdTestSession(
-            agentId,
+            agentInfo,
             testClassName,
             testMethodName,
             traceCategories,
+            debugCategories,
             _ready.deepClonePolymorphic(),
             _sendException.deepClonePolymorphic(),
             _shutdown.deepClonePolymorphic(),
-            _dumpThreads.deepClonePolymorphic(),
+            _showNotification.deepClonePolymorphic(),
             _closeProject.deepClonePolymorphic(),
             _closeProjectIfOpened.deepClonePolymorphic(),
             _runNextAction.deepClonePolymorphic(),
-            _makeScreenshot.deepClonePolymorphic()
+            _requestFocus.deepClonePolymorphic(),
+            _makeScreenshot.deepClonePolymorphic(),
+            _isResponding.deepClonePolymorphic()
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -315,6 +417,7 @@ class RdTestSession private constructor(
  */
 data class RdTestSessionException (
     val type: String,
+    val originalType: String?,
     val message: String?,
     val stacktrace: List<RdTestSessionStackTraceElement>,
     val cause: RdTestSessionExceptionCause?
@@ -323,18 +426,21 @@ data class RdTestSessionException (
     
     companion object : IMarshaller<RdTestSessionException> {
         override val _type: KClass<RdTestSessionException> = RdTestSessionException::class
+        override val id: RdId get() = RdId(-6820612235039581104)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSessionException  {
             val type = buffer.readString()
+            val originalType = buffer.readNullable { buffer.readString() }
             val message = buffer.readNullable { buffer.readString() }
             val stacktrace = buffer.readList { RdTestSessionStackTraceElement.read(ctx, buffer) }
             val cause = buffer.readNullable { RdTestSessionExceptionCause.read(ctx, buffer) }
-            return RdTestSessionException(type, message, stacktrace, cause)
+            return RdTestSessionException(type, originalType, message, stacktrace, cause)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSessionException)  {
             buffer.writeString(value.type)
+            buffer.writeNullable(value.originalType) { buffer.writeString(it) }
             buffer.writeNullable(value.message) { buffer.writeString(it) }
             buffer.writeList(value.stacktrace) { v -> RdTestSessionStackTraceElement.write(ctx, buffer, v) }
             buffer.writeNullable(value.cause) { RdTestSessionExceptionCause.write(ctx, buffer, it) }
@@ -354,6 +460,7 @@ data class RdTestSessionException (
         other as RdTestSessionException
         
         if (type != other.type) return false
+        if (originalType != other.originalType) return false
         if (message != other.message) return false
         if (stacktrace != other.stacktrace) return false
         if (cause != other.cause) return false
@@ -364,6 +471,7 @@ data class RdTestSessionException (
     override fun hashCode(): Int  {
         var __r = 0
         __r = __r*31 + type.hashCode()
+        __r = __r*31 + if (originalType != null) originalType.hashCode() else 0
         __r = __r*31 + if (message != null) message.hashCode() else 0
         __r = __r*31 + stacktrace.hashCode()
         __r = __r*31 + if (cause != null) cause.hashCode() else 0
@@ -374,6 +482,7 @@ data class RdTestSessionException (
         printer.println("RdTestSessionException (")
         printer.indent {
             print("type = "); type.print(printer); println()
+            print("originalType = "); originalType.print(printer); println()
             print("message = "); message.print(printer); println()
             print("stacktrace = "); stacktrace.print(printer); println()
             print("cause = "); cause.print(printer); println()
@@ -382,6 +491,7 @@ data class RdTestSessionException (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -397,6 +507,7 @@ data class RdTestSessionExceptionCause (
     
     companion object : IMarshaller<RdTestSessionExceptionCause> {
         override val _type: KClass<RdTestSessionExceptionCause> = RdTestSessionExceptionCause::class
+        override val id: RdId get() = RdId(3844250127064816121)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSessionExceptionCause  {
@@ -451,6 +562,7 @@ data class RdTestSessionExceptionCause (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -467,6 +579,7 @@ data class RdTestSessionStackTraceElement (
     
     companion object : IMarshaller<RdTestSessionStackTraceElement> {
         override val _type: KClass<RdTestSessionStackTraceElement> = RdTestSessionStackTraceElement::class
+        override val id: RdId get() = RdId(-4029698853809470560)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSessionStackTraceElement  {
@@ -526,4 +639,5 @@ data class RdTestSessionStackTraceElement (
     }
     //deepClone
     //contexts
+    //threading
 }

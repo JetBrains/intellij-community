@@ -8,16 +8,19 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PathUtilRt
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The form is going to be removed")
 internal suspend fun showAuthenticationForm(credentials: Credentials?,
                                             @NlsSafe uri: String,
@@ -30,33 +33,36 @@ internal suspend fun showAuthenticationForm(credentials: Credentials?,
 
   val isGitHub = host == "github.com"
   val isBitbucket = host == "bitbucket.org"
-  val note = if (sshKeyFile == null) icsMessage(if (isGitHub) "login.github.note" else if (isBitbucket) "login.bitbucket.note" else "login.other.git.provider.note") else null
   var username = credentials?.userName
   if (username == null && isGitHub && path != null && sshKeyFile == null) {
     val firstSlashIndex = path.indexOf('/', 1)
     username = path.substring(1, if (firstSlashIndex == -1) path.length else firstSlashIndex)
   }
 
-  val message = if (sshKeyFile == null)
-    icsMessage("log.in.to", uri.trimMiddle(50))
-  else IcsBundle.message("authentication.form.prompt.enter.ssh.key.password", PathUtilRt.getFileName(sshKeyFile))
-
   return withContext(Dispatchers.EDT) {
     val userField = JTextField(username)
     val passwordField = JPasswordField(credentials?.getPasswordAsString())
 
     val centerPanel = panel {
-      noteRow(message)
+      row {
+        text(if (sshKeyFile == null) icsMessage("log.in.to", uri.trimMiddle(50))
+             else IcsBundle.message("authentication.form.prompt.enter.ssh.key.password", PathUtilRt.getFileName(sshKeyFile)))
+      }
       if (sshKeyFile == null && !isGitHub) {
-        row(IcsBundle.message("authentication.form.username")) { userField() }
+        row(IcsBundle.message("authentication.form.username")) { cell(userField).align(AlignX.FILL) }
       }
 
       val authPrompt =
         if (sshKeyFile == null && isGitHub) IcsBundle.message("authentication.form.token")
         else IcsBundle.message("authentication.form.password")
-      row(authPrompt) { passwordField() }
+      row(authPrompt) { cell(passwordField).align(AlignX.FILL) }
 
-      note?.let { noteRow(it) }
+      if (sshKeyFile == null) {
+        row {
+          text(icsMessage(if (isGitHub) "login.github.note"
+                          else if (isBitbucket) "login.bitbucket.note" else "login.other.git.provider.note"))
+        }
+      }
     }
 
     val authenticationForm = dialog(

@@ -8,21 +8,21 @@ __all__ = ["tqdm_tk", "ttkrange", "tqdm", "trange"]
 
 _T = TypeVar("_T")
 
-class tqdm_tk(Generic[_T], std_tqdm[_T]):
+class tqdm_tk(std_tqdm[_T], Generic[_T]):
     @overload
     def __init__(
         self,
         iterable: Iterable[_T],
         desc: str | None = ...,
         total: float | None = ...,
-        leave: bool = ...,
+        leave: bool | None = ...,
         file: SupportsWrite[str] | None = ...,
         ncols: int | None = ...,
         mininterval: float = ...,
         maxinterval: float = ...,
         miniters: float | None = ...,
         ascii: bool | str | None = ...,
-        disable: bool = ...,
+        disable: bool | None = ...,
         unit: str = ...,
         unit_scale: bool | float = ...,
         dynamic_ncols: bool = ...,
@@ -46,17 +46,17 @@ class tqdm_tk(Generic[_T], std_tqdm[_T]):
     @overload
     def __init__(
         self: tqdm_tk[NoReturn],
-        iterable: None = ...,
+        iterable: None = None,
         desc: str | None = ...,
         total: float | None = ...,
-        leave: bool = ...,
+        leave: bool | None = ...,
         file: SupportsWrite[str] | None = ...,
         ncols: int | None = ...,
         mininterval: float = ...,
         maxinterval: float = ...,
         miniters: float | None = ...,
         ascii: bool | str | None = ...,
-        disable: bool = ...,
+        disable: bool | None = ...,
         unit: str = ...,
         unit_scale: bool | float = ...,
         dynamic_ncols: bool = ...,
@@ -81,11 +81,11 @@ class tqdm_tk(Generic[_T], std_tqdm[_T]):
     def close(self) -> None: ...
     def clear(self, *_, **__) -> None: ...
     def display(self, *_, **__) -> None: ...
-    def set_description(self, desc: str | None = ..., refresh: bool | None = ...) -> None: ...
+    def set_description(self, desc: str | None = None, refresh: bool | None = True) -> None: ...
     desc: Incomplete
-    def set_description_str(self, desc: str | None = ..., refresh: bool | None = ...) -> None: ...
+    def set_description_str(self, desc: str | None = None, refresh: bool | None = True) -> None: ...
     def cancel(self) -> None: ...
-    def reset(self, total: Incomplete | None = ...) -> None: ...
+    def reset(self, total: Incomplete | None = None) -> None: ...
 
 def ttkrange(*args, **kwargs) -> tqdm_tk[int]: ...
 

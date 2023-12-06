@@ -87,7 +87,7 @@ public abstract class ProjectImportProvider {
   /**
    * Adds the {@link ModuleWizardStep}-s from {@link ProjectImportProvider#createSteps(WizardContext)} to the import wizard.
    */
-  public void addSteps(StepSequence sequence, WizardContext context, String id) {
+  public void addSteps(@NotNull StepSequence sequence, @NotNull WizardContext context, @NotNull String id) {
     ModuleWizardStep[] steps = createSteps(context);
     for (ModuleWizardStep step : steps) {
       sequence.addSpecificStep(id, step);

@@ -1,5 +1,5 @@
 // "Fix 'kotlin.browser' package usage" "true"
-// JS
+// JS_WITH_DOM_API_COMPAT
 
 package test
 
@@ -8,3 +8,5 @@ fun use(a: Any) {}
 fun usage() {
     use(kotlinx.browser.localStorage.toString())
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.migration.ObsoleteKotlinBrowserUsageFix

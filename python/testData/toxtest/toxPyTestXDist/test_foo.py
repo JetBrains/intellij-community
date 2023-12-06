@@ -4,6 +4,6 @@ def test_doo():
 def test_bar():
     pass
 
-def test_only_2():
+def test_only_37():
     import sys
-    assert str(sys.version).startswith("2")
+    assert str(sys.version).startswith("3.7")

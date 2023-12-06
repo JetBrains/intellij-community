@@ -1,25 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.ComponentListPanelFactory
-import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil.Title
-import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
-import com.intellij.collaboration.ui.codereview.setHtmlBody
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.DimensionRestrictions
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
@@ -30,11 +25,10 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.text.JBDateFormat
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
@@ -66,13 +60,9 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUt
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTitlePane
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.Component
 import java.awt.Container
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -80,6 +70,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val detailsDataProvider: GHPRDetailsDataProvider,
                                        private val commentsDataProvider: GHPRCommentsDataProvider,
                                        private val reviewDataProvider: GHPRReviewDataProvider,
+                                       private val htmlImageLoader: AsyncHtmlImageLoader,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
@@ -89,7 +80,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val currentUser: GHUser)
   : (GHPRTimelineItem) -> JComponent {
 
-  private val eventComponentFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider, ghostUser)
+  private val eventComponentFactory = GHPRTimelineEventComponentFactoryImpl(htmlImageLoader, avatarIconsProvider, ghostUser)
 
   override fun invoke(item: GHPRTimelineItem): JComponent {
     try {
@@ -108,7 +99,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     catch (e: Exception) {
       LOG.warn(e)
       return createTimelineItem(avatarIconsProvider, prAuthor ?: ghostUser, null,
-                                HtmlEditorPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
+                                SimpleHtmlPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
     }
   }
 
@@ -119,7 +110,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         val builder = HtmlBuilder()
           .append(HtmlChunk.p()
                     .children(
-                      HtmlChunk.link("$COMMIT_HREF_PREFIX${it.abbreviatedOid}", it.abbreviatedOid),
+                      HtmlChunk.link("$COMMIT_HREF_PREFIX${it.oid}", it.abbreviatedOid),
                       HtmlChunk.nbsp(),
                       HtmlChunk.raw(it.messageHeadlineHTML)
                     ))
@@ -132,22 +123,19 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             append(HtmlChunk.link(actor.url, actor.getPresentableName()))
             if (date != null) {
               append(HtmlChunk.nbsp())
-              append(JBDateFormat.getFormatter().formatPrettyDateTime(date))
+              append(DateFormatUtil.formatPrettyDateTime(date))
             }
           }
           builder.append(chunk)
         }
         builder.toString()
       }.map { text ->
-        HtmlEditorPane(text).apply {
-          removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+        SimpleHtmlPane(addBrowserListener = false).apply {
+          setHtmlBody(text)
           onHyperlinkActivated {
             val href = it.description
             if (href.startsWith(COMMIT_HREF_PREFIX)) {
               selectInToolWindowHelper.selectCommit(href.removePrefix(COMMIT_HREF_PREFIX))
-            }
-            else {
-              BrowserUtil.browse(href)
             }
           }
         }
@@ -167,7 +155,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         GithubBundle.message("pull.request.timeline.commits.added", commitsCount)
       }
 
-      add(HtmlEditorPane(titleText))
+      add(SimpleHtmlPane(titleText))
       add(StatusMessageComponentFactory.create(commitsPanels))
     }
     val actor = commits.singleOrNull()?.commit?.author?.user ?: prAuthor ?: ghostUser
@@ -186,10 +174,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val contentPanel: JPanel?
     val actionsPanel: JPanel?
     if (details is GHPullRequest) {
-      val textPane = HtmlEditorPane()
-      fun HtmlEditorPane.updateText(body: @Nls String) {
+      val textPane = SimpleHtmlPane(customImageLoader = htmlImageLoader)
+      fun JEditorPane.updateText(body: @Nls String) {
         val text = body.takeIf { it.isNotBlank() }?.convertToHtml(project) ?: noDescriptionHtmlText
-        setBody(text)
+        setHtmlBody(text)
       }
       textPane.updateText(details.body)
 
@@ -216,7 +204,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   private fun createComponent(comment: GHIssueComment): JComponent {
-    val textPane = HtmlEditorPane(comment.body.convertToHtml(project))
+    val textPane = SimpleHtmlPane(customImageLoader = htmlImageLoader).apply {
+      setHtmlBody(comment.body.convertToHtml(project))
+    }
     val panelHandle = GHEditableHtmlPaneHandle(project, textPane, comment::body) { newText ->
       commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
         .successOnEdt { textPane.setHtmlBody(it.convertToHtml(project)) }
@@ -317,7 +307,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
-                                                                     reviewDataProvider, avatarIconsProvider,
+                                                                     reviewDataProvider, htmlImageLoader, avatarIconsProvider,
                                                                      suggestedChangeHelper,
                                                                      CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
                                                                      false,
@@ -376,7 +366,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         combineAndCollect(thread.collapsedState, textFlow) { collapsed, text ->
           removeAll()
           if (collapsed) {
-            val textPane = HtmlEditorPane(text).apply {
+            val textPane = SimpleHtmlPane(text).apply {
               foreground = UIUtil.getContextHelpForeground()
             }.let { pane ->
               CollaborationToolsUIUtil
@@ -389,7 +379,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           }
           else {
             val commentComponent = GHPRReviewCommentComponent
-              .createCommentBodyComponent(project, suggestedChangeHelper, thread, text, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+              .createCommentBodyComponent(project, suggestedChangeHelper, thread, htmlImageLoader,
+                                          text, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
             bodyPanel.setContent(commentComponent)
             add(diff)
             add(panelHandle.panel)
@@ -420,9 +411,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   private fun createThreadTagsPanel(thread: GHPRReviewThreadModel): JPanel {
-    val outdatedLabel = CollaborationToolsUIUtil.createTagLabel(GithubBundle.message("pull.request.review.thread.outdated"))
+    val outdatedLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.outdated.tag"))
     val resolvedLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
-    val pendingLabel = CollaborationToolsUIUtil.createTagLabel(GithubBundle.message("pull.request.review.comment.pending"))
+    val pendingLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.pending.tag"))
 
     val tagsPanel = HorizontalListPanel(Title.HORIZONTAL_GAP).apply {
       isOpaque = false
@@ -447,7 +438,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   private fun createReviewContentItem(review: GHPullRequestReview): JComponent {
     val panelHandle: GHEditableHtmlPaneHandle?
     if (review.body.isNotEmpty()) {
-      val textPane = HtmlEditorPane(review.body.convertToHtml(project))
+      val textPane = SimpleHtmlPane(customImageLoader = htmlImageLoader).apply {
+        setHtmlBody(review.body.convertToHtml(project))
+      }
       panelHandle =
         GHEditableHtmlPaneHandle(project, textPane, review::body) { newText ->
           reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText)
@@ -490,7 +483,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           .minWidth("0"))
       }
 
-      add(StatusMessageComponentFactory.create(HtmlEditorPane(stateText), stateType), CC().grow().push()
+      add(StatusMessageComponentFactory.create(SimpleHtmlPane(stateText), stateType), CC().grow().push()
         .minWidth("0"))
     }
 

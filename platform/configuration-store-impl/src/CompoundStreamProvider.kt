@@ -1,12 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.InputStream
+import java.util.concurrent.atomic.AtomicInteger
 
+@Internal
 class CompoundStreamProvider : StreamProvider {
-  val providers = ContainerUtil.createConcurrentList<StreamProvider>()
+  private val providers = ContainerUtil.createConcurrentList<StreamProvider>()
+  private val providerListModificationCount = AtomicInteger()
+
+  override val saveStorageDataOnReload: Boolean // true by default
+    get() = !providers.any { !it.saveStorageDataOnReload }
 
   override val enabled: Boolean
     get() = providers.any { it.enabled }
@@ -37,4 +44,27 @@ class CompoundStreamProvider : StreamProvider {
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType) = providers.any { it.delete(fileSpec, roamingType) }
+
+  override fun deleteIfObsolete(fileSpec: String, roamingType: RoamingType) {
+    providers.forEach { 
+      it.deleteIfObsolete(fileSpec, roamingType)
+    }
+  }
+
+  fun addStreamProvider(provider: StreamProvider, first: Boolean) {
+    if (first) {
+      providers.add(0, provider)
+    }
+    else {
+      providers.add(provider)
+    }
+    providerListModificationCount.getAndIncrement()
+  }
+
+  fun removeStreamProvider(aClass: Class<out StreamProvider>) {
+    providers.removeAll(aClass::isInstance)
+    providerListModificationCount.getAndIncrement()
+  }
+
+  fun getInstanceOf(aClass: Class<out StreamProvider>): StreamProvider = providers.first { aClass.isInstance(it) }
 }

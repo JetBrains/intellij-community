@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_IN
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -48,10 +49,15 @@ import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.*
-import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout
+import com.intellij.ui.tabs.impl.TabLabel.ActionsPosition
+import com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout
+import com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
+import com.intellij.ui.tabs.impl.multiRow.ScrollableMultiRowLayout
+import com.intellij.ui.tabs.impl.multiRow.WrapMultiRowLayout
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout
 import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
 import com.intellij.util.ui.UIUtil
@@ -65,6 +71,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.lang.Runnable
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 import javax.swing.*
 
 class EditorTabbedContainer internal constructor(private val window: EditorWindow,
@@ -106,7 +113,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
         }
       }
       .setPopupGroup(
-        /* popupGroup = */ { CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP) as ActionGroup? },
+        /* popupGroup = */ { CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP) as ActionGroup },
         /* place = */ ActionPlaces.EDITOR_TAB_POPUP,
         /* addNavigationGroup = */ false
       )
@@ -202,7 +209,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
   fun removeTabAt(componentIndex: Int, indexToSelect: Int) {
     var toSelect = if (indexToSelect >= 0 && indexToSelect < editorTabs.tabCount) editorTabs.getTabAt(indexToSelect) else null
     val info = editorTabs.getTabAt(componentIndex)
-    // removing the hidden tab happens at on end of the drag-out, we've already selected the correct tab for this case in dragOutStarted
+    // removing the hidden tab happens at the end of the drag-out, we've already selected the correct tab for this case in dragOutStarted
     if (info.isHidden || !window.manager.project.isOpen || window.isDisposed) {
       toSelect = null
     }
@@ -262,7 +269,6 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     val project = window.manager.project
     val tab = TabInfo(component)
       .setText(file.presentableName)
-      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file))
       .setIcon(if (UISettings.getInstance().showFileIconInTabs) icon else null)
       .setTooltipText(tooltip)
       .setObject(file)
@@ -275,24 +281,25 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
         tab.text = title
       }
     }
-
-    val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
-    val dataContext = DataManager.getInstance().getDataContext(component)
-    val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup") as DefaultActionGroup
-    val group = DefaultActionGroup()
-    val event = AnActionEvent.createFromDataContext("EditorTabActionGroup", null, dataContext)
-    for (action in editorActionGroup.getChildren(event)) {
-      if (action is ActionGroup) {
-        group.addAll(*action.getChildren(event))
-      }
-      else {
-        group.addAction(action!!)
+    coroutineScope.launch {
+      val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
+      withContext(Dispatchers.EDT) {
+        tab.tabColor = color
       }
     }
-    group.addAction(closeTab, Constraints.LAST)
+
+    val closeTab = CloseTab(component, file, window, parentDisposable)
+    val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
+    val group = DefaultActionGroup(editorActionGroup, closeTab)
     tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
     tab.setTabPaneActions(composite.selectedEditor!!.tabActions)
-    editorTabs.addTabSilently(tab, indexToInsert)
+    if (AsyncEditorLoader.isOpenedInBulk(file)) {
+      editorTabs.addTabWithoutUpdating(info = tab, index = indexToInsert, isDropTarget = false)
+      editorTabs.updateListeners()
+    }
+    else {
+      editorTabs.addTabSilently(tab, indexToInsert)
+    }
   }
 
   val isEmptyVisible: Boolean
@@ -541,7 +548,7 @@ private class EditorTabs(
   parentDisposable: Disposable,
   private val window: EditorWindow,
 ) : SingleHeightTabs(window.manager.project, parentDisposable), ComponentWithMnemonics, EditorWindowHolder {
-  private val entryPointActionGroup: DefaultActionGroup
+  private val _entryPointActionGroup: DefaultActionGroup
   private var isActive = false
 
   init {
@@ -550,25 +557,45 @@ private class EditorTabs(
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
     }
-
-    setUiDecorator {
-      val insets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
-      UiDecoration(null, insets)
-    }
+    setUiDecorator(object : UiDecorator {
+      override fun getDecoration(): UiDecoration {
+        return UiDecoration(
+          labelInsets = getTabLabelInsets(),
+          contentInsetsSupplier = Function { pos ->
+            val actionsOnTheRight: Boolean? = when (pos) {
+              ActionsPosition.RIGHT -> true
+              ActionsPosition.LEFT -> false
+              ActionsPosition.NONE -> null
+            }
+            JBUI.CurrentTheme.EditorTabs.tabContentInsets(actionsOnTheRight)
+          },
+          iconTextGap = JBUI.scale(4)
+        )
+      }
+    })
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
     source.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
-    entryPointActionGroup = DefaultActionGroup(source)
+    _entryPointActionGroup = DefaultActionGroup(source)
   }
 
   override fun getEditorWindow(): EditorWindow = window
 
-  override fun supportsTableLayoutAsSingleRow(): Boolean = true
+
+  override fun useMultiRowLayout(): Boolean {
+    return !isSingleRow || (isHorizontalTabs && (TabLayout.showPinnedTabsSeparately() || !UISettings.getInstance().hideTabsIfNeeded))
+  }
 
   override fun createSingleRowLayout(): SingleRowLayout {
-    return if (!UISettings.getInstance().hideTabsIfNeeded && supportsCompression()) {
-      CompressibleSingleRowLayout(this)
+    return ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar)
+  }
+
+  override fun createMultiRowLayout(): MultiRowLayout {
+    return when {
+      !isSingleRow -> WrapMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
+      UISettings.getInstance().hideTabsIfNeeded -> ScrollableMultiRowLayout(this, showPinnedTabsSeparately = true,
+                                                                            ExperimentalUI.isEditorTabsWithScrollBar)
+      else -> CompressibleMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
     }
-    else ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar())
   }
 
   override fun paintChildren(g: Graphics) {
@@ -582,14 +609,19 @@ private class EditorTabs(
   }
 
   // return same instance to avoid unnecessary action toolbar updates
-  override fun getEntryPointActionGroup(): DefaultActionGroup = entryPointActionGroup
+  override val entryPointActionGroup: DefaultActionGroup
+    get() = _entryPointActionGroup
+
+  private fun getTabLabelInsets(): JBInsets {
+    val insets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
+    return insets as? JBInsets ?: error("JBInsets expected, but was: $insets")
+  }
 
   override fun createTabLabel(info: TabInfo): TabLabel {
     return EditorTabLabel(info)
   }
 
-  private inner class EditorTabLabel(private val info: TabInfo) : SingleHeightLabel(this, info) {
-
+  private inner class EditorTabLabel(info: TabInfo) : SingleHeightLabel(this, info) {
     init {
       updateFont()
     }
@@ -609,44 +641,46 @@ private class EditorTabs(
     }
 
     override fun getPreferredHeight(): Int {
-      val insets = insets
+      val insets = getTabLabelInsets().unscaled
+      val height = JBUI.scale(UNSCALED_PREF_HEIGHT - insets.top - insets.bottom)
       val layoutInsets = layoutInsets
-      return super.getPreferredHeight() - layoutInsets.top - layoutInsets.bottom - insets.top - insets.bottom
+      return height - layoutInsets.top - layoutInsets.bottom
     }
 
-    override fun getActionsInset(): Int {
-      val buttonsOnTheRight = UISettings.shadowInstance.closeTabButtonOnTheRight
-      return if (!buttonsOnTheRight || ExperimentalUI.isNewUI()) JBUI.CurrentTheme.EditorTabs.tabActionsInset() else 2
+    override fun isShowTabActions(): Boolean = UISettings.getInstance().showCloseButton || isPinned
+
+    override fun isTabActionsOnTheRight(): Boolean = UISettings.getInstance().closeTabButtonOnTheRight
+
+    override fun shouldPaintFadeout(): Boolean {
+      return super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true)
     }
 
     override fun editLabelForeground(baseForeground: Color?): Color? {
       return if (baseForeground != null && paintDimmed()) {
         val blendValue = JBUI.CurrentTheme.EditorTabs.unselectedBlend()
-        val background = getInfo().tabColor ?: myTabs.tabPainter.getTabTheme().background
-        if (background != null) {
-          ColorUtil.blendColorsInRgb(background, baseForeground, blendValue.toDouble())
-        }
-        else baseForeground
+        ColorUtil.blendColorsInRgb(effectiveBackground, baseForeground, blendValue.toDouble())
       }
       else baseForeground
     }
 
     override fun editIcon(baseIcon: Icon): Icon {
       return if (paintDimmed()) {
-        IconLoader.getTransparentIcon(baseIcon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha());
+        IconLoader.getTransparentIcon(baseIcon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha())
       }
       else baseIcon
     }
 
     private fun paintDimmed(): Boolean {
-      return ExperimentalUI.isNewUI() && myTabs.selectedInfo != getInfo() && !myTabs.isHoveredTab(this)
+      return ExperimentalUI.isNewUI() && myTabs.selectedInfo != info && !myTabs.isHoveredTab(this)
     }
   }
 
   override fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
     if (!tabs.contains(info)) {
-      return null  // can be requested right after tab is removed, return null in this case
+      // can be requested right after the tab is removed, return null in this case
+      return null
     }
+
     val closeTabAction = info.tabLabelActions?.getChildren(null)?.lastOrNull() as? CloseTab
     return closeTabAction?.getIcon(isHovered)
   }
@@ -673,7 +707,7 @@ private class EditorTabs(
     }
   }
 
-  override fun isActiveTabs(info: TabInfo): Boolean = isActive
+  override fun isActiveTabs(info: TabInfo?): Boolean = isActive
 
   override fun getToSelectOnRemoveOf(info: TabInfo): TabInfo? {
     if (window.isDisposed) {
@@ -691,7 +725,7 @@ private class EditorTabs(
     return super.getToSelectOnRemoveOf(info)
   }
 
-  public override fun revalidateAndRepaint(layoutNow: Boolean) {
+  override fun revalidateAndRepaint(layoutNow: Boolean) {
     // called from super constructor
     @Suppress("SENSELESS_COMPARISON")
     if (window != null && window.owner.isInsideChange) {

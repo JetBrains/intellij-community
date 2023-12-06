@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -16,6 +15,7 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -43,7 +43,7 @@ public final class AsyncEventSupport {
 
   public static void startListening() {
     Application app = ApplicationManager.getApplication();
-    Disposer.register(app, () -> ensureAllEventsProcessed());
+    Disposer.register(app, AsyncEventSupport::ensureAllEventsProcessed);
 
     app.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -87,7 +87,7 @@ public final class AsyncEventSupport {
       long startNs = System.nanoTime();
       boolean canceled = false;
       try {
-        ReadAction.run(() -> ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events)));
+        ApplicationManager.getApplication().runReadAction(() -> ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events)));
       }
       catch (ProcessCanceledException e) {
         canceled = true;
@@ -114,11 +114,14 @@ public final class AsyncEventSupport {
     LOG.assertTrue(ourAsyncProcessedEvents.remove(events));
   }
 
-  private static void beforeVfsChange(@NotNull List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  private static void beforeVfsChange(@NotNull List<AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
       PingProgress.interactWithEdtProgress();
       try {
         applier.beforeVfsChange();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -126,7 +129,7 @@ public final class AsyncEventSupport {
     }
   }
 
-  private static void afterVfsChange(@NotNull List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  private static void afterVfsChange(@NotNull List<AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
       PingProgress.interactWithEdtProgress();
       try {
@@ -141,10 +144,10 @@ public final class AsyncEventSupport {
     }
   }
 
-  static void processEventsFromRefresh(@NotNull List<? extends CompoundVFileEvent> events,
-                                       @NotNull List<? extends AsyncFileListener.ChangeApplier> appliers,
+  @RequiresWriteLock
+  static void processEventsFromRefresh(@NotNull List<CompoundVFileEvent> events,
+                                       @NotNull List<AsyncFileListener.ChangeApplier> appliers,
                                        boolean asyncProcessing) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     beforeVfsChange(appliers);
     try {
       ((PersistentFSImpl)PersistentFS.getInstance()).processEventsImpl(events, asyncProcessing);

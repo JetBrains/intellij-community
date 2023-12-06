@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.gradle.properties.base
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.isFile
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.isRegularFile
 
 abstract class BasePropertiesFile<PROPERTIES> {
 
@@ -16,7 +16,7 @@ abstract class BasePropertiesFile<PROPERTIES> {
   abstract fun getProperties(project: Project, externalProjectPath: Path): PROPERTIES
 
   protected fun loadProperties(propertiesFile: Path): Properties? {
-    if (!propertiesFile.isFile() || !propertiesFile.exists()) {
+    if (!propertiesFile.isRegularFile() || !propertiesFile.exists()) {
       return null
     }
 

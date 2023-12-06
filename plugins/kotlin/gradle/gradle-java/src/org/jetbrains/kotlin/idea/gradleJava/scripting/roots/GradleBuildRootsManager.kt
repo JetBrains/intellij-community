@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.*
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslGradleBuildSync
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot.ImportingStatus.*
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -153,6 +152,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
             add(newRoot)
         } catch (e: Exception) {
             markImportingInProgress(sync.workingDir, false)
+            scriptingErrorLog("Couldn't update Gradle build root: ${oldRoot.pathPrefix}", e)
             return
         }
     }
@@ -241,40 +241,6 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         loadStandaloneScriptConfigurations(changes.new)
     }
 
-    init {
-        getGradleProjectSettings(project).forEach {
-            // don't call this.add, as we are inside scripting manager initialization
-            roots.add(loadLinkedRoot(it))
-        }
-
-        // subscribe to linked gradle project modification
-        val listener = object : GradleSettingsListenerAdapter() {
-            override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
-                settings.forEach {
-                    add(loadLinkedRoot(it))
-                }
-            }
-
-            override fun onProjectsUnlinked(linkedProjectPaths: MutableSet<String>) {
-                linkedProjectPaths.forEach {
-                    remove(it)
-                }
-            }
-
-            override fun onGradleHomeChange(oldPath: String?, newPath: String?, linkedProjectPath: String) {
-                val version = GradleInstallationManager.getGradleVersion(newPath)
-                reloadBuildRoot(linkedProjectPath, version)
-            }
-
-            override fun onGradleDistributionTypeChange(currentValue: DistributionType?, linkedProjectPath: String) {
-                reloadBuildRoot(linkedProjectPath, null)
-            }
-        }
-
-        val disposable = KotlinPluginDisposable.getInstance(project)
-        project.messageBus.connect(disposable).subscribe(GradleSettingsListener.TOPIC, listener)
-    }
-
     private fun getGradleProjectSettings(workingDir: String): GradleProjectSettings? {
         return (ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID) as GradleSettings)
             .getLinkedProjectSettings(workingDir)
@@ -312,7 +278,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         return knownAsSupported == shouldBeSupported
     }
 
-    private fun reloadBuildRoot(rootPath: String, version: String?): GradleBuildRoot? {
+    fun reloadBuildRoot(rootPath: String, version: String?): GradleBuildRoot? {
         val settings = getGradleProjectSettings(rootPath)
         if (settings == null) {
             remove(rootPath)
@@ -325,7 +291,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         }
     }
 
-    private fun loadLinkedRoot(settings: GradleProjectSettings, version: String = getGradleVersion(project, settings)): GradleBuildRoot {
+    fun loadLinkedRoot(settings: GradleProjectSettings, version: String = getGradleVersion(project, settings)): GradleBuildRoot {
         if (!enabled) {
             return Legacy(settings)
         }
@@ -370,7 +336,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         }
     }
 
-    private fun add(newRoot: GradleBuildRoot) {
+    fun add(newRoot: GradleBuildRoot) {
         val old = roots.add(newRoot)
         if (old is Imported && newRoot !is Imported) {
             removeData(old.pathPrefix)
@@ -382,7 +348,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         updateNotifications { it.startsWith(newRoot.pathPrefix) }
     }
 
-    private fun remove(rootPath: String) {
+    fun remove(rootPath: String) {
         val removed = roots.remove(rootPath)
         if (removed is Imported) {
             removeData(rootPath)

@@ -3,6 +3,6 @@ package com.intellij.util.diff;
 
 public class FilesTooBigForDiffException extends Exception {
   public FilesTooBigForDiffException() {
-    super("Can not calculate diff. File is too big and there are too many changes.");
+    super("Unable to calculate diff. File is too big and there are too many changes.");
   }
 }

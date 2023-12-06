@@ -1,23 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 final class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitCompressedRecord> {
   private static final Logger LOG = Logger.getInstance(GitLogUnorderedRecordCollector.class);
   private static final int STATUS_LINES_THRESHOLD = 200_000;
 
-  @NotNull private final MultiMap<String, GitCompressedRecord> myHashToIncompleteRecords = MultiMap.createLinked();
+  private final @NotNull MultiMap<String, GitCompressedRecord> myHashToIncompleteRecords = MultiMap.createLinked();
   private int myIncompleteStatusLinesCount = 0;
 
   GitLogUnorderedRecordCollector(@NotNull Project project,

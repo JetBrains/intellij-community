@@ -2,56 +2,51 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-
-public class ComposeFunctionChainAction extends PsiElementBaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance(ComposeFunctionChainAction.class.getName());
+public class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
+  public ComposeFunctionChainAction() {
+    super(PsiMethodCallExpression.class);
+  }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull final PsiElement element) {
-    PsiMethodCallExpression call =
-      PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false, PsiStatement.class, PsiLambdaExpression.class);
-    if(call == null) return false;
-    if(!"apply".equals(call.getMethodExpression().getReferenceName())) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call) {
+    PsiMethodCallExpression nearCall =
+      PsiTreeUtil.getParentOfType(context.findLeaf(), PsiMethodCallExpression.class, false, PsiStatement.class, PsiLambdaExpression.class);
+    if (nearCall != call) return null;
+    if (!"apply".equals(call.getMethodExpression().getReferenceName())) return null;
     PsiMethod method = call.resolveMethod();
-    if(method == null) return false;
+    if (method == null) return null;
     PsiClass aClass = method.getContainingClass();
-    if(aClass == null) return false;
+    if (aClass == null) return null;
     if(!CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(aClass.getQualifiedName()) &&
        !CommonClassNames.JAVA_UTIL_FUNCTION_BI_FUNCTION.equals(aClass.getQualifiedName())) {
-      return false;
+      return null;
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-    if (!(parent instanceof PsiExpressionList) || ((PsiExpressionList)parent).getExpressionCount() != 1) return false;
+    if (!(parent instanceof PsiExpressionList) || ((PsiExpressionList)parent).getExpressionCount() != 1) return null;
 
     PsiElement gParent = parent.getParent();
-    if (!(gParent instanceof PsiMethodCallExpression)) return false;
+    if (!(gParent instanceof PsiMethodCallExpression)) return null;
 
     PsiMethod outerMethod = ((PsiMethodCallExpression)gParent).resolveMethod();
     if (outerMethod == null ||
-        !Arrays.stream(outerMethod.getThrowsList().getReferencedTypes()).allMatch(ExceptionUtil::isUncheckedException)) {
-      return false;
+        !ContainerUtil.and(outerMethod.getThrowsList().getReferencedTypes(), ExceptionUtil::isUncheckedException)) {
+      return null;
     }
-    return true;
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return JavaBundle.message("intention.compose.function.text");
+    return Presentation.of(JavaBundle.message("intention.compose.function.text"));
   }
 
   @Override
@@ -61,11 +56,7 @@ public class ComposeFunctionChainAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiMethodCallExpression call =
-      PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false, PsiStatement.class, PsiLambdaExpression.class);
-    if(call == null) return;
-
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull ModPsiUpdater updater) {
     PsiElement outer = call.getParent().getParent();
     if(!(outer instanceof PsiMethodCallExpression outerCall)) return;
     PsiMethod outerMethod = outerCall.resolveMethod();
@@ -91,10 +82,10 @@ public class ComposeFunctionChainAction extends PsiElementBaseIntentionAction {
     String replacement = resultQualifier + "andThen(" + reference + ").apply" + ct.text(call.getArgumentList());
 
     PsiElement result = ct.replaceAndRestoreComments(outer, replacement);
-    result = CodeStyleManager.getInstance(project).reformat(result);
+    result = CodeStyleManager.getInstance(context.project()).reformat(result);
     PsiElement applyElement = ((PsiMethodCallExpression)result).getMethodExpression().getReferenceNameElement();
     if(applyElement != null) {
-      editor.getCaretModel().moveToOffset(applyElement.getTextOffset() + applyElement.getTextLength());
+      updater.moveTo(applyElement.getTextOffset() + applyElement.getTextLength());
     }
   }
 

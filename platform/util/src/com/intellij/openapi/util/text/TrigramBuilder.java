@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.text.CharArrayUtil;
@@ -17,7 +17,7 @@ public final class TrigramBuilder {
   private TrigramBuilder() {
   }
 
-  public static abstract class TrigramProcessor implements IntPredicate {
+  public abstract static class TrigramProcessor implements IntPredicate {
     public boolean consumeTrigramsCount(@SuppressWarnings("unused") int count) {
       return true;
     }
@@ -156,7 +156,7 @@ public final class TrigramBuilder {
     return set;
   }
 
-  private static class AddonlyIntSet extends AbstractIntSet {
+  private static final class AddonlyIntSet extends AbstractIntSet {
     private int size;
     private int[] data;
     private int mask;

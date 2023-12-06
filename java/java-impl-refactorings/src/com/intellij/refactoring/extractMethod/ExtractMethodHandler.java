@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class ExtractMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(ExtractMethodHandler.class);
@@ -59,17 +60,11 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    final Pass<PsiElement[]> callback = new Pass<>() {
-      @Override
-      public void pass(final PsiElement[] selectedValue) {
-        invokeOnElements(project, editor, file, selectedValue);
-      }
-    };
-    selectAndPass(project, editor, file, callback);
+    selectAndPass(project, editor, file, selectedValue -> invokeOnElements(project, editor, file, selectedValue));
   }
 
   public static void
-  selectAndPass(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final Pass<PsiElement[]> callback) {
+  selectAndPass(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, @NotNull Consumer<? super PsiElement[]> callback) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (!editor.getSelectionModel().hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
@@ -78,14 +73,14 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
         editor.getSelectionModel().selectLineAtCaret();
       }
       else if (expressions.size() == 1) {
-        callback.pass(new PsiElement[]{expressions.get(0)});
+        callback.accept(new PsiElement[]{expressions.get(0)});
         return;
       }
       else {
         IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
           @Override
           public void pass(PsiExpression psiExpression) {
-            callback.pass(new PsiElement[]{psiExpression});
+            callback.accept(new PsiElement[]{psiExpression});
           }
         }, new PsiExpressionTrimRenderer.RenderFunction());
         return;
@@ -94,7 +89,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    callback.pass(getElements(project, editor, file));
+    callback.accept(getElements(project, editor, file));
   }
 
   @Override
@@ -207,7 +202,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
                                                      final PsiFile file,
                                                      final Editor editor,
                                                      final boolean showErrorMessages,
-                                                     final @Nullable Pass<ExtractMethodProcessor> pass) {
+                                                     final @Nullable Consumer<? super ExtractMethodProcessor> pass) {
     if (elements == null || elements.length == 0) {
       if (showErrorMessages) {
         String message = RefactoringBundle

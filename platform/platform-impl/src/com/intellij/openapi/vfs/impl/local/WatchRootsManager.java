@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.Disposable;
@@ -27,6 +27,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 /**
+ * Class manages the roots to monitor via {@link FileWatcher} -- i.e. it keeps {@link FileWatcher} configured with the
+ * actual set of roots to watch for.
  * Unless stated otherwise, all paths are {@link SystemIndependent @SystemIndependent}.
  */
 final class WatchRootsManager {
@@ -41,7 +43,8 @@ final class WatchRootsManager {
   private final Int2ObjectMap<SymlinkData> mySymlinksById = new Int2ObjectOpenHashMap<>();
   private final NavigableSet<Pair<String, String>> myPathMappings = WatchRootsUtil.createMappingsNavigableSet();
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private boolean myWatcherRequiresUpdate;  // synchronized on `myLock`
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private boolean myWatcherRequiresUpdate;  // synchronized on `myLock`
   private final Object myLock = new Object();
 
   WatchRootsManager(@NotNull FileWatcher fileWatcher, @NotNull Disposable parent) {
@@ -83,7 +86,10 @@ final class WatchRootsManager {
       myOptimizedRecursiveWatchRoots.clear();
       myFlatWatchRoots.clear();
       myPathMappings.clear();
+
+      mySymlinksByPath.clear();
       mySymlinksById.values().forEach(SymlinkData::clear);
+      mySymlinksById.clear();
     }
   }
 
@@ -104,7 +110,8 @@ final class WatchRootsManager {
 
       SymlinkData existing = mySymlinksByPath.get(linkPath);
       if (existing != null) {
-        LOG.error("Path conflict. Existing symlink: " + existing + " vs. new symlink: " + data);
+        LOG.error("Path conflict. " +
+                  "Existing symlink: " + existing + " vs. incoming symlink: " + data);
         return;
       }
 
@@ -132,8 +139,8 @@ final class WatchRootsManager {
       synchronized (myLock) {
         if (!myWatcherRequiresUpdate) return null;
         myWatcherRequiresUpdate = false;
-        return createCanonicalPathMap(myFlatWatchRoots.navigableKeySet(), myOptimizedRecursiveWatchRoots,
-                                      myPathMappings, File.separatorChar == '\\');
+        var convert = File.separatorChar == '\\';
+        return createCanonicalPathMap(myFlatWatchRoots.navigableKeySet(), myOptimizedRecursiveWatchRoots, myPathMappings, convert);
       }
     });
   }
@@ -302,7 +309,7 @@ final class WatchRootsManager {
   }
 
   private void collectSymlinkRequests(@NotNull WatchRequestImpl newRequest,
-                                      @NotNull Collection<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
+                                      @NotNull /*OutParam*/ Collection<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
     assert newRequest.isToWatchRecursively() : newRequest;
     WatchRootsUtil.collectByPrefix(mySymlinksByPath, newRequest.getRootPath(), e -> {
       if (e.getValue().hasValidTarget()) {
@@ -311,7 +318,7 @@ final class WatchRootsManager {
     });
   }
 
-  private static class WatchRequestImpl implements WatchRequest {
+  private static final class WatchRequestImpl implements WatchRequest {
     private final String myFSRootPath;
     private final boolean myWatchRecursively;
 
@@ -336,7 +343,7 @@ final class WatchRootsManager {
     }
   }
 
-  private static class WatchSymlinkRequest implements WatchRequest {
+  private static final class WatchSymlinkRequest implements WatchRequest {
     private final SymlinkData mySymlinkData;
     private final boolean myWatchRecursively;
     private boolean myRegistered = false;
@@ -374,7 +381,7 @@ final class WatchRootsManager {
     }
   }
 
-  private static class SymlinkData {
+  private static final class SymlinkData {
     final int id;
     final @NotNull @SystemIndependent String path;
     final @Nullable @SystemIndependent String target;
@@ -411,7 +418,7 @@ final class WatchRootsManager {
 
     @Override
     public String toString() {
-      return "SymlinkData{" + id + ", " + path + " -> " + target + '}';
+      return "SymlinkData{" + id + ", " + path + " -> " + target + "}[" + (myWatchRequest == null ? "cleared" : "valid") + "]";
     }
   }
 }

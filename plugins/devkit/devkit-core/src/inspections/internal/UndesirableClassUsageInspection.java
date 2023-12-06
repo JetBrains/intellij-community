@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -18,6 +18,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
@@ -29,7 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
+@VisibleForTesting
+public final class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
 
   @NonNls
   private static final Map<String, String> CLASSES = Map.of(
@@ -70,7 +72,7 @@ public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
             String replacement = name==null?null:CLASSES.get(name);
             if (replacement != null) {
               descriptors.add(
-                manager.createProblemDescriptor(Objects.requireNonNull(expression.getPsi()),
+                manager.createProblemDescriptor(Objects.requireNonNull(expression.getSourcePsi()),
                                                 DevKitBundle.message("inspections.undesirable.class.use.instead", replacement),
                                                 true,
                                                 ProblemHighlightType.LIKE_DEPRECATED, isOnTheFly));

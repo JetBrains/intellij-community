@@ -4,5 +4,5 @@ package com.intellij.execution.target
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 
 interface TargetBasedSdkAdditionalData : SdkAdditionalData {
-  var targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
+  val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
 }

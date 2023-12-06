@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
@@ -9,21 +9,16 @@ public abstract class ProjectScopeBuilder {
     return project.getService(ProjectScopeBuilder.class);
   }
 
-  @NotNull
-  public abstract GlobalSearchScope buildEverythingScope();
+  public abstract @NotNull GlobalSearchScope buildEverythingScope();
 
-  @NotNull
-  public abstract GlobalSearchScope buildLibrariesScope();
+  public abstract @NotNull GlobalSearchScope buildLibrariesScope();
 
   /**
    * @return Scope for all things inside the project: files in the project content plus files in libraries/library source
    */
-  @NotNull
-  public abstract GlobalSearchScope buildAllScope();
+  public abstract @NotNull GlobalSearchScope buildAllScope();
 
-  @NotNull
-  public abstract GlobalSearchScope buildProjectScope();
+  public abstract @NotNull GlobalSearchScope buildProjectScope();
 
-  @NotNull
-  public abstract GlobalSearchScope buildContentScope();
+  public abstract @NotNull GlobalSearchScope buildContentScope();
 }

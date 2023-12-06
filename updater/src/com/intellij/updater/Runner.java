@@ -35,7 +35,7 @@ public final class Runner {
       List<String> effectiveArgs = new ArrayList<>();
       for (String arg : args) {
         if (arg.startsWith("@")) {
-          effectiveArgs.addAll(Files.readAllLines(Paths.get(arg.substring(1))));
+          effectiveArgs.addAll(Files.readAllLines(Path.of(arg.substring(1))));
         }
         else {
           effectiveArgs.add(arg);
@@ -62,7 +62,7 @@ public final class Runner {
     System.setProperty("java.util.logging.config.class", Object.class.getName());
 
     String dirPath = System.getProperty("idea.updater.log", System.getProperty("java.io.tmpdir", System.getProperty("user.home", ".")));
-    Path logDir = Paths.get(dirPath).toAbsolutePath().normalize();
+    Path logDir = Path.of(dirPath).toAbsolutePath().normalize();
     logPath = logDir.resolve(LOG_FILE_NAME).toString();
     String errorLogPath = logDir.resolve(ERROR_LOG_FILE_NAME).toString();
 
@@ -89,11 +89,13 @@ public final class Runner {
       }
     };
 
-    FileHandler cumulativeLog = new FileHandler(logPath, 0, 1, true);
+    var cumulativeLog = new FileHandler(logPath, 0L, 1, true);
+    cumulativeLog.setEncoding("UTF-8");
     cumulativeLog.setLevel(Level.ALL);
     cumulativeLog.setFormatter(formatter);
 
-    FileHandler errorLog = new FileHandler(errorLogPath, 0, 1, false);
+    var errorLog = new FileHandler(errorLogPath, 0L, 1, false);
+    cumulativeLog.setEncoding("UTF-8");
     errorLog.setLevel(Level.SEVERE);
     errorLog.setFormatter(formatter);
 
@@ -123,9 +125,7 @@ public final class Runner {
 
       LOG.info("case-sensitive: " + ourCaseSensitiveFs);
 
-      boolean binary = hasArgument(args, "zip_as_binary");
       boolean strict = hasArgument(args, "strict");
-      boolean normalized = hasArgument(args, "normalized");
 
       String root = getArgument(args, "root");
       if (root == null) {
@@ -140,10 +140,11 @@ public final class Runner {
       List<String> criticalFiles = extractArguments(args, "critical");
       List<String> optionalFiles = extractArguments(args, "optional");
       List<String> deleteFiles = extractArguments(args, "delete");
-      Map<String, String> warnings = buildWarningMap(extractArguments(args, "warning"));
 
       String timeoutStr = getArgument(args, "timeout");
       int timeout = timeoutStr != null ? Integer.parseInt(timeoutStr) : 0;
+
+      String cacheDir = getArgument(args, "cache-dir");
 
       PatchSpec spec = new PatchSpec()
         .setOldVersionDescription(oldVersionDesc)
@@ -154,26 +155,24 @@ public final class Runner {
         .setPatchFile(patchFile)
         .setJarFile(jarFile)
         .setStrict(strict)
-        .setBinary(binary)
-        .setNormalized(normalized)
         .setIgnoredFiles(ignoredFiles)
         .setCriticalFiles(criticalFiles)
         .setStrictFiles(strictFiles)
         .setOptionalFiles(optionalFiles)
         .setDeleteFiles(deleteFiles)
-        .setWarnings(warnings)
         .setTimeout(timeout);
 
-      boolean success = create(spec);
+      boolean success = create(spec, cacheDir != null ? Path.of(cacheDir) : null);
       System.exit(success ? 0 : 1);
     }
     else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0])) ||
              args.length >= 3 && ("batch-install".equals(args[0]))) {
       LOG.info("JRE: " + System.getProperty("java.runtime.version", "unknown") + " @ " + System.getProperty("java.home"));
+      LOG.info("user.language=" + System.getProperty("user.language") + " user.country=" + System.getProperty("user.country"));
 
       String destPath = args[1];
 
-      Path destDirectory = Paths.get(destPath);
+      Path destDirectory = Path.of(destPath);
       try {
         destDirectory = destDirectory.toRealPath();
       }
@@ -185,21 +184,12 @@ public final class Runner {
 
       LOG.info("destination: " + destPath + " (" + destDirectory + "), case-sensitive: " + ourCaseSensitiveFs);
 
-      UpdaterUI ui;
-      if ("install".equals(args[0]) || "batch-install".equals(args[0])) {
-        ui = new SwingUpdaterUI();
-      }
-      else if (hasArgument(args, "toolbox-ui")) {
-        ui = new ToolboxUpdaterUI();
-      }
-      else {
-        ui = new ConsoleUpdaterUI();
-      }
+      var ui = "apply".equals(args[0]) ? new ConsoleUpdaterUI(hasArgument(args, "force-replace")) : SwingUpdaterUI.createUI();
 
       boolean backup = !hasArgument(args, "no-backup");
       boolean success;
       if (!Files.isDirectory(destDirectory, LinkOption.NOFOLLOW_LINKS)) {
-        ui.showError("Invalid target directory: " + destPath);
+        ui.showError(UpdaterUI.message("invalid.target.directory", destPath));
         success = false;
       }
       else if (!"batch-install".equals(args[0])) {
@@ -228,26 +218,13 @@ public final class Runner {
   }
 
   private static boolean hasArgument(String[] args, String name) {
-    return Arrays.asList(args).contains("--" + name);
+    return List.of(args).contains("--" + name);
   }
 
   public static void checkCaseSensitivity(String path) {
     boolean orig = new File(path).exists();
     ourCaseSensitiveFs = orig != new File(path.toUpperCase(Locale.ENGLISH)).exists() ||
                          orig != new File(path.toLowerCase(Locale.ENGLISH)).exists();
-  }
-
-  private static Map<String, String> buildWarningMap(List<String> warnings) {
-    Map<String, String> map = new HashMap<>();
-    for (String warning : warnings) {
-      int ix = warning.indexOf(":");
-      if (ix != -1) {
-        String path = warning.substring(0, ix);
-        String message = warning.substring(ix + 1).replace("\\n","\n");
-        map.put(path, message);
-      }
-    }
-    return map;
   }
 
   public static List<String> extractArguments(String[] args, String paramName) {
@@ -284,37 +261,33 @@ public final class Runner {
       "    optional: A set of files that is okay for them not to exist when applying the patch.\n" +
       "    delete: A set of regular expressions for paths that is safe to delete without user confirmation.\n" +
       "  <flags>: Can be:\n" +
-      "    --zip_as_binary: Zip and jar files will be treated as binary files and not inspected internally.\n" +
       "    --strict:     The created patch will contain extra information to fully validate an installation. A strict\n" +
       "                  patch will only be applied if it is guaranteed that the patched version will match exactly\n" +
       "                  the source of the patch. This means that unexpected files will be deleted and all existing files\n" +
       "                  will be validated\n" +
+      "    --cache-dir=<dir>: Sets directory where diffs can be cached.\n" +
+      "                  Useful when building several patches on folders with common files.\n" +
       "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be\n" +
       "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root.\n" +
       "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators.\n" +
-      "    --normalized: This creates a normalized patch. This flag only makes sense in addition to --zip_as_binary\n" +
-      "                  A normalized patch must be used to move from an installation that was patched\n" +
-      "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but\n" +
-      "                  the generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
-      "                  guarantees that the patched version will match exactly the original one.\n" +
       "    --timeout=<T> A time budget for building a 'bsdiff' patch between a pair of files, in seconds.\n" +
       "                  If exceeded, the new version is included into the patch as a whole.\n" +
       "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
   }
 
-  private static boolean create(PatchSpec spec) {
-    ConsoleUpdaterUI ui = new ConsoleUpdaterUI();
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static boolean create(PatchSpec spec, Path cacheDir) {
     boolean success = false;
 
     try {
       File tempPatchFile = Utils.getTempFile("patch");
-      PatchFileCreator.create(spec, tempPatchFile, ui);
+      PatchFileCreator.create(spec, tempPatchFile, cacheDir);
 
       LOG.info("Packing JAR file: " + spec.getPatchFile());
-      ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
+      System.out.println("Packing JAR file '" + spec.getPatchFile() + "'...");
 
-      try (ZipOutputWrapper out = new ZipOutputWrapper(Files.newOutputStream(Paths.get(spec.getPatchFile()), StandardOpenOption.CREATE_NEW));
-           ZipInputStream in = new ZipInputStream(Files.newInputStream(Paths.get(spec.getJarFile())))) {
+      try (ZipOutputWrapper out = new ZipOutputWrapper(Files.newOutputStream(Path.of(spec.getPatchFile()), StandardOpenOption.CREATE_NEW));
+           ZipInputStream in = new ZipInputStream(Files.newInputStream(Path.of(spec.getJarFile())))) {
         ZipEntry e;
         while ((e = in.getNextEntry()) != null) {
           out.zipEntry(e, in);
@@ -327,33 +300,22 @@ public final class Runner {
     }
     catch (Throwable t) {
       LOG.log(Level.SEVERE, "create failed", t);
-      ui.showError(printStackTrace(t));
+      t.printStackTrace(System.err);
     }
     finally {
       try {
-        cleanup(ui);
+        System.out.println("Cleaning up...");
+        LOG.info("Cleaning up...");
+        Utils.cleanup();
       }
       catch (Throwable t) {
         success = false;
         LOG.log(Level.SEVERE, "cleanup failed", t);
-        ui.showError(printStackTrace(t));
+        t.printStackTrace(System.err);
       }
     }
 
     return success;
-  }
-
-  private static String printStackTrace(Throwable t) {
-    StringWriter writer = new StringWriter();
-    t.printStackTrace(new PrintWriter(writer));
-    return writer.toString();
-  }
-
-  private static void cleanup(UpdaterUI ui) throws IOException {
-    LOG.info("Cleaning up...");
-    ui.startProcess("Cleaning up...");
-    ui.setProgressIndeterminate();
-    Utils.cleanup();
   }
 
   private static boolean install(String patch, Path dest, UpdaterUI ui, boolean doBackup) {
@@ -366,7 +328,7 @@ public final class Runner {
         File patchFile = Utils.getTempFile("patch");
 
         LOG.info("Extracting patch file...");
-        ui.startProcess("Extracting patch file...");
+        ui.startProcess(UpdaterUI.message("extracting.patch.file"));
         ui.setProgressIndeterminate();
         try (ZipFile zipFile = new ZipFile(patch);
              InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
@@ -394,10 +356,9 @@ public final class Runner {
       }
       catch (Throwable t) {
         LOG.log(Level.SEVERE, "prepare failed", t);
-        String message = "An error occurred when preparing the patch:\n" +
-                         t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
-                         ui.bold("No files were changed. Please retry applying the patch.") + "\n\n" +
-                         "More details in the log: " + logPath;
+        String message = UpdaterUI.message("prepare.failed", t.getClass().getSimpleName(), t.getMessage()) + "\n\n" +
+                         ui.bold(UpdaterUI.message("nothing.changed.retry")) + "\n\n" +
+                         UpdaterUI.message("see.log", logPath);
         ui.showError(message);
         return false;
       }
@@ -407,18 +368,17 @@ public final class Runner {
         Throwable error = applicationResult.error;
 
         if (error != null) {
-          String message = "An error occurred when applying the patch:\n" +
-                           error.getClass().getSimpleName() + ": " + error.getMessage() + "\n\n";
+          String message = UpdaterUI.message("apply.failed", error.getClass().getSimpleName(), error.getMessage()) + "\n\n";
           if (appliedActions.isEmpty()) {
-            message += ui.bold("No files were changed. Please retry applying the patch.");
+            message += ui.bold(UpdaterUI.message("nothing.changed.retry"));
           }
           else if (backupDir == null) {
-            message += ui.bold("Files may be corrupted. Please reinstall the IDE.");
+            message += ui.bold(UpdaterUI.message("corrupted.reinstall"));
           }
           else {
-            message += ui.bold("Files may be corrupted. The patch will attempt to revert the changes.");
+            message += ui.bold(UpdaterUI.message("corrupted.reverting"));
           }
-          message += "\n\nMore details in the log: " + logPath;
+          message += "\n\n" + UpdaterUI.message("see.log", logPath);
           ui.showError(message);
         }
 
@@ -428,10 +388,9 @@ public final class Runner {
           }
           catch (Throwable t) {
             LOG.log(Level.SEVERE, "revert failed", t);
-            String message = "An error occurred when reverting the patch:\n" +
-                             t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
-                             ui.bold("Files may be corrupted. Please reinstall the IDE.") + "\n\n" +
-                             "More details in the log: " + logPath;
+            String message = UpdaterUI.message("revert.failed", t.getClass().getSimpleName(), t.getMessage()) + "\n\n" +
+                             ui.bold(UpdaterUI.message("corrupted.reinstall")) + "\n\n" +
+                             UpdaterUI.message("see.log", logPath);
             ui.showError(message);
           }
         }
@@ -459,7 +418,7 @@ public final class Runner {
       String jarName = null;
       try {
         LOG.info("Extracting patch files...");
-        ui.startProcess("Extracting patch files...");
+        ui.startProcess(UpdaterUI.message("extracting.patch.files"));
         for (int i = 0; i < patches.length; i++) {
           jarName = new File(patches[i]).getName();
           LOG.info("Unpacking " + jarName);
@@ -480,7 +439,7 @@ public final class Runner {
           if (!backupDir.mkdir()) throw new IOException("Cannot create a backup directory: " + backupDir);
 
           LOG.info("Backing up files...");
-          ui.startProcess("Backing up files...");
+          ui.startProcess(UpdaterUI.message("backing.up.files"));
           ui.setProgressIndeterminate();
           Utils.copyDirectory(destDir.toPath(), backupDir.toPath());
         }
@@ -491,10 +450,10 @@ public final class Runner {
       }
       catch (Throwable t) {
         LOG.log(Level.SEVERE, "prepare failed", t);
-        String message = "An error occurred when " + (jarName != null ? "extracting " + jarName : "preparing the patch") + ":\n" +
-                         t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
-                         ui.bold("No files were changed. Please retry applying the patch.") + "\n\n" +
-                         "More details in the log: " + logPath;
+        String message = (jarName != null ? UpdaterUI.message("extract.failed", jarName, t.getClass().getSimpleName(), t.getMessage())
+                                          : UpdaterUI.message("prepare.failed", t.getClass().getSimpleName(), t.getMessage())) + "\n\n" +
+                         ui.bold(UpdaterUI.message("nothing.changed.retry")) + "\n\n" +
+                         UpdaterUI.message("see.log", logPath);
         ui.showError(message);
         return false;
       }
@@ -525,18 +484,17 @@ public final class Runner {
       }
 
       if (error != null) {
-        String message = "An error occurred when applying the patch:\n" +
-                         error.getClass().getSimpleName() + ": " + error.getMessage() + "\n\n";
+        String message = UpdaterUI.message("apply.failed", error.getClass().getSimpleName(), error.getMessage()) + "\n\n";
         if (!needRestore) {
-          message += ui.bold("No files were changed. Please retry applying the patches.");
+          message += ui.bold(UpdaterUI.message("nothing.changed.retry"));
         }
         else if (backupDir == null) {
-          message += ui.bold("Files may be corrupted. Please reinstall the IDE.");
+          message += ui.bold(UpdaterUI.message("corrupted.reinstall"));
         }
         else {
-          message += ui.bold("Files may be corrupted. The patch will attempt to revert the changes.");
+          message += ui.bold(UpdaterUI.message("corrupted.reverting"));
         }
-        message += "\n\nMore details in the log: " + logPath;
+        message += "\n\n" + UpdaterUI.message("see.log", logPath);
         ui.showError(message);
       }
 
@@ -544,7 +502,7 @@ public final class Runner {
 
       if (!completed && needRestore && backupDir != null) {
         LOG.info("Reverting...");
-        ui.startProcess("Reverting...");
+        ui.startProcess(UpdaterUI.message("reverting"));
         ui.setProgressIndeterminate();
 
         try {
@@ -561,10 +519,9 @@ public final class Runner {
         }
         catch (Throwable t) {
           LOG.log(Level.SEVERE, "revert failed", t);
-          String message = "An error occurred when reverting the patch:\n" +
-                           t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
-                           ui.bold("Files may be corrupted. Please reinstall the IDE.") + "\n\n" +
-                           "More details in the log: " + logPath;
+          String message = UpdaterUI.message("revert.failed", t.getClass().getSimpleName(), t.getMessage()) + "\n\n" +
+                           ui.bold(UpdaterUI.message("corrupted.reinstall")) + "\n\n" +
+                           UpdaterUI.message("see.log", logPath);
           ui.showError(message);
         }
       }
@@ -583,7 +540,7 @@ public final class Runner {
   }
 
   private static Map<String, ValidationResult.Option> askForResolutions(List<ValidationResult> problems, UpdaterUI ui) throws OperationCancelledException {
-    if (problems.isEmpty()) return Collections.emptyMap();
+    if (problems.isEmpty()) return Map.of();
     LOG.warning("conflicts:");
     for (ValidationResult problem : problems) {
       String record = "  " + problem.action.name() + ' ' + problem.path + ": " + problem.message;
@@ -596,6 +553,13 @@ public final class Runner {
       LOG.warning("  " + entry.getKey() + ": " + entry.getValue());
     }
     return resolutions;
+  }
+
+  private static void cleanup(UpdaterUI ui) throws IOException {
+    ui.startProcess(UpdaterUI.message("cleaning.up"));
+    ui.setProgressIndeterminate();
+    LOG.info("Cleaning up...");
+    Utils.cleanup();
   }
 
   private static void refreshApplicationIcon(String destPath) {

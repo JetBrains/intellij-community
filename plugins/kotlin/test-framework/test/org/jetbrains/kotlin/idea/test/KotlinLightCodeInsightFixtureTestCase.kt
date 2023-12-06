@@ -34,10 +34,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -62,10 +59,12 @@ import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_PLUGIN_OPTIONS
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.JVM_TARGET_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.KOTLIN_COMPILER_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.LANGUAGE_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.PROJECT_LANGUAGE_VERSION_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -221,7 +220,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         return when {
             testName.endsWith("runtime") -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
             testName.endsWith("stdlib") -> ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
-            else -> KotlinLightProjectDescriptor.INSTANCE
+            else -> getDefaultProjectDescriptor()
         }
     }
 
@@ -272,7 +271,11 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                         ?.let { version -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance(version) }
                         ?: KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
                     if (minJavaVersion != null) {
-                        object : KotlinWithJdkAndRuntimeLightProjectDescriptor(instance.libraryFiles, instance.librarySourceFiles) {
+                        object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+                            instance.libraryFiles,
+                            instance.librarySourceFiles,
+                            LanguageLevel.parse(minJavaVersion.toString())!!,
+                        ) {
                             val sdkValue by lazy { sdk(minJavaVersion) }
                             override fun getSdk(): Sdk = sdkValue
                         }
@@ -280,6 +283,12 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                         instance
                     }
                 }
+
+                InTextDirectivesUtils.isDirectiveDefined(fileText, "JS_WITH_STDLIB") ->
+                    KotlinStdJSWithStdLibProjectDescriptor
+
+                InTextDirectivesUtils.isDirectiveDefined(fileText, "JS_WITH_DOM_API_COMPAT") ->
+                    KotlinStdJSWithDomApiCompatProjectDescriptor
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "JS") ->
                     KotlinStdJSProjectDescriptor
@@ -300,7 +309,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         6 -> IdeaTestUtil.getMockJdk16()
         8 -> IdeaTestUtil.getMockJdk18()
         9 -> IdeaTestUtil.getMockJdk9()
-        11 -> {
+        11, 17 -> {
             if (SystemInfo.isJavaVersionAtLeast(javaVersion, 0, 0)) {
                 PluginTestCaseBase.fullJdk()
             } else {
@@ -312,7 +321,6 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     }
 
     protected open fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor = KotlinLightProjectDescriptor.INSTANCE
-
     protected fun performNotWriteEditorAction(actionId: String): Boolean {
         val dataContext = (myFixture.editor as EditorEx).dataContext
 
@@ -350,6 +358,8 @@ object CompilerTestDirectives {
     const val API_VERSION_DIRECTIVE = "API_VERSION:"
     const val JVM_TARGET_DIRECTIVE = "JVM_TARGET:"
     const val COMPILER_ARGUMENTS_DIRECTIVE = "COMPILER_ARGUMENTS:"
+    const val COMPILER_PLUGIN_OPTIONS = "COMPILER_PLUGIN_OPTIONS:"
+
 
     val ALL_COMPILER_TEST_DIRECTIVES = listOf(
         LANGUAGE_VERSION_DIRECTIVE,
@@ -361,12 +371,12 @@ object CompilerTestDirectives {
 
 fun <T> withCustomCompilerOptions(fileText: String, project: Project, module: Module, body: () -> T): T {
     val removeFacet = !module.hasKotlinFacet()
-    val configured = configureCompilerOptions(fileText, project, module)
+    val configured = runInEdtAndGet { configureCompilerOptions(fileText, project, module) }
     try {
         return body()
     } finally {
         if (configured) {
-            rollbackCompilerOptions(project, module, removeFacet)
+            runInEdtAndWait { rollbackCompilerOptions(project, module, removeFacet) }
         }
     }
 }
@@ -385,6 +395,11 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
         ?.let { LanguageVersion.fromVersionString(it) }
     val apiVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $API_VERSION_DIRECTIVE ")
         ?.let { ApiVersion.parse(it) }
+
+    InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $COMPILER_PLUGIN_OPTIONS ")
+        ?.split("\\s+,\\s+")?.toTypedArray()?.let {
+            KotlinCommonCompilerArgumentsHolder.getInstance(project).update { this.pluginOptions = it }
+        }
 
     if (compilerVersion != null || languageVersion != null || apiVersion != null || jvmTarget != null || options != null ||
         projectLanguageVersion != null

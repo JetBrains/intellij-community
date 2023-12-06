@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.FlushingDaemon;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -17,7 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.NettyUtil;
 
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
@@ -30,15 +32,15 @@ public final class ThreadLeakTracker {
 
   private ThreadLeakTracker() { }
 
-  private static final Method getThreads = Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
+  private static final MethodHandle getThreads = getThreadsMethodHandle();
 
   public static @NotNull Map<String, Thread> getThreads() {
     Thread[] threads;
     try {
       // faster than Thread.getAllStackTraces().keySet()
-      threads = (Thread[])getThreads.invoke(null);
+      threads = (Thread[])getThreads.invokeExact();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw new RuntimeException(e);
     }
 
@@ -71,6 +73,7 @@ public final class ThreadLeakTracker {
       "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
       "dockerjava-netty",
       "External compiler",
+      FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
       FlushingDaemon.NAME,
       "HttpClient-",
@@ -92,6 +95,7 @@ public final class ThreadLeakTracker {
       "OkHttp ConnectionPool", // Dockers okhttp3.internal.connection.RealConnectionPool
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
       "Periodic tasks thread", // com.intellij.util.concurrency.AppDelayQueue.TransferThread
+      "process reaper", // Thread[#46,process reaper(pid7496),10,InnocuousThreadGroup] (since JDK-8279488 part of InnocuousThreadGroup)
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "RMI GC Daemon",
@@ -107,15 +111,7 @@ public final class ThreadLeakTracker {
       "VM Thread",
       "YJPAgent-Telemetry"
     );
-    List<String> sorted = new ArrayList<>(offenders);
-    sorted.sort(String::compareToIgnoreCase);
-    if (!offenders.equals(sorted)) {
-      String proper = String
-        .join(",\n", ContainerUtil.map(sorted, s -> '"' + s + '"'))
-        .replaceAll('"' + FlushingDaemon.NAME + '"', "FlushingDaemon.NAME")
-        .replaceAll('"' + ProcessIOExecutorService.POOLED_THREAD_PREFIX + '"', "ProcessIOExecutorService.POOLED_THREAD_PREFIX");
-      throw new AssertionError("Thread names must be sorted (for ease of maintenance). Something like this will do:\n" + proper);
-    }
+    validateWhitelistedThreads(offenders);
     wellKnownOffenders = new HashSet<>(offenders);
 
     try {
@@ -149,74 +145,84 @@ public final class ThreadLeakTracker {
       thread -> new Pair<>(thread, thread.getStackTrace())
     );
     for (Thread thread : after.values()) {
-      if (thread == Thread.currentThread()) {
-        continue;
-      }
-
-      ThreadGroup group = thread.getThreadGroup();
-      if (group != null && "system".equals(group.getName()) || !thread.isAlive()) {
-        continue;
-      }
-
-      long start = System.currentTimeMillis();
-      //if (thread.isAlive()) {
-      //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
-      //}
-      StackTraceElement[] traceBeforeWait = thread.getStackTrace();
-      if (shouldIgnore(thread, traceBeforeWait)) continue;
-      int WAIT_SEC = 10;
-      StackTraceElement[] stackTrace = traceBeforeWait;
-      while (System.currentTimeMillis() < start + WAIT_SEC * 1_000) {
-        // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
-        if (EDT.isCurrentThreadEdt()) {
-          UIUtil.dispatchAllInvocationEvents();
-        }
-        else {
-          UIUtil.pump();
-        }
-        // after some time, the submitted task can finish and the thread can become idle
-        stackTrace = thread.getStackTrace();
-        if (shouldIgnore(thread, stackTrace)) break;
-      }
-      //long elapsed = System.currentTimeMillis() - start;
-      //if (elapsed > 1_000) {
-      //  System.err.println("waited for " + thread + " for " + elapsed+"ms");
-      //}
-
-      // check once more because the thread name may be set via race
-      stackTraces.put(thread, stackTrace);
-      if (shouldIgnore(thread, stackTrace)) continue;
-
-      all.keySet().removeAll(after.keySet());
-      Map<Thread, StackTraceElement[]> otherStackTraces = ContainerUtil.map2Map(all.values(), t -> Pair.create(t, t.getStackTrace()));
-
-      String trace = PerformanceWatcher.printStacktrace("", thread, stackTrace);
-      String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
-
-      String internalDiagnostic = internalDiagnostic(stackTrace);
-
-      throw new AssertionError(
-        "Thread leaked: " + traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after " + WAIT_SEC + " seconds wait:) " + trace) +
-        internalDiagnostic +
-        "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
-        "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces)
-      );
+      waitForThread(thread, stackTraces, all, after);
     }
+  }
+
+  private static void waitForThread(@NotNull Thread thread,
+                                    @NotNull Map<Thread, StackTraceElement[]> stackTraces,
+                                    @NotNull Map<String, Thread> all,
+                                    @NotNull Map<String, Thread> after) {
+    if (!shouldWaitForThread(thread)) {
+      return;
+    }
+    long start = System.currentTimeMillis();
+    StackTraceElement[] traceBeforeWait = thread.getStackTrace();
+    if (shouldIgnore(thread, traceBeforeWait)) {
+      return;
+    }
+    int WAIT_SEC = 10;
+    long deadlineMs = start + TimeUnit.SECONDS.toMillis(WAIT_SEC);
+    StackTraceElement[] stackTrace = traceBeforeWait;
+    while (System.currentTimeMillis() < deadlineMs) {
+      // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
+      if (EDT.isCurrentThreadEdt()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      else {
+        UIUtil.pump();
+      }
+      // after some time, the submitted task can finish and the thread can become idle
+      stackTrace = thread.getStackTrace();
+      if (shouldIgnore(thread, stackTrace)) break;
+    }
+
+    // check once more because the thread name may be set via race
+    stackTraces.put(thread, stackTrace);
+    if (shouldIgnore(thread, stackTrace)) {
+      return;
+    }
+
+    all.keySet().removeAll(after.keySet());
+    Map<Thread, StackTraceElement[]> otherStackTraces = ContainerUtil.map2Map(all.values(), t -> Pair.create(t, t.getStackTrace()));
+
+    String trace = PerformanceWatcher.printStacktrace("", thread, stackTrace);
+    String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
+
+    String internalDiagnostic = internalDiagnostic(stackTrace);
+
+    throw new AssertionError(
+      "Thread leaked: " + traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after " + WAIT_SEC + " seconds wait:) " + trace) +
+      internalDiagnostic +
+      "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
+      "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces)
+    );
+  }
+
+  private static boolean shouldWaitForThread(@NotNull Thread thread) {
+    if (thread == Thread.currentThread()) {
+      return false;
+    }
+    ThreadGroup group = thread.getThreadGroup();
+    if (group != null && "system".equals(group.getName()) || !thread.isAlive()) {
+      return false;
+    }
+    return true;
   }
 
   private static boolean shouldIgnore(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     if (!thread.isAlive()) return true;
+    if (stackTrace.length == 0) return true;
     if (isWellKnownOffender(thread.getName())) return true;
 
-    if (stackTrace.length == 0) {
-      return true; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
-    }
     return isIdleApplicationPoolThread(stackTrace)
            || isIdleCommonPoolThread(thread, stackTrace)
            || isFutureTaskAboutToFinish(stackTrace)
            || isIdleDefaultCoroutineExecutorThread(thread, stackTrace)
            || isCoroutineSchedulerPoolThread(thread, stackTrace)
-           || isKotlinCIOSelector(stackTrace);
+           || isKotlinCIOSelector(stackTrace)
+           || isStarterTestFramework(stackTrace)
+           || isJMXRemoteCall(stackTrace);
   }
 
   private static boolean isWellKnownOffender(@NotNull String threadName) {
@@ -319,6 +325,37 @@ public final class ThreadLeakTracker {
     return insideCpuWorkerIdle;
   }
 
+  /**
+   * Starter framework [intellij.ide.starter] / [intellij.ide.starter.extended] register its own JUnit listeners.
+   * Order of execution of listeners isn't defined, so when thread leak detector detects a leak the listener from starter
+   * might not have a chance to clean up after tests.
+   */
+  private static boolean isStarterTestFramework(StackTraceElement @NotNull [] stackTrace) {
+    // java.lang.AssertionError: Thread leaked: Thread[Redirect stderr,5,main] (alive) RUNNABLE
+    //--- its stacktrace:
+    // ...
+    // at app//com.intellij.ide.starter.process.exec.ProcessExecutor$redirectProcessOutput$1.invoke(ProcessExecutor.kt:40)
+    // at app//kotlin.concurrent.ThreadsKt$thread$thread$1.run(Thread.kt:30)
+
+    return ContainerUtil.exists(
+      stackTrace,
+      element -> element.getClassName().contains("com.intellij.ide.starter")
+    );
+  }
+
+  /**
+   * com.intellij.driver.client.* is using JMX. That might lead to long-living tasks.
+   */
+  private static boolean isJMXRemoteCall(StackTraceElement @NotNull [] stackTrace) {
+    // Thread leaked: Thread[JMX client heartbeat 3,5,main] (alive) TIMED_WAITING
+    // --- its stacktrace:
+    // at java.base@17.0.9/java.lang.Thread.sleep(Native Method)
+    // at java.management@17.0.9/com.sun.jmx.remote.internal.ClientCommunicatorAdmin$Checker.run(ClientCommunicatorAdmin.java:180)
+    // at java.base@17.0.9/java.lang.Thread.run(Thread.java:840)
+
+    return ContainerUtil.exists(stackTrace, element -> element.getClassName().contains("com.sun.jmx.remote"));
+  }
+
   private static @NotNull CharSequence dumpThreadsToString(
     @NotNull Map<String, Thread> after,
     @NotNull Map<Thread, StackTraceElement[]> stackTraces
@@ -348,5 +385,28 @@ public final class ThreadLeakTracker {
              " . " + stackTrace[2].getMethodName() +
              " : " + stackTrace[2].getMethodName().equals("finishCompletion") +
              ")";
+  }
+
+  private static @NotNull MethodHandle getThreadsMethodHandle() {
+    try {
+      return MethodHandles.privateLookupIn(Thread.class, MethodHandles.lookup())
+        .findStatic(Thread.class, "getThreads", MethodType.methodType(Thread[].class));
+    }
+    catch (Throwable e) {
+      throw new IllegalStateException("Unable to access the Thread#getThreads method", e);
+    }
+  }
+
+  private static void validateWhitelistedThreads(@NotNull List<String> offenders) {
+    List<String> sorted = new ArrayList<>(offenders);
+    sorted.sort(String::compareToIgnoreCase);
+    if (offenders.equals(sorted)) {
+      return;
+    }
+    String proper = String
+      .join(",\n", ContainerUtil.map(sorted, s -> '"' + s + '"'))
+      .replaceAll('"' + FlushingDaemon.NAME + '"', "FlushingDaemon.NAME")
+      .replaceAll('"' + ProcessIOExecutorService.POOLED_THREAD_PREFIX + '"', "ProcessIOExecutorService.POOLED_THREAD_PREFIX");
+    throw new AssertionError("Thread names must be sorted (for ease of maintenance). Something like this will do:\n" + proper);
   }
 }

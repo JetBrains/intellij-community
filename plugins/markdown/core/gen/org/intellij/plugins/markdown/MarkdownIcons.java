@@ -16,26 +16,26 @@ public final class MarkdownIcons {
   }
 
   public static final class EditorActions {
-    /** 16x16 */ public static final @NotNull Icon AddColumnLeft = load("icons/editor_actions/addColumnLeft.svg", 234491167, 2);
-    /** 16x16 */ public static final @NotNull Icon AddColumnRight = load("icons/editor_actions/addColumnRight.svg", -503230524, 2);
-    /** 16x16 */ public static final @NotNull Icon AddRowAbove = load("icons/editor_actions/addRowAbove.svg", -1232277300, 2);
-    /** 16x16 */ public static final @NotNull Icon AddRowBelow = load("icons/editor_actions/addRowBelow.svg", 1730611292, 2);
-    /** 16x16 */ public static final @NotNull Icon Bold = load("icons/editor_actions/Bold.svg", -88274479, 2);
-    /** 16x16 */ public static final @NotNull Icon BulletList = load("icons/editor_actions/bulletList.svg", -1306355408, 2);
-    /** 16x16 */ public static final @NotNull Icon CenterAlign = load("icons/editor_actions/centerAlign.svg", -413319848, 2);
-    /** 16x16 */ public static final @NotNull Icon CheckmarkList = load("icons/editor_actions/checkmarkList.svg", 557109355, 2);
-    /** 16x16 */ public static final @NotNull Icon Code_span = load("icons/editor_actions/Code_span.svg", -323658899, 2);
-    /** 16x16 */ public static final @NotNull Icon Header_level_down = load("icons/editor_actions/Header_level_down.svg", 1583498872, 2);
-    /** 16x16 */ public static final @NotNull Icon Header_level_up = load("icons/editor_actions/Header_level_up.svg", -1100832401, 2);
-    /** 16x16 */ public static final @NotNull Icon Italic = load("icons/editor_actions/Italic.svg", -1757955022, 2);
-    /** 16x16 */ public static final @NotNull Icon LeftAlign = load("icons/editor_actions/leftAlign.svg", -1654216047, 2);
-    /** 16x16 */ public static final @NotNull Icon Link = load("icons/editor_actions/Link.svg", -355900852, 2);
-    /** 16x16 */ public static final @NotNull Icon NumberedList = load("icons/editor_actions/numberedList.svg", 1854865041, 2);
-    /** 16x16 */ public static final @NotNull Icon RightAlign = load("icons/editor_actions/rightAlign.svg", 884120646, 2);
-    /** 16x16 */ public static final @NotNull Icon Strike_through = load("icons/editor_actions/Strike_through.svg", -1277288126, 2);
-    /** 16x16 */ public static final @NotNull Icon Table = load("icons/editor_actions/table.svg", 721373105, 2);
+    /** 16x16 */ public static final @NotNull Icon AddColumnLeft = load("icons/editor_actions/addColumnLeft.svg", 1600544429, 2);
+    /** 16x16 */ public static final @NotNull Icon AddColumnRight = load("icons/editor_actions/addColumnRight.svg", -928503198, 2);
+    /** 16x16 */ public static final @NotNull Icon AddRowAbove = load("icons/editor_actions/addRowAbove.svg", -1135327274, 2);
+    /** 16x16 */ public static final @NotNull Icon AddRowBelow = load("icons/editor_actions/addRowBelow.svg", -144109156, 2);
+    /** 16x16 */ public static final @NotNull Icon Bold = load("icons/editor_actions/Bold.svg", 1113796502, 2);
+    /** 16x16 */ public static final @NotNull Icon BulletList = load("icons/editor_actions/bulletList.svg", -237954291, 2);
+    /** 16x16 */ public static final @NotNull Icon CenterAlign = load("icons/editor_actions/centerAlign.svg", 669294033, 2);
+    /** 16x16 */ public static final @NotNull Icon CheckmarkList = load("icons/editor_actions/checkmarkList.svg", 470139305, 2);
+    /** 16x16 */ public static final @NotNull Icon Code_span = load("icons/editor_actions/Code_span.svg", 368492179, 2);
+    /** 16x16 */ public static final @NotNull Icon Header_level_down = load("icons/editor_actions/Header_level_down.svg", -1433728030, 2);
+    /** 16x16 */ public static final @NotNull Icon Header_level_up = load("icons/editor_actions/Header_level_up.svg", -524853215, 2);
+    /** 16x16 */ public static final @NotNull Icon Italic = load("icons/editor_actions/Italic.svg", -1040589874, 2);
+    /** 16x16 */ public static final @NotNull Icon LeftAlign = load("icons/editor_actions/leftAlign.svg", -194323511, 2);
+    /** 16x16 */ public static final @NotNull Icon Link = load("icons/editor_actions/Link.svg", -861207690, 2);
+    /** 16x16 */ public static final @NotNull Icon NumberedList = load("icons/editor_actions/numberedList.svg", -311192714, 2);
+    /** 16x16 */ public static final @NotNull Icon RightAlign = load("icons/editor_actions/rightAlign.svg", 884734930, 2);
+    /** 16x16 */ public static final @NotNull Icon Strike_through = load("icons/editor_actions/Strike_through.svg", 438972438, 2);
+    /** 16x16 */ public static final @NotNull Icon Table = load("icons/editor_actions/table.svg", -231839910, 2);
   }
 
-  /** 12x12 */ public static final @NotNull Icon ImageGutter = load("icons/imageGutter.svg", -1724000074, 2);
-  /** 16x16 */ public static final @NotNull Icon MarkdownPlugin = load("icons/MarkdownPlugin.svg", 1074880643, 0);
+  /** 12x12 */ public static final @NotNull Icon ImageGutter = load("icons/imageGutter.svg", 2010654469, 2);
+  /** 16x16 */ public static final @NotNull Icon MarkdownPlugin = load("icons/MarkdownPlugin.svg", -1740905249, 0);
 }

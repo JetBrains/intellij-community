@@ -3,7 +3,6 @@
 
 package com.intellij.openapi.observable.util
 
-import java.util.concurrent.atomic.AtomicBoolean
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -17,6 +16,7 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
@@ -181,14 +181,14 @@ fun <T, C : JList<T>> C.bind(property: ObservableMutableProperty<T?>): C = apply
   }
 }
 
-fun <T, C : JTree> C.bind(property: ObservableProperty<T?>) = apply {
+fun <T, C : JTree> C.bind(property: ObservableProperty<T?>): C = apply {
   selectionPath = model.getTreePath(property.get())
   property.afterChange {
     selectionPath = model.getTreePath(it)
   }
 }
 
-fun <T, C : JTree> C.bind(property: ObservableMutableProperty<T?>) = apply {
+fun <T, C : JTree> C.bind(property: ObservableMutableProperty<T?>): C = apply {
   selectionPath = model.getTreePath(property.get())
   val mutex = AtomicBoolean()
   property.afterChange {

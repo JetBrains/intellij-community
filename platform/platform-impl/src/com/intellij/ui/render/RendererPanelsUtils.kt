@@ -2,26 +2,23 @@
 package com.intellij.ui.render
 
 import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.Constraints
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.dsl.listCellRenderer.stripHorizontalInsets
 import com.intellij.ui.popup.list.SelectablePanel
-import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.Insets
+import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.border.EmptyBorder
 import kotlin.math.max
 
 /**
- * RendererPanelsUtils and panels like [IconCompCompPanel], [IconCompOptionalCompPanel] etc are dedicated to build
+ * RendererPanelsUtils and panels like [IconCompOptionalCompPanel] etc are dedicated to build
  * standard simple renderers, which should cover most single-lined cases. Below are the reasons why use renderers from this file:
  *
  * 1. There are many similar renderers based on different layouts. It's hard to support them all and there are many duplicated code
@@ -44,7 +41,7 @@ import kotlin.math.max
 class RendererPanelsUtils {
 
   companion object {
-    internal const val iconTextUnscaledGap = 4
+    internal const val iconTextUnscaledGap: Int = 4
 
     /**
      * Gap between icon and related text. Can be extracted into a separate UI constant later if needed
@@ -52,58 +49,18 @@ class RendererPanelsUtils {
     @JvmStatic
     val iconTextGap: Int get() = JBUI.scale(iconTextUnscaledGap)
 
-    /**
-     * Calculate width of all non-resizeable components and gaps in the panel. Works only if layout is
-     * [GridLayout] and there is only one row. Throws exception otherwise
-     */
-    @JvmStatic
-    fun calculateNonResizeableWidth(panel: JPanel): Int {
-      val layout = panel.layout as GridLayout
-      val insets = panel.insets
-      var result = insets.left + insets.right
-
-      for (component in panel.components) {
-        val constraint = layout.getConstraints(component as JComponent)!!
-        if (constraint.y != 0) {
-          throw Exception("Multiple rows are not supported")
-        }
-
-        if (constraint.grid !== layout.rootGrid) {
-          throw Exception("Sub-grids are not supported")
-        }
-
-        result += constraint.gaps.width
-
-        if (constraint.x !in layout.rootGrid.resizableColumns) {
-          result += max(component.minimumSize.width, component.preferredSize.width)
-        }
-      }
-
-      return result
-    }
   }
 }
 
 /**
  * Gap between centered and right component. Can be changed by a separate UI constant later if needed
  */
-private const val centerRightGap = 4
-
-open class IconCompCompPanel<C1 : JComponent, C2 : JComponent>(val center: C1, val right: C2) : IconPanel() {
-
-  init {
-    resetHorizontalInsets(center, right)
-
-    createBuilder(this)
-      .cell(iconLabel, baselineAlign = false, gaps = UnscaledGaps(right = RendererPanelsUtils.iconTextUnscaledGap))
-      .cell(center, resizableColumn = true)
-      .cell(right, gaps = UnscaledGaps(left = centerRightGap))
-  }
-}
+private const val CENTER_RIGHT_GAP = 4
 
 /**
  * Should be used for in cases one label, label with icon, and other similar re
  */
+@Deprecated("Use com.intellij.ui.dsl.listCellRenderer.BuilderKt.listCellRenderer instead")
 open class IconCompOptionalCompPanel<C1 : JComponent>(
   val center: C1) : IconPanel() {
 
@@ -118,28 +75,39 @@ open class IconCompOptionalCompPanel<C1 : JComponent>(
       }
 
       if (value != null) {
-        resetHorizontalInsets(value)
-        add(value, Constraints((layout as GridLayout).rootGrid, 2, 0, baselineAlign = true, gaps = UnscaledGaps(left = centerRightGap)))
+        stripHorizontalInsets(value)
+        content.add(value, Constraints((content.layout as GridLayout).rootGrid, 2, 0, baselineAlign = true,
+                                       gaps = UnscaledGaps(left = CENTER_RIGHT_GAP)))
       }
 
       field = value
     }
 
   init {
-    resetHorizontalInsets(center)
+    stripHorizontalInsets(center)
 
-    createBuilder(this)
+    createBuilder()
       .cell(iconLabel, baselineAlign = false, gaps = UnscaledGaps(right = RendererPanelsUtils.iconTextUnscaledGap))
       .cell(center, resizableColumn = true)
   }
 }
 
+@Deprecated("Use com.intellij.ui.dsl.listCellRenderer.BuilderKt.listCellRenderer instead")
 open class IconPanel : SelectablePanel() {
 
-  protected val iconLabel = JLabel()
+  /**
+   * Content panel allows to trim components that could go outside of selection
+   */
+  protected val content: JPanel = JPanel(GridLayout())
+  protected val iconLabel: JLabel = JLabel()
 
   init {
-    resetHorizontalInsets(iconLabel)
+    stripHorizontalInsets(iconLabel)
+    content.isOpaque = false
+    layout = BorderLayout()
+
+    @Suppress("LeakingThis")
+    add(content, BorderLayout.CENTER)
   }
 
   open fun reset() {
@@ -154,32 +122,38 @@ open class IconPanel : SelectablePanel() {
     iconLabel.isVisible = icon != null
     iconLabel.icon = icon
   }
-}
 
-/**
- * Resets any horizontal insets ([EmptyBorder], [JBEmptyBorder]) and ipads ([SimpleColoredComponent.getIpad])
- */
-fun resetHorizontalInsets(vararg components: JComponent) {
-  for (component in components) {
-    component.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+  /**
+   * Calculate width of all non-resizeable components and gaps in the panel
+   */
+  fun calculateNonResizeableWidth(): Int {
+    val contentLayout = content.layout as GridLayout
+    val insets = insets
+    var result = insets.left + insets.right
 
-    val border = component.border
-    if (border != null && (border.javaClass === EmptyBorder::class.java || border.javaClass === JBEmptyBorder::class.java)) {
-      val insets = (border as EmptyBorder).borderInsets
-      component.border = EmptyBorder(insets.top, 0, insets.bottom, 0)
+    for (component in content.components) {
+      val constraint = contentLayout.getConstraints(component as JComponent)!!
+      if (constraint.y != 0) {
+        throw Exception("Multiple rows are not supported")
+      }
+
+      if (constraint.grid !== contentLayout.rootGrid) {
+        throw Exception("Sub-grids are not supported")
+      }
+
+      result += constraint.gaps.width
+
+      if (constraint.x !in contentLayout.rootGrid.resizableColumns) {
+        result += max(component.minimumSize.width, component.preferredSize.width)
+      }
     }
 
-    if (component is SimpleColoredComponent) {
-      component.ipad = Insets(component.ipad.top, 0, component.ipad.bottom, 0)
-    }
+    return result
   }
-}
 
-private fun createBuilder(panel: JPanel): RowsGridBuilder {
-  panel.layout = GridLayout()
-  val result = RowsGridBuilder(panel)
-  result
-    .defaultBaselineAlign(true)
-    .resizableRow()
-  return result
+  protected fun createBuilder(): RowsGridBuilder {
+    return RowsGridBuilder(content)
+      .defaultBaselineAlign(true)
+      .resizableRow()
+  }
 }

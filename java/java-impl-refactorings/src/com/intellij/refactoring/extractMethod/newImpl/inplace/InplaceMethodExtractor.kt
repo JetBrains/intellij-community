@@ -62,7 +62,7 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   private val extractor: DuplicatesMethodExtractor = createExtractor()
 
-  private val editorState = EditorState(editor)
+  private val editorState = EditorState(file.project, editor)
 
   private var methodIdentifierRange: RangeMarker? = null
 
@@ -79,20 +79,28 @@ class InplaceMethodExtractor(private val editor: Editor,
       val elements = ExtractSelector().suggestElementsToExtract(file, range)
       MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
       val (callElements, method) = extractor.extract()
-      val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)
-                           ?: throw IllegalStateException()
+
+      val callExpression = PsiTreeUtil.findChildOfType(callElements.firstOrNull(), PsiMethodCallExpression::class.java, false)
+      val callIdentifier = callExpression?.methodExpression?.referenceNameElement
+      callIdentifierRange = if (callIdentifier != null) createGreedyRangeMarker(editor.document, callIdentifier.textRange) else null
+      val callRange = if (callElements.isNotEmpty()) {
+        TextRange(callElements.first().textRange.startOffset, callElements.last().textRange.endOffset)
+      } else {
+        null
+      }
+
       val methodIdentifier = method.nameIdentifier ?: throw IllegalStateException()
-      val callIdentifier = callExpression.methodExpression.referenceNameElement ?: throw IllegalStateException()
-
       methodIdentifierRange = createGreedyRangeMarker(editor.document, methodIdentifier.textRange)
-      callIdentifierRange = createGreedyRangeMarker(editor.document, callIdentifier.textRange)
-
-      val callRange = TextRange(callElements.first().textRange.startOffset, callElements.last().textRange.endOffset)
       val codePreview = createPreview(editor, method.textRange, methodIdentifier.textRange.endOffset, callRange,
-                                      callIdentifier.textRange.endOffset)
+                                      callIdentifierRange?.textRange?.endOffset)
       Disposer.register(disposable, codePreview)
 
-      val templateField = TemplateField(callIdentifier.textRange, listOf(methodIdentifier.textRange))
+      val templateField = if (callIdentifier != null) {
+        TemplateField(callIdentifier.textRange, listOf(methodIdentifier.textRange))
+      } else {
+        TemplateField(methodIdentifier.textRange)
+      }
+      val templateFieldWithSettings = templateField
         .withCompletionNames(suggestedNames.toList())
         .withCompletionHint(InplaceRefactoring.getPopupOptionsAdvertisement())
         .withValidation { variableRange -> checkReferenceIdentifier(editor, file, variableRange) }
@@ -111,7 +119,7 @@ class InplaceMethodExtractor(private val editor: Editor,
           extractor.replaceDuplicates(editor, extractedMethod)
         }
         .disposeWithTemplate(disposable)
-        .createTemplate(file, listOf(templateField))
+        .createTemplate(file, listOf(templateFieldWithSettings))
       afterTemplateStart(templateState)
     } catch (e: Throwable) {
       Disposer.dispose(disposable)
@@ -177,6 +185,7 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun restartInplace() {
+    val startTime = System.currentTimeMillis()
     val identifierRange = callIdentifierRange?.range
     val methodName = if (identifierRange != null) editor.document.getText(identifierRange) else null
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
@@ -187,6 +196,8 @@ class InplaceMethodExtractor(private val editor: Editor,
         inplaceExtractor.setMethodName(methodName)
       }
     }
+    val endTime = System.currentTimeMillis()
+    InplaceExtractMethodCollector.previewUpdated.log(endTime - startTime)
   }
 
 }

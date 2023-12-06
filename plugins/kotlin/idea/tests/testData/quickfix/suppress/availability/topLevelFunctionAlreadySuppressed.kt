@@ -1,4 +1,4 @@
 // "class com.intellij.codeInspection.SuppressIntentionAction" "false"
 
-@Suppress("REDUNDANT_NULLABLE")
-fun foo(): String?<caret>? = null
+@Suppress("DIVISION_BY_ZERO")
+fun local() = 2 / <caret>0

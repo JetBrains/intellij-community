@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -36,7 +36,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   private volatile PsiFile myPsiFile;
   private static final AtomicReferenceFieldUpdater<SingleRootFileViewProvider, PsiFile>
     myPsiFileUpdater = AtomicReferenceFieldUpdater.newUpdater(SingleRootFileViewProvider.class, PsiFile.class, "myPsiFile");
-  @NotNull private final Language myBaseLanguage;
+  private final @NotNull Language myBaseLanguage;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
@@ -68,8 +68,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  @NotNull
-  public Language getBaseLanguage() {
+  public @NotNull Language getBaseLanguage() {
     return myBaseLanguage;
   }
 
@@ -83,20 +82,17 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  @NotNull
-  public Set<Language> getLanguages() {
+  public @NotNull Set<Language> getLanguages() {
     return Collections.singleton(getBaseLanguage());
   }
 
   @Override
-  @NotNull
-  public List<PsiFile> getAllFiles() {
+  public @NotNull List<PsiFile> getAllFiles() {
     return ContainerUtil.createMaybeSingletonList(getPsi(getBaseLanguage()));
   }
 
   @Override
-  @Nullable
-  protected PsiFile getPsiInner(@NotNull Language target) {
+  protected @Nullable PsiFile getPsiInner(@NotNull Language target) {
     if (target != getBaseLanguage()) {
       return null;
     }
@@ -130,9 +126,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     return ObjectUtils.nullizeIfDefaultValue(myPsiFile, PsiUtilCore.NULL_PSI_FILE);
   }
 
-  @NotNull
   @Override
-  public final List<PsiFile> getCachedPsiFiles() {
+  public final @NotNull List<PsiFile> getCachedPsiFiles() {
     return ContainerUtil.createMaybeSingletonList(getCachedPsi(getBaseLanguage()));
   }
 
@@ -203,7 +198,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
 
   public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, long maxBytes) {
     if (vFile instanceof LightVirtualFile && !vFile.getFileType().isBinary()) {
-      // This is optimization in order to avoid conversion of [large] file contents to bytes
+      // this is an optimization in order to avoid conversion of [large] file contents to bytes
       int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
       if (lengthInChars < maxBytes / 2) {
         return false;
@@ -216,9 +211,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     return vFile.getLength() > maxBytes;
   }
 
-  @NotNull
   @Override
-  public SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
+  public @NotNull SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
     return new SingleRootFileViewProvider(getManager(), copy, false, getBaseLanguage());
   }
 

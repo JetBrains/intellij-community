@@ -148,7 +148,7 @@ internal class InterfaceReader(private val typeToTypeHandler: LinkedHashMap<Clas
             if (jsonField != null && jsonField.allowAnyPrimitiveValue) {
               return RAW_STRING_PARSER
             }
-            else if ((member?.returnType?.isMarkedNullable == true) || method.getAnnotation<Optional>(Optional::class.java) != null) {
+            else if ((member?.returnType?.isMarkedNullable == true) || method.getAnnotation(Optional::class.java) != null) {
               return NULLABLE_STRING_PARSER
             }
           }
@@ -161,7 +161,7 @@ internal class InterfaceReader(private val typeToTypeHandler: LinkedHashMap<Clas
         type.isEnum -> EnumReader(type as Class<Enum<*>>)
         else -> {
           val ref = getTypeRef(type)
-          ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(JsonField::class.java)?.primitiveValue, member?.returnType?.isMarkedNullable ?: false)
+          ObjectValueReader(ref, isSubtyping, method?.getAnnotation(JsonField::class.java)?.primitiveValue, member?.returnType?.isMarkedNullable ?: false)
         }
       }
     }

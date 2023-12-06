@@ -13,8 +13,8 @@ class MainController {
 
 class Wrapper<T> {
   private T data;
-  public static <T> Wrapper<T> wrap(T t) {
-    Wrapper<T> res = new Wrapper<>();
+  public static <T1> Wrapper<T1> wrap(T1 t) {
+    Wrapper<T1> res = new Wrapper<>();
     res.data = t;
     return res;
   }

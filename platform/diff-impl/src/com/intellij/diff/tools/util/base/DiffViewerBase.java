@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
@@ -103,7 +104,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @RequiresEdt
   public final void dispose() {
     if (myDisposed) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myDisposed) return;
@@ -132,7 +133,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     abortRediff();
 
-    if (getComponent().isShowing()) {
+    if (UIUtil.isShowing(getComponent())) {
       myTaskAlarm.addRequest(this::rediff, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     }
   }

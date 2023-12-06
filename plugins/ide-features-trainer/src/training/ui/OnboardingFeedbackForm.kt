@@ -1,12 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
-import com.intellij.feedback.common.FEEDBACK_REPORT_ID_KEY
-import com.intellij.feedback.common.FeedbackRequestType
-import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
-import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
-import com.intellij.feedback.common.submitGeneralFeedback
 import com.intellij.icons.AllIcons
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.internal.statistic.local.ActionsLocalSummary
@@ -14,15 +8,16 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
+import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.impl.*
+import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.JBColor
@@ -33,7 +28,6 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.*
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil
@@ -77,14 +71,8 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
                                                              NotificationType.INFORMATION)
   notification.addAction(object : NotificationAction(LearnBundle.message("onboarding.feedback.notification.action")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      val feedbackHasBeenSent = showOnboardingLessonFeedbackForm(project, onboardingFeedbackData, true)
       notification.expire()
-      if (feedbackHasBeenSent) {
-        invokeLater {
-          // It is needed to show "Thank you" notification
-          (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
-        }
-      }
+      showOnboardingLessonFeedbackForm(project, onboardingFeedbackData, true)
     }
   })
   notification.notify(project)
@@ -144,14 +132,14 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     put("like_vote", likenessToString(likenessResult()))
   }
 
-  val systemInfoData = CommonFeedbackSystemInfoData.getCurrentData()
+  val systemInfoData = CommonFeedbackSystemData.getCurrentData()
 
   val recentProjectsNumber = RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size
   val actionsNumber = service<ActionsLocalSummary>().getActionsStats().keys.size
 
   val emailCheckBox = JBCheckBox(LearnBundle.message("onboarding.feedback.email.consent"))
 
-  val jLabel = JLabel(ApplicationBundle.message("feedback.form.email"))
+  val jLabel = JLabel(LearnBundle.message("onboarding.feedback.form.email"))
   jLabel.isEnabled = false
   val emailTextField = JBTextField(LicensingFacade.INSTANCE?.getLicenseeEmail() ?: "")
   emailTextField.disabledTextColor = UIUtil.getComboBoxDisabledForeground()
@@ -224,7 +212,6 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, onboardingFeedbackData.feedbackReportId)
       put("format_version", FEEDBACK_JSON_VERSION + onboardingFeedbackData.additionalFeedbackFormatVersion)
-      put("email", if (emailCheckBox.isSelected) emailTextField.text else "")
       for (function in saver) {
         function()
       }
@@ -236,10 +223,19 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     }
 
     val description = getShortDescription(likenessResult(), technicalIssuesOption, freeForm)
-    submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, description,
-                          onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData),
-                          feedbackRequestType = getFeedbackRequestType()
+    val feedbackData = FeedbackRequestDataWithDetailedAnswer(
+      (if (emailCheckBox.isSelected) emailTextField.text else ""),
+      onboardingFeedbackData.reportTitle,
+      description,
+      DEFAULT_FEEDBACK_CONSENT_ID,
+      true,
+      emptyList(),
+      onboardingFeedbackData.feedbackReportId,
+      collectedData
     )
+
+    submitFeedback(feedbackData, {}, {}, getFeedbackRequestType())
+    ThanksForFeedbackNotification().notify(project)
   }
   StatisticBase.logOnboardingFeedbackDialogResult(
     place = getFeedbackEntryPlace(project),
@@ -277,7 +273,7 @@ private fun likenessToString(likenessResult: FeedbackLikenessAnswer) = when (lik
 }
 
 private fun showSystemData(project: Project?,
-                           systemInfoData: CommonFeedbackSystemInfoData,
+                           systemInfoData: CommonFeedbackSystemData,
                            onboardingFeedbackData: OnboardingFeedbackData?,
                            recentProjectsNumber: Int,
                            actionsNumber: Int) {

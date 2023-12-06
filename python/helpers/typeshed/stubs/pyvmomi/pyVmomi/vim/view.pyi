@@ -1,8 +1,8 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from pyVmomi.vim import ManagedEntity
 
-def __getattr__(name: str) -> Any: ...  # incomplete
+def __getattr__(name: str) -> Incomplete: ...
 
 class ContainerView:
     def Destroy(self) -> None: ...

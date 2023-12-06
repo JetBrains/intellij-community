@@ -1,14 +1,18 @@
 package test
 
 internal open class ClassWithStatics {
-    fun instanceMethod() {}
+    fun instanceMethod() {
+    }
 
     companion object {
         @JvmStatic
-        fun staticMethod(p: Int) {}
-        const val staticField = 1
+        fun staticMethod(p: Int) {
+        }
+
+        const val staticField: Int = 1
         @JvmField
-        var staticNonFinalField = 1
-        var value = 0
+        var staticNonFinalField: Int = 1
+
+        var value: Int = 0
     }
 }

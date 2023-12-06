@@ -332,7 +332,7 @@ public class XPathEvalAction extends XPathAction {
      * @param project The project to take the history from
      */
     @Nullable
-    private EvalExpressionDialog.Context inputXPathExpression(final Project project, XmlElement contextNode) {
+    private static EvalExpressionDialog.Context inputXPathExpression(final Project project, XmlElement contextNode) {
         final XPathProjectComponent pc = XPathProjectComponent.getInstance(project);
         LOG.assertTrue(pc != null);
 
@@ -363,7 +363,7 @@ public class XPathEvalAction extends XPathAction {
      *
      * @param editor The editor object to apply the highlighting to
      */
-    private void highlightResult(XmlElement contextNode, @NotNull final Editor editor, final List<?> list) {
+    private static void highlightResult(XmlElement contextNode, @NotNull final Editor editor, final List<?> list) {
 
         final Config cfg = XPathAppComponent.getInstance().getConfig();
         int lowestOffset = Integer.MAX_VALUE;
@@ -429,20 +429,6 @@ public class XPathEvalAction extends XPathAction {
         @Override
         public ItemPresentation getPresentation() {
             return myItemPresentation;
-        }
-
-        @Override
-        public void navigate(boolean requestFocus) {
-        }
-
-        @Override
-        public boolean canNavigate() {
-            return false;
-        }
-
-        @Override
-        public boolean canNavigateToSource() {
-            return false;
         }
     }
 

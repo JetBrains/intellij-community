@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeBundle;
@@ -10,10 +10,10 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public final class DarculaLookAndFeelInfo extends UIManager.LookAndFeelInfo {
-  @NonNls public static final String CLASS_NAME = DarculaLaf.class.getName();
+  public static final @NonNls String CLASS_NAME = DarculaLaf.class.getName();
 
   public DarculaLookAndFeelInfo() {
-    super(IdeBundle.message("idea.dark.look.and.feel"), CLASS_NAME);
+    super(IdeBundle.message("darcula.theme.name"), CLASS_NAME);
   }
 
   @Override

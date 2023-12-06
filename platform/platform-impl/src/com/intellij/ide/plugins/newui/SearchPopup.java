@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -13,6 +14,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +28,7 @@ import java.awt.event.ComponentEvent;
 /**
  * @author Alexander Lobas
  */
-public class SearchPopup extends ComponentAdapter implements CaretListener {
+public final class SearchPopup extends ComponentAdapter implements CaretListener {
   public final Type type;
 
   private final JBPopupListener myListener;
@@ -73,7 +75,11 @@ public class SearchPopup extends ComponentAdapter implements CaretListener {
 
     //noinspection unchecked,deprecation
     myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list = new JBList<>(model))
-      .setMovable(false).setResizable(false).setRequestFocus(false)
+      .setMovable(false).setResizable(false)
+      // In general, we want to keep focus on the text field, so that popup works as autocompletion options, and it's still possible
+      // to type more characters. But for screen readers, popup without focus is not accessible, therefore we need to move focus there.
+      .setRequestFocus(ScreenReader.isActive())
+      .setAccessibleName(IdeBundle.message("plugin.manager.search.filters.popup.accessible.name"))
       .setItemChosenCallback(callback).setFont(myEditor.getFont())
       .setRenderer(renderer).createPopup();
     myEvent = new LightweightWindowEvent(myPopup);
@@ -101,8 +107,7 @@ public class SearchPopup extends ComponentAdapter implements CaretListener {
     return JBUIScale.scale(i);
   }
 
-  @NotNull
-  private Point getPopupLocation() {
+  private @NotNull Point getPopupLocation() {
     Point location;
     try {
       Rectangle view = myEditor.modelToView(caretPosition);
@@ -131,7 +136,9 @@ public class SearchPopup extends ComponentAdapter implements CaretListener {
 
   private void show() {
     if (myPopup != null) {
-      list.clearSelection();
+      if (!ScreenReader.isActive()) {
+        list.clearSelection();
+      }
       myPopup.showInScreenCoordinates(myEditor, getPopupLocation());
     }
   }

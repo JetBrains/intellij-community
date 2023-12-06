@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
@@ -8,8 +7,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.cellvalidators.TableCellValidator;
+import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -32,6 +35,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -81,7 +85,20 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     setModel(myTableModel);
 
     TableColumnModel model = getColumnModel();
-    model.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MyTableRenderer<>(this));
+    model.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(
+      new ValidatingTableCellRendererWrapper(new MyTableRenderer<>(this)).withCellValidator(new TableCellValidator() {
+        @Override
+        public ValidationInfo validate(Object value, int row, int column) {
+          MemberInfoData data = getMemberInfoData(row);
+          if (data == null) return null;
+          return switch (data.problem) {
+            case MemberInfoModel.ERROR -> new ValidationInfo("");
+            case MemberInfoModel.WARNING -> new ValidationInfo("").asWarning();
+            default -> null;
+          };
+        }
+      })
+    );
     TableColumn checkBoxColumn = model.getColumn(CHECKED_COLUMN);
     TableUtil.setupCheckboxColumn(checkBoxColumn);
     checkBoxColumn.setCellRenderer(new MyBooleanRenderer<>(this));
@@ -99,6 +116,18 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     setIntercellSpacing(new Dimension(0, 0));
 
     new MyEnableDisableAction().register();
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
+        int row = getSelectedRow();
+        if (row < 0 || row >= myMemberInfos.size()) return false;
+        final M memberInfo = myMemberInfos.get(row);
+        memberInfo.setChecked(!memberInfo.isChecked());
+        fireMemberInfoChange(List.of(memberInfo));
+        myTableModel.fireTableDataChanged();
+        return true;
+      }
+    }.installOn(this);
     TableSpeedSearch.installOn(this);
   }
 
@@ -247,7 +276,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
   protected abstract Icon getOverrideIcon(M memberInfo);
 
-  private static class DefaultMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
+  private static final class DefaultMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
     @Override
     public boolean isMemberEnabled(M member) {
       return true;
@@ -289,7 +318,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
-  protected static class MyTableModel<T extends PsiElement, M extends MemberInfoBase<T>> extends AbstractTableModel {
+  protected static final class MyTableModel<T extends PsiElement, M extends MemberInfoBase<T>> extends AbstractTableModel {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
     public MyTableModel(AbstractMemberSelectionTable<T, M> table) {
@@ -312,7 +341,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
       if (columnIndex == CHECKED_COLUMN || columnIndex == ABSTRACT_COLUMN) {
         return Boolean.class;
       }
@@ -377,7 +406,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
-  private class MyEnableDisableAction extends EnableDisableAction {
+  private final class MyEnableDisableAction extends EnableDisableAction {
 
     @Override
     protected JTable getTable() {
@@ -412,7 +441,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   }
 
   private record MemberInfoData(@Nls String tooltip, Icon icon, boolean isEditable, int problem) {}
-  private static class MyTableRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends ColoredTableCellRenderer {
+  private static final class MyTableRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends ColoredTableCellRenderer {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
     MyTableRenderer(AbstractMemberSelectionTable<T, M> table) {
@@ -432,24 +461,15 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
         setIcon(AnimatedIcon.Default.INSTANCE);
         return;
       }
+
       setToolTipText(data.tooltip());
       setIcon(data.icon());
       setEnabled(data.isEditable());
-      if (value == null) return;
-
-      final int problem = data.problem();
-      Color c = null;
-      if (problem == MemberInfoModel.ERROR) {
-        c = JBColor.RED;
-      }
-      else if (problem == MemberInfoModel.WARNING && !isSelected) {
-        c = JBColor.BLUE;
-      }
-      append((String)value, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, c));
+      if (value instanceof @NlsSafe String s) append(s);
     }
   }
 
-  private static class MyBooleanRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends BooleanTableCellRenderer {
+  private static final class MyBooleanRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends BooleanTableCellRenderer {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
     MyBooleanRenderer(AbstractMemberSelectionTable<T, M> table) {

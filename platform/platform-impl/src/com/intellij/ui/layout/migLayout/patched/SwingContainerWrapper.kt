@@ -56,11 +56,11 @@ internal class SwingContainerWrapper(c: JComponent) : SwingComponentWrapper(c), 
     }
   }
 
-  override fun getComponentCount() = component.componentCount
+  override fun getComponentCount(): Int = component.componentCount
 
   override fun getLayout(): LayoutManager = component.layout
 
-  override fun isLeftToRight() = component.componentOrientation.isLeftToRight
+  override fun isLeftToRight(): Boolean = component.componentOrientation.isLeftToRight
 
   override fun paintDebugCell(x: Int, y: Int, width: Int, height: Int) {
     val c = component
@@ -75,8 +75,8 @@ internal class SwingContainerWrapper(c: JComponent) : SwingComponentWrapper(c), 
     g.drawRect(x, y, width - 1, height - 1)
   }
 
-  override fun getComponentType(disregardScrollPane: Boolean) = ComponentWrapper.TYPE_CONTAINER
+  override fun getComponentType(disregardScrollPane: Boolean): Int = ComponentWrapper.TYPE_CONTAINER
 
   // Removed for 2.3 because the parent.isValid() in MigLayout will catch this instead.
-  override fun getLayoutHashCode() = 0
+  override fun getLayoutHashCode(): Int = 0
 }

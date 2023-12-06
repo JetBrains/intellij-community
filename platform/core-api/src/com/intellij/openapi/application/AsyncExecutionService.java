@@ -19,20 +19,15 @@ public abstract class AsyncExecutionService {
    */
   @ScheduledForRemoval
   @Deprecated
-  @NotNull
-  protected abstract ExpirableExecutor createExecutor(@NotNull Executor executor);
+  protected abstract @NotNull ExpirableExecutor createExecutor(@NotNull Executor executor);
 
-  @NotNull
-  protected abstract AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState);
+  protected abstract @NotNull AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState);
 
-  @NotNull
-  protected abstract AppUIExecutor createWriteThreadExecutor(@NotNull ModalityState modalityState);
+  protected abstract @NotNull AppUIExecutor createWriteThreadExecutor(@NotNull ModalityState modalityState);
 
-  @NotNull
-  protected abstract <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<? extends T> computation);
+  protected abstract @NotNull <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<? extends T> computation);
 
-  @NotNull
-  static AsyncExecutionService getService() {
+  static @NotNull AsyncExecutionService getService() {
     return ApplicationManager.getApplication().getService(AsyncExecutionService.class);
   }
 }

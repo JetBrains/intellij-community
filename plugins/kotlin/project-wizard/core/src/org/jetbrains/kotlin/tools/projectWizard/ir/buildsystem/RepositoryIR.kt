@@ -16,9 +16,7 @@ interface RepositoryWrapper {
 fun <W : RepositoryWrapper> List<W>.distinctAndSorted() =
     distinctBy(RepositoryWrapper::repository)
         .sortedBy { it.repository.url }
-        .sortedBy { wrapper ->
-            if (wrapper.repository is DefaultRepository) 0 else 1
-        }
+        .sortedBy { wrapper -> wrapper.repository.order }
 
 data class RepositoryIR(override val repository: Repository) : BuildSystemIR, RepositoryWrapper {
     override fun BuildFilePrinter.render() = when (this) {

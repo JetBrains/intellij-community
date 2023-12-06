@@ -864,6 +864,16 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   }
 
   private record InjInfo(BaseInjection injection, CfgInfo cfgInfo, boolean bundled) {
+
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj;
+    }
+
+    @Override
+    public int hashCode() {
+      return System.identityHashCode(this);
+    }
   }
 
   private static List<InjInfo> getInjInfoList(final CfgInfo[] infos) {

@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -32,7 +33,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.Producer;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,9 +78,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!EditorModificationUtil.requestWriting(editor)) return;
 
-    DataContext context = dataId -> {
-      return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
-    };
+    DataContext context = CustomizedDataContext.create(dataContext, dataId ->
+      PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : null);
 
     final Project project = editor.getProject();
     final Document document = editor.getDocument();
@@ -127,7 +126,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
   }
 
-  private static class ProcessorAndData<Data extends TextBlockTransferableData> {
+  private static final class ProcessorAndData<Data extends TextBlockTransferableData> {
     final CopyPastePostProcessor<Data> processor;
     final @NotNull List<? extends Data> data;
 
@@ -252,9 +251,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     // For the `CopyPasteFoldingProcessor` it means that folding data is not valid and cannot be applied.
     final Ref<Boolean> skipIndentation = new Ref<>(pastedTextWasChanged ? Boolean.FALSE : null);
     for (ProcessorAndData<?> data : extraData) {
-      SlowOperations.allowSlowOperations(() -> {
-        data.process(project, editor, bounds, caretOffset, skipIndentation);
-      });
+      data.process(project, editor, bounds, caretOffset, skipIndentation);
     }
 
     boolean pastedTextContainsWhiteSpacesOnly =

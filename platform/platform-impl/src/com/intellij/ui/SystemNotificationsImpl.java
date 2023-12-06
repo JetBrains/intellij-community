@@ -30,12 +30,12 @@ public final class SystemNotificationsImpl extends SystemNotifications {
   }
 
   private static @Nullable Notifier getPlatformNotifier() {
-    if (!GraphicsUtil.isProjectorEnvironment()) {
+    if (!GraphicsUtil.isRemoteEnvironment()) {
       try {
         if (SystemInfo.isMac) {
           return MacOsNotifications.getInstance();
         }
-        else if (SystemInfo.isXWindow) {
+        else if (SystemInfo.isUnix) {
           return LibNotifyWrapper.getInstance();
         }
         else if (SystemInfo.isWin10OrNewer) {

@@ -3,7 +3,10 @@
 
 package com.jetbrains.python.sdk
 
-import com.intellij.execution.target.*
+import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
+import com.intellij.execution.target.TargetCustomToolWizardStep
+import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.execution.target.TargetEnvironmentWizard
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,6 +20,7 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.allowCreationTargetOfThisType
 import com.jetbrains.python.sdk.add.PyAddSdkDialog
+import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkDialog
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import java.util.function.Consumer
@@ -56,11 +60,14 @@ private class AddLocalInterpreterAction(private val project: Project,
       project,
       module,
       model.sdks.asList(),
-      Consumer {
-        if (it != null && model.findSdk(it.name) == null) {
-          model.addSdk(it)
-          model.apply()
-          onSdkCreated.accept(it)
+      Consumer {sdk ->
+        if (sdk != null) {
+          PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk)
+          if (model.findSdk(sdk.name) == null) {
+            model.addSdk(sdk)
+            model.apply()
+            onSdkCreated.accept(sdk)
+          }
         }
       }
     )
@@ -77,12 +84,13 @@ private class AddInterpreterOnTargetAction(private val project: Project,
     if (wizard != null && wizard.showAndGet()) {
       val model = PyConfigurableInterpreterList.getInstance(project).model
       val sdk = (wizard.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? Sdk
-      if (sdk != null && model.findSdk(sdk.name) == null) {
-        model.addSdk(sdk)
-
-
-        model.apply()
-        onSdkCreated.accept(sdk)
+      if (sdk != null) {
+        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk)
+        if (model.findSdk(sdk.name) == null) {
+          model.addSdk(sdk)
+          model.apply()
+          onSdkCreated.accept(sdk)
+        }
       }
     }
   }

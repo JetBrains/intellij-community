@@ -2,11 +2,13 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.ui.popup.JBPopup;
+import org.jetbrains.annotations.Nullable;
 
 public interface MorePopupAware {
   DataKey<MorePopupAware> KEY = DataKey.create("MorePopupAware");
   DataKey<MorePopupAware> KEY_TOOLWINDOW_TITLE = DataKey.create("MorePopupAwareToolWindowTitle");
 
   boolean canShowMorePopup();
-  void showMorePopup();
+  @Nullable JBPopup showMorePopup();
 }

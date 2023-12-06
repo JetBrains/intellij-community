@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerAndConfigurationSettings> implements
+public final class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerAndConfigurationSettings> implements
                                                                                                          TargetAwareRunConfigurationEditor {
 
   private final RunConfigurationFragmentedEditor<RunConfigurationBase<?>> myConfigurationEditor;
@@ -53,12 +53,14 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     myConfigurationEditor.targetChanged(targetName);
   }
 
+  @Override
   public boolean isSpecificallyModified() {
-    if (myRCStorageUi != null) {
-      return myRCStorageUi.isModified();
-    }
+    return myRCStorageUi != null && myRCStorageUi.isModified() || myConfigurationEditor.isSpecificallyModified();
+  }
 
-    return false;
+  @Override
+  public boolean isReadyForApply() {
+    return myConfigurationEditor.isReadyForApply();
   }
 
   @Override

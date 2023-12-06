@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig
 
 import com.intellij.BundleBase
@@ -22,12 +22,13 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.LineSeparator
 import org.ec4j.core.ResourceProperties
-import org.editorconfig.configmanagement.ConfigEncodingManager
-import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider
-import org.editorconfig.configmanagement.LineEndingsManager
+import org.editorconfig.configmanagement.ConfigEncodingCharsetUtil
 import org.editorconfig.configmanagement.StandardEditorConfigProperties
+import org.editorconfig.configmanagement.indentSizeKey
+import org.editorconfig.configmanagement.indentStyleKey
+import org.editorconfig.configmanagement.tabWidthKey
 import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
 import org.jetbrains.annotations.TestOnly
 import java.io.File
@@ -53,8 +54,9 @@ object Utils {
   var isEnabledInTests = false
 
   fun ResourceProperties.configValueForKey(key: String): String {
-    val value = properties[key]
-    return if (value == null || value.sourceValue in UNSET_VALUES) "" else value.sourceValue
+    val prop = properties[key] ?: return ""
+    val value = prop.sourceValue.trim()
+    return if (value in UNSET_VALUES) "" else value
   }
 
   @JvmStatic
@@ -80,7 +82,7 @@ object Utils {
 
   fun invalidConfigMessage(project: Project, configValue: String?, configKey: String, filePath: String?) {
     val message = if (configValue != null) {
-      BundleBase.messageOrDefault(EditorConfigBundle.resourceBundle, "invalid.config.value",
+      BundleBase.messageOrDefault(EditorConfigBundle.bundle.resourceBundle, "invalid.config.value",
                                   null,
                                   configValue, configKey.ifEmpty { "?" }, filePath)
     }
@@ -105,7 +107,7 @@ object Utils {
     addIndentOptions(result,
                      "*",
                      commonIndentOptions,
-                     getEncodingLine(project) + getLineEndings(project) + getTrailingSpacesLine() + getEndOfFileLine())
+                     getEncodingLine(project) + getLineEndings(settings) + getTrailingSpacesLine() + getEndOfFileLine())
     FileTypeManager.getInstance().registeredFileTypes.asSequence()
       .filter { FileTypeIndex.containsFileOfType(it, GlobalSearchScope.allScope(project)) }
       .forEach { fileType ->
@@ -151,10 +153,10 @@ object Utils {
       else -> null
     }
 
-  private fun getLineEndings(project: Project): String {
-    val separator = CodeStyle.getSettings(project).lineSeparator
+  private fun getLineEndings(settings: CodeStyleSettings): String {
+    val separator = settings.lineSeparator
     return getLineSeparatorString(separator)?.let {
-      "${LineEndingsManager.lineEndingsKey}=$it\n"
+      "end_of_line=$it\n"
     } ?: ""
   }
 
@@ -164,11 +166,11 @@ object Utils {
       ?.let { StringUtil.toLowerCase(it.name) }
 
   private fun getEncodingLine(project: Project): String =
-    getEncoding(project)?.let { "${ConfigEncodingManager.charsetKey}=$it\n" } ?: ""
+    getEncoding(project)?.let { "${ConfigEncodingCharsetUtil.charsetKey}=$it\n" } ?: ""
 
   fun getEncoding(project: Project): String? {
     val encodingManager = EncodingProjectManager.getInstance(project)
-    return ConfigEncodingManager.toString(encodingManager.defaultCharset, encodingManager.shouldAddBOMForNewUtf8File())
+    return ConfigEncodingCharsetUtil.toString(encodingManager.defaultCharset, encodingManager.shouldAddBOMForNewUtf8File())
   }
 
   fun buildPattern(fileType: FileType): String {
@@ -194,14 +196,14 @@ object Utils {
     result.apply {
       append("[").append(pattern).append("]").append("\n")
       append(additionalText)
-      append(EditorConfigIndentOptionsProvider.indentStyleKey).append("=")
+      append(indentStyleKey).append("=")
       if (options.USE_TAB_CHARACTER) {
         append("tab\n")
-        append(EditorConfigIndentOptionsProvider.tabWidthKey).append("=").append(options.TAB_SIZE).append("\n")
+        append(tabWidthKey).append("=").append(options.TAB_SIZE).append("\n")
       }
       else {
         append("space\n")
-        append(EditorConfigIndentOptionsProvider.indentSizeKey).append("=").append(options.INDENT_SIZE).append("\n")
+        append(indentSizeKey).append("=").append(options.INDENT_SIZE).append("\n")
       }
       append("\n")
     }
@@ -209,7 +211,7 @@ object Utils {
 
   fun editorConfigExists(project: Project): Boolean {
     val projectDir = File(project.basePath ?: return false)
-    return SettingsProviderComponent.getInstance(project).getRootDirs().asSequence()
+    return EditorConfigPropertiesService.getInstance(project).getRootDirs().asSequence()
       .map { File(it.path) }
       .ifEmpty { sequenceOf(projectDir) }
       .flatMap { rootDir ->

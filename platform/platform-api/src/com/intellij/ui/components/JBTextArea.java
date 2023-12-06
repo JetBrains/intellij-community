@@ -69,7 +69,7 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
   @Override
   public void updateUI() {
     super.updateUI();
-    if (getParent() != null) myEmptyText.resetFontToOwnerFont();
+    if (getParent() != null) myEmptyText.resetFont();
   }
 
   @Override

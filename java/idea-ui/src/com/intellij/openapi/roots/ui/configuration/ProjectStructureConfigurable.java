@@ -37,7 +37,6 @@ import com.intellij.ui.navigation.BackAction;
 import com.intellij.ui.navigation.ForwardAction;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -330,39 +329,34 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
 
   @Override
   public void reset() {
-    // need this to ensure VFS operations will not block because of storage flushing
-    // and other maintenance IO tasks run in background
-    HeavyProcessLatch.INSTANCE.performOperation(
-      HeavyProcessLatch.Type.Processing, JavaUiBundle.message("project.structure.configurable.reset.text"), ()->{
-        myContext.reset();
+    myContext.reset();
 
-        myProjectJdksModel.reset(myProject);
+    myProjectJdksModel.reset(myProject);
 
-        Configurable toSelect = null;
-        for (Configurable each : myName2Config) {
-          if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable.equals(each.getDisplayName())) {
-            toSelect = each;
-          }
-          if (each instanceof MasterDetailsComponent) {
-            ((MasterDetailsComponent)each).setHistory(myHistory);
-          }
-          each.reset();
-        }
+    Configurable toSelect = null;
+    for (Configurable each : myName2Config) {
+      if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable.equals(each.getDisplayName())) {
+        toSelect = each;
+      }
+      if (each instanceof MasterDetailsComponent) {
+        ((MasterDetailsComponent)each).setHistory(myHistory);
+      }
+      each.reset();
+    }
 
-        myHistory.clear();
+    myHistory.clear();
 
-        if (toSelect == null && myName2Config.size() > 0) {
-          toSelect = myName2Config.iterator().next();
-        }
+    if (toSelect == null && !myName2Config.isEmpty()) {
+      toSelect = myName2Config.iterator().next();
+    }
 
-        removeSelected();
+    removeSelected();
 
-        navigateTo(toSelect != null ? createPlaceFor(toSelect) : null, false);
+    navigateTo(toSelect != null ? createPlaceFor(toSelect) : null, false);
 
-        if (myUiState.proportion > 0) {
-          mySplitter.setProportion(myUiState.proportion);
-        }
-    });
+    if (myUiState.proportion > 0) {
+      mySplitter.setProportion(myUiState.proportion);
+    }
   }
 
   @Override

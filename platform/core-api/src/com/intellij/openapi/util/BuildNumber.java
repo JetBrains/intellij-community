@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public final class BuildNumber implements Comparable<BuildNumber> {
   private static final String STAR = "*";
@@ -52,7 +54,14 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public boolean isSnapshot() {
-    return ArrayUtil.indexOf(myComponents, SNAPSHOT_VALUE) != -1;
+    int result = -1;
+    for (int i = 0; i < myComponents.length; i++) {
+      if (myComponents[i] == SNAPSHOT_VALUE) {
+        result = i;
+        break;
+      }
+    }
+    return result != -1;
   }
 
   @Contract(pure = true)
@@ -94,12 +103,12 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return builder.toString();
   }
 
-  public static @Nullable BuildNumber fromPluginsCompatibleBuild() {
-    return fromString(getPluginsCompatibleBuild());
+  public static @Nullable BuildNumber fromPluginCompatibleBuild() {
+    return fromString(getPluginCompatibleBuild());
   }
 
   /**
-   * Attempts to parse build number from the specified string.
+   * Attempts to parse the build number from the specified string.
    * Returns {@code null} if the string is not a valid build number.
    */
   public static @Nullable BuildNumber fromStringOrNull(@NotNull String version) {
@@ -124,7 +133,10 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static @Nullable BuildNumber fromString(@NotNull String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
-    if (version.isEmpty()) return null;
+    if (version.isEmpty()) {
+      return null;
+    }
+
     String code = version;
     int productSeparator = code.indexOf('-');
     String productCode;
@@ -133,7 +145,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       code = code.substring(productSeparator + 1);
     }
     else {
-      productCode = productCodeIfAbsentInVersion != null ? productCodeIfAbsentInVersion : "";
+      productCode = productCodeIfAbsentInVersion == null ? "" : productCodeIfAbsentInVersion;
     }
 
     if (SNAPSHOT.equals(code) || isPlaceholder(code)) {
@@ -149,17 +161,17 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       }
 
       String[] stringComponents = code.split("\\.");
-      int[] intComponentsList = new int[stringComponents.length];
+      int[] intComponentList = new int[stringComponents.length];
       for (int i = 0, n = stringComponents.length; i < n; i++) {
         String stringComponent = stringComponents[i];
-        int comp = parseBuildNumber(version, stringComponent, pluginName);
-        intComponentsList[i] = comp;
-        if (comp == SNAPSHOT_VALUE && (i + 1) != n) {
-          intComponentsList = Arrays.copyOf(intComponentsList, i + 1);
+        int component = parseBuildNumber(version, stringComponent, pluginName);
+        intComponentList[i] = component;
+        if (component == SNAPSHOT_VALUE && (i + 1) != n) {
+          intComponentList = Arrays.copyOf(intComponentList, i + 1);
           break;
         }
       }
-      return new BuildNumber(productCode, intComponentsList);
+      return new BuildNumber(productCode, intComponentList);
     }
     else {
       int buildNumber = parseBuildNumber(version, code, pluginName);
@@ -241,47 +253,45 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return 40;
   }
 
-  private static final class Holder {
-    private static final BuildNumber CURRENT_VERSION = fromFile();
+  private static final Supplier<BuildNumber> CURRENT_VERSION = new SynchronizedClearableLazy<>(BuildNumber::fromFile);
 
-    private static @NotNull BuildNumber fromFile() {
-      String homePath = PathManager.getHomePath();
-      Path home = Paths.get(homePath);
+  private static @NotNull BuildNumber fromFile() {
+    String homePath = PathManager.getHomePath();
+    Path home = Paths.get(homePath);
 
-      BuildNumber result = readFile(home.resolve("build.txt"));
+    BuildNumber result = readFile(home.resolve("build.txt"));
+    if (result != null) {
+      return result;
+    }
+
+    if (SystemInfoRt.isMac) {
+      result = readFile(home.resolve("Resources/build.txt"));
       if (result != null) {
         return result;
       }
-
-      if (SystemInfoRt.isMac) {
-        result = readFile(home.resolve("Resources/build.txt"));
-        if (result != null) {
-          return result;
-        }
-      }
-
-      String communityHomePath = PathManager.getCommunityHomePath();
-      if (!communityHomePath.equals(homePath)) {
-        result = readFile(Paths.get(communityHomePath, "build.txt"));
-        if (result != null) {
-          return result;
-        }
-      }
-
-      return Objects.requireNonNull(fromString(FALLBACK_VERSION));
     }
 
-    private static @Nullable BuildNumber readFile(@NotNull Path path) {
-      try (BufferedReader reader = Files.newBufferedReader(path)) {
-        String text = reader.readLine();
-        if (text != null) {
-          return fromString(text);
-        }
+    String communityHomePath = PathManager.getCommunityHomePath();
+    if (!communityHomePath.equals(homePath)) {
+      result = readFile(Paths.get(communityHomePath, "build.txt"));
+      if (result != null) {
+        return result;
       }
-      catch (IOException ignored) {
-      }
-      return null;
     }
+
+    return Objects.requireNonNull(fromString(FALLBACK_VERSION));
+  }
+
+  private static @Nullable BuildNumber readFile(@NotNull Path path) {
+    try (BufferedReader reader = Files.newBufferedReader(path)) {
+      String text = reader.readLine();
+      if (text != null) {
+        return fromString(text);
+      }
+    }
+    catch (IOException ignored) {
+    }
+    return null;
   }
 
   /**
@@ -289,10 +299,10 @@ public final class BuildNumber implements Comparable<BuildNumber> {
    */
   @ApiStatus.Internal
   public static @NotNull BuildNumber currentVersion() {
-    return Holder.CURRENT_VERSION;
+    return CURRENT_VERSION.get();
   }
 
-  private static @Nullable String getPluginsCompatibleBuild() {
-    return System.getProperty("idea.plugins.compatible.build");
+  private static @Nullable String getPluginCompatibleBuild() {
+    return EarlyAccessRegistryManager.INSTANCE.getString("idea.plugins.compatible.build");
   }
 }

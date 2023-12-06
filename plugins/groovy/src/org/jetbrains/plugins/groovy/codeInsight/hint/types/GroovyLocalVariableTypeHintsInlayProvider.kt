@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import org.jetbrains.plugins.groovy.GroovyBundle
 import javax.swing.JPanel
 
@@ -44,8 +45,8 @@ def foo() {
     override fun createComponent(listener: ChangeListener): JPanel = panel {
       row {
         checkBox(GroovyBundle.message("settings.inlay.put.type.hint.before.identifier"))
+          .selected(insertTypeHintBeforeIdentifier)
           .applyToComponent {
-            isSelected = insertTypeHintBeforeIdentifier
             addItemListener {
               listener.settingsChanged()
               settings.insertBeforeIdentifier = this@applyToComponent.isSelected

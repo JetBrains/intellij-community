@@ -3,16 +3,18 @@
 package org.jetbrains.kotlin.tools.projectWizard.cli
 
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
-import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionProviderService
+import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 
 class KotlinVersionProviderTestWizardService : KotlinVersionProviderService(), TestWizardService {
     override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion {
         val repositories = listOf(
             Repositories.JETBRAINS_KOTLIN_BOOTSTRAP,
+            Repositories.JETBRAINS_KOTLIN_IDE_PLUGIN_DEPENDENCIES,
             getKotlinVersionRepository(TEST_KOTLIN_VERSION),
             DefaultRepository.MAVEN_LOCAL
         )
@@ -29,7 +31,7 @@ class KotlinVersionProviderTestWizardService : KotlinVersionProviderService(), T
 
     companion object {
         val TEST_KOTLIN_VERSION by lazy {
-            Version(KotlinGradlePluginVersions.latest.toString())
+            Version(KotlinGradlePluginVersions.latestBootstrap.toString())
         }
     }
 }

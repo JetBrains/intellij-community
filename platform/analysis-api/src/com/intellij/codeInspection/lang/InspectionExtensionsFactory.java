@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lang;
 
 import com.intellij.codeInspection.HTMLComposer;
@@ -17,15 +17,12 @@ public abstract class InspectionExtensionsFactory {
   public static final ExtensionPointName<InspectionExtensionsFactory> EP_NAME = ExtensionPointName.create("com.intellij.codeInspection.InspectionExtension");
 
   public abstract GlobalInspectionContextExtension createGlobalInspectionContextExtension();
-  @Nullable
-  public abstract RefManagerExtension createRefManagerExtension(RefManager refManager);
-  @Nullable
-  public abstract HTMLComposerExtension createHTMLComposerExtension(final HTMLComposer composer);
+  public abstract @Nullable RefManagerExtension createRefManagerExtension(RefManager refManager);
+  public abstract @Nullable HTMLComposerExtension createHTMLComposerExtension(final HTMLComposer composer);
 
   public abstract boolean isToCheckMember(@NotNull PsiElement element, @NotNull String id);
 
-  @Nullable
-  public abstract String getSuppressedInspectionIdsIn(@NotNull PsiElement element);
+  public abstract @Nullable String getSuppressedInspectionIdsIn(@NotNull PsiElement element);
 
   /**
    * @return true to allow inspections run locally or false to stop it. The {@param rerunAction}

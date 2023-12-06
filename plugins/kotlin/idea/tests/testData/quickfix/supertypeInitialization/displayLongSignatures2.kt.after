@@ -12,3 +12,6 @@ open class Base {
 }
 
 class C(p: Int) : Base(p)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix
+/* IGNORE_K2 */

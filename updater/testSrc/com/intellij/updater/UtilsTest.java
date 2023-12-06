@@ -18,7 +18,6 @@ package com.intellij.updater;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -29,7 +28,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -128,7 +126,7 @@ public class UtilsTest {
     assertThat(dir.listFiles()).containsExactly(file);
 
     File link = new File(tempDir.getRoot(), "link");
-    @NotNull Path link1 = link.toPath();
+    Path link1 = link.toPath();
     Files.createSymbolicLink(link1, dir.toPath().getFileName());
     assertTrue(Utils.isLink(link));
     assertThat(link.listFiles()).hasSize(1);
@@ -144,8 +142,8 @@ public class UtilsTest {
 
     File dir = tempDir.newDirectory("temp_dir");
     File link = new File(dir, "link");
-    @NotNull Path link1 = link.toPath();
-    @NotNull Path target = Paths.get("dangling");
+    Path link1 = link.toPath();
+    Path target = Path.of("dangling");
     Files.createSymbolicLink(link1, target);
     assertThat(dir.listFiles()).containsExactly(link);
 

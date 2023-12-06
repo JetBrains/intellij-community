@@ -1,7 +1,5 @@
 // "Opt in for 'MyExperimentalAPI' on 'bar'" "true"
 // PRIORITY: HIGH
-// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
-// WITH_STDLIB
 
 package a.b
 
@@ -20,3 +18,6 @@ class Bar {
         Some().foo<caret>()
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix

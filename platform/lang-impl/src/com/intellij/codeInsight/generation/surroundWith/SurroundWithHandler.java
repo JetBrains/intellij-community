@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation.surroundWith;
 
@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SurroundWithHandler implements CodeInsightActionHandler {
+public final class SurroundWithHandler implements CodeInsightActionHandler {
   public static final TextRange CARET_IS_OK = new TextRange(0, 0);
 
   @Override
@@ -205,7 +205,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     JBPopupFactory.getInstance().createActionGroupPopup(CodeInsightBundle.message("surround.with.chooser.title"), group, context, mnemonics, true).showInBestPositionFor(editor);
   }
 
-  static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
+  public static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
     WriteAction.run(() -> PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument()));
     int col = editor.getCaretModel().getLogicalPosition().column;
     int line = editor.getCaretModel().getLogicalPosition().line;
@@ -284,7 +284,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     return applicable.isEmpty() ? null : applicable;
   }
 
-  private static class InvokeSurrounderAction extends AnAction {
+  private static final class InvokeSurrounderAction extends AnAction {
     private final Surrounder mySurrounder;
     private final Project myProject;
     private final Editor myEditor;

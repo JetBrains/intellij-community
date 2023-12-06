@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.BatchQuickFix;
@@ -54,7 +54,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         if (keyValuePairs.isEmpty()) return null;
         return I18nizeMultipleStringsDialog.getResourceBundleManager(project, contextFiles);
       })
-      .finishOnUiThread(ModalityState.NON_MODAL, bundleManager -> {
+      .finishOnUiThread(ModalityState.nonModal(), bundleManager -> {
         if (keyValuePairs.isEmpty()) return;
         showI18nizeMultipleStringsDialog(project, keyValuePairs, contextFiles, bundleManager);
       })

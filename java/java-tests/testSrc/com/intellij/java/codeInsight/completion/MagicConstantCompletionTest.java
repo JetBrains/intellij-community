@@ -34,6 +34,31 @@ public class MagicConstantCompletionTest extends LightJavaCodeInsightFixtureTest
     assertEquals(0, myFixture.complete(CompletionType.SMART).length);
   }
 
+  public void testMagicConstantInVariableInitializer() {
+    addMagicConstant();
+
+    myFixture.configureByText("a.java", """
+      class TestAssignment {
+          interface States {
+              int INIT =0;
+              int RUNNING = 1;
+              int STOPPED = 2;
+          }
+          @org.intellij.lang.annotations.MagicConstant(valuesFromClass = States.class)
+          int state = <caret>;
+          public TestAssignment() {
+              this.state = 0;
+          }
+      }""");
+
+    myFixture.complete(CompletionType.SMART);
+    myFixture.assertPreferredCompletionItems(0, "INIT", "RUNNING", "STOPPED");
+    LookupManager.getInstance(getProject()).hideActiveLookup();
+
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.assertPreferredCompletionItems(0, "INIT", "RUNNING", "STOPPED");
+  }
+
   public void test_magic_constant_in_equality() {
     addMagicConstant();
 

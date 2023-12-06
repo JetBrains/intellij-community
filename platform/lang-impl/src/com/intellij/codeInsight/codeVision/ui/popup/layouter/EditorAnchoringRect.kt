@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.TextRange
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.intersect
@@ -94,7 +94,7 @@ class EditorAnchoringRect(
   }
 
   private fun calculateRectangle(): Rectangle? {
-    application.assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     require(!editor.isDisposed)
 
     val range = if (rangeMarker.isValid) {

@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -16,13 +16,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @State(name = "UnknownFeatures", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-@Service
+@Service(Service.Level.PROJECT)
 public final class UnknownFeaturesCollector implements PersistentStateComponent<Element> {
 
   private static final @NonNls String FEATURE_ID = "featureType";
   private static final @NonNls String IMPLEMENTATION_NAME = "implementationName";
 
-  private final Set<UnknownFeature> myUnknownFeatures = ContainerUtil.newConcurrentSet();
+  private final Set<UnknownFeature> myUnknownFeatures = ConcurrentCollectionFactory.createConcurrentSet();
   private final Set<UnknownFeature> myIgnoredUnknownFeatures = new HashSet<>();
 
   public static @NotNull UnknownFeaturesCollector getInstance(@NotNull Project project) {

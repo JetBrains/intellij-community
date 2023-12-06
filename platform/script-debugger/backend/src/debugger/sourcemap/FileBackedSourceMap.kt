@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger.sourcemap
 
-import com.intellij.reference.SoftReference
 import com.intellij.util.Url
-import com.intellij.util.io.readText
+import java.lang.ref.SoftReference
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 class FileBackedSourceMap private constructor(filePath: Path,
                                               initialData: SourceMapDataEx,

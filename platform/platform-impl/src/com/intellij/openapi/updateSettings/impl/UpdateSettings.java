@@ -109,7 +109,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
     }
 
-    UpdateSettingsProviderHelper.addPluginRepositories(hosts);
+    hosts.addAll(UpdateSettingsProviderHelper.getPluginRepositories());
     ContainerUtil.removeDuplicates(hosts);
     return hosts;
   }
@@ -129,5 +129,13 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
 
   public void setThirdPartyPluginsAllowed(boolean value) {
     myState.setThirdPartyPluginsAllowed(value);
+  }
+
+  public boolean isObsoleteCustomRepositoriesCleanNeeded() {
+    return myState.isObsoleteCustomRepositoriesCleanNeeded();
+  }
+
+  public void setObsoleteCustomRepositoriesCleanNeeded(boolean value) {
+    myState.setObsoleteCustomRepositoriesCleanNeeded(value);
   }
 }

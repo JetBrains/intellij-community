@@ -13,7 +13,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame.Companion.getInst
 import javax.swing.JComponent
 
 internal class NotificationEventAction(parentDisposable: Disposable) : DumbAwareToggleAction() {
-
   private var notificationTypes = listOf<NotificationType>()
   private var selected = false
   private var hideListenerInstalled = false
@@ -21,10 +20,7 @@ internal class NotificationEventAction(parentDisposable: Disposable) : DumbAware
   init {
     WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC.subscribe<BalloonNotificationListener>(
       parentDisposable,
-      BalloonNotificationListener { types: List<NotificationType?> ->
-        notificationTypes = types.filterNotNull()
-      })
-
+      BalloonNotificationListener { types -> notificationTypes = types.filterNotNull() })
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
@@ -48,22 +44,22 @@ internal class NotificationEventAction(parentDisposable: Disposable) : DumbAware
 
   override fun actionPerformed(e: AnActionEvent) {
     super.actionPerformed(e)
-
     val balloonLayout = getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl ?: return
 
-    if (!hideListenerInstalled) {
+    if (!hideListenerInstalled || balloonLayout.hideListener == null) {
       balloonLayout.setHideListener(Runnable {
         selected = false
       })
       hideListenerInstalled = true
     }
 
-    if (balloonLayout.locationComponent == null) {
+    val locationComponent = balloonLayout.locationComponent
+    if (locationComponent == null || locationComponent.parent == null) {
       balloonLayout.locationComponent = getComponent(e)
     }
 
-    balloonLayout.showPopup()
     selected = true
+    balloonLayout.showPopup()
   }
 
   private fun getComponent(e: AnActionEvent): JComponent {

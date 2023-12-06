@@ -21,7 +21,7 @@ interface UastCodeGenerationPlugin {
     private val extensionPointName = ExtensionPointName<UastCodeGenerationPlugin>("org.jetbrains.uast.generate.uastCodeGenerationPlugin")
 
     @JvmStatic
-    fun byLanguage(language: Language) = extensionPointName.extensionList.asSequence().firstOrNull { it.language == language }
+    fun byLanguage(language: Language): UastCodeGenerationPlugin? = extensionPointName.extensionList.asSequence().firstOrNull { it.language == language }
   }
 
   /**
@@ -197,13 +197,17 @@ data class UParameterInfo(val type: PsiType?, val suggestedName: String?)
 infix fun String?.ofType(type: PsiType?): UParameterInfo = UParameterInfo(type, this)
 
 @ApiStatus.Experimental
-inline fun <reified T : UElement> UElement.replace(newElement: T): T? =
-  UastCodeGenerationPlugin.byLanguage(this.lang)
+inline fun <reified T : UElement> UElement.replace(newElement: T): T? {
+  if (this == newElement) return newElement
+
+  return UastCodeGenerationPlugin.byLanguage(this.lang)
     ?.replace(this, newElement, T::class.java).also {
       if (it == null) {
         logger<UastCodeGenerationPlugin>().warn("failed replacing the $this with $newElement")
       }
     }
+}
+
 
 fun UReferenceExpression.bindToElement(element: PsiElement): PsiElement? =
   UastCodeGenerationPlugin.byLanguage(this.lang)?.bindToElement(this, element)
@@ -215,7 +219,7 @@ fun UQualifiedReferenceExpression.importMemberOnDemand(): UExpression? =
   UastCodeGenerationPlugin.byLanguage(this.lang)?.importMemberOnDemand(this)
 
 @ApiStatus.Experimental
-inline fun <reified T : UElement> T.refreshed() = sourcePsi?.also {
+inline fun <reified T : UElement> T.refreshed(): T? = sourcePsi?.also {
   logger<UastCodeGenerationPlugin>().assertTrue(it.isValid,
     "psi $it of class ${it.javaClass} should be valid, containing file = ${it.containingFile}")
 }?.toUElementOfType<T>()

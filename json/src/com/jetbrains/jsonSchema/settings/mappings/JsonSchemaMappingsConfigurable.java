@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -34,21 +34,20 @@ import java.util.*;
 
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 
-public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable {
-  @NonNls public static final String SETTINGS_JSON_SCHEMA = "settings.json.schema";
+public final class JsonSchemaMappingsConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable {
+  public static final @NonNls String SETTINGS_JSON_SCHEMA = "settings.json.schema";
   private Runnable myInitializer = null;
 
-  private final static Comparator<UserDefinedJsonSchemaConfiguration> COMPARATOR = (o1, o2) -> {
+  private static final Comparator<UserDefinedJsonSchemaConfiguration> COMPARATOR = (o1, o2) -> {
     if (o1.isApplicationDefined() != o2.isApplicationDefined()) {
       return o1.isApplicationDefined() ? 1 : -1;
     }
     return o1.getName().compareToIgnoreCase(o2.getName());
   };
-  static final String STUB_SCHEMA_NAME = "New Schema";
+  static final @Nls String STUB_SCHEMA_NAME = JsonBundle.message("new.schema");
   private @Nls String myError;
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final TreeUpdater myTreeUpdater = showWarning -> {
     TREE_UPDATER.run();
     updateWarningText(showWarning);
@@ -56,22 +55,20 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   private final Function<String, String> myNameCreator = s -> createUniqueName(s);
 
-  public JsonSchemaMappingsConfigurable(@NotNull final Project project) {
+  public JsonSchemaMappingsConfigurable(final @NotNull Project project) {
     myProject = project;
     initTree();
   }
 
-  @Nullable
   @Override
-  protected String getEmptySelectionString() {
+  protected @Nullable String getEmptySelectionString() {
     return myRoot.children().hasMoreElements()
            ? JsonBundle.message("schema.configuration.mapping.empty.area.string")
            : JsonBundle.message("schema.configuration.mapping.empty.area.alt.string");
   }
 
-  @Nullable
   @Override
-  protected ArrayList<AnAction> createActions(boolean fromPopup) {
+  protected @Nullable ArrayList<AnAction> createActions(boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<>();
     result.add(new DumbAwareAction(
       JsonBundle.messagePointer("action.DumbAware.JsonSchemaMappingsConfigurable.text.add"),
@@ -98,8 +95,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   }
 
   @SuppressWarnings("SameParameterValue")
-  @NotNull
-  private @Nls String createUniqueName(@NotNull @NlsSafe String s) {
+  private @NotNull @Nls String createUniqueName(@NotNull @NlsSafe String s) {
     int max = -1;
     Enumeration children = myRoot.children();
     while (children.hasMoreElements()) {
@@ -129,7 +125,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     }
   }
 
-  private void addCreatedMappings(@NotNull final UserDefinedJsonSchemaConfiguration info) {
+  private void addCreatedMappings(final @NotNull UserDefinedJsonSchemaConfiguration info) {
     final JsonSchemaConfigurable configurable = new JsonSchemaConfigurable(myProject, "", info, myTreeUpdater, myNameCreator);
     configurable.setError(myError, true);
     final MyNode node = new MyNode(configurable);
@@ -157,8 +153,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     }
   }
 
-  @NotNull
-  private List<UserDefinedJsonSchemaConfiguration> getStoredList() {
+  private @NotNull List<UserDefinedJsonSchemaConfiguration> getStoredList() {
     final List<UserDefinedJsonSchemaConfiguration> list = new ArrayList<>();
     final Map<String, UserDefinedJsonSchemaConfiguration> projectState = JsonSchemaMappingsProjectConfiguration
       .getInstance(myProject).getStateMap();
@@ -270,8 +265,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     }
   }
 
-  @NotNull
-  private List<UserDefinedJsonSchemaConfiguration> getUiList(boolean applyChildren) throws ConfigurationException {
+  private @NotNull List<UserDefinedJsonSchemaConfiguration> getUiList(boolean applyChildren) throws ConfigurationException {
     final List<UserDefinedJsonSchemaConfiguration> uiList = new ArrayList<>();
     final Enumeration children = myRoot.children();
     while (children.hasMoreElements()) {
@@ -312,13 +306,12 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     };
   }
 
-  private static UserDefinedJsonSchemaConfiguration getSchemaInfo(@NotNull final MyNode node) {
+  private static UserDefinedJsonSchemaConfiguration getSchemaInfo(final @NotNull MyNode node) {
     return ((JsonSchemaConfigurable) node.getConfigurable()).getSchema();
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return JsonBundle.message("configurable.JsonSchemaMappingsConfigurable.display.name");
   }
 
@@ -334,9 +327,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     }
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return SETTINGS_JSON_SCHEMA;
   }
 

@@ -12,15 +12,15 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.isFile
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.div
+import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
+import kotlin.io.path.isRegularFile
 
 private val LOG = logger<RuntimeChooserJreValidator>()
 
@@ -43,8 +43,8 @@ object RuntimeChooserJreValidator {
     return item.jdkMajorVersion >= minJdkFeatureVersion && item.os == JdkPredicate.currentOS && item.arch == JdkPredicate.currentArch
   }
 
-  fun isSupportedSdkItem(sdk: Sdk) = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
-  fun isSupportedSdkItem(sdk: SdkPopupBuilder.SuggestedSdk) = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
+  fun isSupportedSdkItem(sdk: Sdk): Boolean = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
+  fun isSupportedSdkItem(sdk: SdkPopupBuilder.SuggestedSdk): Boolean = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
 
   private inline fun isSupportedSdkItem(versionString: () -> String?, homePath: () -> String?): Boolean = runCatching {
     val version = versionString() ?: return false
@@ -63,6 +63,7 @@ object RuntimeChooserJreValidator {
     allowRunProcesses: Boolean,
     computeHomePath: () -> String?,
     callback: RuntimeChooserJreValidatorCallback<R>,
+    hideLogs: Boolean = false,
   ): R {
     val homeDir = runCatching { Path.of(computeHomePath()).toAbsolutePath() }.getOrNull()
                   ?: return callback.onError(
@@ -77,12 +78,12 @@ object RuntimeChooserJreValidator {
     }
 
     if (SystemInfo.isMac && !(homeDir / "Contents" / "Home").isDirectory()) {
-      LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. macOS Bundle layout is expected")
+      if (!hideLogs) LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. macOS Bundle layout is expected")
       return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.error.mac.bundle", homeDir))
     }
 
     if (SystemInfo.isWindows && WslPath.isWslUncPath(homeDir.toString())) {
-      LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. macOS Bundle layout is expected")
+      if (!hideLogs) LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. macOS Bundle layout is expected")
       callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.version.error.wsl", homeDir))
     }
 
@@ -92,8 +93,8 @@ object RuntimeChooserJreValidator {
       else -> homeDir / "bin" / "java"
     }
 
-    if (!binJava.isFile() || (SystemInfo.isUnix && !binJava.isExecutable())) {
-      LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. Failed to find bin/java executable at $binJava")
+    if (!binJava.isRegularFile() || (SystemInfo.isUnix && !binJava.isExecutable())) {
+      if (!hideLogs) LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. Failed to find bin/java executable at $binJava")
       return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
     }
 
@@ -104,7 +105,7 @@ object RuntimeChooserJreValidator {
     }.getOrNull() ?: return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error", homeDir))
 
     if (info.version == null || info.version.feature < minJdkFeatureVersion) {
-      LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. The version $info is less than $minJdkFeatureVersion")
+      if (!hideLogs) LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. The version $info is less than $minJdkFeatureVersion")
       return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.version.error", homeDir, "11",
                                                  info.version.toString()))
     }
@@ -118,13 +119,13 @@ object RuntimeChooserJreValidator {
         val cmd = GeneralCommandLine(binJava.toString(), "-version")
         val exitCode = CapturingProcessHandler(cmd).runProcess(30_000).exitCode
         if (exitCode != 0) {
-          LOG.warn("Failed to run JDK for boot runtime: ${homeDir}. Exit code is ${exitCode} for $binJava.")
+          if (!hideLogs) LOG.warn("Failed to run JDK for boot runtime: ${homeDir}. Exit code is ${exitCode} for $binJava.")
           return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
         }
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw t
-        LOG.warn("Failed to run JDK for boot runtime: $homeDir. ${t.message}", t)
+        if (!hideLogs) LOG.warn("Failed to run JDK for boot runtime: $homeDir. ${t.message}", t)
         return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
       }
     }

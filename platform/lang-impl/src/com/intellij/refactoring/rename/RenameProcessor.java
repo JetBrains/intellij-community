@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -6,8 +6,6 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
-import com.intellij.model.BranchableSyntheticPsiElement;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -18,7 +16,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -45,7 +42,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +50,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.Command;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(RenameProcessor.class);
@@ -67,7 +66,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private boolean mySearchTextOccurrences;
   protected boolean myForceShowPreview;
 
-  private @NlsContexts.Command String myCommandName;
+  private @Command String myCommandName;
 
   private NonCodeUsageInfo[] myNonCodeUsages = new NonCodeUsageInfo[0];
   private final List<AutomaticRenamerFactory> myRenamerFactories = new ArrayList<>();
@@ -144,7 +143,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   @Override
   public boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
 
     RenameUtil.addConflictDescriptions(usagesIn, conflicts);
     RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts, myAllRenames);
@@ -367,52 +366,21 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   @Override
   public void performRefactoring(UsageInfo @NotNull [] usages) {
-    doPerformRefactoring(usages, null);
-  }
-
-  @Override
-  protected boolean canPerformRefactoringInBranch() {
-    return true;
-  }
-
-  @Override
-  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, @NotNull ModelBranch branch) {
-    Class<?> syncDefinition = ReflectionUtil.getMethodDeclaringClass(getClass(), "performRefactoring", UsageInfo[].class);
-    Class<?> asyncDefinition = ReflectionUtil.getMethodDeclaringClass(getClass(), "performRefactoringInBranch", UsageInfo[].class, ModelBranch.class);
-    if (asyncDefinition != RenameProcessor.class && syncDefinition != asyncDefinition) {
-      throw new UnsupportedOperationException("performRefactoringInBranch should be implemented in " + syncDefinition);
-    }
-    doPerformRefactoring(usages, branch);
-  }
-
-  private void doPerformRefactoring(UsageInfo @NotNull [] usages, @Nullable ModelBranch branch) {
     logScopeStatistics(RenameUsagesCollector.executed);
 
     List<Runnable> postRenameCallbacks = new ArrayList<>();
 
-    Map<PsiElement, PsiElement> elementsToChange = new IdentityHashMap<>();
-    for (PsiElement element : myAllRenames.keySet()) {
-      elementsToChange.put(element, branch != null ? branch.obtainPsiCopy(element) : element);
-    }
-
     MultiMap<RefactoringElementListener, SmartPsiElementPointer<PsiElement>> renameEvents = MultiMap.createLinked();
 
-    List<UsageInfo> branchedUsages =
-      branch == null ? Arrays.asList(usages)
-                     : ContainerUtil.mapNotNull(usages, info -> shouldSkip(info) ? null : ((MoveRenameUsageInfo)info).obtainBranchCopy(branch));
-    MultiMap<PsiElement, UsageInfo> classified = classifyUsages(elementsToChange.values(), branchedUsages);
+    List<UsageInfo> usagesList = Arrays.asList(usages);
+    MultiMap<PsiElement, UsageInfo> classified = classifyUsages(myAllRenames.keySet(), usagesList);
 
     NonCodeUsageInfo[] nonCodeUsages =
-      ContainerUtil.filterIsInstance(branchedUsages, NonCodeUsageInfo.class).toArray(new NonCodeUsageInfo[0]);
+      ContainerUtil.filterIsInstance(usagesList, NonCodeUsageInfo.class).toArray(new NonCodeUsageInfo[0]);
 
     for (final PsiElement element : myAllRenames.keySet()) {
-      PsiElement toChange = elementsToChange.get(element);
       if (!element.isValid()) {
         LOG.error(new PsiInvalidElementAccessException(element));
-        continue;
-      }
-      if (!toChange.isValid()) {
-        LOG.error(new PsiInvalidElementAccessException(toChange));
         continue;
       }
       String newName = myAllRenames.get(element);
@@ -420,10 +388,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
       final RenamePsiElementProcessor renamePsiElementProcessor = RenamePsiElementProcessor.forElement(element);
       Runnable postRenameCallback = renamePsiElementProcessor.getPostRenameCallback(element, newName, elementListener);
-      Collection<UsageInfo> infos = classified.get(toChange);
+      Collection<UsageInfo> infos = classified.get(element);
       try {
-        nowOrAfterMerge(branch, () -> RenameUtil.registerUndoableRename(element, elementListener));
-        renamePsiElementProcessor.renameElement(toChange, newName, infos.toArray(UsageInfo.EMPTY_ARRAY), new RefactoringElementListener() {
+        RenameUtil.registerUndoableRename(element, elementListener);
+        renamePsiElementProcessor.renameElement(element, newName, infos.toArray(UsageInfo.EMPTY_ARRAY), new RefactoringElementListener() {
           @Override
           public void elementMoved(@NotNull PsiElement newElement) {
             throw new UnsupportedOperationException();
@@ -432,9 +400,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
           @Override
           public void elementRenamed(@NotNull PsiElement newElement) {
             if (!newElement.isValid()) return;
-            if (branch != null) {
-              assert branch == ModelBranch.getPsiBranch(newElement);
-            }
             renameEvents.putValue(elementListener, SmartPointerManager.createPointer(newElement));
           }
         });
@@ -448,36 +413,17 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (branch != null) {
-      RenameUtil.renameNonCodeUsages(myProject, nonCodeUsages);
-    } else {
-      myNonCodeUsages = nonCodeUsages;
-    }
+    myNonCodeUsages = nonCodeUsages;
 
-    nowOrAfterMerge(branch, () -> afterRename(postRenameCallbacks, renameEvents, branch));
-  }
-
-  private static void nowOrAfterMerge(@Nullable ModelBranch branch, Runnable runnable) {
-    if (branch == null) {
-      runnable.run();
-    } else {
-      branch.runAfterMerge(runnable);
-    }
+    afterRename(postRenameCallbacks, renameEvents);
   }
 
   private void afterRename(List<? extends Runnable> postRenameCallbacks,
-                           MultiMap<RefactoringElementListener, SmartPsiElementPointer<PsiElement>> renameEvents,
-                           @Nullable ModelBranch branch) {
+                           MultiMap<RefactoringElementListener, SmartPsiElementPointer<PsiElement>> renameEvents) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     for (Map.Entry<RefactoringElementListener, Collection<SmartPsiElementPointer<PsiElement>>> entry : renameEvents.entrySet()) {
       for (SmartPsiElementPointer<PsiElement> pointer : entry.getValue()) {
         PsiElement element = pointer.getElement();
-        if (element instanceof BranchableSyntheticPsiElement) {
-          continue;
-        }
-        if (branch != null && element != null) {
-          element = branch.findOriginalPsi(element);
-        }
         if (element != null) {
           entry.getKey().elementRenamed(element);
         }
@@ -503,7 +449,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
             };
             statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, listener);
           }
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.nonModal());
       }
     }
   }
@@ -573,7 +519,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return mySearchTextOccurrences;
   }
 
-  public void setCommandName(final @NlsContexts.Command String commandName) {
+  public void setCommandName(@Command String commandName) {
     myCommandName = commandName;
   }
 

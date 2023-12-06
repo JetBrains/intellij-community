@@ -75,7 +75,7 @@ class KotlinPushDownDialog(
         panel.add(memberSelectionPanel, BorderLayout.CENTER)
 
         memberInfoModel = object : DelegatingMemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>(
-            ANDCombinedMemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>(
+            ANDCombinedMemberInfoModel(
                 KotlinUsesDependencyMemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>(sourceClass, null, false),
                 UsedByDependencyMemberInfoModel<KtNamedDeclaration, PsiNamedElement, KotlinMemberInfo>(sourceClass)
             )

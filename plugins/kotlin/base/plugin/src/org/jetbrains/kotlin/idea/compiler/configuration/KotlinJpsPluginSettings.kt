@@ -24,8 +24,6 @@ import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_JPS_PLUGIN_SETTINGS_S
 import org.jetbrains.kotlin.config.toKotlinVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import java.nio.file.Path
-import kotlin.io.path.bufferedReader
-import kotlin.io.path.exists
 
 @State(name = KOTLIN_JPS_PLUGIN_SETTINGS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<JpsPluginSettings>(project) {
@@ -57,7 +55,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         val jpsMaximumSupportedVersion: KotlinVersion = LanguageVersion.values().last().toKotlinVersion()
 
         fun validateSettings(project: Project) {
-            val jpsPluginSettings = project.service<KotlinJpsPluginSettings>()
+            val jpsPluginSettings = getInstance(project)
 
             if (jpsPluginSettings.settings.version.isEmpty() && bundledVersion.buildNumber == null) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
@@ -126,10 +124,15 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
          * Please, prefer [getInstance] if possible.
          */
         fun readFromKotlincXmlOrIpr(path: Path): JpsPluginSettings? {
-            return path.takeIf { it.fileIsNotEmpty() }
-                ?.let { JDOMUtil.load(path) }
-                ?.children
-                ?.singleOrNull { it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName }
+            val root = try {
+                JDOMUtil.load(path)
+            } catch (ex: java.nio.file.NoSuchFileException) {
+                return null
+            } catch (ex: org.jdom.JDOMException) { // e.g. Unexpected End-of-input in prolog
+                return null
+            }
+            return root.children
+                .singleOrNull { it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName }
                 ?.let { xmlElement ->
                     JpsPluginSettings().apply {
                         XmlSerializer.deserializeInto(this, xmlElement)
@@ -160,7 +163,11 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         fun importKotlinJpsVersionFromExternalBuildSystem(project: Project, rawVersion: String, isDelegatedToExtBuild: Boolean) {
             val instance = getInstance(project)
             if (rawVersion == rawBundledVersion) {
-                instance.setVersion(rawVersion)
+                runInEdt {
+                    runWriteAction {
+                        instance.setVersion(rawVersion)
+                    }
+                }
                 return
             }
 
@@ -267,5 +274,3 @@ private fun showNotificationUnsupportedJpsPluginVersion(
         .setImportant(true)
         .notify(project)
 }
-
-fun Path.fileIsNotEmpty() = exists() && bufferedReader().use { it.readLine() != null }

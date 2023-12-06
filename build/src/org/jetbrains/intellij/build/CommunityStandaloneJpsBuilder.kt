@@ -28,11 +28,14 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
     "intellij.platform.tracing.rt",
     "intellij.platform.util.diff",
     "intellij.platform.util.rt.java8",
+    "intellij.platform.util.trove",
+    "intellij.platform.util.nanoxml",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
   layout.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
 
+  layout.withModule("intellij.platform.runtime.repository", "platform-runtime-repository.jar")
   layout.withModules(listOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.impl",
@@ -51,11 +54,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.java.rt", "idea_rt.jar")
   layout.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
 
-  layout.withModule("intellij.platform.jps.build.javac.rt.rpc", "rt/jps-javac-rt-rpc.jar")
-  layout.withModuleLibrary(libraryName = "protobuf-java6",
-                           moduleName = "intellij.platform.jps.build.javac.rt.rpc",
-                           relativeOutputPath = "rt/protobuf-java6.jar")
-
   // layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
   layout.withModule("intellij.groovy.jps", "groovy-jps.jar")
   layout.withModule("intellij.groovy.rt", "groovy-rt.jar")
@@ -71,15 +69,16 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
   layout.withModule("intellij.eclipse.common", "eclipse-common.jar")
   layout.withModule("intellij.devkit.jps", "devkit-jps.jar")
+  layout.withModule("intellij.devkit.runtimeModuleRepository.jps", "devkit-runtimeModuleRepository-jps.jar")
   layout.withModule("intellij.java.langInjection.jps", "java-langInjection-jps.jar")
 
   layout.withModule("intellij.space.java.jps", "space-java-jps.jar")
 
   for (it in listOf(
-    "jna", "OroMatcher", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
-    "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
-    "jetbrains-annotations-java5", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib",
-    "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml"
+    "jna", "OroMatcher", "ASM", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
+    "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "slf4j-api", "plexus-utils",
+    "jetbrains-annotations", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib",
+    "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml", "caffeine"
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
   }
@@ -99,6 +98,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
                      outputDir = tempDir,
                      context = context,
                      layout = layout,
+                     platformLayout = null,
                      isRootDir = false,
                      isCodesignEnabled = false,
                      dryRun = dryRun)

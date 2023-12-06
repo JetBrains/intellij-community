@@ -253,6 +253,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     return referenceInternal(base, onClickAction)
   }
 
+
   @Contract(pure = true)
   fun referenceOnHover(base: InlayPresentation, clickListener: ClickListener): InlayPresentation {
     val hovered = onClick(
@@ -309,6 +310,11 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   }
 
   @Contract(pure = true)
+  fun withCursorOnHoverWhenControlDown (base: InlayPresentation, cursor: Cursor): InlayPresentation {
+    return WithCursorOnHoverPresentation(base, cursor, editor) { isControlDown(it) }
+  }
+
+  @Contract(pure = true)
   fun withReferenceAttributes(noHighlightReference: InlayPresentation): WithAttributesPresentation {
     return attributes(noHighlightReference, REFERENCE_HYPERLINK_COLOR,
                       WithAttributesPresentation.AttributesFlags().withSkipEffects(true))
@@ -321,13 +327,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
         base,
         onClickAction = { navigateInternal(resolve) },
         toStringProvider = {
-          val element = resolve() ?: return@referenceInternal ""
-          val virtualFile = element.containingFile.virtualFile
-          val path = (virtualFile.fileSystem as? JarFileSystem)?.let {
-            val root = VfsUtilCore.getRootFile(virtualFile)
-            "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
-          } ?: virtualFile.toString()
-          return@referenceInternal "$path:${element.startOffset}"
+          resolve()?.let(toStringProvider) ?: ""
         })
     } else {
       reference(base) { navigateInternal(resolve) }
@@ -409,7 +409,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       onHover(base, object : HoverListener {
         override fun onHover(event: MouseEvent, translated: Point) {
           if (hint?.isVisible != true && editor.contentComponent.isShowing) {
-            hint = showTooltip(editor, event, tooltip)
+            hint = showTooltip(event, tooltip)
           }
         }
 
@@ -420,7 +420,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       })
     }
   }
-  private fun showTooltip(editor: Editor, e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint {
+  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint {
     val hint = run {
       val label = HintUtil.createInformationLabel(text)
       label.border = JBUI.Borders.empty(6, 6, 5, 6)
@@ -458,5 +458,22 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     if (target is Navigatable) {
       CommandProcessor.getInstance().executeCommand(target.project, { target.navigate(true) }, null, null)
     }
+  }
+
+
+  companion object {
+    var customToStringProvider: ((PsiElement) -> String)? = null
+
+    private val defaultStringProvider: (PsiElement) -> String = { element ->
+      val virtualFile = element.containingFile.virtualFile
+      val path = (virtualFile.fileSystem as? JarFileSystem)?.let {
+        val root = VfsUtilCore.getRootFile(virtualFile)
+        "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
+      } ?: virtualFile.toString()
+      "$path:${element.startOffset}"
+    }
+
+    private val toStringProvider: (PsiElement) -> String
+      get() = customToStringProvider ?: defaultStringProvider
   }
 }

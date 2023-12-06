@@ -3,12 +3,20 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.EntityReference;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 @ApiStatus.Internal
@@ -26,5 +34,15 @@ public interface EntityIndexingServiceEx extends EntityIndexingService {
   @NotNull
   RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<EntityReference<WorkspaceEntity>> references);
 
-  boolean shouldCauseRescan(@NotNull WorkspaceEntity entity, @NotNull Project project);
+  boolean shouldCauseRescan(@Nullable WorkspaceEntity oldEntity, @Nullable WorkspaceEntity newEntity, @NotNull Project project);
+
+  @RequiresBackgroundThread
+  @NotNull
+  Collection<IndexableFilesIterator> createIteratorsForOrigins(@NotNull Project project,
+                                                               @NotNull EntityStorage entityStorage,
+                                                               @NotNull Collection<EntityReference<?>> entityReferences,
+                                                               @NotNull Collection<Sdk> sdks,
+                                                               @NotNull Collection<LibraryId> libraryIds,
+                                                               @NotNull Collection<VirtualFile> filesFromAdditionalLibraryRootsProviders,
+                                                               @NotNull Collection<VirtualFile> filesFromIndexableSetContributors);
 }

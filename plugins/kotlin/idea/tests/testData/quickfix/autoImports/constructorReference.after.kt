@@ -6,6 +6,5 @@ import p2.Some
 import p2.receiveSomeCtor
 
 fun a() {
-    receiveSomeCtor(::Some<caret>)
+    receiveSomeCtor(::Some<selection><caret></selection>)
 }
-/* IGNORE_FIR */

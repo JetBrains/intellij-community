@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -18,6 +18,7 @@ import com.intellij.openapi.options.ex.MutableConfigurableGroup;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -77,9 +78,8 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
 
     myProperties = PropertiesComponent.getInstance(project);
     mySettings = new Settings(groups) {
-      @NotNull
       @Override
-      protected Promise<? super Object> selectImpl(Configurable configurable) {
+      protected @NotNull Promise<? super Object> selectImpl(Configurable configurable) {
         myFilter.update(null);
         return myTreeView.select(configurable);
       }
@@ -115,7 +115,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     mySearch = new SettingsSearch() {
       @Override
       void onTextKeyEvent(KeyEvent event) {
-        myTreeView.myTree.processKeyEvent(event);
+        myTreeView.getTree().processKeyEvent(event);
       }
     };
     JPanel searchPanel = new JPanel(new VerticalLayout(0));
@@ -144,9 +144,8 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
       }
     };
     myFilter.myContext.addColleague(new OptionsEditorColleague() {
-      @NotNull
       @Override
-      public Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
+      public @NotNull Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
           myProperties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.getId(configurable));
           myHistory.pushQueryPlace();
@@ -162,26 +161,22 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
         return result;
       }
 
-      @NotNull
       @Override
-      public Promise<? super Object> onModifiedAdded(Configurable configurable) {
+      public @NotNull Promise<? super Object> onModifiedAdded(Configurable configurable) {
         return updateIfCurrent(configurable);
       }
 
-      @NotNull
       @Override
-      public Promise<? super Object> onModifiedRemoved(Configurable configurable) {
+      public @NotNull Promise<? super Object> onModifiedRemoved(Configurable configurable) {
         return updateIfCurrent(configurable);
       }
 
-      @NotNull
       @Override
-      public Promise<? super Object> onErrorsChanged() {
+      public @NotNull Promise<? super Object> onErrorsChanged() {
         return updateIfCurrent(myFilter.myContext.getCurrentConfigurable());
       }
 
-      @NotNull
-      private Promise<? super Object> updateIfCurrent(@Nullable Configurable configurable) {
+      private @NotNull Promise<? super Object> updateIfCurrent(@Nullable Configurable configurable) {
         if (configurable != null && configurable == myFilter.myContext.getCurrentConfigurable()) {
           updateStatus(configurable);
           return Promises.resolvedPromise();
@@ -192,7 +187,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
       }
     });
     myTreeView = factory.createTreeView(myFilter, groups);
-    myTreeView.myTree.addKeyListener(mySearch);
+    myTreeView.getTree().addKeyListener(mySearch);
     myEditor = new ConfigurableEditor(this, null) {
       @Override
       boolean apply() {
@@ -255,10 +250,11 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     right.add(BorderLayout.CENTER, myLoadingDecorator.getComponent());
     mySplitter = new OnePixelSplitter(false, myProperties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
     mySplitter.setHonorComponentsMinimumSize(true);
+    mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_FIRST_MIN_SIZE);
     mySplitter.setFirstComponent(left);
     mySplitter.setSecondComponent(right);
 
-    if (IdeFrameDecorator.isCustomDecorationActive()) {
+    if (IdeFrameDecorator.Companion.isCustomDecorationActive()) {
       mySplitter.getDivider().setOpaque(false);
     }
 
@@ -266,7 +262,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
       @Override
       void updateNow() {
         Configurable configurable = myFilter.myContext.getCurrentConfigurable();
-        if (myTreeView.myTree.hasFocus() || mySearch.getTextEditor().hasFocus()) {
+        if (myTreeView.getTree().hasFocus() || mySearch.getTextEditor().hasFocus()) {
           update(myFilter, configurable, myEditor.getContent(configurable));
         }
       }
@@ -305,8 +301,12 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     updateController(configurable);
   }
 
-  @NotNull
-  private MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
+  @ApiStatus.Internal
+  public @NotNull SettingsTreeView getTreeView() {
+    return myTreeView;
+  }
+
+  private @NotNull MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
     return new MutableConfigurableGroup.Listener() {
       @Override
       public void handleUpdate() {
@@ -342,7 +342,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
       @Override
       public void focusLost(FocusEvent e) {
         final Component comp = e.getOppositeComponent();
-        if (comp == mySearch.getTextEditor() || comp == myTreeView.myTree) {
+        if (comp == mySearch.getTextEditor() || comp == myTreeView.getTree()) {
           return;
         }
         mySpotlightPainter.update(null, null, null);
@@ -355,7 +355,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
         }
       }
     };
-    myTreeView.myTree.addFocusListener(spotlightRemover);
+    myTreeView.getTree().addFocusListener(spotlightRemover);
     mySearch.getTextEditor().addFocusListener(spotlightRemover);
   }
 
@@ -445,7 +445,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
 
   @Override
   JComponent getPreferredFocusedComponent() {
-    return myTreeView != null ? myTreeView.myTree : myEditor;
+    return myTreeView != null ? myTreeView.getTree() : myEditor;
   }
 
   @Nullable

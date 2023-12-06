@@ -1,36 +1,40 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.statistic.eventLog
 
 import com.intellij.configurationStore.jdomSerializer
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ReportValue
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SkipReportingStatistics
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.BeanBinding
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.minutes
 
 private val GROUP = EventLogGroup("settings", 9)
 private const val CHANGES_GROUP = "settings.changes"
 private const val ID_FIELD = "id"
 
-private val recordedComponents: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
-private val recordedOptionNames: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
+private val recordedComponents = ConcurrentHashMap.newKeySet<String>()
+private val recordedOptionNames = ConcurrentHashMap.newKeySet<String>()
 
 internal fun isComponentNameWhitelisted(name: String): Boolean {
   return recordedComponents.contains(name)
@@ -40,35 +44,84 @@ internal fun isComponentOptionNameWhitelisted(name: String): Boolean {
   return recordedOptionNames.contains(name)
 }
 
-internal object FeatureUsageSettingsEvents {
-  private val printer = FeatureUsageSettingsEventPrinter(false)
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val scope = CoroutineScope(Dispatchers.Default.limitedParallelism(1))
+private sealed interface LogRequest
 
-  fun logDefaultConfigurationState(componentName: String, clazz: Class<*>, project: Project?) {
-    scope.launch {
-      if (FeatureUsageLogger.isEnabled()) {
-        printer.logDefaultConfigurationState(componentName, clazz, project)
+private class LogConfigurationState(@JvmField val componentName: String, @JvmField val state: Any) : LogRequest
+private class LogConfigurationStateChanged(@JvmField val componentName: String, @JvmField val state: Any) : LogRequest
+private class LogDefaultConfigurationState(@JvmField val componentName: String, @JvmField val aClass: Class<*>) : LogRequest
+
+
+@Service(Service.Level.APP, Service.Level.PROJECT)
+internal class FeatureUsageSettingsEvents private constructor(private val project: Project?, coroutineScope: CoroutineScope) {
+  private val channel = Channel<LogRequest>(capacity = Channel.UNLIMITED)
+
+  @Suppress("unused")
+  constructor(coroutineScope: CoroutineScope) : this(project = null, coroutineScope = coroutineScope)
+
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      channel.close()
+    }
+    else {
+      val printer = FeatureUsageSettingsEventPrinter(recordDefault = false)
+      coroutineScope.launch {
+        delay(1.minutes)
+
+        if (!FeatureUsageLogger.isEnabled()) {
+          channel.close()
+          return@launch
+        }
+        for (request in channel) {
+          synchronized(printer) {
+            logRequest(request, printer)
+          }
+        }
+      }
+
+      (project ?: ApplicationManager.getApplication()).messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+        override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+          if (!FeatureUsageLogger.isEnabled()) return
+          // process all pending requests
+          synchronized(printer) {
+            while (true) {
+              val request = channel.tryReceive().getOrNull() ?: break
+              logRequest(request, printer)
+            }
+          }
+        }
+      })
+    }
+  }
+
+  private fun logRequest(request: LogRequest,
+                        printer: FeatureUsageSettingsEventPrinter) {
+    when (request) {
+      is LogConfigurationState -> {
+        printer.logConfigurationState(request.componentName, request.state, project)
+      }
+      is LogConfigurationStateChanged -> {
+        printer.logConfigurationStateChanged(request.componentName, request.state, project)
+      }
+      is LogDefaultConfigurationState -> {
+        printer.logDefaultConfigurationState(request.componentName, request.aClass, project)
       }
     }
   }
 
-  fun logConfigurationState(componentName: String, state: Any, project: Project?) {
-    scope.launch {
-      if (FeatureUsageLogger.isEnabled()) {
-        printer.logConfigurationState(componentName, state, project)
-      }
-    }
+  fun logDefaultConfigurationState(componentName: String, aClass: Class<*>) {
+    channel.trySend(LogDefaultConfigurationState(componentName = componentName, aClass = aClass))
   }
 
-  fun logConfigurationChanged(componentName: String, state: Any, project: Project?) {
-    scope.launch {
-      if (FeatureUsageLogger.isEnabled()) {
-        printer.logConfigurationStateChanged(componentName, state, project)
-      }
-    }
+  fun logConfigurationState(componentName: String, state: Any) {
+    channel.trySend(LogConfigurationState(componentName = componentName, state = state))
+  }
+
+  fun logConfigurationChanged(componentName: String, state: Any) {
+    channel.trySend(LogConfigurationStateChanged(componentName = componentName, state = state))
   }
 }
+
+private val counter = AtomicInteger(0)
 
 open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) {
   private val valuesExtractor = ConfigurationStateExtractor(recordDefault)
@@ -83,12 +136,15 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
         val pluginInfo = getPluginInfo(clazz)
         if (pluginInfo.isDevelopedByJetBrains()) {
           recordedComponents.add(componentName)
-          logConfig(GROUP, "invoked", createComponentData(project, componentName, pluginInfo), counter.incrementAndGet())
+          logConfig(group = GROUP,
+                    eventId = "invoked",
+                    data = createComponentData(project, componentName, pluginInfo),
+                    id = counter.incrementAndGet())
         }
       }
     }
     catch (e: Exception) {
-      LOG.warn("Cannot initialize default settings for '$componentName'")
+      logger<FeatureUsageSettingsEventPrinter>().warn("Cannot initialize default settings for '$componentName'")
     }
   }
 
@@ -109,11 +165,11 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
     val eventId = if (recordDefault) "option" else "not.default"
     val id = counter.incrementAndGet()
     for (data in optionsValues) {
-      logConfig(GROUP, eventId, data, id)
+      logConfig(group = GROUP, eventId = eventId, data = data, id = id)
     }
 
     if (!recordDefault) {
-      logConfig(GROUP, "invoked", createComponentData(project, componentName, pluginInfo), id)
+      logConfig(group = GROUP, eventId = "invoked", data = createComponentData(project, componentName, pluginInfo), id = id)
     }
   }
 
@@ -124,30 +180,24 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
   protected open fun logSettingsChanged(@NonNls eventId: String, data: FeatureUsageData, id: Int) {
     FUCounterUsageLogger.getInstance().logEvent(CHANGES_GROUP, eventId, data.addData(ID_FIELD, id))
   }
-
-  companion object {
-    private val LOG = Logger.getInstance(FeatureUsageSettingsEventPrinter::class.java)
-
-    private val counter = AtomicInteger(0)
-
-    fun createComponentData(project: Project?, componentName: String, pluginInfo: PluginInfo): FeatureUsageData {
-      val data = FeatureUsageData()
-        .addData("component", componentName)
-        .addPluginInfo(pluginInfo)
-      if (project?.isDefault == true) {
-        data.addData("default_project", true)
-      }
-      else {
-        data.addProject(project)
-      }
-      return data
-    }
-  }
 }
 
-internal data class ConfigurationState(val optionsValues: List<FeatureUsageData>, val pluginInfo: PluginInfo)
+private fun createComponentData(project: Project?, componentName: String, pluginInfo: PluginInfo): FeatureUsageData {
+  val data = FeatureUsageData("FUS")
+    .addData("component", componentName)
+    .addPluginInfo(pluginInfo)
+  if (project?.isDefault == true) {
+    data.addData("default_project", true)
+  }
+  else {
+    data.addProject(project)
+  }
+  return data
+}
 
-internal data class ConfigurationStateExtractor(val recordDefault: Boolean) {
+internal data class ConfigurationState(@JvmField val optionsValues: List<FeatureUsageData>, @JvmField val pluginInfo: PluginInfo)
+
+internal data class ConfigurationStateExtractor(private val recordDefault: Boolean) {
   internal fun extract(project: Project?, componentName: String, state: Any): ConfigurationState? {
     if (state is Element || state is JDOMExternalizable) {
       return null
@@ -235,7 +285,7 @@ internal data class ConfigurationStateExtractor(val recordDefault: Boolean) {
       return null
     }
 
-    val data = FeatureUsageSettingsEventPrinter.createComponentData(project, componentName, pluginInfo)
+    val data = createComponentData(project = project, componentName = componentName, pluginInfo = pluginInfo)
     data.addData("type", type)
     data.addData("name", accessor.name)
     recordedOptionNames.add(accessor.name)

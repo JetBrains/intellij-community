@@ -47,9 +47,7 @@ abstract class AbstractNativeIdePlatformKindTooling : IdePlatformKindTooling() {
             .filterIsInstance<KotlinNativeRunConfigurationProvider>()
             .any { !it.isForTests }
 
-        if (!hasRunConfigurations) return false
-
-        return true
+        return hasRunConfigurations
     }
 
     protected fun getTestIcon(declaration: KtNamedDeclaration, moduleName: String): Icon? {

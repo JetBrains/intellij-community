@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
+import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
@@ -18,11 +19,13 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings
@@ -96,9 +99,6 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             if (function != null) {
                 val parameterIndexAsJavaCall = element.parameterIndex() + if (function.receiverTypeReference != null) 1 else 0
                 findCallArgumentsToDelete(result, element, parameterIndexAsJavaCall, function)
-                if (function is KtPrimaryConstructor) {
-                    findCallArgumentsToDelete(result, element, parameterIndexAsJavaCall, function.getContainingClassOrObject())
-                }
             }
         }
         
@@ -150,10 +150,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         for (overriddenFunction in overridden) {
             if (ReferencesSearch.search(overriddenFunction).forEach(Processor {
                     val place = it.element
-                    if (!isInside(place)) {
-                        return@Processor false
-                    }
-                    return@Processor true
+                    return@Processor isInside(place)
                 })) {
                 additionalElementsToDelete.add(overriddenFunction)
                 result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, element, true))
@@ -170,11 +167,20 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         parameterIndexAsJavaCall: Int,
         ktElement: KtElement
     ) {
-        ReferencesSearch.search(ktElement).forEach(Processor {
-            JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
-                ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
-            return@Processor true
-        })
+        if (ktElement is KtConstructor<*>) {
+            val lightMethod = ktElement.toLightMethods().filterIsInstance<KtLightMethod>().firstOrNull() ?: return
+            MethodReferencesSearch.search(lightMethod, lightMethod.useScope, true).forEach(Processor {
+                JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
+                    ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
+                return@Processor true
+            })
+        } else {
+            ReferencesSearch.search(ktElement).forEach(Processor {
+                JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
+                    ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
+                return@Processor true
+            })
+        }
     }
 
     override fun getElementsToSearch(

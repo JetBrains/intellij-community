@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -20,7 +21,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -41,9 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenuContributor {
   private static final Logger LOG = Logger.getInstance(DoNotShowInspectionIntentionMenuContributor.class);
@@ -93,17 +93,18 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       return;
     }
 
-    Collection<ProjectType> projectTypes = ProjectTypeService.getProjectTypes(project);
+    Set<String> projectTypes = ProjectTypeService.getProjectTypeIds(project);
+    boolean isTests = ApplicationManager.getApplication().isUnitTestMode();
 
     List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     for (InspectionToolWrapper<?,?> toolWrapper : profile.getInspectionTools(hostFile)) {
-      if (!toolWrapper.isApplicable(projectTypes)) continue;
+      if (!isTests && !toolWrapper.isApplicable(projectTypes)) continue;
 
-      if (toolWrapper instanceof GlobalInspectionToolWrapper) {
-        toolWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
+      if (toolWrapper instanceof GlobalInspectionToolWrapper global) {
+        toolWrapper = global.getSharedLocalInspectionToolWrapper();
       }
-      if (toolWrapper instanceof LocalInspectionToolWrapper && !((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
+      if (toolWrapper instanceof LocalInspectionToolWrapper local && !local.isUnfair()) {
         HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
         if (profile.isToolEnabled(key, hostFile) &&
             HighlightDisplayLevel.DO_NOT_SHOW.equals(profile.getErrorLevel(key, hostFile))) {
@@ -140,8 +141,8 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       List<ProblemDescriptor> descriptors = entry.getValue();
       String shortName = entry.getKey().getShortName();
       for (ProblemDescriptor problemDescriptor : descriptors) {
-        if (problemDescriptor instanceof ProblemDescriptorBase) {
-          TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
+        if (problemDescriptor instanceof ProblemDescriptorBase base) {
+          TextRange range = base.getTextRange();
           if (range != null && range.containsOffset(offset)) {
             QuickFix[] fixes = problemDescriptor.getFixes();
             for (int k = 0; k < fixes.length; k++) {

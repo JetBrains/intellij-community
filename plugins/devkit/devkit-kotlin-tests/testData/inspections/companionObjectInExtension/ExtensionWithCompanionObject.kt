@@ -1,8 +1,9 @@
-class ExtensionWithCompanionObject : MyExtension {
-  <error descr="Companion objects must not be used in extensions">companion object {
+class MyExtensionImpl : MyExtension {
+  <warning descr="Companion objects in IDE extension implementations may only contain a logger and constants">companion</warning> object {
     private val s = ""
+
     fun foo() { }
-  }</error>
+  }
 
   object NestedObject {
     private val u = ""

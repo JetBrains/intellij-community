@@ -4,31 +4,39 @@ package org.jetbrains.kotlin.nj2k.tree
 
 import org.jetbrains.kotlin.utils.SmartList
 
-
 class JKComment(val text: String, val indent: String? = null) {
-    val isSingleline
-        get() = text.startsWith("//")
+    val isSingleLine: Boolean = text.startsWith("//")
 }
 
 class JKTokenElementImpl(override val text: String) : JKTokenElement {
-    override val trailingComments: MutableList<JKComment> = SmartList()
-    override val leadingComments: MutableList<JKComment> = SmartList()
-    override var hasTrailingLineBreak: Boolean = false
-    override var hasLeadingLineBreak: Boolean = false
+    override val commentsBefore: MutableList<JKComment> = SmartList()
+    override val commentsAfter: MutableList<JKComment> = SmartList()
+    override var lineBreaksBefore: Int = 0
+    override var lineBreaksAfter: Int = 0
 }
 
 interface JKFormattingOwner {
-    val trailingComments: MutableList<JKComment>
-    val leadingComments: MutableList<JKComment>
-    var hasTrailingLineBreak: Boolean
-    var hasLeadingLineBreak: Boolean
+    val commentsBefore: MutableList<JKComment>
+    val commentsAfter: MutableList<JKComment>
+    var lineBreaksBefore: Int
+    var lineBreaksAfter: Int
+}
+
+val JKFormattingOwner.hasLineBreakBefore: Boolean
+    get() = lineBreaksBefore > 0
+
+val JKFormattingOwner.hasLineBreakAfter: Boolean
+    get() = lineBreaksAfter > 0
+
+fun <T : JKFormattingOwner> T.withCommentsFrom(other: JKFormattingOwner): T = also {
+    commentsBefore += other.commentsBefore
+    commentsAfter += other.commentsAfter
 }
 
 fun <T : JKFormattingOwner> T.withFormattingFrom(other: JKFormattingOwner): T = also {
-    trailingComments += other.trailingComments
-    leadingComments += other.leadingComments
-    hasTrailingLineBreak = other.hasTrailingLineBreak
-    hasLeadingLineBreak = other.hasLeadingLineBreak
+    withCommentsFrom(other)
+    lineBreaksBefore = other.lineBreaksBefore
+    lineBreaksAfter = other.lineBreaksAfter
 }
 
 fun <T, S> T.withPsiAndFormattingFrom(
@@ -38,21 +46,25 @@ fun <T, S> T.withPsiAndFormattingFrom(
     this.psi = other.psi
 }
 
-
 inline fun <reified T : JKFormattingOwner> List<T>.withFormattingFrom(other: JKFormattingOwner): List<T> = also {
     if (isNotEmpty()) {
-        it.first().trailingComments += other.trailingComments
-        it.first().hasTrailingLineBreak = other.hasTrailingLineBreak
-        it.last().leadingComments += other.leadingComments
-        it.last().hasLeadingLineBreak = other.hasLeadingLineBreak
+        it.first().commentsBefore += other.commentsBefore
+        it.first().lineBreaksBefore = other.lineBreaksBefore
+        it.last().commentsAfter += other.commentsAfter
+        it.last().lineBreaksAfter = other.lineBreaksAfter
     }
 }
 
 fun JKFormattingOwner.clearFormatting() {
-    trailingComments.clear()
-    leadingComments.clear()
-    hasTrailingLineBreak = false
-    hasLeadingLineBreak = false
+    commentsBefore.clear()
+    commentsAfter.clear()
+    lineBreaksBefore = 0
+    lineBreaksAfter = 0
+}
+
+fun <T : JKFormattingOwner> T.takeFormattingFrom(other: JKFormattingOwner): T = also {
+    withFormattingFrom(other)
+    other.clearFormatting()
 }
 
 interface JKTokenElement : JKFormattingOwner {
@@ -60,4 +72,4 @@ interface JKTokenElement : JKFormattingOwner {
 }
 
 fun JKFormattingOwner.containsNewLine(): Boolean =
-    hasTrailingLineBreak || hasLeadingLineBreak
+    hasLineBreakBefore || hasLineBreakAfter

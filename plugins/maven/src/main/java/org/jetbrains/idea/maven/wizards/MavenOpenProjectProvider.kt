@@ -1,43 +1,73 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLinkingUntrustedProject
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.projectImport.ProjectImportBuilder
-import org.jetbrains.idea.maven.project.MavenProjectsManager
+import com.intellij.platform.backend.observation.trackActivity
+import icons.OpenapiIcons
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.utils.MavenActivityKey
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil
+import javax.swing.Icon
 
 class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
   override val systemId: ProjectSystemId = MavenUtil.SYSTEM_ID
 
-  val builder: MavenProjectBuilder
-    get() = ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(MavenProjectBuilder::class.java)
+  fun getName(): String {
+    return MavenProjectBundle.message("maven.name")
+  }
+
+  fun getIcon(): Icon {
+    return OpenapiIcons.RepositoryLibraryLogo
+  }
 
   override fun isProjectFile(file: VirtualFile): Boolean {
     return MavenUtil.isPomFile(file)
   }
 
   override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+    cs.launch {
+      withContext(Dispatchers.Default) {
+        linkToExistingProjectAsync(projectFile, project)
+      }
+    }
+  }
+
+  override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+    if (Registry.`is`("external.system.auto.import.disabled")) {
+      LOG.debug("External system auto import disabled. Skip linking Maven project '$projectFile' to existing project ${project.name}")
+      return
+    }
+
+    doLinkToExistingProjectAsync(projectFile, project)
+  }
+
+  @ApiStatus.Internal
+  suspend fun forceLinkToExistingProjectAsync(projectFilePath: String, project: Project) {
+    doLinkToExistingProjectAsync(getProjectFile(projectFilePath), project)
+  }
+
+  private suspend fun doLinkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
     LOG.debug("Link Maven project '$projectFile' to existing project ${project.name}")
 
     val projectRoot = if (projectFile.isDirectory) projectFile else projectFile.parent
 
-    if (confirmLinkingUntrustedProject(project, systemId, projectRoot.toNioPath())) {
-      val builder = builder
-      try {
-        builder.isUpdate = MavenProjectsManager.getInstance(project).isMavenizedProject
-        builder.setFileToImport(projectFile)
-        if (builder.validate(null, project)) {
-          builder.commit(project, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
-        }
-      }
-      finally {
-        builder.cleanup()
+    if (ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProjectAsync(project, systemId, projectRoot.toNioPath())) {
+      val asyncBuilder = MavenProjectAsyncBuilder()
+      project.trackActivity(MavenActivityKey) {
+        asyncBuilder.commit(project, projectFile, null)
       }
     }
   }
+
 }

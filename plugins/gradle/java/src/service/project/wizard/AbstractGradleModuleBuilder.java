@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,7 +7,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.GitSilentFileAdderProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,7 +25,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
@@ -38,11 +36,11 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.impl.DependentSdkType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -75,12 +73,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC;
 
-@SuppressWarnings("unused")
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
+
   private static final Logger LOG = Logger.getInstance(AbstractGradleModuleBuilder.class);
 
   private static final String TEMPLATE_GRADLE_SETTINGS = "Gradle Settings.gradle";
@@ -109,13 +108,16 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private Path rootProjectPath;
   private boolean myUseKotlinDSL;
   private boolean isCreatingNewProject;
+  private boolean createEmptyContentRoots = true;
   private GradleVersion gradleVersion;
   private DistributionType gradleDistributionType;
   private @Nullable String gradleHome;
 
   private VirtualFile buildScriptFile;
+  private VirtualFile settingsScriptFile;
   private GradleBuildScriptBuilder<?> buildScriptBuilder;
   private final List<Consumer<GradleBuildScriptBuilder<?>>> buildScriptConfigurators = new ArrayList<>();
+  private final List<BiConsumer<VirtualFile, VirtualFile>> preImportConfigurators = new ArrayList<>();
 
   public AbstractGradleModuleBuilder() {
     super(GradleConstants.SYSTEM_ID, GradleDefaultProjectSettings.createProjectSettings(""));
@@ -162,7 +164,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     }
 
     buildScriptFile = setupGradleBuildFile(modelContentRootDir);
-    setupGradleSettingsFile(
+    settingsScriptFile = setupGradleSettingsFile(
       rootProjectPath, modelContentRootDir, project.getName(),
       myProjectId == null ? module.getName() : myProjectId.getArtifactId(),
       isCreatingNewLinkedProject(),
@@ -219,12 +221,13 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
         // update external projects data to be able to add child modules before the initial import finish
         loadPreviewProject(project);
       }
+      preImportConfigurators.forEach(c -> c.accept(buildScriptFile, settingsScriptFile));
       openBuildScriptFile(project, buildScriptFile);
       if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
         generateGradleWrapper(project);
       }
       reloadProject(project);
-    }, ModalityState.NON_MODAL, project.getDisposed());
+    }, ModalityState.nonModal(), project.getDisposed());
   }
 
   private void loadPreviewProject(@NotNull Project project) {
@@ -238,7 +241,9 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private void reloadProject(@NotNull Project project) {
     ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized(() -> {
       ImportSpecBuilder importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
-      importSpec.createDirectoriesForEmptyContentRoots();
+      if (createEmptyContentRoots) {
+        importSpec.createDirectoriesForEmptyContentRoots();
+      }
       importSpec.callback(new ConfigureGradleModuleCallback(importSpec));
       ExternalSystemUtil.refreshProject(PathKt.getSystemIndependentPath(rootProjectPath), importSpec);
     });
@@ -255,6 +260,15 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   public void configureBuildScript(@NotNull Consumer<GradleBuildScriptBuilder<?>> configure) {
     buildScriptConfigurators.add(configure);
+  }
+
+  /**
+   * Runs the configure callback just before the Gradle import starts.
+   * The first parameter to the callback is the buildScriptFile, the second parameter is the settingsScriptFile.
+   * Can be used to do more advanced modifications of the Gradle files.
+   */
+  public void configurePreImport(@NotNull BiConsumer<@NotNull VirtualFile, @NotNull VirtualFile> configure) {
+    preImportConfigurators.add(configure);
   }
 
   private @Nullable VirtualFile createAndConfigureBuildScriptFile() {
@@ -281,19 +295,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   }
 
   @Override
-  public abstract ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider);
-
-  @Override
-  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
-    return new GradleSdkSettingsStep(settingsStep, this);
-  }
-
-  @Nullable
-  @Override
-  public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
-    final GradleFrameworksWizardStep step = new GradleFrameworksWizardStep(context, this);
-    Disposer.register(parentDisposable, step);
-    return step;
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
+    return ModuleWizardStep.EMPTY_ARRAY;
   }
 
   @Override
@@ -458,6 +461,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     return virtualFile;
   }
 
+  @SuppressWarnings("unused") // Kotlin
   public @Nullable ProjectData getParentProject() {
     return myParentProject;
   }
@@ -470,6 +474,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     return myParentProject == null;
   }
 
+  @SuppressWarnings("unused") // Kotlin
   public boolean isInheritGroupId() {
     return myInheritGroupId;
   }
@@ -478,6 +483,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     myInheritGroupId = inheritGroupId;
   }
 
+  @SuppressWarnings("unused") // Kotlin
   public boolean isInheritVersion() {
     return myInheritVersion;
   }
@@ -500,6 +506,10 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   public void setCreatingNewProject(boolean creatingNewProject) {
     isCreatingNewProject = creatingNewProject;
+  }
+
+  public void setCreateEmptyContentRoots(boolean createEmptyContentRoots) {
+    this.createEmptyContentRoots = createEmptyContentRoots;
   }
 
   public void setGradleVersion(@NotNull GradleVersion version) {

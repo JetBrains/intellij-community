@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns
@@ -16,19 +15,13 @@ import org.jetbrains.kotlin.idea.kdoc.getParamDescriptors
 import org.jetbrains.kotlin.idea.kdoc.resolveKDocLink
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
-import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.utils.collectDescriptorsFiltered
-import java.util.*
 
 class KDocCompletionContributor : CompletionContributor() {
     init {
@@ -71,24 +64,29 @@ class KDocNameCompletionSession(
         val declaration = position.getContainingDoc().getOwner() ?: return
         val kdocLink = position.getStrictParentOfType<KDocLink>()!!
         val declarationDescriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration] ?: return
-        if (kdocLink.getTagIfSubject()?.knownTag == KDocKnownTag.PARAM) {
-            addParamCompletions(position, declarationDescriptor)
-        } else {
-            addLinkCompletions(declarationDescriptor, kdocLink)
+        withCollectRequiredContextVariableTypes { lookupFactory ->
+            if (kdocLink.getTagIfSubject()?.knownTag == KDocKnownTag.PARAM) {
+                addParamCompletions(position, declarationDescriptor, lookupFactory)
+            } else {
+                addLinkCompletions(declarationDescriptor, kdocLink, lookupFactory)
+            }
         }
     }
 
 
     private fun addParamCompletions(
         position: KDocName,
-        declarationDescriptor: DeclarationDescriptor
+        declarationDescriptor: DeclarationDescriptor,
+        lookupFactory: LookupElementFactory,
     ) {
+        if (position.getQualifier() != null) return
+
         val section = position.getContainingSection()
         val documentedParameters = section.findTagsByName("param").map { it.getSubjectName() }.toSet()
         getParamDescriptors(declarationDescriptor)
             .filter { it.name.asString() !in documentedParameters }
             .forEach {
-                collector.addElement(basicLookupElementFactory.createLookupElement(it, parametersAndTypeGrayed = true))
+                collector.addElement(lookupFactory.createLookupElement(it, useReceiverTypes = false, parametersAndTypeGrayed = true))
             }
     }
 
@@ -98,11 +96,11 @@ class KDocNameCompletionSession(
     ): Collection<DeclarationDescriptor> {
         val contextScope = getKDocLinkResolutionScope(resolutionFacade, declarationDescriptor)
 
-        val qualifiedLink = kDocLink.getLinkText().split('.').dropLast(1)
+        val qualifier = kDocLink.qualifier
         val nameFilter = descriptorNameFilter.toNameFilter()
-        return if (qualifiedLink.isNotEmpty()) {
+        return if (qualifier.isNotEmpty()) {
             val parentDescriptors =
-                resolveKDocLink(bindingContext, resolutionFacade, declarationDescriptor, kDocLink, kDocLink.getTagIfSubject(), qualifiedLink)
+                resolveKDocLink(bindingContext, resolutionFacade, declarationDescriptor, kDocLink, kDocLink.getTagIfSubject(), qualifier)
             parentDescriptors.flatMap {
                 val scope = getKDocLinkMemberScope(it, contextScope)
                 scope.getContributedDescriptors(nameFilter = nameFilter)
@@ -112,44 +110,13 @@ class KDocNameCompletionSession(
         }
     }
 
-    private fun addLinkCompletions(declarationDescriptor: DeclarationDescriptor, kDocLink: KDocLink) {
+    private fun addLinkCompletions(declarationDescriptor: DeclarationDescriptor, kDocLink: KDocLink, lookupFactory: LookupElementFactory) {
         collectDescriptorsForLinkCompletion(declarationDescriptor, kDocLink).forEach {
-            val element = basicLookupElementFactory.createLookupElement(it, parametersAndTypeGrayed = true)
+            val element = lookupFactory.createLookupElement(it, useReceiverTypes = true, parametersAndTypeGrayed = true)
             collector.addElement(
                 // insert only plain name here, no qualifier/parentheses/etc.
                 LookupElementDecorator.withDelegateInsertHandler(element, EmptyDeclarativeInsertHandler)
             )
         }
-    }
-}
-
-object KDocTagCompletionProvider : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        // findIdentifierPrefix() requires identifier part characters to be a superset of identifier start characters
-        val prefix = CompletionUtil.findIdentifierPrefix(
-            parameters.position.containingFile,
-            parameters.offset,
-            StandardPatterns.character().javaIdentifierPart() or singleCharPattern('@'),
-            StandardPatterns.character().javaIdentifierStart() or singleCharPattern('@')
-        )
-
-        if (parameters.isAutoPopup && prefix.isEmpty()) return
-        if (prefix.isNotEmpty() && !prefix.startsWith('@')) {
-            return
-        }
-        val kdocOwner = parameters.position.getNonStrictParentOfType<KDoc>()?.getOwner()
-        val resultWithPrefix = result.withPrefixMatcher(prefix)
-        KDocKnownTag.values().forEach {
-            if (kdocOwner == null || it.isApplicable(kdocOwner)) {
-                resultWithPrefix.addElement(LookupElementBuilder.create("@" + it.name.toLowerCase(Locale.US)))
-            }
-        }
-    }
-
-    private fun KDocKnownTag.isApplicable(declaration: KtDeclaration) = when (this) {
-        KDocKnownTag.CONSTRUCTOR, KDocKnownTag.PROPERTY -> declaration is KtClassOrObject
-        KDocKnownTag.RETURN -> declaration is KtNamedFunction
-        KDocKnownTag.RECEIVER -> declaration is KtNamedFunction && declaration.receiverTypeReference != null
-        else -> true
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -7,12 +7,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AboutAction extends AnAction implements DumbAware, LightEditCompatible {
+public final class AboutAction extends AnAction implements DumbAware, LightEditCompatible {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(!ActionPlaces.isMacSystemMenuAction(e));
@@ -30,11 +28,6 @@ public class AboutAction extends AnAction implements DumbAware, LightEditCompati
   }
 
   public static void perform(@Nullable Project project) {
-    if (Registry.is("ide.new.about.dialog")) {
-      new AboutDialog(project).show();
-    }
-    else {
-      AboutPopup.show(WindowManager.getInstance().suggestParentWindow(project), false);
-    }
+    new AboutDialog(project).show();
   }
 }

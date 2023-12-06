@@ -82,16 +82,18 @@ class WSLDistributionConsoleFoldingTest {
   @Test
   fun `replacement text`() {
     fun assertReplacement(commandLine: GeneralCommandLine = GeneralCommandLine("echo"), options: WSLCommandLineOptions) {
+      neverRunTTYFix(commandLine)
       val commandLineString = commandLine.commandLineString
       val expectedLine = if (options.isExecuteCommandInShell &&
                              options.remoteWorkingDirectory.isNullOrEmpty() &&
                              (options.isPassEnvVarsUsingInterop || commandLine.environment.isEmpty()) &&
                              options.initShellCommands.isEmpty()) {
+        val shellPath = wslRule.wsl.shellPath
         if (commandLineString.contains(" ")) {
-          "${options.shellPath} -c \"$commandLineString\""
+          "$shellPath -l -c \"$commandLineString\""
         }
         else {
-          "${options.shellPath} -c $commandLineString"
+          "$shellPath -l -c $commandLineString"
         }
       } else {
         commandLineString

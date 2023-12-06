@@ -5,7 +5,7 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.PathKt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.util.PersistentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
         // if we could not delete caches, ensure that corruption marker is still there
         Path corruptionMarkerFile = PersistentUtil.getCorruptionMarkerFile();
         try {
-          PathKt.createFile(corruptionMarkerFile);
+          Files.createFile(NioFiles.createParentDirectories(corruptionMarkerFile));
         }
         catch (Exception e) {
           LOG.warn(e);
@@ -51,28 +51,19 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
   @Override
   public void invalidateCaches() {
     boolean isEmpty = true;
-    try {
-      isEmpty = !ProjectUtil.hasCacheForAnyProjectStartingWith(SQLITE_VCS_LOG_DB_FILENAME_PREFIX);
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
 
-    if (isEmpty && Files.exists(PersistentUtil.LOG_CACHE)) {
-      try {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(PersistentUtil.LOG_CACHE)) {
-          if (stream.iterator().hasNext()) {
-            isEmpty = false;
-          }
+    if (Files.exists(PersistentUtil.LOG_CACHE)) {
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(PersistentUtil.LOG_CACHE)) {
+        if (stream.iterator().hasNext()) {
+          isEmpty = false;
         }
       }
-      catch (IOException ignored) {
-      }
+      catch (IOException ignored) { }
     }
 
     if (!isEmpty) {
       try {
-        PathKt.createFile(PersistentUtil.getCorruptionMarkerFile());
+        Files.createFile(NioFiles.createParentDirectories(PersistentUtil.getCorruptionMarkerFile()));
       }
       catch (Exception e) {
         LOG.error(e);
@@ -91,6 +82,6 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
   }
 
   public static @NotNull VcsLogCachesInvalidator getInstance() {
-    return EP_NAME.findExtension(VcsLogCachesInvalidator.class);
+    return EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator.class);
   }
 }

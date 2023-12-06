@@ -9,12 +9,11 @@ import org.jetbrains.jps.api.JpsDynamicBundle;
 /**
  * @author Alexander Lobas
  */
-public class FormBundle extends JpsDynamicBundle {
+public final class FormBundle {
   private static final String BUNDLE = "messages.FormBundle";
-  private static final FormBundle INSTANCE = new FormBundle();
+  private static final JpsDynamicBundle INSTANCE = new JpsDynamicBundle(FormBundle.class, BUNDLE);
 
   private FormBundle() {
-    super(BUNDLE);
   }
 
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

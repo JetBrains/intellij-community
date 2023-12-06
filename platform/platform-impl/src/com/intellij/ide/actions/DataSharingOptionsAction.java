@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -11,10 +9,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class DataSharingOptionsAction extends DumbAwareAction {
-  public DataSharingOptionsAction() {
+import javax.swing.*;
+
+final class DataSharingOptionsAction extends DumbAwareAction {
+  DataSharingOptionsAction() {
     super(IdeBundle.messagePointer("action.DataSharingOptionsAction.text"),
-          IdeBundle.messagePointer("action.DataSharingOptionsAction.description"), null);
+          IdeBundle.messagePointer("action.DataSharingOptionsAction.description"), (Icon)null);
   }
 
   @Override

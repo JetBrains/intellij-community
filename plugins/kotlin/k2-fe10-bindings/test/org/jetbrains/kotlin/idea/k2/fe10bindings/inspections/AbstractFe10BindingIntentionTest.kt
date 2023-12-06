@@ -3,10 +3,13 @@
 package org.jetbrains.kotlin.idea.k2.fe10bindings.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.mock.MockProject
 import com.intellij.psi.PsiFile
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTestBase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
@@ -14,9 +17,18 @@ import java.io.File
 abstract class AbstractFe10BindingIntentionTest : AbstractIntentionTestBase() {
     override fun isFirPlugin() = true
 
+    override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
+
     // left empty because error reporting in FIR and old FE is different
     override fun checkForErrorsBefore(fileText: String) {}
     override fun checkForErrorsAfter(fileText: String) {}
+
+    override fun setUp() {
+        super.setUp()
+        project.registerLifetimeTokenFactoryForFe10Binding(myFixture.testRootDisposable)
+    }
 
     override fun tearDown() {
         runAll(

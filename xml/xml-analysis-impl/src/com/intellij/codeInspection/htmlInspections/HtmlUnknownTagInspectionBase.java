@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
+import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
@@ -42,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.xml.util.XmlUtil.isNotInjectedOrCustomHtmlFile;
 
 public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
   public static final Key<HtmlUnknownElementInspection> TAG_KEY = Key.create(TAG_SHORT_NAME);
@@ -97,7 +100,9 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
     }
 
     if (isAbstractDescriptor(ownDescriptor) ||
-        (parentDescriptor instanceof HtmlElementDescriptorImpl &&
+        ((parentDescriptor instanceof HtmlElementDescriptorImpl
+          || parentDescriptor instanceof WebSymbolElementDescriptor webSymbolElementDescriptor
+             && !webSymbolElementDescriptor.isCustomElement()) &&
          ownDescriptor instanceof HtmlElementDescriptorImpl &&
          isAbstractDescriptor(descriptorFromContext))) {
 
@@ -133,9 +138,9 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
         if (HtmlUtil.isHtml5Tag(name) && !HtmlUtil.hasNonHtml5Doctype(tag)) {
           quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
         }
-        ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ?
-                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
-                                             ProblemHighlightType.INFORMATION;
+        ProblemHighlightType highlightType = isNotInjectedOrCustomHtmlFile(tag.getContainingFile())
+                                             ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                                             : ProblemHighlightType.INFORMATION;
         if (isOnTheFly || highlightType != ProblemHighlightType.INFORMATION) {
           if (startTagName.getTextLength() > 0) {
             holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));

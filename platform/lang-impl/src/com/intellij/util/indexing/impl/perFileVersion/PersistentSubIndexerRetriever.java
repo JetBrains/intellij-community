@@ -3,17 +3,13 @@ package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.Closeable;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,7 +25,7 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   @NotNull
   private final PersistentSubIndexerVersionEnumerator<SubIndexerVersion> myPersistentVersionEnumerator;
   @NotNull
-  private final FileAttribute myFileAttribute;
+  private final IntFileAttribute myFileAttribute;
   @NotNull
   private final CompositeDataIndexer<?, ?, SubIndexerType, SubIndexerVersion> myIndexer;
 
@@ -65,6 +61,10 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     myPersistentVersionEnumerator.flush();
   }
 
+  public boolean isDirty() {
+    return myPersistentVersionEnumerator.isDirty();
+  }
+
   private static Path versionMapRoot() {
     return Paths.get(".perFileVersion", INDEXED_VERSIONS);
   }
@@ -79,32 +79,26 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   }
 
   public void setFileIndexerId(int fileId, int indexerId) throws IOException {
-    try (DataOutputStream stream = FSRecords.writeAttribute(fileId, myFileAttribute)) {
-      DataInputOutputUtil.writeINT(stream, indexerId);
-    }
+    myFileAttribute.writeInt(fileId, indexerId);
   }
 
   /**
    * @return stored file indexer id. value < 0 means that no id is available for specified file
    */
   public int getStoredFileIndexerId(int fileId) throws IOException {
-    try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, myFileAttribute)) {
-      if (stream == null) return UNINDEXED_STATE;
-      return DataInputOutputUtil.readINT(stream);
-    }
+    int indexerId = myFileAttribute.readInt(fileId);
+    return indexerId == 0 ? UNINDEXED_STATE : indexerId;
   }
 
   public FileIndexingState getSubIndexerState(int fileId, @NotNull IndexedFile file) throws IOException {
-    try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, myFileAttribute)) {
-      if (stream != null) {
-        int currentIndexedVersion = DataInputOutputUtil.readINT(stream);
-        if (currentIndexedVersion == UNINDEXED_STATE) {
-          return FileIndexingState.NOT_INDEXED;
-        }
-        int actualVersion = getFileIndexerId(file);
-        return actualVersion == currentIndexedVersion ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
-      }
+    int indexerId = myFileAttribute.readInt(fileId);
+    if (indexerId == 0) {
+      return FileIndexingState.OUT_DATED;
+    } else if (indexerId == UNINDEXED_STATE) {
       return FileIndexingState.NOT_INDEXED;
+    } else {
+      int actualVersion = getFileIndexerId(file);
+      return actualVersion == indexerId ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
     }
   }
 
@@ -127,11 +121,13 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     return myIndexer.getSubIndexerVersion(type);
   }
 
-  private static final Map<Pair<String, Integer>, FileAttribute> ourAttributes = new HashMap<>();
+  private static final Map<Pair<String, Integer>, IntFileAttribute> ourAttributes = new HashMap<>();
 
-  private static FileAttribute getFileAttribute(String name, int version) {
+  private static IntFileAttribute getFileAttribute(String name, int version) {
     synchronized (ourAttributes) {
-      return ourAttributes.computeIfAbsent(new Pair<>(name, version), __ -> new FileAttribute(name + ".index.version", version, false));
+      return ourAttributes.computeIfAbsent(new Pair<>(name, version), __ -> {
+        return IntFileAttribute.create(name + ".index.version", version);
+      });
     }
   }
 }

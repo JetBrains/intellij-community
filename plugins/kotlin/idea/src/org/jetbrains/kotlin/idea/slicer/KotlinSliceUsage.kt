@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.slicer
 
 import com.intellij.ide.SelectInEditorManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.ProperTextRange
@@ -12,12 +13,17 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.slicer.SliceAnalysisParams
 import com.intellij.slicer.SliceUsage
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.usageView.UsageInfo
+import com.intellij.usages.TextChunk
+import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import java.awt.Font
 
 open class KotlinSliceUsage : SliceUsage {
 
@@ -46,6 +52,7 @@ open class KotlinSliceUsage : SliceUsage {
     //TODO: it's all hacks due to UsageInfo stored in the base class - fix it in IDEA
     private fun initializeUsageInfo() {
         usageInfo = getUsageInfo().element?.let { AdaptedUsageInfo(it, mode) }
+        resetCachedPresentation()
     }
 
     override fun getUsageInfo(): UsageInfo {
@@ -54,6 +61,42 @@ open class KotlinSliceUsage : SliceUsage {
 
     override fun getMergedInfos(): Array<UsageInfo> {
         return arrayOf(getUsageInfo())
+    }
+
+    protected open val isDereference: Boolean
+        get() = false
+
+    override fun computeText(): Array<TextChunk> {
+        val text = super.computeText()
+
+        val result = mutableListOf<TextChunk>()
+        for ((i, textChunk) in text.withIndex()) {
+            var attributes = textChunk.simpleAttributesIgnoreBackground
+            if (isDereference) {
+                attributes = attributes.derive(attributes.style, JBColor.LIGHT_GRAY, attributes.bgColor, attributes.waveColor)
+            }
+
+            if (attributes.fontStyle == Font.BOLD) {
+                attributes = attributes.derive(attributes.style or SimpleTextAttributes.STYLE_UNDERLINE, null, null, null)
+            }
+
+            result.add(TextChunk(attributes.toTextAttributes(), textChunk.text))
+            if (i == 0) {
+                result.add(TextChunk(TextAttributes(), FontUtil.spaceAndThinSpace()))
+            }
+        }
+
+        for (behaviour in mode.behaviourStack.reversed()) {
+            result.add(TextChunk(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES.toTextAttributes(), behaviour.slicePresentationPrefix))
+        }
+
+        val containerSuffix = KotlinSliceUsageSuffix.containerSuffix(this)
+        if (containerSuffix != null) {
+            result.add(TextChunk(TextAttributes(), " "))
+            result.add(TextChunk(SimpleTextAttributes.GRAY_ATTRIBUTES.toTextAttributes(), containerSuffix))
+        }
+
+        return result.toTypedArray()
     }
 
     override fun openTextEditor(focus: Boolean): Editor? {

@@ -69,14 +69,13 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     val newPsi = newElement.sourcePsi ?: return null
 
     adjustChainStyleToMethodCalls(oldPsi, newPsi)
-
     val factory = JavaPsiFacade.getElementFactory(oldPsi.project)
     val updOldPsi = when {
       (newPsi is PsiBlockStatement || newPsi is PsiCodeBlock) && oldPsi.parent is PsiExpressionStatement -> oldPsi.parent
       else -> oldPsi
     }
     val updNewPsi = when {
-      updOldPsi is PsiStatement && newPsi is PsiExpression -> factory.createExpressionStatement(newPsi) ?: return null
+      updOldPsi is PsiStatement && newPsi is PsiExpression -> factory.createExpressionStatement(newPsi, oldElement) ?: return null
       updOldPsi is PsiCodeBlock && newPsi is PsiBlockStatement -> newPsi.codeBlock
       else -> newPsi
     }
@@ -137,10 +136,37 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
   override fun changeLabel(returnExpression: UReturnExpression, context: PsiElement): UReturnExpression = returnExpression
 }
 
-private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression): PsiStatement? {
-  val statement = createStatementFromText("x;", null) as? PsiExpressionStatement ?: return null
+private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression, oldElement: UElement? = null): PsiStatement? {
+  val comments = oldElement?.comments
+  val textStatement = if (comments.isNullOrEmpty()) "x;" else createStatementTextWithComment(comments, oldElement)
+
+  val statement = createStatementFromText(textStatement, null) as? PsiExpressionStatement ?: return null
+
   statement.expression.replace(expression)
   return statement
+}
+
+private fun createStatementTextWithComment(comments: List<UComment>, oldElement: UElement): String {
+  val comment = comments.joinToString(prefix = getCommentPrefix(comments, oldElement), separator = " ") { it.text }
+
+  return "x;$comment"
+}
+
+private fun getCommentPrefix(comments: List<UComment>, oldElement: UElement): String {
+  val lastCommentPsi = comments.last().sourcePsi
+  val sourcePsi = oldElement.sourcePsi
+  val defaultPrefix = " "
+  if (sourcePsi == null) return defaultPrefix
+
+  val isCommentInChildren = sourcePsi.children.filterIsInstance<PsiComment>().any { it == lastCommentPsi }
+  val siblings = if (isCommentInChildren) {
+    sourcePsi.firstChild.siblings()
+  } else {
+    sourcePsi.siblings(withSelf = false)
+  }
+  val beforeComment = siblings.takeWhile { it != lastCommentPsi }.lastOrNull()  
+  
+  return (beforeComment as? PsiWhiteSpace)?.text ?: defaultPrefix
 }
 
 class JavaUastElementFactory(private val project: Project) : UastElementFactory {
@@ -200,11 +226,17 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
 
   private fun createCallExpressionTemplateRespectingChainStyle(receiver: UExpression?): String {
     if (receiver == null) return "a()"
-    val siblings = receiver.sourcePsi?.siblings(withSelf = false) ?: return "a.b()"
 
-    (siblings.firstOrNull() as? PsiWhiteSpace)?.let { whitespace ->
-      return "a${whitespace.text}.b()"
+    val siblings = receiver.sourcePsi?.siblings(withSelf = false) ?: return "a.b()"
+    val initialSpace = (siblings.firstOrNull() as? PsiWhiteSpace)?.text
+
+    if (receiver.comments.isNotEmpty()) {
+      val comments = receiver.comments.joinToString(prefix = initialSpace ?: " ", separator = "") { it.text }
+
+      return "a${comments}\n.b()"
     }
+
+    initialSpace?.let { whitespace -> return "a${whitespace}.b()" }
 
     if (siblings.firstOrNull()?.elementType == ElementType.DOT) {
       (siblings.elementAt(2) as? PsiWhiteSpace)?.let { whitespace ->
@@ -391,13 +423,12 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       }
 
       expression.sourcePsi?.let { psi ->
-        psi as? PsiStatement ?: (psi as? PsiExpression)?.let { psiFactory.createExpressionStatement(it) }
+        psi as? PsiStatement ?: (psi as? PsiExpression)?.let { psiFactory.createExpressionStatement(it, expression) }
       }?.let { blockStatement.codeBlock.add(it) } ?: return null
     }
 
     return JavaUBlockExpression(blockStatement, null)
   }
-
 
   override fun createLambdaExpression(parameters: List<UParameterInfo>, body: UExpression, context: PsiElement?): ULambdaExpression? {
     //TODO: smart handling cases, when parameters types should exist in code

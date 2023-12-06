@@ -5,3 +5,5 @@ fun foo(a: String?): Array<String> {
     val w = a ?: return null<caret>
     return arrayOf(w)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix

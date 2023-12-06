@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.validations;
 
 import com.intellij.json.JsonBundle;
@@ -9,7 +9,7 @@ import com.jetbrains.jsonSchema.extension.JsonValidationHost;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.*;
 
-public class NumericValidation implements JsonSchemaValidation {
+public final class NumericValidation implements JsonSchemaValidation {
   public static final NumericValidation INSTANCE = new NumericValidation();
   private static void checkNumber(PsiElement propValue,
                                   JsonSchemaObject schema,

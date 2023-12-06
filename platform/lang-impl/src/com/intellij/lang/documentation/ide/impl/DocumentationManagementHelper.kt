@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 
-@Service
+@Service(Service.Level.PROJECT)
 class DocumentationManagementHelper(private val project: Project) {
   fun showQuickDoc(editor: Editor, target: DocumentationTarget, popupClosedCallback: (() -> Unit)? = null) {
     val context = DataContext {
@@ -20,11 +20,10 @@ class DocumentationManagementHelper(private val project: Project) {
         else -> null
       }
     }
-    DocumentationManager.instance(project).actionPerformed(context, popupClosedCallback)
+    DocumentationManager.getInstance(project).actionPerformed(context, popupClosedCallback)
   }
 
   companion object {
-    @JvmStatic
-    fun instance(project: Project): DocumentationManagementHelper = project.service()
+    fun getInstance(project: Project): DocumentationManagementHelper = project.service()
   }
 }

@@ -2,8 +2,8 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.util.VcsUserUtil
@@ -17,7 +17,7 @@ abstract class VcsLogUserResolverBase : VcsLogUserResolver {
   abstract val currentUsers: Map<VirtualFile, VcsUser>
   abstract val allUsers: Set<VcsUser>
 
-  private val cachedUsers = ClearableLazyValue.createAtomic {
+  private val cachedUsers = SynchronizedClearableLazy {
     val usersByNames: MultiMap<String, VcsUser> = MultiMap.create()
     val usersByEmails: MultiMap<String, VcsUser> = MultiMap.create()
 
@@ -33,7 +33,7 @@ abstract class VcsLogUserResolverBase : VcsLogUserResolver {
       }
     }
 
-    return@createAtomic Pair(usersByNames, usersByEmails)
+    return@SynchronizedClearableLazy Pair(usersByNames, usersByEmails)
   }
 
   private val allUsersByNames: MultiMap<String, VcsUser> get() = cachedUsers.value.first
@@ -60,7 +60,7 @@ abstract class VcsLogUserResolverBase : VcsLogUserResolver {
     val emails = usersByName.map { user -> VcsUserUtil.emailToLowerCase(user.email) }.toSet()
     val usersByEmail = resolveUserName(emailNamePart).filter { candidateUser ->
       /*
-      ivan@ivanov.com and ivan@petrov.com have the same emailNamePart but they are different people
+      ivan@ivanov.com and ivan@petrov.com have the same emailNamePart, but they are different people
       resolveUserName("ivan") will find both of them, so we filter results here
       */
       emails.contains(VcsUserUtil.emailToLowerCase(candidateUser.email))

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +24,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
     return new FileContentPattern();
   }
 
-  public FileContentPattern withName(@NotNull final String name) {
+  public FileContentPattern withName(final @NotNull String name) {
     return with(new PatternCondition<>("withName") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
@@ -51,7 +51,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
     });
   }
 
-  public FileContentPattern xmlWithRootTag(@NotNull final String rootTag) {
+  public FileContentPattern xmlWithRootTag(final @NotNull String rootTag) {
     return with(new PatternCondition<>("withRootTag") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
@@ -72,7 +72,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
   public FileContentPattern xmlWithRootTagNamespace(final ElementPattern<String> namespacePattern) {
     return with(new PatternCondition<>("xmlWithRootTagNamespace") {
       @Override
-      public boolean accepts(@NotNull final FileContent fileContent, final ProcessingContext context) {
+      public boolean accepts(final @NotNull FileContent fileContent, final ProcessingContext context) {
         try {
           String rootTagNamespace = parseHeaderWithException(CharArrayUtil.readerFromCharSequence(fileContent.getContentAsText())).getRootTagNamespace();
           return rootTagNamespace != null && namespacePattern.accepts(rootTagNamespace, context);
@@ -90,8 +90,8 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
       return ApplicationManager.getApplication().getService(ParseXml.class);
     }
   }
-  @NotNull
-  private static XmlFileHeader parseHeaderWithException(@NotNull Reader reader) throws IOException {
+
+  private static @NotNull XmlFileHeader parseHeaderWithException(@NotNull Reader reader) throws IOException {
     return ParseXml.getInstance().parseHeaderWithException(reader);
   }
 }

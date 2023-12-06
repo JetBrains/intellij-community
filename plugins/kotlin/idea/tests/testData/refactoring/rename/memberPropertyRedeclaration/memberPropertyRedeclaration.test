@@ -3,5 +3,6 @@
   "mainFile": "test/test.kt",
   "newName": "foo",
   "withRuntime": "true",
-  "hint": "Property 'foo' is already declared in class 'A'"
+  "hint": "Property 'foo' is already declared in class 'A'",
+  "enabledInK2": "true"
 }

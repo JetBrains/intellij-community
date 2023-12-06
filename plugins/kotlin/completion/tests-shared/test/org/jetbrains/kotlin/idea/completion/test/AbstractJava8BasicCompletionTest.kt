@@ -2,9 +2,4 @@
 
 package org.jetbrains.kotlin.idea.completion.test
 
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-
-abstract class AbstractJava8BasicCompletionTest : AbstractJvmBasicCompletionTest()
+abstract class AbstractJava8BasicCompletionTest : AbstractJvmBasicCompletionTestBase()

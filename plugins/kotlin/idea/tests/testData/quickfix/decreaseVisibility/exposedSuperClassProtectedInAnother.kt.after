@@ -12,3 +12,4 @@ class Other {
 class Another {
     private class First : Other.Data(42)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPrivateFix

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.application.options.editor.checkBox
@@ -25,7 +25,11 @@ import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsSetting
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.toMultiMap
+import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -36,18 +40,39 @@ import javax.swing.JComponent
  * @see com.intellij.openapi.options.UiDslUnnamedConfigurable
  */
 internal class GeneralVcsSettingsProviderEP(project: Project) : ConfigurableEP<UnnamedConfigurable>(project) {
+  /**
+   * Allowed values: 'confirmations', anything else is considered to be 'other'.
+   */
+  @Attribute("location")
+  var location: String? = "other"
+
   companion object {
     val VCS_SETTINGS_EP_NAME = ExtensionPointName<GeneralVcsSettingsProviderEP>("com.intellij.generalVcsSettingsExtension")
   }
+
+  fun getLocationEnum(): Location = when (location?.lowercase()) {
+    "confirmations" -> Location.Confirmations
+    else -> Location.Other
+  }
+}
+
+enum class Location {
+  Confirmations,
+  Other
 }
 
 class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
   "project.propVCSSupport.Confirmation"
 ), Configurable.WithEpDependencies {
+  private val extensions: MultiMap<Location, UnnamedConfigurable> by lazy {
+    GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME.getExtensionList(project)
+      .mapNotNull { ext -> ext.createConfigurable()?.let { ext.getLocationEnum() to it } }
+      .toMultiMap()
+  }
 
   override fun createConfigurables(): List<UnnamedConfigurable> =
-    GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME.getExtensions(project).mapNotNull { it.createConfigurable() }
+    extensions.values().toList()
 
   override fun getDependencies() = listOf(VcsEP.EP_NAME, GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME)
 
@@ -76,11 +101,12 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
             .gap(RightGap.SMALL)
           val addComboBox = comboBox(
             EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-            renderer = listCellRenderer {
-              text = when (it) {
+            renderer = textListCellRenderer {
+              when (it) {
                 VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.creation.show.options")
                 VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.creation.add.silently")
                 VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.creation.do.not.add")
+                null -> ""
               }
             })
             .bindItem(addConfirmation::getValue, addConfirmation::setValue)
@@ -98,11 +124,12 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
             .withApplicableVcsesTooltip(removeConfirmation, vcsListeners)
             .gap(RightGap.SMALL)
           comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-                   renderer = listCellRenderer {
-                     text = when (it) {
+                   renderer = textListCellRenderer {
+                     when (it) {
                        VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.deletion.show.options")
                        VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.deletion.remove.silently")
                        VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.deletion.do.not.remove")
+                       null -> ""
                      }
                    })
             .bindItem(removeConfirmation::getValue, removeConfirmation::setValue)
@@ -122,6 +149,10 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
           row {
             checkBox(cdShowReadOnlyStatusDialog(project))
           }
+        }
+
+        extensions.get(Location.Confirmations).forEach { configurable ->
+          appendDslConfigurable(configurable)
         }
       }
 
@@ -181,7 +212,7 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
         label(message("settings.checkbox.rows"))
       }
 
-      for (configurable in configurables) {
+      extensions.get(Location.Other).forEach { configurable ->
         appendDslConfigurable(configurable)
       }
     }

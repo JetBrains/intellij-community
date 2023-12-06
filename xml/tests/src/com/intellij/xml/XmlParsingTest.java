@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml;
 
 import com.intellij.lang.*;
@@ -8,25 +8,36 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
 import com.intellij.lexer.EmbeddedTokenTypesProvider;
-import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XmlLexer;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
+import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.IOException;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class XmlParsingTest extends ParsingTestCase {
   public XmlParsingTest() {
     super("psi/xml", "xml", new XMLParserDefinition());
@@ -38,6 +49,10 @@ public class XmlParsingTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
+    return getXmlParsingTestDataPath();
+  }
+
+  private static String getXmlParsingTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
   }
 
@@ -166,116 +181,72 @@ public class XmlParsingTest extends ParsingTestCase {
     doTestXml(loadFile("manyErrors.xml"));
   }
 
-  public void _testLexerPerformance1() throws Exception {
-    final String text = loadFile("pallada.xml");
-    XmlLexer lexer = new XmlLexer();
-    doLex(lexer, text);
-    final FilterLexer filterLexer = new FilterLexer(new XmlLexer(),
-                                                    new FilterLexer.SetFilter(
-                                                      LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE)
-                                                        .getWhitespaceTokens()));
-    doLex(filterLexer, text);
-    doLex(lexer, text);
-    doLex(filterLexer, text);
-    doLex(filterLexer, text);
-  }
-
-  public void _testLexerPerformance2() throws Exception {
-    final String text = loadFile("performance2.xml");
-    XmlLexer lexer = new XmlLexer();
-    doLex(lexer, text);
-    final FilterLexer filterLexer = new FilterLexer(new XmlLexer(),
-                                                    new FilterLexer.SetFilter(
-                                                      LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE)
-                                                        .getWhitespaceTokens()));
-    doLex(filterLexer, text);
-    doLex(lexer, text);
-    for (int i = 0; i < 20; i++) {
-      doLex(filterLexer, text);
-    }
-  }
-
-  private static void doLex(Lexer lexer, final String text) {
-    lexer.start(text);
-    long time = System.currentTimeMillis();
-    int count = 0;
-    while (lexer.getTokenType() != null) {
-      lexer.advance();
-      count++;
-    }
-    LOG.debug("Plain lexing took " + (System.currentTimeMillis() - time) + "ms lexems count:" + count);
-  }
-
   private static void transformAllChildren(final ASTNode file) {
     for (ASTNode child = file.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       transformAllChildren(child);
     }
   }
 
-  public void _testPerformance1() throws Exception {
-    final String text = loadFile("pallada.xml");
-    long time = System.currentTimeMillis();
-    final PsiFile file = createFile("test.xml", text);
-    transformAllChildren(file.getNode());
-    LOG.debug("Old parsing took " + (System.currentTimeMillis() - time) + "ms");
-    int index = 0;
-    while (index++ < 10) {
-      newParsing(text);
-    }
-    LeafElement firstLeaf = TreeUtil.findFirstLeaf(file.getNode());
-    index = 0;
-    do {
-      index++;
-    }
-    while ((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
-    LOG.debug("For " + index + " lexems");
+  public void testPerformance1() throws Exception {
+    doTestPerformance("pallada.xml", 1000);
   }
 
-  public void _testReparsePerformance() throws Exception {
-    final String text = loadFile("performance2.xml");
-    final PsiFile file = createFile("test.xml", text);
+  public void testPerformance2() throws Exception {
+    doTestPerformance("performance2.xml", 2000);
+  }
+
+  private void doTestPerformance(String fileName, int expectedMs) throws IOException {
+    final String text = loadFileDefault(getXmlParsingTestDataPath() + "psi/xml", fileName);
+    long start = System.nanoTime();
+    final PsiFile file = createFile(fileName, text);
     transformAllChildren(file.getNode());
-    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    LOG.debug("First parsing took " + (System.nanoTime() - start) + "ns");
 
-    System.gc();
-    System.gc();
+    PlatformTestUtil.startPerformanceTest("XML Parser Performance on " + fileName, expectedMs, () -> {
+      for (int i = 0; i < 10; i++) {
+        PsiFile next = createPsiFile("test" + i, text);
+        transformAllChildren(next.getNode());
+      }
+    }).setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches()).assertTimingAsSubtest();
 
-    WriteCommandAction.writeCommandAction(getProject(), file).run(
+    LeafElement firstLeaf = TreeUtil.findFirstLeaf(file.getNode());
+    int count = 0;
+    do {
+      count++;
+    }
+    while ((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
+    LOG.debug("For " + count + " lexemes");
+  }
+
+  public void testReparsePerformance() throws Exception {
+    Assume.assumeTrue("Skip in non XmlParsingTest", getClass() == XmlParsingTest.class);
+    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder(getTestName(false));
+    final CodeInsightTestFixture fixture = factory.createCodeInsightFixture(builder.getFixture());
+    fixture.setTestDataPath(getXmlParsingTestDataPath() + "psi/xml");
+    fixture.setUp();
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new PsiAwareTextEditorProvider(),
+                                                                            fixture.getTestRootDisposable());
+
+    final Project project = fixture.getProject();
+
+    final PsiFile file = fixture.configureByFile("performance2.xml");
+    assertNotNull(file);
+    transformAllChildren(file.getNode());
+    final Document doc = fixture.getDocument(file);
+    assertNotNull(doc);
+
+    WriteCommandAction.writeCommandAction(project, file).run(
       () -> PlatformTestUtil.startPerformanceTest("XML reparse using PsiBuilder", 2500, () -> {
         for (int i = 0; i < 10; i++) {
-          final long tm = System.currentTimeMillis();
+          final long start = System.nanoTime();
           doc.insertString(0, "<additional root=\"tag\"/>");
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-          LOG.debug("Reparsed for: " + (System.currentTimeMillis() - tm));
+          PsiDocumentManager.getInstance(project).commitDocument(doc);
+          LOG.debug("Reparsed for: " + (System.nanoTime() - start));
         }
-      }).useLegacyScaling().assertTiming());
-  }
+      }).assertTiming());
 
-  public void _testPerformance2() throws Exception {
-    final String text = loadFile("performance2.xml");
-    long time = System.currentTimeMillis();
-    final PsiFile file = createFile("test.xml", text);
-    transformAllChildren(file.getNode());
-    LOG.debug("Old parsing took " + (System.currentTimeMillis() - time) + "ms");
-    int index = 0;
-    while (index++ < 10) {
-      newParsing(text);
-    }
-    LeafElement firstLeaf = TreeUtil.findFirstLeaf(file.getNode());
-    index = 0;
-    do {
-      index++;
-    }
-    while ((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
-    LOG.debug("For " + index + " lexems");
-  }
-
-  private static void newParsing(final String text) {
-    long time = System.currentTimeMillis();
-
-    ASTFactory.lazy(XmlElementType.XML_FILE, text).getFirstChildNode(); // ensure parsed
-
-    LOG.debug("parsed for " + (System.currentTimeMillis() - time) + "ms");
+    fixture.tearDown();
   }
 
   public void testXmlDecl() throws Exception {

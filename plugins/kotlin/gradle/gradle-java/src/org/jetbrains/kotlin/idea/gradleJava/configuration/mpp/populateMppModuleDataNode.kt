@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.text.VersionComparatorUtil
@@ -30,14 +29,13 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtil
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationImpl
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedSerializedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalProject
@@ -56,7 +54,6 @@ import java.util.stream.Collectors
  * @param moduleDataNode: The node representing a specific Gradle project which contains multiplatform source sets
  */
 internal fun populateMppModuleDataNode(context: KotlinMppGradleProjectResolver.Context) {
-    KotlinMPPCompilerArgumentsCacheMergeManager.mergeCache(context.gradleModule, context.resolverCtx)
     context.initializeModuleData()
     context.createMppGradleSourceSetDataNodes()
 }
@@ -98,12 +95,13 @@ internal fun doCreateSourceSetInfo(
             when (it) {
                 is JvmIdePlatformKind -> KotlinPlatform.JVM
                 is JsIdePlatformKind -> KotlinPlatform.JS
+                is WasmIdePlatformKind -> KotlinPlatform.WASM
                 is NativeIdePlatformKind -> KotlinPlatform.NATIVE
                 else -> KotlinPlatform.COMMON
             }
         } ?: KotlinPlatform.COMMON
 
-        info.lazyCompilerArguments = lazy {
+        info.compilerArguments = CompilerArgumentsProvider {
             createCompilerArguments(emptyList(), compilerArgumentsPlatform).also {
                 it.multiPlatform = true
                 it.languageVersion = languageSettings.languageVersion
@@ -140,8 +138,6 @@ internal fun doCreateSourceSetInfo(
         )
     }
 
-    val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
-
     return KotlinSourceSetInfo(compilation).also { sourceSetInfo ->
         sourceSetInfo.moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, compilation, resolverCtx)
         sourceSetInfo.gradleModuleId = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
@@ -160,30 +156,9 @@ internal fun doCreateSourceSetInfo(
             KotlinModuleUtils.getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
         }.toSet()
 
-        when (val cachedArgsInfo = compilation.cachedArgsInfo) {
-            is CachedExtractedArgsInfo -> {
-                val restoredArgs = lazy { CachedArgumentsRestoring.restoreExtractedArgs(cachedArgsInfo, cacheHolder) }
-                sourceSetInfo.lazyCompilerArguments = lazy { restoredArgs.value.currentCompilerArguments }
-                sourceSetInfo.lazyDefaultCompilerArguments = lazy { restoredArgs.value.defaultCompilerArguments }
-                sourceSetInfo.lazyDependencyClasspath =
-                    lazy { restoredArgs.value.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) } }
-            }
-
-            is CachedSerializedArgsInfo -> {
-                val restoredArgs =
-                    lazy { CachedArgumentsRestoring.restoreSerializedArgsInfo(cachedArgsInfo, cacheHolder) }
-                sourceSetInfo.lazyCompilerArguments = lazy {
-                    createCompilerArguments(restoredArgs.value.currentCompilerArguments.toList(), compilation.platform).also {
-                        it.multiPlatform = true
-                    }
-                }
-                sourceSetInfo.lazyDefaultCompilerArguments = lazy {
-                    createCompilerArguments(restoredArgs.value.defaultCompilerArguments.toList(), compilation.platform)
-                }
-
-                sourceSetInfo.lazyDependencyClasspath = lazy {
-                    restoredArgs.value.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) }
-                }
+        compilation.compilerArguments?.let { compilerArguments ->
+            sourceSetInfo.compilerArguments = CompilerArgumentsProvider {
+                createCompilerArguments(compilerArguments, compilation.platform)
             }
         }
         sourceSetInfo.addSourceSets(compilation.allSourceSets, compilation.fullName(), gradleModule, resolverCtx)
@@ -194,26 +169,50 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
     if (moduleDataNode.isMppDataInitialized) return
 
 
-    /* Populate 'MPP_CONFIGURATION_ARTIFACTS' for every production source set */
+    /*
+    Populate 'artifactMap' mapping between artifacts and source modules that produce said artifacts.
+    This map is later used to resolve dependencies from a given artifact to its source modules.
+     */
     run {
         val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)
         if (externalProject == null) return
         moduleDataNode.isMppDataInitialized = true
 
-        // save artifacts locations.
-        val userData = projectDataNode.getUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS)
-            ?: HashMap<String, MutableList<String>>().apply {
-                projectDataNode.putUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS, this)
-            }
 
         mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
             val path = ExternalSystemApiUtil.toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
-            val currentModules = userData[path] ?: ArrayList<String>().apply { userData[path] = this }
-            // Test modules should not be added. Otherwise we could get dependnecy of java.mail on jvmTest
-            val allSourceSets = target.compilations.filter { !it.isTestComponent }.flatMap { it.declaredSourceSets }.toSet()
-            val availableViaDependsOn = allSourceSets.flatMap { it.allDependsOnSourceSets }.mapNotNull { mppModel.sourceSetsByName[it] }
-            allSourceSets.union(availableViaDependsOn).forEach { sourceSet ->
-                currentModules.add(KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx))
+            val declaredSourceSetsOfCompilations = target.jar!!.compilations.flatMap { it.declaredSourceSets }.toSet()
+            val availableViaDependsOn = declaredSourceSetsOfCompilations
+                .flatMap { it.allDependsOnSourceSets }
+                .mapNotNull { mppModel.sourceSetsByName[it] }
+
+            declaredSourceSetsOfCompilations.union(availableViaDependsOn).forEach { sourceSet ->
+                resolverCtx.artifactsMap.storeModuleId(
+                    artifactPath = path,
+                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
+                    /*
+                    Using 'kotlin' as moduleId to mark the artifact as being owned by the Kotlin plugin.
+                    As of writing this comment, the exact moduleId is not relevant; there won't be code that will query
+                    artifacts with this ownerId. This acts more as 'tinting' this artifact to be owned by someone else than the
+                    platform. This will disable some special logic from the platform that is mostly relevant for pure java projects.
+
+                    (e.g., retaining some artifacts despite being resolved to _some_ source modules)
+                     */
+                    ownerId = "kotlin"
+                )
+            }
+        }
+
+        // Collect compilation output archives
+        mppModel.targets.flatMap { it.compilations }.forEach { compilation ->
+            val archiveFile = compilation.archiveFile ?: return@forEach
+            val path = ExternalSystemApiUtil.toCanonicalPath(archiveFile.absolutePath)
+            compilation.allSourceSets.forEach { sourceSet ->
+                resolverCtx.artifactsMap.storeModuleId(
+                    artifactPath = path,
+                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
+                    ownerId = "kotlin"
+                )
             }
         }
     }
@@ -508,7 +507,7 @@ private fun getInternalModuleName(
 
 //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
 private var DataNode<ModuleData>.isMppDataInitialized
-        by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_MPP_DATA_INITIALIZED"), false)
+        by NotNullableCopyableDataNodeUserDataProperty(Key.create("IS_MPP_DATA_INITIALIZED"), false)
 
 private fun shouldDelegateToOtherPlugin(kotlinTarget: KotlinTarget): Boolean =
     kotlinTarget.platform == KotlinPlatform.ANDROID
@@ -563,8 +562,8 @@ private fun ExternalProject.notImportedCommonSourceSets() =
 
 private fun KotlinPlatform.isNotSupported() = IdePlatformKindTooling.getToolingIfAny(this) == null
 
-private fun createCompilerArguments(args: List<String>, platform: KotlinPlatform): CommonCompilerArguments {
-    val compilerArguments = IdePlatformKindTooling.getTooling(platform).kind.argumentsClass.newInstance()
+fun createCompilerArguments(args: List<String>, platform: KotlinPlatform): CommonCompilerArguments {
+    val compilerArguments = IdePlatformKindTooling.getTooling(platform).kind.argumentsClass.getDeclaredConstructor().newInstance()
     parseCommandLineArguments(args.toList(), compilerArguments)
     return compilerArguments
 }

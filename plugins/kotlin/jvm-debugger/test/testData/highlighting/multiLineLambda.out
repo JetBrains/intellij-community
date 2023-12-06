@@ -1,0 +1,21 @@
+LineBreakpoint created at multiLineLambda.kt:7 lambdaOrdinal = 1
+LineBreakpoint created at multiLineLambda.kt:11 lambdaOrdinal = 1
+LineBreakpoint created at multiLineLambda.kt:15 lambdaOrdinal = 1
+LineBreakpoint created at multiLineLambda.kt:20 lambdaOrdinal = 1
+LineBreakpoint created at multiLineLambda.kt:25 lambdaOrdinal = 2
+Run Java
+Connected to the target VM
+multiLineLambda.kt:8
+Highlight whole line
+multiLineLambda.kt:11
+Highlight lambda range: '{ println(it) }'
+multiLineLambda.kt:16
+Highlight whole line
+multiLineLambda.kt:21
+Highlight lambda range: '         it }'
+multiLineLambda.kt:25
+Highlight lambda range: '{ it
+'
+Disconnected from the target VM
+
+Process finished with exit code 0

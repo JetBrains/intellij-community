@@ -4,8 +4,10 @@ package com.intellij.util.ui;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Objects;
 
 import static java.lang.Math.ceil;
 
@@ -16,18 +18,22 @@ import static java.lang.Math.ceil;
  */
 public class ColorIcon extends EmptyIcon {
   private final Color myColor;
-  private final boolean myBorder;
+  private final @Nullable Color myBorderColor;
   private final int myColorWidth;
   private final int myColorHeight;
   private final int myArc;
 
-  public ColorIcon(int width, int height, int colorWidth, int colorHeight, @NotNull Color color, boolean border, int arc) {
+  public ColorIcon(int width, int height, int colorWidth, int colorHeight, @NotNull Color color, @Nullable Color borderColor, int arc) {
     super(width, height);
     myColor = color;
     myColorWidth = colorWidth;
     myColorHeight = colorHeight;
-    myBorder = border;
+    myBorderColor = borderColor;
     myArc = arc;
+  }
+
+  public ColorIcon(int width, int height, int colorWidth, int colorHeight, @NotNull Color color, boolean border, int arc) {
+    this(width, height, colorWidth, colorHeight, color, border ? Gray.x00.withAlpha(40) : null, arc);
   }
 
   public ColorIcon(int width, int height, int colorWidth, int colorHeight, @NotNull Color color, boolean border) {
@@ -49,15 +55,14 @@ public class ColorIcon extends EmptyIcon {
   protected ColorIcon(ColorIcon icon) {
     super(icon);
     myColor = icon.myColor;
-    myBorder = icon.myBorder;
+    myBorderColor = icon.myBorderColor;
     myColorWidth = icon.myColorWidth;
     myColorHeight = icon.myColorHeight;
     myArc = icon.myArc;
   }
 
-  @NotNull
   @Override
-  public ColorIcon copy() {
+  public @NotNull ColorIcon copy() {
     return new ColorIcon(this);
   }
 
@@ -81,9 +86,9 @@ public class ColorIcon extends EmptyIcon {
 
     g.fillRoundRect(x, y, width, height, arc, arc);
 
-    if (myBorder) {
-      g.setColor(Gray.x00.withAlpha(40));
-      g.fillRoundRect(x, y, width, height, arc, arc);
+    if (myBorderColor != null) {
+      g.setColor(myBorderColor);
+      g.drawRoundRect(x, y, width, height, arc, arc);
     }
     config.restore();
   }
@@ -108,7 +113,7 @@ public class ColorIcon extends EmptyIcon {
 
     ColorIcon icon = (ColorIcon)o;
 
-    if (myBorder != icon.myBorder) return false;
+    if (!Objects.equals(myBorderColor, icon.myBorderColor)) return false;
     if (myColorWidth != icon.myColorWidth) return false;
     if (myColorHeight != icon.myColorHeight) return false;
     if (myArc != icon.myArc) return false;
@@ -121,7 +126,7 @@ public class ColorIcon extends EmptyIcon {
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (myColor != null ? myColor.hashCode() : 0);
-    result = 31 * result + (myBorder ? 1 : 0);
+    result = 31 * result + (myBorderColor != null ? myBorderColor.hashCode() : 0);
     result = 31 * result + myColorWidth;
     result = 31 * result + myColorHeight;
     result = 31 * result + myArc;

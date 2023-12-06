@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -37,6 +38,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +53,7 @@ import static com.intellij.ui.SimpleTextAttributes.*;
 /**
  * @author gregsh
  */
-public class JumpToColorsAndFontsAction extends DumbAwareAction {
+public final class JumpToColorsAndFontsAction extends DumbAwareAction {
 
   public JumpToColorsAndFontsAction() {
     setInjectedContext(true);
@@ -75,39 +77,13 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) return;
+
     Map<TextAttributesKey, Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> keyMap = new HashMap<>();
-    Processor<RangeHighlighterEx> processor = r -> {
-      HighlightInfo info = HighlightInfo.fromRangeHighlighter(r);
-      TextAttributesKey key = info != null
-                              ? ObjectUtils.chooseNotNull(info.forcedTextAttributesKey, info.type.getAttributesKey())
-                              : null;
+    List<TextAttributesKey> keys = getTextAttributesKeys(project, editor);
+    for (TextAttributesKey key : keys) {
       Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p =
         key == null ? null : ColorSettingsPages.getInstance().getAttributeDescriptor(key);
       if (p != null) keyMap.put(key, p);
-      return true;
-    };
-    JBIterable<Editor> editors = editor instanceof EditorWindow ? JBIterable.of(editor, ((EditorWindow)editor).getDelegate()) : JBIterable.of(editor);
-    for (Editor ed : editors) {
-      TextRange selection = EditorUtil.getSelectionInAnyMode(ed);
-      MarkupModel forDocument = DocumentMarkupModel.forDocument(ed.getDocument(), project, false);
-      if (forDocument != null) {
-        ((MarkupModelEx)forDocument).processRangeHighlightersOverlappingWith(selection.getStartOffset(), selection.getEndOffset(), processor);
-      }
-      ((MarkupModelEx)ed.getMarkupModel()).processRangeHighlightersOverlappingWith(selection.getStartOffset(), selection.getEndOffset(), processor);
-      EditorHighlighter highlighter = editor.getHighlighter();
-      SyntaxHighlighter syntaxHighlighter = highlighter instanceof LexerEditorHighlighter ? ((LexerEditorHighlighter)highlighter).getSyntaxHighlighter() : null;
-      if (syntaxHighlighter != null) {
-        HighlighterIterator iterator = highlighter.createIterator(selection.getStartOffset());
-        while (!iterator.atEnd()) {
-          for (TextAttributesKey key : syntaxHighlighter.getTokenHighlights(iterator.getTokenType())) {
-            Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p =
-              key == null ? null : ColorSettingsPages.getInstance().getAttributeDescriptor(key);
-            if (p != null) keyMap.put(key, p);
-          }
-          if (iterator.getEnd() >= selection.getEndOffset()) break;
-          iterator.advance();
-        }
-      }
     }
 
     if (keyMap.isEmpty()) {
@@ -180,7 +156,63 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
     }
   }
 
-  private static boolean openSettingsAndSelectKey(@NotNull Project project, @NotNull ColorAndFontDescriptorsProvider page, @NotNull AttributesDescriptor descriptor) {
-    return selectOrEditColor(id -> CommonDataKeys.PROJECT.is(id) ? project : null, descriptor.getDisplayName(), page.getDisplayName());
+  /**
+   * Includes attributes at selection start, doesn't include at end.
+   */
+  @VisibleForTesting
+  public static @NotNull List<TextAttributesKey> getTextAttributesKeys(@NotNull Project project, @NotNull Editor editor) {
+    List<TextAttributesKey> keys = new ArrayList<>();
+    Ref<TextRange> selectionRef = new Ref<>();
+    Ref<Boolean> hasEraseMarkerRef = new Ref<>();
+    Processor<RangeHighlighterEx> processor = r -> {
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(r);
+      boolean relevant =
+        selectionRef.get().getStartOffset() < r.getEndOffset() &&
+        (selectionRef.get().getLength() == 0 || r.getStartOffset() < selectionRef.get().getEndOffset());
+      TextAttributesKey key = info != null && relevant
+                              ? ObjectUtils.chooseNotNull(info.forcedTextAttributesKey, info.type.getAttributesKey())
+                              : null;
+      if (r.getForcedTextAttributes() == TextAttributes.ERASE_MARKER) {
+        hasEraseMarkerRef.set(true);
+      }
+      else if (key != null) {
+        keys.add(key);
+      }
+      return true;
+    };
+    JBIterable<Editor> editors = editor instanceof EditorWindow ? JBIterable.of(editor, ((EditorWindow)editor).getDelegate()) : JBIterable.of(
+      editor);
+    for (Editor ed : editors) {
+      TextRange selection = EditorUtil.getSelectionInAnyMode(ed);
+      selectionRef.set(selection);
+      hasEraseMarkerRef.set(false);
+      MarkupModel forDocument = DocumentMarkupModel.forDocument(ed.getDocument(), project, false);
+      if (forDocument != null) {
+        ((MarkupModelEx)forDocument).processRangeHighlightersOverlappingWith(selection.getStartOffset(), selection.getEndOffset(), processor);
+      }
+      ((MarkupModelEx)ed.getMarkupModel()).processRangeHighlightersOverlappingWith(selection.getStartOffset(), selection.getEndOffset(), processor);
+      EditorHighlighter highlighter = editor.getHighlighter();
+      SyntaxHighlighter syntaxHighlighter = highlighter instanceof LexerEditorHighlighter ? ((LexerEditorHighlighter)highlighter).getSyntaxHighlighter() : null;
+      if (syntaxHighlighter != null && !hasEraseMarkerRef.get()) {
+        HighlighterIterator iterator = highlighter.createIterator(selection.getStartOffset());
+        while (!iterator.atEnd()) {
+          for (TextAttributesKey key : syntaxHighlighter.getTokenHighlights(iterator.getTokenType())) {
+            if (key != null) {
+              keys.add(key);
+            }
+          }
+          if (iterator.getEnd() >= selection.getEndOffset()) break;
+          iterator.advance();
+        }
+      }
+    }
+    return keys;
+  }
+
+  private static boolean openSettingsAndSelectKey(@NotNull Project project,
+                                                  @NotNull ColorAndFontDescriptorsProvider page,
+                                                  @NotNull AttributesDescriptor descriptor) {
+    return selectOrEditColor(id -> CommonDataKeys.PROJECT.is(id) ? project : null,
+                             descriptor.getDisplayName(), page.getDisplayName());
   }
 }

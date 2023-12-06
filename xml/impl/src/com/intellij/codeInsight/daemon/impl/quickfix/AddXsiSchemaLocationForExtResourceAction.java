@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -32,8 +32,8 @@ import java.util.List;
  * @author maxim.mossienko
  */
 public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAction {
-  @NonNls private static final String XMLNS_XSI_ATTR_NAME = "xmlns:xsi";
-  @NonNls private static final String XSI_SCHEMA_LOCATION_ATTR_NAME = "xsi:schemaLocation";
+  private static final @NonNls String XMLNS_XSI_ATTR_NAME = "xmlns:xsi";
+  private static final @NonNls String XSI_SCHEMA_LOCATION_ATTR_NAME = "xsi:schemaLocation";
   private static final String KEY = "xml.intention.add.xsi.schema.location.for.external.resource";
 
   @Override
@@ -41,9 +41,8 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
     return KEY;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
@@ -53,14 +52,14 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
   }
 
   @Override
-  protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
+  protected void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor) throws IncorrectOperationException {
     final XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(offset), XmlTag.class);
     if (tag == null) return;
     final List<String> schemaLocations = new ArrayList<>();
 
     CreateNSDeclarationIntentionFix.processExternalUris(new CreateNSDeclarationIntentionFix.TagMetaHandler(tag.getLocalName()), file, new CreateNSDeclarationIntentionFix.ExternalUriProcessor() {
       @Override
-      public void process(@NotNull final String currentUri, final String url) {
+      public void process(final @NotNull String currentUri, final String url) {
         if (currentUri.equals(uri) && url != null) schemaLocations.add(url);
       }
     });
@@ -68,7 +67,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
     CreateNSDeclarationIntentionFix.runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
       ArrayUtilRt.toStringArray(schemaLocations), file.getProject(), new CreateNSDeclarationIntentionFix.StringToAttributeProcessor() {
         @Override
-        public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName) throws IncorrectOperationException {
+        public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(final @NotNull String attrName) throws IncorrectOperationException {
           doIt(file, editor, uri, tag, attrName);
         }
       }, XmlPsiBundle.message("xml.action.select.namespace.location.title"), this, editor);

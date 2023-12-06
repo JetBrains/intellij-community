@@ -1,8 +1,7 @@
-requests.adapters.PoolManager.connection_from_host
-requests.adapters.PoolManager.connection_from_url
-requests.adapters.PoolManager.urlopen
-requests.models.RequestField.__init__
-requests.models.RequestField.from_tuples
-requests.sessions.SessionRedirectMixin.resolve_redirects
-requests.structures.LookupDict.__getattr__
-requests.structures.LookupDict.get
+# Loop variables that leak into the global scope
+requests.packages.mod
+requests.packages.package
+requests.packages.target
+
+# Alias for builtins.bytes
+requests.compat.bytes.__buffer__

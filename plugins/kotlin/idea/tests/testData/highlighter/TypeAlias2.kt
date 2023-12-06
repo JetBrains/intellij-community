@@ -1,9 +1,9 @@
-// IGNORE_FIR
+// IGNORE_K2
+// EXPECTED_DUPLICATED_HIGHLIGHTING
+<symbolName textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">annotation</symbolName> class <symbolName textAttributesKey="KOTLIN_ANNOTATION">Anno</symbolName>
+typealias <symbolName textAttributesKey="KOTLIN_ANNOTATION">AnnoAlias</symbolName> = <symbolName textAttributesKey="KOTLIN_ANNOTATION">Anno</symbolName>
+<symbolName textAttributesKey="KOTLIN_ANNOTATION">@Anno</symbolName> fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">annoUsage</symbolName>() {}
 
-<info textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">annotation</info> class <info textAttributesKey="KOTLIN_ANNOTATION">Anno</info>
-typealias <info textAttributesKey="KOTLIN_ANNOTATION">AnnoAlias</info> = <info textAttributesKey="KOTLIN_ANNOTATION">Anno</info>
-<info textAttributesKey="KOTLIN_ANNOTATION">@Anno</info> fun <info textAttributesKey="KOTLIN_FUNCTION_DECLARATION">annoUsage</info>() {}
-
-class <info textAttributesKey="KOTLIN_CLASS">Foo</info>
-typealias <info textAttributesKey="KOTLIN_TYPE_ALIAS">FooAlias</info> = <info textAttributesKey="KOTLIN_CLASS">Foo</info>
-fun <info textAttributesKey="KOTLIN_FUNCTION_DECLARATION">fooUsage</info>(<warning descr="[UNUSED_PARAMETER] Parameter 'a' is never used" textAttributesKey="null"><info textAttributesKey="KOTLIN_PARAMETER">a</info></warning>: <info textAttributesKey="KOTLIN_TYPE_ALIAS">FooAlias</info>) {}
+class <symbolName textAttributesKey="KOTLIN_CLASS">Foo</symbolName>
+typealias <symbolName textAttributesKey="KOTLIN_TYPE_ALIAS">FooAlias</symbolName> = <symbolName textAttributesKey="KOTLIN_CLASS">Foo</symbolName>
+fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">fooUsage</symbolName>(<warning descr="[UNUSED_PARAMETER] Parameter 'a' is never used" textAttributesKey="null"><symbolName textAttributesKey="KOTLIN_PARAMETER">a</symbolName></warning>: <symbolName textAttributesKey="KOTLIN_TYPE_ALIAS">FooAlias</symbolName>) {}

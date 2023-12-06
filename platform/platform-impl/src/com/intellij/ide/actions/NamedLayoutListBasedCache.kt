@@ -4,9 +4,11 @@ package com.intellij.ide.actions
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.util.containers.toArray
 
-class NamedLayoutListBasedCache<T>(private val mapping: (String) -> T?) {
-
-  var dependsOnActiveLayout: Boolean = false
+internal class NamedLayoutListBasedCache<T>(
+  private val baseList: List<T>,
+  private val insertionIndex: Int,
+  private val mapping: (String) -> T?
+) {
 
   private var cachedData: CachedData<T>? = null
 
@@ -14,24 +16,21 @@ class NamedLayoutListBasedCache<T>(private val mapping: (String) -> T?) {
     val cachedData = this.cachedData
     val manager = ToolWindowDefaultLayoutManager.getInstance()
     val newLayoutNames = manager.getLayoutNames()
-    val newActiveLayoutName = if (dependsOnActiveLayout) manager.activeLayoutName else null
-    if (
-      newLayoutNames == cachedData?.cachedLayoutNames &&
-      newActiveLayoutName == cachedData.activeLayoutName
-    ) {
+    if (newLayoutNames == cachedData?.cachedLayoutNames) {
       return cachedData.cachedArray
     }
-    val newArray = newLayoutNames.asSequence()
+    val newElements = newLayoutNames.asSequence()
       .sorted()
       .mapNotNull(mapping)
       .toList()
-      .toArray(emptyArray)
-    this.cachedData = CachedData(newActiveLayoutName, newLayoutNames, newArray)
+    val newList = ArrayList(baseList)
+    newList.addAll(insertionIndex, newElements)
+    val newArray = newList.toArray(emptyArray)
+    this.cachedData = CachedData(newLayoutNames, newArray)
     return newArray
   }
 
   private class CachedData<T>(
-    val activeLayoutName: String?,
     val cachedLayoutNames: Set<String>,
     val cachedArray: Array<T>,
   )

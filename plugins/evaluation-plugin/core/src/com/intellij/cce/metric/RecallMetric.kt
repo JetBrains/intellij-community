@@ -1,25 +1,24 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
-import java.util.stream.Collectors
 
 class RecallMetric : Metric {
   private val sample = Sample()
   override val name = NAME
+  override val description: String = "Ratio of successful invocations"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = sample.mean()
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val listOfCompletions = sessions.stream()
-      .flatMap { session -> session.lookups.map { lookup -> Pair(lookup.suggestions, session.expectedText) }.stream() }
-      .collect(Collectors.toList())
+  override fun evaluate(sessions: List<Session>): Double {
+    val lookups = sessions.flatMap { session -> session.lookups }
 
     val fileSample = Sample()
-    listOfCompletions.stream()
-      .forEach { (suggests, expectedText) ->
-        val value = if (suggests.any { comparator.accept(it, expectedText) }) 1.0 else 0.0
+    lookups
+      .forEach { lookup ->
+        val value = if (lookup.suggestions.any { it.isRelevant }) 1.0 else 0.0
         fileSample.add(value)
         sample.add(value)
       }

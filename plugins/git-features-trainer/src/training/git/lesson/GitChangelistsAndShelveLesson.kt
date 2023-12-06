@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
 import com.intellij.CommonBundle
@@ -67,7 +67,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
   override val lessonContent: LessonContext.() -> Unit = {
     val defaultChangelistName = VcsBundle.message("changes.default.changelist.name")
-    prepareRuntimeTask(ModalityState.NON_MODAL) {
+    prepareRuntimeTask(ModalityState.nonModal()) {
       resetChangelistsState(project)
       removeShelvedChangeLists(project)
       modifyFile(virtualFile)

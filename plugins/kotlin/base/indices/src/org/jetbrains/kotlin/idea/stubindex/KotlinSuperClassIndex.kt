@@ -22,6 +22,7 @@ class KotlinSuperClassIndex internal constructor() : StringStubIndexExtension<Kt
 
     override fun getKey(): StubIndexKey<String, KtClassOrObject> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinSuperClassIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
         return Helper[key, project, scope]
     }

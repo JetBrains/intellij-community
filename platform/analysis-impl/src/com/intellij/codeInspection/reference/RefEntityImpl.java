@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.project.DumbService;
@@ -149,21 +149,18 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
     myName = myManager.internName(name);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
   @Override
-  public String getQualifiedName() {
+  public @NotNull String getQualifiedName() {
     return myName;
   }
 
-  @NotNull
   @Override
-  public synchronized List<RefEntity> getChildren() {
+  public synchronized @NotNull List<RefEntity> getChildren() {
     return ObjectUtils.notNull(myChildren, ContainerUtil.emptyList());
   }
 
@@ -173,12 +170,12 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
   }
 
   @Override
-  public synchronized void setOwner(@Nullable final WritableRefEntity owner) {
+  public synchronized void setOwner(final @Nullable WritableRefEntity owner) {
     myOwner = owner;
   }
 
   @Override
-  public synchronized void add(@NotNull final RefEntity child) {
+  public synchronized void add(final @NotNull RefEntity child) {
     addChild(child);
     ((RefEntityImpl)child).setOwner(this);
   }
@@ -192,7 +189,7 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
   }
 
   @Override
-  public synchronized void removeChild(@NotNull final RefEntity child) {
+  public synchronized void removeChild(final @NotNull RefEntity child) {
     if (myChildren != null) {
       myChildren.remove(child);
     }
@@ -203,7 +200,7 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
   }
 
   @Override
-  public void accept(@NotNull final RefVisitor refVisitor) {
+  public void accept(final @NotNull RefVisitor refVisitor) {
     DumbService.getInstance(myManager.getProject()).runReadActionInSmartMode(() -> refVisitor.visitElement(this));
   }
 
@@ -220,9 +217,8 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
     return myName;
   }
 
-  @NotNull
   @Override
-  public RefManagerImpl getRefManager() {
+  public @NotNull RefManagerImpl getRefManager() {
     return myManager;
   }
 }

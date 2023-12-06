@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,39 +11,39 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import org.jetbrains.annotations.NotNull;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -54,34 +54,36 @@ final class RefreshWorker {
   private static final Logger LOG = Logger.getInstance(RefreshWorker.class);
 
   private static final int ourParallelism =
-    MathUtil.clamp(Registry.intValue("vfs.refresh.worker.parallelism", 4), 1, Runtime.getRuntime().availableProcessors());
-  private static final ExecutorService ourExecutor =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("VFS Refresh", ourParallelism);
+    MathUtil.clamp(Registry.intValue("vfs.refresh.worker.parallelism", 6), 1, Runtime.getRuntime().availableProcessors());
+  private static final Executor ourExecutor = ExecutorsKt.asExecutor(Dispatchers.getIO().limitedParallelism(ourParallelism));
 
   private final boolean myIsRecursive;
   private final boolean myParallel;
   private final Set<NewVirtualFile> myRoots;
   private final Queue<NewVirtualFile> myRefreshQueue;
   private final Semaphore mySemaphore;
+  private final Object myRequestor;
   private final PersistentFS myPersistence = PersistentFS.getInstance();
+  private final FSRecordsImpl myPersistencePeer = ((PersistentFSImpl)myPersistence).peer();
   private volatile boolean myCancelled;
 
   private final AtomicInteger myFullScans = new AtomicInteger(), myPartialScans = new AtomicInteger(), myProcessed = new AtomicInteger();
   private final AtomicLong myVfsTime = new AtomicLong(), myIoTime = new AtomicLong();
 
-  RefreshWorker(@NotNull Collection<@NotNull NewVirtualFile> refreshRoots, boolean isRecursive) {
+  RefreshWorker(Collection<NewVirtualFile> refreshRoots, boolean isRecursive) {
     myIsRecursive = isRecursive;
     myParallel = isRecursive && ourParallelism > 1 && !ApplicationManager.getApplication().isWriteIntentLockAcquired();
     myRoots = new HashSet<>(refreshRoots);
     myRefreshQueue = new LinkedBlockingQueue<>(refreshRoots);
     mySemaphore = new Semaphore(refreshRoots.size());
+    myRequestor = VFileEvent.REFRESH_REQUESTOR;
   }
 
   void cancel() {
     myCancelled = true;
   }
 
-  @NotNull List<VFileEvent> scan() {
+  List<VFileEvent> scan() {
     var t = System.nanoTime();
     try {
       var events = new ArrayList<VFileEvent>();
@@ -120,7 +122,7 @@ final class RefreshWorker {
           processQueue(threadEvents);
         }
         catch (RefreshCancelledException ignored) { }
-        catch (ProcessCanceledException e) {
+        catch (ProcessCanceledException | CancellationException e) {
           myCancelled = true;
         }
         catch (Throwable t) {
@@ -296,12 +298,11 @@ final class RefreshWorker {
     List<VirtualFile> cached = snapshot.first;
     List<String> wanted = snapshot.second;
 
+    Set<String> names = CollectionFactory.createFilePathSet(wanted, dir.isCaseSensitive());
+    for (VirtualFile file : cached) names.add(file.getName());
+
     Map<String, FileAttributes> dirList = null;
     if (fs instanceof BatchingFileSystem) {
-      Set<String> names = CollectionFactory.createFilePathSet(wanted, dir.isCaseSensitive());
-      for (VirtualFile file : cached) {
-        names.add(file.getName());
-      }
       t = System.nanoTime();
       Map<String, FileAttributes> rawDirList = ((BatchingFileSystem)fs).listWithAttributes(dir, names);
       myIoTime.addAndGet(System.nanoTime() - t);
@@ -317,7 +318,7 @@ final class RefreshWorker {
     }
     else {
       t = System.nanoTime();
-      String[] rawList = fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir);
+      String[] rawList = fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir, names) : fs.list(dir);
       actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(rawList, false);
       myIoTime.addAndGet(System.nanoTime() - t);
     }
@@ -392,19 +393,20 @@ final class RefreshWorker {
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(child);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(child) : null;
     myIoTime.addAndGet(System.nanoTime() - t);
-    return new ChildInfoImpl(name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
+    int nameId = myPersistencePeer.getNameId(name);
+    return new ChildInfoImpl(nameId, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
-  private static void generateDeleteEvents(List<VFileEvent> events,
-                                           VirtualDirectoryImpl dir,
-                                           Set<String> deletedNames,
-                                           ObjectOpenCustomHashSet<String> actualNames,
-                                           List<ChildInfo> newKids) {
+  private void generateDeleteEvents(List<VFileEvent> events,
+                                    VirtualDirectoryImpl dir,
+                                    Set<String> deletedNames,
+                                    ObjectOpenCustomHashSet<String> actualNames,
+                                    List<ChildInfo> newKids) {
     for (String name : deletedNames) {
       VirtualFileSystemEntry child = dir.findChild(name);
       if (child != null) {
         if (checkAndScheduleFileNameChange(events, actualNames, child)) {
-          newKids.removeIf(newKidCandidate -> StringUtil.equalsIgnoreCase(newKidCandidate.getName(), child.getName()));
+          newKids.removeIf(newKidCandidate -> StringUtilRt.equal(newKidCandidate.getName(), child.getName(), true));
         }
         else {
           scheduleDeletion(events, child);
@@ -443,7 +445,7 @@ final class RefreshWorker {
     }
   }
 
-  private static class RefreshCancelledException extends RuntimeException {
+  private static final class RefreshCancelledException extends RuntimeException {
     @Override
     public synchronized Throwable fillInStackTrace() {
       return this;
@@ -474,9 +476,9 @@ final class RefreshWorker {
     file.markDirty();
   }
 
-  private static void scheduleDeletion(List<VFileEvent> events, VirtualFile file) {
+  private void scheduleDeletion(List<VFileEvent> events, VirtualFile file) {
     if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
-    events.add(new VFileDeleteEvent(null, file, true));
+    events.add(new VFileDeleteEvent(myRequestor, file));
   }
 
   private void scheduleCreation(List<VFileEvent> events, NewVirtualFile parent, String childName, FileAttributes attributes, @Nullable String symlinkTarget) {
@@ -503,7 +505,7 @@ final class RefreshWorker {
       }
     }
 
-    events.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
+    events.add(new VFileCreateEvent(myRequestor, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, children));
 
     VFileEvent event = VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
     if (event != null) {
@@ -541,7 +543,8 @@ final class RefreshWorker {
   private ChildInfo @Nullable [] scanChildren(Path root, List<Path> excluded, NewVirtualFile currentDir) {
     // the stack contains a list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
-    ChildInfo fakeRoot = new ChildInfoImpl("", null, null, null);
+    int nameId = myPersistencePeer.getNameId("");
+    ChildInfo fakeRoot = new ChildInfoImpl(nameId, null, null, null);
     stack.push(new SmartList<>(fakeRoot));
     FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
       private int checkCanceledCount;
@@ -551,12 +554,12 @@ final class RefreshWorker {
         if (!dir.equals(root)) {
           visitFile(dir, attrs);
         }
-        if (SystemInfo.isWindows && attrs.isOther()) {
+        if (SystemInfoRt.isWindows && attrs.isOther()) {
           return FileVisitResult.SKIP_SUBTREE;  // bypassing NTFS reparse points
         }
-        // on average, this "excluded" array is very small for any particular root, so linear search it is.
+        // on average, this "excluded" array is small for any particular root, so linear search it is.
         if (excluded.contains(dir)) {
-          // skipping excluded roots (just record its attributes nevertheless), even if we have content roots beneath
+          // skipping excluded roots (record its attributes nevertheless), even if we have content roots beneath
           // stop optimization right here - it's too much pain to track all these nested content/excluded/content otherwise
           return FileVisitResult.SKIP_SUBTREE;
         }
@@ -570,8 +573,9 @@ final class RefreshWorker {
           checkCancelled(currentDir);
         }
         FileAttributes attributes = FileAttributes.fromNio(file, attrs);
-        String symLinkTarget = attrs.isSymbolicLink() ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
-        ChildInfo info = new ChildInfoImpl(file.getFileName().toString(), attributes, null, symLinkTarget);
+        String symLinkTarget = attrs.isSymbolicLink() ? FileUtilRt.toSystemIndependentName(file.toRealPath().toString()) : null;
+        int nameId = myPersistencePeer.getNameId(file.getFileName().toString());
+        ChildInfo info = new ChildInfoImpl(nameId, attributes, null, symLinkTarget);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;
       }
@@ -624,7 +628,7 @@ final class RefreshWorker {
 
     checkWritableAttributeChange(events, child, myPersistence.isWritable(child), childAttributes.isWritable());
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       checkHiddenAttributeChange(events, child, child.is(VFileProperty.HIDDEN), childAttributes.isHidden());
     }
 
@@ -643,7 +647,7 @@ final class RefreshWorker {
           "update file=" + child +
           (oldTimestamp != newTimestamp ? " TS=" + oldTimestamp + "->" + newTimestamp : "") +
           (oldLength != newLength ? " len=" + oldLength + "->" + newLength : ""));
-        events.add(new VFileContentChangeEvent(null, child, child.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
+        events.add(new VFileContentChangeEvent(myRequestor, child, child.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength));
       }
       child.markClean();
     }
@@ -686,9 +690,9 @@ final class RefreshWorker {
     return false;
   }
 
-  private static boolean checkAndScheduleFileNameChange(List<VFileEvent> events,
-                                                        @Nullable ObjectOpenCustomHashSet<String> actualNames,
-                                                        VirtualFile child) {
+  private boolean checkAndScheduleFileNameChange(List<VFileEvent> events,
+                                                 @Nullable ObjectOpenCustomHashSet<String> actualNames,
+                                                 VirtualFile child) {
     if (actualNames != null) {
       String currentName = child.getName();
       String actualName = actualNames.get(currentName);
@@ -700,32 +704,32 @@ final class RefreshWorker {
     return false;
   }
 
-  private static void checkWritableAttributeChange(List<VFileEvent> events, VirtualFile file, boolean oldWritable, boolean newWritable) {
+  private void checkWritableAttributeChange(List<VFileEvent> events, VirtualFile file, boolean oldWritable, boolean newWritable) {
     if (oldWritable != newWritable) {
       scheduleAttributeChange(events, file, VirtualFile.PROP_WRITABLE, oldWritable, newWritable);
     }
   }
 
-  private static void checkHiddenAttributeChange(List<VFileEvent> events, VirtualFile child, boolean oldHidden, boolean newHidden) {
+  private void checkHiddenAttributeChange(List<VFileEvent> events, VirtualFile child, boolean oldHidden, boolean newHidden) {
     if (oldHidden != newHidden) {
       scheduleAttributeChange(events, child, VirtualFile.PROP_HIDDEN, oldHidden, newHidden);
     }
   }
 
-  private static void checkSymbolicLinkChange(List<VFileEvent> events, VirtualFile child, String oldTarget, String currentTarget) {
-    String currentVfsTarget = currentTarget != null ? FileUtil.toSystemIndependentName(currentTarget) : null;
+  private void checkSymbolicLinkChange(List<VFileEvent> events, VirtualFile child, String oldTarget, String currentTarget) {
+    String currentVfsTarget = currentTarget != null ? FileUtilRt.toSystemIndependentName(currentTarget) : null;
     if (!Objects.equals(oldTarget, currentVfsTarget)) {
       scheduleAttributeChange(events, child, VirtualFile.PROP_SYMLINK_TARGET, oldTarget, currentVfsTarget);
     }
   }
 
-  private static void scheduleAttributeChange(List<VFileEvent> events,
-                                              VirtualFile file,
-                                              @VirtualFile.PropName String property,
-                                              Object current,
-                                              Object upToDate) {
+  private void scheduleAttributeChange(List<VFileEvent> events,
+                                       VirtualFile file,
+                                       @VirtualFile.PropName String property,
+                                       Object current,
+                                       Object upToDate) {
     if (LOG.isTraceEnabled()) LOG.trace("update file=" + file + ' ' + property + '=' + current + "->" + upToDate);
-    events.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
+    events.add(new VFilePropertyChangeEvent(myRequestor, file, property, current, upToDate));
   }
 
   static Consumer<? super VirtualFile> ourTestListener;

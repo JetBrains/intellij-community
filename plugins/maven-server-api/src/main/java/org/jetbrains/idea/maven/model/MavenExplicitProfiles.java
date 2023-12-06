@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,29 +11,30 @@ import java.util.HashSet;
 public class MavenExplicitProfiles implements Serializable {
   public static final MavenExplicitProfiles NONE = new MavenExplicitProfiles(Collections.emptySet());
 
-  private final Collection<String> myEnabledProfiles;
-  private final Collection<String> myDisabledProfiles;
+  private final HashSet<String> myEnabledProfiles;
+  private final HashSet<String> myDisabledProfiles;
 
-  public MavenExplicitProfiles(Collection<String> enabledProfiles, Collection<String> disabledProfiles) {
-    myEnabledProfiles = enabledProfiles;
-    myDisabledProfiles = disabledProfiles;
+  public MavenExplicitProfiles(@NotNull Collection<@NotNull String> enabledProfiles,
+                               @NotNull Collection<@NotNull String> disabledProfiles) {
+    myEnabledProfiles = new HashSet<>(enabledProfiles);
+    myDisabledProfiles = new HashSet<>(disabledProfiles);
   }
 
   public MavenExplicitProfiles(Collection<String> enabledProfiles) {
     this(enabledProfiles, Collections.emptySet());
   }
 
-  public Collection<String> getEnabledProfiles() {
+  public @NotNull Collection<@NotNull String> getEnabledProfiles() {
     return myEnabledProfiles;
   }
 
-  public Collection<String> getDisabledProfiles() {
+  public @NotNull Collection<@NotNull String> getDisabledProfiles() {
     return myDisabledProfiles;
   }
 
   @Override
   public MavenExplicitProfiles clone() {
-    return new MavenExplicitProfiles(new HashSet<String>(myEnabledProfiles), new HashSet<String>(myDisabledProfiles));
+    return new MavenExplicitProfiles(myEnabledProfiles, myDisabledProfiles);
   }
 
   @Override
@@ -52,5 +55,13 @@ public class MavenExplicitProfiles implements Serializable {
     int result = myEnabledProfiles.hashCode();
     result = 31 * result + myDisabledProfiles.hashCode();
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "MavenExplicitProfiles{" +
+           "myEnabledProfiles=" + myEnabledProfiles +
+           ", myDisabledProfiles=" + myDisabledProfiles +
+           '}';
   }
 }

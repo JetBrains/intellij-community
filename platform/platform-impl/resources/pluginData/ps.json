@@ -1,0 +1,27 @@
+[
+  {
+    "builtIn": true,
+    "ideaName": "PHP",
+    "vsCodeId": "xdebug.php-debug"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "PHP",
+    "vsCodeId": "bmewburn.vscode-intelephense-client"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "PHP",
+    "vsCodeId": "xdebug.php-pack"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "PHP",
+    "vsCodeId": "zobo.php-intellisense"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "PHP",
+    "vsCodeId": "DEVSENSE.phptools-vscode"
+  }
+]

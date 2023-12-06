@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -7,6 +7,8 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.NavigateAction;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.model.Pointer;
 import com.intellij.model.psi.impl.UtilKt;
@@ -18,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -36,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Consumer;
@@ -174,14 +178,31 @@ public class GotoImplementationHandler extends GotoTargetHandler {
                                         @NlsContexts.PopupContent String dumbModeMessage) {
     Project project = baseElement.getProject();
     if (DumbService.isDumb(project)) {
-      DumbService.getInstance(project).showDumbModeNotification(dumbModeMessage);
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(dumbModeMessage, DumbModeBlockedFunctionality.GotoImplementations);
       return;
     }
     PsiUtilCore.ensureValid(baseElement);
     PsiFile containingFile = baseElement.getContainingFile();
-    Editor editor = UtilKt.mockEditor(containingFile);
-    GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile), baseElement.getTextOffset(), baseElement);
-    show(project, editor, containingFile, source, popup -> popup.show(new RelativePoint(e)));
+    //for compiled files a decompiled copy is analysed in the editor (see TextEditorBackgroundHighlighter.getPasses)
+    //but it's a non-physical copy with disabled events (see ClsFileImpl.getDecompiledPsiFile)
+    //which in turn means that no document can be found for such file - it's required to restore original file
+    //other non-physical copies should not be opened in the editor
+    PsiFile originalFile = containingFile.getOriginalFile();
+    Editor editor = UtilKt.mockEditor(originalFile);
+    GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile + "; original: " + originalFile), baseElement.getTextOffset(), baseElement);
+
+    if (source.isCanceled) return;
+    if (source.targets.length == 0) {
+      String message = getNotFoundMessage(project, editor, containingFile);
+      // Cannot call showEditorHint, as it doesn't work for mockEditor instance
+      JComponent label = HintUtil.createErrorLabel(message);
+      label.setBorder(HintUtil.createHintBorder());
+      int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+      HintManager.getInstance().showHint(label, new RelativePoint(e), flags, 0);
+      return;
+    }
+
+    showNotEmpty(project, source, popup -> popup.show(new RelativePoint(e)));
   }
 
   @TestOnly

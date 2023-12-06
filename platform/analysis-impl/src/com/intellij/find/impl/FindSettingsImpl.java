@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -15,6 +15,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,12 +25,12 @@ import java.util.List;
 
 @State(name = "FindSettings", storages = @Storage("find.xml"))
 public class FindSettingsImpl extends FindSettings implements PersistentStateComponent<FindSettingsImpl> {
-  @NonNls private static final String FIND_DIRECTION_FORWARD = "forward";
-  @NonNls private static final String FIND_DIRECTION_BACKWARD = "backward";
-  @NonNls private static final String FIND_ORIGIN_FROM_CURSOR = "from_cursor";
-  @NonNls private static final String FIND_ORIGIN_ENTIRE_SCOPE = "entire_scope";
-  @NonNls private static final String FIND_SCOPE_GLOBAL = "global";
-  @NonNls private static final String FIND_SCOPE_SELECTED = "selected";
+  private static final @NonNls String FIND_DIRECTION_FORWARD = "forward";
+  private static final @NonNls String FIND_DIRECTION_BACKWARD = "backward";
+  private static final @NonNls String FIND_ORIGIN_FROM_CURSOR = "from_cursor";
+  private static final @NonNls String FIND_ORIGIN_ENTIRE_SCOPE = "entire_scope";
+  private static final @NonNls String FIND_SCOPE_GLOBAL = "global";
+  private static final @NonNls String FIND_SCOPE_SELECTED = "selected";
 
   public FindSettingsImpl() {
   }
@@ -66,7 +67,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @SuppressWarnings("WeakerAccess") public boolean WITH_SUBDIRECTORIES = true;
   @SuppressWarnings("WeakerAccess") public boolean SHOW_RESULTS_IN_SEPARATE_VIEW;
 
-  @SuppressWarnings("WeakerAccess") public String SEARCH_SCOPE = getDefaultSearchScope();
+  @SuppressWarnings("WeakerAccess") public @Nls String SEARCH_SCOPE = getDefaultSearchScope();
   @SuppressWarnings("WeakerAccess") public String FILE_MASK;
 
   @Property(surroundWithTag = false)
@@ -94,7 +95,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   }
 
   @Override
-  public String getDefaultScopeName() {
+  public @Nls String getDefaultScopeName() {
     return SEARCH_SCOPE;
   }
 
@@ -340,7 +341,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     }
   }
 
-  private static String getDefaultSearchScope() {
+  private static @Nls String getDefaultSearchScope() {
     return FindBundle.message("find.scope.all.project.classes");
   }
 }

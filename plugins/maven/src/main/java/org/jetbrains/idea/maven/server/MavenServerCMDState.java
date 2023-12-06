@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -30,7 +30,7 @@ import org.jetbrains.idea.maven.buildtool.quickfix.InstallMaven2BuildIssue;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
-import org.slf4j.impl.JDK14LoggerFactory;
+import org.slf4j.jul.JDK14LoggerFactory;
 
 import java.io.File;
 import java.util.*;
@@ -44,6 +44,7 @@ public class MavenServerCMDState extends CommandLineState {
 
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
   @NonNls private static final String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
+  @NonNls private static final String MAIN_CLASS40 = "com.intellij.maven.server.m40.RemoteMavenServer40";
   @NonNls private static final String MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS =
     "org.jetbrains.idea.maven.server.RemoteMavenServerThrowsExceptionForTests";
 
@@ -84,11 +85,14 @@ public class MavenServerCMDState extends CommandLineState {
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
 
     if (myDebugPort != null) {
-      params.getVMParametersList()
-        .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=*:" + myDebugPort);
+      params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=*:" + myDebugPort);
+      params.getProgramParametersList().add("runWithDebugger");
     }
 
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
+    if (Registry.is("maven.collect.local.stat")) {
+      params.getVMParametersList().addProperty("maven.collect.local.stat", "true");
+    }
 
     String xmxProperty = null;
     String xmsProperty = null;
@@ -176,7 +180,7 @@ public class MavenServerCMDState extends CommandLineState {
     MavenUtil.addEventListener(myDistribution.getVersion(), params);
   }
 
-  private void configureSslRelatedOptions(Map<String, String> defs) {
+  private static void configureSslRelatedOptions(Map<String, String> defs) {
     for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
       Object key = each.getKey();
       Object value = each.getValue();
@@ -212,6 +216,9 @@ public class MavenServerCMDState extends CommandLineState {
     if (setupThrowMainClass && MavenUtil.isMavenUnitTestModeEnabled()) {
       setupThrowMainClass = false;
       params.setMainClass(MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS);
+    }
+    else if (StringUtil.compareVersionNumbers(mavenVersion, "4.0") >= 0) {
+      params.setMainClass(MAIN_CLASS40);
     }
     else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
       params.setMainClass(MAIN_CLASS36);

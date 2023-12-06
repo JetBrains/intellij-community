@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.gradle.configuration.klib
 
 import com.intellij.util.containers.orNull
-import com.intellij.util.io.isFile
 import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
 import java.io.IOException
 import java.nio.file.Files
@@ -10,6 +9,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
+import kotlin.io.path.isRegularFile
 
 internal fun interface KlibManifestProvider {
     fun getManifest(libraryPath: Path): Properties?
@@ -73,7 +73,7 @@ internal object ZipKlibManifestProvider : KlibManifestProvider {
     private val manifestEntryRegex = Regex("""(.+/manifest|manifest)""")
 
     override fun getManifest(libraryPath: Path): Properties? {
-        if (!libraryPath.isFile()) return null
+      if (!libraryPath.isRegularFile()) return null
         try {
             val properties = Properties()
             val zipFile = ZipFile(libraryPath.toFile())

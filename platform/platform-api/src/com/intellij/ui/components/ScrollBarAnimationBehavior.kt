@@ -1,22 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.openapi.util.Computable
 import com.intellij.util.Alarm
 import javax.swing.JScrollBar
 
-public enum class ScrollBarVisibilityPolicy {
-  ON, OFF, AUTOMATIC
-}
-
-internal abstract class ScrollBarAnimationBehavior(protected val trackAnimator: TwoWayAnimator,
-                                                   protected val thumbAnimator: TwoWayAnimator) {
+internal abstract class ScrollBarAnimationBehavior(@JvmField protected val trackAnimator: TwoWayAnimator,
+                                                   @JvmField protected val thumbAnimator: TwoWayAnimator) {
 
   val trackFrame: Float
-    get() = trackAnimator.myValue
+    get() = trackAnimator.value
 
   val thumbFrame: Float
-    get() = thumbAnimator.myValue
+    get() = thumbAnimator.value
 
   open fun onToggle(isOn: Boolean?) {}
   abstract fun onTrackHover(hovered: Boolean)
@@ -79,7 +75,7 @@ internal class MacScrollBarAnimationBehavior(private val scrollBarComputable: Co
   override fun onThumbMove() {
     val scrollBar = scrollBarComputable.compute()
     if (scrollBar != null && scrollBar.isShowing() && !DefaultScrollBarUI.isOpaque(scrollBar)) {
-      if (!isTrackHovered && thumbAnimator.myValue == 0f) trackAnimator.rewind(false)
+      if (!isTrackHovered && thumbAnimator.value == 0f) trackAnimator.rewind(false)
       thumbAnimator.rewind(true)
       hideThumbAlarm.cancelAllRequests()
       if (!isTrackHovered) {

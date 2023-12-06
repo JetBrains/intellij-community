@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script;
 
 import com.intellij.icons.AllIcons;
@@ -20,19 +20,17 @@ import javax.swing.*;
 /**
  * @author gregsh
  */
-public class IdeConsoleRootType extends com.intellij.execution.console.IdeConsoleRootType  {
+public final class IdeConsoleRootType extends com.intellij.execution.console.IdeConsoleRootType  {
   IdeConsoleRootType() {
     super("ide", LangBundle.message("root.type.ide.consoles"));
   }
 
-  @NotNull
-  public static IdeConsoleRootType getInstance() {
+  public static @NotNull IdeConsoleRootType getInstance() {
     return findByClass(IdeConsoleRootType.class);
   }
 
-  @Nullable
   @Override
-  public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return null;
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence());
     Icon icon = fileType == UnknownFileType.INSTANCE || fileType == PlainTextFileType.INSTANCE ?

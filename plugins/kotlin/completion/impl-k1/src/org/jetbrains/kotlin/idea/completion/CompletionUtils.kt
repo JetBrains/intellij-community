@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.handlers.CastReceiverInsertHandler
 import org.jetbrains.kotlin.idea.completion.smart.KeywordProbability
 import org.jetbrains.kotlin.idea.completion.smart.keywordProbability
@@ -63,7 +64,7 @@ fun LookupElement.keepOldArgumentListOnTab(): LookupElement {
 
 fun PrefixMatcher.asStringNameFilter() = { name: String -> prefixMatches(name) }
 
-fun ((String) -> Boolean).toNameFilter(): (Name) -> Boolean {
+fun ((String) -> Boolean).toNameFilter(): NameFilter {
     return { name -> !name.isSpecial && this(name.identifier) }
 }
 

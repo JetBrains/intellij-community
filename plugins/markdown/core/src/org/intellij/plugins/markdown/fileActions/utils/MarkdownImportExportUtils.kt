@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.ModalityUiUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
@@ -36,7 +36,7 @@ import java.io.File
 /**
  * Utilities used mainly for import/export from markdown.
  */
-object MarkdownImportExportUtils {
+internal object MarkdownImportExportUtils {
   /**
    * Returns the preview of markdown file or null if the preview editor or project is null.
    */
@@ -175,14 +175,14 @@ object MarkdownImportExportUtils {
     }
   }
 
-  fun notifyAndRefreshIfExportSuccess(file: File, project: Project) {
+  fun notifyAndRefreshIfExportSuccess(file: VirtualFile, project: Project) {
     MarkdownNotifications.showInfo(
       project,
       id = MarkdownExportProvider.Companion.NotificationIds.exportSuccess,
       message = MarkdownBundle.message("markdown.export.success.msg", file.name)
     )
     val dirToExport = file.parent
-    refreshProjectDirectory(project, dirToExport)
+    refreshProjectDirectory(project, dirToExport.path)
   }
 }
 

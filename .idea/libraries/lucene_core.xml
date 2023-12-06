@@ -1,14 +1,20 @@
 <component name="libraryTable">
   <library name="lucene-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-core:8.11.2" />
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-core:9.8.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/9.8.0/lucene-core-9.8.0.jar">
+          <sha256sum>50b9f845b75dcfe287e2162b02b117740922cc7ccfdfba7298d020cae43299d3</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.11.2/lucene-core-8.11.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/9.8.0/lucene-core-9.8.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.11.2/lucene-core-8.11.2-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/9.8.0/lucene-core-9.8.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.11.2/lucene-core-8.11.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/9.8.0/lucene-core-9.8.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

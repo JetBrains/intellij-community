@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -9,6 +10,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.lw.*;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,30 +65,34 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
 
       LwIntrospectedProperty property = CompiledClassPropertiesProvider.propertyFromClassName(propertyClassName, name);
       if (property == null) {
-        PsiClass propClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(propertyClassName, scope);
-        if (propClass == null) continue;
-        if (propClass.isEnum()) {
-          final String enumClassName = ClassUtil.getJVMClassName(propClass);
-          final ClassLoader loader = LoaderFactory.getInstance(myModule.getProject()).getLoader(myModule);
-          try {
-            property = new LwIntroEnumProperty(name, loader.loadClass(enumClassName));
-          }
-          catch (ClassNotFoundException e) {
-            continue;
-          }
-        }
-        else {
-          PsiClass componentClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(Component.class.getName(), scope);
-          PsiClass listModelClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(ListModel.class.getName(), scope);
-          if (componentClass != null && InheritanceUtil.isInheritorOrSelf(propClass, componentClass, true)) {
-            property = new LwIntroComponentProperty(name, propertyClassName);
-          }
-          else if (componentClass != null && listModelClass != null && InheritanceUtil.isInheritorOrSelf(propClass, listModelClass, true)) {
-            property = new LwIntroListModelProperty(name, propertyClassName);
+        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-513290")) {
+          PsiClass propClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(propertyClassName, scope);
+          if (propClass == null) continue;
+          if (propClass.isEnum()) {
+            final String enumClassName = ClassUtil.getJVMClassName(propClass);
+            final ClassLoader loader = LoaderFactory.getInstance(myModule.getProject()).getLoader(myModule);
+            try {
+              property = new LwIntroEnumProperty(name, loader.loadClass(enumClassName));
+            }
+            catch (ClassNotFoundException e) {
+              continue;
+            }
           }
           else {
-            // type is not supported
-            continue;
+            PsiClass componentClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(Component.class.getName(), scope);
+            PsiClass listModelClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(ListModel.class.getName(), scope);
+            if (componentClass != null && InheritanceUtil.isInheritorOrSelf(propClass, componentClass, true)) {
+              property = new LwIntroComponentProperty(name, propertyClassName);
+            }
+            else if (componentClass != null &&
+                     listModelClass != null &&
+                     InheritanceUtil.isInheritorOrSelf(propClass, listModelClass, true)) {
+              property = new LwIntroListModelProperty(name, propertyClassName);
+            }
+            else {
+              // type is not supported
+              continue;
+            }
           }
         }
       }

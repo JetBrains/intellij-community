@@ -1,21 +1,12 @@
-import org.gradle.api.internal.GradleInternal
-import org.gradle.api.internal.project.ProjectInternal
-import org.gradle.tooling.provider.model.ToolingModelBuilder
-import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
-import org.gradle.tooling.provider.model.UnknownModelException
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.model.internal.DummyModel
-import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
 
-import java.util.concurrent.CopyOnWriteArrayList
-import javax.inject.Inject
-
-//noinspection GrUnresolvedAccess
 boolean isBuildSrcProject = IS_BUILD_SCR_PROJECT
 
 initscript {
   dependencies {
-    //noinspection GrUnresolvedAccess
     classpath files(EXTENSIONS_JARS_PATH)
   }
 }
@@ -43,101 +34,4 @@ if (isBuildSrcProject) {
       }
     }
   }
-}
-
-class JetGradlePlugin implements Plugin<Gradle> {
-  private final ToolingModelBuilderRegistry toolingModelBuilderRegistry
-
-  @Inject
-  JetGradlePlugin(ToolingModelBuilderRegistry toolingModelBuilderRegistry) {
-    this.toolingModelBuilderRegistry = toolingModelBuilderRegistry
-  }
-
-  void apply(Gradle gradle) {
-    def jetModelBuilder = getJetModelBuilderOrRegisterIfAbsent(gradle, toolingModelBuilderRegistry)
-    def projectEvaluationIsNotCalledForIncludedBuilds = GradleVersion.current() >= GradleVersion.version("3.1") &&
-                                                        GradleVersion.current() < GradleVersion.version("4.0")
-    if (projectEvaluationIsNotCalledForIncludedBuilds) {
-      def processor = new RegistryProcessor(jetModelBuilder)
-      gradle.rootProject {
-        it.afterEvaluate {
-          gradle.includedBuilds.each { included ->
-            // included builds should be configured by now, so calling `configuredBuild` should be safe
-            def toolingRegistry = (ToolingModelBuilderRegistry)included.configuredBuild.services.get(ToolingModelBuilderRegistry.class)
-            processor.process(toolingRegistry)
-          }
-        }
-      }
-    }
-  }
-
-  static ToolingModelBuilder getJetModelBuilderOrRegisterIfAbsent(Gradle gradle, ToolingModelBuilderRegistry registry) {
-    def jetModelBuilder = findJetModelBuilder(registry)
-    if (jetModelBuilder != null) return jetModelBuilder
-
-    Gradle rootGradle = gradle
-    while (rootGradle.parent != null) {
-      rootGradle = rootGradle.parent
-    }
-    ToolingModelBuilderRegistry rootRegistry = (rootGradle as GradleInternal).services.get(ToolingModelBuilderRegistry)
-    jetModelBuilder = findJetModelBuilder(rootRegistry)
-    if(jetModelBuilder == null) {
-      jetModelBuilder = GradleVersion.current() >= GradleVersion.version("4.4")
-        ? (ToolingModelBuilder) ExtraModelBuilder.class.classLoader.loadClass(ExtraModelBuilder.class.typeName + "\$ForGradle44").newInstance()
-        : new ExtraModelBuilder();
-      rootRegistry.register(jetModelBuilder)
-    }
-    if (registry != rootRegistry) {
-      registry.register(jetModelBuilder)
-    }
-    return jetModelBuilder
-  }
-
-  static ToolingModelBuilder findJetModelBuilder(ToolingModelBuilderRegistry registry) {
-    try {
-      return registry.getBuilder(DummyModel.class.getName())
-    }
-    catch(UnknownModelException ignored) {}
-    return null
-  }
-}
-
-/**
- * Adds a single extra model builder instance for each root of ToolingModelBuilderRegistry hierarchy<br>
- * Thread safe.
- */
-class RegistryProcessor implements ProjectEvaluationListener {
-  ToolingModelBuilder jetModelBuilder
-  RegistryProcessor(ToolingModelBuilder jetModelBuilder) {
-    this.jetModelBuilder = jetModelBuilder
-  }
-
-  CopyOnWriteArrayList<ToolingModelBuilderRegistry> processedRegistries = new CopyOnWriteArrayList<ToolingModelBuilderRegistry>()
-
-  @Override
-  void beforeEvaluate(Project project) {
-    def registry = (ToolingModelBuilderRegistry)((ProjectInternal)project).services.get(ToolingModelBuilderRegistry.class)
-    process(registry)
-  }
-
-  void process(ToolingModelBuilderRegistry registry) {
-    ToolingModelBuilderRegistry rootRegistry = registry
-    while (rootRegistry.hasProperty('parent') && rootRegistry.parent != null) {
-      rootRegistry = rootRegistry.parent
-    }
-
-    boolean alreadySeen = !processedRegistries.addIfAbsent(rootRegistry)
-    if (alreadySeen || extraModelBuilderIsRegistered(rootRegistry)) {
-      return
-    }
-    rootRegistry.register(jetModelBuilder)
-    println("registered $jetModelBuilder on ${rootRegistry}")
-  }
-
-  private static boolean extraModelBuilderIsRegistered(registry) {
-    return JetGradlePlugin.findJetModelBuilder(registry) != null
-  }
-
-  @Override
-  void afterEvaluate(Project project, ProjectState state) {  }
 }

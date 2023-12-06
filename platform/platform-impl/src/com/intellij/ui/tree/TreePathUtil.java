@@ -23,8 +23,7 @@ public final class TreePathUtil {
    * @param component the last path component
    * @return a tree path with all the parent components plus the given component
    */
-  @NotNull
-  public static TreePath createTreePath(TreePath parent, @NotNull Object component) {
+  public static @NotNull TreePath createTreePath(TreePath parent, @NotNull Object component) {
     return parent != null
            ? parent.pathByAddingChild(component)
            : new CachingTreePath(component);

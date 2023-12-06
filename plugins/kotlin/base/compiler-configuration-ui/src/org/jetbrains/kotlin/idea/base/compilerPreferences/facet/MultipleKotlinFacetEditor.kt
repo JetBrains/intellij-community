@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.base.compilerPreferences.facet
 import com.intellij.facet.ui.FacetEditor
 import com.intellij.facet.ui.FacetEditorsFactory
 import com.intellij.facet.ui.MultipleFacetSettingsEditor
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
@@ -26,14 +25,6 @@ class MultipleKotlinFacetEditor(
     override fun createComponent(): JComponent {
         return KotlinFacetEditorGeneralTab.EditorComponent(project, null).apply {
             initialize()
-            editors.forEach { facetEditor ->
-                for (editorTab in facetEditor.editorTabs) {
-                    if (editorTab !is KotlinFacetEditorGeneralTab) continue
-
-                    ProgressManager.checkCanceled()
-                    editorTab.initializeIfNeeded()
-                }
-            }
 
             helper.bind(useProjectSettingsCheckBox, editors) { it.tabEditor.useProjectSettingsCheckBox }
             //TODO(auskov): Support bulk editing target platforms?
@@ -41,8 +32,6 @@ class MultipleKotlinFacetEditor(
                 helper.bind(reportWarningsCheckBox, editors) { it.compilerConfigurable.reportWarningsCheckBox }
                 helper.bind(additionalArgsOptionsField.textField, editors) { it.compilerConfigurable.additionalArgsOptionsField.textField }
                 helper.bind(generateSourceMapsCheckBox, editors) { it.compilerConfigurable.generateSourceMapsCheckBox }
-                helper.bind(outputPrefixFile.textField, editors) { it.compilerConfigurable.outputPrefixFile.textField }
-                helper.bind(outputPostfixFile.textField, editors) { it.compilerConfigurable.outputPostfixFile.textField }
                 helper.bind(outputDirectory.textField, editors) { it.compilerConfigurable.outputDirectory.textField }
                 helper.bind(copyRuntimeFilesCheckBox, editors) { it.compilerConfigurable.copyRuntimeFilesCheckBox }
                 helper.bind(keepAliveCheckBox, editors) { it.compilerConfigurable.keepAliveCheckBox }

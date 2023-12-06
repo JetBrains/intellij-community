@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -16,8 +16,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class PluginHeaderPanel {
-  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
+public final class PluginHeaderPanel {
 
   private IdeaPluginDescriptor myPlugin;
   private JBLabel myCategory;
@@ -56,10 +55,8 @@ public class PluginHeaderPanel {
     myUpdated.setVisible(true);
     myName.setFont(StartupUiUtil.getLabelFont().deriveFont(4f + StartupUiUtil.getLabelFont().getSize()));
 
-    //data
-    //noinspection HardCodedStringLiteral
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
-    myCategory.setText(plugin.getCategory() == null ? IdeBundle.message("label.category.unknown") : StringUtil.toUpperCase(plugin.getCategory())); //NON-NLS
+    myCategory.setText(plugin.getDisplayCategory() == null ? IdeBundle.message("label.category.unknown") : StringUtil.toUpperCase(plugin.getDisplayCategory()));
     String versionText;
     boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();
     if (plugin instanceof PluginNode node) {
@@ -78,7 +75,7 @@ public class PluginHeaderPanel {
       myCategory.setVisible(false);
       myDownloadsPanel.setVisible(false);
       final String version = plugin.getVersion();
-      if (ourState.wasUpdated(plugin.getPluginId())) {
+      if (InstalledPluginsState.getInstance().wasUpdated(plugin.getPluginId())) {
         versionText = IdeBundle.message("label.new.version.will.be.available.after.restart");
       }
       else if (version != null && showVersion) {

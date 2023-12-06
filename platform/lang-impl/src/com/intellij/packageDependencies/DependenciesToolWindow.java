@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -15,8 +16,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
-
-public class DependenciesToolWindow {
+@Service(Service.Level.PROJECT)
+public final class DependenciesToolWindow {
   private final Project myProject;
   private ContentManager myContentManager;
 
@@ -29,7 +30,7 @@ public class DependenciesToolWindow {
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
 
-      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
+      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.ANALYZE_DEPENDENCIES,
                                                                    true,
                                                                    ToolWindowAnchor.BOTTOM,
                                                                    project);
@@ -47,7 +48,7 @@ public class DependenciesToolWindow {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
       myContentManager.addContent(content);
       myContentManager.setSelectedContent(content);
-      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEPENDENCIES).activate(null);
+      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.ANALYZE_DEPENDENCIES).activate(null);
     });
   }
 

@@ -5,7 +5,7 @@ package com.intellij.history.integration;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.util.NlsContexts;
 
-public class LocalHistoryActionImpl implements LocalHistoryAction {
+public final class LocalHistoryActionImpl implements LocalHistoryAction {
   private final @NlsContexts.Label String myName;
   private final LocalHistoryEventDispatcher myDispatcher;
 

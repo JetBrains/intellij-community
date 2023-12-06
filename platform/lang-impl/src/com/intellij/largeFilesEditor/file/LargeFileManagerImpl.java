@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.file;
 
 import com.google.common.collect.EvictingQueue;
@@ -19,7 +19,7 @@ import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class LargeFileManagerImpl implements LargeFileManager {
+public final class LargeFileManagerImpl implements LargeFileManager {
   private static final Logger logger = Logger.getInstance(LargeFileManagerImpl.class);
   private static final int MAX_SIZE_OF_PAGE_CASH = 3;
 

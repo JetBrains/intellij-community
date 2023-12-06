@@ -7,9 +7,12 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.codeInsight.ExpectedExpressionMatcherProvider
@@ -40,7 +43,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
 
         return resolveCandidates(context) f@ { file, variables ->
             val importStrategyDetector = ImportStrategyDetector(file, context.project)
-            variables.mapTo(ArrayList()) { with(lookupElementFactory) { createLookupElement(it, importStrategyDetector) } }
+            variables.mapTo(ArrayList()) { lookupElementFactory.createLookupElement(it, importStrategyDetector) }
                 .toTypedArray()
         }
     }
@@ -63,18 +66,21 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
         val contextElement = targetElement.getNonStrictParentOfType<KtElement>() ?: return null
 
         allowAnalysisOnEdt {
-            analyze(contextElement) {
-                val matcher = with (ExpectedExpressionMatcherProvider) {
-                    if (filterByExpectedType) get(contextElement) else null
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(contextElement) {
+                    val matcher = with (ExpectedExpressionMatcherProvider) {
+                        if (filterByExpectedType) get(contextElement) else null
+                    }
+
+                    val scope = file.getScopeContextForPosition(contextElement).getCompositeScope { it !is KtScopeKind.ImportingScope }
+                    val variables = scope.getCallableSymbols()
+                      .filterIsInstance<KtVariableLikeSymbol>()
+                      .filter { !it.name.isSpecial && shouldDisplayVariable(it, file) }
+                      .filter { matcher == null || matcher. match(it.returnType) }
+
+                    return mapper(this@analyze, file, variables)
                 }
-
-                val scope = file.getScopeContextForPosition(contextElement).scopes
-                val variables = scope.getCallableSymbols()
-                    .filterIsInstance<KtVariableLikeSymbol>()
-                    .filter { !it.name.isSpecial && shouldDisplayVariable(it, file) }
-                    .filter { matcher == null || with(matcher) { match(it.returnType) } }
-
-                return mapper(this@analyze, file, variables)
             }
         }
     }

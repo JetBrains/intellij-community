@@ -2,23 +2,31 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.ListElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.StringElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.PropertyElement
 
 class KotlinScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
   override fun add(element: ScriptElement, indent: Int, isNewLine: Boolean) {
-    when {
-      element is ListElement -> {
+    when (element) {
+      is ListElement -> {
         add("listOf(", indent, isNewLine)
         add(element.elements, indent)
         add(")", indent, false)
         return
       }
-      element is PropertyElement -> {
+      is PropertyElement -> {
         add("var", indent, isNewLine)
         add(" ", indent, false)
         add(element.name, indent, false)
         add(" = ", indent, false)
         add(element.value, indent, false)
+      }
+      is StringElement -> {
+        val escapedString = element.value
+          .replace("\\", "\\\\")
+          .replace("\n", "\\n")
+        val string = "\"" + escapedString.replace("\"", "\\\"") + "\""
+        add(string, indent, isNewLine)
       }
       else -> {
         super.add(element, indent, isNewLine)

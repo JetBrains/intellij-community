@@ -8,14 +8,16 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.NamedArgumentInsertHandler
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
 internal class NamedArgumentLookupElementFactory {
-    fun KtAnalysisSession.createNamedArgumentLookup(name: Name, types: List<KtType>): LookupElement {
-        val typeText = types.singleOrNull()?.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT) ?: "..."
+    context(KtAnalysisSession)
+fun createNamedArgumentLookup(name: Name, types: List<KtType>): LookupElement {
+        val typeText = types.singleOrNull()?.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT) ?: "..."
         val nameString = name.asString()
         return LookupElementBuilder.create(NamedArgumentLookupObject(name), "$nameString =")
             .withTailText(" $typeText")

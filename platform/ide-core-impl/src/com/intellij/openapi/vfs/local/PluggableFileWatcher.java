@@ -31,8 +31,10 @@ public abstract class PluggableFileWatcher {
    * The inputs to this method must be absolute and free of symbolic links.
    *
    * @implNote An implementation <b>must report</b> paths it doesn't recognize via {@link FileWatcherNotificationSink#notifyManualWatchRoots}.
+   * On application shutdown, the corresponding parameter is set to {@code true} and the lists are empty; in this case,
+   * implementations should minimize their operations to speed up shutdown.
    */
-  public abstract void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat);
+  public abstract void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat, boolean shuttingDown);
 
   public void resetChangedPaths() { }
 

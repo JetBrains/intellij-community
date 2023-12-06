@@ -1,5 +1,4 @@
 // WITH_STDLIB
-// PROBLEM: none
 import java.util.Arrays
 
 fun test() {

@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
@@ -39,13 +39,15 @@ import java.util.zip.ZipException
  */
 internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
                                      forbiddenSubPaths: List<String>,
+                                     forbiddenSubPathExceptions: List<String>,
                                      root: Path,
                                      messages: BuildMessages) {
   spanBuilder("verify class files")
     .setAttribute("ruleCount", versionCheckConfig.size.toLong())
     .setAttribute("forbiddenSubPathCount", forbiddenSubPaths.size.toLong())
+    .setAttribute("forbiddenSubPathExceptionsCount", forbiddenSubPathExceptions.size.toLong())
     .setAttribute("root", root.toString())
-    .useWithScope2 {
+    .useWithScope {
       val rules = ArrayList<Rule>(versionCheckConfig.size)
       for (entry in versionCheckConfig.entries) {
         rules.add(Rule(path = entry.key, version = classVersion(entry.value)))
@@ -62,7 +64,7 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
         })
       }
 
-      val checker = ClassFileChecker(rules, forbiddenSubPaths)
+      val checker = ClassFileChecker(messages, rules, forbiddenSubPaths, forbiddenSubPathExceptions)
       val errors = ConcurrentLinkedQueue<String>()
       if (Files.isDirectory(root)) {
         coroutineScope {
@@ -88,7 +90,10 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
         messages.warning("---\n$error")
       }
       check(errorCount == 0) {
-        throw ClassFileCheckError("Failed with $errorCount problems", errors)
+        throw ClassFileCheckError(
+          "Failed with $errorCount problems. First 5 of them:\n" +
+          errors.take(5).joinToString("\n"),
+          errors)
       }
 
       val unusedRules = rules.filter { !it.wasUsed }
@@ -103,7 +108,10 @@ class ClassFileCheckError(message: String, val errors: Collection<String> = empt
 
 private val READ = EnumSet.of(StandardOpenOption.READ)
 
-private class ClassFileChecker(private val versionRules: List<Rule>, private val forbiddenSubPaths: List<String>) {
+private class ClassFileChecker(private val messages: BuildMessages,
+                               private val versionRules: List<Rule>,
+                               private val forbiddenSubPaths: List<String>,
+                               private val forbiddenSubPathExceptions: List<String>) {
   val checkedJarCount = AtomicInteger()
   val checkedClassCount = AtomicInteger()
 
@@ -179,8 +187,15 @@ private class ClassFileChecker(private val versionRules: List<Rule>, private val
   }
 
   private fun checkIfSubPathIsForbidden(relPath: String, errors: MutableCollection<String>) {
+    if (forbiddenSubPathExceptions.contains(relPath)) {
+      messages.info("$relPath is explicitly allowed and will be excepted from the forbidden sub paths check.")
+      return
+    }
+
     for (f in forbiddenSubPaths) {
       if (relPath.contains(f)) {
+
+
         errors.add("$relPath: .class file has a forbidden sub-path: $f")
       }
     }

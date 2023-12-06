@@ -3,6 +3,8 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.treeView.FileNameComparator;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -18,10 +20,11 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.*;
 
@@ -32,7 +35,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.ToIntFunction;
-import java.util.stream.Stream;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
@@ -67,30 +69,35 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
   private boolean myHelper;
-  private Color myBackgroundColor = UNKNOWN_COLOR;
-  @NotNull private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+  private @Nullable Color myBackgroundColor = UNKNOWN_COLOR;
+  private final @NotNull UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   protected ChangesBrowserNode(T userObject) {
     super(userObject);
   }
 
-  @RequiresBackgroundThread
-  protected void preparePresentationDataCaches(@NotNull Project project) {
-    getBackgroundColorCached(project);
+  @ApiStatus.Internal
+  final @Nullable Color getBackgroundColorCached() {
+    Color backgroundColor = myBackgroundColor;
+    return backgroundColor == UNKNOWN_COLOR ? null : backgroundColor;
   }
 
-  /**
-   * see {@link TreeModelBuilder#precalculateFileColors(Project, ChangesBrowserNode)}
-   */
   @ApiStatus.Internal
-  final Color getBackgroundColorCached(@NotNull Project project) {
+  final boolean hasBackgroundColorCached() {
     Color backgroundColor = myBackgroundColor;
-    if (backgroundColor == UNKNOWN_COLOR) {
-      backgroundColor = getBackgroundColor(project);
-      myBackgroundColor = backgroundColor;
-    }
+    return backgroundColor != UNKNOWN_COLOR;
+  }
 
-    return backgroundColor;
+  @ApiStatus.Internal
+  final boolean cacheBackgroundColor(@NotNull Project project) {
+    Color backgroundColor = myBackgroundColor;
+    if (backgroundColor != UNKNOWN_COLOR) return false;
+
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-318216, EA-829418")) {
+      backgroundColor = getBackgroundColor(project);
+    }
+    myBackgroundColor = backgroundColor;
+    return backgroundColor != null;
   }
 
   @NotNull
@@ -289,6 +296,14 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return getTextPresentation();
   }
 
+  @Override
+  public void setUserObject(Object userObject) {
+    if (userObject != getUserObject()) {
+      Logger.getInstance(ChangesBrowserNode.class).error("Should not replace UserObject for ChangesBrowserNode");
+    }
+    super.setUserObject(userObject);
+  }
+
   /**
    * Used by speedsearch, copy-to-clipboard and default renderer.
    */
@@ -378,7 +393,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   @Nullable
   private static VirtualFile getScopeVirtualFileFor(@NotNull FilePath filePath) {
     if (filePath.isNonLocal()) return null;
-    return ChangesUtil.findValidParentAccurately(filePath);
+    return VcsImplUtil.findValidParentAccurately(filePath);
   }
 
   public boolean shouldExpandByDefault() {
@@ -465,53 +480,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     }
   }
 
-
-  /**
-   * @deprecated Use {@link #iterateFilesUnder()}
-   */
-  @NotNull
-  @Deprecated
-  public List<VirtualFile> getAllFilesUnder() {
-    return iterateFilesUnder().toList();
-  }
-
-  /**
-   * @deprecated Use {@link #iterateFilesUnder()}
-   */
-  @NotNull
-  @Deprecated
-  public Stream<VirtualFile> getFilesUnderStream() {
-    return iterateFilesUnder().toStream();
-  }
-
-  /**
-   * @deprecated Use {@link #iterateFilePathsUnder()}
-   */
-  @NotNull
-  @Deprecated
-  public List<FilePath> getAllFilePathsUnder() {
-    return iterateFilePathsUnder().toList();
-  }
-
-  /**
-   * @deprecated Use {@link #iterateFilePathsUnder()}
-   */
-  @NotNull
-  @Deprecated
-  public Stream<FilePath> getFilePathsUnderStream() {
-    return iterateFilePathsUnder().toStream();
-  }
-
-  /**
-   * @deprecated Use {@link #traverse()}
-   */
-  @NotNull
-  @Deprecated
-  public Stream<ChangesBrowserNode<?>> getNodesUnderStream() {
-    return traverse().toStream();
-  }
-
-  interface NodeWithFilePath {
+  public interface NodeWithFilePath {
     @NotNull
     FilePath getNodeFilePath();
   }

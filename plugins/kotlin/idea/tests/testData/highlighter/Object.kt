@@ -1,12 +1,13 @@
+// EXPECTED_DUPLICATED_HIGHLIGHTING
 package testing
 
-object <info textAttributesKey="KOTLIN_OBJECT">O</info> {
-    fun <info textAttributesKey="KOTLIN_FUNCTION_DECLARATION">foo</info>() = 42
+object <symbolName textAttributesKey="KOTLIN_OBJECT">O</symbolName> {
+    fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">foo</symbolName>() = 42
 }
 
-fun <info textAttributesKey="KOTLIN_FUNCTION_DECLARATION">testing</info>(): <info textAttributesKey="KOTLIN_OBJECT">O</info> {
-    <info textAttributesKey="KOTLIN_OBJECT">O</info>.<info textAttributesKey="KOTLIN_FUNCTION_CALL">foo</info>()
-    val <info textAttributesKey="KOTLIN_LOCAL_VARIABLE">o</info> = <info textAttributesKey="KOTLIN_OBJECT">O</info>
-    <info textAttributesKey="KOTLIN_LOCAL_VARIABLE">o</info>.<info textAttributesKey="KOTLIN_FUNCTION_CALL">foo</info>()
-    return <info textAttributesKey="KOTLIN_OBJECT">O</info>
+fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">testing</symbolName>(): <symbolName textAttributesKey="KOTLIN_OBJECT">O</symbolName> {
+    <symbolName textAttributesKey="KOTLIN_OBJECT">O</symbolName>.<symbolName textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+    val <symbolName textAttributesKey="KOTLIN_LOCAL_VARIABLE">o</symbolName> = <symbolName textAttributesKey="KOTLIN_OBJECT">O</symbolName>
+    <symbolName textAttributesKey="KOTLIN_LOCAL_VARIABLE">o</symbolName>.<symbolName textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+    return <symbolName textAttributesKey="KOTLIN_OBJECT">O</symbolName>
 }

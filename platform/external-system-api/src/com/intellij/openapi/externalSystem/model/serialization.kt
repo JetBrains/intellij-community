@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model
 
 import com.intellij.diagnostic.PluginException
@@ -10,22 +10,30 @@ import com.intellij.serialization.ReadConfiguration
 import com.intellij.serialization.WriteConfiguration
 
 // do not use SkipNullAndEmptySerializationFilter for now because can lead to issues
-fun createCacheWriteConfiguration() = WriteConfiguration(allowAnySubTypes = true)
+fun createCacheWriteConfiguration(): WriteConfiguration = WriteConfiguration(allowAnySubTypes = true)
 
-private fun createDataClassResolver(log: Logger): (name: String, hostObject: DataNode<*>?) -> Class<*>? {
-  val projectDataManager = ProjectDataManager.getInstance()
-  val managerClassLoaders = ExternalSystemManager.EP_NAME.lazySequence()
+private class DataClassResolver(private val log: Logger) {
+  private val projectDataManager = ProjectDataManager.getInstance()
+
+  private val managerClassLoaders = ExternalSystemManager.EP_NAME.lazySequence()
+    .flatMap { it.extensionPointsForResolver.flatMap { it.lazySequence() } + it }
     .map { it.javaClass.classLoader }
     .toSet()
-  return fun(name: String, hostObject: DataNode<*>?): Class<*>? {
-    var classLoadersToSearch = managerClassLoaders
-    val services = if (hostObject == null) emptyList() else projectDataManager!!.findService(hostObject.key)
-    if (!services.isNullOrEmpty()) {
-      val set = LinkedHashSet<ClassLoader>(managerClassLoaders.size + services.size)
-      set.addAll(managerClassLoaders)
-      services.mapTo(set) { it.javaClass.classLoader }
-      classLoadersToSearch = set
+
+  private fun getClassLoadersToSearch(hostObject: DataNode<*>?): Set<ClassLoader> {
+    val services = hostObject?.let { projectDataManager!!.findService(hostObject.key) }
+    if (services.isNullOrEmpty()) {
+      return managerClassLoaders
     }
+
+    val set = LinkedHashSet<ClassLoader>(managerClassLoaders.size + services.size)
+    set.addAll(managerClassLoaders)
+    services.mapTo(set) { it.javaClass.classLoader }
+    return set
+  }
+
+  fun resolve(name: String, hostObject: DataNode<*>?): Class<*>? {
+    val classLoadersToSearch = getClassLoadersToSearch(hostObject)
 
     var pe: PluginException? = null
     for (classLoader in classLoadersToSearch) {
@@ -33,21 +41,28 @@ private fun createDataClassResolver(log: Logger): (name: String, hostObject: Dat
         return classLoader.loadClass(name)
       }
       catch (e: PluginException) {
-        pe?.let(e::addSuppressed)
+        if (pe != null) {
+          e.addSuppressed(pe)
+        }
         pe = e
       }
       catch (_: ClassNotFoundException) {
       }
     }
 
-    log.warn("Cannot find class `$name`", pe)
-    throw pe ?: return null
+    log.warn("ExternalProjectsDataStorage deserialization: Cannot find class `$name`", pe)
+    if (pe != null) {
+      throw pe
+    }
+    else {
+      return null
+    }
   }
 }
 
 @JvmOverloads
 fun createCacheReadConfiguration(log: Logger, testOnlyClassLoader: ClassLoader? = null): ReadConfiguration {
-  val dataNodeResolver = if (testOnlyClassLoader == null) createDataClassResolver(log) else null
+  val dataNodeResolver = if (testOnlyClassLoader == null) DataClassResolver(log) else null
   return createDataNodeReadConfiguration(fun(name: String, hostObject: Any): Class<*>? {
     return when {
       hostObject !is DataNode<*> -> {
@@ -58,11 +73,11 @@ fun createCacheReadConfiguration(log: Logger, testOnlyClassLoader: ClassLoader? 
         catch (e: ClassNotFoundException) {
           log.debug("cannot find class $name using class loader of class ${hostObjectClass.name} (classLoader=${hostObjectClass.classLoader})", e)
           // let's try system manager class loaders
-          dataNodeResolver?.invoke(name, null) ?: throw e
+          dataNodeResolver?.resolve(name, null) ?: throw e
         }
       }
       dataNodeResolver == null -> testOnlyClassLoader!!.loadClass(name)
-      else -> dataNodeResolver(name, hostObject)
+      else -> dataNodeResolver.resolve(name, hostObject)
     }
   })
 }

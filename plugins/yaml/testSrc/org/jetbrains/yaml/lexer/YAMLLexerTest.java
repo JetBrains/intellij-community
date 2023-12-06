@@ -1,19 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.lexer;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.LexerTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class YAMLLexerTest extends LexerTestCase {
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return new YAMLFlexLexer();
   }
 
   @Override
-  protected String getDirPath() {
+  protected void doTest(@NotNull String text, @Nullable String expected) {
+    super.doTest(text, expected);
+    checkCorrectRestart(text);
+  }
+
+  @Override
+  protected @NotNull String getDirPath() {
     return (PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/lexer/data/")
       .substring(PathManager.getHomePath().length());
   }
@@ -240,6 +248,10 @@ public class YAMLLexerTest extends LexerTestCase {
 
   // Copy-paste from parser test
   public void testExplicitMaps() {
+    doTest();
+  }
+
+  public void testExplicitMapsWithoutEmptyLine() {
     doTest();
   }
 

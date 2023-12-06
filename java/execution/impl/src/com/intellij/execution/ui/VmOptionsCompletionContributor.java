@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
+import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -36,6 +38,7 @@ import java.util.stream.Stream;
 public class VmOptionsCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Pattern OPTION_SEPARATOR = Pattern.compile("\\s+");
   private static final Pattern OPTION_MATCHER = Pattern.compile("^-XX:[+\\-]?(\\w+)(=.+)?$");
+  private static final char OPTION_VALUE_SEPRATOR = '=';
 
   private static final VMOption[] STANDARD_OPTIONS = {
     opt("ea", "enable assertions with specified granularity"),
@@ -50,9 +53,9 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
     opt("D", "set a system property in format <name>=<value>"),
     opt("XX:", "specify non-standard JVM-specific option")
   };
-  
+
   private static VMOption opt(@NotNull String name, @NotNull String doc) {
-    return new VMOption(name, null, null, VMOptionKind.Standard, doc, VMOptionVariant.DASH);
+    return new VMOption(name, null, null, VMOptionKind.Standard, doc, VMOptionVariant.DASH, null);
   }
 
   @Override
@@ -69,41 +72,52 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       offset--;
     }
     JavaRunConfigurationBase settings = document.getUserData(VmOptionsEditor.SETTINGS_KEY);
-    if (addXxCompletion(result, data, offset, currentText) || addSimpleOptions(result, settings, data, offset, currentText)) {
+    if (addXxCompletion(result, data, offset, currentText) ||
+        addSimpleOptions(result, settings, data, parameters.getOffset(), currentText)) {
       result.stopHere();
     }
   }
 
   private static boolean addSimpleOptions(@NotNull CompletionResultSet result,
-                                          @Nullable JavaRunConfigurationBase settings, 
+                                          @Nullable JavaRunConfigurationBase settings,
                                           @NotNull JdkOptionsData data,
                                           int offset,
                                           @NotNull String text) {
-    String[] prefixes = {"--", "-", ""};
-    for (String prefix : prefixes) {
-      if (hasOptionPrefix(text, offset, prefix)) {
-        addDashOptions(result, settings, data, prefix);
-        return true;
+    int optionStart = offset;
+    while (optionStart > 0 && !Character.isWhitespace(text.charAt(optionStart - 1))) {
+      if (text.charAt(optionStart - 1) == OPTION_VALUE_SEPRATOR) {
+        return false;
       }
+      optionStart--;
     }
-    return false;
+    String optionText = text.substring(optionStart, offset);
+    result = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(optionText));
+    addDashOptions(result, settings, data);
+    return true;
   }
 
   private static void addDashOptions(@NotNull CompletionResultSet result,
                                      @Nullable JavaRunConfigurationBase settings,
-                                     @NotNull JdkOptionsData data, String prefix) {
+                                     @NotNull JdkOptionsData data) {
     Stream.of(
       data.getOptions().stream().filter(option1 -> option1.getVariant() != VMOptionVariant.XX),
-      Stream.of(STANDARD_OPTIONS), 
+      Stream.of(STANDARD_OPTIONS),
       settings == null ? null : settings.getKnownVMOptions().stream())
       .flatMap(Function.identity())
       .forEach(option -> {
       String fullLookup = option.getVariant().prefix() + option.getOptionName();
-      if (!fullLookup.startsWith(prefix)) return;
-      String lookup = fullLookup.substring(prefix.length());
-      result.addElement(LookupElementBuilder.create(option.createPointer(), lookup + option.getVariant().suffix())
-                          .withTypeText(option.getType())
-                          .withPresentableText(fullLookup));
+      LookupElementBuilder builder = LookupElementBuilder.create(option.createPointer(), fullLookup)
+        .withTypeText(option.getType())
+        .withPresentableText(fullLookup);
+      VMOptionLookupElementDecorator decorator = option.getDecorator();
+      if (decorator != null) {
+        result.addElement(decorator.tune(builder));
+      }
+      else {
+        Character suffix = option.getVariant().suffix();
+        TailType tailType = suffix == null ? null : new CharTailType(suffix);
+        result.addElement(TailTypeDecorator.withTail(builder, tailType));
+      }
     });
   }
 
@@ -129,12 +143,12 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       Icon icon = option.getKind().icon();
       if ("bool".equals(type)) {
         String lookupString = (booleanStart ? "" : Boolean.parseBoolean(option.getDefaultValue()) ? "-" : "+") + option.getOptionName();
-        tailType = TailType.SPACE;
+        tailType = TailTypes.spaceType();
         e = LookupElementBuilder.create(option.createPointer(), lookupString);
       }
       else if (!booleanStart) {
         String tailText = " = " + option.getDefaultValue();
-        tailType = TailType.EQUALS;
+        tailType = TailTypes.equalsType();
         e = LookupElementBuilder.create(option.createPointer(), option.getOptionName()).withTailText(tailText, true);
       }
       if (e != null) {

@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea
 
-import org.jetbrains.kotlin.idea.util.ElementKind
-import org.jetbrains.kotlin.idea.refactoring.IntroduceRefactoringException
+import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractExpressionSelectionTest : KotlinLightCodeInsightFixtureTestCase() {

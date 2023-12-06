@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
  * Implementation in K1: [org.jetbrains.kotlin.idea.completion.returnExpressionItems]
  */
 internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.RETURN_KEYWORD) {
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun KtAnalysisSession.createLookups(
+    context(KtAnalysisSession)
+    override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
@@ -66,7 +66,8 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
         return result
     }
 
-    private fun KtAnalysisSession.addAllReturnVariants(
+    context(KtAnalysisSession)
+    private fun addAllReturnVariants(
         result: MutableList<LookupElement>,
         returnType: KtType,
         label: Name?,
@@ -87,8 +88,8 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun KtAnalysisSession.getExpressionsToReturnByType(returnType: KtType): List<ExpressionTarget> = buildList {
+    context(KtAnalysisSession)
+    private fun getExpressionsToReturnByType(returnType: KtType): List<ExpressionTarget> = buildList {
         if (returnType.canBeNull) {
             add(ExpressionTarget("null", addToLookupElementTail = false))
         }
@@ -103,9 +104,11 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
                 add(ExpressionTarget("true", addToLookupElementTail = false))
                 add(ExpressionTarget("false", addToLookupElementTail = false))
             }
+
             emptyListShouldBeSuggested() -> {
                 add(ExpressionTarget("emptyList()", addToLookupElementTail = true))
             }
+
             returnType.isClassTypeWithClassId(StandardClassIds.Set) -> {
                 add(ExpressionTarget("emptySet()", addToLookupElementTail = true))
             }

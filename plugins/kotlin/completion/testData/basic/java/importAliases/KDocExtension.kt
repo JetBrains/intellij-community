@@ -6,4 +6,5 @@ import kotlin.text.capitalize as xxx
  */
 fun foo(){}
 
+// IGNORE_K2
 // EXIST: { lookupString: "xxx", itemText: "xxx", icon: "Function"}

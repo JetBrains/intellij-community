@@ -11,3 +11,4 @@ object Bar {
     @Deprecated(message = "", replaceWith = ReplaceWith("str.isEmpty()"))
     fun bar(str: String): Boolean = str.isEmpty()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

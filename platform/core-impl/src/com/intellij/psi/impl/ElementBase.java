@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
@@ -26,19 +26,21 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PsiIconUtil;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.function.Function;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   private static final Logger LOG = Logger.getInstance(ElementBase.class);
 
   public static final int FLAGS_LOCKED = 0x800;
-  private static final Function<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
+  private static final Function1<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
     PsiElement element = request.myPointer.getElement();
-    if (element == null) return null;
+    if (element == null) {
+      return null;
+    }
 
     Icon icon = computeIconNow(element, request.myFlags);
     LastComputedIconCache.put(element, icon, request.myFlags);
@@ -77,7 +79,12 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (baseIcon == null) {
         baseIcon = AstLoadingFilter.disallowTreeLoading(() -> computeBaseIcon(flags));
       }
-      return baseIcon == null ? null : IconManager.getInstance().createDeferredIcon(baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
+      if (baseIcon == null) {
+        return null;
+      }
+      return IconManager.getInstance().createDeferredIcon(baseIcon,
+                                                          new ElementIconRequest(psiElement, psiElement.getProject(), flags),
+                                                          ICON_COMPUTE);
     }
 
     return computeIconNow(psiElement, flags);
@@ -100,8 +107,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return ((ElementBase)element).getElementIcon(flags);
   }
 
-  @Nullable
-  protected Icon computeBaseIcon(@Iconable.IconFlags int flags) {
+  protected @Nullable Icon computeBaseIcon(@Iconable.IconFlags int flags) {
     Icon baseIcon = isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
 
     // to prevent blinking, base icon should be created with the layers
@@ -114,8 +120,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return baseIcon;
   }
 
-  @Nullable
-  protected Icon getBaseIcon() {
+  protected @Nullable Icon getBaseIcon() {
     if (this instanceof PsiElement) {
       PsiFile file = ((PsiElement)this).getContainingFile();
       if (file != null) {
@@ -175,14 +180,14 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       ElementIconRequest request = (ElementIconRequest)o;
 
       if (myFlags != request.myFlags) return false;
-      if (!myPointer.equals(request.myPointer)) return false;
+      if (myPointer != request.myPointer) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = myPointer.hashCode();
+      int result = System.identityHashCode(myPointer);
       result = 31 * result + myFlags;
       return result;
     }

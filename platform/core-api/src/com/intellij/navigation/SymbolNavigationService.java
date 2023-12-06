@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation;
 
 import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.backend.navigation.NavigationTarget;
+import com.intellij.platform.backend.presentation.TargetPresentation;
+import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -23,8 +26,7 @@ import java.util.Collection;
 @ApiStatus.Experimental
 public interface SymbolNavigationService {
 
-  @NotNull
-  static SymbolNavigationService getInstance() {
+  static @NotNull SymbolNavigationService getInstance() {
     return ApplicationManager.getApplication().getService(SymbolNavigationService.class);
   }
 

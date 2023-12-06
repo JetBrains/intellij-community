@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -17,6 +16,8 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -41,41 +42,50 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @Override
-  public @Nullable Document getDocument(@NotNull VirtualFile file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  @RequiresReadLock
+  public final @Nullable Document getDocument(@NotNull VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
-    if (document == null) {
-      if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
+    if (document != null) {
+      return document;
+    }
 
-      boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-      if (file.getFileType().isBinary() && tooLarge) return null;
+    if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) {
+      return null;
+    }
 
-      CharSequence text = loadText(file, tooLarge);
-      synchronized (lock) {
-        document = (DocumentEx)getCachedDocument(file);
-        if (document != null) return document;  // double-checking
+    boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+    if (file.getFileType().isBinary() && tooLarge) {
+      return null;
+    }
 
-        document = (DocumentEx)createDocument(text, file);
-        document.setModificationStamp(file.getModificationStamp());
-        setDocumentTooLarge(document, tooLarge);
-        FileType fileType = file.getFileType();
-        document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
-
-        if (isTrackable(file)) {
-          document.addDocumentListener(getDocumentListener());
-        }
-
-        if (file instanceof LightVirtualFile) {
-          registerDocument(document, file);
-        }
-        else {
-          document.putUserData(FILE_KEY, file);
-          cacheDocument(file, document);
-        }
+    CharSequence text = loadText(file, tooLarge);
+    synchronized (lock) {
+      document = (DocumentEx)getCachedDocument(file);
+      // double-checking
+      if (document != null) {
+        return document;
       }
 
-      fileContentLoaded(file, document);
+      document = createDocument(text, file);
+      document.setModificationStamp(file.getModificationStamp());
+      setDocumentTooLarge(document, tooLarge);
+      FileType fileType = file.getFileType();
+      document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
+
+      if (isTrackable(file)) {
+        document.addDocumentListener(getDocumentListener());
+      }
+
+      if (file instanceof LightVirtualFile) {
+        registerDocument(document, file);
+      }
+      else {
+        document.putUserData(FILE_KEY, file);
+        cacheDocument(file, document);
+      }
     }
+
+    fileContentLoaded(file, document);
 
     return document;
   }
@@ -95,7 +105,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
   }
 
-  protected abstract @NotNull Document createDocument(@NotNull CharSequence text, @NotNull VirtualFile file);
+  protected abstract @NotNull DocumentEx createDocument(@NotNull CharSequence text, @NotNull VirtualFile file);
 
   @Override
   public @Nullable Document getCachedDocument(@NotNull VirtualFile file) {
@@ -119,6 +129,19 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     synchronized (lock) {
       document.putUserData(FILE_KEY, virtualFile);
       virtualFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
+    }
+  }
+
+  /**
+   * Rebinds a document to a different virtualFile instance. This can be helpful in case when a virtual file has become invalid
+   * and then a new virtualFile appeared at the same path.
+   */
+  @ApiStatus.Internal
+  public static void rebindDocument(@NotNull Document document, @NotNull VirtualFile oldFile, @NotNull VirtualFile newFile) {
+    synchronized (lock) {
+      oldFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
+      document.putUserData(FILE_KEY, newFile);
+      newFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
     }
   }
 
@@ -155,7 +178,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
   }
 
-  private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();
+  private final Map<VirtualFile, Document> myDocumentCache = CollectionFactory.createConcurrentWeakValueMap();
 
   private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.put(file, document);

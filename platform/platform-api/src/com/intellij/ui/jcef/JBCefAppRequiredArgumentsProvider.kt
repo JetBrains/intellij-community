@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 
 interface JBCefAppRequiredArgumentsProvider {
   companion object {
-    var EP = ExtensionPointName<JBCefAppRequiredArgumentsProvider>("com.intellij.jcef.appRequiredArgumentsProvider")
+    var EP: ExtensionPointName<JBCefAppRequiredArgumentsProvider> = ExtensionPointName("com.intellij.jcef.appRequiredArgumentsProvider")
 
     @JvmStatic
     fun getProviders(): List<JBCefAppRequiredArgumentsProvider> = EP.extensionList

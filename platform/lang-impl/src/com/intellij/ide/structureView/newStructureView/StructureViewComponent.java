@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.newStructureView;
 
 import com.intellij.icons.AllIcons;
@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -48,6 +49,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -430,37 +432,33 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @NotNull
   private Promise<TreePath> expandSelectFocusInner(Object element, boolean select, boolean requestFocus) {
+    int editorOffset;
+    if (myFileEditor instanceof TextEditor textEditor) {
+      editorOffset = textEditor.getEditor().getCaretModel().getOffset();
+    }
+    else {
+      editorOffset = -1;
+    }
     AsyncPromise<TreePath> result = myCurrentFocusPromise = new AsyncPromise<>();
-    int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
-    TreePath[] deepestPath = {null};
-    TreeVisitor visitor = path -> {
-      if (myCurrentFocusPromise != result) {
-        result.setError("rejected");
-        return TreeVisitor.Action.INTERRUPT;
+    var state = new StructureViewSelectVisitorState();
+    TreeVisitor visitor = new TreeVisitor() {
+      @Override
+      public @NotNull TreeVisitor.VisitThread visitThread() {
+        return VisitThread.BGT;
       }
-      Object last = path.getLastPathComponent();
-      Object userObject = unwrapNavigatable(last);
-      Object value = unwrapValue(last);
-      if (Comparing.equal(value, element) ||
-          userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
-        return TreeVisitor.Action.INTERRUPT;
-      }
-      if (value instanceof PsiElement && element instanceof PsiElement) {
-        if (PsiTreeUtil.isAncestor((PsiElement)value, (PsiElement)element, true)) {
-          int count = path.getPathCount();
-          if (stage[1] == 0 || stage[1] < count) {
-            stage[1] = count;
-            deepestPath[0] = path;
-          }
+
+      @Override
+      public @NotNull Action visit(@NotNull TreePath path) {
+        if (myCurrentFocusPromise != result) {
+          result.setError("rejected");
+          return TreeVisitor.Action.INTERRUPT;
         }
-        else if (stage[0] != 3) {
-          stage[0] = 2;
-          return TreeVisitor.Action.SKIP_CHILDREN;
-        }
+        return visitPathForElementSelection(path, element, editorOffset, state);
       }
-      return TreeVisitor.Action.CONTINUE;
     };
     Function<TreePath, Promise<TreePath>> action = path -> {
+      ThreadingAssertions.assertEventDispatchThread();
+
       if (select) {
         TreeUtil.selectPath(myTree, path);
       }
@@ -479,20 +477,72 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           result.setError("rejected");
           return Promises.rejectedPromise();
         }
-        else if (path == null && stage[0] == 2) {
+        else if (path == null && state.isOptimizationUsed()) {
           // Some structure views merge unrelated psi elements into a structure node (MarkdownStructureViewModel).
           // So turn off the isAncestor() optimization and retry once.
-          stage[0] = 3;
+          state.disableOptimization();
           return myAsyncTreeModel.accept(visitor).thenAsync(this);
         }
         else {
-          TreePath adjusted = path == null ? deepestPath[0] : path;
+          TreePath adjusted = path == null ? state.getBestMatch() : path;
           return adjusted == null ? Promises.rejectedPromise() : action.fun(adjusted);
         }
       }
     };
     myAsyncTreeModel.accept(visitor).thenAsync(fallback).processed(result);
     return myCurrentFocusPromise;
+  }
+
+  /**
+   * Visits the specified path and checks whether it's a match for selecting the current editor element.
+   * <p>
+   * There's an optimization: if the node is not an ancestor of the one we're looking for,
+   * its children are skipped. However, some structure views (MarkdownStructureViewModel)
+   * actually have custom grouping that can group unrelated PSI elements into a common node,
+   * so a second pass is done if no element was found during the first pass. To indicate the current
+   * stage, the {@code stage} parameter is passed, containing three values: the first is the current
+   * stage (1 - first pass, but no skipped children yet; 2 - first pass, and some children were skipped;
+   * 3 - the second pass with optimization disabled), the second value is used to store the length
+   * of the longest tree path found so far, and the last value indicates whether it's a good match
+   * (equal to the element we're looking for, or its canRepresent method returns true, etc.)
+   * or just the closest ancestor (1 - good match, 0 - ancestor).
+   * The corresponding value itself is stored into the {@code deepestPath} parameter.
+   * </p>
+   *
+   * @param path         the path to visit
+   * @param element      the element to look for
+   * @param editorOffset the current editor offset, or -1 if the editor is not a text editor
+   * @param stage        the current stage and the length of the longest path found so far
+   * @param deepestPath  the longest path found so far
+   * @return SKIP_CHILDREN if the optimization is performed, CONTINUE in other cases
+   */
+  @ApiStatus.Internal
+  public static TreeVisitor.@NotNull Action visitPathForElementSelection(
+    @NotNull TreePath path,
+    Object element,
+    int editorOffset,
+    @NotNull StructureViewSelectVisitorState state
+  ) {
+    Object last = path.getLastPathComponent();
+    Object userObject = unwrapNavigatable(last);
+    Object value = unwrapValue(last);
+    // Even if they are equal, or node.canRepresent(element), we still need to go deeper,
+    // because there may be a better match down there that's not a PSI element,
+    // for example, a folding region inside the class represented by the element.
+    boolean isGoodMatch =
+      Comparing.equal(value, element) ||
+      userObject instanceof AbstractTreeNode<?> node && node.canRepresent(element) ||
+      value instanceof CustomRegionTreeElement region && region.containsOffset(editorOffset);
+    boolean isAncestor = isGoodMatch ||
+      value instanceof PsiElement valPsi && element instanceof PsiElement elPsi && PsiTreeUtil.isAncestor(valPsi, elPsi, true);
+    if (isAncestor) {
+      state.updateIfBetterMatch(path, isGoodMatch);
+    }
+    else if (state.canUseOptimization()) {
+      state.usedOptimization();
+      return TreeVisitor.Action.SKIP_CHILDREN;
+    }
+    return TreeVisitor.Action.CONTINUE;
   }
 
   private void scrollToSelectedElement() {
@@ -518,7 +568,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   private void scrollToSelectedElementLater() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     cancelScrollToSelectedElement();
     if (isDisposed()) return;
@@ -569,7 +619,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @Override
   public void setActionActive(String name, boolean state) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     storeState();
     StructureViewFactoryEx.getInstanceEx(myProject).setActiveAction(name, state);
     ourSettingsModificationCount.incrementAndGet();
@@ -639,9 +689,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (isDisposed()) return;
       myAutoscrollFeedback = true;
 
-      Navigatable navigatable = CommonDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(getTree()));
-      if (myFileEditor != null && navigatable != null && navigatable.canNavigateToSource()) {
-        navigatable.navigate(false);
+      if (myFileEditor != null) {
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(getTree()), false);
       }
     }
   }
@@ -785,7 +834,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return provider == null ? 2 : provider.getMinimumAutoExpandDepth();
   }
 
-  private static class MyNodeWrapper extends TreeElementWrapper
+  private static final class MyNodeWrapper extends TreeElementWrapper
     implements NodeDescriptorProvidingKey, ValidateableNode {
 
     private long childrenStamp = -1;
@@ -905,7 +954,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  private static class MyGroupWrapper extends GroupWrapper {
+  private static final class MyGroupWrapper extends GroupWrapper {
     MyGroupWrapper(Project project, @NotNull Group group, @NotNull TreeModel treeModel) {
       super(project, group, treeModel);
     }
@@ -929,7 +978,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  private static class MyTree extends DnDAwareTree implements PlaceProvider {
+  private static final class MyTree extends DnDAwareTree implements PlaceProvider {
     MyTree(javax.swing.tree.TreeModel model) {
       super(model);
       HintUpdateSupply.installDataContextHintUpdateSupply(this);
@@ -1045,7 +1094,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return actions;
   }
 
-  private static class MyExpandListener extends TreeModelAdapter {
+  private static final class MyExpandListener extends TreeModelAdapter {
     private static final RegistryValue autoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
 
     private final JTree tree;

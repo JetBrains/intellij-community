@@ -31,6 +31,14 @@
     <orderEntry type="module-library">
       <library name="Xalan-2.7.2" type="repository">
         <properties maven-id="xalan:xalan:2.7.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/xalan/xalan/2.7.2/xalan-2.7.2.jar">
+              <sha256sum>a44bd80e82cb0f4cfac0dac8575746223802514e3cec9dc75235bc0de646af14</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/xalan/serializer/2.7.2/serializer-2.7.2.jar">
+              <sha256sum>e8f5b4340d3b12a0cfa44ac2db4be4e0639e479ae847df04c4ed8b521734bb4a</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="xml-apis:xml-apis" />
           </exclude>
@@ -40,7 +48,10 @@
           <root url="jar://$MAVEN_REPOSITORY$/xalan/serializer/2.7.2/serializer-2.7.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/xalan/xalan/2.7.2/xalan-2.7.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/xalan/serializer/2.7.2/serializer-2.7.2-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

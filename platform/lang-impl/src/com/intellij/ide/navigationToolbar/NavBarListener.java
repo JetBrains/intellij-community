@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.actions.CopyAction;
 import com.intellij.ide.actions.CutAction;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -55,7 +54,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class NavBarListener
   implements ProblemListener, FocusListener, FileStatusListener, AnActionListener, FileEditorManagerListener,
              PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener, WindowFocusListener,
@@ -86,7 +85,7 @@ public final class NavBarListener
     MessageBusConnection connection = project.getMessageBus().connect(disposable);
     connection.subscribe(FileStatusListener.TOPIC, listener);
     connection.subscribe(AnActionListener.TOPIC, listener);
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
+    connection.subscribe(ModuleRootListener.TOPIC, listener);
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, listener);
     connection.subscribe(NavBarModelListener.NAV_BAR, listener);
     connection.subscribe(ProblemListener.TOPIC, listener);

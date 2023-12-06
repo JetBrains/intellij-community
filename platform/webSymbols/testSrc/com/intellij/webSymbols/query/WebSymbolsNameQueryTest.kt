@@ -30,10 +30,6 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/attributes/v-foo", null, true, "basic-pattern")
   }
 
-  fun testVirtualAttributes() {
-    doTest("html/attributes", null, true, "basic-pattern")
-  }
-
   fun testVueDirectiveWithArguments() {
     doTest("html/elements/foo/attributes/v-on:bar.stop.foo.once", "vue", true, "vue")
   }
@@ -86,10 +82,6 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/elements/foo/attributes/@drag.enter.left.ctrl.exact.stop", "vue", true, "vue", "events")
   }
 
-  fun testVueElementWithExtends1() {
-    doTest("html/elements/TransitionGroup/props", "vue", "vue")
-  }
-
   fun testVueElementWithExtends2() {
     doTest("html/elements/TransitionGroup/attributes/appearActiveClass", "vue", "vue")
   }
@@ -104,10 +96,6 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
   fun testVueElementBind1() {
     doTest("html/elements/TransitionGroup/attributes/v-bind:tag", "vue", true, "vue")
-  }
-
-  fun testVueElements() {
-    doTest("html/vue-components", "vue", "vue")
   }
 
   fun testOldVueElement1() {
@@ -126,24 +114,8 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/elements/foo/attributes/v-on_old:click.stop", "vue", true, "vue", "vue-old", "events")
   }
 
-  fun testFrameworkFiltering() {
-    doTest("html/elements", null, true, "vue", "basic")
-  }
-
-  fun testCssProperties1() {
-    doTest("css/properties", null, "css")
-  }
-
-  fun testCssProperties2() {
-    doTest("html/elements/tag-with-css/css/properties", null, "css")
-  }
-
   fun testCssProperties3() {
     doTest("html/elements/tag-with-css/css/properties/global-prop", null, true, "css")
-  }
-
-  fun testCssClasses1() {
-    doTest("html/elements/tag-with-css/css/classes", null, "css")
   }
 
   fun testCssClasses2() {
@@ -283,15 +255,15 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNamingRules4() {
-    doTest("js/properties/prop-one", "vue", true, "naming-rules")
+    doTest("js/custom-properties/prop-one", "vue", true, "naming-rules")
   }
 
   fun testNamingRules5() {
-    doTest("js/properties/propOne", "vue", true, "naming-rules")
+    doTest("js/custom-properties/propOne", "vue", true, "naming-rules")
   }
 
   fun testNamingRules6() {
-    doTest("js/properties/prop-two-three", "vue", true, "naming-rules")
+    doTest("js/custom-properties/prop-two-three", "vue", true, "naming-rules")
   }
 
   fun testNestedNamingRules1() {
@@ -300,18 +272,6 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
   fun testNestedNamingRules2() {
     doTest("html/elements/hello-13Wo-rld", "vue", true, "nested-naming-rules")
-  }
-
-  fun testLegacyVuetifyDirectives() {
-    doTest("html/vue-directives", "vue", false, "vuetify-legacy", "vue")
-  }
-
-  fun testLegacyVuetifyComponents() {
-    doTest("html/vue-components", "vue", false, "vuetify-legacy", "vue")
-  }
-
-  fun testLegacyVuetifyComponentProps1() {
-    doTest("html/elements/VAutocomplete/props", "vue", false, "vuetify-legacy", "vue")
   }
 
   fun testLegacyVuetifyComponentProps2() {
@@ -396,15 +356,29 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
            "reference-with-complex-name-conversion")
   }
 
+  fun testMultipleReferences1() {
+    doTest("html/attributes/test-the-a", null, "multiple-references")
+  }
+
+  fun testMultipleReferences2() {
+    doTest("html/attributes/test-the-b", null, "multiple-references")
+  }
+
+  fun testBasicCustomElementsManifest1() {
+    doTest("html/elements/my-EleMeNt", customElementsManifests = listOf("basic"))
+  }
+
+  fun testBasicCustomElementsManifest2() {
+    doTest("html/elements/my-EleMeNt/attributes/disabled", customElementsManifests = listOf("basic"))
+  }
+
   fun testNestedPattern1() {
     webSymbolsQueryExecutorFactory.addScope(
       object : WebSymbolsScope {
-        override fun getSymbols(namespace: SymbolNamespace,
-                                kind: SymbolKind,
-                                name: String?,
-                                params: WebSymbolsNameMatchQueryParams,
-                                scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> {
-          return if (kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
+        override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+                                        params: WebSymbolsNameMatchQueryParams,
+                                        scope: Stack<WebSymbolsScope>): List<WebSymbol> {
+          return if (qualifiedName.kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
             listOf(object : WebSymbol {
               override val origin: WebSymbolOrigin
                 get() = object : WebSymbolOrigin {
@@ -436,8 +410,16 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun doTest(path: String, framework: String?, includeVirtual: Boolean, vararg webTypes: String) {
+    doTest(path, framework, includeVirtual, webTypes = webTypes.toList())
+  }
+
+  fun doTest(path: String,
+             framework: String? = null,
+             includeVirtual: Boolean = true,
+             webTypes: List<String> = emptyList(),
+             customElementsManifests: List<String> = emptyList()) {
     doTest(testPath) {
-      registerFiles(framework, *webTypes)
+      registerFiles(framework, webTypes, customElementsManifests)
       val matches = webSymbolsQueryExecutorFactory.create(null)
         .runNameMatchQuery(parseWebTypesPath(path, null), includeVirtual, false)
       printMatches(matches)

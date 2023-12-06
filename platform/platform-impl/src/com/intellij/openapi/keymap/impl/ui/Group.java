@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -12,14 +12,15 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static com.intellij.ide.ui.search.SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR;
 
-public class Group implements KeymapGroup {
+public final class Group implements KeymapGroup {
   private Group myParent;
   private final @NlsActions.ActionText String myName;
   private final String myId;
-  private final Icon myIcon;
+  private final @Nullable Supplier<? extends @Nullable Icon> icon;
   /**
    * Group or action id (String) or Separator or QuickList or Hyperlink
    */
@@ -32,12 +33,26 @@ public class Group implements KeymapGroup {
   public Group(@NlsActions.ActionText String name, String id, Icon icon) {
     myName = name;
     myId = id;
-    myIcon = icon;
+    this.icon = icon == null ? null : () -> icon;
     myChildren = new ArrayList<>();
   }
 
-  public Group(final @NlsActions.ActionText String name, final Icon icon) {
-    this(name, null, icon);
+  public Group(@NlsActions.ActionText String name, String id) {
+    myName = name;
+    myId = id;
+    this.icon = null;
+    myChildren = new ArrayList<>();
+  }
+
+  public Group(@NlsActions.ActionText String name, String id, @Nullable Supplier<? extends @Nullable Icon> icon) {
+    myName = name;
+    myId = id;
+    this.icon = icon;
+    myChildren = new ArrayList<>();
+  }
+
+  public Group(final @NlsActions.ActionText String name) {
+    this(name, null, (Icon)null);
   }
 
   public @NlsActions.ActionText String getName() {
@@ -45,11 +60,10 @@ public class Group implements KeymapGroup {
   }
 
   public Icon getIcon() {
-    return myIcon;
+    return icon == null ? null : icon.get();
   }
 
-  @Nullable
-  public String getId() {
+  public @Nullable String getId() {
     return myId;
   }
 
@@ -118,11 +132,11 @@ public class Group implements KeymapGroup {
   }
 
   public void normalizeSeparators() {
-    while (myChildren.size() > 0 && myChildren.get(0) instanceof Separator) {
+    while (!myChildren.isEmpty() && (myChildren.get(0) instanceof Separator s) && s.getText() != null) {
       myChildren.remove(0);
     }
 
-    while (myChildren.size() > 0 && myChildren.get(myChildren.size() - 1) instanceof Separator) {
+    while (!myChildren.isEmpty() && myChildren.get(myChildren.size() - 1) instanceof Separator) {
       myChildren.remove(myChildren.size() - 1);
     }
 
@@ -183,8 +197,7 @@ public class Group implements KeymapGroup {
     return null;
   }
 
-  @Nullable
-  private String getName(boolean presentable) {
+  private @Nullable String getName(boolean presentable) {
     return presentable ? getName() : getId();
   }
 

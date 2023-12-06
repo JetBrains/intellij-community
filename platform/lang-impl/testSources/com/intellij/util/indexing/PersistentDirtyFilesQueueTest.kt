@@ -10,19 +10,18 @@ import org.junit.Test
 
 class PersistentDirtyFilesQueueTest {
   @get: Rule
-  val tempDir = TempDirectory()
+  val tempDir: TempDirectory = TempDirectory()
 
   @get: Rule
-  val app = ApplicationRule()
+  val app: ApplicationRule = ApplicationRule()
 
   @Test
   fun `test store and load if vfs version`() {
     val file = tempDir.newDirectoryPath().resolve("test-PersistentDirtyFilesQueue")
-    val queue = PersistentDirtyFilesQueue(file)
     val vfsVersion = 987L
-    queue.storeIndexingQueue(IntList.of(1, 2, 3), vfsVersion)
+    PersistentDirtyFilesQueue.storeIndexingQueue(file, IntList.of(1, 2, 3), vfsVersion)
 
-    Assert.assertEquals(IntList.of(1, 2, 3), queue.readIndexingQueue(vfsVersion))
-    Assert.assertEquals(IntList.of(), queue.readIndexingQueue(vfsVersion + 1))
+    Assert.assertEquals(IntList.of(1, 2, 3), PersistentDirtyFilesQueue.readIndexingQueue(file, vfsVersion))
+    Assert.assertEquals(IntList.of(), PersistentDirtyFilesQueue.readIndexingQueue(file, vfsVersion + 1))
   }
 }

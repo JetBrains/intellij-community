@@ -5,17 +5,16 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analysis.providers.DecompiledPsiDeclarationProvider.findPsi
+import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -30,18 +29,24 @@ import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 
-val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
+val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lazyPub {
     UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
         ?: FirKotlinUastLanguagePlugin()
 }
 
+@OptIn(KtAllowAnalysisOnEdt::class)
 internal inline fun <R> analyzeForUast(
     useSiteKtElement: KtElement,
     action: KtAnalysisSession.() -> R
-): R =
-    analyze(useSiteKtElement, KtAlwaysAccessibleLifetimeTokenFactory, action)
+): R = allowAnalysisOnEdt {
+    @OptIn(KtAllowAnalysisFromWriteAction::class)
+    allowAnalysisFromWriteAction {
+        analyze(useSiteKtElement, action)
+    }
+}
 
-internal fun KtAnalysisSession.containingKtClass(
+context(KtAnalysisSession)
+internal fun containingKtClass(
     ktConstructorSymbol: KtConstructorSymbol,
 ): KtClass? {
     return when (val psi = ktConstructorSymbol.psi) {
@@ -51,7 +56,8 @@ internal fun KtAnalysisSession.containingKtClass(
     }
 }
 
-internal fun KtAnalysisSession.toPsiClass(
+context(KtAnalysisSession)
+internal fun toPsiClass(
     ktType: KtType,
     source: UElement?,
     context: KtElement,
@@ -69,7 +75,8 @@ internal fun KtAnalysisSession.toPsiClass(
     )
 }
 
-internal fun KtAnalysisSession.toPsiMethod(
+context(KtAnalysisSession)
+internal fun toPsiMethod(
     functionSymbol: KtFunctionLikeSymbol,
     context: KtElement,
 ): PsiMethod? {
@@ -92,7 +99,7 @@ internal fun KtAnalysisSession.toPsiMethod(
         is KtFunction -> {
             // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
             fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
-                val ktModule = source.getKtModule(context.project)
+                val ktModule = getModule(source)
                 if (ktModule !is KtSourceModule) return null
                 return getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
             }
@@ -113,7 +120,8 @@ internal fun KtAnalysisSession.toPsiMethod(
     }
 }
 
-private fun KtAnalysisSession.toPsiMethodForDeserialized(
+context(KtAnalysisSession)
+private fun toPsiMethodForDeserialized(
     functionSymbol: KtFunctionLikeSymbol,
     context: KtElement,
     psi: KtFunction,
@@ -149,7 +157,8 @@ private fun KtAnalysisSession.toPsiMethodForDeserialized(
     psi.containingKtFile.findFacadeClass()?.lookup(fake = true)
 }
 
-private fun KtAnalysisSession.desc(
+context(KtAnalysisSession)
+private fun desc(
     functionSymbol: KtFunctionLikeSymbol,
     containingLightDeclaration: PsiModifierListOwner,
     context: KtElement
@@ -182,7 +191,8 @@ private fun KtAnalysisSession.desc(
     )
 }
 
-internal fun KtAnalysisSession.toPsiType(
+context(KtAnalysisSession)
+internal fun toPsiType(
     ktType: KtType,
     source: UElement?,
     context: KtElement,
@@ -195,7 +205,8 @@ internal fun KtAnalysisSession.toPsiType(
         config
     )
 
-internal fun KtAnalysisSession.toPsiType(
+context(KtAnalysisSession)
+internal fun toPsiType(
     ktType: KtType,
     containingLightDeclaration: PsiModifierListOwner?,
     context: KtElement,
@@ -227,25 +238,15 @@ internal fun KtAnalysisSession.toPsiType(
     ) ?: UastErrorType
 }
 
-internal fun KtAnalysisSession.isExtension(
-    ktCall: KtCallableMemberCall<*, *>
-): Boolean {
-    return ktCall.symbol.isExtension
-}
-
-internal fun KtAnalysisSession.receiverType(
+context(KtAnalysisSession)
+internal fun receiverType(
     ktCall: KtCallableMemberCall<*, *>,
     source: UElement,
     context: KtElement,
 ): PsiType? {
-    var ktType = ktCall.partiallyAppliedSymbol.signature.receiverType
-    if (ktType == null) {
-        ktType =
-            if (isExtension(ktCall))
-                ktCall.partiallyAppliedSymbol.extensionReceiver?.type
-            else
-                ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
-    }
+    val ktType = ktCall.partiallyAppliedSymbol.signature.receiverType
+        ?: ktCall.partiallyAppliedSymbol.extensionReceiver?.type
+        ?: ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
     if (ktType == null || ktType is KtErrorType) return null
     return toPsiType(
         ktType,
@@ -258,32 +259,36 @@ internal fun KtAnalysisSession.receiverType(
     )
 }
 
-internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? {
+context(KtAnalysisSession)
+internal fun isInheritedGenericType(ktType: KtType?): Boolean {
+    if (ktType == null) return false
+    return ktType is KtTypeParameterType &&
+        // explicitly nullable, e.g., T?
+        !ktType.isMarkedNullable &&
+        // non-null upper bound, e.g., T : Any
+        nullability(ktType) != KtTypeNullability.NON_NULLABLE
+}
+
+context(KtAnalysisSession)
+internal fun nullability(ktType: KtType?): KtTypeNullability? {
     if (ktType == null) return null
     if (ktType is KtErrorType) return null
-    return if (ktType.canBeNull)
+    return if (ktType.fullyExpandedType.canBeNull)
         KtTypeNullability.NULLABLE
     else
         KtTypeNullability.NON_NULLABLE
 }
 
-internal fun KtAnalysisSession.nullability(ktCallableDeclaration: KtCallableDeclaration): KtTypeNullability? {
-    val ktType = (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
-    return nullability(ktType)
-}
-
-internal fun KtAnalysisSession.nullability(ktDeclaration: KtDeclaration): KtTypeNullability? {
-    return nullability(ktDeclaration.getReturnKtType())
-}
-
-internal fun KtAnalysisSession.nullability(ktExpression: KtExpression): KtTypeNullability? {
-    return nullability(ktExpression.getKtType())
+context(KtAnalysisSession)
+internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
+    return (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
 }
 
 /**
  * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KtLibraryModule].
  */
-internal tailrec fun KtAnalysisSession.psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
+context(KtAnalysisSession)
+internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
     if (symbol.origin == KtSymbolOrigin.LIBRARY) {
         return findPsi(symbol, project) ?: symbol.psi
     }

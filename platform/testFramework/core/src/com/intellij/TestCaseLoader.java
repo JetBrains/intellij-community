@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
-import com.intellij.idea.Bombed;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
+import com.intellij.idea.IJIgnore;
+import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.teamcity.TeamCityClient;
 import com.intellij.testFramework.*;
@@ -16,24 +16,26 @@ import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
+import java.util.stream.Stream;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
@@ -92,6 +94,8 @@ public class TestCaseLoader {
 
   private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
 
+  public static final String COMMON_TEST_GROUPS_RESOURCE_NAME = "tests/testGroups.properties";
+
   private final HashSet<Class<?>> myClassSet = new HashSet<>();
   private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
   private Class<?> myFirstTestClass;
@@ -118,6 +122,10 @@ public class TestCaseLoader {
     TestClassesFilter affectedTestsFilter = affectedTestsFilter();
     if (affectedTestsFilter != null) {
       testClassesFilter = new TestClassesFilter.And(testClassesFilter, affectedTestsFilter);
+    }
+    TestClassesFilter explicitTestsFilter = explicitTestsFilter();
+    if (explicitTestsFilter != null) {
+      testClassesFilter = new TestClassesFilter.And(testClassesFilter, explicitTestsFilter);
     }
     myTestClassesFilter = testClassesFilter;
     System.out.println(myTestClassesFilter);
@@ -163,6 +171,7 @@ public class TestCaseLoader {
     System.out.println("Using test groups: " + testGroupNames);
     Set<String> testGroupNameSet = new HashSet<>(testGroupNames);
     testGroupNameSet.removeAll(groups.keySet());
+    testGroupNameSet.remove(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED);
     if (!testGroupNameSet.isEmpty()) {
       System.err.println("Unknown test groups: " + testGroupNameSet);
     }
@@ -175,18 +184,16 @@ public class TestCaseLoader {
 
   private static @Nullable TestClassesFilter affectedTestsFilter() {
     if (RUN_ONLY_AFFECTED_TESTS) {
-      System.out.println("Trying to load affected tests.");
-      File affectedTestClasses = new File(System.getProperty("idea.home.path"), "discoveredTestClasses.txt");
-      if (affectedTestClasses.exists()) {
-        System.out.println("Loading file with affected classes " + affectedTestClasses.getAbsolutePath());
-        try {
-          return new PatternListTestClassFilter(FileUtil.loadLines(affectedTestClasses));
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-          throw new RuntimeException(e);
-        }
-      }
+      return Stream.of(System.getProperty("intellij.build.test.affected.classes.file", ""),
+                       System.getProperty("idea.home.path", "") + "/discoveredTestClasses.txt")
+        .filter(Predicate.not(StringUtil::isEmptyOrSpaces))
+        .map(Path::of)
+        .filter(Files::isRegularFile)
+        .findFirst()
+        .map(path -> {
+          System.out.println("Loading affected tests patterns from " + path);
+          return loadTestsFilterFromFile(path, true);
+        }).orElse(null);
     }
     else {
       System.out.println("Affected tests discovery is disabled. Will run with the standard test filter");
@@ -194,8 +201,42 @@ public class TestCaseLoader {
     return null;
   }
 
+  private static @Nullable TestClassesFilter explicitTestsFilter() {
+    String fileName = System.getProperty("intellij.build.test.list.file");
+    if (fileName != null && !fileName.isBlank()) {
+      Path path = Path.of(fileName);
+      if (Files.isRegularFile(path)) {
+        System.out.println("Loading explicit tests list from " + path);
+        return loadTestsFilterFromFile(path, false);
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable TestClassesFilter loadTestsFilterFromFile(Path path, boolean linesArePatterns) {
+    try {
+      List<String> lines = Files.readAllLines(path);
+      if (lines.isEmpty()) return null;
+      if (ContainerUtil.and(lines, String::isBlank)) return null;
+      return linesArePatterns ? new PatternListTestClassFilter(lines) : new NameListTestClassFilter(lines);
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+  }
+
   private static List<String> getTestGroups() {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
+  }
+
+  private boolean isPotentiallyTestCase(String className, String moduleName) {
+    String classNameWithoutPackage = StringsKt.substringAfterLast(className, '.', className);
+    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(classNameWithoutPackage)) return false;
+    if (!myTestClassesFilter.matches(className, moduleName)) return false;
+    if (myFirstTestClass != null && className.equals(myFirstTestClass.getName())) return false;
+    if (myLastTestClass != null && className.equals(myLastTestClass.getName())) return false;
+    return true;
   }
 
   private boolean isClassTestCase(Class<?> testCaseClass, String moduleName) {
@@ -232,7 +273,7 @@ public class TestCaseLoader {
   }
 
   static boolean matchesCurrentBucketViaHashing(@NotNull String testIdentifier) {
-    return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
+    return TEST_RUNNERS_COUNT == 1 || MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
   }
 
   /**
@@ -261,10 +302,10 @@ public class TestCaseLoader {
   }
 
   private static List<Class<?>> loadClassesForWarmup() {
-    var groupsTestCaseLoader = new TestCaseLoader("tests/testGroups.properties");
+    var groupsTestCaseLoader = new TestCaseLoader(COMMON_TEST_GROUPS_RESOURCE_NAME);
 
     for (Path classesRoot : TestAll.getClassRoots()) {
-      ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+      ClassFinder classFinder = new ClassFinder(classesRoot, "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
 
       Collection<String> foundTestClasses = classFinder.getClasses();
       groupsTestCaseLoader.loadTestCases(classesRoot.getFileName().toString(), foundTestClasses);
@@ -333,6 +374,7 @@ public class TestCaseLoader {
     System.out.println("Fair bucketing initialization started ...");
 
     var testCaseClasses = loadClassesForWarmup();
+    Collections.shuffle(testCaseClasses, new Random(TEST_RUNNERS_COUNT));
 
     testCaseClasses.forEach(testCaseClass -> matchesCurrentBucketFair(testCaseClass.getName(), TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX));
     System.out.println("Fair bucketing initialization finished.");
@@ -388,7 +430,7 @@ public class TestCaseLoader {
   }
 
   private boolean shouldAddTestCase(Class<?> testCaseClass, String moduleName, boolean checkForExclusion) {
-    if ((testCaseClass.getModifiers() & Modifier.ABSTRACT) != 0) return false;
+    if (Modifier.isAbstract(testCaseClass.getModifiers())) return false;
 
     if (checkForExclusion) {
       if (shouldExcludeTestClass(moduleName, testCaseClass)) return false;
@@ -403,7 +445,7 @@ public class TestCaseLoader {
 
     try {
       final Method suiteMethod = testCaseClass.getMethod("suite");
-      if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
+      if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && Modifier.isStatic(suiteMethod.getModifiers())) {
         return true;
       }
     }
@@ -418,21 +460,21 @@ public class TestCaseLoader {
     if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass.getSimpleName())) return true;
     String className = testCaseClass.getName();
 
-    return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass) || isExcludeFromTestDiscovery(testCaseClass);
+    return !myTestClassesFilter.matches(className, moduleName) ||
+           testCaseClass.isAnnotationPresent(IJIgnore.class) ||
+           testCaseClass.isAnnotationPresent(IgnoreJUnit3.class) ||
+           isExcludeFromTestDiscovery(testCaseClass);
   }
 
   private static boolean isExcludeFromTestDiscovery(Class<?> c) {
     return RUN_WITH_TEST_DISCOVERY && getAnnotationInHierarchy(c, ExcludeFromTestDiscovery.class) != null;
   }
 
-  public static boolean isBombed(final AnnotatedElement element) {
-    final Bombed bombedAnnotation = element.getAnnotation(Bombed.class);
-    if (bombedAnnotation == null) return false;
-    return !TestFrameworkUtil.bombExplodes(bombedAnnotation);
-  }
-
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
+      if (!isPotentiallyTestCase(className, moduleName)) {
+        continue;
+      }
       try {
         Class<?> candidateClass = Class.forName(className, false, getClassLoader());
         if (isClassTestCase(candidateClass, moduleName)) {
@@ -496,7 +538,7 @@ public class TestCaseLoader {
    * @return Sorted list of loaded classes
    */
   public List<Class<?>> getClasses() {
-    List<Class<?>> result = new ArrayList<>(myClassSet.size());
+    List<Class<?>> result = new ArrayList<>(myClassSet.size() + 2);
 
     if (myFirstTestClass != null) {
       result.add(myFirstTestClass);
@@ -575,19 +617,40 @@ public class TestCaseLoader {
 
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createClassNameFilter`
   @SuppressWarnings("unused")
-  public static boolean isClassIncluded(String className) {
+  public static boolean isClassNameIncluded(String className) {
     if (!INCLUDE_UNCONVENTIONALLY_NAMED_TESTS &&
         !className.endsWith("Test")) {
       return false;
     }
+    if ("_FirstInSuiteTest".equals(className) || "_LastInSuiteTest".equals(className)) {
+      return false;
+    }
 
     if (ourFilter == null) {
-      ourFilter = calcTestClassFilter("tests/testGroups.properties");
+      ourFilter = calcTestClassFilter(COMMON_TEST_GROUPS_RESOURCE_NAME);
+      TestClassesFilter affectedTestsFilter = affectedTestsFilter();
+      if (affectedTestsFilter != null) {
+        ourFilter = new TestClassesFilter.And(ourFilter, affectedTestsFilter);
+      }
+      TestClassesFilter explicitTestsFilter = explicitTestsFilter();
+      if (explicitTestsFilter != null) {
+        ourFilter = new TestClassesFilter.And(ourFilter, explicitTestsFilter);
+      }
+      System.out.println("Initialized tests filter: " + ourFilter);
     }
     return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
-           // no need to calculate bucket matching (especially that may break fair bucketing), if the test does not match the filter
-           ourFilter.matches(className) &&
-           matchesCurrentBucket(className);
+           ourFilter.matches(className);
+  }
+
+  // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createPostDiscoveryFilter`
+  @SuppressWarnings("unused")
+  public static boolean isClassIncluded(String className) {
+    // no need to calculate bucket matching (especially that may break fair bucketing), if the test does not match the filter
+    if (!isClassNameIncluded(className)) {
+      return false;
+    }
+
+    return matchesCurrentBucket(className);
   }
 
   public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {
@@ -595,7 +658,7 @@ public class TestCaseLoader {
 
     for (Path classesRoot : classesRoots) {
       int count = getClassesCount();
-      ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+      ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
       loadTestCases(classesRoot.getFileName().toString(), classFinder.getClasses());
       count = getClassesCount() - count;
       if (count > 0) {

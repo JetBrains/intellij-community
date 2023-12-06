@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
 import com.intellij.configurationStore.CURRENT_NAME_CONVERTER
@@ -36,8 +36,12 @@ abstract class SchemeManagerFactory {
     directoryPath: Path? = null,
     settingsCategory: SettingsCategory = SettingsCategory.OTHER
   ): SchemeManager<SCHEME> {
-    return create(directoryName, processor, presentableName, RoamingType.DEFAULT,
-                  directoryPath = directoryPath, settingsCategory = settingsCategory)
+    return create(directoryName = directoryName,
+                  processor = processor,
+                  presentableName = presentableName,
+                  roamingType = RoamingType.DEFAULT,
+                  directoryPath = directoryPath,
+                  settingsCategory = settingsCategory)
   }
 
   abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(
@@ -61,9 +65,7 @@ enum class SchemeState {
 }
 
 abstract class SchemeProcessor<SCHEME: Scheme, in MUTABLE_SCHEME: SCHEME> {
-  open fun getSchemeKey(scheme: SCHEME): String {
-    return scheme.name
-  }
+  open fun getSchemeKey(scheme: SCHEME): String = scheme.name
 
   open fun isExternalizable(scheme: SCHEME): Boolean = scheme is ExternalizableScheme
 
@@ -73,7 +75,7 @@ abstract class SchemeProcessor<SCHEME: Scheme, in MUTABLE_SCHEME: SCHEME> {
   abstract fun writeScheme(scheme: MUTABLE_SCHEME): Parent?
 
   /**
-   * Called on external scheme add or change file events.
+   * Called on an external scheme add or change file events.
    */
   open fun onSchemeAdded(scheme: MUTABLE_SCHEME) {
   }

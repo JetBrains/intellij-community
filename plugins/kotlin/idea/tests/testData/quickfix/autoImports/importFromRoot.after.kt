@@ -7,4 +7,3 @@ import RootClass
 fun test() {
     RootClass()
 }
-/* IGNORE_FIR */

@@ -17,7 +17,7 @@ internal class ExternalModuleStorage(private val module: Module,
 
   override fun loadLocalData() = manager.readModuleData(module.name)
 
-  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalModuleStorage>(states, this) {
+  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<ExternalModuleStorage>(states, this) {
     override fun saveLocally(dataWriter: DataWriter?) {
       manager.moduleStorage.write(module.name, dataWriter)
     }
@@ -35,7 +35,7 @@ internal open class ExternalProjectStorage @JvmOverloads constructor(fileSpec: S
 
   override fun loadLocalData() = manager.fileStorage.read(fileSpec)
 
-  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
+  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<ExternalProjectStorage>(states, this) {
     override fun saveLocally(dataWriter: DataWriter?) {
       manager.fileStorage.write(fileSpec, dataWriter)
     }
@@ -63,7 +63,7 @@ internal class ExternalProjectFilteringStorage(fileSpec: String,
     return JDOMUtil.merge(externalData, internalData)
   }
 
-  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
+  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<ExternalProjectStorage>(states, this) {
     override fun saveLocally(dataWriter: DataWriter?) {
       manager.fileStorage.write(fileSpec, dataWriter, filter)
     }

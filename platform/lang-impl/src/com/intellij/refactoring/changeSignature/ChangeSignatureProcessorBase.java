@@ -1,18 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -31,6 +34,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.Command;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
  * @author Maxim.Medvedev
@@ -53,18 +59,22 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     return findUsages(myChangeInfo);
   }
 
-  public static void collectConflictsFromExtensions(@NotNull Ref<UsageInfo[]> refUsages,
-                                                    MultiMap<PsiElement, String> conflictDescriptions,
-                                                    ChangeInfo changeInfo) {
-    for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
-      final MultiMap<PsiElement, String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
-      for (PsiElement key : conflicts.keySet()) {
-        Collection<String> collection = conflictDescriptions.get(key);
-        if (collection.isEmpty()) collection = new HashSet<>();
-        collection.addAll(conflicts.get(key));
-        conflictDescriptions.put(key, collection);
+  public static void collectConflictsFromExtensions(@NotNull final Ref<UsageInfo[]> refUsages,
+                                                    final MultiMap<PsiElement, @DialogMessage String> conflictDescriptions,
+                                                    final ChangeInfo changeInfo) {
+    Computable<Boolean> computable = () -> {
+      for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
+        final MultiMap<PsiElement, @DialogMessage String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
+        for (PsiElement key : conflicts.keySet()) {
+          Collection<String> collection = conflictDescriptions.get(key);
+          if (collection.isEmpty()) collection = new HashSet<>();
+          collection.addAll(conflicts.get(key));
+          conflictDescriptions.put(key, collection);
+        }
       }
-    }
+      return true;
+    };
+    ActionUtil.underModalProgress(changeInfo.getMethod().getProject(), RefactoringBundle.message("detecting.possible.conflicts"), computable);
   }
 
   public static UsageInfo @NotNull [] findUsages(ChangeInfo changeInfo) {
@@ -154,14 +164,19 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   protected void performRefactoring(UsageInfo @NotNull [] usages) {
     RefactoringTransaction transaction = getTransaction();
     final ChangeInfo changeInfo = myChangeInfo;
-    final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(changeInfo.getMethod());
-    final String fqn = CopyReferenceAction.elementToFqn(changeInfo.getMethod());
+    PsiElement method = changeInfo.getMethod();
+    final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(method);
+    final String fqn = CopyReferenceAction.elementToFqn(method);
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(method);
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
         @Override
         public void undo() {
           if (elementListener instanceof UndoRefactoringElementListener) {
-            ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(changeInfo.getMethod(), fqn);
+            PsiElement element = pointer.getElement();
+            if (element != null) {
+              ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(element, fqn);
+            }
           }
         }
 
@@ -173,8 +188,8 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     }
     try {
       doChangeSignature(changeInfo, usages);
-      final PsiElement method = changeInfo.getMethod();
-      LOG.assertTrue(method.isValid());
+      method = pointer.getElement();
+      LOG.assertTrue(method != null && method.isValid());
       if (elementListener != null && changeInfo.isNameChanged()) {
         elementListener.elementRenamed(method);
       }
@@ -224,7 +239,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
   @NotNull
   @Override
-  protected @NlsContexts.Command String getCommandName() {
+  protected @Command String getCommandName() {
     return RefactoringBundle.message("changing.signature.of.0", DescriptiveNameUtil.getDescriptiveName(myChangeInfo.getMethod()));
   }
 

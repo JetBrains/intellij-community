@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.Key;
@@ -24,7 +24,7 @@ import java.util.Set;
 
 public final class XmlPsiUtil {
   private static final Key<CachedValue<PsiElement>> PARSED_DECL_KEY = Key.create("PARSED_DECL_KEY");
-  @NonNls public static final String XINCLUDE_URI = "http://www.w3.org/2001/XInclude";
+  public static final @NonNls String XINCLUDE_URI = "http://www.w3.org/2001/XInclude";
 
   public static boolean processXmlElements(XmlElement element, PsiElementProcessor<? super PsiElement> processor, boolean deepFlag) {
     return processXmlElements(element, processor, deepFlag, false);
@@ -70,8 +70,7 @@ public final class XmlPsiUtil {
     return true;
   }
 
-  @Nullable
-  public static XmlElement findElement(@NotNull final XmlElement parent, @NotNull final IElementType.Predicate predicate) {
+  public static @Nullable XmlElement findElement(final @NotNull XmlElement parent, final @NotNull IElementType.Predicate predicate) {
     final Ref<XmlElement> result = new Ref<>();
     parent.processElements(new PsiElementProcessor<>() {
       @Override

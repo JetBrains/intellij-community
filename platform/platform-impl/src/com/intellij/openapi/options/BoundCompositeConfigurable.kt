@@ -5,19 +5,25 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 
+/**
+ * Composite configurable that contains several configurables.
+ *
+ * @see [UiDslUnnamedConfigurable]
+ */
 abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   @NlsContexts.ConfigurableName displayName: String,
   helpTopic: String? = null
 ) : BoundConfigurable(displayName, helpTopic) {
+
   abstract fun createConfigurables(): List<T>
 
   private val lazyConfigurables: Lazy<List<T>> = lazy { createConfigurables() }
 
-  val configurables get() = lazyConfigurables.value
-  private val plainConfigurables get() = lazyConfigurables.value.filter { it !is UiDslConfigurable && it !is UiDslUnnamedConfigurable }
+  val configurables: List<T> get() = lazyConfigurables.value
+  private val plainConfigurables get() = lazyConfigurables.value.filter { it !is UiDslUnnamedConfigurable }
 
   override fun isModified(): Boolean {
     return super.isModified() || plainConfigurables.any { it.isModified }
@@ -57,7 +63,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
       val panel = configurable.createComponent()
       if (panel != null) {
         if (panel.layout !is GridLayout) {
-          panel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+          panel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
         }
         row {
           cell(panel)

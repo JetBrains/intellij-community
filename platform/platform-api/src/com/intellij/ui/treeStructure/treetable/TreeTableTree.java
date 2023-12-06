@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.ui.treeStructure.Tree;
@@ -33,7 +33,6 @@ public class TreeTableTree extends Tree {
     myTreeTable = treeTable;
     setCellRenderer(getCellRenderer());
     putClientProperty(FOCUSABLE_SIBLING, treeTable);
-    setBorder(null);
   }
 
   public TreeTable getTreeTable() {
@@ -43,6 +42,7 @@ public class TreeTableTree extends Tree {
   @Override
   public void updateUI() {
     super.updateUI();
+    setBorder(null);
     TreeCellRenderer tcr = super.getCellRenderer();
     if (tcr instanceof DefaultTreeCellRenderer dtcr) {
       dtcr.setTextSelectionColor(UIUtil.getTableSelectionForeground());
@@ -123,9 +123,8 @@ public class TreeTableTree extends Tree {
     return renderer;
   }
 
-  @Nullable
   @Override
-  public Rectangle getPathBounds(TreePath path) {
+  public @Nullable Rectangle getPathBounds(TreePath path) {
     Rectangle bounds = super.getPathBounds(path);
     if (bounds == null) {
       return null;

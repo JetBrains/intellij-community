@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
+
 
 public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRunConfiguration<?>> extends PythonCommandLineState {
   protected final T myConfiguration;
@@ -132,6 +134,9 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     String workingDirectory = myConfiguration.getWorkingDirectory();
     if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
       workingDirectory = myConfiguration.getWorkingDirectorySafe();
+    }
+    else {
+      workingDirectory = getExpandedWorkingDir(myConfiguration);
     }
     cmd.withWorkDirectory(workingDirectory);
   }

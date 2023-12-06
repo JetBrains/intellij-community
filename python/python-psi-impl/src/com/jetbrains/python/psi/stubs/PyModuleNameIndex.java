@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.stubs;
 
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.jetbrains.python.PyNames;
@@ -22,6 +22,8 @@ import com.jetbrains.python.psi.search.PySearchUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
 
 public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> NAME = ID.create("Py.module.name");
@@ -64,8 +66,7 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    // TODO support DefaultFileTypeSpecificInputFilter for content-less indexes (IDEA-235426)
-    return file -> FileTypeRegistry.getInstance().isFileOfType(file, PythonFileType.INSTANCE);
+    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> fileType == PythonFileType.INSTANCE);
   }
 
   @Override
@@ -129,9 +130,9 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   public static List<PyFile> findByQualifiedName(@NotNull QualifiedName qName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     String shortName = qName.getLastComponent();
     if (shortName == null) return Collections.emptyList();
-    return ContainerUtil.mapNotNull(findByShortName(shortName, project, scope), file -> {
+    return ContainerUtil.filter(findByShortName(shortName, project, scope), file -> {
       List<QualifiedName> possibleQNames = QualifiedNameFinder.findImportableQNames(file, file.getVirtualFile());
-      return possibleQNames.contains(qName) ? file : null;
+      return possibleQNames.contains(qName);
     });
   }
 }

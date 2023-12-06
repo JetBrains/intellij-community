@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.kt</file>
+    <line>4</line>
+    <description>Actual value of parameter &lt;code&gt;fields&lt;/code&gt; is always '[1, 2]'</description>
+    <highlighted_element>fields</highlighted_element>
+  </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>8</line>
+    <description>Actual value of parameter &lt;code&gt;fields&lt;/code&gt; is always '[1, 2, 3]'</description>
+    <highlighted_element>fields</highlighted_element>
+  </problem>
+</problems>

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog.items.tree
 
 import com.intellij.ui.ColoredTreeCellRenderer
@@ -90,4 +91,6 @@ internal class AttachTreeNodeWrapper(
     if (column == 0) return this
     return node.getValueAtColumn(column)
   }
+
+  override fun toString(): String = "($node)"
 }

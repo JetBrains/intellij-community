@@ -12,7 +12,7 @@ import org.junit.runners.JUnit4
 class TableTypingWithDisabledSmartKeysTest: LightPlatformCodeInsightTestCase() {
   // Just for resetting settings after every test
   @get:Rule
-  val rule = MarkdownCodeInsightSettingsRule { it.copy(reformatTablesOnType = false) }
+  val rule = MarkdownCodeInsightSettingsRule { it.reformatTablesOnType = false }
 
   @Test
   fun `test no column expand`() {

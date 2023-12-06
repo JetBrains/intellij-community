@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 
-public class SearchResult {
+public final class SearchResult {
 
   public static final Key<SearchResult> KEY = new Key<>("lfe.SearchResult");
 

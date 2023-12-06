@@ -29,7 +29,7 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     super();
   }
 
-  public HtmlUnknownTagInspection(@NonNls @NotNull final String defaultValues) {
+  public HtmlUnknownTagInspection(final @NonNls @NotNull String defaultValues) {
     super(defaultValues);
   }
 
@@ -41,9 +41,8 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     );
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix createChangeTemplateDataFix(PsiFile file) {
+  protected @Nullable LocalQuickFix createChangeTemplateDataFix(PsiFile file) {
     if (file != TemplateLanguageUtil.getTemplateFile(file)) return null;
 
     FileViewProvider vp = file.getViewProvider();
@@ -53,9 +52,8 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
         LangBundle.message("quickfix.change.template.data.language.text", viewProvider.getTemplateDataLanguage().getDisplayName());
 
       return new LocalQuickFixOnPsiElement(file) {
-        @NotNull
         @Override
-        public String getText() {
+        public @NotNull String getText() {
           return text;
         }
 
@@ -72,10 +70,8 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
           ChangeTemplateDataLanguageAction.editSettings(project, file.getVirtualFile());
         }
 
-        @Nls
-        @NotNull
         @Override
-        public String getFamilyName() {
+        public @Nls @NotNull String getFamilyName() {
           return XmlBundle.message("change.template.data.language");
         }
       };

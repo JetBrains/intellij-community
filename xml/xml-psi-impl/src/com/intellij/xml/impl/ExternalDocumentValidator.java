@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -26,7 +26,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.xml.actions.validate.ErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.util.XmlResourceResolver;
@@ -35,9 +34,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
 
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * @author maxim
@@ -53,22 +55,14 @@ public class ExternalDocumentValidator {
 
   private long myModificationStamp;
   private PsiFile myFile;
-  @NonNls
-  private static final String CANNOT_FIND_DECLARATION_ERROR_PREFIX = "Cannot find the declaration of element";
-  @NonNls
-  private static final String ELEMENT_ERROR_PREFIX = "Element";
-  @NonNls
-  private static final String ROOT_ELEMENT_ERROR_PREFIX = "Document root element";
-  @NonNls
-  private static final String CONTENT_OF_ELEMENT_TYPE_ERROR_PREFIX = "The content of element type";
-  @NonNls
-  private static final String VALUE_ERROR_PREFIX = "Value ";
-  @NonNls
-  private static final String ATTRIBUTE_ERROR_PREFIX = "Attribute ";
-  @NonNls
-  private static final String STRING_ERROR_PREFIX = "The string";
-  @NonNls
-  private static final String ATTRIBUTE_MESSAGE_PREFIX = "cvc-attribute.";
+  private static final @NonNls String CANNOT_FIND_DECLARATION_ERROR_PREFIX = "Cannot find the declaration of element";
+  private static final @NonNls String ELEMENT_ERROR_PREFIX = "Element";
+  private static final @NonNls String ROOT_ELEMENT_ERROR_PREFIX = "Document root element";
+  private static final @NonNls String CONTENT_OF_ELEMENT_TYPE_ERROR_PREFIX = "The content of element type";
+  private static final @NonNls String VALUE_ERROR_PREFIX = "Value ";
+  private static final @NonNls String ATTRIBUTE_ERROR_PREFIX = "Attribute ";
+  private static final @NonNls String STRING_ERROR_PREFIX = "The string";
+  private static final @NonNls String ATTRIBUTE_MESSAGE_PREFIX = "cvc-attribute.";
 
   private record ValidationInfo(PsiElement element, @InspectionMessage String message, Validator.ValidationHost.ErrorType type) {
   }
@@ -82,7 +76,7 @@ public class ExternalDocumentValidator {
     if (myFile == file &&
         myModificationStamp == file.getModificationStamp() &&
         !ValidateXmlActionHandler.isValidationDependentFilesOutOfDate((XmlFile)file) &&
-        SoftReference.dereference(myInfos)!=null // we have validated before
+        dereference(myInfos)!=null // we have validated before
         ) {
       addAllInfos(host,myInfos.get());
       return;
@@ -98,7 +92,7 @@ public class ExternalDocumentValidator {
     myHost = new Validator.ValidationHost() {
 
       @Override
-      public void addMessage(final PsiElement context, final String message, @NotNull final ErrorType type) {
+      public void addMessage(final PsiElement context, final String message, final @NotNull ErrorType type) {
         final ValidationInfo o = new ValidationInfo(context, message, type);
         results.add(o);
       }
@@ -360,7 +354,7 @@ public class ExternalDocumentValidator {
     if (!profile.isToolEnabled(HighlightDisplayKey.find(INSPECTION_SHORT_NAME), containingFile)) return;
 
     SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
-    ExternalDocumentValidator validator = SoftReference.dereference(validatorReference);
+    ExternalDocumentValidator validator = dereference(validatorReference);
 
     if(validator == null) {
       validator = new ExternalDocumentValidator();

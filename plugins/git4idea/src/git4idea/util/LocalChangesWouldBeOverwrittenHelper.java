@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
 import com.intellij.notification.Notification;
@@ -15,7 +15,10 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.ChangesBrowserWithRollback;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
@@ -23,21 +26,15 @@ import java.util.List;
 
 public final class LocalChangesWouldBeOverwrittenHelper {
 
-  @Nls
-  @NotNull
-  public static String getErrorNotificationDescription() {
+  public static @Nls @NotNull String getErrorNotificationDescription() {
     return getErrorDescription(true);
   }
 
-  @Nls
-  @NotNull
-  private static String getErrorDialogDescription() {
+  private static @Nls @NotNull String getErrorDialogDescription() {
     return getErrorDescription(false);
   }
 
-  @Nls
-  @NotNull
-  private static String getErrorDescription(boolean forNotification) {
+  private static @Nls @NotNull String getErrorDescription(boolean forNotification) {
     String message = GitBundle.message("warning.your.local.changes.would.be.overwritten.by.merge");
     if (forNotification) {
       return new HtmlBuilder()
@@ -50,11 +47,11 @@ public final class LocalChangesWouldBeOverwrittenHelper {
     }
   }
 
-  public static void showErrorNotification(@NotNull final Project project,
+  public static void showErrorNotification(final @NotNull Project project,
                                            @NonNls @Nullable String displayId,
-                                           @NotNull final VirtualFile root,
-                                           @NotNull final String operationName,
-                                           @NotNull final Collection<String> relativeFilePaths) {
+                                           final @NotNull VirtualFile root,
+                                           final @NotNull String operationName,
+                                           final @NotNull Collection<String> relativeFilePaths) {
     final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);
     final List<Change> changes = GitUtil.findLocalChangesForPaths(project, root, absolutePaths, false);
     String notificationTitle = GitBundle.message("notification.title.git.operation.failed", StringUtil.capitalize(operationName));

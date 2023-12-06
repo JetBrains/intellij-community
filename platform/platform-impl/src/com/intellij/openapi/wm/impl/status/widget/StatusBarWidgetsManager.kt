@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LiftReturnOrAssignment")
-@file:OptIn(FlowPreview::class)
 
 package com.intellij.openapi.wm.impl.status.widget
 
@@ -23,7 +22,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.createComponentByWidgetPresentation
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import javax.swing.JComponent
@@ -53,17 +52,18 @@ class StatusBarWidgetsManager(private val project: Project,
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   internal val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
     override val project: Project
       get() = this@StatusBarWidgetsManager.project
 
     override val currentFileEditor: StateFlow<FileEditor?> by lazy {
       flow {
-        emit(project.serviceAsync<FileEditorManager>().await() as FileEditorManagerEx)
+        emit(project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
       }
         .take(1)
         .flatMapConcat { it.currentFileEditorFlow }
-        .stateIn(scope = parentScope, started = SharingStarted.WhileSubscribed(), initialValue = null)
+        .stateIn(scope = parentScope, started = SharingStarted.Eagerly, initialValue = null)
     }
   }
 
@@ -160,7 +160,7 @@ class StatusBarWidgetsManager(private val project: Project,
     return factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
   }
 
-  internal fun init(): List<Pair<StatusBarWidget, LoadingOrder>> {
+  internal fun init(frame: IdeFrame): List<Pair<StatusBarWidget, LoadingOrder>> {
     val isLightEditProject = LightEdit.owns(project)
     val statusBarWidgetSettings = StatusBarWidgetSettings.getInstance()
     val availableFactories: List<Pair<StatusBarWidgetFactory, LoadingOrder>> = StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
@@ -179,19 +179,20 @@ class StatusBarWidgetsManager(private val project: Project,
       .filter { !isLightEditProject || it.first is LightEditCompatible }
       .toList()
 
-    val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
-      val pendingFactories = availableFactories.toMutableList()
-      @Suppress("removal", "DEPRECATION")
-      StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) {
-        StatusBarWidgetProviderToFactoryAdapter(project, it) to anchorToOrder(it.anchor)
-      }
+    val pendingFactories = availableFactories.toMutableList()
 
+    @Suppress("removal", "DEPRECATION")
+    StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) {
+      StatusBarWidgetProviderToFactoryAdapter(project, frame, it) to anchorToOrder(it.anchor)
+    }
+
+    pendingFactories.removeAll {  (factory, _) ->
+      (factory.isConfigurable && !statusBarWidgetSettings.isEnabled(factory)) || !factory.isAvailable(project)
+    }
+
+    val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
       val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()
       for ((factory, anchor) in pendingFactories) {
-        if ((factory.isConfigurable && !statusBarWidgetSettings.isEnabled(factory)) || !factory.isAvailable(project)) {
-          continue
-        }
-
         if (widgetFactories.containsKey(factory)) {
           LOG.error("Factory has been added already: ${factory.id}")
           continue

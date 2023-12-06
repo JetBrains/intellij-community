@@ -1,6 +1,7 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 

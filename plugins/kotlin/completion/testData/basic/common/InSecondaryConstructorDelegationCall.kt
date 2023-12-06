@@ -9,6 +9,7 @@ class A(val prop: Int, arg: Int) {
     fun foo() = 1
 }
 
+// IGNORE_K2
 // EXIST: abc, topLevel, prop, another, foo
 // ABSENT: { itemText: "arg" }
 // EXIST: { itemText: "arg =" }

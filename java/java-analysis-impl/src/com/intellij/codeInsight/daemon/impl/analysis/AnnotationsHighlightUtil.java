@@ -7,12 +7,14 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationToPackageInfoFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -43,8 +45,6 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public final class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
 
-  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
-
   static HighlightInfo.Builder checkNameValuePair(@NotNull PsiNameValuePair pair,
                                           @Nullable RefCountHolder refCountHolder) {
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
@@ -63,7 +63,7 @@ public final class AnnotationsHighlightUtil {
         HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF)
           .range(ref.getElement(), ref.getRangeInElement())
           .descriptionAndTooltip(description);
-        IntentionAction action = QUICK_FIX_FACTORY.createCreateAnnotationMethodFromUsageFix(pair);
+        IntentionAction action = QuickFixFactory.getInstance().createCreateAnnotationMethodFromUsageFix(pair);
         builder.registerFix(action, null, null, null, null);
         return builder;
       }
@@ -72,7 +72,7 @@ public final class AnnotationsHighlightUtil {
         PsiElement element = ref.getElement();
         HighlightInfo.Builder highlightInfo =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-        for (IntentionAction action : QUICK_FIX_FACTORY.createAddAnnotationAttributeNameFixes(pair)) {
+        for (IntentionAction action : QuickFixFactory.getInstance().createAddAnnotationAttributeNameFixes(pair)) {
           highlightInfo.registerFix(action, null, null, null, null);
         }
         return highlightInfo;
@@ -102,9 +102,9 @@ public final class AnnotationsHighlightUtil {
                                                      name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name);
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pair).descriptionAndTooltip(description);
-        IntentionAction action1 = QUICK_FIX_FACTORY.createDeleteFix(pair);
+        IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(pair);
         info.registerFix(action1, null, null, null, null);
-        IntentionAction action = QUICK_FIX_FACTORY.createMergeDuplicateAttributesFix(pair);
+        IntentionAction action = QuickFixFactory.getInstance().createMergeDuplicateAttributesFix(pair);
         if (action != null) {
           info.registerFix(action, null, null, null, null);
         }
@@ -151,7 +151,8 @@ public final class AnnotationsHighlightUtil {
       PsiClass annotationClass = ((PsiAnnotation)value).resolveAnnotationType();
       if (annotationClass != null) {
         IntentionAction annotationMethodReturnFix =
-          QUICK_FIX_FACTORY.createAnnotationMethodReturnFix(annotationMethod, TypeUtils.getType(annotationClass), fromDefaultValue);
+          QuickFixFactory.getInstance()
+            .createAnnotationMethodReturnFix(annotationMethod, TypeUtils.getType(annotationClass), fromDefaultValue);
         info.registerFix(annotationMethodReturnFix, null, null, null, null);
       }
       return info;
@@ -165,21 +166,21 @@ public final class AnnotationsHighlightUtil {
       if (initializers.length == 0) {
         PsiType arrayType = PsiTypesUtil.createArrayType(expectedType, 1);
         IntentionAction annotationMethodReturnFix =
-          QUICK_FIX_FACTORY.createAnnotationMethodReturnFix(method, arrayType, fromDefaultValue);
+          QuickFixFactory.getInstance().createAnnotationMethodReturnFix(method, arrayType, fromDefaultValue);
         info.registerFix(annotationMethodReturnFix, null, null, null, null);
       }
       PsiExpression firstInitializer = ObjectUtils.tryCast(ArrayUtil.getFirstElement(initializers), PsiExpression.class);
       if (firstInitializer == null || firstInitializer.getType() == null) return info;
       if (initializers.length == 1 &&
           TypeConversionUtil.areTypesAssignmentCompatible(expectedType, firstInitializer)) {
-        IntentionAction action = QUICK_FIX_FACTORY.createUnwrapArrayInitializerMemberValueAction(arrayValue);
+        IntentionAction action = QuickFixFactory.getInstance().createUnwrapArrayInitializerMemberValueAction(arrayValue);
         if (action != null) {
           info.registerFix(action, null, null, null, null);
         }
       }
       PsiType arrayType = PsiTypesUtil.createArrayType(firstInitializer.getType(), 1);
       IntentionAction annotationMethodReturnFix =
-        QUICK_FIX_FACTORY.createAnnotationMethodReturnFix(method, arrayType, fromDefaultValue);
+        QuickFixFactory.getInstance().createAnnotationMethodReturnFix(method, arrayType, fromDefaultValue);
       info.registerFix(annotationMethodReturnFix, null, null, null, null);
       return info;
     }
@@ -204,10 +205,10 @@ public final class AnnotationsHighlightUtil {
       String description = JavaErrorBundle
         .message("incompatible.types", JavaHighlightUtil.formatType(expectedType), JavaHighlightUtil.formatType(type));
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description);
-      IntentionAction action1 = QUICK_FIX_FACTORY.createSurroundWithQuotesAnnotationParameterValueFix(value, expectedType);
+      IntentionAction action1 = QuickFixFactory.getInstance().createSurroundWithQuotesAnnotationParameterValueFix(value, expectedType);
       info.registerFix(action1, null, null, null, null);
       if (type != null) {
-        IntentionAction action = QUICK_FIX_FACTORY.createAnnotationMethodReturnFix(method, type, fromDefaultValue);
+        IntentionAction action = QuickFixFactory.getInstance().createAnnotationMethodReturnFix(method, type, fromDefaultValue);
         info.registerFix(action, null, null, null, null);
       }
       return info;
@@ -248,7 +249,7 @@ public final class AnnotationsHighlightUtil {
         String description = JavaErrorBundle.message("annotation.duplicate.explained", explanation);
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-        IntentionAction action = QUICK_FIX_FACTORY.createCollapseAnnotationsFix(annotationToCheck);
+        IntentionAction action = QuickFixFactory.getInstance().createCollapseAnnotationsFix(annotationToCheck);
         if (action != null) {
           info.registerFix(action, null, null, null, null);
         }
@@ -340,7 +341,7 @@ public final class AnnotationsHighlightUtil {
         String description = JavaErrorBundle.message("annotation.missing.attribute", buff);
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameRef).descriptionAndTooltip(description);
-        IntentionAction fix = QUICK_FIX_FACTORY.createAddMissingRequiredAnnotationParametersFix(
+        IntentionAction fix = QuickFixFactory.getInstance().createAddMissingRequiredAnnotationParametersFix(
           annotation, annotationMethods, missed);
         info.registerFix(fix, null, null, null, null);
         return info;
@@ -443,9 +444,9 @@ public final class AnnotationsHighlightUtil {
               .range(annotation)
               .descriptionAndTooltip(JavaErrorBundle.message("annotation.not.allowed.var"));
             IntentionAction action1 =
-              QUICK_FIX_FACTORY.createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
+              QuickFixFactory.getInstance().createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
             info.registerFix(action1, null, null, null, null);
-            IntentionAction action = new ReplaceVarWithExplicitTypeFix(typeElement);
+            ModCommandAction action = new ReplaceVarWithExplicitTypeFix(typeElement);
             info.registerFix(action, null, null, null, null);
             return info;
           }
@@ -472,9 +473,9 @@ public final class AnnotationsHighlightUtil {
     String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
     String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
     HighlightInfo.Builder info = createAnnotationError(annotation, message);
-    if (Objects.requireNonNull(annotation.resolveAnnotationType()).isWritable()) {
+    if (BaseIntentionAction.canModify(Objects.requireNonNull(annotation.resolveAnnotationType()))) {
       for (PsiAnnotation.TargetType targetType : targets) {
-        IntentionAction action = QUICK_FIX_FACTORY.createAddAnnotationTargetFix(annotation, targetType);
+        IntentionAction action = QuickFixFactory.getInstance().createAddAnnotationTargetFix(annotation, targetType);
         info.registerFix(action, null, null, null, null);
       }
     }
@@ -483,7 +484,8 @@ public final class AnnotationsHighlightUtil {
 
   @NotNull
   private static HighlightInfo.Builder createAnnotationError(@NotNull PsiAnnotation annotation, @NotNull @NlsContexts.DetailedDescription String message) {
-    LocalQuickFixAndIntentionActionOnPsiElement fix = QUICK_FIX_FACTORY.createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
+    LocalQuickFixAndIntentionActionOnPsiElement fix = QuickFixFactory.getInstance()
+      .createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
     return createAnnotationError(annotation, message, fix);
   }
 
@@ -509,12 +511,18 @@ public final class AnnotationsHighlightUtil {
     }
 
     PsiElement parent = ref.getParent();
-    if (parent instanceof PsiJavaCodeReferenceElement) {
+    while (parent instanceof PsiJavaCodeReferenceElement) {
       PsiElement qualified = ((PsiJavaCodeReferenceElement)parent).resolve();
       if (qualified instanceof PsiMember && ((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
         return createAnnotationError(annotation,
                                      JavaErrorBundle.message("annotation.not.allowed.static"),
-                                     new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation));
+                                     new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation).asIntention());
+      }
+      if (qualified instanceof PsiClass) {
+        parent = parent.getParent();
+      }
+      else {
+        break;
       }
     }
     return null;
@@ -596,7 +604,7 @@ public final class AnnotationsHighlightUtil {
         String description = JavaErrorBundle.message("annotation.members.may.not.have.throws.list");
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
-        IntentionAction action = QUICK_FIX_FACTORY.createDeleteFix(list);
+        IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(list);
         info.registerFix(action, null, null, null, null);
         return info;
       }
@@ -606,7 +614,7 @@ public final class AnnotationsHighlightUtil {
         String description = JavaErrorBundle.message("annotation.may.not.have.extends.list");
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
-        IntentionAction action = QUICK_FIX_FACTORY.createDeleteFix(list);
+        IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(list);
         info.registerFix(action, null, null, null, null);
         return info;
       }
@@ -619,10 +627,10 @@ public final class AnnotationsHighlightUtil {
     if (annotationList != null && !PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
       String message = JavaErrorBundle.message("invalid.package.annotation.containing.file");
       IntentionAction deleteFix =
-        QUICK_FIX_FACTORY.createDeleteFix(annotationList, JavaAnalysisBundle.message("intention.text.remove.annotation"));
+        QuickFixFactory.getInstance().createDeleteFix(annotationList, JavaAnalysisBundle.message("intention.text.remove.annotation"));
       HighlightInfo.Builder builder =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotationList).descriptionAndTooltip(message);
-      IntentionAction moveAnnotationToPackageInfoFileFix = new MoveAnnotationToPackageInfoFileFix(statement);
+      var moveAnnotationToPackageInfoFileFix = new MoveAnnotationToPackageInfoFileFix(statement);
       return builder.registerFix(deleteFix, null, null, null, null)
         .registerFix(moveAnnotationToPackageInfoFileFix, null, null, null, null);
     }
@@ -679,7 +687,7 @@ public final class AnnotationsHighlightUtil {
           if (errorMessage != null) {
             HighlightInfo.Builder info =
               HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage);
-            IntentionAction action = QUICK_FIX_FACTORY.createDeleteFix(annotation);
+            IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(annotation);
             info.registerFix(action, null, null, null, null);
             return info;
           }
@@ -689,7 +697,7 @@ public final class AnnotationsHighlightUtil {
               .range(annotation)
               .descriptionAndTooltip(
                 JavaErrorBundle.message("functional.interface.must.not.be.sealed.error.description", PsiModifier.SEALED));
-            IntentionAction action = QUICK_FIX_FACTORY.createDeleteFix(annotation);
+            IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(annotation);
             info.registerFix(action, null, null, null, null);
             return info;
           }
@@ -807,10 +815,10 @@ public final class AnnotationsHighlightUtil {
       String text = JavaErrorBundle.message("receiver.static.context");
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text);
-      IntentionAction action1 = QUICK_FIX_FACTORY.createDeleteFix(parameter);
+      IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(parameter);
       info.registerFix(action1, null, null, null, null);
       IntentionAction action =
-        QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, false, false);
+        QuickFixFactory.getInstance().createModifierListFix(method.getModifierList(), PsiModifier.STATIC, false, false);
       info.registerFix(action, null, null, null, null);
       return info;
     }
@@ -819,11 +827,11 @@ public final class AnnotationsHighlightUtil {
       String text = JavaErrorBundle.message("receiver.wrong.position");
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text);
-      IntentionAction action1 = QUICK_FIX_FACTORY.createDeleteFix(parameter);
+      IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(parameter);
       info.registerFix(action1, null, null, null, null);
       PsiReceiverParameter firstReceiverParameter = PsiTreeUtil.getChildOfType(method.getParameterList(), PsiReceiverParameter.class);
       if (!PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesAndCommentsBackward(firstReceiverParameter), JavaTokenType.LPARENTH)) {
-        IntentionAction action = QUICK_FIX_FACTORY.createMakeReceiverParameterFirstFix(parameter);
+        IntentionAction action = QuickFixFactory.getInstance().createMakeReceiverParameterFirstFix(parameter);
         info.registerFix(action, null, null, null, null);
       }
       return info;
@@ -848,7 +856,7 @@ public final class AnnotationsHighlightUtil {
         PsiElement range = ObjectUtils.notNull(parameter.getTypeElement(), parameter);
         String text = JavaErrorBundle.message("receiver.type.mismatch");
         HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(text);
-        IntentionAction action = QUICK_FIX_FACTORY.createReceiverParameterTypeFix(parameter, type);
+        IntentionAction action = QuickFixFactory.getInstance().createReceiverParameterTypeFix(parameter, type);
         info.registerFix(action, null, null, null, null);
         return info;
       }
@@ -866,7 +874,7 @@ public final class AnnotationsHighlightUtil {
           name = "this";
         }
         if (name != null) {
-          IntentionAction action = QUICK_FIX_FACTORY.createReceiverParameterNameFix(parameter, name);
+          IntentionAction action = QuickFixFactory.getInstance().createReceiverParameterNameFix(parameter, name);
           info.registerFix(action, null, null, null, null);
         }
         return info;

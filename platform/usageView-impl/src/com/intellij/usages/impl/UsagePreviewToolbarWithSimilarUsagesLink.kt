@@ -4,7 +4,8 @@ package com.intellij.usages.impl
 import com.intellij.find.findUsages.similarity.SimilarUsagesComponent
 import com.intellij.find.findUsages.similarity.SimilarUsagesToolbar
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.AnActionLink
@@ -13,7 +14,7 @@ import com.intellij.usageView.UsageViewBundle
 import com.intellij.usages.UsageView
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
 import com.intellij.usages.similarity.clustering.UsageCluster
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logLinkToSimilarUsagesLinkFromUsagePreviewClicked
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logLinkToSimilarUsagesLinkFromUsagePreviewClicked
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
@@ -68,7 +69,8 @@ class UsagePreviewToolbarWithSimilarUsagesLink(previewPanel: UsagePreviewPanel,
       previewPanel.releaseEditor()
       val firstSelectedInfo = ContainerUtil.getFirstItem(infos)!!
       logLinkToSimilarUsagesLinkFromUsagePreviewClicked(firstSelectedInfo.project, myUsageView)
-      val similarUsagesComponent = SimilarUsagesComponent(myUsageView, firstSelectedInfo, previewPanel)
+      val similarUsagesComponent = SimilarUsagesComponent(myUsageView, firstSelectedInfo)
+      Disposer.register(previewPanel, similarUsagesComponent)
       previewPanel.add(SimilarUsagesToolbar(similarUsagesComponent,
                                             UsageViewBundle.message("0.similar.usages",
                                                                     onlyValidUsages.size - 1), null,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,13 +9,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.NotNullList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.List;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * @author Dmitry Avdeev
@@ -28,8 +30,7 @@ public abstract class CachedValueBase<T> {
     myTrackValue = trackValue;
   }
 
-  @NotNull
-  private Data<T> computeData(@NotNull Computable<CachedValueProvider.Result<T>> doCompute) {
+  private @NotNull Data<T> computeData(@NotNull Computable<CachedValueProvider.Result<T>> doCompute) {
     CachedValueProvider.Result<T> result;
     CachedValueProfiler.ValueTracker tracker;
     if (CachedValueProfiler.isProfiling()) {
@@ -54,8 +55,7 @@ public abstract class CachedValueBase<T> {
     return new Data<>(value, inferredDependencies, inferredTimeStamps, tracker);
   }
 
-  @Nullable
-  private synchronized Data<T> cacheOrGetData(@Nullable Data<T> expected, @Nullable Data<T> updatedValue) {
+  private synchronized @Nullable Data<T> cacheOrGetData(@Nullable Data<T> expected, @Nullable Data<T> updatedValue) {
     if (expected != getRawData()) return null;
 
     if (updatedValue != null) {
@@ -91,8 +91,7 @@ public abstract class CachedValueBase<T> {
     return getUpToDateOrNull() != null;
   }
 
-  @Nullable
-  public final Data<T> getUpToDateOrNull() {
+  public final @Nullable Data<T> getUpToDateOrNull() {
     Data<T> data = getRawData();
     return data != null && checkUpToDate(data) ? data : null;
   }
@@ -107,9 +106,8 @@ public abstract class CachedValueBase<T> {
     return false;
   }
 
-  @Nullable
-  private Data<T> getRawData() {
-    return SoftReference.dereference(myData);
+  private @Nullable Data<T> getRawData() {
+    return dereference(myData);
   }
 
   protected boolean isUpToDate(@NotNull Data<T> data) {
@@ -179,8 +177,7 @@ public abstract class CachedValueBase<T> {
 
   public abstract boolean isFromMyProject(@NotNull Project project);
 
-  @NotNull
-  public abstract Object getValueProvider();
+  public abstract @NotNull Object getValueProvider();
 
   private static final Object[] PSI_MODIFICATION_DEPENDENCIES = new Object[] { PsiModificationTracker.MODIFICATION_COUNT };
 
@@ -229,8 +226,7 @@ public abstract class CachedValueBase<T> {
     }
   }
 
-  @Nullable
-  protected <P> T getValueWithLock(P param) {
+  protected @Nullable <P> T getValueWithLock(P param) {
     Data<T> data = getUpToDateOrNull();
     if (data != null) {
       if (IdempotenceChecker.areRandomChecksEnabled()) {

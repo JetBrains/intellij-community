@@ -23,7 +23,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class PutSystemLabelChange extends PutLabelChange {
+public final class PutSystemLabelChange extends PutLabelChange {
   private final int myColor;
 
   public PutSystemLabelChange(long id, @NlsContexts.Label String name, String projectId, int color) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -13,7 +13,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 @ApiStatus.Internal
-public class ServiceViewTreeLinkMouseListener extends RepaintLinkMouseListenerBase<Object> {
+public final class ServiceViewTreeLinkMouseListener extends RepaintLinkMouseListenerBase<Object> {
   private final Tree myTree;
 
   public ServiceViewTreeLinkMouseListener(@NotNull Tree tree) {

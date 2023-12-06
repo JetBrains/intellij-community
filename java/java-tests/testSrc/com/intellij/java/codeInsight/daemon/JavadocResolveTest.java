@@ -4,19 +4,25 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
-import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.navigation.NavigationRequest;
-import com.intellij.navigation.impl.SourceNavigationRequest;
+import com.intellij.model.Symbol;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
+import com.intellij.platform.backend.navigation.NavigationRequest;
+import com.intellij.platform.backend.navigation.NavigationTarget;
+import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.javadoc.PsiSnippetAttribute;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 public class JavadocResolveTest extends DaemonAnalyzerTestCase {
@@ -40,21 +46,26 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
       .filter(attr -> attr.getName().equals(PsiSnippetAttribute.REGION_ATTRIBUTE))
       .first();
     assertNotNull(attribute);
-    PsiReference ref = attribute.getValue().getReference();
-    assertNotNull(ref);
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof Navigatable);
-    assertEquals("@start region=reg", resolved.getText());
-    assertEquals("region", LanguageFindUsages.getType(resolved));
+    Collection<? extends @NotNull PsiSymbolReference> refs = attribute.getValue().getOwnReferences();
+    assertEquals(1, refs.size());
+    PsiSymbolReference ref = refs.iterator().next();
+    Collection<? extends Symbol> symbols = ref.resolveReference();
+    assertEquals(1, symbols.size());
+    Symbol symbol = symbols.iterator().next();
+    assertTrue(symbol instanceof NavigationTarget);
+    NavigationTarget target = ((NavigationTarget)symbol);
+    TargetPresentation presentation = target.computePresentation();
+    assertEquals("@start region=reg", presentation.getPresentableText());
+    assertEquals("Test.java", presentation.getLocationText());
     NavigationRequest request = ReadAction
-      .nonBlocking(() -> ((Navigatable)resolved).navigationRequest()).submit(AppExecutorUtil.getAppExecutorService())
+      .nonBlocking(() -> target.navigationRequest()).submit(AppExecutorUtil.getAppExecutorService())
       .get();
     assertTrue(request instanceof SourceNavigationRequest);
     SourceNavigationRequest snr = (SourceNavigationRequest)request;
     VirtualFile file = snr.getFile();
     assertEquals(file.getName(), "Test.java");
     PsiFile snippetFile = PsiManager.getInstance(myProject).findFile(file);
-    assertTrue(snippetFile.getText().startsWith("@start region=reg", snr.getOffset()));
+    assertTrue(snippetFile.getText().startsWith("@start region=reg", snr.getOffsetMarker().getStartOffset()));
   }
 
   private void doTest() {

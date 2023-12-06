@@ -1,0 +1,6 @@
+test.java.file
+  CLASS_OBJECT_ACCESS_EXPRESSION
+    TYPE
+      INT_KEYWORD
+    DOT
+    CLASS_KEYWORD

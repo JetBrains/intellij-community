@@ -1,10 +1,11 @@
+// EXPECTED_DUPLICATED_HIGHLIGHTING
 /**
- * @param <info descr="null" textAttributesKey="KDOC_LINK">x</info> foo and <info descr="null" textAttributesKey="KDOC_LINK">[baz]</info>
- * @param <info descr="null" textAttributesKey="KDOC_LINK">y</info> bar
+ * @param <symbolName descr="null" textAttributesKey="KDOC_LINK">x</symbolName> foo and <symbolName descr="null" textAttributesKey="KDOC_LINK">[baz]</symbolName>
+ * @param <symbolName descr="null" textAttributesKey="KDOC_LINK">y</symbolName> bar
  * @return notALink here
  */
-fun <info descr="null">f</info>(<info descr="null">x</info>: <info descr="null">Int</info>, <info descr="null">y</info>: <info descr="null">Int</info>): <info descr="null">Int</info> {
-return <info descr="null">x</info> + <info descr="null">y</info>
+fun <symbolName descr="null">f</symbolName>(<symbolName descr="null">x</symbolName>: <symbolName descr="null">Int</symbolName>, <symbolName descr="null">y</symbolName>: <symbolName descr="null">Int</symbolName>): <symbolName descr="null">Int</symbolName> {
+return <symbolName descr="null">x</symbolName> + <symbolName descr="null">y</symbolName>
 }
 
-fun <info descr="null">baz</info>() {}
+fun <symbolName descr="null">baz</symbolName>() {}

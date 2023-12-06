@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.core.overrideImplement
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -36,21 +37,24 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
     }
 
     companion object {
-        fun KtAnalysisSession.getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
+        context(KtAnalysisSession)
+fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
             classWithUnimplementedMembers.getClassOrObjectSymbol()?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
                 .map { unimplementedMemberSymbol ->
                     val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
+                    @NlsSafe
+                    val fqName = (containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())
                     KtClassMemberInfo.create(
                         symbol = unimplementedMemberSymbol,
                         memberText = unimplementedMemberSymbol.render(renderer),
                         memberIcon = getIcon(unimplementedMemberSymbol),
-                        containingSymbolText = containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString()
-                            ?: containingSymbol?.name?.asString(),
+                        containingSymbolText = fqName,
                         containingSymbolIcon = containingSymbol?.let { symbol -> getIcon(symbol) }
                     )
                 }
 
-        private fun KtAnalysisSession.getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
+        context(KtAnalysisSession)
+private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
             return buildList {
                 classWithUnimplementedMembers.getMemberScope().getCallableSymbols().forEach { symbol ->
                     if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach
@@ -127,8 +131,8 @@ object MemberNotImplementedQuickfixFactories {
             getUnimplementedMemberFixes(diagnostic.psi, false)
         }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun KtAnalysisSession.getUnimplementedMemberFixes(
+    context(KtAnalysisSession)
+private fun getUnimplementedMemberFixes(
         classWithUnimplementedMembers: KtClassOrObject,
         includeImplementAsConstructorParameterQuickfix: Boolean = true
     ): List<IntentionAction> {

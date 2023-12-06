@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -40,7 +40,7 @@ import java.io.File;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
-public class FindPopupDirectoryChooser extends JPanel {
+public final class FindPopupDirectoryChooser extends JPanel {
   @NotNull private final FindUIHelper myHelper;
   @NotNull private final Project myProject;
   @NotNull private final FindPopupPanel myFindPopupPanel;
@@ -149,7 +149,7 @@ public class FindPopupDirectoryChooser extends JPanel {
     return null;
   }
 
-  private class MyRecursiveDirectoryAction extends DumbAwareToggleAction {
+  private final class MyRecursiveDirectoryAction extends DumbAwareToggleAction {
     MyRecursiveDirectoryAction() {
       super(FindBundle.messagePointer("find.recursively.hint"), Presentation.NULL_STRING, AllIcons.Actions.ShowAsTree);
     }

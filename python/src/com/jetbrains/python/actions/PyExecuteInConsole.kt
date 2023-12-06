@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.content.ContentManager
 import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.*
@@ -63,7 +64,7 @@ private fun executeCodeInConsole(project: Project,
   if (!checkIfAvailableAndShowHint(editor)) return
   if (canUseExistingConsole) {
     if (virtualFile != null && PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
-      val (descriptor, listener) = getCustomDescriptor(project, editor)
+      val (descriptor, listener) = getCustomDescriptor(project, virtualFile)
       existingConsole = descriptor
       newConsoleListener = listener
     }
@@ -104,8 +105,7 @@ fun checkIfAvailableAndShowHint(editor: Editor?): Boolean {
   return true
 }
 
-fun getCustomDescriptor(project: Project, editor: Editor?): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
-  val virtualFile = (editor as? EditorImpl)?.virtualFile ?: return Pair(null, null)
+fun getCustomDescriptor(project: Project, virtualFile: VirtualFile): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
   val executeCustomizer = PyExecuteConsoleCustomizer.instance
   when (executeCustomizer.getCustomDescriptorType(virtualFile)) {
     DescriptorType.NEW -> {
@@ -215,10 +215,7 @@ private fun showConsole(project: Project,
         }
       }
       // Select "Console" tab in case of Debug console
-      val contentManager = currentSession.ui.contentManager
-      contentManager.findContent("Console")?.let { content ->
-        contentManager.setSelectedContent(content)
-      }
+      selectConsoleTab(descriptor, currentSession.ui.contentManager, isDebug=true)
       return (console as PythonDebugLanguageConsoleView).pydevConsoleView
     }
   }
@@ -227,17 +224,20 @@ private fun showConsole(project: Project,
       if (!toolWindow.isVisible) {
         ApplicationManager.getApplication().invokeLater { toolWindow.show(null) }
       }
-      val contentManager = toolWindow.contentManager
-      contentManager.findContent(PyExecuteConsoleCustomizer.instance.getDescriptorName(descriptor))?.let {
-        contentManager.setSelectedContent(it)
-      }
+      selectConsoleTab(descriptor, toolWindow.contentManager, isDebug=false)
     }
     return descriptor.executionConsole as? PythonConsoleView
   }
   return null
 }
 
-private fun requestFocus(requestFocusToConsole: Boolean, editor: Editor?, consoleView: PythonConsoleView?, isDebug: Boolean) {
+fun selectConsoleTab(descriptor: RunContentDescriptor, contentManager: ContentManager, isDebug: Boolean) {
+  val tabName = if (isDebug) "Console" else PyExecuteConsoleCustomizer.instance.getDescriptorName(descriptor)
+  contentManager.findContent(tabName)?.let { content -> contentManager.setSelectedContent(content) }
+}
+
+
+fun requestFocus(requestFocusToConsole: Boolean, editor: Editor?, consoleView: PythonConsoleView?, isDebug: Boolean) {
   if (requestFocusToConsole) {
     consoleView?.let {
       if (isDebug) {

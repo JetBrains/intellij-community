@@ -3,5 +3,5 @@ import static java.lang.annotation.ElementType.*;
 
 @Target({TYPE, FIELD, METHOD})
 public @interface A {
-  int value();
+  int value() default 3;
 }

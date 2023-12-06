@@ -5,15 +5,17 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.workspaceModel.jps.OrphanageWorkerEntitySource
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.workspaceModel
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import io.opentelemetry.api.metrics.Meter
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
@@ -30,7 +32,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
 
     updater(builder)
 
-    val changes = builder.collectChanges(before)
+    val changes = builder.collectChanges()
 
     checkIfParentsAlreadyExist(changes, builder)
 
@@ -101,11 +103,25 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
         }
       }
     }
+    updateOrphanTimeMs.addAndGet(updateTime)
     if (updateTime > 1_000) log.warn("Orphanage update took $updateTime ms")
   }
 
   companion object {
     private val log = logger<OrphanListener>()
+
+    private val updateOrphanTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val updateOrphanTimeGauge = meter.gaugeBuilder("workspaceModel.orphan.listener.update.ms")
+        .ofLongs().buildObserver()
+
+      meter.batchCallback({ updateOrphanTimeGauge.record(updateOrphanTimeMs.get()) }, updateOrphanTimeGauge)
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 }
 

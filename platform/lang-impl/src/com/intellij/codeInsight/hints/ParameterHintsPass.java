@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
@@ -52,22 +52,6 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     myRootElement = element;
     myHintInfoFilter = hintsFilter;
     myForceImmediateUpdate = forceImmediateUpdate;
-  }
-
-  /**
-   * @deprecated May block UI thread, use {@link ParameterHintsPass#asyncUpdate(PsiElement, Editor)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static void syncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
-    MethodInfoExcludeListFilter filter = MethodInfoExcludeListFilter.forLanguage(element.getLanguage());
-    ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
-    try {
-      pass.doCollectInformation(new ProgressIndicatorBase());
-    }
-    catch (IndexNotReadyException e) {
-      return; // cannot update synchronously, hints will be updated after indexing ends by the complete pass
-    }
-    pass.applyInformationToEditor();
   }
 
   /**
@@ -219,7 +203,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     return myDocument.getTextLength() == rootRange.getLength();
   }
 
-  static class HintData {
+  static final class HintData {
     final String presentationText;
     final boolean relatesToPrecedingText;
     final HintWidthAdjustment widthAdjustment;

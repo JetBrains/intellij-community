@@ -4,12 +4,14 @@ package com.intellij.platform.backend.documentation;
 import com.intellij.model.Pointer;
 import com.intellij.model.Symbol;
 import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @see SymbolDocumentationTargetProvider
  */
 @Experimental
+@OverrideOnly
 public interface DocumentationSymbol extends Symbol {
 
   @Override

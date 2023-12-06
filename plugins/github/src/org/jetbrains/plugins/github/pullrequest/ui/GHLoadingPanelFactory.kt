@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
@@ -14,7 +15,6 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -144,7 +144,7 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
       private fun createEmptyContent(): JComponent? {
         if (notLoadingText == null) return null
 
-        val pane = HtmlEditorPane(notLoadingText).apply {
+        val pane = SimpleHtmlPane(notLoadingText).apply {
           isFocusable = true
           foreground = UIUtil.getContextHelpForeground()
         }

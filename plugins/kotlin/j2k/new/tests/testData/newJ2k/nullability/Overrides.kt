@@ -18,9 +18,8 @@ internal open class Base {
 
 internal interface I {
     fun zoo(o: Any?): String?
-    fun nya(s: String?): String? {
-        return ""
-    }
+
+    fun nya(s: String?): String?
 }
 
 internal class C : Base(), I {

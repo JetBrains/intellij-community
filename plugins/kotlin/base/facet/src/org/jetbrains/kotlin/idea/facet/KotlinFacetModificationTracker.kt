@@ -5,13 +5,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
+import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 
 class KotlinFacetModificationTracker(project: Project) :
     SimpleModificationTracker(), WorkspaceModelChangeListener, Disposable {
@@ -48,9 +48,10 @@ class KotlinFacetModificationTracker(project: Project) :
     override fun dispose() = Unit
 
     companion object {
-        fun FacetEntity.isKotlinFacet() = name == KotlinFacetType.NAME
 
         @JvmStatic
         fun getInstance(project: Project): KotlinFacetModificationTracker = project.service()
     }
 }
+
+fun FacetEntity.isKotlinFacet(): Boolean = name == KotlinFacetType.NAME

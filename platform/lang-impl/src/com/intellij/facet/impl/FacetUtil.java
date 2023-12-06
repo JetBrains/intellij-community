@@ -100,7 +100,6 @@ public class FacetUtil {
       FacetConfiguration configuration = facet.getConfiguration();
       config = saveFacetConfiguration(configuration);
       if (facet instanceof JDOMExternalizable) {
-        //todo[nik] remove
         ((JDOMExternalizable)facet).writeExternal(config);
       }
     }

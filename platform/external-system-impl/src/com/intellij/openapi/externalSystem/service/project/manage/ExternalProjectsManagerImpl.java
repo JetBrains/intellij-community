@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -34,7 +34,7 @@ import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,22 +48,21 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
 /**
  * @author Vladislav.Soroka
  */
-@State(name = "ExternalProjectsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable {
-  private static final Logger LOG = Logger.getInstance(ExternalProjectsManager.class);
+@State(name = "ExternalProjectsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), getStateRequiresEdt = true)
+public final class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable {
+  private static final Logger LOG = Logger.getInstance(ExternalProjectsManagerImpl.class);
 
   private static final ExtensionPointName<ExternalSystemProjectSetupExtension> PROJECT_SETUP_EXTENSION_EP
-    = ExtensionPointName.create("com.intellij.openapi.externalSystem.projectSetupExtension");
+    = new ExtensionPointName<>("com.intellij.openapi.externalSystem.projectSetupExtension");
 
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
   private final AtomicBoolean isInitializationStarted = new AtomicBoolean();
   private final AtomicBoolean isDisposed = new AtomicBoolean();
   private final CompositeRunnable myPostInitializationActivities = new CompositeRunnable();
-  @NotNull
-  private ExternalProjectsState myState = new ExternalProjectsState();
+  private final CompositeRunnable myPostInitializationBGActivities = new CompositeRunnable();
+  private @NotNull ExternalProjectsState myState = new ExternalProjectsState();
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final ExternalSystemRunManagerListener myRunManagerListener;
   private final ExternalSystemTaskActivator myTaskActivator;
   private final ExternalSystemShortcutsManager myShortcutsManager;
@@ -78,17 +77,18 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     myRunManagerListener = new ExternalSystemRunManagerListener(this);
     myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
 
-    ApplicationManager.getApplication().getMessageBus().connect(project).
-      subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(project)
+      .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
         public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-          Set<ProjectSystemId> availableES =
-            ExternalSystemManager.EP_NAME.getExtensionList().stream()
-              .map(ExternalSystemManager::getSystemId)
-              .collect(Collectors.toSet());
+          Set<ProjectSystemId> availableES = new HashSet<>();
+          for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getExtensionList()) {
+            ProjectSystemId id = manager.getSystemId();
+            availableES.add(id);
+          }
 
           Iterator<ExternalProjectsView> iterator = myProjectsViews.iterator();
-          while(iterator.hasNext()) {
+          while (iterator.hasNext()) {
             ExternalProjectsView view = iterator.next();
             if (!availableES.contains(view.getSystemId())) {
               iterator.remove();
@@ -102,11 +102,10 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   }
 
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
-    return (ExternalProjectsManagerImpl)project.getService(ExternalProjectsManager.class);
+    return (ExternalProjectsManagerImpl)ExternalProjectsManager.getInstance(project);
   }
 
-  @Nullable
-  public static Project setupCreatedProject(@Nullable Project project) {
+  public static @Nullable Project setupCreatedProject(@Nullable Project project) {
     if (project != null) {
       getInstance(project).setStoreExternally(true);
       for (ExternalSystemProjectSetupExtension each : PROJECT_SETUP_EXTENSION_EP.getExtensionList()) {
@@ -135,9 +134,8 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     }
   }
 
-  @NotNull
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -164,8 +162,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     }
   }
 
-  @Nullable
-  public ExternalProjectsView getExternalProjectsView(@NotNull ProjectSystemId systemId) {
+  public @Nullable ExternalProjectsView getExternalProjectsView(@NotNull ProjectSystemId systemId) {
     for (ExternalProjectsView projectsView : myProjectsViews) {
       if (projectsView.getSystemId().equals(systemId)) return projectsView;
     }
@@ -208,11 +205,15 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
         myPostInitializationActivities.run();
         myPostInitializationActivities.clear();
       });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        myPostInitializationBGActivities.run();
+        myPostInitializationBGActivities.clear();
+      });
     }
   }
 
   @Override
-  public void refreshProject(@NotNull final String externalProjectPath, @NotNull final ImportSpec importSpec) {
+  public void refreshProject(final @NotNull String externalProjectPath, final @NotNull ImportSpec importSpec) {
     ExternalSystemUtil.refreshProject(externalProjectPath, importSpec);
   }
 
@@ -225,6 +226,19 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
       }
       else {
         myPostInitializationActivities.add(runnable);
+      }
+    }
+  }
+
+  @Override
+  public void runWhenInitializedInBackground(@NotNull Runnable runnable) {
+    if (isDisposed.get()) return;
+    synchronized (isInitializationFinished) {
+      if (isInitializationFinished.get()) {
+        ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      }
+      else {
+        myPostInitializationBGActivities.add(runnable);
       }
     }
   }
@@ -255,10 +269,9 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     ExternalSystemUtil.scheduleExternalViewStructureUpdate(myProject, projectSystemId);
   }
 
-  @NotNull
   @Override
-  public ExternalProjectsState getState() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+  @RequiresReadLock
+  public @NotNull ExternalProjectsState getState() {
     for (ExternalProjectsView externalProjectsView : myProjectsViews) {
       if (externalProjectsView instanceof ExternalProjectsViewImpl) {
         final ExternalProjectsViewState externalProjectsViewState = ((ExternalProjectsViewImpl)externalProjectsView).getState();
@@ -270,8 +283,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     return myState;
   }
 
-  @NotNull
-  public ExternalProjectsStateProvider getStateProvider() {
+  public @NotNull ExternalProjectsStateProvider getStateProvider() {
     return new ExternalProjectsStateProvider() {
       @Override
       public List<TasksActivation> getAllTasksActivation() {
@@ -292,19 +304,12 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
       }
 
       @Override
-      public List<TasksActivation> getTasksActivation(@NotNull final ProjectSystemId systemId) {
-        final Set<Map.Entry<String, TaskActivationState>> entries =
-          myState.getExternalSystemsState().get(systemId.getId()).getExternalSystemsTaskActivation().entrySet();
-        return ContainerUtil.map(entries, entry -> new TasksActivation(systemId, entry.getKey(), entry.getValue()));
-      }
-
-      @Override
       public TaskActivationState getTasksActivation(@NotNull ProjectSystemId systemId, @NotNull String projectPath) {
         return myState.getExternalSystemsState().get(systemId.getId()).getExternalSystemsTaskActivation().get(projectPath);
       }
 
       @Override
-      public Map<String, TaskActivationState> getProjectsTasksActivationMap(@NotNull final ProjectSystemId systemId) {
+      public Map<String, TaskActivationState> getProjectsTasksActivationMap(final @NotNull ProjectSystemId systemId) {
         return myState.getExternalSystemsState().get(systemId.getId()).getExternalSystemsTaskActivation();
       }
     };
@@ -338,6 +343,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   public void dispose() {
     if (isDisposed.getAndSet(true)) return;
     myPostInitializationActivities.clear();
+    myPostInitializationBGActivities.clear();
     myProjectsViews.clear();
     myRunManagerListener.detach();
   }
@@ -358,8 +364,6 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     }
 
     List<TasksActivation> getAllTasksActivation();
-
-    List<TasksActivation> getTasksActivation(@NotNull ProjectSystemId systemId);
 
     TaskActivationState getTasksActivation(@NotNull ProjectSystemId systemId, @NotNull String projectPath);
 

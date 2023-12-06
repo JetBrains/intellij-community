@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -20,8 +20,7 @@ public class TooManyUsagesStatus {
     myIndicator = indicator;
   }
 
-  @NotNull
-  public static TooManyUsagesStatus getFrom(@NotNull ProgressIndicator indicator) {
+  public static @NotNull TooManyUsagesStatus getFrom(@NotNull ProgressIndicator indicator) {
     TooManyUsagesStatus data = indicator instanceof UserDataHolder ? ((UserDataHolder)indicator).getUserData(KEY) : null;
     return data == null ? NULL_STATUS : data;
   }

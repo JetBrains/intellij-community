@@ -1,0 +1,6 @@
+<idea-plugin>
+  <id>com.example.demo</id>
+  <actions>
+    <action class="A"/>
+  </actions>
+</idea-plugin>

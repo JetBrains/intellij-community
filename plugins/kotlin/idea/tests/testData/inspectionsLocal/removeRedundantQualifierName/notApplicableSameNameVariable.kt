@@ -6,3 +6,5 @@ sealed class Foo {
         val BAR: Foo = <caret>Foo.BAR
     }
 }
+
+// IGNORE_K2

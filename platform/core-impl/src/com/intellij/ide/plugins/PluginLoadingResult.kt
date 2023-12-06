@@ -1,10 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.PlatformUtils
@@ -12,8 +10,6 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
-import kotlin.io.path.name
 
 // https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
 // If a plugin does not include any module dependency tags in its plugin.xml,
@@ -22,14 +18,15 @@ import kotlin.io.path.name
 class PluginLoadingResult(private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
   private val incompletePlugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
-  @JvmField val enabledPluginsById = HashMap<PluginId, IdeaPluginDescriptorImpl>()
+  @JvmField
+  internal val enabledPluginsById: HashMap<PluginId, IdeaPluginDescriptorImpl> = HashMap()
 
   private val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>()
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
   private val pluginErrors = HashMap<PluginId, PluginLoadingError>()
 
   @VisibleForTesting
-  @JvmField val shadowedBundledIds: MutableSet<PluginId> = Collections.newSetFromMap(HashMap())
+  @JvmField val shadowedBundledIds: MutableSet<PluginId> = HashSet()
 
   @get:TestOnly
   val hasPluginErrors: Boolean
@@ -68,23 +65,24 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   /**
    * @see [com.intellij.openapi.project.ex.ProjectManagerEx]
    */
-  fun addAll(descriptors: Iterable<IdeaPluginDescriptorImpl?>, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
-    val isMainProcess = java.lang.Boolean.getBoolean("ide.per.project.instance")
-                        && !PathManager.getPluginsDir().name.startsWith("perProject_")
-
-    val applicationInfoEx = ApplicationInfoImpl.getShadowInstance()
+  fun addAll(descriptors: Sequence<IdeaPluginDescriptorImpl>, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
     for (descriptor in descriptors) {
-      if (descriptor != null
-          && (!isMainProcess || applicationInfoEx.isEssentialPlugin(descriptor.pluginId))) {
-        add(descriptor, overrideUseIfCompatible, productBuildNumber)
-      }
+      add(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, productBuildNumber = productBuildNumber)
+    }
+  }
+
+  @TestOnly
+  fun addAll(descriptors: List<IdeaPluginDescriptorImpl>) {
+    val productBuildNumber = BuildNumber.fromString("2042.42")!!
+    for (descriptor in descriptors) {
+      add(descriptor = descriptor, overrideUseIfCompatible = false, productBuildNumber = productBuildNumber)
     }
   }
 
   private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
     val pluginId = descriptor.pluginId
     descriptor.isIncomplete?.let { error ->
-      addIncompletePlugin(descriptor, error.takeIf { !it.isDisabledError })
+      addIncompletePlugin(plugin = descriptor, error = error.takeIf { !it.isDisabledError })
       return
     }
 
@@ -116,7 +114,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
     if (PluginManagerCore.checkBuildNumberCompatibility(descriptor, productBuildNumber) == null &&
         (overrideUseIfCompatible || VersionComparatorUtil.compare(descriptor.version, prevDescriptor.version) > 0)) {
-      PluginManagerCore.getLogger().info("$descriptor overrides $prevDescriptor")
+      PluginManagerCore.logger.info("$descriptor overrides $prevDescriptor")
       idMap.put(pluginId, descriptor)
       return
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.diagnostic.PluginException;
@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
@@ -15,21 +16,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,13 +40,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
+import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import static com.intellij.concurrency.ThreadContext.currentThreadContext;
+import static com.intellij.concurrency.ThreadContext.installThreadContext;
 
 public final class ActionUtil {
   private static final Logger LOG = Logger.getInstance(ActionUtil.class);
@@ -62,7 +65,9 @@ public final class ActionUtil {
   private ActionUtil() {
   }
 
-  public static void showDumbModeWarning(@Nullable Project project, AnActionEvent @NotNull ... events) {
+  public static void showDumbModeWarning(@Nullable Project project,
+                                         @NotNull AnAction action,
+                                         AnActionEvent @NotNull ... events) {
     List<String> actionNames = new ArrayList<>();
     for (AnActionEvent event : events) {
       String s = event.getPresentation().getText();
@@ -74,7 +79,8 @@ public final class ActionUtil {
       LOG.debug("Showing dumb mode warning for " + Arrays.asList(events), new Throwable());
     }
     if (project == null) return;
-    DumbService.getInstance(project).showDumbModeNotification(getActionUnavailableMessage(actionNames));
+    DumbService.getInstance(project).showDumbModeNotificationForAction(getActionUnavailableMessage(actionNames),
+                                                                       ActionManager.getInstance().getId(action));
   }
 
   private static @NotNull @NlsContexts.PopupContent String getActionUnavailableMessage(@NotNull List<String> actionNames) {
@@ -120,7 +126,7 @@ public final class ActionUtil {
    */
   public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     Presentation presentation = e.getPresentation();
-    if (LightEdit.owns(e.getProject()) && !LightEdit.isActionCompatible(action)) {
+    if (LightEdit.owns(e.getProject()) && !isActionLightEditCompatible(action)) {
       presentation.setEnabledAndVisible(false);
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false);
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false);
@@ -145,7 +151,7 @@ public final class ActionUtil {
       Runnable runnable = () -> {
         // init group flags from deprecated methods
         boolean isGroup = action instanceof ActionGroup;
-        boolean wasPopup = isGroup && ((ActionGroup)action).isPopup(e.getPlace());
+        boolean wasPopup = isGroup && ((ActionGroup)action).isPopup();
         boolean wasHideIfEmpty = isGroup && ((ActionGroup)action).hideIfNoVisibleChildren();
         boolean wasDisableIfEmpty = isGroup && ((ActionGroup)action).disableIfNoVisibleChildren();
         presentation.setPopupGroup(isGroup && (presentation.isPopupGroup() || wasPopup));
@@ -174,7 +180,7 @@ public final class ActionUtil {
           assertDeprecatedActionGroupFlagsNotChanged((ActionGroup)action, e, wasPopup, wasHideIfEmpty, wasDisableIfEmpty);
         }
       };
-      boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
+      boolean isLikeUpdate = !beforeActionPerformed;
       try (AccessToken ignore = SlowOperations.startSection(isLikeUpdate ? SlowOperations.ACTION_UPDATE
                                                                          : SlowOperations.ACTION_PERFORM)) {
         long startTime = System.nanoTime();
@@ -203,9 +209,14 @@ public final class ActionUtil {
     return false;
   }
 
+  private static boolean isActionLightEditCompatible(@NotNull AnAction action) {
+    if (action instanceof AnActionWrapper wrapper) return isActionLightEditCompatible(wrapper.getDelegate());
+    return (action instanceof ActionGroup) && action.isDumbAware() || action instanceof LightEditCompatible;
+  }
+
   private static void assertDeprecatedActionGroupFlagsNotChanged(@NotNull ActionGroup group, @NotNull AnActionEvent event,
                                                                  boolean wasPopup, boolean wasHideIfEmpty, boolean wasDisableIfEmpty) {
-    boolean warnPopup = wasPopup != group.isPopup(event.getPlace());
+    boolean warnPopup = wasPopup != group.isPopup();
     boolean warnHide = wasHideIfEmpty != group.hideIfNoVisibleChildren();
     boolean warnDisable = wasDisableIfEmpty != group.disableIfNoVisibleChildren();
     if (!(warnPopup || warnHide || warnDisable)) return;
@@ -284,7 +295,7 @@ public final class ActionUtil {
         return false;
       }
 
-      showDumbModeWarning(project, e);
+      showDumbModeWarning(project, action, e);
       return false;
     }
 
@@ -334,6 +345,16 @@ public final class ActionUtil {
     }
   }
 
+  public static void performInputEventHandlerWithCallbacks(@NotNull InputEvent inputEvent, @NotNull Runnable runnable) {
+    String place = inputEvent instanceof KeyEvent ? ActionPlaces.KEYBOARD_SHORTCUT :
+                   inputEvent instanceof MouseEvent ? ActionPlaces.MOUSE_SHORTCUT :
+                   ActionPlaces.UNKNOWN;
+    AnActionEvent event = AnActionEvent.createFromInputEvent(
+      inputEvent, place, InputEventDummyAction.INSTANCE.getTemplatePresentation().clone(),
+      DataManager.getInstance().getDataContext(Objects.requireNonNull(inputEvent.getComponent())));
+    performDumbAwareWithCallbacks(InputEventDummyAction.INSTANCE, event, runnable);
+  }
+
   public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
                                                    @NotNull AnActionEvent event,
                                                    @NotNull Runnable performRunnable) {
@@ -342,17 +363,21 @@ public final class ActionUtil {
     ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, event);
     Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    String actionId = StringUtil.notNullize(
+      event.getActionManager().getId(action),
+      action == InputEventDummyAction.INSTANCE ? performRunnable.getClass().getName() :
+      action.getClass().getName());
     if (component != null && !UIUtil.isShowing(component) &&
         !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
         !Boolean.TRUE.equals(ClientProperty.get(component, ALLOW_ACTION_PERFORM_WHEN_HIDDEN))) {
-      String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
       LOG.warn("Action is not performed because target component is not showing: " +
-               "action=" + id + ", component=" + component.getClass().getName());
+               "action=" + actionId + ", component=" + component.getClass().getName());
       manager.fireAfterActionPerformed(action, event, AnActionResult.IGNORED);
       return;
     }
     AnActionResult result = null;
-    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM);
+         AccessToken ignore2 = withActionThreadContext(actionId, event.getPlace(), event.getInputEvent(), component)) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }
@@ -370,7 +395,7 @@ public final class ActionUtil {
     }
     if (indexError != null) {
       LOG.info(indexError);
-      showDumbModeWarning(project, event);
+      showDumbModeWarning(project, action, event);
     }
   }
 
@@ -386,16 +411,12 @@ public final class ActionUtil {
     }
     catch (IndexNotReadyException ex) {
       LOG.info(ex);
-      showDumbModeWarning(project, event);
+      showDumbModeWarning(project, action, event);
     }
   }
 
   public static @NotNull AnActionEvent createEmptyEvent() {
-    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
-  }
-
-  public static void sortAlphabetically(@NotNull List<? extends AnAction> list) {
-    list.sort((o1, o2) -> Comparing.compare(o1.getTemplateText(), o2.getTemplateText()));
+    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, DataContext.EMPTY_CONTEXT);
   }
 
   /**
@@ -551,6 +572,27 @@ public final class ActionUtil {
     };
   }
 
+  /**
+   * ActionManager.getInstance().getAction(id).registerCustomShortcutSet(shortcutSet, component) must not be used,
+   * because it erases shortcuts assigned to this action in keymap.
+   * <p>
+   * see {@link #wrap(AnAction)}
+   */
+  public static @NotNull AnAction wrap(@NotNull String actionId) {
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) throw new IllegalArgumentException("No action found with id='" + actionId + "'");
+    return action instanceof ActionGroup ? new ActionGroupWrapper((ActionGroup)action) :
+           new AnActionWrapper(action);
+  }
+
+  /**
+   * Wrapping allows altering template presentation and shortcut set without affecting the original action.
+   */
+  public static @NotNull AnAction wrap(@NotNull AnAction action) {
+    return action instanceof ActionGroup ? new ActionGroupWrapper((ActionGroup)action) :
+           new AnActionWrapper(action);
+  }
+
   public static @Nullable ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
     return KeymapUtil.getShortcutsForMnemonicCode(action.getTemplatePresentation().getMnemonic());
   }
@@ -611,5 +653,60 @@ public final class ActionUtil {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(place, group, horizontal);
     toolbar.setTargetComponent(target);
     return toolbar.getComponent();
+  }
+
+  public static @NotNull AnAction createActionFromSwingAction(@NotNull Action action) {
+    AnAction anAction = new AnAction((String)action.getValue(Action.NAME)) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(action.isEnabled());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null));
+      }
+    };
+
+    Object value = action.getValue(Action.ACCELERATOR_KEY);
+    if (value instanceof KeyStroke keys) {
+      anAction.setShortcutSet(new CustomShortcutSet(keys));
+    }
+
+    return anAction;
+  }
+
+  @ApiStatus.Internal
+  @RequiresBlockingContext
+  public static @Nullable ActionContextElement getActionThreadContext() {
+    return currentThreadContext().get(ActionContextElement.Companion);
+  }
+
+  private static final Key<ActionContextElement> ACTION_CONTEXT_ELEMENT_KEY = Key.create("ACTION_CONTEXT_ELEMENT_KEY");
+
+  @ApiStatus.Internal
+  public static void initActionContextForComponent(@NotNull JComponent component) {
+    ClientProperty.put(component, ACTION_CONTEXT_ELEMENT_KEY, getActionThreadContext());
+  }
+
+  private static @NotNull AccessToken withActionThreadContext(@NotNull String actionId,
+                                                              @NotNull String place,
+                                                              @Nullable InputEvent event,
+                                                              @Nullable Component component) {
+    ActionContextElement parent = UIUtil.uiParents(component, false)
+      .filterMap(o -> ClientProperty.get(o, ACTION_CONTEXT_ELEMENT_KEY)).first();
+    return installThreadContext(currentThreadContext().plus(
+      new ActionContextElement(actionId, place, event == null ? -1 : event.getID(), parent)), true);
+  }
+
+  private static class InputEventDummyAction extends DumbAwareAction implements LightEditCompatible {
+    static final InputEventDummyAction INSTANCE = new InputEventDummyAction();
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) { }
   }
 }

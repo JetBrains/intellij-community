@@ -122,7 +122,7 @@ public final class PropertiesImplUtil extends PropertiesUtil {
   @NotNull
   public static List<IProperty> findPropertiesByKey(@NotNull final Project project, @NotNull final String key) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    List<IProperty> properties = new ArrayList<>(PropertyKeyIndex.getInstance().get(key, project, scope));
+    List<IProperty> properties = new ArrayList<>(PropertyKeyIndex.getInstance().getProperties(key, project, scope));
     final Set<VirtualFile> files = new HashSet<>();
     FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, new XmlPropertiesIndex.Key(key), null, (file, value) -> {
       if (files.add(file)) {

@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +24,8 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
     public boolean USE_CREDENTIAL_HELPER = false;
     public boolean STAGING_AREA_ENABLED = false;
+
+    public boolean SHOW_DROP_COMMIT_DIALOG = true;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -42,14 +47,12 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
    * or use {@link GitExecutableManager#getPathToGit()}/{@link GitExecutableManager#getPathToGit(Project)} to get git executable with
    * auto-detection
    */
-  @NotNull
   @Deprecated(forRemoval = true)
-  public String getPathToGit() {
+  public @NotNull String getPathToGit() {
     return GitExecutableManager.getInstance().getPathToGit();
   }
 
-  @Nullable
-  public String getSavedPathToGit() {
+  public @Nullable String getSavedPathToGit() {
     return myState.myPathToGit;
   }
 
@@ -66,8 +69,7 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     myState.ANNOTATE_IGNORE_SPACES = value;
   }
 
-  @NotNull
-  public AnnotateDetectMovementsOption getAnnotateDetectMovementsOption() {
+  public @NotNull AnnotateDetectMovementsOption getAnnotateDetectMovementsOption() {
     return myState.ANNOTATE_DETECT_INNER_MOVEMENTS;
   }
 
@@ -89,6 +91,14 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public void setStagingAreaEnabled(boolean isStagingAreaEnabled) {
     myState.STAGING_AREA_ENABLED = isStagingAreaEnabled;
+  }
+
+  public boolean isShowDropCommitDialog() {
+    return myState.SHOW_DROP_COMMIT_DIALOG;
+  }
+
+  public void setShowDropCommitDialog(boolean isShowDropCommitDialog) {
+    myState.SHOW_DROP_COMMIT_DIALOG = isShowDropCommitDialog;
   }
 
   public enum AnnotateDetectMovementsOption {

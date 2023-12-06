@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -15,8 +15,8 @@ import com.intellij.ui.LightweightHint
 import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -58,7 +58,7 @@ object ReviewAddedImports {
                             }
                         }
                     )
-                }, ModalityState.NON_MODAL
+                }, ModalityState.nonModal()
             )
         }
     }
@@ -99,7 +99,7 @@ object ReviewAddedImports {
                 if (importsToRemove.contains(importedFqName.asString())) return@mapNotNull null
                 ImportPath(importedFqName, it.isAllUnder, it.aliasName?.let { alias -> Name.identifier(alias) })
             }
-            KotlinImportOptimizer.replaceImports(file, newImports)
+            KotlinOptimizeImportsFacility.getInstance().replaceImports(file, newImports)
         })
     }
 }

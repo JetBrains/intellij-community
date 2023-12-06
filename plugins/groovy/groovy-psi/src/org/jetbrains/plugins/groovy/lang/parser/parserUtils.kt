@@ -28,7 +28,7 @@ import java.util.*
 
 private val PsiBuilder.groovyParser: GroovyParser get() = (this as Builder).parser as GroovyParser
 
-private val collapseHook = Hook<IElementType> { _, marker: Marker?, elementType: IElementType ->
+private val collapseHook = Hook { _, marker: Marker?, elementType: IElementType ->
   marker ?: return@Hook null
   val newMarker = marker.precede()
   marker.drop()
@@ -62,7 +62,7 @@ fun extendedStatement(builder: PsiBuilder, level: Int): Boolean = builder.groovy
 
 fun extendedSeparator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf { builder.groovyParser.isExtendedSeparator(tokenType) }
 
-private val currentClassNames: Key<Deque<String>> = KeyWithDefaultValue.create("groovy.parse.class.name") { LinkedList<String>() }
+private val currentClassNames: Key<Deque<String>> = KeyWithDefaultValue.create("groovy.parse.class.name") { LinkedList() }
 private val parseDiamonds: Key<Boolean> = Key.create("groovy.parse.diamonds")
 private val parseArguments: Key<Boolean> = Key.create("groovy.parse.arguments")
 private val parseApplicationArguments: Key<Boolean> = Key.create("groovy.parse.application.arguments")

@@ -1,0 +1,15 @@
+LineBreakpoint created at inlineOnlyFunctions.kt:6
+LineBreakpoint created at inlineOnlyFunctions.kt:16
+Run Java
+Connected to the target VM
+inlineOnlyFunctions.kt:6
+Highlight whole line
+inlineOnlyFunctions.kt:8
+Highlight whole line
+inlineOnlyFunctions.kt:16
+Highlight whole line
+inlineOnlyFunctions.kt:17
+Highlight lambda range: '  }'
+Disconnected from the target VM
+
+Process finished with exit code 0

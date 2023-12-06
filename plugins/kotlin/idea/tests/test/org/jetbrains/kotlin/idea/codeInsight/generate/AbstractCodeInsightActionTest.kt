@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestActionEvent
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
 import org.jetbrains.kotlin.idea.test.*
@@ -23,7 +23,7 @@ import java.io.File
 abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun createAction(fileText: String): CodeInsightAction {
         val actionClassName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// ACTION_CLASS: ")
-        return Class.forName(actionClassName).newInstance() as CodeInsightAction
+        return Class.forName(actionClassName).getDeclaredConstructor().newInstance() as CodeInsightAction
     }
 
     protected open fun configure(mainFilePath: String, mainFileText: String) {
@@ -96,7 +96,7 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
                 myFixture.checkResult(FileUtil.loadFile(afterFile, true))
                 checkExtra()
             }
-        } catch (e: ComparisonFailure) {
+        } catch (e: FileComparisonFailure) {
             KotlinTestUtils.assertEqualsToFile(afterFile, myFixture.editor)
         } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
             KotlinTestUtils.assertEqualsToFile(conflictFile, e.message!!)

@@ -1,9 +1,10 @@
-// "Suppress 'REDUNDANT_NULLABLE' for initializer " "true"
+// "Suppress 'DIVISION_BY_ZERO' for initializer " "true"
 
 fun foo() {
-    var (a, b) = Pair<String?<caret>?, String>("", "")
+    var (a, b) = Pair<String, Int>("", 2 / <caret>0)
 }
 
 data class Pair<A, B>(val a: A, val b: B)
 
-// IGNORE_FIR
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

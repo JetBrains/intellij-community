@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -30,22 +31,14 @@ import java.awt.event.KeyEvent;
  */
 public final class ScrollingUtil {
   private static final Logger LOG = Logger.getInstance(ScrollingUtil.class);
-  @NonNls
-  private static final String SCROLL_UP_ACTION_ID = "scrollUp";
-  @NonNls
-  private static final String SCROLL_DOWN_ACTION_ID = "scrollDown";
-  @NonNls
-  private static final String SELECT_PREVIOUS_ROW_ACTION_ID = "selectPreviousRow";
-  @NonNls
-  private static final String SELECT_NEXT_ROW_ACTION_ID = "selectNextRow";
-  @NonNls
-  private static final String SELECT_LAST_ROW_ACTION_ID = "selectLastRow";
-  @NonNls
-  private static final String SELECT_FIRST_ROW_ACTION_ID = "selectFirstRow";
-  @NonNls
-  private static final String MOVE_HOME_ID = "MOVE_HOME";
-  @NonNls
-  private static final String MOVE_END_ID = "MOVE_END";
+  private static final @NonNls String SCROLL_UP_ACTION_ID = "scrollUp";
+  private static final @NonNls String SCROLL_DOWN_ACTION_ID = "scrollDown";
+  private static final @NonNls String SELECT_PREVIOUS_ROW_ACTION_ID = "selectPreviousRow";
+  private static final @NonNls String SELECT_NEXT_ROW_ACTION_ID = "selectNextRow";
+  private static final @NonNls String SELECT_LAST_ROW_ACTION_ID = "selectLastRow";
+  private static final @NonNls String SELECT_FIRST_ROW_ACTION_ID = "selectFirstRow";
+  private static final @NonNls String MOVE_HOME_ID = "MOVE_HOME";
+  private static final @NonNls String MOVE_END_ID = "MOVE_END";
 
   public static final int ROW_PADDING = 2;
 
@@ -345,11 +338,11 @@ public final class ScrollingUtil {
     UIUtil.maybeInstall(map, MOVE_END_ID, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
   }
 
-  public interface ScrollingAction extends DumbAware {
+  public interface ScrollingAction extends DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   }
 
-  public static abstract class ListScrollAction extends MyScrollingAction {
+  public abstract static class ListScrollAction extends MyScrollingAction {
     protected ListScrollAction(@NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {
       super(component);
       registerCustomShortcutSet(shortcutSet, component);
@@ -374,8 +367,7 @@ public final class ScrollingUtil {
     }
   }
 
-  @NotNull
-  private static Rectangle getCellBounds(@NotNull JTable table, int top, int bottom) {
+  private static @NotNull Rectangle getCellBounds(@NotNull JTable table, int top, int bottom) {
     return table.getCellRect(top, 0, true).union(table.getCellRect(bottom,0,true));
   }
 
@@ -403,8 +395,7 @@ public final class ScrollingUtil {
     return 0 < table.getRowCount() ? 0 : -1;
   }
 
-  @NotNull
-  private static Point getLeadingPoint(@NotNull JTable table, @NotNull Rectangle visibleRect) {
+  private static @NotNull Point getLeadingPoint(@NotNull JTable table, @NotNull Rectangle visibleRect) {
     if (table.getComponentOrientation().isLeftToRight()) {
         return new Point(visibleRect.x, visibleRect.y);
     }
@@ -569,7 +560,10 @@ public final class ScrollingUtil {
     }
 
     protected boolean isEnabled() {
-      return SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent);
+      var speedSearch = SpeedSearchSupply.getSupply(myComponent);
+      // Check if the speed search supports its own navigation (such as go to next/previous match).
+      // If it doesn't, we take over instead.
+      return (speedSearch == null || !speedSearch.supportsNavigation()) && !isEmpty(myComponent);
     }
   }
 
@@ -676,7 +670,7 @@ public final class ScrollingUtil {
   }
 
   private static class ListMoveUpAction extends ListScrollAction {
-    private @NotNull final JList<?> myList;
+    private final @NotNull JList<?> myList;
     private final boolean myCycleScrolling;
 
     private ListMoveUpAction(@Nullable JComponent focusParent, @NotNull JList<?> list, boolean cycleScrolling) {
@@ -695,7 +689,7 @@ public final class ScrollingUtil {
   }
 
   private static class ListMoveEndAction extends ListScrollAction {
-    private @NotNull final JList<?> myList;
+    private final @NotNull JList<?> myList;
 
     private ListMoveEndAction(@Nullable JComponent focusParent, @NotNull JList<?> list) {
       super(CommonShortcuts.getMoveEnd(), focusParent == null ? list : focusParent);
@@ -709,7 +703,7 @@ public final class ScrollingUtil {
   }
 
   private static class ListMoveHomeAction extends ListScrollAction {
-    private @NotNull final JList<?> myList;
+    private final @NotNull JList<?> myList;
 
     private ListMoveHomeAction(@Nullable JComponent focusParent, @NotNull JList<?> list) {
       super(CommonShortcuts.getMoveHome(), focusParent == null ? list : focusParent);
@@ -723,7 +717,7 @@ public final class ScrollingUtil {
   }
 
   private static class ListMovePageDownAction extends ListScrollAction {
-    private @NotNull final JList<?> myList;
+    private final @NotNull JList<?> myList;
 
     private ListMovePageDownAction(@Nullable JComponent focusParent, @NotNull JList<?> list) {
       super(CommonShortcuts.getMovePageDown(), focusParent == null ? list : focusParent);
@@ -737,7 +731,7 @@ public final class ScrollingUtil {
   }
 
   private static class ListMovePageUpAction extends ListScrollAction {
-    private @NotNull final JList<?> myList;
+    private final @NotNull JList<?> myList;
 
     private ListMovePageUpAction(@Nullable JComponent focusParent, @NotNull JList<?> list) {
       super(CommonShortcuts.getMovePageUp(), focusParent == null ? list : focusParent);
@@ -751,7 +745,7 @@ public final class ScrollingUtil {
   }
 
   private static class ListMoveDownAction extends ListScrollAction {
-    private @NotNull final JList<?> myList;
+    private final @NotNull JList<?> myList;
     private final boolean myCycleScrolling;
 
     private ListMoveDownAction(@Nullable JComponent focusParent, @NotNull JList<?> list, boolean cycleScrolling) {
@@ -770,7 +764,7 @@ public final class ScrollingUtil {
   }
 
   private static class TableMoveHomeAction extends MyScrollingAction {
-    private @NotNull final JTable myTable;
+    private final @NotNull JTable myTable;
 
     private TableMoveHomeAction(@NotNull JTable table) {
       super(table);
@@ -784,7 +778,7 @@ public final class ScrollingUtil {
   }
 
   private static class TableMoveEndAction extends MyScrollingAction {
-    private @NotNull final JTable myTable;
+    private final @NotNull JTable myTable;
 
     private TableMoveEndAction(@NotNull JTable table) {
       super(table);
@@ -798,7 +792,7 @@ public final class ScrollingUtil {
   }
 
   private static class TableMoveDownAction extends MyScrollingAction {
-    private @NotNull final JTable myTable;
+    private final @NotNull JTable myTable;
     private final boolean myCycleScrolling;
     private final JComponent myTarget;
 
@@ -821,7 +815,7 @@ public final class ScrollingUtil {
   }
 
   private static class TableMoveUpAction extends MyScrollingAction {
-    private @NotNull final JTable myTable;
+    private final @NotNull JTable myTable;
     private final boolean myCycleScrolling;
     private final JComponent myTarget;
 
@@ -844,7 +838,7 @@ public final class ScrollingUtil {
   }
 
   private static class TableMovePageUpAction extends MyScrollingAction {
-    private @NotNull final JTable myTable;
+    private final @NotNull JTable myTable;
 
     private TableMovePageUpAction(@NotNull JTable table) {
       super(table);
@@ -858,7 +852,7 @@ public final class ScrollingUtil {
   }
 
   private static class TableMovePageDownAction extends MyScrollingAction {
-    private @NotNull final JTable myTable;
+    private final @NotNull JTable myTable;
 
     private TableMovePageDownAction(@NotNull JTable table) {
       super(table);

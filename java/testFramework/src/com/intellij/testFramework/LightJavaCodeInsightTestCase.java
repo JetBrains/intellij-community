@@ -2,12 +2,16 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
@@ -88,6 +92,16 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK()) {
+      @Override
+      protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+        DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
+      }
+    };
   }
 
   @NotNull

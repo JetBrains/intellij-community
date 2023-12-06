@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -80,9 +81,25 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
   }
 
   @Override
-  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
+    return null;
+  }
+
+  @Override
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    for (PsiElement element : elements) {
+      LineMarkerInfo<?> info = buildLineMarkerInfo(element);
+      if (info != null) {
+        result.add(info);
+      }
+    }
+  }
+
+  private LineMarkerInfo<?> buildLineMarkerInfo(@NotNull PsiElement element) {
     PsiModifierListOwner owner = getAnnotationOwner(element);
     if (owner == null) return null;
+
+    ProgressManager.checkCanceled();
 
     Collection<AnnotationDocGenerator> nonCodeAnnotations = NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values();
     if (getAnnotationLineMarkerType(nonCodeAnnotations) != myLineMarkerType) {
@@ -198,7 +215,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
              action instanceof DeannotateIntentionAction ||
              action.getClass().getName().equals("com.intellij.codeInspection.dataFlow.EditContractIntention") ||
              action instanceof MakeInferredAnnotationExplicit ||
-             action instanceof MakeExternalAnnotationExplicit;
+             action.asModCommandAction() instanceof MakeExternalAnnotationExplicit;
     }
   }
 }

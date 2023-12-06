@@ -23,3 +23,6 @@ object QObject : Q()
 fun usage() {
     A.<caret>foo()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+/* IGNORE_K2 */

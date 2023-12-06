@@ -1,12 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager;
+import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -66,31 +67,61 @@ public abstract class MetaAnnotationUtil {
   private static @NotNull Map<Pair<String, Boolean>, Collection<PsiClass>> getAllAnnotationClassesMap(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       Map<Pair<String, Boolean>, Collection<PsiClass>> map = ConcurrentFactoryMap.createMap(key -> {
-        PsiClass annotationClass = JavaPsiFacade.getInstance(module.getProject())
-          .findClass(key.getFirst(), moduleWithDependenciesAndLibrariesScope(module));
-        if (annotationClass == null || !annotationClass.isAnnotationType()) {
-          return emptySet();
-        }
-
-        PsiFile annotationFile = annotationClass.getContainingFile();
-        if (annotationFile == null) {
-          return emptySet();
-        }
-
-        if (ProjectScope.getLibrariesScope(module.getProject()).contains(annotationFile.getVirtualFile())) {
-          Collection<PsiClass> libsTypes = getChildLibraryAnnotations(module, key.getFirst());
-
-          return findAnnotationTypesWithChildren(libsTypes, getAnnotationSourceSearchScope(module, key.getSecond()));
-        }
-        else {
-          // annotation defined in Project sources, there is no sense in search in libraries
-          return findAnnotationTypesWithChildren(List.of(annotationClass), getAnnotationSourceSearchScope(module, key.getSecond()));
-        }
+        return findAnnotationClasses(module, key.getFirst(), key.getSecond());
       });
 
       return Result.create(map,
-                           UastModificationTracker.getInstance(module.getProject()),
-                           ProjectRootManager.getInstance(module.getProject()));
+                           OuterModelsModificationTrackerManager.getTracker(module.getProject()),
+                           JavaLibraryModificationTracker.getInstance(module.getProject()));
+    });
+  }
+
+  private static @NotNull Collection<PsiClass> findAnnotationClasses(@NotNull Module module,
+                                                                     @NotNull String qualifiedName,
+                                                                     boolean includeTests) {
+    PsiClass annotationClass = JavaPsiFacade.getInstance(module.getProject())
+      .findClass(qualifiedName, moduleWithDependenciesAndLibrariesScope(module));
+    if (annotationClass == null || !annotationClass.isAnnotationType()) {
+      return emptySet();
+    }
+
+    PsiFile annotationFile = annotationClass.getContainingFile();
+    if (annotationFile == null) {
+      return emptySet();
+    }
+
+    if (ProjectScope.getLibrariesScope(module.getProject()).contains(annotationFile.getVirtualFile())) {
+      Collection<PsiClass> libsTypes = getChildLibraryAnnotations(module, qualifiedName);
+
+      return findAnnotationTypesWithChildren(libsTypes, getAnnotationSourceSearchScope(module, includeTests));
+    }
+    else {
+      // annotation defined in Project sources, there is no sense in search in libraries
+      return findAnnotationTypesWithChildren(List.of(annotationClass), getAnnotationSourceSearchScope(module, includeTests));
+    }
+  }
+
+  public static Collection<String> getAnnotationNamesWithChildren(@NotNull Module module, String annotationName, boolean includeTests) {
+    return getAllAnnotationClassNamesMap(module).get(Pair.pair(annotationName, includeTests));
+  }
+
+  private static Collection<String> toNames(Collection<PsiClass> classes) {
+    return classes.stream()
+      .map(PsiClass::getQualifiedName)
+      .filter(Objects::nonNull)
+      .sorted()
+      .toList();
+  }
+
+  private static @NotNull Map<Pair<String, Boolean>, Collection<String>> getAllAnnotationClassNamesMap(@NotNull Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      Map<Pair<String, Boolean>, Collection<String>> map = ConcurrentFactoryMap.createMap(key -> {
+        return toNames(findAnnotationClasses(module, key.getFirst(), key.getSecond()));
+      });
+
+      return Result.create(map,
+                           OuterModelsModificationTrackerManager.getTracker(module.getProject()),
+                           JavaLibraryModificationTracker.getInstance(module.getProject()));
     });
   }
 
@@ -125,7 +156,8 @@ public abstract class MetaAnnotationUtil {
   }
 
   public static Set<PsiClass> getChildren(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
-    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) == null) {
+    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) ==
+        null) {
       return emptySet();
     }
 
@@ -338,6 +370,32 @@ public abstract class MetaAnnotationUtil {
         .filter(Objects::nonNull);
 
     return Stream.concat(directAnnotations, metaAnnotations);
+  }
+
+  public static @NotNull Stream<PsiClass> findAnnotationsByMeta(
+    @NotNull PsiModifierListOwner listOwner,
+    @NotNull Collection<String> metaAnnotations
+  ) {
+    Stream<PsiClass> directAnnotations = Stream.of(AnnotationUtil.findAnnotations(listOwner, metaAnnotations))
+      .map(MetaAnnotationUtil::resolveAnnotationType)
+      .filter(Objects::nonNull);
+
+    Stream<PsiClass> lazyResolvedAnnotations =
+      Stream.generate(() -> getResolvedClassesInAnnotationsList(listOwner)).limit(1)
+        .flatMap(Collection::stream);
+
+    Stream<PsiClass> indirectAnnotations =
+      lazyResolvedAnnotations
+        .flatMap(psiClass -> metaAnnotations.stream()
+          .map(annotationFQN -> {
+            PsiAnnotation metaAnnotation = metaAnnotationCached(psiClass, annotationFQN);
+            if (metaAnnotation != null) return psiClass;
+
+            return null;
+          }))
+        .filter(Objects::nonNull);
+
+    return Stream.concat(directAnnotations, indirectAnnotations);
   }
 
   private static List<PsiClass> getResolvedClassesInAnnotationsList(PsiModifierListOwner owner) {

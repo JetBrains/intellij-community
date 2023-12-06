@@ -9,41 +9,41 @@ import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.TreePath
 
 internal interface ProblemsTreeVisitor : TreeVisitor {
-  override fun visit(path: TreePath) = when (val node = TreeUtil.getLastUserObject(path)) {
+  override fun visit(path: TreePath): TreeVisitor.Action = when (val node = TreeUtil.getLastUserObject(path)) {
     is Root -> visitRoot(node)
     is FileNode -> visitFile(node)
-    is GroupNode -> visitGroup(node)
+    is ProblemsViewGroupNode -> visitGroup(node)
     is ProblemNode -> visitProblem(node)
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
 
-  fun visitRoot(root: Root) = TreeVisitor.Action.CONTINUE
+  fun visitRoot(root: Root): TreeVisitor.Action = TreeVisitor.Action.CONTINUE
   fun visitFile(node: FileNode): TreeVisitor.Action
-  fun visitGroup(node: GroupNode) = TreeVisitor.Action.SKIP_CHILDREN
-  fun visitProblem(node: ProblemNode) = TreeVisitor.Action.SKIP_CHILDREN
+  fun visitGroup(node: ProblemsViewGroupNode): TreeVisitor.Action = TreeVisitor.Action.SKIP_CHILDREN
+  fun visitProblem(node: ProblemNode): TreeVisitor.Action = TreeVisitor.Action.SKIP_CHILDREN
 }
 
 
 internal class FileNodeFinder(private val file: VirtualFile) : ProblemsTreeVisitor {
-  override fun visitFile(node: FileNode) = when (node.file) {
+  override fun visitFile(node: FileNode): TreeVisitor.Action = when (node.file) {
     file -> TreeVisitor.Action.INTERRUPT
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
 }
 
 internal class ProblemNodeFinder(private val problem: Problem) : ProblemsTreeVisitor {
-  override fun visitFile(node: FileNode) = when {
+  override fun visitFile(node: FileNode): TreeVisitor.Action = when {
     problem !is FileProblem -> TreeVisitor.Action.SKIP_CHILDREN
     node.file == problem.file -> TreeVisitor.Action.CONTINUE
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
 
-  override fun visitGroup(node: GroupNode) = when (node.group) {
+  override fun visitGroup(node: ProblemsViewGroupNode): TreeVisitor.Action = when (node.group) {
     problem.group -> TreeVisitor.Action.CONTINUE
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
 
-  override fun visitProblem(node: ProblemNode) = when (node.problem) {
+  override fun visitProblem(node: ProblemNode): TreeVisitor.Action = when (node.problem) {
     problem -> TreeVisitor.Action.INTERRUPT
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }

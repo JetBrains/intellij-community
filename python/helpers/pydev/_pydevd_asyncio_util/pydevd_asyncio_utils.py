@@ -4,6 +4,7 @@ from _pydevd_bundle.pydevd_constants import IS_ASYNCIO_DEBUGGER_ENV, IS_ASYNCIO_
 from _pydevd_bundle.pydevd_exec2 import Exec
 from _pydev_bundle.pydev_log import warn
 
+
 eval_async_expression_in_context = None
 eval_async_expression = None
 exec_async_code = None
@@ -11,7 +12,7 @@ asyncio_command_compiler = None
 
 if IS_ASYNCIO_DEBUGGER_ENV or IS_ASYNCIO_REPL:
     from _pydevd_bundle import pydevd_save_locals
-    from _pydevd_asyncio_util.pydevd_nest_asyncio import apply
+    from _pydevd_asyncio_util.pydevd_nest_asyncio import apply, PyDevCoro
     from codeop import CommandCompiler
     import ast, types, inspect, asyncio
 
@@ -114,9 +115,9 @@ if IS_ASYNCIO_DEBUGGER_ENV or IS_ASYNCIO_REPL:
         try:
             if inspect.iscoroutine(result) and MODULE in str(result):
                 loop = asyncio.get_event_loop()
-                result = loop.run_until_complete(result)
+                result = loop.run_until_complete(PyDevCoro(result))
         except:
-            warn('Failed to run coroutine %s'%str(result))
+            warn('Failed to run coroutine %s' % str(result))
         finally:
             return result
 

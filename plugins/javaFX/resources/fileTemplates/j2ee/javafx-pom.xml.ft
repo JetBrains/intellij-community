@@ -30,7 +30,13 @@
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-web</artifactId>
       <version>${context.getProperty("javafx.version")}</version>
-    </dependency>#end
+    </dependency>
+      <dependency>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-swing</artifactId>
+        <version>${context.getProperty("javafx.version")}</version>
+      </dependency>
+    #end
     #if ($context.hasLibrary("fxgl"))<dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-media</artifactId>
@@ -121,7 +127,7 @@
     </dependency>#end
     #if ($context.hasLanguage("kotlin"))<dependency>
       <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-stdlib-jdk8</artifactId>
+      <artifactId>kotlin-stdlib</artifactId>
       <version>${context.asPlaceholder("kotlin.version")}</version>
     </dependency>#end
   </dependencies>

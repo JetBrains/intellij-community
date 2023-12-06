@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -189,7 +188,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
       final DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
       if (type != null) {
-        myDeploymentSource = ReadAction.compute(() -> type.load(deploymentTag, getProject()));
+        myDeploymentSource = type.load(deploymentTag, getProject());
         myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
         ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
       }
@@ -203,7 +202,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
 
   @Nullable
   private static DeploymentSourceType<?> findDeploymentSourceType(@Nullable String id) {
-    for (DeploymentSourceType<?> type : DeploymentSourceType.EP_NAME.getExtensions()) {
+    for (DeploymentSourceType<?> type : DeploymentSourceType.EP_NAME.getExtensionList()) {
       if (type.getId().equals(id)) {
         return type;
       }

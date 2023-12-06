@@ -9,13 +9,25 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-artifact:3.0.5" type="repository">
-        <properties maven-id="org.apache.maven:maven-artifact:3.0.5" />
+        <properties maven-id="org.apache.maven:maven-artifact:3.0.5">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.0.5/maven-artifact-3.0.5.jar">
+              <sha256sum>c6d5e244dd2329971f91b8df666ffe9e0b00a7dd014d6ee073b6f6cb82877f5c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/2.0.6/plexus-utils-2.0.6.jar">
+              <sha256sum>8b909f4ca9788647942f883d4e559bcc642123f7c6bcd3846983a2e465469c33</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.0.5/maven-artifact-3.0.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/2.0.6/plexus-utils-2.0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.0.5/maven-artifact-3.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/2.0.6/plexus-utils-2.0.6-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>

@@ -9,9 +9,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
@@ -22,7 +23,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.replaceFirstReceiver
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyHandler
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -131,12 +132,13 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
         else -> throw KotlinExceptionWithAttachments("Only binary / is expressions are supported here: ${condition?.let { it::class.java }}")
             .withPsiAttachment("condition", condition)
     }!!
-    KotlinIntroduceVariableHandler.doRefactoring(
+    K1IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
         project,
         editor,
         occurrenceInConditional,
         false,
-        listOf(occurrenceInConditional, occurrenceInThenClause), null
+        listOf(occurrenceInConditional, occurrenceInThenClause),
+        onNonInteractiveFinish = null,
     )
 }
 
@@ -257,7 +259,7 @@ data class IfThenToSelectData(
                     if (replaced is KtQualifiedExpression) {
                         val call = replaced.callExpression
                         val callee = call?.calleeExpression
-                        if (callee != null && call.isCallingInvokeFunction(context)) {
+                        if (callee != null && callee.text != "invoke" && call.isCallingInvokeFunction(context)) {
                             replaced = factory.createExpressionByPattern("$0?.$1?.invoke()", replaced.receiverExpression, callee)
                         }
                     }
@@ -287,10 +289,10 @@ data class IfThenToSelectData(
         receiver: KtExpression,
         factory: KtPsiFactory
     ): KtExpression {
-        val needExplicitParameter = valueArguments.any { it.getArgumentExpression()?.text == "it" }
+        val needExplicitParameter = valueArguments.any { it.getArgumentExpression()?.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier }
         val parameterName = if (needExplicitParameter) {
             val scope = getResolutionScope()
-            Fe10KotlinNameSuggester.suggestNameByName("it") { scope.findVariable(Name.identifier(it), NoLookupLocation.FROM_IDE) == null }
+            KotlinNameSuggester.suggestNameByName("it") { scope.findVariable(Name.identifier(it), NoLookupLocation.FROM_IDE) == null }
         } else {
             "it"
         }
@@ -352,7 +354,7 @@ internal fun KtIfExpression.buildSelectTransformationData(): IfThenToSelectData?
 internal fun KtExpression?.isClauseTransformableToLetOnly(receiver: KtExpression?) =
     this is KtCallExpression && (resolveToCall()?.getImplicitReceiverValue() == null || receiver !is KtThisExpression)
 
-internal fun KtIfExpression.shouldBeTransformed(): Boolean = when (val condition = condition) {
+fun KtIfExpression.shouldBeTransformed(): Boolean = when (val condition = condition) {
     is KtBinaryExpression -> {
         val baseClause = (if (condition.operationToken == KtTokens.EQEQ) `else` else then)?.unwrapBlockOrParenthesis()
         !baseClause.isClauseTransformableToLetOnly(condition.checkedExpression())

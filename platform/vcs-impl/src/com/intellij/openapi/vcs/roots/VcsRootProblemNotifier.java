@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.notification.Notification;
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -133,6 +134,8 @@ public final class VcsRootProblemNotifier {
       notificationActions = new NotificationAction[]{enableIntegration, getConfigureNotificationAction(), ignoreAction};
     }
 
+    ProgressManager.checkCanceled();
+
     synchronized (NOTIFICATION_LOCK) {
       expireNotification();
       VcsNotifier notifier = VcsNotifier.getInstance(myProject);
@@ -172,13 +175,6 @@ public final class VcsRootProblemNotifier {
     else {
       myVcsManager.setDirectoryMappings(mappings);
     }
-  }
-
-  private boolean isUnderOrAboveProjectDir(@NotNull VcsDirectoryMapping mapping) {
-    String projectDir = Objects.requireNonNull(myProject.getBasePath());
-    return mapping.isDefaultMapping() ||
-           FileUtil.isAncestor(projectDir, mapping.getDirectory(), false) ||
-           FileUtil.isAncestor(mapping.getDirectory(), projectDir, false);
   }
 
   private boolean isIgnoredOrExcludedPath(@NotNull VcsDirectoryMapping mapping) {
@@ -300,7 +296,6 @@ public final class VcsRootProblemNotifier {
     return filter(errors, error -> {
       VcsDirectoryMapping mapping = error.getMapping();
       return error.getType() == UNREGISTERED_ROOT &&
-             isUnderOrAboveProjectDir(mapping) &&
              !isIgnoredOrExcludedPath(mapping) &&
              !isExplicitlyIgnoredPath(mapping) &&
              !conflictsWithExistingMapping(mapping);
@@ -328,7 +323,7 @@ public final class VcsRootProblemNotifier {
   @VisibleForTesting
   @NotNull
   String getPresentableMapping(@NotNull String mapping) {
-    FilePath filePath = VcsUtil.getFilePath(mapping);
+    FilePath filePath = VcsUtil.getFilePath(mapping, true);
     String presentablePath = VcsUtil.getPresentablePath(myProject, filePath, false, false);
     return escapeXmlEntities(presentablePath);
   }

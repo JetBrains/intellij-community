@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class CreateLabelFromTextAction implements LocalQuickFix, HighPriorityAction {
+public final class CreateLabelFromTextAction implements LocalQuickFix, HighPriorityAction {
   private final String myBundleKey;
   private final boolean myTextBeforeTag;
   private final String myName;
@@ -29,8 +29,7 @@ public class CreateLabelFromTextAction implements LocalQuickFix, HighPriorityAct
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return HtmlToolsBundle.message(myBundleKey, myName);
   }
 

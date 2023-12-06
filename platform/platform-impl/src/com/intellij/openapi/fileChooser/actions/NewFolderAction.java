@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.CommonBundle;
@@ -67,7 +67,7 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
 
       try {
         var progress = UIBundle.message("file.chooser.creating.progress", name);
-        var newDir = ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(e.getProject(), panel.getComponent(), progress, true) {
+        panel.reloadAfter(() -> ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(e.getProject(), panel.getComponent(), progress, true) {
           @Override
           protected Path compute(@NotNull ProgressIndicator indicator) throws IOException {
             indicator.setIndeterminate(true);
@@ -76,8 +76,7 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
             NioFiles.createDirectories(newDirectory);
             return newDirectory;
           }
-        });
-        panel.reload(newDir);
+        }));
         break;
       }
       catch (IOException | InvalidPathException ex) {
@@ -109,7 +108,7 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
     }
   }
 
-  private static class NewFolderValidator implements InputValidatorEx {
+  private static final class NewFolderValidator implements InputValidatorEx {
     private final VirtualFile myDirectory;
     private @NlsContexts.DetailedDescription String myErrorText;
 

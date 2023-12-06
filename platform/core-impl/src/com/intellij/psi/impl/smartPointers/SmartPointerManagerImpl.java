@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.Disposable;
@@ -16,26 +16,28 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public final class SmartPointerManagerImpl extends SmartPointerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(SmartPointerManagerImpl.class);
   private final Project myProject;
   private final PsiDocumentManagerBase myPsiDocManager;
   private final Key<WeakReference<SmartPointerTracker>> LIGHT_TRACKER_KEY;
-  private final ConcurrentMap<VirtualFile, SmartPointerTracker> myPhysicalTrackers = ContainerUtil.createConcurrentWeakValueMap();
+  private final ConcurrentMap<VirtualFile, SmartPointerTracker> myPhysicalTrackers = CollectionFactory.createConcurrentWeakValueMap();
 
   public SmartPointerManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -48,8 +50,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
     SmartPointerTracker.processQueue();
   }
 
-  @NotNull
-  private static @NonNls String anonymize(@NotNull Project project) {
+  private static @NotNull @NonNls String anonymize(@NotNull Project project) {
     return
       (project.isDisposed() ? "(Disposed)" : "") +
       (project.isDefault() ? "(Default)" : "") +
@@ -63,22 +64,19 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
 
   private static final Key<Reference<SmartPsiElementPointerImpl<?>>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
   @Override
-  @NotNull
-  public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
+  public @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile containingFile = element.getContainingFile();
     return createSmartPsiElementPointer(element, containingFile);
   }
   @Override
-  @NotNull
-  public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
+  public @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
     return createSmartPsiElementPointer(element, containingFile, false);
   }
 
-  @NotNull
-  public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
-                                                                                       PsiFile containingFile,
-                                                                                       boolean forInjected) {
+  public @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
+                                                                                                PsiFile containingFile,
+                                                                                                boolean forInjected) {
     ensureValid(element, containingFile);
     SmartPointerTracker.processQueue();
     ensureMyProject(containingFile != null ? containingFile.getProject() : element.getProject());
@@ -118,7 +116,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
 
   private static <E extends PsiElement> SmartPsiElementPointerImpl<E> getCachedPointer(@NotNull E element) {
     Reference<SmartPsiElementPointerImpl<?>> data = element.getUserData(CACHED_SMART_POINTER_KEY);
-    SmartPsiElementPointerImpl<?> cachedPointer = SoftReference.dereference(data);
+    SmartPsiElementPointerImpl<?> cachedPointer = dereference(data);
     if (cachedPointer != null) {
       PsiElement cachedElement = cachedPointer.getElement();
       if (cachedElement != element) {
@@ -130,15 +128,13 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
   }
 
   @Override
-  @NotNull
-  public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range) {
+  public @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range) {
     return createSmartPsiFileRangePointer(file, range, false);
   }
 
-  @NotNull
-  public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file,
-                                                          @NotNull TextRange range,
-                                                          boolean forInjected) {
+  public @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file,
+                                                                   @NotNull TextRange range,
+                                                                   boolean forInjected) {
     PsiUtilCore.ensureValid(file);
     SmartPointerTracker.processQueue();
     SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(this, file, ProperTextRange.create(range), forInjected);
@@ -191,11 +187,10 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
 
   @Nullable
   SmartPointerTracker getTracker(@NotNull VirtualFile file) {
-    return file instanceof LightVirtualFile ? SoftReference.dereference(file.getUserData(LIGHT_TRACKER_KEY)) : myPhysicalTrackers.get(file);
+    return file instanceof LightVirtualFile ? dereference(file.getUserData(LIGHT_TRACKER_KEY)) : myPhysicalTrackers.get(file);
   }
 
-  @NotNull
-  private SmartPointerTracker getOrCreateTracker(@NotNull VirtualFile file) {
+  private @NotNull SmartPointerTracker getOrCreateTracker(@NotNull VirtualFile file) {
     synchronized (myPhysicalTrackers) {
       SmartPointerTracker tracker = getTracker(file);
       if (tracker == null) {

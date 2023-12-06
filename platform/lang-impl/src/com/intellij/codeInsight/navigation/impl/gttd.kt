@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.*
+import com.intellij.codeInsight.navigation.CtrlMouseData
+import com.intellij.codeInsight.navigation.SymbolTypeProvider
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationPlaceAwareProvider
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
+import com.intellij.codeInsight.navigation.multipleTargetsCtrlMouseData
+import com.intellij.codeInsight.navigation.symbolCtrlMouseData
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolReference
@@ -14,10 +17,10 @@ import com.intellij.model.psi.impl.EvaluatorReference
 import com.intellij.model.psi.impl.TargetData
 import com.intellij.model.psi.impl.declaredReferencedData
 import com.intellij.model.psi.impl.mockEditor
-import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
@@ -44,17 +47,6 @@ internal class GTTDActionData(
 ) {
 
   private fun typeSymbols() = targetData.typeSymbols(project, editor, offset)
-
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  fun ctrlMouseInfo(): CtrlMouseInfo? {
-    val typeSymbols = typeSymbols().take(2).toList()
-    return when (typeSymbols.size) {
-      0 -> null
-      1 -> SingleSymbolCtrlMouseInfo(typeSymbols.single(), targetData.elementAtOffset(), targetData.highlightRanges(), false)
-      else -> MultipleTargetElementsInfo(targetData.highlightRanges())
-    }
-  }
 
   fun ctrlMouseData(): CtrlMouseData? {
     val typeSymbols = typeSymbols().take(2).toList()
@@ -152,11 +144,9 @@ private fun Sequence<Symbol>.navigationTargets(project: Project): Sequence<Navig
 internal fun result(navigationTargets: Collection<NavigationTarget>): NavigationActionResult? {
   return when (navigationTargets.size) {
     0 -> null
-    1 -> navigationTargets.single().navigationRequest()?.let { request ->
-      SingleTarget(request, null)
-    }
+    1 -> SingleTarget(navigationTargets.single()::navigationRequest, null)
     else -> MultipleTargets(navigationTargets.map { navigationTarget ->
-      LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.presentation(), null)
+      LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.computePresentation(), null)
     })
   }
 }

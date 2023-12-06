@@ -32,16 +32,8 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
         builder.setTitle(KotlinBundle.message("action.new.script.dialog.title"))
 
         builder
-            .addKind(
-                KotlinBundle.message("action.new.script.name"),
-                KotlinIcons.SCRIPT,
-                KOTLIN_SCRIPT_TEMPLATE_NAME
-            )
-            .addKind(
-                KotlinBundle.message("action.new.worksheet.name"),
-                KotlinIcons.SCRIPT,
-                KOTLIN_WORKSHEET_TEMPLATE_NAME
-            )
+            .addKind(KotlinFileTemplate.Script)
+            .addKind(KotlinFileTemplate.Worksheet)
 
         builder.setValidator(NewKotlinFileNameValidator)
     }

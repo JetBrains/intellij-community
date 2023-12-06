@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.execution.impl
@@ -8,15 +8,14 @@ import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.UnknownConfigurationType
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jdom.Element
-import java.util.*
 
-internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
+internal class RunConfigurationListManagerHelper(private val manager: RunManagerImpl) {
   // template configurations are not included here
-  val idToSettings = LinkedHashMap<String, RunnerAndConfigurationSettings>()
+  @JvmField
+  val idToSettings: LinkedHashMap<String, RunnerAndConfigurationSettings> = LinkedHashMap()
 
   private val customOrder = Object2IntOpenHashMap<String>()
 
@@ -35,6 +34,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     }
 
   @Volatile
+  @JvmField
   var immutableSortedSettingsList: List<RunnerAndConfigurationSettings>? = emptyList()
 
   fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>, isApplyAdditionalSortByTypeAndGroup: Boolean) {
@@ -56,8 +56,11 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     }
   }
 
-  private fun compareByTypeAndFolderAndCustomComparator(folderNames: List<String?>, comparator: Comparator<RunnerAndConfigurationSettings>): Comparator<RunnerAndConfigurationSettings> {
-    return kotlin.Comparator { o1, o2 ->
+  private fun compareByTypeAndFolderAndCustomComparator(
+    folderNames: List<String?>,
+    comparator: Comparator<RunnerAndConfigurationSettings>,
+  ): Comparator<RunnerAndConfigurationSettings> {
+    return Comparator { o1, o2 ->
       val type1 = o1.type
       val type2 = o2.type
       if (type1 !== type2) {
@@ -101,11 +104,11 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     }
 
     val listElement = Element("list")
-    idToSettings.values.forEachManaged {
+    idToSettings.values.managedOnly().forEach {
       listElement.addContent(Element("item").setAttribute("itemvalue", it.uniqueID))
     }
 
-    if (!JDOMUtil.isEmpty(listElement)) {
+    if (!listElement.isEmpty) {
       parent.addContent(listElement)
     }
   }
@@ -130,7 +133,9 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     }
 
     val folderNames = getSortedFolderNames(idToSettings.values)
-    val list = idToSettings.values.sortedWith(compareByTypeAndFolderAndCustomComparator(folderNames) { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.name, o2.name) })
+    val list = idToSettings.values.sortedWith(compareByTypeAndFolderAndCustomComparator(folderNames) { o1, o2 ->
+      NaturalComparator.INSTANCE.compare(o1.name, o2.name)
+    })
     idToSettings.clear()
     for (settings in list) {
       idToSettings.put(settings.uniqueID, settings)
@@ -157,7 +162,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
       }
     }
 
-    val result = Collections.unmodifiableList(idToSettings.values.toList())
+    val result = java.util.List.copyOf(idToSettings.values)
     immutableSortedSettingsList = result
     return result
   }
@@ -193,29 +198,31 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
 
   fun checkIfDependenciesAreStable(configuration: RunConfiguration, list: List<RunnerAndConfigurationSettings>) {
     for (runTask in configuration.beforeRunTasks) {
-      val runTaskSettings = (runTask as? RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)?.settings
+      val runTaskSettings = (runTask as? RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)?.getSettings(manager)
       if (runTaskSettings?.isTemporary == true) {
         manager.makeStable(runTaskSettings)
         checkIfDependenciesAreStable(runTaskSettings.configuration, list)
       }
     }
 
-    if (configuration is CompoundRunConfiguration) {
-      val children = configuration.getConfigurationsWithTargets(manager)
-      for (otherSettings in list) {
-        if (!otherSettings.isTemporary) {
-          continue
-        }
+    if (configuration !is CompoundRunConfiguration) {
+      return
+    }
 
-        val otherConfiguration = otherSettings.configuration
-        if (otherConfiguration === configuration) {
-          continue
-        }
+    val children = configuration.getConfigurationsWithTargets(manager)
+    for (otherSettings in list) {
+      if (!otherSettings.isTemporary) {
+        continue
+      }
 
-        if (children.keys.any { it === otherConfiguration } && otherSettings.isTemporary) {
-          manager.makeStable(otherSettings)
-          checkIfDependenciesAreStable(otherConfiguration, list)
-        }
+      val otherConfiguration = otherSettings.configuration
+      if (otherConfiguration === configuration) {
+        continue
+      }
+
+      if (children.keys.any { it === otherConfiguration } && otherSettings.isTemporary) {
+        manager.makeStable(otherSettings)
+        checkIfDependenciesAreStable(otherConfiguration, list)
       }
     }
   }
@@ -235,12 +242,8 @@ private fun getSortedFolderNames(list: Collection<RunnerAndConfigurationSettings
   return result
 }
 
-internal inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(handler: (settings: RunnerAndConfigurationSettings) -> Unit) {
-  for (settings in this) {
-    if (settings.type.isManaged) {
-      handler(settings)
-    }
-  }
+internal fun Collection<RunnerAndConfigurationSettings>.managedOnly(): Sequence<RunnerAndConfigurationSettings> {
+  return asSequence().filter { it.type.isManaged }
 }
 
 internal fun compareTypesForUi(type1: ConfigurationType, type2: ConfigurationType): Int {

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
+import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule;
@@ -58,12 +59,13 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     }
   }
 
-  public static @NotNull EventGroupRemoteDescriptor createGroupWithCustomRules(@NotNull String groupId, @NotNull String rules) {
+  public static @NotNull EventGroupRemoteDescriptor createGroupWithCustomRules(@NotNull String groupId, @NotNull String rules)
+    throws StreamReadException, DatabindException {
     final String content =
       "{\"id\":\"" + groupId + "\"," +
       "\"versions\":[ {\"from\" : \"1\"}]," +
       "\"rules\":" + rules + "}";
-    return new GsonBuilder().create().fromJson(content, EventGroupRemoteDescriptor.class);
+    return SerializationHelper.INSTANCE.deserialize(content, EventGroupRemoteDescriptor.class);
   }
 
   public static void addTestGroup(@NotNull String recorderId, @NotNull GroupValidationTestRule group) throws IOException {
@@ -94,10 +96,9 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     }
 
     approvedGroups.groups.add(group);
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
     Files.createDirectories(file.getParent());
     try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      gson.toJson(approvedGroups, EventGroupRemoteDescriptors.class, writer);
+      SerializationHelper.INSTANCE.serialize(writer, approvedGroups);
     }
   }
 
@@ -150,11 +151,10 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
       }
     }
 
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
     Path file = getEventsTestSchemeFile();
     Files.createDirectories(file.getParent());
     try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      gson.toJson(approvedGroups, EventGroupRemoteDescriptors.class, writer);
+      SerializationHelper.INSTANCE.serialize(writer, approvedGroups);
     }
   }
 }

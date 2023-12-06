@@ -11,10 +11,12 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
-internal fun searchTestRoots(project: String): Set<Path> {
+internal fun searchTestRoots(projectHomePath: String): Set<Path> {
   return try {
-    jpsProject(project)
+    jpsProject(projectHomePath)
       .modules.flatMap {
         it.getSourceRoots(JavaSourceRootType.TEST_SOURCE) +
         it.getSourceRoots(JavaResourceRootType.TEST_RESOURCE)
@@ -26,15 +28,26 @@ internal fun searchTestRoots(project: String): Set<Path> {
   }
 }
 
-internal fun jpsProject(path: String): JpsProject {
-  val file = Paths.get(FileUtil.toCanonicalPath(path))
+internal fun jpsProject(projectHomePath: String): JpsProject {
+  val file = Paths.get(FileUtil.toCanonicalPath(projectHomePath))
   return when {
-    path.endsWith(".ipr") ||
+    projectHomePath.endsWith(".ipr") ||
     Files.isDirectory(file.resolve(PathMacroUtil.DIRECTORY_STORE_NAME)) ||
     Files.isDirectory(file) && file.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME) -> {
-      JpsSerializationManager.getInstance().loadModel(path, null).project
+      JpsSerializationManager.getInstance().loadModel(projectHomePath, null).project
     }
-    file.parent == null -> error("Jps project isn't found at $file")
-    else -> jpsProject(file.parent.toString())
+    else -> error("Jps project isn't found at $file")
   }
+}
+
+internal fun findProjectHomePath(): String {
+  val workingDirectory = System.getProperty("user.dir")
+  var currentDir: Path? = Path.of(workingDirectory)
+  while (currentDir != null) {
+    if (currentDir.resolve(PathMacroUtil.DIRECTORY_STORE_NAME).exists()) {
+      return currentDir.pathString
+    }
+    currentDir = currentDir.parent
+  }
+  return workingDirectory
 }

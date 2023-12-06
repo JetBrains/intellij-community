@@ -2,6 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
@@ -10,7 +11,7 @@ internal class EditMemorySettingsPanel(private val option: VMOptions.MemoryKind,
   lateinit var newValueField: JBTextField
 
   @JvmField
-  val panel = panel {
+  val panel: DialogPanel = panel {
     val current = VMOptions.readOption(option, true)
     val file = EditMemorySettingsService.getInstance().userOptionsFile ?: throw IllegalStateException()
 

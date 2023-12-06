@@ -516,6 +516,7 @@ public final class MavenDomProjectProcessorUtils {
     private final MavenProjectsManager myManager;
 
     public DomParentProjectFileProcessor(MavenProjectsManager manager) {
+      super(manager.getProject());
       myManager = manager;
     }
 

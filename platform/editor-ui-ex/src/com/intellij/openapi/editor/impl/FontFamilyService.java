@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -115,6 +114,14 @@ public class FontFamilyService {
     return getFont(family, subFamily, subFamily, Font.PLAIN, size);
   }
 
+  public static @Nullable FontFamilyDescriptor getDescriptorByFont(@NotNull Font font) {
+    return getInstance().getDescriptorByFontImpl(font);
+  }
+
+  public static @Nullable Font getFontByDescriptor(@NotNull FontFamilyDescriptor descriptor) {
+    return getInstance().getFontByDescriptorImpl(descriptor);
+  }
+
   /**
    * Migrates from old font setting ('standard' font family name) to new font settings (typographic family name and typographic subfamily
    * names to be used for 'normal' and 'bold' font) if possible.
@@ -138,7 +145,7 @@ public class FontFamilyService {
   }
 
   protected @NotNull List<String> getAvailableFamiliesImpl() {
-    return Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames(Locale.ENGLISH));
+    return List.of(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames(Locale.ENGLISH));
   }
 
   protected boolean isMonospacedImpl(@NotNull String family) {
@@ -146,7 +153,7 @@ public class FontFamilyService {
   }
 
   protected @NotNull List<@NotNull String> getSubFamiliesImpl(@NotNull String family) {
-    return Arrays.asList(MAIN_FALLBACK_SUB_FAMILY, BOLD_FALLBACK_SUB_FAMILY);
+    return List.of(MAIN_FALLBACK_SUB_FAMILY, BOLD_FALLBACK_SUB_FAMILY);
   }
 
   protected @NotNull String getRecommendedSubFamilyImpl(@NotNull String family) {
@@ -169,7 +176,15 @@ public class FontFamilyService {
     return font;
   }
 
+  protected @Nullable FontFamilyDescriptor getDescriptorByFontImpl(@NotNull Font font) {
+    return null;
+  }
+
+  protected @Nullable Font getFontByDescriptorImpl(@NotNull FontFamilyDescriptor descriptor) {
+    return null;
+  }
+
   protected String @NotNull [] migrateFontSettingImpl(@NotNull String family) {
-    return new String[] {family, null, null};
+    return new String[]{family, null, null};
   }
 }

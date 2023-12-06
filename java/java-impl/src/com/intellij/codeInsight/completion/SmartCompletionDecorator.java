@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
@@ -32,7 +29,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
   @Nullable
   private TailType computeTailType(InsertionContext context) {
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-      return TailType.NONE;
+      return TailTypes.noneType();
     }
 
     if (LookupItem.getDefaultTailType(context.getCompletionChar()) != null) {
@@ -43,7 +40,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
     LookupItem<?> item = as(LookupItem.CLASS_CONDITION_KEY);
     Object object = delegate.getObject();
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && (object instanceof PsiMethod || object instanceof PsiClass)) {
-      return TailType.NONE;
+      return TailTypes.noneType();
     }
 
     PsiExpression enclosing =
@@ -51,7 +48,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
 
     if (enclosing != null) {
       final PsiType type = JavaCompletionUtil.getLookupElementType(delegate);
-      final TailType itemType = item != null ? item.getTailType() : TailType.NONE;
+      final TailType itemType = item != null ? item.getTailType() : TailTypes.noneType();
       if (type != null && type.isValid()) {
         Set<TailType> voidTyped = new HashSet<>();
         Set<TailType> sameTyped = new HashSet<>();
@@ -104,7 +101,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
 
     LookupItem<?> lookupItem = getDelegate().as(LookupItem.CLASS_CONDITION_KEY);
     if (lookupItem != null && tailType != null) {
-      lookupItem.setTailType(TailType.UNKNOWN);
+      lookupItem.setTailType(TailTypes.unknownType());
     }
     TailTypeDecorator.withTail(getDelegate(), tailType).handleInsert(context);
 

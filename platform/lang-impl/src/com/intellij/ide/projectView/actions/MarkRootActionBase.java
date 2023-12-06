@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.SaveAndSyncHandler;
@@ -166,7 +166,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     return result;
   }
 
-  public static class RootsSelection {
+  public static final class RootsSelection {
     public static final RootsSelection EMPTY = new RootsSelection(null);
     public final Module myModule;
 

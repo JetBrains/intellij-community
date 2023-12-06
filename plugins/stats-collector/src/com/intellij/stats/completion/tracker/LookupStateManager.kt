@@ -93,13 +93,13 @@ class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
   private fun computeAnalyticsItemFeatures(lookupElement: LookupElement): Map<String, String> {
     val features = mutableMapOf<String, String>()
     lookupElement.getUserData(LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS)?.let {
-      features["analytics_timestamp_show"] = it.toString()
+      features["ml_analytics_timestamp_show"] = it.toString()
     }
     lookupElement.getUserData(BaseCompletionService.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS)?.let {
-      features["analytics_timestamp_add"] = it.toString()
+      features["ml_analytics_timestamp_add"] = it.toString()
     }
     lookupElement.getUserData(BaseCompletionService.LOOKUP_ELEMENT_RESULT_SET_ORDER)?.let {
-      features["analytics_to_result_set_add_order"] = it.toString()
+      features["ml_analytics_to_result_set_add_order"] = it.toString()
     }
     return features
   }

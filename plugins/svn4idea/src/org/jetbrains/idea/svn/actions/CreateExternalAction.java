@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -36,11 +36,10 @@ import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 import static org.jetbrains.idea.svn.commandLine.CommandUtil.escape;
 import static org.jetbrains.idea.svn.properties.ExternalsDefinitionParser.parseExternalsProperty;
 
-public class CreateExternalAction extends DumbAwareAction {
+public final class CreateExternalAction extends DumbAwareAction {
   public CreateExternalAction() {
     super(messagePointer("svn.create.external.below.action"),
-          messagePointer("svn.create.external.below.description"),
-          null);
+          messagePointer("svn.create.external.below.description"));
   }
 
   @Override

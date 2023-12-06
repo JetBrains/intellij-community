@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.util.io.URLUtil;
@@ -22,7 +22,7 @@ import java.util.*;
  *
  * @author tav
  */
-final class JBCefFileSchemeHandlerFactory implements CefSchemeHandlerFactory  {
+final class JBCefFileSchemeHandlerFactory implements CefSchemeHandlerFactory {
   public static final String FILE_SCHEME_NAME = "file";
   public static final String LOADHTML_RANDOM_URL_PREFIX = FILE_SCHEME_NAME + ":///jbcefbrowser/";
 
@@ -34,11 +34,12 @@ final class JBCefFileSchemeHandlerFactory implements CefSchemeHandlerFactory  {
 
     String url = request.getURL();
     if (url == null) return null;
+    url = normalizeUrl(url);
 
     // 1) check if the request has been registered
     Map<String, String> map = LOADHTML_REQUEST_MAP.get(browser);
     if (map != null) {
-      String html = map.remove(request.getURL());
+      String html = map.get(url);
       if (html != null) {
         return new JBCefLoadHtmlResourceHandler(html);
       }
@@ -47,15 +48,14 @@ final class JBCefFileSchemeHandlerFactory implements CefSchemeHandlerFactory  {
     return null;
   }
 
-  @NotNull
-  public static String registerLoadHTMLRequest(@NotNull CefBrowser browser, @NotNull String html, @NotNull String origUrl) {
+  public static @NotNull String registerLoadHTMLRequest(@NotNull CefBrowser browser, @NotNull String html, @NotNull String origUrl) {
+    origUrl = normalizeUrl(origUrl);
     String fileUrl = makeFileUrl(origUrl);
     getInitMap(browser).put(fileUrl, html);
     return fileUrl;
   }
 
-  @NotNull
-  private static Map<String, String> getInitMap(@NotNull CefBrowser browser) {
+  private static @NotNull Map<String, String> getInitMap(@NotNull CefBrowser browser) {
     Map<String, String> map = LOADHTML_REQUEST_MAP.get(browser);
     if (map == null) {
       synchronized (LOADHTML_REQUEST_MAP) {
@@ -68,12 +68,15 @@ final class JBCefFileSchemeHandlerFactory implements CefSchemeHandlerFactory  {
     return map;
   }
 
-  @NotNull
-  public static String makeFileUrl(@NotNull String url) {
+  public static @NotNull String makeFileUrl(@NotNull String url) {
     if (url.startsWith(FILE_SCHEME_NAME + URLUtil.SCHEME_SEPARATOR)) {
       return url;
     }
     // otherwise make a random file:// url
-    return LOADHTML_RANDOM_URL_PREFIX + new Random().nextInt(Integer.MAX_VALUE) + "#url=" + url;
+    return normalizeUrl(LOADHTML_RANDOM_URL_PREFIX + new Random().nextInt(Integer.MAX_VALUE) + "#url=" + url);
+  }
+
+  private static @NotNull String normalizeUrl(@NotNull String url) {
+    return url.replaceAll("/$", "");
   }
 }

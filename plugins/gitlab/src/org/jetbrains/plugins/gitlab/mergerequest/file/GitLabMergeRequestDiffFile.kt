@@ -1,38 +1,26 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
-import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
-import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.ide.actions.SplitAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.util.cancelOnDispose
-import com.intellij.util.childScope
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridgeRepository
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabMergeRequestDiffFile(override val connectionId: String,
                                  private val project: Project,
                                  private val glProject: GitLabProjectCoordinates,
-                                 val mergeRequestId: GitLabMergeRequestId)
-  : DiffVirtualFile(GitLabBundle.message("merge.request.diff.file.name", mergeRequestId.iid)),
+                                 val mergeRequestIid: String)
+  : DiffVirtualFile(GitLabBundle.message("merge.request.diff.file.name", mergeRequestIid)),
     VirtualFilePathWrapper,
     GitLabVirtualFile {
 
@@ -42,48 +30,16 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
 
   override fun enforcePresentableName() = true
 
-  override fun isValid(): Boolean = findConnection() != null
+  override fun isValid(): Boolean = findProjectVm(project, connectionId) != null
 
   override fun getPath(): String =
-    (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestId, true)
+    (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestIid, true)
 
-  override fun getPresentablePath(): String = "$glProject/mergerequests/${mergeRequestId.iid}.diff"
-
-  private fun findConnection() = project.serviceIfCreated<GitLabProjectConnectionManager>()?.connectionState?.value?.takeIf {
-    it.id == connectionId
-  }
+  override fun getPresentablePath(): String = presentablePath(glProject, mergeRequestIid)
 
   override fun createProcessor(project: Project): DiffRequestProcessor {
-    val connection = findConnection() ?: error("Missing connection for $this")
-    val diffBridge: GitLabMergeRequestDiffBridge =
-      project.serviceIfCreated<GitLabMergeRequestDiffBridgeRepository>()?.get(connection, mergeRequestId)
-      ?: error("Missing diff model for $this")
-
-    val job = SupervisorJob()
-    val cs = CoroutineScope(job)
-
-    val reviewVm = GitLabMergeRequestDiffReviewViewModelImpl(cs, connection.currentUser, connection.projectData, mergeRequestId)
-
-    val uiCs = cs.childScope(Dispatchers.Main.immediate)
-    val processor = object : MutableDiffRequestChainProcessor(project, null) {
-      override fun selectFilePath(filePath: FilePath) {
-        uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
-          diffBridge.selectFilePath(filePath)
-        }
-      }
-    }.apply {
-      putContextUserData(GitLabProjectConnection.KEY, connection)
-      putContextUserData(GitLabMergeRequestDiffReviewViewModel.KEY, reviewVm)
-    }
-    job.cancelOnDispose(processor)
-
-    uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
-      processor.chain = SimpleDiffRequestChain(LoadingDiffRequest())
-      diffBridge.chain.collectLatest {
-        processor.chain = it
-      }
-    }
-    return processor
+    val projectVm = findProjectVm(project, connectionId) ?: error("Missing project view model for $this")
+    return project.service<GitLabMergeRequestDiffService>().createDiffRequestProcessor(projectVm, mergeRequestIid)
   }
 
   override fun getFileSystem(): VirtualFileSystem = GitLabVirtualFileSystem.getInstance()
@@ -101,17 +57,24 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
     if (connectionId != other.connectionId) return false
     if (project != other.project) return false
     if (glProject != other.glProject) return false
-    return mergeRequestId == other.mergeRequestId
+    return mergeRequestIid == other.mergeRequestIid
   }
 
   override fun hashCode(): Int {
     var result = connectionId.hashCode()
     result = 31 * result + project.hashCode()
     result = 31 * result + glProject.hashCode()
-    result = 31 * result + mergeRequestId.hashCode()
+    result = 31 * result + mergeRequestIid.hashCode()
     return result
   }
 
   override fun toString(): String =
-    "GitLabMergeRequestDiffFile(connectionId='$connectionId', project=$project, glProject=$glProject, mergeRequestId=$mergeRequestId)"
+    "GitLabMergeRequestDiffFile(connectionId='$connectionId', project=$project, glProject=$glProject, mergeRequestId=$mergeRequestIid)"
 }
+
+
+internal fun presentablePath(glProject: GitLabProjectCoordinates, mergeRequestIid: String): String =
+  "$glProject/mergerequests/${mergeRequestIid}.diff"
+
+internal fun findProjectVm(project: Project, connectionId: String): GitLabToolWindowProjectViewModel? =
+  project.serviceIfCreated<GitLabToolWindowViewModel>()?.projectVm?.value?.takeIf { it.connectionId == connectionId }

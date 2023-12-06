@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring
 
 import com.intellij.codeInsight.lookup.LookupManager
@@ -468,6 +468,67 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testExtractVirtualExpressionFromPolyadic(){
+    doTest()
+  }
+
+  fun testExtractVirtualExpressionFromSubstring(){
+    doTest()
+  }
+
+  fun testExtractExpressionFromClassContext(){
+    doTest{
+      nextTemplateVariable()
+    }
+  }
+
+  fun testExtractMethodFromClassContext(){
+    doTest{
+      nextTemplateVariable()
+    }
+  }
+
+  fun testFoldParametersInDuplicates(){
+    doTest()
+  }
+
+  fun testTypeParametersInNonStaticTarget(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = true
+    shouldSelectTargetClass("Inner in Test")
+    doTest()
+  }
+
+  fun testNonStaticExtractFromStaticInner(){
+    shouldSelectTargetClass("Inner in Test")
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
+    doTest()
+  }
+
+  fun testPassThisAsParameter(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
+  }
+
+  fun testCheckNameExtractedFromLambda(){
+    doTest {
+      nextTemplateVariable()
+    }
+  }
+
+  fun testChangeSignatureIsIgnored(){
+    DuplicatesMethodExtractor.changeSignatureDefault = true
+    doTest()
+  }
+
+  fun testKeepVarKeyword(){
+    doTest()
+  }
+
+  fun testDeclareVarType(){
+    JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = true
+    doTest()
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
@@ -482,8 +543,6 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
         override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
           doneReceived = true
         }
-        override fun conflictsDetected(refactoringId: String, conflictsData: RefactoringEventData) = Unit
-        override fun undoRefactoring(refactoringId: String) = Unit
       })
       startRefactoring(editor)
       require(startReceived)
@@ -514,11 +573,13 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     val settings = JavaRefactoringSettings.getInstance()
     val defaultStatic = settings.EXTRACT_STATIC_METHOD
     val defaultPassFields = settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS
+    val defaultDeclareVar = settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE
     val defaultChangeSignature = DuplicatesMethodExtractor.changeSignatureDefault
     val defaultReplaceDuplicates = DuplicatesMethodExtractor.replaceDuplicatesDefault
     Disposer.register(testRootDisposable) {
       settings.EXTRACT_STATIC_METHOD = defaultStatic
       settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = defaultPassFields
+      settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE = defaultDeclareVar
       DuplicatesMethodExtractor.changeSignatureDefault = defaultChangeSignature
       DuplicatesMethodExtractor.replaceDuplicatesDefault = defaultReplaceDuplicates
     }

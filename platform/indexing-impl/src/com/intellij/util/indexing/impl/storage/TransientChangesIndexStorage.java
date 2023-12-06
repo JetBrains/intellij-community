@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl.storage;
 
@@ -20,14 +20,12 @@ import java.util.Set;
 /**
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
  */
-public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(TransientChangesIndexStorage.class);
   private final Map<Key, TransientChangeTrackingValueContainer<Value>> myMap;
-  @NotNull
-  private final VfsAwareIndexStorage<Key, Value> myBackendStorage;
+  private final @NotNull VfsAwareIndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  @NotNull
-  private final ID<?, ?> myIndexId;
+  private final @NotNull ID<?, ?> myIndexId;
   private boolean myBufferingEnabled;
 
   public interface BufferingStateListener {
@@ -64,6 +62,9 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
   public boolean clearMemoryMap() {
     boolean modified = !myMap.isEmpty();
     myMap.clear();
+    if (modified && FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+      LOG.info("clearMemoryMap,index=" + myIndexId);
+    }
     return modified;
   }
 
@@ -71,6 +72,9 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
     TransientChangeTrackingValueContainer<Value> container = myMap.get(key);
     if (container != null) {
       container.dropAssociatedValue(fileId);
+      if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+        LOG.info("clearMemoryMapForId,inputId=" + fileId + ",index=" + myIndexId + ",key=" + key);
+      }
       return true;
     }
     return false;
@@ -85,11 +89,10 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
   @Override
   public void clearCaches() {
     try {
-      if (myMap.size() == 0) return;
+      if (myMap.isEmpty()) return;
 
-      if (IndexDebugProperties.DEBUG) {
-        String message = "Dropping caches for " + myIndexId + ", number of items:" + myMap.size();
-        ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().info(message);
+      if (IndexDebugProperties.DEBUG || FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+        LOG.info("clearCaches,index=" + myIndexId + ",number of items:" + myMap.size());
       }
 
       for (ChangeTrackingValueContainer<Value> v : myMap.values()) {
@@ -117,7 +120,12 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
   }
 
   @Override
-  public boolean processKeys(@NotNull final Processor<? super Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
+  public boolean isDirty() {
+    return myBackendStorage.isDirty();
+  }
+
+  @Override
+  public boolean processKeys(final @NotNull Processor<? super Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
     final Set<Key> stopList = new HashSet<>();
 
     Processor<Key> decoratingProcessor = key -> {
@@ -141,6 +149,10 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
 
   @Override
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
+    if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+      LOG.info("addValue,inputId=" + inputId + ",index=" + myIndexId + ",inMemory=" + myBufferingEnabled + "," + value);
+    }
+
     if (myBufferingEnabled) {
       getMemValueContainer(key).addValue(inputId, value);
       return;
@@ -155,6 +167,10 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
 
   @Override
   public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
+    if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+      LOG.info("removeAllValues,inputId=" + inputId + ",index=" + myIndexId + ",inMemory=" + myBufferingEnabled);
+    }
+
     if (myBufferingEnabled) {
       getMemValueContainer(key).removeAssociatedValue(inputId);
       return;
@@ -181,8 +197,7 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
   }
 
   @Override
-  @NotNull
-  public ValueContainer<Value> read(final Key key) throws StorageException {
+  public @NotNull ValueContainer<Value> read(final Key key) throws StorageException {
     final ValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer != null) {
       return valueContainer;

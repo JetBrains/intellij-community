@@ -27,8 +27,8 @@ public enum PythonHelper implements HelperPackage {
 
   // Packaging tools
   PACKAGING_TOOL("packaging_tool.py"),
-  VIRTUALENV_ZIPAPP("virtualenv-20.16.7.pyz"),
-  PY2_VIRTUALENV_ZIPAPP("virtualenv-20.13.0.pyz"),
+  VIRTUALENV_ZIPAPP("virtualenv-20.24.5.pyz"),
+  LEGACY_VIRTUALENV_ZIPAPP("virtualenv-20.13.0.pyz"), // virtualenv used to create virtual environments for python 2.7 & 3.6
 
   COVERAGEPY_OLD("coveragepy_old", ""),
   COVERAGEPY_NEW("coveragepy_new", ""),
@@ -72,7 +72,12 @@ public enum PythonHelper implements HelperPackage {
   EXTRA_SYSPATH("extra_syspath.py"),
   SYSPATH("syspath.py"),
 
+  // Compatible with 3.8+
   PYCODESTYLE("pycodestyle.py"),
+  // Compatible with 3.6+
+  PYCODESTYLE_2_10_0("pycodestyle-2.10.0.py"),
+  // Compatible with 2.7 and 3.5+
+  PYCODESTYLE_2_8_0("pycodestyle-2.8.0.py"),
 
   REST_RUNNER("rest_runners/rst2smth.py"),
 

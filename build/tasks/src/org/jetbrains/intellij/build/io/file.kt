@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.io
@@ -27,13 +27,13 @@ fun moveFile(source: Path, target: Path) {
   Files.move(source, target)
 }
 
-fun moveFileToDir(file: Path, targetDir: Path) {
+fun moveFileToDir(file: Path, targetDir: Path): Path {
   Files.createDirectories(targetDir)
-  Files.move(file, targetDir.resolve(file.fileName))
+  return Files.move(file, targetDir.resolve(file.fileName))
 }
 
 fun copyFile(file: Path, target: Path) {
-  doCopyFile(file, target, target.parent)
+  doCopyFile(file = file, target = target, targetDir = target.parent)
 }
 
 private fun doCopyFile(file: Path, target: Path, targetDir: Path) {

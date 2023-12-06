@@ -25,8 +25,8 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     configure("<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("--add-exports", "--add-opens",
-                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless=",
-                         "-dsa", "-Duser.dir=", "-Duser.home=", "-Duser.name=", "-ea", "-enableassertions", "-esa",
+                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless",
+                         "-dsa", "-Duser.dir", "-Duser.home", "-Duser.name", "-ea", "-enableassertions", "-esa",
                          "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
     checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
@@ -36,19 +36,41 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
   public void testSimpleOptions() {
     configure("-<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("-add-exports", "-add-opens",
-                         "agentlib:", "agentpath:", "D", "da", "disableassertions", "Djava.awt.headless=",
-                         "dsa", "Duser.dir=", "Duser.home=", "Duser.name=", "ea", "enableassertions", "esa",
-                         "javaagent:", "Xmx", "XX:"), myFixture.getLookupElementStrings());
+    assertEquals(List.of("--add-exports", "--add-opens",
+                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless",
+                         "-dsa", "-Duser.dir", "-Duser.home", "-Duser.name", "-ea", "-enableassertions", "-esa",
+                         "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
     checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
+  }
+
+  @Test
+  public void testSimpleOptionsAfterDot() {
+    configure("-Duser.<caret>");
+    myFixture.completeBasic();
+    assertEquals(List.of("-Duser.dir", "-Duser.home", "-Duser.name"), myFixture.getLookupElementStrings());
+  }
+
+  @Test
+  public void testSimpleOptionsAfterDash() {
+    configure("-add-<caret>");
+    myFixture.completeBasic();
+    assertEquals(List.of("--add-exports", "--add-opens"), myFixture.getLookupElementStrings());
+  }
+
+  @Test
+  public void testSimpleOptionsBeforeAnother() {
+    configure("-<caret> -ea");
+    myFixture.completeBasic();
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertContainsElements(strings, "-Duser.dir", "-Duser.home", "-Duser.name");
   }
 
   @Test
   public void testDoubleDash() {
     configure("--<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("add-exports", "add-opens"), myFixture.getLookupElementStrings());
+    assertEquals(List.of("--add-exports", "--add-opens"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
   }
 
@@ -125,7 +147,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
   
   @Test
   public void testVmOptionDocumentation() {
-    VMOption option = new VMOption("Flag", "bool", "true", VMOptionKind.Experimental, "SuperOption", VMOptionVariant.XX);
+    VMOption option = new VMOption("Flag", "bool", "true", VMOptionKind.Experimental, "SuperOption", VMOptionVariant.XX, null);
     DocumentationData result = (DocumentationData)option.computeDocumentation();
     String doc = result.getHtml();
     assertEquals("""
@@ -135,6 +157,20 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
                    <tr><td align="right" valign="top"><b>Type: </b></td><td>bool</td></tr>\
                    <tr><td align="right" valign="top"><b>Default value: </b></td><td>true</td></tr>\
                    <tr><td align="right" valign="top"><b>Description: </b></td><td>SuperOption</td></tr></table>""", doc);
+  }
+
+  @Test
+  public void testSimpleOptionCompletion() {
+    configure("-Duser.di<caret>");
+    myFixture.completeBasic();
+    myFixture.checkResult("-Duser.dir=<caret>");
+  }
+
+  @Test
+  public void testSimpleOptionTailReplace() {
+    configure("-Duser.di<caret>=");
+    myFixture.completeBasic();
+    myFixture.checkResult("-Duser.dir=<caret>");
   }
 
   private void configure(String text) {
@@ -154,14 +190,14 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     public CompletableFuture<JdkOptionsData> getOrComputeOptionsForJdk(@NotNull String javaHome) {
       assertEquals("/my/jre", javaHome);
       return CompletableFuture.completedFuture(new JdkOptionsData(List.of(
-        new VMOption("Flag", "bool", "true", VMOptionKind.Product, null, VMOptionVariant.XX),
-        new VMOption("MinusFlag", "bool", "false", VMOptionKind.Product, null, VMOptionVariant.XX),
-        new VMOption("Value", "uint", "10", VMOptionKind.Product, null, VMOptionVariant.XX),
-        new VMOption("Experimental", "uint", "10", VMOptionKind.Experimental, null, VMOptionVariant.XX),
-        new VMOption("Diagnostic", "uint", "20", VMOptionKind.Diagnostic, null, VMOptionVariant.XX),
-        new VMOption("mx", null, null, VMOptionKind.Product, null, VMOptionVariant.X),
-        new VMOption("add-exports", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH),
-        new VMOption("add-opens", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH)
+        new VMOption("Flag", "bool", "true", VMOptionKind.Product, null, VMOptionVariant.XX, null),
+        new VMOption("MinusFlag", "bool", "false", VMOptionKind.Product, null, VMOptionVariant.XX, null),
+        new VMOption("Value", "uint", "10", VMOptionKind.Product, null, VMOptionVariant.XX, null),
+        new VMOption("Experimental", "uint", "10", VMOptionKind.Experimental, null, VMOptionVariant.XX, null),
+        new VMOption("Diagnostic", "uint", "20", VMOptionKind.Diagnostic, null, VMOptionVariant.XX, null),
+        new VMOption("mx", null, null, VMOptionKind.Product, null, VMOptionVariant.X, null),
+        new VMOption("add-exports", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH, null),
+        new VMOption("add-opens", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH, null)
       )));
     }
   }

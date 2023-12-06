@@ -3,9 +3,9 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/helpers">
-      <sourceFolder url="file://$MODULE_DIR$/helpers" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/helpers/pydev" isTestSource="false" packagePrefix="pydev" />
-      <sourceFolder url="file://$MODULE_DIR$/helpers/third_party/thriftpy" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/helpers" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/helpers/pydev" type="java-resource" relativeOutputPath="pydev" />
+      <sourceFolder url="file://$MODULE_DIR$/helpers/third_party/thriftpy" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/helpers/env" />
       <excludeFolder url="file://$MODULE_DIR$/helpers/pydev/build" />
     </content>

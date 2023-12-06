@@ -1,6 +1,179 @@
 <component name="libraryTable">
   <library name="flexmark" type="repository">
-    <properties maven-id="com.vladsch.flexmark:flexmark-all:0.64.0">
+    <properties maven-id="com.vladsch.flexmark:flexmark-all:0.64.8">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-all/0.64.8/flexmark-all-0.64.8.jar">
+          <sha256sum>4b89d89af1251cb404e5f025714b3d52f60fb090fe546057e4640c7f30c05726</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark/0.64.8/flexmark-0.64.8.jar">
+          <sha256sum>3133878d108f0e1964d7d427f379a7433e1b71a45f9f3c1fab7ed0ac0301d3b0</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-abbreviation/0.64.8/flexmark-ext-abbreviation-0.64.8.jar">
+          <sha256sum>4f5d2dbac5775dcd32c1a6324618687883f0b287b3e243b836c7e8560be0bbea</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util/0.64.8/flexmark-util-0.64.8.jar">
+          <sha256sum>1e24c891dac9532bb722be7122c7026fb47868c3de36c02400eed8e9ad535727</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-admonition/0.64.8/flexmark-ext-admonition-0.64.8.jar">
+          <sha256sum>a6823ea45a5810ac1e97f545bdec83710797e6fcf6ca4eeefbe930e57a9a043d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-anchorlink/0.64.8/flexmark-ext-anchorlink-0.64.8.jar">
+          <sha256sum>36d6849df8548a71b0f87eb97d3690864b960a8e4979fedf865418c8903453a6</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-aside/0.64.8/flexmark-ext-aside-0.64.8.jar">
+          <sha256sum>feba989fc8207b3d67df517feaedadb2496c35d45827b3f0ab6b49d887743884</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-attributes/0.64.8/flexmark-ext-attributes-0.64.8.jar">
+          <sha256sum>4db42f300ec5490ff79e7d4e44000088e08d83d14096e7b3a9fd63119589ed77</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-autolink/0.64.8/flexmark-ext-autolink-0.64.8.jar">
+          <sha256sum>4850d6f895ec3f2932635829d74ff9a2fb00918965bb91c000ab497d603e11b8</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.6.0/autolink-0.6.0.jar">
+          <sha256sum>a80be030f6386f18111cad9161c0b6983157352a1b59a59e6002172f0d321c04</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-definition/0.64.8/flexmark-ext-definition-0.64.8.jar">
+          <sha256sum>d8dac5e0732c405702c932b3c495a0fc413224335333ce6009d830734e31e0e6</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-emoji/0.64.8/flexmark-ext-emoji-0.64.8.jar">
+          <sha256sum>012d2db51463afd84702627e493fedce42eb7deb1bae309ddcefd181ab283cbe</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-enumerated-reference/0.64.8/flexmark-ext-enumerated-reference-0.64.8.jar">
+          <sha256sum>e2f858bedf356e24db9d31c15cc57a2b14071074a850f8bbfdd8c632acf05942</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-escaped-character/0.64.8/flexmark-ext-escaped-character-0.64.8.jar">
+          <sha256sum>01009a3473c007bddecfe3cd3979282117b82d49812dcf347cebfcee47023712</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-footnotes/0.64.8/flexmark-ext-footnotes-0.64.8.jar">
+          <sha256sum>ae5244254e270ae6479803870fa791fe0ae12be242f72e47979412a8ae16df06</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-issues/0.64.8/flexmark-ext-gfm-issues-0.64.8.jar">
+          <sha256sum>0c332dcbeb703179dc88df368cdb71b3a5f486ceb62488cf8a816f7bebe71558</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-strikethrough/0.64.8/flexmark-ext-gfm-strikethrough-0.64.8.jar">
+          <sha256sum>fc6cad026fbd036b3ffd0448264360a5f1b572756ef3427ff022715b7fc5f1c3</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-tasklist/0.64.8/flexmark-ext-gfm-tasklist-0.64.8.jar">
+          <sha256sum>c86754ba8f0ffe997fa448da2a6ab2cfdbea9b381884cfed6f74bf513b77f5a9</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-users/0.64.8/flexmark-ext-gfm-users-0.64.8.jar">
+          <sha256sum>996f2e361c5918a5724a66766fe803a14c397aa9f7d0f75220ec1b9cae0b0c06</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gitlab/0.64.8/flexmark-ext-gitlab-0.64.8.jar">
+          <sha256sum>36dbd3e3253bc16f09c9773bb4c9b4e3476769c0f53430380b12ac1a47d59983</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-front-matter/0.64.8/flexmark-ext-jekyll-front-matter-0.64.8.jar">
+          <sha256sum>b11e4e61dbd4cb3e37ae325b2f9cd16dbf78f86bfd623d952bf0dfd6d685c46a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-tag/0.64.8/flexmark-ext-jekyll-tag-0.64.8.jar">
+          <sha256sum>234de845decddf253f7bebd5400e0c6c130ea5f89887c0f71958e033bcdc233e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-media-tags/0.64.8/flexmark-ext-media-tags-0.64.8.jar">
+          <sha256sum>8f2e41be52f9633aeaf36ce8d0ed222e6cc37ad9e0e6c943a0d304b2d071f600</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-resizable-image/0.64.8/flexmark-ext-resizable-image-0.64.8.jar">
+          <sha256sum>e3af2fd6d82e4cd5adf66a1b5cd68ae0c2cef7c7bccb2f2010c2eabe88eafbee</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-macros/0.64.8/flexmark-ext-macros-0.64.8.jar">
+          <sha256sum>bc846058d8a2bd66e7c4193fde8e194db089761e2534ce017ae99ac271fc8d3e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-ins/0.64.8/flexmark-ext-ins-0.64.8.jar">
+          <sha256sum>5b61b83c31cb0bd3273cbf12aed3887b63b8bdc6dfa17b03ecf479cf1ce176bd</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-xwiki-macros/0.64.8/flexmark-ext-xwiki-macros-0.64.8.jar">
+          <sha256sum>f986ce5aed53fa8db20fdf2a98e36aa5cafefb496516c8c031b84bfb081a5672</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-superscript/0.64.8/flexmark-ext-superscript-0.64.8.jar">
+          <sha256sum>457933324d1ca9f283bc15a1842777c6df0385f318fcceade4de41621395e402</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-tables/0.64.8/flexmark-ext-tables-0.64.8.jar">
+          <sha256sum>cdf82d26e112e96ade7e370138aeb16920b7e2d411d20c6c15cb1acfacd1ef1f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-toc/0.64.8/flexmark-ext-toc-0.64.8.jar">
+          <sha256sum>bf54f1bb7bca720341db0e322691725ab8e022b2ca269ad1e4f3705c16d37911</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-typographic/0.64.8/flexmark-ext-typographic-0.64.8.jar">
+          <sha256sum>61561a811c716843fee3cb7f18f00783c3a01c30a6ce653446738bcc900aeb13</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-wikilink/0.64.8/flexmark-ext-wikilink-0.64.8.jar">
+          <sha256sum>f32ef779eefb4c3b80d5bebf3c4b7ad7206fc46e083a5901cf51db7b4535ff79</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.64.8/flexmark-ext-yaml-front-matter-0.64.8.jar">
+          <sha256sum>6c60b85db4cc851301c1a52d712dc0909c5d2da9bd17ebae4d97a3a03afe22ee</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.64.8/flexmark-ext-youtube-embedded-0.64.8.jar">
+          <sha256sum>6fe195afee752df502ad4295ab0c4ec8ed79f5b0fdc5ff85b98c8bc512f0f11a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.64.8/flexmark-html2md-converter-0.64.8.jar">
+          <sha256sum>3f24a90a8fedd6708f06be72bbc9f5f5211abc49c35ee95918ce7b0b41651e62</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.64.8/flexmark-jira-converter-0.64.8.jar">
+          <sha256sum>ccc1c3a9659a104b75a53a2321e9c1d4cedb05acd867d4366d8b8e1647bd37dd</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.64.8/flexmark-pdf-converter-0.64.8.jar">
+          <sha256sum>2efacba4c37d4736f00fc35cd5685f8f00b83db9b3c80ca5602eda2fb9d2511c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-core/1.0.10/openhtmltopdf-core-1.0.10.jar">
+          <sha256sum>3e6fd2250d833d500b7cd48b7a896700d0c33bd9f77a219e820493b01566eda3</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-pdfbox/1.0.10/openhtmltopdf-pdfbox-1.0.10.jar">
+          <sha256sum>7de90df1b3ecf84e6f0daf808d724c11142007a2f22bff1936479bf17251d31a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/pdfbox/pdfbox/2.0.24/pdfbox-2.0.24.jar">
+          <sha256sum>3c2c0553ec0e7533c490b4c952e1af113621de5275af6e380e11d0d9a0a4f3d6</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/pdfbox/fontbox/2.0.24/fontbox-2.0.24.jar">
+          <sha256sum>2e8c0a569a90b04734fbc0c805d77f4ec03f98c11f5705055ccd7718c1953d68</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/pdfbox/xmpbox/2.0.24/xmpbox-2.0.24.jar">
+          <sha256sum>27383df2285b9e228c39f2c755adeebbef774793d33c4f20f0dc99e9ebaaf673</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/de/rototor/pdfbox/graphics2d/0.32/graphics2d-0.32.jar">
+          <sha256sum>37f8f387395f96c214ac44f7475c7a2e1f832dfc1de289a3610e0ffbf728f679</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-rtl-support/1.0.10/openhtmltopdf-rtl-support-1.0.10.jar">
+          <sha256sum>5675c0b56d613b15446f9d0922d89781af48f05331326a87bdb3d1775c703215</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-profile-pegdown/0.64.8/flexmark-profile-pegdown-0.64.8.jar">
+          <sha256sum>1ef21e536299c25c040f26ff9b229fdeef24c3661c6c371bc2b9462227652426</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-ast/0.64.8/flexmark-util-ast-0.64.8.jar">
+          <sha256sum>a5342f644c6a5f37d502f225c3a0cb699c263621c82e720d9c08eba5a9f3b8d3</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-builder/0.64.8/flexmark-util-builder-0.64.8.jar">
+          <sha256sum>afb9c88d9f652451e75f1ab069ad7ddd791d712eb211c51d8d2a83494240875d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-collection/0.64.8/flexmark-util-collection-0.64.8.jar">
+          <sha256sum>031ff01408d0f54c6235db18d451dc6e6b15b859b0ec1e40ff3429a82375082a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-data/0.64.8/flexmark-util-data-0.64.8.jar">
+          <sha256sum>83ceb5989ab0205054bf1b42446f55cb6da14c10aa7c2bda05d6a2504670f353</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-dependency/0.64.8/flexmark-util-dependency-0.64.8.jar">
+          <sha256sum>e41adb5e8144699b61b78d50eb004eeb7de84f90c4c63626609e6cee5ea28b42</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-format/0.64.8/flexmark-util-format-0.64.8.jar">
+          <sha256sum>6c9ac87686474edf0117b3f838d9dcb3b965fa72be4998d2177b598013679f73</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-html/0.64.8/flexmark-util-html-0.64.8.jar">
+          <sha256sum>5b19e6506aff7913c74ad725af7c2b8a9f23958e6324bf0710c5a645a4663017</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-misc/0.64.8/flexmark-util-misc-0.64.8.jar">
+          <sha256sum>74472ca81a9080e51ea1a4f11c270898e3d6c242c92275fab47eb993806c8f2b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-options/0.64.8/flexmark-util-options-0.64.8.jar">
+          <sha256sum>2489f41e9caf1d9f8061833b311b25403925cbb631fff2b8c069192804d6fc88</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-sequence/0.64.8/flexmark-util-sequence-0.64.8.jar">
+          <sha256sum>6e22976fe4e9b8de94fd529991ecb2d79cc482aad94985367470a93be1d82631</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-visitor/0.64.8/flexmark-util-visitor-0.64.8.jar">
+          <sha256sum>d9b3002a833a078c45e139568b306dab0ac117ff9046c6a1f9e180c0154563fc</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.8/flexmark-youtrack-converter-0.64.8.jar">
+          <sha256sum>06e556491d36876c1d7eb66b1300263a4e774c1541b9cffc6946f541df38a9b6</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="org.jsoup:jsoup" />
@@ -9,43 +182,43 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-all/0.64.0/flexmark-all-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark/0.64.0/flexmark-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-abbreviation/0.64.0/flexmark-ext-abbreviation-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util/0.64.0/flexmark-util-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-admonition/0.64.0/flexmark-ext-admonition-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-anchorlink/0.64.0/flexmark-ext-anchorlink-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-aside/0.64.0/flexmark-ext-aside-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-attributes/0.64.0/flexmark-ext-attributes-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-autolink/0.64.0/flexmark-ext-autolink-0.64.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-all/0.64.8/flexmark-all-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark/0.64.8/flexmark-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-abbreviation/0.64.8/flexmark-ext-abbreviation-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util/0.64.8/flexmark-util-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-admonition/0.64.8/flexmark-ext-admonition-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-anchorlink/0.64.8/flexmark-ext-anchorlink-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-aside/0.64.8/flexmark-ext-aside-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-attributes/0.64.8/flexmark-ext-attributes-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-autolink/0.64.8/flexmark-ext-autolink-0.64.8.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.6.0/autolink-0.6.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-definition/0.64.0/flexmark-ext-definition-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-emoji/0.64.0/flexmark-ext-emoji-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-enumerated-reference/0.64.0/flexmark-ext-enumerated-reference-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-escaped-character/0.64.0/flexmark-ext-escaped-character-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-footnotes/0.64.0/flexmark-ext-footnotes-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-issues/0.64.0/flexmark-ext-gfm-issues-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-strikethrough/0.64.0/flexmark-ext-gfm-strikethrough-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-tasklist/0.64.0/flexmark-ext-gfm-tasklist-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-users/0.64.0/flexmark-ext-gfm-users-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gitlab/0.64.0/flexmark-ext-gitlab-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-front-matter/0.64.0/flexmark-ext-jekyll-front-matter-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-tag/0.64.0/flexmark-ext-jekyll-tag-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-media-tags/0.64.0/flexmark-ext-media-tags-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-resizable-image/0.64.0/flexmark-ext-resizable-image-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-macros/0.64.0/flexmark-ext-macros-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-ins/0.64.0/flexmark-ext-ins-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-xwiki-macros/0.64.0/flexmark-ext-xwiki-macros-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-superscript/0.64.0/flexmark-ext-superscript-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-tables/0.64.0/flexmark-ext-tables-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-toc/0.64.0/flexmark-ext-toc-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-typographic/0.64.0/flexmark-ext-typographic-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-wikilink/0.64.0/flexmark-ext-wikilink-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.64.0/flexmark-ext-yaml-front-matter-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.64.0/flexmark-ext-youtube-embedded-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.64.0/flexmark-html2md-converter-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.64.0/flexmark-jira-converter-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.64.0/flexmark-pdf-converter-0.64.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-definition/0.64.8/flexmark-ext-definition-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-emoji/0.64.8/flexmark-ext-emoji-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-enumerated-reference/0.64.8/flexmark-ext-enumerated-reference-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-escaped-character/0.64.8/flexmark-ext-escaped-character-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-footnotes/0.64.8/flexmark-ext-footnotes-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-issues/0.64.8/flexmark-ext-gfm-issues-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-strikethrough/0.64.8/flexmark-ext-gfm-strikethrough-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-tasklist/0.64.8/flexmark-ext-gfm-tasklist-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-users/0.64.8/flexmark-ext-gfm-users-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gitlab/0.64.8/flexmark-ext-gitlab-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-front-matter/0.64.8/flexmark-ext-jekyll-front-matter-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-tag/0.64.8/flexmark-ext-jekyll-tag-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-media-tags/0.64.8/flexmark-ext-media-tags-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-resizable-image/0.64.8/flexmark-ext-resizable-image-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-macros/0.64.8/flexmark-ext-macros-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-ins/0.64.8/flexmark-ext-ins-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-xwiki-macros/0.64.8/flexmark-ext-xwiki-macros-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-superscript/0.64.8/flexmark-ext-superscript-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-tables/0.64.8/flexmark-ext-tables-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-toc/0.64.8/flexmark-ext-toc-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-typographic/0.64.8/flexmark-ext-typographic-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-wikilink/0.64.8/flexmark-ext-wikilink-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.64.8/flexmark-ext-yaml-front-matter-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.64.8/flexmark-ext-youtube-embedded-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.64.8/flexmark-html2md-converter-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.64.8/flexmark-jira-converter-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.64.8/flexmark-pdf-converter-0.64.8.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-core/1.0.10/openhtmltopdf-core-1.0.10.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-pdfbox/1.0.10/openhtmltopdf-pdfbox-1.0.10.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/pdfbox/pdfbox/2.0.24/pdfbox-2.0.24.jar!/" />
@@ -53,57 +226,56 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/pdfbox/xmpbox/2.0.24/xmpbox-2.0.24.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/de/rototor/pdfbox/graphics2d/0.32/graphics2d-0.32.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-rtl-support/1.0.10/openhtmltopdf-rtl-support-1.0.10.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-jsoup-dom-converter/1.0.0/openhtmltopdf-jsoup-dom-converter-1.0.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-profile-pegdown/0.64.0/flexmark-profile-pegdown-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-ast/0.64.0/flexmark-util-ast-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-builder/0.64.0/flexmark-util-builder-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-collection/0.64.0/flexmark-util-collection-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-data/0.64.0/flexmark-util-data-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-dependency/0.64.0/flexmark-util-dependency-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-format/0.64.0/flexmark-util-format-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-html/0.64.0/flexmark-util-html-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-misc/0.64.0/flexmark-util-misc-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-options/0.64.0/flexmark-util-options-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-sequence/0.64.0/flexmark-util-sequence-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-visitor/0.64.0/flexmark-util-visitor-0.64.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.0/flexmark-youtrack-converter-0.64.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-profile-pegdown/0.64.8/flexmark-profile-pegdown-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-ast/0.64.8/flexmark-util-ast-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-builder/0.64.8/flexmark-util-builder-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-collection/0.64.8/flexmark-util-collection-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-data/0.64.8/flexmark-util-data-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-dependency/0.64.8/flexmark-util-dependency-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-format/0.64.8/flexmark-util-format-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-html/0.64.8/flexmark-util-html-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-misc/0.64.8/flexmark-util-misc-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-options/0.64.8/flexmark-util-options-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-sequence/0.64.8/flexmark-util-sequence-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-visitor/0.64.8/flexmark-util-visitor-0.64.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.8/flexmark-youtrack-converter-0.64.8.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark/0.64.0/flexmark-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-abbreviation/0.64.0/flexmark-ext-abbreviation-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-admonition/0.64.0/flexmark-ext-admonition-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-anchorlink/0.64.0/flexmark-ext-anchorlink-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-aside/0.64.0/flexmark-ext-aside-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-attributes/0.64.0/flexmark-ext-attributes-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-autolink/0.64.0/flexmark-ext-autolink-0.64.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark/0.64.8/flexmark-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-abbreviation/0.64.8/flexmark-ext-abbreviation-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-admonition/0.64.8/flexmark-ext-admonition-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-anchorlink/0.64.8/flexmark-ext-anchorlink-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-aside/0.64.8/flexmark-ext-aside-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-attributes/0.64.8/flexmark-ext-attributes-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-autolink/0.64.8/flexmark-ext-autolink-0.64.8-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.6.0/autolink-0.6.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-definition/0.64.0/flexmark-ext-definition-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-emoji/0.64.0/flexmark-ext-emoji-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-enumerated-reference/0.64.0/flexmark-ext-enumerated-reference-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-escaped-character/0.64.0/flexmark-ext-escaped-character-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-footnotes/0.64.0/flexmark-ext-footnotes-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-issues/0.64.0/flexmark-ext-gfm-issues-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-strikethrough/0.64.0/flexmark-ext-gfm-strikethrough-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-tasklist/0.64.0/flexmark-ext-gfm-tasklist-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-users/0.64.0/flexmark-ext-gfm-users-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gitlab/0.64.0/flexmark-ext-gitlab-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-front-matter/0.64.0/flexmark-ext-jekyll-front-matter-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-tag/0.64.0/flexmark-ext-jekyll-tag-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-media-tags/0.64.0/flexmark-ext-media-tags-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-resizable-image/0.64.0/flexmark-ext-resizable-image-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-macros/0.64.0/flexmark-ext-macros-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-ins/0.64.0/flexmark-ext-ins-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-xwiki-macros/0.64.0/flexmark-ext-xwiki-macros-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-superscript/0.64.0/flexmark-ext-superscript-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-tables/0.64.0/flexmark-ext-tables-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-toc/0.64.0/flexmark-ext-toc-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-typographic/0.64.0/flexmark-ext-typographic-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-wikilink/0.64.0/flexmark-ext-wikilink-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.64.0/flexmark-ext-yaml-front-matter-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.64.0/flexmark-ext-youtube-embedded-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.64.0/flexmark-html2md-converter-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.64.0/flexmark-jira-converter-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.64.0/flexmark-pdf-converter-0.64.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-definition/0.64.8/flexmark-ext-definition-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-emoji/0.64.8/flexmark-ext-emoji-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-enumerated-reference/0.64.8/flexmark-ext-enumerated-reference-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-escaped-character/0.64.8/flexmark-ext-escaped-character-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-footnotes/0.64.8/flexmark-ext-footnotes-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-issues/0.64.8/flexmark-ext-gfm-issues-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-strikethrough/0.64.8/flexmark-ext-gfm-strikethrough-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-tasklist/0.64.8/flexmark-ext-gfm-tasklist-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-users/0.64.8/flexmark-ext-gfm-users-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gitlab/0.64.8/flexmark-ext-gitlab-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-front-matter/0.64.8/flexmark-ext-jekyll-front-matter-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-tag/0.64.8/flexmark-ext-jekyll-tag-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-media-tags/0.64.8/flexmark-ext-media-tags-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-resizable-image/0.64.8/flexmark-ext-resizable-image-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-macros/0.64.8/flexmark-ext-macros-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-ins/0.64.8/flexmark-ext-ins-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-xwiki-macros/0.64.8/flexmark-ext-xwiki-macros-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-superscript/0.64.8/flexmark-ext-superscript-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-tables/0.64.8/flexmark-ext-tables-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-toc/0.64.8/flexmark-ext-toc-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-typographic/0.64.8/flexmark-ext-typographic-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-wikilink/0.64.8/flexmark-ext-wikilink-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.64.8/flexmark-ext-yaml-front-matter-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.64.8/flexmark-ext-youtube-embedded-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.64.8/flexmark-html2md-converter-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.64.8/flexmark-jira-converter-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.64.8/flexmark-pdf-converter-0.64.8-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-core/1.0.10/openhtmltopdf-core-1.0.10-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-pdfbox/1.0.10/openhtmltopdf-pdfbox-1.0.10-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/pdfbox/pdfbox/2.0.24/pdfbox-2.0.24-javadoc.jar!/" />
@@ -111,57 +283,56 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/pdfbox/xmpbox/2.0.24/xmpbox-2.0.24-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/de/rototor/pdfbox/graphics2d/0.32/graphics2d-0.32-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-rtl-support/1.0.10/openhtmltopdf-rtl-support-1.0.10-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-jsoup-dom-converter/1.0.0/openhtmltopdf-jsoup-dom-converter-1.0.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-profile-pegdown/0.64.0/flexmark-profile-pegdown-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-ast/0.64.0/flexmark-util-ast-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-builder/0.64.0/flexmark-util-builder-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-collection/0.64.0/flexmark-util-collection-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-data/0.64.0/flexmark-util-data-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-dependency/0.64.0/flexmark-util-dependency-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-format/0.64.0/flexmark-util-format-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-html/0.64.0/flexmark-util-html-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-misc/0.64.0/flexmark-util-misc-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-options/0.64.0/flexmark-util-options-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-sequence/0.64.0/flexmark-util-sequence-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-visitor/0.64.0/flexmark-util-visitor-0.64.0-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.0/flexmark-youtrack-converter-0.64.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-profile-pegdown/0.64.8/flexmark-profile-pegdown-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-ast/0.64.8/flexmark-util-ast-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-builder/0.64.8/flexmark-util-builder-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-collection/0.64.8/flexmark-util-collection-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-data/0.64.8/flexmark-util-data-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-dependency/0.64.8/flexmark-util-dependency-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-format/0.64.8/flexmark-util-format-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-html/0.64.8/flexmark-util-html-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-misc/0.64.8/flexmark-util-misc-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-options/0.64.8/flexmark-util-options-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-sequence/0.64.8/flexmark-util-sequence-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-visitor/0.64.8/flexmark-util-visitor-0.64.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.8/flexmark-youtrack-converter-0.64.8-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark/0.64.0/flexmark-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-abbreviation/0.64.0/flexmark-ext-abbreviation-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-admonition/0.64.0/flexmark-ext-admonition-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-anchorlink/0.64.0/flexmark-ext-anchorlink-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-aside/0.64.0/flexmark-ext-aside-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-attributes/0.64.0/flexmark-ext-attributes-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-autolink/0.64.0/flexmark-ext-autolink-0.64.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark/0.64.8/flexmark-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-abbreviation/0.64.8/flexmark-ext-abbreviation-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-admonition/0.64.8/flexmark-ext-admonition-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-anchorlink/0.64.8/flexmark-ext-anchorlink-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-aside/0.64.8/flexmark-ext-aside-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-attributes/0.64.8/flexmark-ext-attributes-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-autolink/0.64.8/flexmark-ext-autolink-0.64.8-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.6.0/autolink-0.6.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-definition/0.64.0/flexmark-ext-definition-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-emoji/0.64.0/flexmark-ext-emoji-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-enumerated-reference/0.64.0/flexmark-ext-enumerated-reference-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-escaped-character/0.64.0/flexmark-ext-escaped-character-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-footnotes/0.64.0/flexmark-ext-footnotes-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-issues/0.64.0/flexmark-ext-gfm-issues-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-strikethrough/0.64.0/flexmark-ext-gfm-strikethrough-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-tasklist/0.64.0/flexmark-ext-gfm-tasklist-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-users/0.64.0/flexmark-ext-gfm-users-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gitlab/0.64.0/flexmark-ext-gitlab-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-front-matter/0.64.0/flexmark-ext-jekyll-front-matter-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-tag/0.64.0/flexmark-ext-jekyll-tag-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-media-tags/0.64.0/flexmark-ext-media-tags-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-resizable-image/0.64.0/flexmark-ext-resizable-image-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-macros/0.64.0/flexmark-ext-macros-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-ins/0.64.0/flexmark-ext-ins-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-xwiki-macros/0.64.0/flexmark-ext-xwiki-macros-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-superscript/0.64.0/flexmark-ext-superscript-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-tables/0.64.0/flexmark-ext-tables-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-toc/0.64.0/flexmark-ext-toc-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-typographic/0.64.0/flexmark-ext-typographic-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-wikilink/0.64.0/flexmark-ext-wikilink-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.64.0/flexmark-ext-yaml-front-matter-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.64.0/flexmark-ext-youtube-embedded-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.64.0/flexmark-html2md-converter-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.64.0/flexmark-jira-converter-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.64.0/flexmark-pdf-converter-0.64.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-definition/0.64.8/flexmark-ext-definition-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-emoji/0.64.8/flexmark-ext-emoji-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-enumerated-reference/0.64.8/flexmark-ext-enumerated-reference-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-escaped-character/0.64.8/flexmark-ext-escaped-character-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-footnotes/0.64.8/flexmark-ext-footnotes-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-issues/0.64.8/flexmark-ext-gfm-issues-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-strikethrough/0.64.8/flexmark-ext-gfm-strikethrough-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-tasklist/0.64.8/flexmark-ext-gfm-tasklist-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-users/0.64.8/flexmark-ext-gfm-users-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gitlab/0.64.8/flexmark-ext-gitlab-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-front-matter/0.64.8/flexmark-ext-jekyll-front-matter-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-tag/0.64.8/flexmark-ext-jekyll-tag-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-media-tags/0.64.8/flexmark-ext-media-tags-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-resizable-image/0.64.8/flexmark-ext-resizable-image-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-macros/0.64.8/flexmark-ext-macros-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-ins/0.64.8/flexmark-ext-ins-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-xwiki-macros/0.64.8/flexmark-ext-xwiki-macros-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-superscript/0.64.8/flexmark-ext-superscript-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-tables/0.64.8/flexmark-ext-tables-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-toc/0.64.8/flexmark-ext-toc-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-typographic/0.64.8/flexmark-ext-typographic-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-wikilink/0.64.8/flexmark-ext-wikilink-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.64.8/flexmark-ext-yaml-front-matter-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.64.8/flexmark-ext-youtube-embedded-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.64.8/flexmark-html2md-converter-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.64.8/flexmark-jira-converter-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.64.8/flexmark-pdf-converter-0.64.8-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-core/1.0.10/openhtmltopdf-core-1.0.10-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-pdfbox/1.0.10/openhtmltopdf-pdfbox-1.0.10-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/pdfbox/pdfbox/2.0.24/pdfbox-2.0.24-sources.jar!/" />
@@ -169,20 +340,19 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/pdfbox/xmpbox/2.0.24/xmpbox-2.0.24-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/de/rototor/pdfbox/graphics2d/0.32/graphics2d-0.32-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-rtl-support/1.0.10/openhtmltopdf-rtl-support-1.0.10-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-jsoup-dom-converter/1.0.0/openhtmltopdf-jsoup-dom-converter-1.0.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-profile-pegdown/0.64.0/flexmark-profile-pegdown-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-ast/0.64.0/flexmark-util-ast-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-builder/0.64.0/flexmark-util-builder-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-collection/0.64.0/flexmark-util-collection-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-data/0.64.0/flexmark-util-data-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-dependency/0.64.0/flexmark-util-dependency-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-format/0.64.0/flexmark-util-format-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-html/0.64.0/flexmark-util-html-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-misc/0.64.0/flexmark-util-misc-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-options/0.64.0/flexmark-util-options-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-sequence/0.64.0/flexmark-util-sequence-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-visitor/0.64.0/flexmark-util-visitor-0.64.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.0/flexmark-youtrack-converter-0.64.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-profile-pegdown/0.64.8/flexmark-profile-pegdown-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-ast/0.64.8/flexmark-util-ast-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-builder/0.64.8/flexmark-util-builder-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-collection/0.64.8/flexmark-util-collection-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-data/0.64.8/flexmark-util-data-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-dependency/0.64.8/flexmark-util-dependency-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-format/0.64.8/flexmark-util-format-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-html/0.64.8/flexmark-util-html-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-misc/0.64.8/flexmark-util-misc-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-options/0.64.8/flexmark-util-options-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-sequence/0.64.8/flexmark-util-sequence-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-visitor/0.64.8/flexmark-util-visitor-0.64.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.8/flexmark-youtrack-converter-0.64.8-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

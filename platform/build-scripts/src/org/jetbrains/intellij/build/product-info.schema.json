@@ -3,7 +3,7 @@
   "$id": "http://jetbrains.org/intellij/schema/product.schema.json",
   "title": "IntelliJ-based IDE installation",
   "description": "Meta-information about installation of an IDE based on IntelliJ Platform",
-  "version": "0.2",
+  "version": "0.3",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -47,7 +47,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["os", "launcherPath", "vmOptionsFilePath"],
+        "required": ["os", "arch", "launcherPath", "vmOptionsFilePath"],
         "additionalProperties": false,
         "minItems": 1,
         "properties": {
@@ -91,6 +91,58 @@
             "items": {
               "type": "string",
               "minItems": 1
+            }
+          },
+          "mainClass": {
+            "description": "A name of the class to launch",
+            "type": "string"
+          },
+          "customCommands": {
+            "description": "Specifies custom values for some properties if IDE is started with a specific command",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["commands"],
+              "additionalProperties": false,
+              "minItems": 0,
+              "properties": {
+                "commands": {
+                  "description": "List of commands (specified as the first argument in the command line) this customization should be used for",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minItems": 1
+                  }
+                },
+                "vmOptionsFilePath": {
+                  "description": "Overrides value of 'vmOptionsFilePath' for the specified commands",
+                  "type": "string"
+                },
+                "bootClassPathJarNames": {
+                  "description": "Overrides value of 'bootClassPathJarNames' for the specified commands",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minItems": 1
+                  }
+                },
+                "additionalJvmArguments": {
+                  "description": "Overrides value of 'additionalJvmArguments' for the specified commands",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minItems": 1
+                  }
+                },
+                "mainClass": {
+                  "description": "Overrides value of 'mainClass' for the specified commands",
+                  "type": "string"
+                },
+                "dataDirectoryName": {
+                  "description": "Overrides 'dataDirectoryName' from product-info object for the specified commands",
+                  "type": "string"
+                }
+              }
             }
           }
         }

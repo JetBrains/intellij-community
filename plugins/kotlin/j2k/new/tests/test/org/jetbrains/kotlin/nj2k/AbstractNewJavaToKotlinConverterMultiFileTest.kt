@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
+import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -95,5 +95,5 @@ abstract class AbstractNewJavaToKotlinConverterMultiFileTest : AbstractJavaToKot
         }
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor()
 }

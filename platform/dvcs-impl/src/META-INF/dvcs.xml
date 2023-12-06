@@ -12,7 +12,7 @@
                     interface="com.intellij.dvcs.repo.VcsRepositoryCreator"
                     dynamic="true"/>
 
-    <extensionPoint name="prePushHandler" interface="com.intellij.dvcs.push.PrePushHandler" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="prePushHandler" interface="com.intellij.dvcs.push.PrePushHandler" dynamic="true"/>
     <extensionPoint name="clonePathProvider"
                     interface="com.intellij.dvcs.repo.ClonePathProvider"
                     dynamic="true"/>
@@ -25,6 +25,10 @@
 
     <extensionPoint name="commitNodeUiRenderExtension"
                     interface="com.intellij.dvcs.push.ui.CommitNodeUiRenderExtension"
+                    dynamic="true"/>
+
+    <extensionPoint name="customPushOptionsPanelFactory"
+                    interface="com.intellij.dvcs.push.CustomPushOptionsPanelFactory"
                     dynamic="true"/>
   </extensionPoints>
   <actions>

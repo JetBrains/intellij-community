@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenFileTemplateGroupFactory;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -30,7 +31,7 @@ public class OpenOrCreateSettingsXmlAction extends MavenOpenOrCreateFilesAction 
     final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
     if(projectsManager == null) return Collections.emptyList();
     File file = projectsManager.getGeneralSettings().getEffectiveUserSettingsIoFile();
-    return file != null ? Collections.singletonList(file) : Collections.emptyList();
+    return ContainerUtil.createMaybeSingletonList(file);
   }
 
   @Override

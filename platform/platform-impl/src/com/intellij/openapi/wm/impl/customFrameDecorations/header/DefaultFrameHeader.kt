@@ -1,47 +1,35 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
-import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationTitle
-import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
-import com.jetbrains.CustomWindowDecoration.*
-import net.miginfocom.swing.MigLayout
 import java.awt.Frame
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import javax.swing.JFrame
 
 internal class DefaultFrameHeader(frame: JFrame, isForDockContainerProvider: Boolean) : FrameHeader(frame) {
   private val customDecorationTitle = CustomDecorationTitle(frame, isForDockContainerProvider = isForDockContainerProvider)
 
   init {
-    layout = MigLayout("novisualpadding, ins 0, fillx, gap 0", "[min!][][pref!]")
+    layout = GridBagLayout()
 
-    updateCustomDecorationHitTestSpots()
+    updateCustomTitleBar()
 
     productIcon.border = JBUI.Borders.empty(V, H, V, H)
     customDecorationTitle.view.border = JBUI.Borders.empty(V, 0, V, H)
 
-    add(productIcon)
-    add(customDecorationTitle.view, "wmin 0, left, growx, center")
-    add(buttonPanes.getView(), "top, wmin pref")
+    val gb = GridBag().setDefaultFill(GridBagConstraints.VERTICAL).setDefaultAnchor(GridBagConstraints.WEST)
+    add(productIcon, gb.next())
+    add(customDecorationTitle.view, gb.next().fillCell().weightx(1.0))
+    buttonPanes?.let { add(it.getView(), gb.next().anchor(GridBagConstraints.EAST)) }
 
-    setCustomFrameTopBorder(isTopNeeded = { myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH })
+    setCustomFrameTopBorder(isTopNeeded = { state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH })
   }
 
   override fun updateActive() {
-    customDecorationTitle.setActive(myActive)
+    customDecorationTitle.setActive(isActive)
     super.updateActive()
-  }
-
-  override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
-    val buttons = buttonPanes as ResizableCustomFrameTitleButtons
-    val hitTestSpots = ArrayList<Pair<RelativeRectangle, Int>>()
-    hitTestSpots.add(Pair(RelativeRectangle(productIcon), OTHER_HIT_SPOT))
-    hitTestSpots.add(Pair(RelativeRectangle(buttons.minimizeButton), MINIMIZE_BUTTON))
-    hitTestSpots.add(Pair(RelativeRectangle(buttons.maximizeButton), MAXIMIZE_BUTTON))
-    hitTestSpots.add(Pair(RelativeRectangle(buttons.restoreButton), MAXIMIZE_BUTTON))
-    hitTestSpots.add(Pair(RelativeRectangle(buttons.closeButton), CLOSE_BUTTON))
-    hitTestSpots.addAll(customDecorationTitle.getBoundList().map { Pair(it, OTHER_HIT_SPOT) })
-    return hitTestSpots.asSequence()
   }
 }

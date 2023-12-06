@@ -20,6 +20,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiUsesStatement;
 import com.intellij.psi.impl.java.stubs.impl.PsiUsesStatementStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiUsesStatementImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -35,7 +36,7 @@ import java.io.IOException;
 
 public class JavaUsesStatementElementType extends JavaStubElementType<PsiUsesStatementStub, PsiUsesStatement> {
   public JavaUsesStatementElementType() {
-    super("USES_STATEMENT");
+    super("USES_STATEMENT", BasicJavaElementType.BASIC_USES_STATEMENT);
   }
 
   @NotNull

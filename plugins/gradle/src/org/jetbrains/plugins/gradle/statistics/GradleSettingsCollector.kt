@@ -8,8 +8,8 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.Companion.JRE_TYPE_FIELD
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsageFields
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsageFields.JRE_TYPE_FIELD
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
@@ -20,10 +20,8 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-class GradleSettingsCollector : ProjectUsagesCollector() {
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+internal class GradleSettingsCollector : ProjectUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val gradleSettings = GradleSettings.getInstance(project)
@@ -42,6 +40,8 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(HAS_CUSTOM_GRADLE_VM_OPTIONS.metric(!gradleSettings.gradleVmOptions.isNullOrBlank()))
     usages.add(SHOW_SELECTIVE_IMPORT_DIALOG_ON_INITIAL_IMPORT.metric(gradleSettings.showSelectiveImportDialogOnInitialImport()))
     usages.add(STORE_PROJECT_FILES_EXTERNALLY.metric(gradleSettings.storeProjectFilesExternally))
+    usages.add(GRADLE_DOWNLOAD_DEPENDENCY_SOURCES.metric(gradleSettings.isDownloadSources))
+    usages.add(GRADLE_PARALLEL_MODEL_FETCH.metric(gradleSettings.isParallelModelFetch))
 
     // project settings
     for (setting in gradleSettings.linkedProjectsSettings) {
@@ -56,8 +56,8 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
       usages.add(IS_COMPOSITE_BUILDS.metric(setting.compositeBuild != null))
       usages.add(DISABLE_WRAPPER_SOURCE_DISTRIBUTION_NOTIFICATION.metric(setting.isDisableWrapperSourceDistributionNotification))
 
-      usages.add(GRADLE_JVM_TYPE.metric(ExternalSystemUsagesCollector.getJreType(setting.gradleJvm)))
-      usages.add(GRADLE_JVM_VERSION.metric(ExternalSystemUsagesCollector.getJreVersion(project, setting.gradleJvm)))
+      usages.add(GRADLE_JVM_TYPE.metric(ExternalSystemUsageFields.getJreType(setting.gradleJvm)))
+      usages.add(GRADLE_JVM_VERSION.metric(ExternalSystemUsageFields.getJreVersion(project, setting.gradleJvm)))
 
       val gradleVersion = setting.resolveGradleVersion()
       if (gradleVersion.isSnapshot) {
@@ -89,30 +89,30 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
     return Version.parseVersion(version.version)?.toCompactString() ?: "unknown"
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("build.gradle.state", 4)
-    private val HAS_GRADLE_PROJECT = GROUP.registerEvent("hasGradleProject", EventFields.Enabled)
-    private val OFFLINE_WORK = GROUP.registerEvent("offlineWork", EventFields.Enabled)
-    private val HAS_CUSTOM_SERVICE_DIRECTORY_PATH = GROUP.registerEvent("hasCustomServiceDirectoryPath", EventFields.Enabled)
-    private val HAS_CUSTOM_GRADLE_VM_OPTIONS = GROUP.registerEvent("hasCustomGradleVmOptions", EventFields.Enabled)
-    private val SHOW_SELECTIVE_IMPORT_DIALOG_ON_INITIAL_IMPORT = GROUP.registerEvent("showSelectiveImportDialogOnInitialImport",
+  private val GROUP = EventLogGroup("build.gradle.state", 6)
+  private val HAS_GRADLE_PROJECT = GROUP.registerEvent("hasGradleProject", EventFields.Enabled)
+  private val OFFLINE_WORK = GROUP.registerEvent("offlineWork", EventFields.Enabled)
+  private val HAS_CUSTOM_SERVICE_DIRECTORY_PATH = GROUP.registerEvent("hasCustomServiceDirectoryPath", EventFields.Enabled)
+  private val HAS_CUSTOM_GRADLE_VM_OPTIONS = GROUP.registerEvent("hasCustomGradleVmOptions", EventFields.Enabled)
+  private val SHOW_SELECTIVE_IMPORT_DIALOG_ON_INITIAL_IMPORT = GROUP.registerEvent("showSelectiveImportDialogOnInitialImport",
+                                                                                   EventFields.Enabled)
+  private val STORE_PROJECT_FILES_EXTERNALLY = GROUP.registerEvent("storeProjectFilesExternally", EventFields.Enabled)
+  private val IS_USE_QUALIFIED_MODULE_NAMES = GROUP.registerEvent("isUseQualifiedModuleNames", EventFields.Enabled)
+  private val CREATE_MODULE_PER_SOURCE_SET = GROUP.registerEvent("createModulePerSourceSet", EventFields.Enabled)
+  private val IS_COMPOSITE_BUILDS = GROUP.registerEvent("isCompositeBuilds", EventFields.Enabled)
+  private val DISABLE_WRAPPER_SOURCE_DISTRIBUTION_NOTIFICATION = GROUP.registerEvent("disableWrapperSourceDistributionNotification",
                                                                                      EventFields.Enabled)
-    private val STORE_PROJECT_FILES_EXTERNALLY = GROUP.registerEvent("storeProjectFilesExternally", EventFields.Enabled)
-    private val IS_USE_QUALIFIED_MODULE_NAMES = GROUP.registerEvent("isUseQualifiedModuleNames", EventFields.Enabled)
-    private val CREATE_MODULE_PER_SOURCE_SET = GROUP.registerEvent("createModulePerSourceSet", EventFields.Enabled)
-    private val IS_COMPOSITE_BUILDS = GROUP.registerEvent("isCompositeBuilds", EventFields.Enabled)
-    private val DISABLE_WRAPPER_SOURCE_DISTRIBUTION_NOTIFICATION = GROUP.registerEvent("disableWrapperSourceDistributionNotification",
-                                                                                       EventFields.Enabled)
-    private val DELEGATE_BUILD_RUN = GROUP.registerEvent("delegateBuildRun", EventFields.Enabled)
-    private val IDEA_SPECIFIC_CONFIGURATION_USED = GROUP.registerEvent("ideaSpecificConfigurationUsed", EventFields.Enabled)
+  private val DELEGATE_BUILD_RUN = GROUP.registerEvent("delegateBuildRun", EventFields.Enabled)
+  private val IDEA_SPECIFIC_CONFIGURATION_USED = GROUP.registerEvent("ideaSpecificConfigurationUsed", EventFields.Enabled)
 
-    private val DISTRIBUTION_TYPE = GROUP.registerEvent("distributionType",
-                                                        EventFields.Enum("value", DistributionType::class.java) { it.name.lowercase() })
-    private val VERSION_FIELD = EventFields.StringValidatedByRegexp("value", "version")
-    private val GRADLE_VERSION = GROUP.registerEvent("gradleVersion", VERSION_FIELD)
-    private val PREFERRED_TEST_RUNNER = GROUP.registerEvent("preferredTestRunner",
-                                                            EventFields.Enum("value", TestRunner::class.java){ it.name.lowercase() })
-    private val GRADLE_JVM_TYPE = GROUP.registerEvent("gradleJvmType", JRE_TYPE_FIELD)
-    private val GRADLE_JVM_VERSION = GROUP.registerEvent("gradleJvmVersion", VERSION_FIELD)
-  }
+  private val DISTRIBUTION_TYPE = GROUP.registerEvent("distributionType",
+                                                      EventFields.Enum("value", DistributionType::class.java) { it.name.lowercase() })
+  private val VERSION_FIELD = EventFields.StringValidatedByRegexpReference("value", "version")
+  private val GRADLE_VERSION = GROUP.registerEvent("gradleVersion", VERSION_FIELD)
+  private val PREFERRED_TEST_RUNNER = GROUP.registerEvent("preferredTestRunner",
+                                                          EventFields.Enum("value", TestRunner::class.java) { it.name.lowercase() })
+  private val GRADLE_JVM_TYPE = GROUP.registerEvent("gradleJvmType", JRE_TYPE_FIELD)
+  private val GRADLE_JVM_VERSION = GROUP.registerEvent("gradleJvmVersion", VERSION_FIELD)
+  private val GRADLE_DOWNLOAD_DEPENDENCY_SOURCES = GROUP.registerEvent("gradleDownloadDependencySources", EventFields.Enabled)
+  private val GRADLE_PARALLEL_MODEL_FETCH = GROUP.registerEvent("gradleParallelModelFetch", EventFields.Enabled)
 }

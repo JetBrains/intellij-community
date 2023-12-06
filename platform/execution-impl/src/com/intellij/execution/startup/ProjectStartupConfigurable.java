@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.startup;
 
 import com.intellij.execution.ExecutionBundle;
@@ -14,6 +14,7 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.NewRunConfigurationPopup;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,7 +54,7 @@ import java.util.List;
 import java.util.Set;
 
 final class ProjectStartupConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  final static class ProjectStartupConfigurableProvider extends ConfigurableProvider {
+  static final class ProjectStartupConfigurableProvider extends ConfigurableProvider {
     private final Project myProject;
 
     ProjectStartupConfigurableProvider(@NotNull Project project) {
@@ -80,27 +81,23 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "preferences.startup.tasks";
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return ExecutionBundle.message("configurable.ProjectStartupConfigurable.display.name");
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.settings.startup.tasks";
   }
 
-  @NotNull
   @Override
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     myModel = new ProjectStartupTasksTableModel();
     myTable = new JBTable(myModel);
     myTable.setShowGrid(false);
@@ -210,7 +207,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
       }
 
       @Override
-      public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
+      public void perform(final @NotNull Project project, final @NotNull Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
         List<ConfigurationType> typesToShow =
           ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), configurationType -> {
@@ -243,7 +240,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
   }
 
   private void addConfiguration(RunnerAndConfigurationSettings configuration) {
-    if (!ProjectStartupRunner.canBeRun(configuration)) {
+    if (!ProjectStartupRunnerKt.canBeRun(configuration)) {
       final String message = ExecutionBundle.message("settings.project.startup.warning", configuration.getName());
       final Balloon balloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(message, MessageType.ERROR, null)
@@ -263,17 +260,16 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final List<ChooseRunConfigurationPopup.ItemWrapper<?>> wrappers = new ArrayList<>();
     wrappers.add(createNewWrapper(button));
-    final List<ChooseRunConfigurationPopup.ItemWrapper> allSettings =
-      ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
-        @Override
-        public Executor getExecutor() {
-          return executor;
-        }
-      }, false);
+    var allSettings = ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
+      @Override
+      public Executor getExecutor() {
+        return executor;
+      }
+    }, DataManager.getInstance().getDataContext(myTable), false);
     final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
     for (ChooseRunConfigurationPopup.ItemWrapper<?> setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings settings) {
-        if (!settings.isTemporary() && ProjectStartupRunner.canBeRun(settings) && !existing.contains(settings)) {
+        if (!settings.isTemporary() && ProjectStartupRunnerKt.canBeRun(settings) && !existing.contains(settings)) {
           wrappers.add(setting);
         }
       }
@@ -297,9 +293,8 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     showPopup(button, popup);
   }
 
-  private void showPopup(AnActionButton button, JBPopup popup) {
-    final RelativePoint point = button.getPreferredPopupPoint();
-    popup.show(point);
+  private static void showPopup(AnActionButton button, JBPopup popup) {
+    popup.show(button.getPreferredPopupPoint());
   }
 
   @Override

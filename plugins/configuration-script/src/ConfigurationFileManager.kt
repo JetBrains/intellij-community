@@ -1,6 +1,9 @@
 package com.intellij.configurationScript
 
-import com.intellij.configurationScript.yaml.LightScalarResolver
+import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,22 +22,33 @@ import org.snakeyaml.engine.v2.nodes.MappingNode
 import org.snakeyaml.engine.v2.nodes.NodeTuple
 import org.snakeyaml.engine.v2.parser.ParserImpl
 import org.snakeyaml.engine.v2.scanner.StreamReader
+import org.snakeyaml.engine.v2.schema.FailsafeSchema
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
 
 // we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
 // that's why we don't use snakeyaml TypeDescription approach to load
-internal class ConfigurationFileManager(project: Project) {
+@Service(Service.Level.PROJECT)
+internal class ConfigurationFileManager(project: Project): Disposable {
   private val clearableLazyValues = ContainerUtil.createConcurrentList<() -> Unit>()
 
   private val yamlData = SynchronizedClearableLazy {
+    if (!project.isTrusted()) {
+      return@SynchronizedClearableLazy null
+    }
     val projectIdeaDir = Paths.get(project.basePath ?: return@SynchronizedClearableLazy null)
     readProjectConfigurationFile(projectIdeaDir)
   }
 
   init {
+    if (!project.isTrusted()) {
+      TrustedProjectsListener.onceWhenProjectTrusted(this) {
+        clearClearableValues()
+      }
+    }
     registerClearableLazyValue(yamlData)
+    addFileListener(project)
   }
 
   companion object {
@@ -49,8 +63,8 @@ internal class ConfigurationFileManager(project: Project) {
     clearableLazyValues.add(value)
   }
 
-  init {
-    addFileListener(project)
+  private fun clearClearableValues() {
+    clearableLazyValues.forEach { it() }
   }
 
   private fun addFileListener(project: Project) {
@@ -74,7 +88,7 @@ internal class ConfigurationFileManager(project: Project) {
             }
           }
 
-          clearableLazyValues.forEach { it() }
+          clearClearableValues()
         }
       }
     })
@@ -86,6 +100,8 @@ internal class ConfigurationFileManager(project: Project) {
     val root = getConfigurationNode() ?: return null
     return findValueNode(root, namePath)
   }
+
+  override fun dispose() = Unit
 }
 
 // later we can avoid full node graph building, but for now just use simple implementation (problem is that Yaml supports references and merge - proper support of it can be tricky)
@@ -99,10 +115,10 @@ internal fun doRead(reader: Reader): MappingNode? {
   reader.use {
     val settings = LoadSettings.builder()
       .setUseMarks(false)
-      .setScalarResolver(LightScalarResolver())
+      .setSchema(FailsafeSchema())
       .build()
-    val parser = ParserImpl(StreamReader(it, settings), settings)
-    return Composer(parser, settings).singleNode.orElse(null) as? MappingNode
+    val parser = ParserImpl(settings, StreamReader(settings, it))
+    return Composer(settings, parser).singleNode.orElse(null) as? MappingNode
   }
 }
 

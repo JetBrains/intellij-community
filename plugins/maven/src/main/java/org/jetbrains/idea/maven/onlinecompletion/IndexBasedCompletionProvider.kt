@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.onlinecompletion
 
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.idea.maven.indices.MavenGAVIndex
 import org.jetbrains.idea.maven.indices.MavenIndex
 import org.jetbrains.idea.maven.indices.MavenSearchIndex
 import org.jetbrains.idea.maven.model.MavenId
@@ -9,17 +10,17 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactIn
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
+import kotlin.math.min
 
 /**
  * This class is used as a solution to support completion from repositories, which do not support online completion
  */
-internal class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : DependencySearchProvider {
+internal class IndexBasedCompletionProvider(private val myIndex: MavenGAVIndex) : DependencySearchProvider {
 
   override fun fulltextSearch(searchString: String): CompletableFuture<List<RepositoryArtifactData>> =
     search(MavenId(searchString))
 
-  override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> =
+  override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> =
     search(MavenId(groupId, artifactId, null))
 
   private fun search(mavenId: MavenId): CompletableFuture<List<RepositoryArtifactData>> = CompletableFuture.supplyAsync {
@@ -49,7 +50,7 @@ internal class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : D
         real, template)
     }
     var matches = 0
-    for (i in 0 until Math.min(splittedReal.size, splittedTemplate.size)) {
+    for (i in 0 until min(splittedReal.size, splittedTemplate.size)) {
       if (StringUtil.startsWith(splittedTemplate[i], splittedReal[i]) ||
           StringUtil.startsWith(splittedReal[i], splittedTemplate[i])) {
         matches += 1
@@ -60,7 +61,4 @@ internal class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : D
   }
 
   override fun isLocal() = true
-
-  val index: MavenSearchIndex
-    get() = myIndex
-}
+  }

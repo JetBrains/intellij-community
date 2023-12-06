@@ -1,13 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -17,14 +16,9 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MakeReceiverParameterFirstFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class MakeReceiverParameterFirstFix extends PsiUpdateModCommandAction<PsiReceiverParameter> {
   public MakeReceiverParameterFirstFix(@NotNull PsiReceiverParameter parameter) {
     super(parameter);
-  }
-
-  @Override
-  public @IntentionName @NotNull String getText() {
-    return QuickFixBundle.message("make.receiver.parameter.first.text");
   }
 
   @Override
@@ -33,30 +27,22 @@ public class MakeReceiverParameterFirstFix extends LocalQuickFixAndIntentionActi
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @Nullable Editor editor,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    if (!startElement.isValid() || !BaseIntentionAction.canModify(startElement)) return false;
-    final PsiParameterList parameterList = ObjectUtils.tryCast(startElement.getParent(), PsiParameterList.class);
-    return parameterList != null && PsiUtil.isJavaToken(parameterList.getFirstChild(), JavaTokenType.LPARENTH);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiReceiverParameter parameter) {
+    final PsiParameterList parameterList = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
+    if (parameterList == null || !PsiUtil.isJavaToken(parameterList.getFirstChild(), JavaTokenType.LPARENTH)) return null;
+    return Presentation.of(QuickFixBundle.message("make.receiver.parameter.first.text"));
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    final PsiParameterList parameterList = ObjectUtils.tryCast(startElement.getParent(), PsiParameterList.class);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiReceiverParameter parameter, @NotNull ModPsiUpdater updater) {
+    final PsiParameterList parameterList = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
     if (parameterList == null) return;
     final PsiElement firstChild = parameterList.getFirstChild();
     if (!PsiUtil.isJavaToken(firstChild, JavaTokenType.LPARENTH)) return;
-    final PsiElement movedParameter = parameterList.addAfter(startElement, firstChild);
-    moveComments(startElement, movedParameter, parameterList, true);
-    moveComments(startElement, movedParameter, parameterList, false);
-    startElement.delete();
+    final PsiElement movedParameter = parameterList.addAfter(parameter, firstChild);
+    moveComments(parameter, movedParameter, parameterList, true);
+    moveComments(parameter, movedParameter, parameterList, false);
+    parameter.delete();
     PsiElement next = firstChild.getNextSibling();
     if (next instanceof PsiWhiteSpace) {
       next.delete();

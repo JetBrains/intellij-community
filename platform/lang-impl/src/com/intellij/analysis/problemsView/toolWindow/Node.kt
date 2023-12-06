@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.ui.tree.LeafState
 import com.intellij.ui.tree.TreePathUtil.pathToCustomNode
+import javax.swing.tree.TreePath
 
 abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Supplier {
   protected constructor(project: Project) : super(project, null)
@@ -21,7 +22,7 @@ abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Supplier {
 
   abstract override fun getName(): String
 
-  override fun toString() = name
+  override fun toString(): String = name
 
   open fun getChildren(): Collection<Node> = emptyList()
 
@@ -29,14 +30,14 @@ abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Supplier {
 
   open fun getNavigatable(): Navigatable? = descriptor
 
-  override fun getElement() = this
+  override fun getElement(): Node = this
 
   override fun update(presentation: PresentationData) {
     if (myProject == null || myProject.isDisposed) return
     update(myProject, presentation)
   }
 
-  fun getPath() = pathToCustomNode(this) { node: Node? -> node?.getParent(Node::class.java) }!!
+  fun getPath(): TreePath = pathToCustomNode(this) { node: Node? -> node?.getParent(Node::class.java) }!!
 
   fun <T> getParent(type: Class<T>): T? {
     val parent = parentDescriptor ?: return null

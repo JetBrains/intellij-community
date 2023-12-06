@@ -1,3 +1,4 @@
-// "Create actual annotation class for module testModule_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
+// IGNORE_K2
 
 expect annotation class <caret>Ann(val x: Int, val y: String)

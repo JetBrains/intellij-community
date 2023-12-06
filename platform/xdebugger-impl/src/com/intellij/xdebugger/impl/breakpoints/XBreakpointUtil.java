@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
@@ -125,7 +126,7 @@ public final class XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @NotNull
-  public static Promise<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
+  public static Promise<@Nullable XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
                                                               @NotNull XSourcePosition position,
                                                               @Nullable Editor editor,
                                                               boolean temporary,
@@ -146,7 +147,7 @@ public final class XBreakpointUtil {
 
     if (editor != null && lineStart != lineWinner) {
       int offset = editor.getDocument().getLineStartOffset(lineWinner);
-      ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
+      ExpandRegionAction.expandRegionAtOffset(editor, offset);
       if (moveCaret) {
         editor.getCaretModel().moveToOffset(offset);
       }
@@ -165,6 +166,11 @@ public final class XBreakpointUtil {
                                                                                          @Nullable Editor editor) {
     int lineStart = position.getLine();
     VirtualFile file = position.getFile();
+
+    if (!file.isValid()) {
+      return Pair.create(Collections.emptyList(), -1);
+    }
+
     // for folded text check each line and find out type with the biggest priority
     int linesEnd = lineStart;
     if (editor != null) {

@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "RAW_RUN_BLOCKING")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
@@ -16,7 +16,7 @@ import java.security.MessageDigest
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readBytes
 
-private val mavenCommonLibs: List<String> = listOf(
+private val maven3Libs: List<String> = listOf(
   "org.apache.maven.archetype:archetype-common:2.2",
   "org.apache.maven.archetype:archetype-catalog:2.2",
   "org.apache.maven.archetype:archetype-descriptor:2.2",
@@ -24,6 +24,15 @@ private val mavenCommonLibs: List<String> = listOf(
   "org.sonatype.nexus:nexus-indexer:3.0.4",
   "org.sonatype.nexus:nexus-indexer-artifact:1.0.1",
   "org.apache.lucene:lucene-core:2.4.1",
+)
+
+private val maven4Libs: List<String> = listOf(
+  // let's not bundle archetype plugin version 3 with maven version 4
+/*  "org.apache.maven.archetype:archetype-common:3.2.1",
+  "org.apache.maven.archetype:archetype-catalog:3.2.1",
+  "org.apache.maven.archetype:archetype-descriptor:3.2.1",
+  "org.apache.maven.shared:maven-artifact-transfer:0.13.1",
+  "org.jdom:jdom2:2.0.6.1",*/
 )
 
 object BundledMavenDownloader {
@@ -34,9 +43,11 @@ object BundledMavenDownloader {
     val communityRoot = BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory
     runBlocking(Dispatchers.Default) {
       val distRoot = downloadMavenDistribution(communityRoot)
-      val commonLibs = downloadMavenCommonLibs(communityRoot)
+      val maven3DownloadedLibs = downloadMaven3Libs(communityRoot)
+      val maven4DownloadedLibs = downloadMaven4Libs(communityRoot)
       println("Maven distribution extracted at $distRoot")
-      println("Maven common libs at $commonLibs")
+      println("Maven 3 libs at $maven3DownloadedLibs")
+      println("Maven 4 libs at $maven4DownloadedLibs")
     }
   }
 
@@ -47,18 +58,28 @@ object BundledMavenDownloader {
     return BigInteger(1, digest).toString(32)
   }
 
-  fun downloadMavenCommonLibsSync(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return runBlocking(Dispatchers.Default) {
-      downloadMavenCommonLibs(communityRoot)
+  fun downloadMaven4LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path =
+    runBlocking(Dispatchers.Default) {
+      downloadMaven4Libs(communityRoot)
     }
-  }
+
+  suspend fun downloadMaven4Libs(communityRoot: BuildDependenciesCommunityRoot): Path =
+    downloadMavenLibs(communityRoot, "plugins/maven/maven40-server-impl/lib", maven4Libs)
+
+  fun downloadMaven3LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path =
+    runBlocking(Dispatchers.Default) {
+      downloadMaven3Libs(communityRoot)
+    }
+
+  suspend fun downloadMaven3Libs(communityRoot: BuildDependenciesCommunityRoot): Path =
+    downloadMavenLibs(communityRoot, "plugins/maven/maven3-server-common/lib", maven3Libs)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  suspend fun downloadMavenCommonLibs(communityRoot: BuildDependenciesCommunityRoot): Path {
-    val root = communityRoot.communityRoot.resolve("plugins/maven/maven3-server-common/lib")
+  private suspend fun downloadMavenLibs(communityRoot: BuildDependenciesCommunityRoot, path: String, libs: List<String>): Path {
+    val root = communityRoot.communityRoot.resolve(path)
     Files.createDirectories(root)
     val targetToSourceFiles = coroutineScope {
-      mavenCommonLibs.map { coordinates ->
+      libs.map { coordinates ->
         async {
           val split = coordinates.split(':')
           check(split.size == 3) {
@@ -113,7 +134,7 @@ object BundledMavenDownloader {
 
   suspend fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot): Path {
     val extractDir = communityRoot.communityRoot.resolve("plugins/maven/maven36-server-impl/lib/maven3")
-    val properties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
+    val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
     val bundledMavenVersion = properties.property("bundledMavenVersion")
     mutex.withLock {
       val uri = BuildDependenciesDownloader.getUriForMavenArtifact(

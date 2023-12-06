@@ -2,19 +2,16 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.BundleBase
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.whenPropertyChanged
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ContextHelpLabel
@@ -29,14 +26,10 @@ import com.intellij.ui.dsl.builder.components.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
-import com.intellij.ui.dsl.gridLayout.unscale
 import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.popup.PopupState
 import com.intellij.util.Function
 import com.intellij.util.MathUtil
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
@@ -52,10 +45,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                             private val parent: PanelImpl,
                             rowLayout: RowLayout) : Row {
 
-  var rowLayout = rowLayout
+  var rowLayout: RowLayout = rowLayout
     private set
 
-  var resizableRow = false
+  var resizableRow: Boolean = false
     private set
 
   var rowComment: DslLabel? = null
@@ -67,7 +60,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   /**
    * Used if topGap is not set, skipped for first row
    */
-  var internalTopGap = 0
+  var internalTopGap: Int = 0
 
   var bottomGap: BottomGap? = null
     private set
@@ -75,9 +68,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   /**
    * Used if bottomGap is not set, skipped for last row
    */
-  var internalBottomGap = 0
+  var internalBottomGap: Int = 0
 
-  val cells = mutableListOf<CellBaseImpl<*>?>()
+  val cells: MutableList<CellBaseImpl<*>?> = mutableListOf()
 
   private var visible = true
   private var enabled = true
@@ -95,10 +88,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun rowComment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int, action: HyperlinkEventAction): RowImpl {
     this.rowComment = createComment(comment, maxLineLength, action)
     return this
-  }
-
-  override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
-    return cellImpl(component, viewComponent)
   }
 
   override fun <T : JComponent> cell(component: T): CellImpl<T> {
@@ -143,11 +132,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun enabledIf(property: ObservableProperty<Boolean>): RowImpl {
-    enabled(property.get())
-    property.whenPropertyChanged {
-      enabled(it)
-    }
-    return this
+    return enabledIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   override fun visible(isVisible: Boolean): RowImpl {
@@ -158,18 +143,14 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun visibleIf(predicate: ComponentPredicate): Row {
+  override fun visibleIf(predicate: ComponentPredicate): RowImpl {
     visible(predicate())
     predicate.addListener { visible(it) }
     return this
   }
 
   override fun visibleIf(property: ObservableProperty<Boolean>): RowImpl {
-    visible(property.get())
-    property.whenPropertyChanged {
-      visible(it)
-    }
-    return this
+    return visibleIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   fun visibleFromParent(parentVisible: Boolean): RowImpl {
@@ -203,7 +184,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       isOpaque = false
     }
   }
-  
+
+  override fun threeStateCheckBox(@NlsContexts.Checkbox text: String): Cell<ThreeStateCheckBox> {
+    return cell(ThreeStateCheckBox(text)).applyToComponent {
+      isOpaque = false
+    }
+  }
+
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
     val result = cell(JBRadioButton(text)).applyToComponent {
       isOpaque = false
@@ -227,17 +214,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun actionButton(action: AnAction, actionPlace: String): Cell<ActionButton> {
-    val component = ActionButton(action, action.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
-    return cell(component)
-  }
-
-  override fun actionsButton(vararg actions: AnAction, actionPlace: String, icon: Icon): Cell<ActionButton> {
-    val actionGroup = PopupActionGroup(arrayOf(*actions))
-    actionGroup.templatePresentation.icon = icon
-    return cell(ActionButton(actionGroup, actionGroup.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
-  }
-
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar> {
     val actionGroup = DefaultActionGroup(options.map { DeprecatedSegmentedButtonAction(it, property, renderer(it)) })
     val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
@@ -246,15 +222,22 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T> {
-    val result = SegmentedButtonImpl(dialogPanelConfig, this, renderer)
-    result.items(items)
-    cells.add(result)
-    return result
+    return segmentedButtonImpl(items) {
+      text = renderer.invoke(it)
+    }
   }
 
-  override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String, tooltipRenderer: (T) -> @Nls String?): SegmentedButton<T> {
-    val result = SegmentedButtonImpl(dialogPanelConfig, this, renderer, tooltipRenderer)
-    result.items(items)
+  override fun <T> segmentedButton(items: Collection<T>, renderer: SegmentedButton.ItemPresentation.(T) -> Unit): SegmentedButton<T> {
+    return segmentedButtonImpl(items, renderer)
+  }
+
+  // Work around https://youtrack.jetbrains.com/issue/KT-62048
+  private fun <T> segmentedButtonImpl(
+    items: Collection<T>,
+    renderer: SegmentedButton.ItemPresentation.(T) -> Unit,
+  ): SegmentedButtonImpl<T> {
+    val result = SegmentedButtonImpl(dialogPanelConfig, this, renderer)
+    result.items = items
     cells.add(result)
     return result
   }
@@ -310,10 +293,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun browserLink(text: String, url: String): CellImpl<BrowserLink> {
     return cell(BrowserLink(text, url))
-  }
-
-  override fun <T> dropDownLink(item: T, items: List<T>, onSelected: ((T) -> Unit)?, updateText: Boolean): Cell<DropDownLink<T>> {
-    return cell(DropDownLink(item, items, onSelect = { t -> onSelected?.let { it(t) } }, updateText = updateText))
   }
 
   override fun <T> dropDownLink(item: T, items: List<T>): Cell<DropDownLink<T>> {
@@ -433,12 +412,8 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return comboBox(DefaultComboBoxModel(Vector(items)), renderer)
   }
 
-  override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
-    return comboBox(items.toList(), renderer)
-  }
-
   override fun customize(customRowGaps: VerticalGaps): Row {
-    return customize(UnscaledGapsY(customRowGaps.top.unscale(), customRowGaps.bottom.unscale()))
+    return customize(UnscaledGapsY(JBUI.unscale(customRowGaps.top), JBUI.unscale(customRowGaps.bottom)))
   }
 
   override fun customize(customRowGaps: UnscaledGapsY): Row {
@@ -478,34 +453,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
     cells.add(result)
 
+    registerCreationStacktrace(component)
+
     if (component is JRadioButton) {
       @Suppress("UNCHECKED_CAST")
       registerRadioButton(result as CellImpl<JRadioButton>, null)
     }
 
     return result
-  }
-}
-
-private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup(), DumbAware {
-
-  private val popupState = PopupState.forPopup()
-
-  init {
-    isPopup = true
-    templatePresentation.isPerformGroup = actions.isNotEmpty()
-  }
-
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
-
-  override fun actionPerformed(e: AnActionEvent) {
-    if (popupState.isRecentlyHidden) {
-      return
-    }
-
-    val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.dataContext,
-      JBPopupFactory.ActionSelectionAid.MNEMONICS, true)
-    popupState.prepareToShow(popup)
-    PopupUtil.showForActionButtonEvent(popup, e)
   }
 }

@@ -46,6 +46,19 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/codeInsight/lineMarker/methodSeparators")
+    public static class MethodSeparators extends AbstractLineMarkersTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("MethodSeparators.kt")
+        public void testMethodSeparators() throws Exception {
+            runTest("testData/codeInsight/lineMarker/methodSeparators/MethodSeparators.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/lineMarker/overrideImplement")
     public static class OverrideImplement extends AbstractLineMarkersTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -132,6 +145,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/Interface.kt");
         }
 
+        @TestMetadata("InterfaceDisabledImplOption.kt")
+        public void testInterfaceDisabledImplOption() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/InterfaceDisabledImplOption.kt");
+        }
+
         @TestMetadata("NavigateFromPrivateAbstractClass.kt")
         public void testNavigateFromPrivateAbstractClass() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/NavigateFromPrivateAbstractClass.kt");
@@ -155,6 +173,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
         @TestMetadata("OverrideFunction.kt")
         public void testOverrideFunction() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/OverrideFunction.kt");
+        }
+
+        @TestMetadata("OverrideFunctionInJava.kt")
+        public void testOverrideFunctionInJava() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/OverrideFunctionInJava.kt");
         }
 
         @TestMetadata("OverrideIconForOverloadMethodBug.kt")
@@ -212,6 +235,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/ToStringInInterface.kt");
         }
 
+        @TestMetadata("WithJavaAnonymousInheritor.kt")
+        public void testWithJavaAnonymousInheritor() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/WithJavaAnonymousInheritor.kt");
+        }
+
         @TestMetadata("WithJavaInheritor.kt")
         public void testWithJavaInheritor() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/WithJavaInheritor.kt");
@@ -228,6 +256,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
     public static class RecursiveCall extends AbstractLineMarkersTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("backticksInName.kt")
+        public void testBackticksInName() throws Exception {
+            runTest("testData/codeInsight/lineMarker/recursiveCall/backticksInName.kt");
         }
 
         @TestMetadata("companionInvoke.kt")
@@ -343,6 +376,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit4TestFile.kt");
         }
 
+        @TestMetadata("jUnit5TestFile.kt")
+        public void testJUnit5TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
+        }
+
         @TestMetadata("jUnitTestClassWithSubclasses.kt")
         public void testJUnitTestClassWithSubclasses() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnitTestClassWithSubclasses.kt");
@@ -369,19 +407,6 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
         @TestMetadata("suspendIteration.kt")
         public void testSuspendIteration() throws Exception {
             runTest("testData/codeInsight/lineMarker/suspendCall/suspendIteration.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/codeInsight/lineMarker")
-    public static class Uncategorized extends AbstractLineMarkersTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("MethodSeparators.kt")
-        public void testMethodSeparators() throws Exception {
-            runTest("testData/codeInsight/lineMarker/MethodSeparators.kt");
         }
     }
 }

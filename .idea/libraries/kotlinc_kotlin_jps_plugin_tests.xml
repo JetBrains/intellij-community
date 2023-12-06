@@ -1,12 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-plugin-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-tests-for-ide:1.8.0-release-345" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-tests-for-ide:1.9.21-release-633">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.9.21-release-633/kotlin-jps-plugin-tests-for-ide-1.9.21-release-633.jar">
+          <sha256sum>48b550ff4c50e739761bb48abb4485d78a5ab640b2602d2ce218d8c113801741</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.8.0-release-345/kotlin-jps-plugin-tests-for-ide-1.8.0-release-345.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.9.21-release-633/kotlin-jps-plugin-tests-for-ide-1.9.21-release-633.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.8.0-release-345/kotlin-jps-plugin-tests-for-ide-1.8.0-release-345-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.9.21-release-633/kotlin-jps-plugin-tests-for-ide-1.9.21-release-633-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

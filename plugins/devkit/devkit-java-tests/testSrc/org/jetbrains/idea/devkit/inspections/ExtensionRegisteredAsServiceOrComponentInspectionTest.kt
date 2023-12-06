@@ -39,4 +39,9 @@ class ExtensionRegisteredAsServiceOrComponentInspectionTest : ExtensionRegistere
     setPluginXml("extension-component-plugin.xml")
     doTest()
   }
+
+  fun testServiceWithServiceAttribute() {
+    setPluginXml("service-attribute-plugin.xml")
+    myFixture.testHighlighting("ServiceWithServiceAttribute.java", "ServiceAttributeBean.java")
+  }
 }

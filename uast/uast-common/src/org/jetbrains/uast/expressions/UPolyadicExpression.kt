@@ -22,10 +22,6 @@ interface UPolyadicExpression : UExpression {
    */
   val operator: UastBinaryOperator
 
-  fun hasOperator(expectedOperator: UastBinaryOperator): Boolean {
-    return operator == expectedOperator
-  }
-
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitPolyadicExpression(this)) return
     uAnnotations.acceptList(visitor)

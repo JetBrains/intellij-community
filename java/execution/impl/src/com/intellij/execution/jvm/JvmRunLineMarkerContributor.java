@@ -17,7 +17,7 @@ public abstract class JvmRunLineMarkerContributor extends RunLineMarkerContribut
   public final Info getInfo(@NotNull PsiElement element) {
     if (!Registry.is("ide.jvm.run.marker")) return null;
     for (JvmElement declaration : getElementsByIdentifier(element)) {
-      Info info = getInfo(declaration);
+      Info info = getInfo(element, declaration);
       if (info != null) {
         return info;
       }
@@ -26,5 +26,5 @@ public abstract class JvmRunLineMarkerContributor extends RunLineMarkerContribut
   }
 
   @Nullable
-  protected abstract Info getInfo(JvmElement element);
+  protected abstract Info getInfo(@NotNull PsiElement psiElement, @NotNull JvmElement element);
 }

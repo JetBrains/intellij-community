@@ -47,6 +47,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class RangeMarkerTest extends LightPlatformTestCase {
@@ -391,7 +393,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     WriteAction.run(() -> {
       synchronizer.startTransaction(getProject(), document, psiFile);
 
-      String newText = StringUtil.replaceSubstring(document.getText(), TextRange.create(marker), "");
+      String newText = StringUtil.replaceSubstring(document.getText(), marker.getTextRange(), "");
       synchronizer.replaceString(document, 0, document.getTextLength(), newText);
 
       final List<DocumentEvent> events = new ArrayList<>();
@@ -885,7 +887,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
             int x = gen.nextInt(N);
             int y = x + gen.nextInt(N - x);
             RangeMarkerEx r = (RangeMarkerEx)finalDocument.createRangeMarker(x, y);
-            adds.add(Pair.create(r, TextRange.create(r)));
+            adds.add(Pair.create(r, r.getTextRange()));
           }
 
           for (int i = 0; i < 10; i++) {
@@ -943,18 +945,21 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     System.err.println(s);
   }
 
-  private RangeMarkerEx createMarker(String text, final int start, final int end) {
+  @NotNull
+  private RangeMarkerEx createMarker(@NotNull String text, final int start, final int end) {
     psiFile = createFile("x.txt", text);
     fileNode = psiFile.getNode(); // the node should be loaded, otherwise PsiToDocumentSynchronizer will ignore our commands
     return createMarker(psiFile, start, end);
   }
 
-  private RangeMarkerEx createMarker(PsiFile psiFile, final int start, final int end) {
+  @NotNull
+  private RangeMarkerEx createMarker(@NotNull PsiFile psiFile, final int start, final int end) {
     document = Objects.requireNonNull(documentManager.getDocument(psiFile));
     return (RangeMarkerEx)document.createRangeMarker(start, end);
   }
 
-  private RangeMarkerEx createMarker(@NonNls String string) {
+  @NotNull
+  private RangeMarkerEx createMarker(@NonNls @NotNull String string) {
     int start = string.indexOf('[');
     assertTrue(start != -1);
     string = string.replace("[", "");
@@ -1175,6 +1180,27 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertEquals("\n\t\n", document.getText());
     assertTrue(marker.toString(), marker.isValid());
     assertEquals(0, marker.getStartOffset());
+  }
+
+  public void testLazyRangeMarkersWithInvalidOffsetWhenNoDocumentCreatedMustInvalidateThemSelvesOnGcedDocumentReload() {
+    LazyRangeMarkerFactoryImpl factory = (LazyRangeMarkerFactoryImpl)LazyRangeMarkerFactory.getInstance(getProject());
+    // need to be physical file, because LightVirtualFile retains Document hard
+    VirtualFile virtualFile = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "   ");
+    PsiFile psiFile = Objects.requireNonNull(getPsiManager().findFile(virtualFile));
+    RangeMarker marker = factory.createRangeMarker(virtualFile, 2);
+
+    assertEquals("   ", psiFile.getText());
+
+    document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    assertEquals("   ", document.getText());
+    assertTrue(marker.toString(), marker.isValid());
+    assertEquals(TextRange.create(2,2), marker.getTextRange());
+    
+    gcDocument();
+    HeavyPlatformTestCase.setBinaryContent(virtualFile, "".getBytes(StandardCharsets.UTF_8)); // shrink contents to invalidate markers
+    Document d2 = FileDocumentManager.getInstance().getDocument(virtualFile);
+    assertEquals("", d2.getText());
+    assertFalse(marker.isValid());
   }
 
   public void testLazyRangeMarkersWithInvalidOffsetWhenCachedDocumentAlreadyExistsMustRejectInvalidOffsetsRightAway() {
@@ -1412,9 +1438,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     WriteCommandAction.runWriteCommandAction(getProject(), ()->document.insertString(2,"000"));
     assertTrue(marker[0].isValid());
-    assertEquals("bl000ah", TextRange.create(marker[0]).substring(document.getText()));
+    assertEquals("bl000ah", marker[0].getTextRange().substring(document.getText()));
     assertTrue(persistentMarker[0].isValid());
-    assertEquals("bl000ah", TextRange.create(persistentMarker[0]).substring(document.getText()));
+    assertEquals("bl000ah", persistentMarker[0].getTextRange().substring(document.getText()));
     gcDocument();
     checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
   }
@@ -1426,10 +1452,18 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     psiFile = null;
     fileNode = null;
     document = null;
-
-    while (ref.get() != null) {
+    TestTimeOut t = TestTimeOut.setTimeout(60, TimeUnit.SECONDS);
+    while (ref.get() != null && !t.isTimedOut()) {
       GCUtil.tryGcSoftlyReachableObjects();
       UIUtil.dispatchAllInvocationEvents();
+    }
+    Document d = ref.get();
+    if (t.isTimedOut() && d != null) {
+      int hashCode = System.identityHashCode(d);
+      Class<?> aClass = d.getClass();
+      d = null;
+      LeakHunter.checkLeak(LeakHunter.allRoots(), aClass, leakedDoc -> System.identityHashCode(leakedDoc) == hashCode);
+      fail("Unable to gc the document");
     }
   }
 
@@ -1456,9 +1490,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertEquals(newText, document.getText());
 
     assertTrue(marker[0].isValid());
-    assertEquals("la", TextRange.create(marker[0]).substring(document.getText()));
+    assertEquals("la", marker[0].getTextRange().substring(document.getText()));
     assertTrue(persistentMarker[0].isValid());
-    assertEquals("la", TextRange.create(persistentMarker[0]).substring(document.getText()));
+    assertEquals("la", persistentMarker[0].getTextRange().substring(document.getText()));
     gcDocument();
     checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
   }
@@ -1536,9 +1570,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeMarker[] marker = {createMarker(psiFile, 1, 3)};
     RangeMarker[] persistentMarker = {document.createRangeMarker(1, 3, true)};
     assertTrue(marker[0].isValid());
-    assertEquals("la", TextRange.create(marker[0]).substring(document.getText()));
+    assertEquals("la", marker[0].getTextRange().substring(document.getText()));
     assertTrue(persistentMarker[0].isValid());
-    assertEquals("la", TextRange.create(persistentMarker[0]).substring(document.getText()));
+    assertEquals("la", persistentMarker[0].getTextRange().substring(document.getText()));
     int docHash1 = System.identityHashCode(document);
     assertNotSame(docHash0, docHash1);
     assertTrue(oldmarker[0].isValid());
@@ -1558,9 +1592,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     WriteCommandAction.runWriteCommandAction(getProject(), ()->document.insertString(2,"000"));
 
     assertTrue(marker[0].isValid());
-    assertEquals("l000a", TextRange.create(marker[0]).substring(document.getText()));
+    assertEquals("l000a", marker[0].getTextRange().substring(document.getText()));
     assertTrue(persistentMarker[0].isValid());
-    assertEquals("l000a", TextRange.create(persistentMarker[0]).substring(document.getText()));
+    assertEquals("l000a", persistentMarker[0].getTextRange().substring(document.getText()));
     assertTrue(oldmarker[0].isValid());
     oldmarker[0] = null;
     gcDocument();
@@ -1598,5 +1632,55 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       assertEquals(range.toString(), 1, range.getLength());
     }
     future.get();
+  }
+
+  public void testRangeMarkerMustPreserveItsOffsetsSomeTimeAfterDeath() {
+    createRemoveCheck(
+      () -> createMarker("xxxxx", 1, 3),
+      RangeMarker::dispose);
+
+    createRemoveCheck(
+      () -> createMarker("xxxxx", 2, 3),
+      marker -> ((DocumentEx)marker.getDocument()).removeRangeMarker((RangeMarkerEx)marker));
+
+    createRemoveCheck(
+      () -> DocumentMarkupModel.forDocument(document, getProject(), true).addRangeHighlighter(2, 4, 0, null, HighlighterTargetArea.EXACT_RANGE),
+      highlighter -> highlighter.dispose());
+
+    createRemoveCheck(
+      () -> DocumentMarkupModel.forDocument(document, getProject(), true).addRangeHighlighter(2, 4, 0, null, HighlighterTargetArea.EXACT_RANGE),
+      highlighter -> DocumentMarkupModel.forDocument(document, getProject(), true).removeHighlighter((RangeHighlighter)highlighter));
+
+    createRemoveCheck(
+      () -> {
+        VirtualFile virtualFile = createFile("x.txt", "xxx").getVirtualFile();
+        return LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(virtualFile, 2);
+      },
+      RangeMarker::dispose);
+    
+    createRemoveCheck(
+      () -> {
+        VirtualFile virtualFile = createFile("x.txt", "xxx").getVirtualFile();
+        return LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(virtualFile, 2);
+      },
+      marker -> {
+        gcDocument();
+        marker.dispose();
+      });
+  }
+
+  private void createRemoveCheck(Supplier<? extends RangeMarker> creator, Consumer<? super RangeMarker> remover) {
+    RangeMarker marker = creator.get();
+    assertTrue(marker.isValid());
+    TextRange range = marker.getTextRange();
+    remover.accept(marker);
+    assertFalse(marker.isValid());
+    assertEquals(range, marker.getTextRange());
+  }
+
+  public void testInvalidOffsetMustThrow() {
+    assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", 2, 1));
+    assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", -1, 1));
+    assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", 1, 5));
   }
 }

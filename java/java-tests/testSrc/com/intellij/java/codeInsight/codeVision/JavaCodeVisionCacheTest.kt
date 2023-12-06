@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.codeVision
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.JavaCodeInsightTestCase
+import com.intellij.codeInsight.daemon.impl.UsageCounterConfiguration
 import com.intellij.codeInsight.daemon.impl.UsagesCountManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.JavaPsiFacade
@@ -11,6 +12,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class JavaCodeVisionCacheTest : JavaCodeInsightTestCase() {
@@ -62,7 +65,7 @@ class JavaCodeVisionCacheTest : JavaCodeInsightTestCase() {
   fun testUsagesNotRecomputed() {
     val externalComputations = AtomicInteger(0)
     val localComputations = AtomicInteger(0)
-    val testUsagesCounter = object : UsagesCountManager.UsagesCounter {
+    val testUsagesCounter = object : UsageCounterConfiguration {
       override fun countUsages(file: PsiFile, members: List<PsiMember>, scope: SearchScope): Int {
         if (scope.contains(file.virtualFile)) {
           localComputations.incrementAndGet()
@@ -71,6 +74,11 @@ class JavaCodeVisionCacheTest : JavaCodeInsightTestCase() {
           externalComputations.incrementAndGet()
         }
         return 0
+      }
+
+      override fun <K : Any, V : Any> createCacheMap(): ConcurrentMap<K, V> {
+        //cache with strong key-values to exclude GC impact
+        return ConcurrentHashMap()
       }
     }
     val usagesCountManager = UsagesCountManager(project, testUsagesCounter)

@@ -12,6 +12,7 @@ import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
+import org.jetbrains.annotations.ApiStatus
 
 
 object StrategyUtils {
@@ -81,32 +82,15 @@ object StrategyUtils {
    * @param types possible types of siblings
    * @return sequence of siblings with whitespace tokens
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
   fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, types: Set<IElementType>) =
     getNotSoDistantSiblingsOfTypes(strategy, element) { type -> type in types }
 
-  /**
-   * Get all siblings of [element] of type accepted by [checkType]
-   * which are no further than one line
-   *
-   * @param element element whose siblings are to be found
-   * @param checkType predicate to check if type is accepted
-   * @return sequence of siblings with whitespace tokens
-   */
-  @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
-  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, checkType: (IElementType?) -> Boolean) =
+  private fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, checkType: (IElementType?) -> Boolean) =
     getNotSoDistantSimilarSiblings(strategy, element) { sibling -> checkType(sibling.elementType) }
 
-  /**
-   * Get all siblings of [element] that are accepted by [checkSibling]
-   * which are no further than one line
-   *
-   * @param element element whose siblings are to be found
-   * @param checkSibling predicate to check if sibling is accepted
-   * @return sequence of siblings with whitespace tokens
-   */
-  @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
-  fun getNotSoDistantSimilarSiblings(strategy: GrammarCheckingStrategy, element: PsiElement, checkSibling: (PsiElement?) -> Boolean) =
+  private fun getNotSoDistantSimilarSiblings(strategy: GrammarCheckingStrategy, element: PsiElement, checkSibling: (PsiElement?) -> Boolean) =
     sequence {
     fun PsiElement.process(checkSibling: (PsiElement?) -> Boolean, next: Boolean) = sequence<PsiElement> {
       val whitespaceTokens = strategy.getWhiteSpaceTokens()

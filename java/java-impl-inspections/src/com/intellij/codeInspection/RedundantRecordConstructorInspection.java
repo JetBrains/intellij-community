@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -8,6 +8,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
@@ -25,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -75,9 +76,8 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
           int count = getAssignedComponentsCount(components, parameters, statements);
           if (count < statements.length) {
             for (int i = statements.length - count; i < statements.length; i++) {
-              holder.registerProblem(statements[i],
-                                     JavaBundle.message("inspection.redundant.record.constructor.statement.message"),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new DeleteElementFix(statements[i]));
+              holder.problem(statements[i], JavaBundle.message("inspection.redundant.record.constructor.statement.message"))
+                .fix(new DeleteElementFix(statements[i])).register();
             }
             return;
           }
@@ -127,7 +127,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
                                                 PsiParameter @NotNull [] parameters,
                                                 PsiStatement @NotNull [] statements) {
     assert parameters.length == components.length;
-    Set<PsiRecordComponent> unprocessed = new HashSet<>(Arrays.asList(components));
+    Set<PsiRecordComponent> unprocessed = ContainerUtil.newHashSet(components);
     int i = statements.length - 1;
     while (i >= 0 && !unprocessed.isEmpty()) {
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[i]);
@@ -150,20 +150,19 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     return components.length - unprocessed.size();
   }
 
-  public interface ConstructorSimplifier extends LocalQuickFix {
-    void simplify(@NotNull PsiMethod ctor);
+  public static abstract class ConstructorSimplifier extends PsiUpdateModCommandQuickFix {
+    public abstract void simplify(@NotNull PsiMethod ctor);
 
     @Override
-    default void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethod ctor = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethod.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethod ctor = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (ctor != null) {
         simplify(ctor);
       }
     }
   }
 
-  private static class RemoveRedundantCtorSimplifier implements ConstructorSimplifier {
-
+  private static class RemoveRedundantCtorSimplifier extends ConstructorSimplifier {
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.remove.title", JavaElementKind.CONSTRUCTOR.object());
@@ -175,7 +174,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static class MakeCtorCompactSimplifier implements ConstructorSimplifier {
+  private static class MakeCtorCompactSimplifier extends ConstructorSimplifier {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override

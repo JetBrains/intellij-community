@@ -168,9 +168,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     topPanel.add(header, BorderLayout.NORTH);
     topPanel.add(mySearchField, BorderLayout.SOUTH);
 
-    WindowMoveListener moveListener = new WindowMoveListener(this);
-    topPanel.addMouseListener(moveListener);
-    topPanel.addMouseMotionListener(moveListener);
+    new WindowMoveListener(this).installTo(topPanel);
 
     addToTop(topPanel);
     addToCenter(suggestionsPanel);
@@ -227,10 +225,18 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     }
   }
 
-  private JPanel createSuggestionsPanel() {
+  protected JPanel createSuggestionsPanel() {
     JPanel pnl = new JPanel(new BorderLayout());
     pnl.setOpaque(false);
 
+    JScrollPane resultsScroll = createListPane();
+    pnl.add(resultsScroll, BorderLayout.CENTER);
+
+    return createFooterPanel(pnl);
+  }
+
+  @NotNull
+  protected JScrollPane createListPane() {
     JScrollPane resultsScroll = new JBScrollPane(myResultsList) {
       @Override
       public void updateUI() {
@@ -244,11 +250,14 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     ComponentUtil.putClientProperty(resultsScroll.getVerticalScrollBar(), JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);
 
     resultsScroll.setPreferredSize(JBUI.size(670, JBUI.CurrentTheme.BigPopup.maxListHeight()));
-    pnl.add(resultsScroll, BorderLayout.CENTER);
+    return resultsScroll;
+  }
 
+  @NotNull
+  protected JPanel createFooterPanel(@NotNull JPanel panel) {
     myHintLabel = createHint();
-    pnl.add(myHintLabel.getAdComponent(), BorderLayout.SOUTH);
-    return pnl;
+    panel.add(myHintLabel.getAdComponent(), BorderLayout.SOUTH);
+    return panel;
   }
 
   @NotNull

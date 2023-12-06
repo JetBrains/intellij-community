@@ -1,20 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
-import com.intellij.diagnostic.telemetry.TraceManager
-import com.intellij.diagnostic.telemetry.runWithSpan
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.ArrayUtil
-import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
+import git4idea.telemetry.GitTelemetrySpan
+import java.util.function.Consumer
 
 internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetadata>(protected val project: Project,
                                                                                      protected val root: VirtualFile,
@@ -48,14 +50,14 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
                                          vararg parameters: String) {
     val factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project) ?: return
 
-    val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters(project)), *parameters)
+    val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters(project, handler.executable)), *parameters)
     if (requirements.diffInMergeCommits == GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS) {
       val consumer = { records: List<R> ->
         val firstRecord = records.first()
         val parents = firstRecord.parentsHashes
 
         if (parents.isEmpty() || parents.size == records.size) {
-          commitConsumer.consume(createCommit(records, factory, requirements))
+          commitConsumer.accept(createCommit(records, factory, requirements))
         }
         else {
           LOG.warn("Not enough records for commit ${firstRecord.hash} " +
@@ -69,7 +71,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     }
     else {
       val consumer = Consumer<R> { record ->
-        commitConsumer.consume(createCommit(mutableListOf(record), factory, requirements))
+        commitConsumer.accept(createCommit(mutableListOf(record), factory, requirements))
       }
 
       readRecordsFromHandler(handler, consumer, *commandParameters)
@@ -85,13 +87,15 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     handler.addParameters("--name-status")
     handler.endOptions()
 
-    runWithSpan(TraceManager.getTracer("vcs"), "loading details") { span ->
-      span.setAttribute("rootName", root.name)
+    TelemetryManager.getInstance().getTracer(VcsScope)
+      .spanBuilder(GitTelemetrySpan.Log.LoadingFullCommitDetails.name)
+      .useWithScopeBlocking { span ->
+        span.setAttribute("rootName", root.name)
 
-      val handlerListener = GitLogOutputSplitter(handler, parser, converter)
-      Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
-      handlerListener.reportErrors()
-    }
+        val handlerListener = GitLogOutputSplitter(handler, parser, converter)
+        Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
+        handlerListener.reportErrors()
+      }
   }
 
   protected abstract fun createRecordsCollector(consumer: (List<R>) -> Unit): GitLogRecordCollector<R>

@@ -3,20 +3,21 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Companion.invertSelectorFunction
+import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Util.invertSelectorFunction
+import org.jetbrains.kotlin.idea.intentions.ConvertBinaryExpressionWithDemorgansLawIntention.Holder.topmostBinaryExpression
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiUtil.deparenthesize
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
@@ -26,27 +27,29 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
         val expr = element.topmostBinaryExpression()
         setTextGetter(
             when (expr.operationToken) {
-                KtTokens.ANDAND -> KotlinBundle.lazyMessage("replace.with2")
-                KtTokens.OROR -> KotlinBundle.lazyMessage("replace.with")
+                KtTokens.ANDAND -> KotlinBundle.lazyMessage("replace.&&.with.||")
+                KtTokens.OROR -> KotlinBundle.lazyMessage("replace.||.with.&&")
                 else -> return false
             }
         )
-        return splitBooleanSequence(expr) != null
+        return Holder.splitBooleanSequence(expr) != null
     }
 
-    override fun applyTo(element: KtBinaryExpression, editor: Editor?) = applyTo(element)
+    override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
+        Holder.applyTo(element)
+    }
 
-    companion object {
+    object Holder {
         fun convertIfPossible(element: KtBinaryExpression) {
             val expr = element.topmostBinaryExpression()
             if (splitBooleanSequence(expr) == null) return
             applyTo(element)
         }
 
-        private fun KtBinaryExpression.topmostBinaryExpression(): KtBinaryExpression =
+        internal fun KtBinaryExpression.topmostBinaryExpression(): KtBinaryExpression =
             parentsWithSelf.takeWhile { it is KtBinaryExpression }.last() as KtBinaryExpression
 
-        private fun applyTo(element: KtBinaryExpression) {
+        internal fun applyTo(element: KtBinaryExpression) {
             val expr = element.topmostBinaryExpression()
             val operatorText = when (expr.operationToken) {
                 KtTokens.ANDAND -> KtTokens.OROR.value
@@ -67,7 +70,7 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
                 ?: expr.replace(newExpression.negate())
         }
 
-        private fun splitBooleanSequence(expression: KtBinaryExpression, contextProvider: (() -> BindingContext)? = null): List<KtExpression>? {
+        internal fun splitBooleanSequence(expression: KtBinaryExpression, contextProvider: (() -> BindingContext)? = null): List<KtExpression>? {
             val result = ArrayList<KtExpression>()
             val firstOperator = expression.operationToken
             var remainingExpression: KtExpression = expression

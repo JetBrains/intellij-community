@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.project.Project;
@@ -16,21 +16,18 @@ public class MockResolveScopeManager extends ResolveScopeManager {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
+  public @NotNull GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
     return GlobalSearchScope.allScope(element.getProject());
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
+  public @NotNull GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
     return GlobalSearchScope.allScope(myProject);
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
+  public @NotNull GlobalSearchScope getUseScope(@NotNull PsiElement element) {
     return GlobalSearchScope.allScope(element.getProject());
   }
 }

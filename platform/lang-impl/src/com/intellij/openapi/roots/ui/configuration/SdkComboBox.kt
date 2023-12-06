@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.PopupMenuListenerAdapter
+import com.intellij.util.concurrency.ThreadingAssertions
 import javax.swing.event.PopupMenuEvent
 
 class SdkComboBox(model: SdkComboBoxModel) : SdkComboBoxBase<SdkListItem>(model.modelBuilder) {
-  val model get() = getModel() as SdkComboBoxModel
+  val model: SdkComboBoxModel get() = getModel() as SdkComboBoxModel
 
   override fun onModelUpdated(listModel: SdkListModel) {
     setModel(model.copyAndSetListModel(listModel))
@@ -64,7 +64,7 @@ class SdkComboBox(model: SdkComboBoxModel) : SdkComboBoxBase<SdkListItem>(model.
 
   init {
     setModel(model)
-    setRenderer(SdkListPresenter { this@SdkComboBox.model.listModel })
+    setRenderer(SdkListPresenter.create(this, { this@SdkComboBox.model.listModel }, { it }))
     addPopupMenuListener(ModelReloadProvider())
     reloadModel()
   }
@@ -84,7 +84,7 @@ class SdkComboBox(model: SdkComboBoxModel) : SdkComboBoxBase<SdkListItem>(model.
     }
 
     private fun setReloadDisposable(parentDisposable: Disposable?) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       parentDisposable?.let { Disposer.register(model.project, it) }
       disposable?.let { Disposer.dispose(it) }
       disposable = parentDisposable

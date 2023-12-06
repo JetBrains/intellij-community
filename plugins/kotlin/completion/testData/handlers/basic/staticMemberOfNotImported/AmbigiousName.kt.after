@@ -6,4 +6,5 @@ fun foo() {
     FooBar.inFoo()
 }
 
+// IGNORE_K2
 // ELEMENT: inFoo

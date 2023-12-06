@@ -1,26 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.messages.Topic
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.OptionTag
 
+private val defaultProviderType: ProviderType
+  get() = CredentialStoreManager.getInstance().defaultProvider()
+
 @Service
 @State(name = "PasswordSafe", storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
-class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<PasswordSafeSettings.PasswordSafeOptions> {
+class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<PasswordSafeOptions> {
   companion object {
-    private val LOG = logger<PasswordSafeSettings>()
-
     @JvmField
-    val TOPIC = Topic.create("PasswordSafeSettingsListener", PasswordSafeSettingsListener::class.java)
-
-    private val defaultProviderType: ProviderType
-      get() = CredentialStoreManager.getInstance().defaultProvider()
+    @Topic.AppLevel
+    val TOPIC: Topic<PasswordSafeSettingsListener> = Topic("PasswordSafeSettingsListener", PasswordSafeSettingsListener::class.java)
   }
 
   private var state = PasswordSafeOptions()
@@ -73,17 +71,17 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
   }
 
   override fun getStateModificationCount() = state.modificationCount
+}
 
-  class PasswordSafeOptions : BaseState() {
-    // do not use it directly
-    @get:OptionTag("PROVIDER")
-    var provider by enum(defaultProviderType)
+class PasswordSafeOptions : BaseState() {
+  // do not use it directly
+  @get:OptionTag("PROVIDER")
+  var provider by enum(defaultProviderType)
 
-    // do not use it directly
-    var keepassDb by string()
-    var isRememberPasswordByDefault by property(true)
+  // do not use it directly
+  var keepassDb by string()
+  var isRememberPasswordByDefault by property(true)
 
-    // do not use it directly
-    var pgpKeyId by string()
-  }
+  // do not use it directly
+  var pgpKeyId by string()
 }

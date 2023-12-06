@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.ide.IdeBundle;
@@ -66,7 +66,7 @@ public final class AppConsoleFontConfigurable extends AppFontConfigurable {
     super.reset();
   }
 
-  private static class ConsoleFontOptionsPanel extends AppFontOptionsPanel {
+  private static final class ConsoleFontOptionsPanel extends AppFontOptionsPanel {
 
     private JCheckBox myUseEditorFontBox;
 
@@ -74,9 +74,8 @@ public final class AppConsoleFontConfigurable extends AppFontConfigurable {
       super(scheme);
     }
 
-    @NotNull
     @Override
-    protected JComponent createControls() {
+    protected @NotNull JComponent createControls() {
       JPanel outerPanel = new JPanel(new BorderLayout());
       myUseEditorFontBox = new JCheckBox(IdeBundle.message("configurable.console.font.use.editor.font"));
       myUseEditorFontBox.setSelected(isReadOnly());
@@ -127,7 +126,7 @@ public final class AppConsoleFontConfigurable extends AppFontConfigurable {
     }
   }
 
-  public static class Provider extends ConfigurableProvider {
+  public static final class Provider extends ConfigurableProvider {
 
     @Override
     public @Nullable Configurable createConfigurable() {

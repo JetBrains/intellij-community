@@ -184,12 +184,6 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
     fun getHostRangeEscapeAware(segmentRange: TextRange, inSegmentStart: Int, inSegmentEnd: Int): TextRange {
       if (host is PsiLanguageInjectionHost) {
 
-        fun mkAttachments(): Array<Attachment> = arrayOf(
-          Attachment("host.txt", kotlin.runCatching { host.text ?: "<null>" }.getOrElse { it.stackTraceToString() }),
-          Attachment(kotlin.runCatching { host.containingFile?.virtualFile?.name  }.getOrNull() ?: "file.txt", 
-                     kotlin.runCatching { host.containingFile?.text ?: "<null>" }.getOrElse { it.stackTraceToString() })
-        )
-
         try {
           val escaper = host.createLiteralTextEscaper()
           val decode = escaper.decode(segmentRange, StringBuilder())
@@ -201,7 +195,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
             else {
               logger<PartiallyKnownString>().error(
                 "decoding of ${segmentRange} failed for $host : [$start, $end] inSegment = [$inSegmentStart, $inSegmentEnd]",
-                *mkAttachments()
+                *mkAttachments(host)
               )
               return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
             }
@@ -210,7 +204,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         catch (e: Exception) {
           if (e is ControlFlowException) throw e
           logger<PartiallyKnownString>().error(
-            "decoding of ${segmentRange} failed for $host inSegment = [$inSegmentStart, $inSegmentEnd]", e, *mkAttachments()
+            "decoding of ${segmentRange} failed for $host inSegment = [$inSegmentStart, $inSegmentEnd]", e, *mkAttachments(host)
           )
         }
       }
@@ -274,10 +268,17 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
   }
 
   companion object {
-    val empty = PartiallyKnownString(emptyList())
+    val empty: PartiallyKnownString = PartiallyKnownString(emptyList())
   }
 
 }
+
+@ApiStatus.Internal
+fun mkAttachments(host: PsiElement): Array<Attachment> = arrayOf(
+  Attachment("host.txt", runCatching { host.text ?: "<null>" }.getOrElse { it.stackTraceToString() }),
+  Attachment(runCatching { host.containingFile?.virtualFile?.name }.getOrNull() ?: "file.txt",
+             runCatching { host.containingFile?.text ?: "<null>" }.getOrElse { it.stackTraceToString() })
+)
 
 @ApiStatus.Experimental
 sealed class StringEntry {

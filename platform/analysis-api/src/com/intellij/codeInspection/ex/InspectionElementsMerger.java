@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -9,8 +9,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * Merges multiple inspections settings {@link #getSourceToolNames()} into another one {@link #getMergedToolName()}.
@@ -51,8 +54,7 @@ public abstract class InspectionElementsMerger {
    * when one of toolNames doesn't present in the profile, default settings for that tool are expected, e.g. by default the result would be enabled with min severity WARNING
    */
   @Contract(pure = true)
-  @NonNls
-  public abstract String @NotNull [] getSourceToolNames();
+  public abstract @NonNls String @NotNull [] getSourceToolNames();
 
   /**
    * The ids to check for suppression.
@@ -60,8 +62,7 @@ public abstract class InspectionElementsMerger {
    * @return the suppressIds of the merged inspections.
    */
   @Contract(pure = true)
-  @NonNls
-  public String @NotNull [] getSuppressIds() {
+  public @NonNls String @NotNull [] getSuppressIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
@@ -70,12 +71,9 @@ public abstract class InspectionElementsMerger {
    * @return new merged tool name
    *         null if merger is not found
    */
-  public static String getMergedToolName(@NotNull String id) {
-    for (InspectionElementsMerger merger : EP_NAME.getExtensionList()) {
-      if (ArrayUtil.contains(id, merger.getSourceToolNames()) || ArrayUtil.contains(id, merger.getSuppressIds())) {
-        return merger.getMergedToolName();
-      }
-    }
-    return null;
+  public static List<String> getMergedToolNames(@NotNull String id) {
+    return EP_NAME.getExtensionList().stream()
+      .filter(merger -> ArrayUtil.contains(id, merger.getSourceToolNames()) || ArrayUtil.contains(id, merger.getSuppressIds()))
+      .map(InspectionElementsMerger::getMergedToolName).toList();
   }
 }

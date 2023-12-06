@@ -68,38 +68,64 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
     setText(bytecode, 0);
   }
 
-  public void setText(@NonNls final String bytecode, PsiElement element) {
-    int offset = 0;
+  public void setText(@NonNls final String bytecode, PsiElement element, int lineNumber) {
+    int offset = -1;
     VirtualFile file = PsiUtilCore.getVirtualFile(element);
     if (file != null) {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
-        int lineNumber = document.getLineNumber(element.getTextOffset());
+        if (lineNumber == -1) {
+          lineNumber = document.getLineNumber(element.getTextOffset());
+        }
+
+        // Use 1-based line numbers from here:
+        lineNumber++;
+
         LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
         if (mapping != null) {
-          int mappedLine = mapping.sourceToBytecode(lineNumber);
-          while (mappedLine == -1 && lineNumber < document.getLineCount()) {
-            mappedLine = mapping.sourceToBytecode(++lineNumber);
-          }
-          if (mappedLine > 0) {
-            lineNumber = mappedLine;
+          for (int l = lineNumber; l <= document.getLineCount(); l++) {
+            int bytecodeLine = mapping.sourceToBytecode(l);
+            if (bytecodeLine != -1) {
+              offset = findLineNumber(bytecode, bytecodeLine);
+              assert offset != -1 : "there is bytecode line in mapping but it is missing in bytecode";
+              break;
+            }
           }
         }
-        offset = bytecode.indexOf("LINENUMBER " + lineNumber);
-        while (offset == -1 && lineNumber < document.getLineCount()) {
-          offset = bytecode.indexOf("LINENUMBER " + (lineNumber++));
+        else {
+          for (int l = lineNumber; l <= document.getLineCount(); l++) {
+            offset = findLineNumber(bytecode, l);
+            if (offset != -1) {
+              break;
+            }
+          }
         }
       }
     }
     setText(bytecode, Math.max(0, offset));
   }
 
+  private static int findLineNumber(@NonNls String bytecode, int l) {
+    int idx = bytecode.indexOf("\n    LINENUMBER " + l + " ");
+    if (idx != -1) {
+      // shift by one to skip '\n'
+      return idx + 1;
+    } else {
+      return -1;
+    }
+  }
+
   public void setText(final String bytecode, final int offset) {
     DocumentUtil.writeInRunUndoTransparentAction(() -> {
       Document fragmentDoc = myEditor.getDocument();
       fragmentDoc.setReadOnly(false);
-      fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), bytecode);
-      fragmentDoc.setReadOnly(true);
+      try {
+        fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), bytecode);
+      }
+      finally {
+        fragmentDoc.setReadOnly(true);
+      }
+
       myEditor.getCaretModel().moveToOffset(offset);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     });

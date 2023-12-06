@@ -16,14 +16,15 @@ import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
@@ -89,17 +90,17 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
     DiffRequestChain chain;
     if (needsConversion) {
-      FutureResult<ListSelection<Producer>> resultRef = new FutureResult<>();
+      CompletableFuture<ListSelection<Producer>> resultRef = new CompletableFuture<>();
       // this trick is essential since we are under some conditions to refresh changes;
       // but we can only rely on callback after refresh
       ChangeListManager.getInstance(project).invokeAfterUpdate(true, () -> {
         ChangesViewManager.getInstanceEx(project).promiseRefresh().onProcessed(__ -> {
           try {
-            List<Change> actualChanges = loadFakeRevisions(project, changes);
-            resultRef.set(collectRequestProducers(project, actualChanges, unversioned, view));
+            List<? extends Change> actualChanges = loadFakeRevisions(project, changes);
+            resultRef.complete(collectRequestProducers(project, actualChanges, unversioned, view));
           }
           catch (Throwable err) {
-            resultRef.setException(err);
+            resultRef.completeExceptionally(err);
           }
         });
       });
@@ -145,12 +146,9 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   @NotNull
-  private static List<Change> loadFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
-    List<Change> actualChanges = new ArrayList<>();
-    for (Change change : changes) {
-      actualChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
-    }
-    return actualChanges;
+  private static List<? extends Change> loadFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
+    Collection<Change> allChanges = ChangeListManager.getInstance(project).getAllChanges();
+    return VcsImplUtil.filterChangesUnder(allChanges, ChangesUtil.getPaths(changes)).toList();
   }
 
   @NotNull

@@ -20,6 +20,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.psi.impl.java.stubs.impl.PsiRequiresStatementStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiRequiresStatementImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -35,7 +36,7 @@ import java.io.IOException;
 
 public class JavaRequiresStatementElementType extends JavaStubElementType<PsiRequiresStatementStub, PsiRequiresStatement> {
   public JavaRequiresStatementElementType() {
-    super("REQUIRES_STATEMENT");
+    super("REQUIRES_STATEMENT", BasicJavaElementType.BASIC_REQUIRES_STATEMENT);
   }
 
   @NotNull

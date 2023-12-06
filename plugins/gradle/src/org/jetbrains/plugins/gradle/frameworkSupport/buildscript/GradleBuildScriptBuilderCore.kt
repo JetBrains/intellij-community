@@ -117,6 +117,12 @@ interface GradleBuildScriptBuilderCore<out BSB : GradleBuildScriptBuilderCore<BS
   fun withRepository(configure: Consumer<ScriptTreeBuilder>): BSB
 
   /**
+   * java { ... }
+   */
+  fun withJava(configure: ScriptTreeBuilder.() -> Unit): BSB
+  fun withJava(configure: Consumer<ScriptTreeBuilder>): BSB
+
+  /**
    * buildscript { ... }
    * ...
    * repositories { ... }

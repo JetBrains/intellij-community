@@ -14,15 +14,11 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
-    private companion object {
-        private val FORBIDDEN_PACKAGE_NAMES = listOf("kotlin", "java.lang")
-    }
-
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun resolveSupertypes(expression: KtExpression, file: KtFile): Collection<PsiNamedElement> {
         allowAnalysisOnEdt {
             analyze(expression) {
-                val scope = file.getScopeContextForPosition(expression).scopes
+                val scope = file.getScopeContextForPosition(expression).getCompositeScope()
                 return scope.getClassifierSymbols()
                     .filterIsInstance<KtNamedClassOrObjectSymbol>()
                     .filter { shouldSuggest(it) }
@@ -54,3 +50,5 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
         return true
     }
 }
+
+private val FORBIDDEN_PACKAGE_NAMES = listOf("kotlin", "java.lang")

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.local
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
@@ -191,6 +192,8 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   protected open fun getCollapsedDependencyCategories(): List<String> = emptyList()
   protected open fun getFilePathsToOpen(): List<String> = emptyList()
 
+  protected open fun isShowProjectTypes(): Boolean = true
+
   internal open fun getCollapsedDependencyCategoriesInternal(): List<String> = getCollapsedDependencyCategories()
 
   internal fun isDependencyAvailableInternal(starter: Starter, dependency: Library): Boolean {
@@ -237,7 +240,8 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       emptyList(),
       emptyList(),
       getTestFrameworks(),
-      getCustomizedMessages()
+      getCustomizedMessages(),
+      isShowProjectTypes()
     )
   }
 
@@ -374,14 +378,14 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       preprocessModuleCreated(module, this, starterContext.starter?.id)
 
       StartupManager.getInstance(module.project).runAfterOpened {  // IDEA-244863
-        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, module.disposed, Runnable {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), module.disposed, Runnable {
           if (module.isDisposed) return@Runnable
 
           ReformatCodeProcessor(module.project, module, false).run()
-          // import of module may dispose it and create another, open files first
+          // import of module may dispose it and create another. open samples first.
           openSampleFiles(module, getFilePathsToOpen())
 
-          if (starterContext.gitIntegration) {
+          if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
             runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
               GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
             }

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.ide.warmup.WarmupStatus;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -16,12 +17,9 @@ public abstract class MavenSimpleProjectComponent {
     return !MavenUtil.isMavenUnitTestModeEnabled() && !isHeadless() && !isDefault();
   }
 
-  protected boolean isNoBackgroundMode() {
-    return MavenUtil.isNoBackgroundMode();
-  }
-
   protected boolean isHeadless() {
-    return ApplicationManager.getApplication().isHeadlessEnvironment();
+    return ApplicationManager.getApplication().isHeadlessEnvironment() &&
+           !WarmupStatus.InProgress.INSTANCE.equals(WarmupStatus.Companion.currentStatus(ApplicationManager.getApplication()));
   }
 
   protected boolean isDefault() {

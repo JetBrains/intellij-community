@@ -44,7 +44,7 @@ public interface CoverageSuite extends JDOMExternalizable {
 
   boolean isTrackTestFolders();
 
-  boolean isTracingEnabled();
+  boolean isBranchCoverage();
 
   CoverageRunner getRunner();
 
@@ -68,8 +68,8 @@ public interface CoverageSuite extends JDOMExternalizable {
    */
   default boolean canRemove() {
     CoverageFileProvider provider = getCoverageDataFileProvider();
-    return provider instanceof DefaultCoverageFileProvider && Comparing.strEqual(((DefaultCoverageFileProvider)provider).getSourceProvider(),
-                                                                                 DefaultCoverageFileProvider.class.getName());
+    return provider instanceof DefaultCoverageFileProvider defaultProvider
+           && Comparing.strEqual(defaultProvider.getSourceProvider(), DefaultCoverageFileProvider.DEFAULT_LOCAL_PROVIDER_KEY);
   }
 
   /**

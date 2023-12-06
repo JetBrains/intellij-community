@@ -8,7 +8,7 @@ abstract public class RemoteSshProcess extends RemoteProcess implements SelfKill
   /**
    * @deprecated use {@link #killProcessTree()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected abstract boolean sendCtrlC();
 
   @Override
@@ -19,10 +19,5 @@ abstract public class RemoteSshProcess extends RemoteProcess implements SelfKill
     else {
       return false;
     }
-  }
-
-  @Override
-  public void setWindowSize(int columns, int rows) {
-    //not implemented yet; see IJ-MR-9216 && PY-40900
   }
 }

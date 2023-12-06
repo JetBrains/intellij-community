@@ -4,7 +4,7 @@ Reports JUnit <code>assertEquals()</code> calls with arguments of an array type.
 Such methods compare the arrays' identities instead of the arrays' contents.
 Array contents should be checked with the <code>assertArrayEquals()</code> method.
 <p><b>Example:</b></p>
-<pre><code>
+<pre><code lang="java">
   @Test
   public void testSort() {
     int[] actual = {248, 496, 0, 56};
@@ -13,7 +13,7 @@ Array contents should be checked with the <code>assertArrayEquals()</code> metho
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
+<pre><code lang="java">
   @Test
   public void testSort() {
     int[] actual = {248, 496, 0, 56};

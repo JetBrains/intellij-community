@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -36,8 +36,8 @@ public final class HashSetQueue<T> extends AbstractCollection<T> implements Queu
     TOMB.next = TOMB.prev = TOMB;
   }
 
-  private static class QueueEntry<T> {
-    @NotNull private final T t;
+  private static final class QueueEntry<T> {
+    private final @NotNull T t;
     private QueueEntry<T> next;
     private QueueEntry<T> prev;
 
@@ -83,8 +83,7 @@ public final class HashSetQueue<T> extends AbstractCollection<T> implements Queu
   }
 
   @Override
-  @NotNull
-  public T remove() {
+  public @NotNull T remove() {
     T poll = poll();
     if (poll == null) throw new NoSuchElementException();
     return poll;
@@ -100,8 +99,7 @@ public final class HashSetQueue<T> extends AbstractCollection<T> implements Queu
   }
 
   @Override
-  @NotNull
-  public T element() {
+  public @NotNull T element() {
     T peek = peek();
     if (peek == null) throw new NoSuchElementException();
     return peek;
@@ -151,9 +149,8 @@ public final class HashSetQueue<T> extends AbstractCollection<T> implements Queu
     return (T)o;
   }
 
-  @NotNull
   @Override
-  public PositionalIterator<T> iterator() {
+  public @NotNull PositionalIterator<T> iterator() {
     return new PositionalIterator<T>() {
       private QueueEntry<T> cursor = TOMB;
       private long count;
@@ -175,9 +172,8 @@ public final class HashSetQueue<T> extends AbstractCollection<T> implements Queu
         HashSetQueue.this.remove(cursor.t);
       }
 
-      @NotNull
       @Override
-      public IteratorPosition<T> position() {
+      public @NotNull IteratorPosition<T> position() {
         return new MyIteratorPosition<>(cursor, count, TOMB);
       }
     };

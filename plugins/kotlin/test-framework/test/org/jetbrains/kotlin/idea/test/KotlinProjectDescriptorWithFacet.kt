@@ -45,6 +45,18 @@ class KotlinProjectDescriptorWithFacet(
         val KOTLIN_11 = KotlinProjectDescriptorWithFacet(LanguageVersion.KOTLIN_1_1)
         val KOTLIN_STABLE_WITH_MULTIPLATFORM =
             KotlinProjectDescriptorWithFacet(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, multiPlatform = true)
+
+        fun createKotlinWithMultiplatformAndStdlib() = object : KotlinWithJdkAndRuntimeLightProjectDescriptor() {
+            override fun configureModule(module: Module, model: ModifiableRootModel) {
+                configureKotlinFacet(module) {
+                    settings.languageLevel = KotlinPluginLayout.standaloneCompilerVersion.languageVersion
+                    settings.compilerSettings = CompilerSettings().apply {
+                        additionalArguments += " -Xmulti-platform"
+                    }
+                }
+                super.configureModule(module, model)
+            }
+        }
     }
 }
 

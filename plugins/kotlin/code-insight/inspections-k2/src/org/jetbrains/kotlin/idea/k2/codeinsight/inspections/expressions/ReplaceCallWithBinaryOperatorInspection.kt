@@ -3,9 +3,12 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
 import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
@@ -28,11 +31,16 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-class ReplaceCallWithBinaryOperatorInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtDotQualifiedExpression, ReplaceCallWithBinaryOperatorInspection.Context>(
-        KtDotQualifiedExpression::class
-    ) {
+internal class ReplaceCallWithBinaryOperatorInspection :
+    AbstractKotlinApplicableInspectionWithContext<KtDotQualifiedExpression, ReplaceCallWithBinaryOperatorInspection.Context>() {
 
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        return object : KtVisitorVoid() {
+            override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
+                visitTargetElement(expression, holder, isOnTheFly)
+            }
+        }
+    }
     @FileModifier.SafeTypeForPreview
     data class Context(val operation: KtSingleValueToken, val isFloatingPointEquals: Boolean)
 
@@ -73,7 +81,7 @@ class ReplaceCallWithBinaryOperatorInspection :
         val argument = callExpression.singleArgumentExpression() ?: return null
 
         analyze(element) {
-            val resolvedCall = callExpression.resolveCall().successfulFunctionCallOrNull() ?: return null
+            val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
             if (resolvedCall.symbol.valueParameters.size != 1) return null
             if (resolvedCall.typeArgumentsMapping.isNotEmpty()) return null
             if (!element.isReceiverExpressionWithValue()) return null

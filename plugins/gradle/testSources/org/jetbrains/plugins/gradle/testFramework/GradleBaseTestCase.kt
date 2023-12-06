@@ -3,19 +3,15 @@ package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
-import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.SdkTestFixture
-import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.utils.vfs.createDirectory
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESListenerLeakTracker
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESReloadLeakTracker
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
@@ -23,45 +19,25 @@ import org.junit.jupiter.api.TestInfo
 @TestApplication
 abstract class GradleBaseTestCase {
 
-  private lateinit var listenerLeakTracker: ESListenerLeakTracker
-  private lateinit var reloadLeakTracker: ESReloadLeakTracker
+  private lateinit var testDisposable: Disposable
 
-  lateinit var testDisposable: Disposable
+  private lateinit var gradleTestFixture: GradleTestFixture
 
-  private lateinit var sdkFixture: SdkTestFixture
-  private lateinit var fileFixture: TempDirTestFixture
-
-  lateinit var testRoot: VirtualFile
-
-  val gradleJvm: String
-    get() = sdkFixture.getSdk().name
-
-  val gradleVersion: GradleVersion
-    get() = GradleVersion.current()
-
-  val gradleReload: ESReloadLeakTracker
-    get() = reloadLeakTracker
+  val testRoot: VirtualFile get() = gradleTestFixture.testRoot
+  val gradleJvm: String get() = gradleTestFixture.gradleJvm
+  val gradleVersion: GradleVersion get() = gradleTestFixture.gradleVersion
 
   @BeforeEach
   fun setUpGradleBaseTestCase(testInfo: TestInfo) {
-    listenerLeakTracker = ESListenerLeakTracker()
-    listenerLeakTracker.setUp()
-
-    reloadLeakTracker = ESReloadLeakTracker()
-    reloadLeakTracker.setUp()
+    gradleTestFixture = GradleTestFixtureFactory.getFixtureFactory()
+      .createGradleTestFixture(
+        className = testInfo.testClass.get().simpleName,
+        methodName = testInfo.testMethod.get().name,
+        gradleVersion = GradleVersion.current()
+      )
+    gradleTestFixture.setUp()
 
     testDisposable = Disposer.newDisposable()
-
-    sdkFixture = GradleTestFixtureFactory.getFixtureFactory().createGradleJvmTestFixture(gradleVersion)
-    sdkFixture.setUp()
-
-    fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
-    fileFixture.setUp()
-    runWriteActionAndWait {
-      testRoot = fileFixture.findOrCreateDir(testInfo.testClass.get().simpleName)
-        .createDirectory(testInfo.testMethod.get().name)
-    }
-
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
     AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
   }
@@ -69,11 +45,28 @@ abstract class GradleBaseTestCase {
   @AfterEach
   fun tearDownGradleBaseTestCase() {
     runAll(
-      { fileFixture.tearDown() },
-      { sdkFixture.tearDown() },
       { Disposer.dispose(testDisposable) },
-      { reloadLeakTracker.tearDown() },
-      { listenerLeakTracker.tearDown() }
+      { gradleTestFixture.tearDown() }
     )
+  }
+
+  suspend fun openProject(relativePath: String, wait: Boolean = true): Project {
+    return gradleTestFixture.openProject(relativePath, wait)
+  }
+
+  suspend fun linkProject(project: Project, relativePath: String) {
+    gradleTestFixture.linkProject(project, relativePath)
+  }
+
+  suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit) {
+    gradleTestFixture.reloadProject(project, relativePath, configure)
+  }
+
+  suspend fun <R> awaitAnyGradleProjectReload(wait: Boolean = true, action: suspend () -> R): R {
+    return gradleTestFixture.awaitAnyGradleProjectReload(wait, action)
+  }
+
+  fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean) {
+    gradleTestFixture.assertNotificationIsVisible(project, isNotificationVisible)
   }
 }

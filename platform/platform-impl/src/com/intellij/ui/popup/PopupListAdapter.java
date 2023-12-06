@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -51,9 +51,9 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
 
   @Override
   public void setItemChosenCallback(Consumer<? super T> callback) {
-    myBuilder.setItemChoosenCallback(() -> {
+    myBuilder.setItemChosenCallback(() -> {
       T selectedValue = myList.getSelectedValue();
-      if (selectedValue != null) {
+      if (selectedValue != null || !myList.isSelectionEmpty()) {
         callback.consume(selectedValue);
       }
     });
@@ -61,7 +61,7 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
 
   @Override
   public void setItemsChosenCallback(Consumer<? super Set<T>> callback) {
-    myBuilder.setItemChoosenCallback(() -> {
+    myBuilder.setItemChosenCallback(() -> {
       List<T> list = myList.getSelectedValuesList();
       callback.consume(list != null ? new HashSet<>(list) : Collections.emptySet());
     });
@@ -77,9 +77,8 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
     return true;
   }
 
-  @Nullable
   @Override
-  public Predicate<KeyEvent> getKeyEventHandler() {
+  public @Nullable Predicate<KeyEvent> getKeyEventHandler() {
     return InputEvent::isConsumed;
   }
 
@@ -158,8 +157,7 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
+    public @Nullable Object getData(@NotNull @NonNls String dataId) {
       return PopupImplUtil.getDataImplForList(myList, dataId);
     }
 

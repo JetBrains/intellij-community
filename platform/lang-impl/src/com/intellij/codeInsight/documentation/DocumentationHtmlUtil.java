@@ -91,6 +91,8 @@ public final class DocumentationHtmlUtil {
       ".content-separated { padding: 5px 16px 5px " + leftPadding + "px; max-width: 100%;" +
       "                     border-bottom: thin solid " + borderColor + "; }",
       ".content-only { padding: 8px 16px 0 " + leftPadding + "px; max-width: 100% }",
+      ".separated { padding: 0 0 4px 0; margin: 0; max-width: 100%;" +
+      "             border-bottom: thin solid " + borderColor + "; }",
       ".bottom { padding: 3px 16px 0 " + leftPadding + "px; }",
       ".bottom-no-content { padding: 5px 16px 0 " + leftPadding + "px; }",
       "p { padding: 1px 0 2px 0; }",

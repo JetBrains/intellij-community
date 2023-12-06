@@ -1,15 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 
-public class TreeFileChooserFactoryImpl extends TreeFileChooserFactory {
+public final class TreeFileChooserFactoryImpl extends TreeFileChooserFactory {
   private final Project myProject;
 
   public TreeFileChooserFactoryImpl(Project project) {
@@ -19,14 +21,14 @@ public class TreeFileChooserFactoryImpl extends TreeFileChooserFactory {
   @Override
   @NotNull
   public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter) {
-    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, false, false);
+    return createFileChooser(title, initialFile, fileType, filter, false);
   }
 
   @Override
   @NotNull
   public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter,
                                            boolean disableStructureProviders) {
-    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, disableStructureProviders, false);
+    return createFileChooser(title, initialFile, fileType, filter, disableStructureProviders, false);
   }
 
   @Override
@@ -34,6 +36,18 @@ public class TreeFileChooserFactoryImpl extends TreeFileChooserFactory {
   public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter,
                                            boolean disableStructureProviders,
                                            boolean showLibraryContents) {
-    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, disableStructureProviders, showLibraryContents);
+    return createFileChooser(title, initialFile, fileType, filter, null, disableStructureProviders, showLibraryContents);
+  }
+
+  @Override
+  @NotNull
+  public TreeFileChooser createFileChooser(@NotNull String title,
+                                                    @Nullable PsiFile initialFile,
+                                                    @Nullable FileType fileType,
+                                                    TreeFileChooser.@Nullable PsiFileFilter filter,
+                                                    @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                                                    boolean disableStructureProviders,
+                                                    boolean showLibraryContents) {
+    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, comparator, disableStructureProviders, showLibraryContents);
   }
 }

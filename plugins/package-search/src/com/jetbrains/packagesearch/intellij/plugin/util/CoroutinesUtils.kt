@@ -25,16 +25,23 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.util.flow.throttle
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.platform.util.coroutines.flow.throttle
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.data.LoadingContainer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.*
-import kotlinx.coroutines.*
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.AsyncModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -57,9 +64,14 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -214,7 +226,7 @@ internal suspend fun showBackgroundLoadingBar(
                 @Suppress("HardCodedStringLiteral")
                 val channelsJob = launch {
                     if (isPausable) {
-                        ProgressSuspender.markSuspendable(indicator, PackageSearchBundle.message("packagesearch.ui.resume"))
+                        ProgressSuspender.markSuspendable(indicator as ProgressIndicatorEx, PackageSearchBundle.message("packagesearch.ui.resume"))
                             .isSuspendedFLow
                             .collectIn(this, isSuspendedChannel)
                     }
@@ -274,9 +286,6 @@ internal class BackgroundLoadingBarController(
         runCatching { syncMutex.unlock() }
     }
 }
-
-@Deprecated("", ReplaceWith("com.intellij.openapi.application.writeAction(action)"))
-suspend fun <R> writeAction(action: () -> R): R = com.intellij.openapi.application.writeAction { action() }
 
 internal fun AsyncModuleTransformer.asCoroutine() = object : ModuleTransformer {
     override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<PackageSearchModule> =

@@ -12,13 +12,15 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PositionTracker;
 import kotlin.collections.ArraysKt;
@@ -44,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction;
 
@@ -59,12 +62,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
         }
     };
 
-    private static final Pass<JComponent> DO_NOTHING = new Pass<>() {
-        @Override
-        public void pass(JComponent component) {
-
-        }
-    };
+    private static final Consumer<? super JComponent> DO_NOTHING = __ -> {};
 
     protected static final class ControlWrapper {
         @NotNull
@@ -72,13 +70,13 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
         @NotNull
         private final Function0<Boolean> condition;
         @NotNull
-        private final Pass<JComponent> initializer;
+        private final Consumer<? super JComponent> initializer;
         private JComponent component;
 
         public ControlWrapper(
-                @NotNull Function0<JComponent> factory,
-                @NotNull Function0<Boolean> condition,
-                @NotNull Pass<JComponent> initializer) {
+          @NotNull Function0<JComponent> factory,
+          @NotNull Function0<Boolean> condition,
+          @NotNull Consumer<? super JComponent> initializer) {
             this.factory = factory;
             this.condition = condition;
             this.initializer = initializer;
@@ -93,7 +91,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
         }
 
         public void initialize() {
-            initializer.pass(getComponent());
+            initializer.accept(getComponent());
         }
 
         @NotNull
@@ -179,9 +177,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
                                                                           JBUI.insets(0, 5), 0, 0));
             ++count;
         }
-      panel.add(Box.createVerticalBox(), new GridBagConstraints(0, count, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
-                                                                GridBagConstraints.BOTH,
-                                                                JBInsets.emptyInsets(), 0, 0));
+        revalidate();
     }
 
     @NotNull

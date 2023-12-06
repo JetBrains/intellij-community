@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -13,6 +13,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @deprecated Prefer using {@link AsyncChangesTreeImpl} instead.
+ */
+@Deprecated
 public abstract class ChangesTreeImpl<T> extends ChangesTree {
   @NotNull private final List<T> myChanges = new ArrayList<>();
   @NotNull private final Class<T> myClazz;
@@ -36,7 +40,7 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
   }
 
   public void setChangesToDisplay(@NotNull Collection<? extends T> changes) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myProject.isDisposed()) return;
 
     myChanges.clear();
@@ -70,7 +74,6 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
   public Collection<T> getIncludedChanges() {
     return VcsTreeModelData.included(this).userObjects(myClazz);
   }
-
 
   public static class Changes extends ChangesTreeImpl<Change> {
     public Changes(@NotNull Project project,

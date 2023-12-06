@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitExecutor")
 package git4idea.test
 
@@ -67,6 +67,9 @@ private fun addCommit(project: Project, message: String): String {
   add(project)
   return commit(project, message)
 }
+
+fun GitRepository.deleteBranch(name: String) = cd { deleteBranch(project, name) }
+private fun deleteBranch(project: Project, name: String) = git(project, "branch -D $name")
 
 fun GitRepository.branch(name: String) = cd { branch(project, name) }
 fun GitPlatformTest.branch(name: String) = branch(project, name)

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,7 +30,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.ui.dsl.gridLayout.GapsKt.toGaps;
+import static com.intellij.ui.dsl.gridLayout.UnscaledGapsKt.toUnscaledGaps;
 
 public class SearchTextField extends JPanel {
 
@@ -44,8 +45,7 @@ public class SearchTextField extends JPanel {
   private final MyModel myModel;
   private final TextFieldWithProcessing myTextField;
 
-  @Nullable
-  private JBPopup myPopup;
+  private @Nullable JBPopup myPopup;
   private String myHistoryPropertyName;
   private final boolean historyPopupEnabled;
 
@@ -175,7 +175,7 @@ public class SearchTextField extends JPanel {
     myTextField.putClientProperty("JTextField.variant", "search");
 
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toGaps(myTextField.getInsets()));
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toUnscaledGaps(myTextField.getInsets()));
     DumbAwareAction.create(event -> {
       showPopup();
     }).registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextField);
@@ -188,7 +188,7 @@ public class SearchTextField extends JPanel {
     if (toClearTextOnEscape()) {
       ActionManager actionManager = ActionManager.getInstance();
       if (actionManager != null) {
-        EmptyAction.registerWithShortcutSet(IdeActions.ACTION_CLEAR_TEXT, CommonShortcuts.ESCAPE, this);
+        ActionUtil.wrap(IdeActions.ACTION_CLEAR_TEXT).registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
       }
     }
   }
@@ -416,8 +416,9 @@ public class SearchTextField extends JPanel {
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(chooseRunnable)
+        .setItemChosenCallback(chooseRunnable)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        .setAccessibleName(UIBundle.message("search.text.field.history.popup.accessible.name"))
         .createPopup();
       AlignedPopup.showUnderneathWithoutAlignment(myPopup, getPopupLocationComponent());
     }
@@ -452,13 +453,6 @@ public class SearchTextField extends JPanel {
       return true;
     }
     return false;
-  }
-
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  public void setSearchIcon(final Icon icon) {
   }
 
   public static final class FindAction extends DumbAwareAction {

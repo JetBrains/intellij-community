@@ -9,6 +9,7 @@ import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
@@ -31,7 +32,6 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
-import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -75,7 +75,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }
     }
     XDebugSessionTab tab;
-    if (Registry.is("debugger.new.tool.window.layout") || XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess())) {
+    if (UIExperiment.isNewDebuggerUIEnabled() || XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess())) {
       if (XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess())) {
         tab = new XDebugSessionTab3(session, icon, environment);
       }
@@ -179,7 +179,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   protected void addVariablesAndWatches(@NotNull XDebugSessionImpl session) {
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     if (!myWatchesInVariables) {
-      myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
+      myUi.addContent(createWatchesContent(session, null), 0, PlaceInGrid.right, false);
     }
   }
 
@@ -248,8 +248,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
-  protected Content createWatchesContent(@NotNull XDebugSessionImpl session) {
-    myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
+  protected Content createWatchesContent(@NotNull XDebugSessionImpl session, @Nullable XWatchesViewImpl watchesView) {
+    myWatchesView = watchesView != null ? watchesView : new XWatchesViewImpl(session, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
                                                 XDebuggerBundle.message("debugger.session.tab.watches.title"), null, myWatchesView.getDefaultFocusedComponent());
@@ -355,7 +355,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void registerAdditionalActions(DefaultActionGroup leftToolbar, DefaultActionGroup topLeftToolbar, DefaultActionGroup settings) {
-    mySession.getDebugProcess().registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
+    if (mySession != null) {
+      mySession.getDebugProcess().registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
+    }
   }
 
   protected static void attachViewToSession(@NotNull XDebugSessionImpl session, @Nullable XDebugView view) {

@@ -9,6 +9,8 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PyCommonFragmentsBuilder
 import com.jetbrains.python.run.PythonRunConfigurationExtensionsManager
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 
 abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRunConfiguration<*>>(val runConfiguration: T) :
   RunConfigurationFragmentedEditor<T>(runConfiguration, PythonRunConfigurationExtensionsManager.instance) {
@@ -19,13 +21,14 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     fragments.add(BeforeRunFragment.createBeforeRun(beforeRunComponent, null))
     fragments.addAll(BeforeRunFragment.createGroup())
     fragments.add(CommonParameterFragments.createRunHeader())
+    fragments.add(CommonTags.parallelRun())
 
     createEnvironmentFragments(fragments, runConfiguration)
     addInterpreterOptions(fragments)
     addContentSourceRoots(fragments)
 
     customizeFragments(fragments)
-
+    fragments.add(PyEditorExtensionFragment())
     fragments.add(LogsGroupFragment())
     return fragments
   }
@@ -43,10 +46,13 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
       "py.interpreter.options",
       PyBundle.message("python.run.configuration.fragments.interpreter.options"),
       PyBundle.message("python.run.configuration.fragments.python.group"),
-      interpreterOptionsField, SettingsEditorFragmentType.COMMAND_LINE,
+      interpreterOptionsField,
+      SettingsEditorFragmentType.COMMAND_LINE,
       { config: T, field: RawCommandLineEditor -> field.text = config.interpreterOptions },
       { config: T, field: RawCommandLineEditor -> config.interpreterOptions = field.text.trim() },
       { config: T -> !config.interpreterOptions.trim().isEmpty() })
+    interpreterOptionsField.editorField.emptyText.setText(PyBundle.message("python.run.configuration.fragments.interpreter.options.placeholder"))
+    FragmentedSettingsUtil.setupPlaceholderVisibility(interpreterOptionsField.editorField)
     interpreterOptionsFragment.setHint(PyBundle.message("python.run.configuration.fragments.interpreter.options.hint"))
     interpreterOptionsFragment.actionHint = PyBundle.message("python.run.configuration.fragments.interpreter.options.hint")
     fragments.add(interpreterOptionsFragment)
@@ -64,13 +70,41 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     fragments.add(addContentRoots)
 
     val addSourceRoots = SettingsEditorFragment.createTag<T>(
-      "py.add.content.roots",
+      "py.add.source.roots",
       PyBundle.message("python.run.configuration.fragments.source.roots"),
       PyBundle.message("python.run.configuration.fragments.python.group"),
-      { it.shouldAddContentRoots() },
-      { config, value -> config.setAddContentRoots(value) })
+      { it.shouldAddSourceRoots() },
+      { config, value -> config.setAddSourceRoots(value) })
 
     addSourceRoots.actionHint = PyBundle.message("python.run.configuration.fragments.source.roots.hint")
     fragments.add(addSourceRoots)
+  }
+
+  protected fun <U : AbstractPythonRunConfiguration<*>> addSingleSelectionListeners(editors: MutableList<SettingsEditorFragment<U, *>>) {
+    for ((i, editor) in editors.withIndex()) {
+      editor.component().addComponentListener(object : ComponentAdapter() {
+        override fun componentShown(e: ComponentEvent?) {
+          for ((j, otherEditor) in editors.withIndex()) {
+            if (i != j) {
+              otherEditor.isSelected = false
+            }
+          }
+        }
+      })
+    }
+  }
+
+  fun addToFragmentsBeforeEditors(fragments: MutableList<SettingsEditorFragment<T, *>>, newFragment: SettingsEditorFragment<T, *>) {
+    // Q: not sure whether it makes sense to make it more generic, not only for EDITOR type
+    val index = fragments.indexOfFirst { it.isEditor }
+    if (index == -1) {
+      fragments.add(newFragment)
+    } else {
+      fragments.add(index, newFragment)
+    }
+  }
+
+  companion object {
+    const val MIN_FRAGMENT_WIDTH = 500
   }
 }

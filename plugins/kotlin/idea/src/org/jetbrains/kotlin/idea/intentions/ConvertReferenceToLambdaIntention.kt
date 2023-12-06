@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.KOTLIN_REFLECT_FQ_NAME
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
@@ -17,8 +18,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParenthesesIfPossible
+import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -42,12 +43,12 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
     KtCallableReferenceExpression::class.java, KotlinBundle.lazyMessage("convert.reference.to.lambda")
 ) {
     override fun applyTo(element: KtCallableReferenceExpression, editor: Editor?) {
-        applyTo(element)
+        Holder.applyTo(element)
     }
 
-    override fun isApplicableTo(element: KtCallableReferenceExpression): Boolean = Companion.isApplicableTo(element)
+    override fun isApplicableTo(element: KtCallableReferenceExpression): Boolean = Holder.isApplicableTo(element)
 
-    companion object {
+    object Holder {
         private val SOURCE_RENDERER = IdeDescriptorRenderers.SOURCE_CODE
 
         fun isApplicableTo(
@@ -110,7 +111,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
 
             val lambdaExpression = if (valueArgumentParent != null &&
                 lambdaParameterNamesAndTypes.size == 1 &&
-                receiverExpression?.text != "it"
+                receiverExpression?.text != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
             ) {
                 val body = if (acceptsReceiverAsParameter) {
                     if (targetDescriptor is PropertyDescriptor) "it.$targetName"
@@ -160,6 +161,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
             return callGrandParent.lambdaArguments.lastOrNull()?.getArgumentExpression() ?: lastLambdaExpression
         }
 
-        private fun CallableMemberDescriptor.inCompanion() = containingDeclaration.safeAs<ClassDescriptor>()?.isCompanionObject == true
+        private fun CallableMemberDescriptor.inCompanion(): Boolean =
+            containingDeclaration.safeAs<ClassDescriptor>()?.isCompanionObject == true
     }
 }

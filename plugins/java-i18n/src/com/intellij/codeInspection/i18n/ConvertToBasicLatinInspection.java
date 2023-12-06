@@ -1,20 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.io.IOUtil;
@@ -31,7 +31,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final TokenSet LITERALS = TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL);
 
   @NotNull
   @Override
@@ -53,11 +52,14 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         super.visitLiteralExpression(expression);
-        if (!(expression instanceof PsiLiteralExpressionImpl)) return;
-        if (!LITERALS.contains(((PsiLiteralExpressionImpl)expression).getLiteralElementType())) {
-          return;
-        }
+        if (!PsiUtil.isJavaToken(expression.getFirstChild(), ElementType.TEXT_LITERALS)) return;
         handle(expression);
+      }
+
+      @Override
+      public void visitFragment(@NotNull PsiFragment fragment) {
+        super.visitFragment(fragment);
+        handle(fragment);
       }
 
       @Override
@@ -70,7 +72,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
 
   private abstract static class Handler {
     @NotNull
-    PsiElement getSubstitution(@NotNull Project project, @NotNull PsiElement element) {
+    PsiElement buildReplacement(@NotNull Project project, @NotNull PsiElement element) {
       String text = element.getText();
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < text.length(); i++) {
@@ -83,7 +85,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
         }
       }
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      return getSubstitution(factory, element, sb.toString());
+      return buildReplacement(factory, element, sb.toString());
     }
 
     protected static boolean isBasicLatin(char ch) {
@@ -93,14 +95,14 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     protected abstract void convert(@NotNull StringBuilder sb, char ch);
 
     @NotNull
-    protected abstract PsiElement getSubstitution(@NotNull PsiElementFactory factory, @NotNull PsiElement element, @NotNull String newText);
+    protected abstract PsiElement buildReplacement(@NotNull PsiElementFactory factory, @NotNull PsiElement element, @NotNull String newText);
   }
 
   private static class LiteralHandler extends Handler {
     @Override
-    protected @NotNull PsiElement getSubstitution(@NotNull PsiElementFactory factory,
-                                                  @NotNull PsiElement element,
-                                                  @NotNull String newText) {
+    protected @NotNull PsiElement buildReplacement(@NotNull PsiElementFactory factory,
+                                                   @NotNull PsiElement element,
+                                                   @NotNull String newText) {
       return factory.createExpressionFromText(newText, element.getParent());
     }
 
@@ -110,14 +112,23 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     }
   }
 
+  private static class FragmentHandler extends LiteralHandler {
+    @Override
+    protected @NotNull PsiElement buildReplacement(@NotNull PsiElementFactory factory,
+                                                   @NotNull PsiElement element,
+                                                   @NotNull String newText) {
+      return factory.createStringTemplateFragment(newText, ((PsiFragment)element).getTokenType(), element);
+    }
+  }
+
   private static class DocCommentHandler extends Handler {
     private static Int2ObjectMap<String> ourEntities;
 
     @Override
     @NotNull
-    PsiElement getSubstitution(@NotNull Project project, @NotNull PsiElement element) {
+    PsiElement buildReplacement(@NotNull Project project, @NotNull PsiElement element) {
       loadEntities(project);
-      return ourEntities != null ? super.getSubstitution(project, element) : element;
+      return ourEntities != null ? super.buildReplacement(project, element) : element;
     }
 
     @Override
@@ -132,9 +143,9 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    protected @NotNull PsiElement getSubstitution(@NotNull PsiElementFactory factory,
-                                                  @NotNull PsiElement element,
-                                                  @NotNull String newText) {
+    protected @NotNull PsiElement buildReplacement(@NotNull PsiElementFactory factory,
+                                                   @NotNull PsiElement element,
+                                                   @NotNull String newText) {
       return factory.createCommentFromText(newText, element.getParent());
     }
 
@@ -187,7 +198,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
   private static class CommentHandler extends DocCommentHandler {
   }
 
-  private static class ConvertToBasicLatinFix implements LocalQuickFix {
+  private static class ConvertToBasicLatinFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -196,8 +207,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final Handler handler;
       if (element instanceof PsiLiteralExpression) {
         handler = new LiteralHandler();
@@ -208,12 +218,13 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
       else if (element instanceof PsiComment) {
         handler = new CommentHandler();
       }
-      else {
-        handler = null;
+      else if (element instanceof PsiFragment) {
+        handler = new FragmentHandler();
       }
-      if (handler == null) return;
-      final PsiElement newElement = handler.getSubstitution(project, element);
-      element.replace(newElement);
+      else {
+        return;
+      }
+      element.replace(handler.buildReplacement(project, element));
     }
   }
 }

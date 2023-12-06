@@ -19,7 +19,7 @@
       matchedName: "html/modifiers/capture",
       origin: "vue@3.0.0 (vue)",
       complete: true,
-      description: "<p>Add event listener in capture mode.</p>",
+      description: "<p>Add event listener in capture mode.",
       priority: NORMAL,
       segments: [
        {
@@ -52,7 +52,7 @@
       matchedName: "html/modifiers/once",
       origin: "vue@3.0.0 (vue)",
       complete: true,
-      description: "<p>Trigger handler at most once.</p>",
+      description: "<p>Trigger handler at most once.",
       priority: NORMAL,
       segments: [
        {
@@ -118,7 +118,7 @@
       matchedName: "html/modifiers/prevent",
       origin: "vue@3.0.0 (vue)",
       complete: true,
-      description: "<p>Call <code>event.preventDefault()</code>.<…",
+      description: "<p>Call <code>event.preventDefault()</code>.",
       priority: NORMAL,
       segments: [
        {
@@ -184,7 +184,7 @@
       matchedName: "html/modifiers/stop",
       origin: "vue@3.0.0 (vue)",
       complete: true,
-      description: "<p>Call <code>event.stopPropagation()</code>.…",
+      description: "<p>Call <code>event.stopPropagation()</code>.",
       priority: NORMAL,
       segments: [
        {
@@ -209,7 +209,7 @@
    name: "event name",
    origin: "vue@3.0.0 (vue)",
    complete: true,
-   description: "<p>Optional event name</p>",
+   description: "<p>Optional event name",
    priority: NORMAL,
    has-pattern: true,
    segments: [

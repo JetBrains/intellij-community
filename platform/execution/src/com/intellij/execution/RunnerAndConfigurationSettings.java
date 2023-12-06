@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @author anna
  * @see RunManager#createConfiguration(String, ConfigurationFactory)
  */
+@ApiStatus.NonExtendable
 public interface RunnerAndConfigurationSettings {
   /**
    * Returns the type of the run configuration.
@@ -232,6 +234,20 @@ public interface RunnerAndConfigurationSettings {
    * @return if true (it's default value), the tool window will be activated before launching this configuration.
    */
   boolean isActivateToolWindowBeforeRun();
+
+  /**
+   * Sets the "Before launch: Focus tool window" flag (for activation tool window Run/Debug etc.)
+   *
+   * @param value if true, the tool window will be focused before launching this configuration.
+   */
+  void setFocusToolWindowBeforeRun(boolean value);
+
+  /**
+   * Returns the "Before launch: Focus tool window" flag
+   *
+   * @return if true (it's default value), the tool window will be focused before launching this configuration.
+   */
+  boolean isFocusToolWindowBeforeRun();
 
   /**
    * @deprecated Use {@link RunConfiguration#isAllowRunningInParallel()}

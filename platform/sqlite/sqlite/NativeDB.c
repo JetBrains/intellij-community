@@ -34,26 +34,7 @@ static jmethodID mth_throwex = 0;
 static jmethodID mth_throwexcode = 0;
 static jmethodID mth_throwexmsg = 0;
 
-static jclass  fclass = 0;
-static jfieldID func_context = 0,
-                func_value = 0,
-                func_args = 0;
-static jmethodID fmethod = 0;
-
-static jclass  cclass = 0;
-static jmethodID mth_compare = 0;
-
-static jclass  aclass = 0;
-static jmethodID mth_aggr_xstep = 0;
-static jmethodID mth_aggr_xfinal = 0;
-static jmethodID aclone = 0;
-
-static jclass  wclass = 0;
-static jmethodID w_mth_inverse = 0;
-static jmethodID w_mth_xvalue = 0;
-
 static jclass pclass = 0;
-//static jclass phandleclass = 0;
 static jmethodID pmethod = 0;
 
 static jmethodID exp_msg = 0;
@@ -84,8 +65,7 @@ static void throwex_errorcode(JNIEnv *env, jobject this, int errorCode)
 
 static void throwex_msg(JNIEnv *env, const char *str)
 {
-    (*env)->CallStaticVoidMethod(env, dbclass, mth_throwexmsg,
-                                (*env)->NewStringUTF(env, str));
+    (*env)->CallStaticVoidMethod(env, dbclass, mth_throwexmsg, (*env)->NewStringUTF(env, str));
 }
 
 static void throwex_outofmemory(JNIEnv *env)
@@ -242,185 +222,6 @@ static void set_new_handler(JNIEnv *env, jobject nativeDB, char *fieldName,
     (*env)->SetLongField(env, nativeDB, handlerField, fromref(newHandler));
 }
 
-struct CollationData {
-    JavaVM *vm;
-    jobject func;
-};
-
-// User Defined Function SUPPORT ////////////////////////////////////
-
-struct UDFData {
-    JavaVM *vm;
-    jobject func;
-};
-
-/* Returns the sqlite3_value for the given arg of the given function.
- * If 0 is returned, an exception has been thrown to report the reason. */
-static sqlite3_value * tovalue(JNIEnv *env, jobject function, jint arg)
-{
-    jlong value_pntr = 0;
-    jint numArgs = 0;
-
-    // check we have any business being here
-    if (arg  < 0) { throwex_msg(env, "negative arg out of range"); return 0; }
-    if (!function) { throwex_msg(env, "inconstent function"); return 0; }
-
-    value_pntr = (*env)->GetLongField(env, function, func_value);
-    numArgs = (*env)->GetIntField(env, function, func_args);
-
-    if (value_pntr == 0) { throwex_msg(env, "no current value"); return 0; }
-    if (arg >= numArgs) { throwex_msg(env, "arg out of range"); return 0; }
-
-    return ((sqlite3_value**)toref(value_pntr))[arg];
-}
-
-/* called if an exception occured processing xFunc */
-static void xFunc_error(sqlite3_context *context, JNIEnv *env)
-{
-    jstring msg = 0;
-    char *msg_bytes;
-    int msg_nbytes;
-
-    jthrowable ex = (*env)->ExceptionOccurred(env);
-
-    (*env)->ExceptionClear(env);
-
-    msg = (jstring)(*env)->CallObjectMethod(env, ex, exp_msg);
-    if (!msg) { sqlite3_result_error(context, "unknown error", 13); return; }
-
-    stringToUtf8Bytes(env, msg, &msg_bytes, &msg_nbytes);
-    if (!msg_bytes) { sqlite3_result_error_nomem(context); return; }
-
-    sqlite3_result_error(context, msg_bytes, msg_nbytes);
-    freeUtf8Bytes(msg_bytes);
-}
-
-/* used to call xFunc, xStep and xFinal */
-static void xCall(
-    sqlite3_context *context,
-    int args,
-    sqlite3_value** value,
-    jobject func,
-    jmethodID method)
-{
-    JNIEnv *env = 0;
-    struct UDFData *udf = 0;
-
-    udf = (struct UDFData*)sqlite3_user_data(context);
-    assert(udf);
-    (*udf->vm)->AttachCurrentThread(udf->vm, (void **)&env, 0);
-    if (!func) func = udf->func;
-
-    (*env)->SetLongField(env, func, func_context, fromref(context));
-    (*env)->SetLongField(env, func, func_value, value ? fromref(value) : 0);
-    (*env)->SetIntField(env, func, func_args, args);
-
-    (*env)->CallVoidMethod(env, func, method);
-
-    // check if xFunc threw an Exception
-    if ((*env)->ExceptionCheck(env)) {
-        xFunc_error(context, env);
-    }
-
-    (*env)->SetLongField(env, func, func_context, 0);
-    (*env)->SetLongField(env, func, func_value, 0);
-    (*env)->SetIntField(env, func, func_args, 0);
-}
-
-
-void xFunc(sqlite3_context *context, int args, sqlite3_value** value)
-{
-    JNIEnv *env;
-    struct UDFData *udf = (struct UDFData*)sqlite3_user_data(context);
-    (*udf->vm)->AttachCurrentThread(udf->vm, (void **)&env, 0);
-    xCall(context, args, value, 0, fmethod);
-}
-
-static jobject* get_initialized_udf_context(sqlite3_context *context) {
-    // clone the Function.Aggregate instance and store a pointer
-    // in SQLite's aggregate_context (clean up in xFinal)
-    jobject *func = sqlite3_aggregate_context(context, sizeof(jobject));
-    if (!*func) {
-        JNIEnv *env;
-        struct UDFData *udf = (struct UDFData*)sqlite3_user_data(context);
-        (*udf->vm)->AttachCurrentThread(udf->vm, (void **)&env, 0);
-
-        *func = (*env)->CallObjectMethod(env, udf->func, aclone);
-        *func = (*env)->NewGlobalRef(env, *func);
-    }
-    return func;
-}
-
-void xStep(sqlite3_context *context, int args, sqlite3_value** value)
-{
-    // clone the Function.Aggregate instance and store a pointer
-    // in SQLite's aggregate_context (clean up in xFinal)
-    jobject *func = get_initialized_udf_context(context);
-    xCall(context, args, value, *func, mth_aggr_xstep);
-}
-
-void xInverse(sqlite3_context *context, int args, sqlite3_value** value)
-{
-    JNIEnv *env = 0;
-    struct UDFData *udf = 0;
-    jobject *func = 0;
-
-    udf = (struct UDFData*)sqlite3_user_data(context);
-    (*udf->vm)->AttachCurrentThread(udf->vm, (void **)&env, 0);
-
-    func = sqlite3_aggregate_context(context, sizeof(jobject));
-    assert(*func); // disaster
-
-    xCall(context, args, value, *func, w_mth_inverse);
-}
-
-void xValue(sqlite3_context *context)
-{
-    JNIEnv *env = 0;
-    struct UDFData *udf = 0;
-    jobject *func = 0;
-
-    udf = (struct UDFData*)sqlite3_user_data(context);
-    (*udf->vm)->AttachCurrentThread(udf->vm, (void **)&env, 0);
-
-    func = sqlite3_aggregate_context(context, sizeof(jobject));
-    assert(*func); // disaster
-
-    xCall(context, 0, 0, *func, w_mth_xvalue);
-}
-
-void xFinal(sqlite3_context *context)
-{
-    JNIEnv *env = 0;
-
-    struct UDFData *udf = (struct UDFData*)sqlite3_user_data(context);
-
-    (*udf->vm)->AttachCurrentThread(udf->vm, (void **)&env, 0);
-
-    // func may not have been allocated if xStep never ran
-    jobject *func = get_initialized_udf_context(context);
-    xCall(context, 0, 0, *func, mth_aggr_xfinal);
-
-    // clean up Function.Aggregate instance
-    (*env)->DeleteGlobalRef(env, *func);
-}
-
-int xCompare(void* context, int len1, const void* str1, int len2, const void* str2)
-{
-    JNIEnv *env;
-    struct CollationData *coll = (struct CollationData*)context;
-    (*coll->vm)->AttachCurrentThread(coll->vm, (void **)&env, 0);
-
-    // According to https://bugs.openjdk.java.net/browse/JDK-8163861 the len param of NewString
-    // expects a length in terms of code unit. Being UTF-16, code unit is 16 bits
-    // SQLite pass the length in bytes for len1 and len2, which is 8 bits
-    jstring jstr1 = (*env)->NewString(env, str1, len1 / 2);
-    jstring jstr2 = (*env)->NewString(env, str2, len2 / 2);
-
-    return (*env)->CallIntMethod(env, coll->func, mth_compare, jstr1, jstr2);
-}
-
-
 // INITIALISATION ///////////////////////////////////////////////////
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
@@ -443,32 +244,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     mth_throwex = (*env)->GetMethodID(env, dbclass, "throwex", "()V");
     mth_throwexcode = (*env)->GetMethodID(env, dbclass, "throwex", "(I)V");
     mth_throwexmsg = (*env)->GetStaticMethodID(env, dbclass, "throwex", "(Ljava/lang/String;)V");
-
-    fclass = (*env)->FindClass(env, "org/jetbrains/sqlite/Function");
-    if (!fclass) return JNI_ERR;
-    fclass = (*env)->NewWeakGlobalRef(env, fclass);
-    func_context = (*env)->GetFieldID(env, fclass, "context", "J");
-    func_value = (*env)->GetFieldID(env, fclass, "value", "J");
-    func_args  = (*env)->GetFieldID(env, fclass, "args", "I");
-    fmethod = (*env)->GetMethodID(env, fclass, "xFunc", "()V");
-
-    cclass = (*env)->FindClass(env, "org/jetbrains/sqlite/Collation");
-    if (!cclass) return JNI_ERR;
-    cclass = (*env)->NewWeakGlobalRef(env, cclass);
-    mth_compare = (*env)->GetMethodID(env, cclass, "xCompare", "(Ljava/lang/String;Ljava/lang/String;)I");
-
-    aclass = (*env)->FindClass(env, "org/jetbrains/sqlite/Function$Aggregate");
-    if (!aclass) return JNI_ERR;
-    aclass = (*env)->NewWeakGlobalRef(env, aclass);
-    mth_aggr_xstep = (*env)->GetMethodID(env, aclass, "xStep", "()V");
-    mth_aggr_xfinal = (*env)->GetMethodID(env, aclass, "xFinal", "()V");
-    aclone = (*env)->GetMethodID(env, aclass, "clone", "()Ljava/lang/Object;");
-
-    wclass = (*env)->FindClass(env, "org/jetbrains/sqlite/Function$Window");
-    if (!wclass) return JNI_ERR;
-    wclass = (*env)->NewWeakGlobalRef(env, wclass);
-    w_mth_inverse = (*env)->GetMethodID(env, wclass, "xInverse", "()V");
-    w_mth_xvalue = (*env)->GetMethodID(env, wclass, "xValue", "()V");
 
     pclass = (*env)->FindClass(env, "org/jetbrains/sqlite/SqliteDb$ProgressObserver");
     if(!pclass) return JNI_ERR;
@@ -495,14 +270,6 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
         return;
 
     if (dbclass) (*env)->DeleteWeakGlobalRef(env, dbclass);
-
-    if (fclass) (*env)->DeleteWeakGlobalRef(env, fclass);
-
-    if (cclass) (*env)->DeleteWeakGlobalRef(env, cclass);
-
-    if (aclass) (*env)->DeleteWeakGlobalRef(env, aclass);
-
-    if (wclass) (*env)->DeleteWeakGlobalRef(env, wclass);
 
     if (pclass) (*env)->DeleteWeakGlobalRef(env, pclass);
 
@@ -667,7 +434,6 @@ JNIEXPORT jlong JNICALL Java_org_jetbrains_sqlite_NativeDB_prepare_1utf8(
     }
     return fromref(stmt);
 }
-
 
 JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB__1exec_1utf8(
         JNIEnv *env, jobject this, jbyteArray sql)
@@ -1010,6 +776,48 @@ JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_bind_1int(
     return sqlite3_bind_int(toref(stmt), pos, v);
 }
 
+JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_executeBatch
+(
+  JNIEnv *env, jobject this, jlong statement, jint queryCount, jint paramCount, jintArray data
+)
+{
+  if (!statement)
+  {
+      throwex_stmt_finalized(env);
+      return SQLITE_MISUSE;
+  }
+
+  int batchIndex;
+  int position;
+  int status;
+  jint *body = (*env)->GetIntArrayElements(env, data, NULL);
+  for (batchIndex = 0; batchIndex < queryCount; batchIndex++) {
+    sqlite3_reset(toref(statement));
+
+    for (position = 0; position < paramCount; position++) {
+      status = sqlite3_bind_int(toref(statement), position + 1, body[(batchIndex * paramCount) + position]);
+      if (status != SQLITE_OK) {
+        (*env)->ReleaseIntArrayElements(env, data, body, JNI_ABORT);
+        throwex(env, this);
+        return SQLITE_MISUSE;
+      }
+    }
+
+    status = sqlite3_step(toref(statement));
+    if (status != SQLITE_DONE) {
+      (*env)->ReleaseIntArrayElements(env, data, body, JNI_ABORT);
+      sqlite3_reset(toref(statement));
+      throwex(env, this);
+      return SQLITE_MISUSE;
+    }
+  }
+  (*env)->ReleaseIntArrayElements(env, data, body, JNI_ABORT);
+  sqlite3_reset(toref(statement));
+  sqlite3_clear_bindings(toref(statement));
+
+  return SQLITE_OK;
+}
+
 JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_bind_1long(
         JNIEnv *env, jobject this, jlong stmt, jint pos, jlong v)
 {
@@ -1160,202 +968,6 @@ JNIEXPORT void JNICALL Java_org_jetbrains_sqlite_NativeDB_result_1error_1utf8(
     freeUtf8Bytes(err_bytes);
 }
 
-JNIEXPORT jobject JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1text_1utf8(
-        JNIEnv *env, jobject this, jobject f, jint arg)
-{
-    const char* bytes;
-    int nbytes;
-
-    sqlite3_value *value = tovalue(env, f, arg);
-    if (!value) return NULL;
-
-    bytes = (const char*) sqlite3_value_text(value);
-    nbytes = sqlite3_value_bytes(value);
-
-    return utf8BytesToDirectByteBuffer(env, bytes, nbytes);
-}
-
-JNIEXPORT jbyteArray JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1blob(
-        JNIEnv *env, jobject this, jobject f, jint arg)
-{
-    int length;
-    jbyteArray jBlob;
-    const void *blob;
-    sqlite3_value *value = tovalue(env, f, arg);
-    if (!value) return NULL;
-
-    blob = sqlite3_value_blob(value);
-    if (!blob) return NULL;
-
-    length = sqlite3_value_bytes(value);
-    jBlob = (*env)->NewByteArray(env, length);
-    if (!jBlob) { throwex_outofmemory(env); return NULL; }
-
-    (*env)->SetByteArrayRegion(env, jBlob, (jsize) 0, (jsize) length, (const jbyte*) blob);
-
-    return jBlob;
-}
-
-JNIEXPORT jdouble JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1double(
-        JNIEnv *env, jobject this, jobject f, jint arg)
-{
-    sqlite3_value *value = tovalue(env, f, arg);
-    return value ? sqlite3_value_double(value) : 0;
-}
-
-JNIEXPORT jlong JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1long(
-        JNIEnv *env, jobject this, jobject f, jint arg)
-{
-    sqlite3_value *value = tovalue(env, f, arg);
-    return value ? sqlite3_value_int64(value) : 0;
-}
-
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1int(
-        JNIEnv *env, jobject this, jobject f, jint arg)
-{
-    sqlite3_value *value = tovalue(env, f, arg);
-    return value ? sqlite3_value_int(value) : 0;
-}
-
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1type(
-        JNIEnv *env, jobject this, jobject func, jint arg)
-{
-    return sqlite3_value_type(tovalue(env, func, arg));
-}
-
-void free_collation_func(void *context) {
-    JNIEnv *env;
-    struct CollationData *coll = (struct CollationData*)context;
-    (*coll->vm)->AttachCurrentThread(coll->vm, (void **)&env, 0);
-
-    (*env)->DeleteGlobalRef(env, coll->func);
-    free(coll);
-}
-
-void free_udf_func(void *udfToFree) {
-    JNIEnv *env;
-    struct UDFData *udf = (struct UDFData*) udfToFree;
-    (*udf->vm)->AttachCurrentThread(udf->vm, (void **)&env, 0);
-
-    (*env)->DeleteGlobalRef(env, udf->func);
-    free(udf);
-}
-
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_create_1function_1utf8(
-        JNIEnv *env, jobject nativeDB, jbyteArray name, jobject func, jint nArgs, jint flags)
-{
-    jint ret = 0;
-    char *name_bytes;
-    int isAgg = 0, isWindow = 0;
-
-    struct UDFData *udf = (struct UDFData*) malloc(sizeof(struct UDFData));
-
-    if (!udf) { throwex_outofmemory(env); return 0; }
-
-    isAgg = (*env)->IsInstanceOf(env, func, aclass);
-    isWindow = (*env)->IsInstanceOf(env, func, wclass);
-    udf->func = (*env)->NewGlobalRef(env, func);
-    (*env)->GetJavaVM(env, &udf->vm);
-
-    utf8JavaByteArrayToUtf8Bytes(env, name, &name_bytes, NULL);
-    if (!name_bytes) { throwex_outofmemory(env); return 0; }
-
-    if (isAgg) {
-        ret = sqlite3_create_window_function(
-                gethandle(env, nativeDB),
-                name_bytes,            // function name
-                nArgs,                 // number of args
-                SQLITE_UTF16 | flags,  // preferred chars
-                udf,
-                &xStep,
-                &xFinal,
-                isWindow ? &xValue : NULL,
-                isWindow ? &xInverse : NULL,
-                &free_udf_func         // Cleanup function
-        );
-    } else {
-        ret = sqlite3_create_function_v2(
-                gethandle(env, nativeDB),
-                name_bytes,            // function name
-                nArgs,                 // number of args
-                SQLITE_UTF16 | flags,  // preferred chars
-                udf,
-                &xFunc,
-                NULL,
-                NULL,
-                &free_udf_func         // Cleanup function
-        );
-    }
-
-    freeUtf8Bytes(name_bytes);
-
-    return ret;
-}
-
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_destroy_1function_1utf8(
-        JNIEnv *env, jobject nativeDB, jbyteArray name)
-{
-    jint ret = 0;
-    char* name_bytes;
-
-    utf8JavaByteArrayToUtf8Bytes(env, name, &name_bytes, NULL);
-    if (!name_bytes) { throwex_outofmemory(env); return 0; }
-    
-    ret = sqlite3_create_function(
-        gethandle(env, nativeDB), name_bytes, -1, SQLITE_UTF16, NULL, NULL, NULL, NULL
-    );
-    freeUtf8Bytes(name_bytes);
-
-    return ret;
-}
-
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_create_1collation_1utf8(
-        JNIEnv *env, jobject this, jbyteArray name, jobject func)
-{
-    jint ret = 0;
-    char *name_bytes;
-
-    struct CollationData *coll = (struct CollationData*) malloc(sizeof(struct CollationData));
-
-    if (!coll) { throwex_outofmemory(env); return 0; }
-
-    coll->func = (*env)->NewGlobalRef(env, func);
-    (*env)->GetJavaVM(env, &coll->vm);
-
-    utf8JavaByteArrayToUtf8Bytes(env, name, &name_bytes, NULL);
-    if (!name_bytes) { throwex_outofmemory(env); return 0; }
-
-    ret = sqlite3_create_collation_v2(
-            gethandle(env, this),
-            name_bytes,            // collation name
-            SQLITE_UTF16,          // preferred chars
-            coll,
-            &xCompare,
-            &free_collation_func
-    );
-
-    freeUtf8Bytes(name_bytes);
-
-    return ret;
-}
-
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_destroy_1collation_1utf8(
-        JNIEnv *env, jobject this, jbyteArray name)
-{
-    jint ret = 0;
-    char *name_bytes;
-
-    utf8JavaByteArrayToUtf8Bytes(env, name, &name_bytes, NULL);
-    if (!name_bytes) { throwex_outofmemory(env); return 0; }
-
-    ret = sqlite3_create_collation(
-            gethandle(env, this), name_bytes, SQLITE_UTF16, 0, 0
-    );
-    freeUtf8Bytes(name_bytes);
-
-    return ret;
-}
-
 JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_limit(JNIEnv *env, jobject this, jint id, jint value)
 {
     sqlite3* db;
@@ -1372,75 +984,6 @@ JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_limit(JNIEnv *env, job
 }
 
 // COMPOUND FUNCTIONS ///////////////////////////////////////////////
-
-//JNIEXPORT jobjectArray JNICALL Java_org_jetbrains_sqlite_NativeDB_column_1metadata(
-//        JNIEnv *env, jobject this, jlong stmt)
-//{
-//    const char *zTableName, *zColumnName;
-//    int pNotNull, pPrimaryKey, pAutoinc, i, colCount;
-//    jobjectArray array;
-//    jbooleanArray colData;
-//    jboolean* colDataRaw;
-//    sqlite3 *db;
-//    sqlite3_stmt *dbstmt;
-//
-//    db = gethandle(env, this);
-//    if (!db)
-//    {
-//        throwex_db_closed(env);
-//        return NULL;
-//    }
-//
-//    if (!stmt)
-//    {
-//        throwex_stmt_finalized(env);
-//        return NULL;
-//    }
-//
-//    dbstmt = toref(stmt);
-//
-//    colCount = sqlite3_column_count(dbstmt);
-//    array = (*env)->NewObjectArray(
-//        env, colCount, (*env)->FindClass(env, "[Z"), NULL) ;
-//    if (!array) { throwex_outofmemory(env); return 0; }
-//
-//    colDataRaw = (jboolean*)malloc(3 * sizeof(jboolean));
-//    if (!colDataRaw) { throwex_outofmemory(env); return 0; }
-//
-//    for (i = 0; i < colCount; i++) {
-//        // load passed column name and table name
-//        zColumnName = sqlite3_column_name(dbstmt, i);
-//        zTableName  = sqlite3_column_table_name(dbstmt, i);
-//
-//        pNotNull = 0;
-//        pPrimaryKey = 0;
-//        pAutoinc = 0;
-//
-//        // request metadata for column and load into output variables
-//        if (zTableName && zColumnName) {
-//            sqlite3_table_column_metadata(
-//                db, 0, zTableName, zColumnName,
-//                0, 0, &pNotNull, &pPrimaryKey, &pAutoinc
-//            );
-//        }
-//
-//        // load relevant metadata into 2nd dimension of return results
-//        colDataRaw[0] = pNotNull;
-//        colDataRaw[1] = pPrimaryKey;
-//        colDataRaw[2] = pAutoinc;
-//
-//        colData = (*env)->NewBooleanArray(env, 3);
-//        if (!colData) { throwex_outofmemory(env); return 0; }
-//
-//        (*env)->SetBooleanArrayRegion(env, colData, 0, 3, colDataRaw);
-//        (*env)->SetObjectArrayElement(env, array, i, colData);
-//    }
-//
-//    free(colDataRaw);
-//
-//    return array;
-//}
-
 // backup function
 
 void reportProgress(JNIEnv* env, jobject func, int remaining, int pageCount) {
@@ -1526,66 +1069,62 @@ JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_backup(
   jint pagesPerStep            /* number of DB pages to copy per step */
 )
 {
-#if SQLITE_VERSION_NUMBER >= 3006011
-  int rc;                     /* Function return code */
-  sqlite3* pDb;               /* Database to back up */
-  sqlite3* pFile;             /* Database connection opened on zFilename */
-  sqlite3_backup *pBackup;    /* Backup handle used to copy data */
-  char *dFileName;
-  char *dDBName;
+int rc;                     /* Function return code */
+sqlite3* pDb;               /* Database to back up */
+sqlite3* pFile;             /* Database connection opened on zFilename */
+sqlite3_backup *pBackup;    /* Backup handle used to copy data */
+char *dFileName;
+char *dDBName;
 
-  pDb = gethandle(env, this);
-  if (!pDb)
-  {
-    throwex_db_closed(env);
-    return SQLITE_MISUSE;
-  }
+pDb = gethandle(env, this);
+if (!pDb)
+{
+  throwex_db_closed(env);
+  return SQLITE_MISUSE;
+}
 
-  utf8JavaByteArrayToUtf8Bytes(env, zFilename, &dFileName, NULL);
-  if (!dFileName)
-  {
-    return SQLITE_NOMEM;
-  }
+utf8JavaByteArrayToUtf8Bytes(env, zFilename, &dFileName, NULL);
+if (!dFileName)
+{
+  return SQLITE_NOMEM;
+}
 
-  utf8JavaByteArrayToUtf8Bytes(env, zDBName, &dDBName, NULL);
-  if (!dDBName)
-  {
-    freeUtf8Bytes(dFileName);
-    return SQLITE_NOMEM;
-  }
-
-  /* Open the database file identified by dFileName. */
-  int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
-  if (sqlite3_strnicmp(dFileName, "file:", 5) == 0) {
-    flags |= SQLITE_OPEN_URI;
-  }
-  rc = sqlite3_open_v2(dFileName, &pFile, flags, NULL);
-
-  if(rc == SQLITE_OK) {
-
-    /* Open the sqlite3_backup object used to accomplish the transfer */
-    pBackup = sqlite3_backup_init(pFile, "main", pDb, dDBName);
-    if( pBackup ){
-      copyLoop(env, pBackup, observer, pagesPerStep, nTimeoutLimit, sleepTimeMillis);
-
-      /* Release resources allocated by backup_init(). */
-      (void)sqlite3_backup_finish(pBackup);
-    }
-    rc = sqlite3_errcode(pFile);
-  }
-
-  /* Close the database connection opened on database file zFilename
-  ** and return the result of this function. */
-  (void)sqlite3_close(pFile);
-
-  freeUtf8Bytes(dDBName);
+utf8JavaByteArrayToUtf8Bytes(env, zDBName, &dDBName, NULL);
+if (!dDBName)
+{
   freeUtf8Bytes(dFileName);
+  return SQLITE_NOMEM;
+}
 
-  return rc;
-#else
-  return SQLITE_INTERNAL;
-#endif
-} 
+/* Open the database file identified by dFileName. */
+int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+if (sqlite3_strnicmp(dFileName, "file:", 5) == 0) {
+  flags |= SQLITE_OPEN_URI;
+}
+rc = sqlite3_open_v2(dFileName, &pFile, flags, NULL);
+
+if(rc == SQLITE_OK) {
+
+  /* Open the sqlite3_backup object used to accomplish the transfer */
+  pBackup = sqlite3_backup_init(pFile, "main", pDb, dDBName);
+  if( pBackup ){
+    copyLoop(env, pBackup, observer, pagesPerStep, nTimeoutLimit, sleepTimeMillis);
+
+    /* Release resources allocated by backup_init(). */
+    (void)sqlite3_backup_finish(pBackup);
+  }
+  rc = sqlite3_errcode(pFile);
+}
+
+/* Close the database connection opened on database file zFilename
+** and return the result of this function. */
+(void)sqlite3_close(pFile);
+
+freeUtf8Bytes(dDBName);
+freeUtf8Bytes(dFileName);
+
+return rc;
+}
 
 JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_restore(
   JNIEnv *env, jobject this, 
@@ -1597,139 +1136,62 @@ JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_restore(
   jint pagesPerStep             /* number of DB pages to copy per step */
 )
 {
-#if SQLITE_VERSION_NUMBER >= 3006011
-  int rc;                     /* Function return code */
-  sqlite3* pDb;               /* Database to back up */
-  sqlite3* pFile;             /* Database connection opened on zFilename */
-  sqlite3_backup *pBackup;    /* Backup handle used to copy data */
-  char *dFileName;
-  char *dDBName;
-  int nTimeout = 0;
+int rc;                     /* Function return code */
+sqlite3* pDb;               /* Database to back up */
+sqlite3* pFile;             /* Database connection opened on zFilename */
+sqlite3_backup *pBackup;    /* Backup handle used to copy data */
+char *dFileName;
+char *dDBName;
+int nTimeout = 0;
 
-  pDb = gethandle(env, this);
-  if (!pDb)
-  {
-    throwex_db_closed(env);
-    return SQLITE_MISUSE;
-  }
-
-  utf8JavaByteArrayToUtf8Bytes(env, zFilename, &dFileName, NULL);
-  if (!dFileName)
-  {
-    return SQLITE_NOMEM;
-  }
-
-  utf8JavaByteArrayToUtf8Bytes(env, zDBName, &dDBName, NULL);
-  if (!dDBName)
-  {
-    freeUtf8Bytes(dFileName);
-    return SQLITE_NOMEM;
-  }
-
-  /* Open the database file identified by dFileName. */
-  int flags = SQLITE_OPEN_READONLY;
-  if (sqlite3_strnicmp(dFileName, "file:", 5) == 0) {
-    flags |= SQLITE_OPEN_URI;
-  }
-  rc = sqlite3_open_v2(dFileName, &pFile, flags, NULL);
-
-  if (rc == SQLITE_OK) {
-
-    /* Open the sqlite3_backup object used to accomplish the transfer */
-    pBackup = sqlite3_backup_init(pDb, dDBName, pFile, "main");
-    if (pBackup) {
-      copyLoop(env, pBackup, observer, pagesPerStep, nTimeoutLimit, sleepTimeMillis);
-      /* Release resources allocated by backup_init(). */
-      (void)sqlite3_backup_finish(pBackup);
-    }
-    rc = sqlite3_errcode(pFile);
-  }
-
-  /* Close the database connection opened on database file zFilename
-  ** and return the result of this function. */
-  (void)sqlite3_close(pFile);
-
-  freeUtf8Bytes(dDBName);
-  freeUtf8Bytes(dFileName);
-
-  return rc;
-#else
-  return SQLITE_INTERNAL;
-#endif
+pDb = gethandle(env, this);
+if (!pDb)
+{
+  throwex_db_closed(env);
+  return SQLITE_MISUSE;
 }
 
+utf8JavaByteArrayToUtf8Bytes(env, zFilename, &dFileName, NULL);
+if (!dFileName)
+{
+  return SQLITE_NOMEM;
+}
 
-// Progress handler
+utf8JavaByteArrayToUtf8Bytes(env, zDBName, &dDBName, NULL);
+if (!dDBName)
+{
+  freeUtf8Bytes(dFileName);
+  return SQLITE_NOMEM;
+}
 
-//struct ProgressHandlerContext {
-//    JavaVM *vm;
-//    jmethodID mth;
-//    jobject phandler;
-//};
+/* Open the database file identified by dFileName. */
+int flags = SQLITE_OPEN_READONLY;
+if (sqlite3_strnicmp(dFileName, "file:", 5) == 0) {
+  flags |= SQLITE_OPEN_URI;
+}
+rc = sqlite3_open_v2(dFileName, &pFile, flags, NULL);
 
-//static void free_progress_handler(JNIEnv *env, void *toFree) {
-//    struct ProgressHandlerContext* progressHandlerContext = (struct ProgressHandlerContext*) toFree;
-//    (*env)->DeleteGlobalRef(env, progressHandlerContext->phandler);
-//    free(toFree);
-//}
-//
-//static int progress_handler_function(void *ctx) {
-//    JNIEnv *env = 0;
-//    struct ProgressHandlerContext* progressHandlerContext = (struct ProgressHandlerContext*) ctx;
-//    (*progressHandlerContext->vm)->AttachCurrentThread(progressHandlerContext->vm, (void **)&env, 0);
-//    jint rv = (*env)->CallIntMethod(env, progressHandlerContext->phandler, progressHandlerContext->mth);
-//    return rv;
-//}
+if (rc == SQLITE_OK) {
 
-//static void change_progress_handler(JNIEnv *env, jobject nativeDB, jobject progressHandler, jint vmCalls)
-//{
-//    sqlite3 *db;
-//
-//    db = gethandle(env, nativeDB);
-//    if (!db){
-//        throwex_db_closed(env);
-//        return;
-//    }
-//
-//    struct ProgressHandlerContext* progressHandlerContext = NULL;
-//
-//    if (progressHandler) {
-//        progressHandlerContext = (struct ProgressHandlerContext*) malloc(sizeof(struct ProgressHandlerContext));
-//        (*env)->GetJavaVM(env, &progressHandlerContext->vm);
-//
-//        progressHandlerContext->phandler = (*env)->NewGlobalRef(env, progressHandler);
-//        progressHandlerContext->mth = (*env)->GetMethodID(  env,
-//                                                   (*env)->GetObjectClass(env, progressHandlerContext->phandler),
-//                                                   "progress",
-//                                                   "()I");
-//    }
-//
-//    if (progressHandlerContext) {
-//        sqlite3_progress_handler(gethandle(env, nativeDB), vmCalls, &progress_handler_function, progressHandlerContext);
-//    } else {
-//        sqlite3_progress_handler(gethandle(env, nativeDB), 0, NULL, NULL);
-//    }
-//
-//    set_new_handler(env, nativeDB, "progressHandler", progressHandlerContext, &free_progress_handler);
-//}
+  /* Open the sqlite3_backup object used to accomplish the transfer */
+  pBackup = sqlite3_backup_init(pDb, dDBName, pFile, "main");
+  if (pBackup) {
+    copyLoop(env, pBackup, observer, pagesPerStep, nTimeoutLimit, sleepTimeMillis);
+    /* Release resources allocated by backup_init(). */
+    (void)sqlite3_backup_finish(pBackup);
+  }
+  rc = sqlite3_errcode(pFile);
+}
 
-//JNIEXPORT void JNICALL Java_org_jetbrains_sqlite_NativeDB_register_1progress_1handler(
-//  JNIEnv *env,
-//  jobject nativeDB,
-//  jint vmCalls,
-//  jobject progressHandler
-//)
-//{
-//    change_progress_handler(env, nativeDB, progressHandler, vmCalls);
-//}
-//
-//JNIEXPORT void JNICALL Java_org_jetbrains_sqlite_NativeDB_clear_1progress_1handler(
-//  JNIEnv *env,
-//  jobject nativeDB
-//)
-//{
-//    change_progress_handler(env, nativeDB, NULL, 0);
-//}
+/* Close the database connection opened on database file zFilename
+** and return the result of this function. */
+(void)sqlite3_close(pFile);
+
+freeUtf8Bytes(dDBName);
+freeUtf8Bytes(dFileName);
+
+return rc;
+}
 
 // Update hook
 

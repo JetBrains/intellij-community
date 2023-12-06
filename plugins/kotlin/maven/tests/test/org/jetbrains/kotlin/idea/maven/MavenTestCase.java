@@ -1,11 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -39,7 +37,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public abstract class MavenTestCase extends UsefulTestCase {
 
@@ -84,14 +81,14 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
         myProject = myTestFixture.getProject();
 
-        MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
+        MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspacePersistedSettings());
 
         String home = getTestMavenHome();
         if (home != null) {
-            getMavenGeneralSettings().setMavenHome(home);
+            getMavenGeneralSettings().setMavenHomeType(new MavenInSpecificPath(home));
         }
 
-        UIUtil.invokeAndWaitIfNeeded((Runnable) () -> {
+        UIUtil.invokeAndWaitIfNeeded(() -> {
             try {
                 restoreSettingsFile();
             }
@@ -130,9 +127,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
     protected void tearDown() {
         RunAll.runAll(
                 () -> MavenServerManager.getInstance().shutdown(true),
-                () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
                 () -> myProject = null,
-                () -> UIUtil.invokeAndWaitIfNeeded((Runnable) () -> {
+                () -> UIUtil.invokeAndWaitIfNeeded(() -> {
                     try {
                         tearDownFixtures();
                     }

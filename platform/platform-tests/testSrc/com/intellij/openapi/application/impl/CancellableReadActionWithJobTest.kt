@@ -1,11 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -15,7 +13,8 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
 
   @Test
   fun context() {
-    currentJobTest { currentJob ->
+    blockingContextTest {
+      val currentJob = checkNotNull(Cancellation.currentJob())
       val application = ApplicationManager.getApplication()
 
       assertNull(ProgressManager.getGlobalProgressIndicator())
@@ -37,12 +36,11 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
 
   @Test
   fun cancellation() {
-    val job = Job()
-    withCurrentJob(job) {
-      assertThrows<CancellationException> {
+    blockingContextTest {
+      assertThrows<ProcessCanceledException> {
         computeCancellable {
           testNoExceptions()
-          job.cancel()
+          checkNotNull(Cancellation.currentJob()).cancel()
           testExceptions()
         }
       }
@@ -51,42 +49,42 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
 
   @Test
   fun rethrow() {
-    currentJobTest {
+    blockingContextTest {
       testComputeCancellableRethrow()
     }
   }
 
   @Test
   fun `throws when a write is pending`() {
-    currentJobTest {
+    blockingContextTest {
       testThrowsIfPendingWrite()
     }
   }
 
   @Test
   fun `throws when a write is running`() {
-    currentJobTest {
+    blockingContextTest {
       testThrowsIfRunningWrite()
     }
   }
 
   @Test
   fun `does not throw when a write is requested during almost finished computation`() {
-    currentJobTest {
+    blockingContextTest {
       testDoesntThrowWhenAlmostFinished()
     }
   }
 
   @Test
   fun `throws when a write is requested during computation`() {
-    currentJobTest {
+    blockingContextTest {
       testThrowsOnWrite()
     }
   }
 
   @Test
   fun `throws inside non-cancellable read action when a write is requested during computation`() {
-    currentJobTest {
+    blockingContextTest {
       runReadAction {
         testThrowsOnWrite()
       }

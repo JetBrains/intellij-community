@@ -32,10 +32,9 @@ import static com.intellij.util.io.PersistentMapBuilder.newBuilder;
  * @see PersistentMapBuilder
  **/
 public final class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value>, MeasurableIndexStore {
-  @NonNls
-  static final String DATA_FILE_EXTENSION = ".values";
+  static final @NonNls String DATA_FILE_EXTENSION = ".values";
 
-  @NotNull private final PersistentMapBase<Key, Value> myImpl;
+  private final @NotNull PersistentMapBase<Key, Value> myImpl;
 
   PersistentHashMap(@NotNull PersistentMapBuilder<Key, Value> builder, boolean checkInheritedMembers) throws IOException {
     if (checkInheritedMembers) {
@@ -58,6 +57,7 @@ public final class PersistentHashMap<Key, Value> implements AppendablePersistent
   /**
    * @deprecated Use {@link PersistentHashMap#PersistentHashMap(Path, KeyDescriptor, DataExternalizer)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public PersistentHashMap(@NotNull File file,
                            @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -174,8 +174,7 @@ public final class PersistentHashMap<Key, Value> implements AppendablePersistent
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  @NotNull
-  public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
+  public @NotNull Collection<Key> getAllKeysWithExistingMapping() throws IOException {
     List<Key> result = new ArrayList<>();
     myImpl.processExistingKeys(new CommonProcessors.CollectProcessor<>(result));
     return result;

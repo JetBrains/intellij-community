@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.injected.editor.EditorWindow;
@@ -353,7 +353,7 @@ public final class HighlightManagerImpl extends HighlightManager {
    */
   @Contract(pure = true)
   @HideFlags
-  public @Nullable Integer getHideFlags(@NotNull RangeHighlighter highlighter) {
+  public static @Nullable Integer getHideFlags(@NotNull RangeHighlighter highlighter) {
     //noinspection MagicConstant
     return highlighter.getUserData(HIGHLIGHT_FLAGS_KEY);
   }
@@ -362,7 +362,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     highlighter.putUserData(HIGHLIGHT_FLAGS_KEY, flags);
   }
 
-  private class MyAnActionListener implements AnActionListener {
+  private final class MyAnActionListener implements AnActionListener {
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
       requestHideHighlights(event.getDataContext());

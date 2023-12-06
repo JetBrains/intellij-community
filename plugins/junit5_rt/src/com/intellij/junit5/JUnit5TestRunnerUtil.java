@@ -63,7 +63,7 @@ public final class JUnit5TestRunnerUtil {
             }
           }
         }
-        packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
+        packageNameRef[0] = packageName.isEmpty() ? "<default package>" : packageName;
         if (selectors.isEmpty()) {
           builder.selectors(DiscoverySelectors.selectPackage(packageName));
         }

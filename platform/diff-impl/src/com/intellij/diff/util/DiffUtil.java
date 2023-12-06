@@ -52,7 +52,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -113,6 +112,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
+import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
 public final class DiffUtil {
@@ -245,7 +245,7 @@ public final class DiffUtil {
       editor.getSettings().setLanguageSupplier(() -> language);
     }
     else if (editor.getProject() != null) {
-      editor.getSettings().setLanguageSupplier(() -> TextEditorImpl.getDocumentLanguage(editor));
+      editor.getSettings().setLanguageSupplier(() -> TextEditorImpl.Companion.getDocumentLanguage(editor));
     }
 
     editor.getSettings().setCaretRowShown(false);
@@ -315,22 +315,25 @@ public final class DiffUtil {
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
     assert foldingSupport.getCount() == 1;
-    IntUnaryOperator foldingLineConvertor = foldingSupport.getLineConvertor(0);
-    editor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(foldingLineConvertor));
+    IntPredicate foldingLinePredicate = foldingSupport.hideLineNumberPredicate(0);
+    editor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(foldingLinePredicate, null));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content) {
     IntUnaryOperator contentLineConvertor = getContentLineConvertor(content);
-    editor.getGutter().setLineNumberConverter(contentLineConvertor == null ? LineNumberConverter.DEFAULT
-                                                                           : new LineNumberConverterAdapter(contentLineConvertor));
+    if (contentLineConvertor == null) {
+      editor.getGutter().setLineNumberConverter(null);
+    }
+    else {
+      editor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(null, contentLineConvertor));
+    }
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @Nullable DocumentContent content,
                                           @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
     IntUnaryOperator contentLineConvertor = content != null ? getContentLineConvertor(content) : null;
-    IntUnaryOperator foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
-    IntUnaryOperator merged = mergeLineConverters(contentLineConvertor, foldingLineConvertor);
-    editor.getGutter().setLineNumberConverter(merged == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged));
+    IntPredicate foldingLinePredicate = foldingSupport.hideLineNumberPredicate(editorIndex);
+    editor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(foldingLinePredicate, contentLineConvertor));
   }
 
   @Nullable
@@ -472,12 +475,11 @@ public final class DiffUtil {
     Color commentFg = JBColor.lazy(() -> {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
-      if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
-        return commentAttributes.getForegroundColor();
+      Color commentAttributesForegroundColor = commentAttributes.getForegroundColor();
+      if (commentAttributesForegroundColor != null && commentAttributes.getBackgroundColor() == null) {
+        return commentAttributesForegroundColor;
       }
-      else {
-        return scheme.getDefaultForeground();
-      }
+      return scheme.getDefaultForeground();
     });
     label.setForeground(commentFg);
 
@@ -582,8 +584,8 @@ public final class DiffUtil {
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
     boolean needCreateTitle = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = needCreateTitle ? createTitle(titles.get(i),
-                                                       diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null) : null;
+      DiffEditorTitleCustomizer customizer = diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null;
+      JComponent title = needCreateTitle ? createTitle(titles.get(i), customizer) : null;
       title = createTitleWithNotifications(viewer, title, contents.get(i));
       components.add(title);
     }
@@ -619,14 +621,40 @@ public final class DiffUtil {
     return result;
   }
 
+  @NotNull
+  public static List<JComponent> createPatchTextTitles(@Nullable DiffViewer viewer,
+                                                       @NotNull DiffRequest request,
+                                                       @NotNull List<@Nls @Nullable String> titles) {
+    List<JComponent> result = new ArrayList<>(titles.size());
+
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
+    boolean needCreateTitle = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
+    for (int i = 0; i < titles.size(); i++) {
+      JComponent title = null;
+      if (needCreateTitle) {
+        String titleText = titles.get(i);
+        DiffEditorTitleCustomizer customizer = diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null;
+        //noinspection RedundantCast
+        title = createTitle(titleText, (LineSeparator)null, (Charset)null, (Boolean)null, true, customizer);
+      }
+
+      title = createTitleWithNotifications(viewer, title, null);
+      result.add(title);
+    }
+
+    return result;
+  }
+
   @Nullable
   private static JComponent createTitleWithNotifications(@Nullable DiffViewer viewer,
                                                          @Nullable JComponent title,
-                                                         @NotNull DiffContent content) {
+                                                         @Nullable DiffContent content) {
     List<JComponent> components = new ArrayList<>();
     if (title != null) components.add(title);
 
-    components.addAll(createCustomNotifications(viewer, content));
+    if (content != null) {
+      components.addAll(createCustomNotifications(viewer, content));
+    }
 
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
@@ -744,13 +772,7 @@ public final class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
-    if (!ContainerUtil.exists(components, Conditions.notNull())) return components;
-    List<JComponent> result = new ArrayList<>();
-    for (int i = 0; i < components.size(); i++) {
-      JComponent component = components.get(i);
-      result.add(new SyncHeightComponent(components, component));
-    }
-    return result;
+    return SyncHeightComponent.createSyncHeightComponents(components);
   }
 
   @NotNull
@@ -1292,6 +1314,13 @@ public final class DiffUtil {
   public static TextDiffType getDiffType(@NotNull DiffFragment fragment) {
     boolean left = fragment.getEndOffset1() != fragment.getStartOffset1();
     boolean right = fragment.getEndOffset2() != fragment.getStartOffset2();
+    return getDiffType(left, right);
+  }
+
+  @NotNull
+  public static TextDiffType getDiffType(@NotNull Range range) {
+    boolean left = range.start1 != range.end1;
+    boolean right = range.start2 != range.end2;
     return getDiffType(left, right);
   }
 

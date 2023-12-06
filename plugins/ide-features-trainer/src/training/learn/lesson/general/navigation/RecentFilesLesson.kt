@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general.navigation
 
 import com.intellij.CommonBundle
@@ -96,7 +96,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     task {
       text(LessonsBundle.message("recent.files.search.jump", LessonUtil.rawEnter()))
       stateCheck { virtualFile.name == sampleFilePath.substringAfterLast("/") }
-      restoreState {
+      restoreState(delayMillis = defaultRestoreDelay) {
         !checkRecentFilesSearch("rfd") || previous.ui?.isShowing != true
       }
       test(waitEditorToBeReady = false) {
@@ -165,7 +165,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
         item.isToStringContains(transitionFileName)
       }
       stateCheck { virtualFile.name.contains(transitionFileName) }
-      restoreState {
+      restoreState(delayMillis = defaultRestoreDelay) {
         !checkRecentLocationsSearch(stringForRecentFilesSearch) || previous.ui?.isShowing != true
       }
       test {
@@ -185,7 +185,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
             val files = curFile.parent?.children?.filter { it.name != curFile.name }
                         ?: throw IllegalStateException("Not found neighbour files for ${curFile.name}")
             for (i in 0 until min(countOfFilesToOpen - 1, files.size)) {
-              invokeAndWaitIfNeeded(ModalityState.NON_MODAL) {
+              invokeAndWaitIfNeeded(ModalityState.nonModal()) {
                 if (!indicator.isCanceled) {
                   FileEditorManager.getInstance(project).openFile(files[i], true)
                   indicator.fraction = (i + 1).toDouble() / (countOfFilesToOpen - 1)

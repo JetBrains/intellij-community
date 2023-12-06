@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.project;
 
 import com.intellij.ide.scratch.RootType;
@@ -87,9 +87,8 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     return updater;
   }
 
-  @NotNull
   @Override
-  public Invoker getInvoker() {
+  public @NotNull Invoker getInvoker() {
     return invoker;
   }
 
@@ -117,9 +116,8 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     return node == null || node.parent != parent ? -1 : super.getIndexOfChild(parent, object);
   }
 
-  @NotNull
   @Override
-  public List<ProjectFileNode> getChildren(Object object) {
+  public @NotNull List<ProjectFileNode> getChildren(Object object) {
     Node node = object instanceof Node && isValidThread() ? (Node)object : null;
     if (node == null) return emptyList();
     List<?> children = node.getChildren();
@@ -181,9 +179,8 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       list.forEach(node -> map.put(node.file, node));
     }
 
-    @NotNull
     @Override
-    public FileNode apply(VirtualFile file, Object id) {
+    public @NotNull FileNode apply(VirtualFile file, Object id) {
       FileNode node = map.isEmpty() ? null : map.remove(file);
       return node != null && node.id.equals(id) ? node : new FileNode(file, id);
     }
@@ -196,8 +193,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     volatile List<FileNode> children = emptyList();
     volatile boolean valid;
 
-    @NotNull
-    abstract List<FileNode> getChildren(@NotNull List<? extends FileNode> oldList);
+    abstract @NotNull List<FileNode> getChildren(@NotNull List<? extends FileNode> oldList);
 
     final List<FileNode> getChildren() {
       List<FileNode> oldList = children;
@@ -234,7 +230,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
 
-  private static class ProjectNode extends Node {
+  private static final class ProjectNode extends Node {
     volatile VirtualFileFilter filter;
     volatile boolean showExcludedFiles;
     volatile boolean showModules;
@@ -294,7 +290,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
 
-  private static class FileNode extends Node implements ProjectFileNode {
+  private static final class FileNode extends Node implements ProjectFileNode {
     final VirtualFile file;
     final Object id;
 
@@ -303,15 +299,13 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       this.id = id;
     }
 
-    @NotNull
     @Override
-    public Object getRootID() {
+    public @NotNull Object getRootID() {
       return id;
     }
 
     @Override
-    @NotNull
-    public VirtualFile getVirtualFile() {
+    public @NotNull VirtualFile getVirtualFile() {
       return file;
     }
 

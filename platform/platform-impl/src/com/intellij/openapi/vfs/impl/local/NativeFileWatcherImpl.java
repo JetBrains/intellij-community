@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
@@ -37,9 +37,10 @@ import java.nio.file.Path;
 import java.text.Normalizer;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class NativeFileWatcherImpl extends PluggableFileWatcher {
+public final class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
 
   private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
@@ -47,6 +48,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final String ROOTS_COMMAND = "ROOTS";
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
+  private static final int EXIT_TIMEOUT_MS = 500;
 
   private FileWatcherNotificationSink myNotificationSink;
   private Path myExecutable;
@@ -101,7 +103,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   @Override
   public void dispose() {
     myIsShuttingDown = true;
-    shutdownProcess();
+    shutdownProcess(true);
   }
 
   @Override
@@ -115,14 +117,20 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   @Override
-  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    setWatchRoots(recursive, flat, false);
+  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat, boolean shuttingDown) {
+    if (shuttingDown) {
+      myIsShuttingDown = true;
+      shutdownProcess(false);
+    }
+    else {
+      doSetWatchRoots(recursive, flat, false);
+    }
   }
 
   /**
    * Subclasses should override this method if they want to use custom logic to disable their file watcher.
    */
-  protected boolean isDisabled() {
+  private static boolean isDisabled() {
     if (Boolean.getBoolean(PROPERTY_WATCHER_DISABLED)) return true;
     Application app = ApplicationManager.getApplication();
     return app.isCommandLine() || app.isUnitTestMode();
@@ -131,11 +139,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   /**
    * Subclasses should override this method to provide a custom binary to run.
    */
-  protected @Nullable Path getExecutable() {
-    return getFSNotifierExecutable();
-  }
-
-  public static @Nullable Path getFSNotifierExecutable() {
+  @Nullable
+  private static Path getExecutable() {
     String customPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
     if (customPath != null) {
       Path customFile = PathManager.findBinFile(customPath);
@@ -182,7 +187,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     if (restart) {
-      shutdownProcess();
+      shutdownProcess(true);
     }
 
     LOG.info("Starting file watcher: " + myExecutable);
@@ -194,42 +199,38 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       List<String> recursive = myRecursiveWatchRoots;
       List<String> flat = myFlatWatchRoots;
       if (recursive.size() + flat.size() > 0) {
-        setWatchRoots(recursive, flat, true);
+        doSetWatchRoots(recursive, flat, true);
       }
     }
   }
 
-  private void shutdownProcess() {
-    OSProcessHandler processHandler = myProcessHandler;
-    if (processHandler != null) {
-      if (!processHandler.isProcessTerminated()) {
-        try { writeLine(EXIT_COMMAND); }
-        catch (IOException ignore) { }
-        if (!processHandler.waitFor(10)) {
-          Runnable r = () -> {
-            if (!processHandler.waitFor(500)) {
-              LOG.warn("File watcher is still alive, doing a force quit.");
-              processHandler.destroyProcess();
-            }
-          };
-          if (myIsShuttingDown) {
-            new Thread(r, "fsnotifier shutdown").start();
-          }
-          else {
-            ApplicationManager.getApplication().executeOnPooledThread(r);
-          }
-        }
-      }
+  private void shutdownProcess(boolean await) {
+    var processHandler = myProcessHandler;
+    if (processHandler == null || processHandler.isProcessTerminated()) {
+      myProcessHandler = null;
+      return;
+    }
 
+    try { writeLine(EXIT_COMMAND); }
+    catch (IOException ignore) { }
+
+    if (await) {
+      var timeout = TimeUnit.MILLISECONDS.toNanos(EXIT_TIMEOUT_MS) + System.nanoTime();
+      while (!processHandler.isProcessTerminated()) {
+        if (System.nanoTime() > timeout) {
+          LOG.warn("File watcher is still alive, doing a force quit.");
+          processHandler.destroyProcess();
+          break;
+        }
+        processHandler.waitFor(10);
+      }
       myProcessHandler = null;
     }
   }
 
-  private void setWatchRoots(List<String> recursive, List<String> flat, boolean restart) {
-    if (myProcessHandler == null || myProcessHandler.isProcessTerminated()) return;
-
-    if (ApplicationManager.getApplication().isDisposed()) {
-      recursive = flat = Collections.emptyList();
+  private void doSetWatchRoots(List<String> recursive, List<String> flat, boolean restart) {
+    if (myProcessHandler == null || myProcessHandler.isProcessTerminated() || myIsShuttingDown) {
+      return;
     }
 
     if (!restart && myRecursiveWatchRoots.equals(recursive) && myFlatWatchRoots.equals(flat)) {
@@ -339,7 +340,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         startupProcess(true);
       }
       catch (IOException e) {
-        shutdownProcess();
+        shutdownProcess(true);
         LOG.warn("Watcher terminated and attempt to restart has failed. Exiting watching thread.", e);
       }
     }
@@ -349,7 +350,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       if (outputType == ProcessOutputTypes.STDERR) {
         LOG.warn(line);
       }
-      if (outputType != ProcessOutputTypes.STDOUT) {
+      if (outputType != ProcessOutputTypes.STDOUT || myIsShuttingDown) {
         return;
       }
 
@@ -445,9 +446,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  protected boolean isRepetition(String path) {
-    // collapse subsequent change file change notifications that happen once we copy a large file,
-    // this allows reduction of path checks at least 20% for Windows
+  private boolean isRepetition(String path) {
+    // debouncing subsequent notifications (happen e.g. on copying of large files); this reduces path checks at least 20% on Windows
     synchronized (myLastChangedPaths) {
       for (int i = 0; i < myLastChangedPaths.length; ++i) {
         int last = myLastChangedPathIndex - i - 1;
@@ -486,7 +486,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     MyProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
       myIsShuttingDown = true;
-      shutdownProcess();
+      shutdownProcess(true);
 
       long t = System.currentTimeMillis();
       while (!processHandler.isProcessTerminated()) {

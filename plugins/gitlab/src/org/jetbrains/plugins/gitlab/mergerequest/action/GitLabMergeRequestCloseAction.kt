@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.collaboration.async.combineAndCollect
-import com.intellij.collaboration.ui.codereview.details.RequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
@@ -18,10 +18,10 @@ internal class GitLabMergeRequestCloseAction(
     scope.launch {
       combineAndCollect(
         reviewFlowVm.isBusy,
-        reviewFlowVm.requestState,
-        reviewFlowVm.userCanManageReview
-      ) { isBusy, requestState, userCanManageReview ->
-        isEnabled = !isBusy && requestState == RequestState.OPENED && userCanManageReview
+        reviewFlowVm.reviewRequestState,
+        reviewFlowVm.userCanManage
+      ) { isBusy, reviewRequestState, userCanManageReview ->
+        isEnabled = !isBusy && reviewRequestState == ReviewRequestState.OPENED && userCanManageReview
       }
     }
   }

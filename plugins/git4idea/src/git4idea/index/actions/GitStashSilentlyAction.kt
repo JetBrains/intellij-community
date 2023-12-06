@@ -1,19 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThreeState
-import git4idea.actions.GitStash
 import git4idea.index.GitStageTracker
 import git4idea.index.isStagingAreaAvailable
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.stash.GitStashOperations
 import git4idea.stash.createStashHandler
 
 class GitStashSilentlyAction : DumbAwareAction() {
@@ -35,7 +36,10 @@ class GitStashSilentlyAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val repositories = GitRepositoryManager.getInstance(project).repositories
-    GitStash.runStashInBackground(project, changedRoots(project, repositories)) {
+
+    FileDocumentManager.getInstance().saveAllDocuments()
+
+    GitStashOperations.runStashInBackground(project, changedRoots(project, repositories)) {
       createStashHandler(project, it)
     }
   }

@@ -4,7 +4,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
@@ -12,6 +11,8 @@ import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -260,7 +261,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     return new TextRange(startOffset, endOffset).shiftRight(-expression.getTextOffset());
   }
 
-  interface CallChainFix extends FileModifier {
+  interface CallChainFix {
     @IntentionName String getName();
     void applyFix(@NotNull Project project, PsiElement element);
   }
@@ -283,7 +284,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     PsiElement simplify(PsiMethodCallExpression element);
   }
 
-  private static class SimplifyCallChainFix implements LocalQuickFix {
+  private static class SimplifyCallChainFix extends PsiUpdateModCommandQuickFix {
     private final CallChainFix myFix;
 
     SimplifyCallChainFix(CallChainFix fix) {
@@ -303,14 +304,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      myFix.applyFix(project, descriptor.getStartElement());
-    }
-
-    @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      CallChainFix newFix = (CallChainFix)myFix.getFileModifierForPreview(target);
-      return newFix == myFix ? this : new SimplifyCallChainFix(newFix);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      myFix.applyFix(project, element);
     }
   }
 
@@ -1678,12 +1673,6 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     AnyMatchContainsFix(@NotNull PsiExpression value) {
       myValuePointer = SmartPointerManager.createPointer(value);
-    }
-
-    @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      PsiExpression expression = myValuePointer.getElement();
-      return expression == null ? null : new AnyMatchContainsFix(expression);
     }
 
     @Override

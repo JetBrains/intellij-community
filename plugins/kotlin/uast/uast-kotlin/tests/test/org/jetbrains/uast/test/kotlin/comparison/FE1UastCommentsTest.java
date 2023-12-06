@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
-@TestRoot("uast/uast-kotlin-fir")
-@TestMetadata("uast-kotlin-fir/testData/declaration")
+@TestRoot("uast/uast-kotlin-fir/tests")
+@TestMetadata("uast-kotlin-fir/tests/testData/declaration")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public class FE1UastCommentsTest extends AbstractFE1UastCommentsTest {

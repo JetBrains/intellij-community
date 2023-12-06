@@ -35,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -352,6 +354,40 @@ public final class PythonSdkUtil {
     if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
     runner = new File(new File(new File("/usr", "local"), "bin"), name);
     if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
+    return null;
+  }
+
+  @Nullable
+  public static Path getExecutablePath(@NotNull Path homeDirectory, @NotNull String name) {
+    Path binDir = homeDirectory.getParent();
+    if (binDir == null) return null;
+    Path runner = binDir.resolve(name);
+    if (Files.exists(runner)) return runner;
+    runner = binDir.resolve("Scripts").resolve(name);
+    if (Files.exists(runner)) return runner;
+
+    if (binDir.getParent() != null) {
+      runner = binDir.getParent().resolve("Scripts").resolve(name);
+      if (Files.exists(runner)) return runner;
+      runner = binDir.getParent().resolve("local").resolve(name);
+      if (Files.exists(runner)) return runner;
+      runner = binDir.getParent().resolve("local").resolve("bin").resolve(name);
+      if (Files.exists(runner)) return runner;
+    }
+
+    // if interpreter is a symlink
+    String homeDirectoryAbsolutePath = homeDirectory.toAbsolutePath().toString();
+    if (FileSystemUtil.isSymLink(homeDirectoryAbsolutePath)) {
+      String resolvedPath = FileSystemUtil.resolveSymLink(homeDirectoryAbsolutePath);
+      if (resolvedPath != null && !resolvedPath.equals(homeDirectoryAbsolutePath)) {
+        return getExecutablePath(Path.of(resolvedPath), name);
+      }
+    }
+    // Search in standard unix path
+    runner = Path.of("/usr", "bin", name);
+    if (Files.exists(runner)) return runner;
+    runner = Path.of("/usr", "local", "bin", name);
+    if (Files.exists(runner)) return runner;
     return null;
   }
 

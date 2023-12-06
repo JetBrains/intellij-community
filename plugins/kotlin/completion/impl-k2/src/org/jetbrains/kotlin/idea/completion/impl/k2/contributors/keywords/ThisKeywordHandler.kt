@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -29,8 +30,8 @@ import org.jetbrains.kotlin.types.Variance
 internal class ThisKeywordHandler(
     private val basicContext: FirBasicCompletionContext
 ) : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.THIS_KEYWORD) {
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun KtAnalysisSession.createLookups(
+    context(KtAnalysisSession)
+    override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
@@ -55,24 +56,28 @@ internal class ThisKeywordHandler(
         return result
     }
 
-    private fun KtAnalysisSession.canReferenceSymbolByThis(parameters: CompletionParameters, symbol: KtSymbol): Boolean {
+    context(KtAnalysisSession)
+    private fun canReferenceSymbolByThis(parameters: CompletionParameters, symbol: KtSymbol): Boolean {
         if (symbol !is KtClassOrObjectSymbol) return true
         if (symbol.classKind != KtClassKind.COMPANION_OBJECT) return true
         val companionPsi = symbol.psi as KtClassOrObject
         return parameters.offset in companionPsi.textRange
     }
 
-    private fun KtAnalysisSession.createThisLookupElement(receiver: KtImplicitReceiver, labelName: Name?): LookupElement {
+    context(KtAnalysisSession)
+    private fun createThisLookupElement(receiver: KtImplicitReceiver, labelName: Name?): LookupElement {
         return createKeywordElement("this", labelName.labelNameToTail(), lookupObject = KeywordLookupObject())
-            .withTypeText(receiver.type.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
+            .withTypeText(receiver.type.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT))
     }
 
-    private fun KtAnalysisSession.getThisLabelBySymbol(symbol: KtSymbol): Name? = when {
+    context(KtAnalysisSession)
+    private fun getThisLabelBySymbol(symbol: KtSymbol): Name? = when {
         symbol is KtNamedSymbol && !symbol.name.isSpecial -> symbol.name
         symbol is KtAnonymousFunctionSymbol -> {
             val psi = symbol.psi as KtFunctionLiteral
             psi.findLabelAndCall().first
         }
+
         else -> null
     }
 }

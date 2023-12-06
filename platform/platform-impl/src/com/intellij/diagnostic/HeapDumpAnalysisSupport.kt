@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.google.gson.stream.JsonReader
@@ -23,30 +23,26 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
-open class HeapDumpAnalysisSupport {
+internal open class HeapDumpAnalysisSupport {
   companion object {
-    fun getInstance() = service<HeapDumpAnalysisSupport>()
+    fun getInstance(): HeapDumpAnalysisSupport = service<HeapDumpAnalysisSupport>()
   }
 
-  open fun getPrivacyPolicyUrl(): String {
-    return "https://www.jetbrains.com/company/privacy.html"
-  }
+  open fun getPrivacyPolicyUrl(): String = "https://www.jetbrains.com/company/privacy.html"
 
   open fun uploadReport(reportText: String, heapReportProperties: HeapReportProperties, parentComponent: Component) {
     val text = getHeapDumpReportText(reportText, heapReportProperties)
     val attachment = Attachment("report.txt", text)
     attachment.isIncluded = true
-    val loggingEvent = LogMessage.createEvent(OutOfMemoryError(), "Heap analysis results", attachment)
+    val loggingEvent = LogMessage.eventOf(OutOfMemoryError(), "Heap analysis results", listOf(attachment))
     ITNReporter().submit(arrayOf(loggingEvent), null, parentComponent) { }
   }
 
   /**
    * Checks if there's already a snapshot saved for analysis after restart and notifies the user if needed.
-   * Returns true if there's a pending snapshot and a new one should not be saved.
+   * Returns true if there's a pending snapshot and a new one shouldn't be saved.
    */
-  open fun checkPendingSnapshot(): Boolean {
-    return false
-  }
+  open fun checkPendingSnapshot(): Boolean = false
 
   /**
    * Saves the given snapshot for analysis after restart.

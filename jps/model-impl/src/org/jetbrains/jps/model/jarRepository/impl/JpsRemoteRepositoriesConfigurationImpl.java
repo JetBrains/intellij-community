@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.jarRepository.impl;
 
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.ex.JpsElementBase;
@@ -23,6 +8,7 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoriesConfiguration;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -30,10 +16,10 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class JpsRemoteRepositoriesConfigurationImpl extends JpsElementBase<JpsRemoteRepositoriesConfigurationImpl> implements JpsRemoteRepositoriesConfiguration{
+public final class JpsRemoteRepositoriesConfigurationImpl extends JpsElementBase<JpsRemoteRepositoriesConfigurationImpl> implements JpsRemoteRepositoriesConfiguration{
   public static final JpsElementChildRole<JpsRemoteRepositoriesConfiguration> ROLE = JpsElementChildRoleBase.create("remote repositories configuration");
   
-  private final List<JpsRemoteRepositoryDescription> myRepositories = new SmartList<>();
+  private final List<JpsRemoteRepositoryDescription> repositories = new ArrayList<>();
 
   public JpsRemoteRepositoriesConfigurationImpl() {
     this(Arrays.asList( // defaults
@@ -43,13 +29,12 @@ public class JpsRemoteRepositoriesConfigurationImpl extends JpsElementBase<JpsRe
   }
 
   public JpsRemoteRepositoriesConfigurationImpl(List<? extends JpsRemoteRepositoryDescription> repositories) {
-    myRepositories.addAll(repositories);
+    this.repositories.addAll(repositories);
   }
 
-  @NotNull
   @Override
-  public JpsRemoteRepositoriesConfigurationImpl createCopy() {
-    return new JpsRemoteRepositoriesConfigurationImpl(myRepositories);
+  public @NotNull JpsRemoteRepositoriesConfigurationImpl createCopy() {
+    return new JpsRemoteRepositoriesConfigurationImpl(repositories);
   }
 
   @Override
@@ -59,12 +44,12 @@ public class JpsRemoteRepositoriesConfigurationImpl extends JpsElementBase<JpsRe
 
   @Override
   public List<JpsRemoteRepositoryDescription> getRepositories() {
-    return Collections.unmodifiableList(myRepositories);
+    return Collections.unmodifiableList(repositories);
   }
 
   @Override
   public void setRepositories(List<? extends JpsRemoteRepositoryDescription> repositories) {
-    myRepositories.clear();
-    myRepositories.addAll(repositories);
+    this.repositories.clear();
+    this.repositories.addAll(repositories);
   }
 }

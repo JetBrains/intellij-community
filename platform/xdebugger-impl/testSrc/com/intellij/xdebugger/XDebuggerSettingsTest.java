@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -16,8 +16,8 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
   protected void setUp() throws Exception {
     super.setUp();
     initApplication();
-    registerExtensionPoint(XDebuggerSettings.EXTENSION_POINT, XDebuggerSettings.class);
-    registerExtension(XDebuggerSettings.EXTENSION_POINT, new MyDebuggerSettings());
+    registerExtensionPoint(XDebuggerSettingManagerImpl.getSettingsEP(), XDebuggerSettings.class);
+    registerExtension(XDebuggerSettingManagerImpl.getSettingsEP(), new MyDebuggerSettings());
     getApplication().registerService(XDebuggerUtil.class, XDebuggerUtilImpl.class);
     getApplication().registerService(XDebuggerSettingsManager.class, XDebuggerSettingManagerImpl.class);
   }

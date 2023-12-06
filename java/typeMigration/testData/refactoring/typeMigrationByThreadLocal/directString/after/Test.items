@@ -5,7 +5,7 @@ PsiReferenceExpression:myS : java.lang.ThreadLocal<java.lang.String>
 
 Conversions:
 "" -> new java.lang.ThreadLocal<java.lang.String>() {
-  @Override
+  @java.lang.Override
   protected java.lang.String initialValue() {
     return $qualifier$;
   }

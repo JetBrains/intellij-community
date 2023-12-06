@@ -30,7 +30,9 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    return myDelegate.getChildren(e);
+    UpdateSession session = e != null ? e.getUpdateSession() : UpdateSession.EMPTY;
+    return session == UpdateSession.EMPTY ? myDelegate.getChildren(e) :
+           session.children(myDelegate).toArray(AnAction.EMPTY_ARRAY);
   }
 
   @Override
@@ -40,7 +42,9 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    myDelegate.update(e);
+    UpdateSession session = e.getUpdateSession();
+    if (session == UpdateSession.EMPTY) myDelegate.update(e);
+    else e.getPresentation().copyFrom(session.presentation(myDelegate), null, true);
   }
 
   @Override

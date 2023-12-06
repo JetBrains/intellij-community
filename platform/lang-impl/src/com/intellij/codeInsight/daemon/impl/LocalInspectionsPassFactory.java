@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -25,10 +25,9 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
                                                  serializeCodeInsightPasses ? null : ghp, true, Pass.LOCAL_INSPECTIONS);
   }
 
-  @NotNull
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.LOCAL_INSPECTIONS);
+  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+    TextRange textRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.LOCAL_INSPECTIONS);
     if (textRange == null){
       return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
     }
@@ -51,7 +50,7 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
                                    @NotNull TextRange textRange,
                                    @NotNull TextRange visibleRange,
                                    @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-      super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true, highlightInfoProcessor, true);
+      super(file, document, textRange, visibleRange, true, highlightInfoProcessor, true);
     }
 
     @Override

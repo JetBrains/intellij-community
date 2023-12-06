@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SdkListCellRenderer extends ColoredListCellRenderer<Sdk> {
+public final class SdkListCellRenderer extends ColoredListCellRenderer<Sdk> {
   private final @NlsContexts.Label String myNullText;
   private final boolean myShowHomePath;
 
@@ -40,7 +40,7 @@ public class SdkListCellRenderer extends ColoredListCellRenderer<Sdk> {
     }
   }
 
-  protected Icon getSdkIcon(Sdk sdk) {
+  private static Icon getSdkIcon(Sdk sdk) {
     return ((SdkType) sdk.getSdkType()).getIcon();
   }
 }

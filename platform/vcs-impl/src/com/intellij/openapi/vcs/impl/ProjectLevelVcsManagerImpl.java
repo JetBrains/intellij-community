@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.trustedProjects.TrustedProjectsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -18,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,21 +44,25 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
+import com.intellij.vcsUtil.VcsImplUtil;
+import kotlin.Pair;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element> {
+public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectLevelVcsManagerImpl.class);
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
@@ -76,7 +83,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   private final @NotNull AtomicInteger myBackgroundOperationCounter = new AtomicInteger();
 
-  private final Set<ActionKey> myBackgroundRunningTasks = ContainerUtil.newConcurrentSet();
+  private final Set<ActionKey> myBackgroundRunningTasks = ConcurrentCollectionFactory.createConcurrentSet();
 
   private final FileIndexFacade myExcludedIndex;
 
@@ -87,7 +94,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myOptionsAndConfirmations = new OptionsAndConfirmations();
 
     myMappings = new NewMappings(myProject, this);
-    Disposer.register(myProject, myMappings);
+  }
+
+  @Override
+  public void dispose() {
+    Disposer.dispose(myMappings);
   }
 
   public static ProjectLevelVcsManagerImpl getInstanceImpl(@NotNull Project project) {
@@ -101,9 +112,13 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public @Nullable AbstractVcs findVcsByName(@Nullable String name) {
-    AbstractVcs result = name == null || myProject.isDisposed() ? null : AllVcses.getInstance(myProject).getByName(name);
-    ProgressManager.checkCanceled();
-    return result;
+    if (name == null) return null;
+    AbstractVcs vcs = AllVcses.getInstance(myProject).getByName(name);
+    if (vcs == null && myProject.isDisposed()) {
+      // Take readLock to avoid race between Project.isDisposed and Disposer.dispose.
+      ReadAction.run(ProgressManager::checkCanceled);
+    }
+    return vcs;
   }
 
   @Override
@@ -146,6 +161,20 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       }
     }
     return true;
+  }
+
+  @Override
+  public @NotNull @NlsSafe String getShortNameForVcsRoot(@NotNull VirtualFile root) {
+    String shortName = myMappings.getShortNameFor(root);
+    if (shortName != null) return shortName;
+
+    VirtualFile projectDir = myProject.getBaseDir();
+    String relativePath = projectDir != null ? VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar) : null;
+    if (relativePath != null) {
+      return relativePath.isEmpty() ? root.getName() : relativePath;
+    }
+
+    return root.getPresentableUrl();
   }
 
   @Override
@@ -349,6 +378,16 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
+  public void registerNewDirectMappings(Collection<Pair<VirtualFile, AbstractVcs>> detectedRoots) {
+    var mappings = new ArrayList<>(myMappings.getDirectoryMappings());
+    var knownMappedRoots = mappings.stream().map(VcsDirectoryMapping::getDirectory).collect(Collectors.toSet());
+    var newMappings = detectedRoots.stream()
+      .map(pair -> new VcsDirectoryMapping(pair.component1().getPath(), pair.component2().getName()))
+      .filter(it -> !knownMappedRoots.contains(it.getDirectory())).toList();
+    mappings.addAll(newMappings);
+    setAutoDirectoryMappings(mappings);
+  }
+
   public void setAutoDirectoryMappings(@NotNull List<VcsDirectoryMapping> mappings) {
     myMappings.setDirectoryMappings(mappings);
     myMappings.cleanupMappings();
@@ -385,16 +424,22 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
   }
 
+  /**
+   * @see #writeDirectoryMappings(Element)
+   */
   @Override
   public @NotNull Element getState() {
     Element element = new Element("state");
     ProjectLevelVcsManagerSerialization.writeExternalUtil(element, myOptionsAndConfirmations);
-    if (myHaveLegacyVcsConfiguration) {
+    if (myHaveLegacyVcsConfiguration && !myProject.isDefault()) {
       element.setAttribute(SETTINGS_EDITED_MANUALLY, "true");
     }
     return element;
   }
 
+  /**
+   * @see #readDirectoryMappings(Element)
+   */
   @Override
   public void loadState(@NotNull Element state) {
     ProjectLevelVcsManagerSerialization.readExternalUtil(state, myOptionsAndConfirmations);
@@ -457,6 +502,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
+  @Deprecated
   public List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs) {
     return MappingsToRoots.getDetailedVcsMappings(myProject, myMappings, vcs);
   }
@@ -612,7 +658,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
         return checker;
       }
     }
-    return new DefaultVcsRootChecker(vcs);
+    return new DefaultVcsRootChecker(vcs, getDescriptor(vcs.getName()));
   }
 
   @Override
@@ -642,13 +688,13 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @RequiresEdt
   void startBackgroundTask(Object @NotNull ... keys) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(myBackgroundRunningTasks.add(new ActionKey(keys)));
   }
 
   @RequiresEdt
   void stopBackgroundTask(Object @NotNull ... keys) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(myBackgroundRunningTasks.remove(new ActionKey(keys)));
   }
 
@@ -657,7 +703,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
    * @see VcsStartupActivity
    */
   public void addInitializationRequest(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
-    VcsInitialization.getInstance(myProject).add(vcsInitObject, runnable);
+    VcsInitialization.Companion.getInstance(myProject).add(vcsInitObject, runnable);
   }
 
   @Override
@@ -700,7 +746,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       if (myProject.isDisposed() || myProject.isDefault()) return false;
 
       if (Registry.is("ide.hide.excluded.files")) {
-        VirtualFile vf = ChangesUtil.findValidParentAccurately(filePath);
+        VirtualFile vf = VcsImplUtil.findValidParentAccurately(filePath);
         return vf != null && myExcludedIndex.isExcludedFile(vf);
       }
       else {
@@ -754,7 +800,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @TestOnly
   public void waitForInitialized() {
-    VcsInitialization.getInstance(myProject).waitFinished();
+    VcsInitialization.Companion.getInstance(myProject).waitFinished();
   }
 
   @Override

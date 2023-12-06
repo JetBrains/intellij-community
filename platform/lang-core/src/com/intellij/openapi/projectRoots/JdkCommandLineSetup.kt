@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots
 
 import com.intellij.execution.CantRunException
@@ -17,7 +17,7 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
-import com.intellij.execution.target.java.JavaLanguageRuntimeType
+import com.intellij.execution.target.java.JavaLanguageRuntimeTypeConstants
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
@@ -35,7 +35,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.NonNls
@@ -57,6 +56,7 @@ import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest
+import kotlin.io.path.isDirectory
 import kotlin.math.abs
 
 class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
@@ -65,8 +65,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     request.onEnvironmentPrepared { environment, progressIndicator -> provideEnvironment(environment, progressIndicator) }
   }
 
-  val commandLine = TargetedCommandLineBuilder(request)
-  val platform = request.targetPlatform.platform
+  val commandLine: TargetedCommandLineBuilder = TargetedCommandLineBuilder(request)
+  val platform: Platform = request.targetPlatform.platform
 
   private val languageRuntime: JavaLanguageRuntimeConfiguration? = request.configuration?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
@@ -115,7 +115,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       catch (t: Throwable) {
         LOG.warn(t)
         targetProgressIndicator.stopWithErrorMessage(LangCoreBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot,
-                                                                        t.localizedMessage))
+                                                                            t.localizedMessage))
         result.resolveFailure(t)
       }
     }
@@ -151,7 +151,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       catch (t: Throwable) {
         LOG.warn(t)
         targetProgressIndicator.stopWithErrorMessage(LangCoreBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot,
-                                                                        t.localizedMessage))
+                                                                            t.localizedMessage))
         result.resolveFailure(t)
       }
     }
@@ -302,7 +302,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
           is ParameterTargetValuePart.Const ->
             TargetValue.fixed(part.localValue)
           is ParameterTargetValuePart.Path ->
-            requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, part.pathToUpload, null)
+            requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, part.pathToUpload, null)
           is ParameterTargetValuePart.PathSeparator ->
             TargetValue.fixed(platform.pathSeparator.toString())
           is ParameterTargetValuePart.PromiseValue ->
@@ -353,7 +353,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
         }
       }
 
-      val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath, uploadPathIsFile = true)
+      val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, argFile.file.absolutePath, uploadPathIsFile = true)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
       argFile.scheduleWriteFileWhenReady(vmParameters) {
@@ -400,12 +400,12 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
 
 
-      val targetJarFile = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, jarFile.file.absolutePath, uploadPathIsFile = true)
+      val targetJarFile = requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, jarFile.file.absolutePath, uploadPathIsFile = true)
       if (dynamicVMOptions || dynamicParameters) {
         // -classpath path1:path2 CommandLineWrapper path2
         commandLine.addParameter("-classpath")
         commandLine.addParameter(composePathsList(listOf(
-          requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)),
+          requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)),
           targetJarFile
         )))
         commandLine.addParameter(TargetValue.fixed(commandLineWrapper.name))
@@ -474,11 +474,11 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
 
       val classpath: MutableSet<TargetValue<String>> = LinkedHashSet()
-      classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)))
+      classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)))
       // If kotlin agent starts it needs kotlin-stdlib in the classpath.
       javaParameters.classPath.rootDirs.forEach { rootDir ->
         rootDir.getUserData(JdkUtil.AGENT_RUNTIME_CLASSPATH)?.let {
-          classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, it))
+          classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, it))
         }
       }
       if (isUrlClassloader(vmParameters)) {
@@ -505,19 +505,19 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       commandLine.addParameter(composePathsList(classpath))
 
       commandLine.addParameter(commandLineWrapper.name)
-      val classPathParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, classpathFile.absolutePath, uploadPathIsFile = true)
+      val classPathParameter = requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, classpathFile.absolutePath, uploadPathIsFile = true)
       commandLine.addParameter(classPathParameter)
       rememberFileContentAfterUpload(classpathFile, classPathParameter)
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params")
-        val vmParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, vmParamsFile.absolutePath, uploadPathIsFile = true)
+        val vmParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, vmParamsFile.absolutePath, uploadPathIsFile = true)
         commandLine.addParameter(vmParamsParameter)
         rememberFileContentAfterUpload(vmParamsFile, vmParamsParameter)
       }
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params")
-        val appParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, appParamsFile.absolutePath, uploadPathIsFile = true)
+        val appParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, appParamsFile.absolutePath, uploadPathIsFile = true)
         commandLine.addParameter(appParamsParameter)
         rememberFileContentAfterUpload(appParamsFile, appParamsParameter)
       }
@@ -568,7 +568,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       value.resolvePaths(
         uploadPathsResolver = { path ->
           path.beforeUploadOrDownloadResolved(path.localPath)
-          requestUploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path.localPath, uploadPathIsFile = true) { path.afterUploadOrDownloadResolved(it) }
+          requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME, path.localPath, uploadPathIsFile = true) { path.afterUploadOrDownloadResolved(it) }
         },
         downloadPathsResolver = { path ->
           path.beforeUploadOrDownloadResolved(path.localPath)
@@ -612,7 +612,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     }
     val suffix = if (equalsSign > -1) value.substring(equalsSign) else ""
     commandLine.addParameter(
-      TargetValue.map(requestUploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path, uploadPathIsFile = true)) { v: String ->
+      TargetValue.map(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME, path, uploadPathIsFile = true)) { v: String ->
         prefix + v + suffix
       })
   }
@@ -683,7 +683,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     for (path in classPath.pathList) {
       if (localJdkPath == null || remoteJdkPath == null || !path.startsWith(localJdkPath)) {
-        result.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, path))
+        result.add(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, path))
       }
       else {
         //todo[remoteServers]: revisit with "provided" volume (?)
@@ -804,7 +804,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     private val manifest = Manifest()
     private val manifestText = StringBuilder()
-    internal val file = FileUtil.createTempFile(
+    internal val file: File = FileUtil.createTempFile(
       CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + abs(Random().nextInt()), ".jar", true)
 
     fun addToManifest(key: String, value: String, skipInCommandLineContent: Boolean = false) {

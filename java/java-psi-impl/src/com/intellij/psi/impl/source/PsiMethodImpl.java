@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -23,18 +23,21 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stub.JavaStubImplUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements PsiMethod, Queryable {
   private SoftReference<PsiType> myCachedType;
@@ -58,6 +61,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     dropCached();
   }
 
+  @MustBeInvokedByOverriders
   protected void dropCached() {
     myCachedType = null;
     myCachedName = null;
@@ -174,7 +178,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
     PsiMethodStub stub = getStub();
     if (stub != null) {
-      PsiType type = SoftReference.dereference(myCachedType);
+      PsiType type = dereference(myCachedType);
       if (type == null) {
         type = JavaSharedImplUtil.createTypeFromStub(this, stub.getReturnTypeText());
         myCachedType = new SoftReference<>(type);

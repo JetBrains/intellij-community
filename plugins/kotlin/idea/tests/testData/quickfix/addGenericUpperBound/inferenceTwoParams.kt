@@ -4,3 +4,5 @@
 fun <T : Any, U: Any> foo(x: T, y: U) = 1
 
 fun <E, F> bar(x: E, y: F) = foo(<caret>x, y)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.HighPriorityMakeUpperBoundNonNullableFix

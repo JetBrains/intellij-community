@@ -4,40 +4,47 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.FileAttribute
-import org.jetbrains.kotlin.idea.core.util.readNullable
+import com.intellij.util.gist.storage.GistStorage
+import com.intellij.util.io.DataExternalizer
 import org.jetbrains.kotlin.idea.core.util.readString
-import org.jetbrains.kotlin.idea.core.util.writeNullable
 import org.jetbrains.kotlin.idea.core.util.writeString
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModel
 import java.io.DataInput
-import java.io.DataInputStream
 import java.io.DataOutput
 
+private const val BINARY_FORMAT_VERSION = 1
+private const val NO_TRACK_GIST_STAMP = 0
+
 internal object GradleBuildRootDataSerializer {
-    private val attribute = FileAttribute("kotlin-dsl-script-models", 8, false)
+
+    private val currentBuildRoot: ThreadLocal<VirtualFile> = ThreadLocal()
+
+    private val buildRootDataGist =
+        GistStorage.getInstance().newGist("GradleBuildRootData", BINARY_FORMAT_VERSION, Externalizer)
 
     fun read(buildRoot: VirtualFile): GradleBuildRootData? {
-        return attribute.readFileAttribute(buildRoot)?.use {
-            it.readNullable {
-                readKotlinDslScriptModels(it, buildRoot.path)
-            }
-        }
+        currentBuildRoot.set(buildRoot)
+        return buildRootDataGist.getGlobalData(buildRoot, NO_TRACK_GIST_STAMP).data()
     }
 
     fun write(buildRoot: VirtualFile, data: GradleBuildRootData?) {
-        attribute.writeFileAttribute(buildRoot).use {
-            it.writeNullable(data) {
-                writeKotlinDslScriptModels(this, it)
-            }
-        }
+        currentBuildRoot.set(buildRoot) // putGlobalData calls  Externalizer.read
+        buildRootDataGist.putGlobalData(buildRoot, data, NO_TRACK_GIST_STAMP)
     }
 
     fun remove(buildRoot: VirtualFile) {
         write(buildRoot, null)
         LastModifiedFiles.remove(buildRoot)
+    }
+
+    private object Externalizer: DataExternalizer<GradleBuildRootData> {
+        override fun save(out: DataOutput, value: GradleBuildRootData) =
+            writeKotlinDslScriptModels(out, value)
+
+        override fun read(`in`: DataInput): GradleBuildRootData =
+            readKotlinDslScriptModels(`in`, currentBuildRoot.get().path)
     }
 }
 
@@ -69,7 +76,7 @@ fun writeKotlinDslScriptModels(output: DataOutput, data: GradleBuildRootData) {
 }
 
 @IntellijInternalApi
-fun readKotlinDslScriptModels(input: DataInputStream, buildRoot: String): GradleBuildRootData {
+fun readKotlinDslScriptModels(input: DataInput, buildRoot: String): GradleBuildRootData {
     val strings = StringsPool.reader(input)
 
     val importTs = input.readLong()
@@ -134,12 +141,12 @@ private object StringsPool {
         }
     }
 
-    fun reader(input: DataInputStream): Reader {
+    fun reader(input: DataInput): Reader {
         val strings = input.readList { input.readString() }
         return Reader(input, strings)
     }
 
-    class Reader(val input: DataInputStream, val strings: List<String>) {
+    class Reader(val input: DataInput, val strings: List<String>) {
         fun getString(id: Int) = strings[id]
 
         fun readString() = getString(input.readInt())

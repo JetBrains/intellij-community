@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -40,7 +41,6 @@ internal fun convertParentImpl(
                 parent.toUElementOfType<UClass>()?.let { return it } // mutlifile facade class
             }
         }
-
     }
 
     if (psi is KtLightElement<*, *> && (uElement.sourcePsi as? KtClassOrObject)?.isLocal == true) {
@@ -107,15 +107,23 @@ internal fun convertParentImpl(
     if (parent is KtLambdaArgument) {
         parent = parent.parent
     } 
-    
-    if (parent is KtParameter && parent.ownerFunction == null) {
+
+    // [KtParameter] can appear in:
+    //   1) KtNamedFunction -> KtParameterList -> KtParameter -> KtTypeReference, ...
+    //   2) KtCatchClause -> KtParameterList -> KtParameter -> KtTypeReference, ...
+    //   3) KtFunctionType -> KtParameterList -> KtParameter -> KtTypeReference
+    // First two are converted by [BaseKotlinConverter#convertParameter],
+    // and thus bound to containing [UMethod], [ULambdaExpression], or [UCatchClause].
+    // The third one does not have a direct UAST modeling. Here, we skip to the parent (KtParameterList)
+    // so that the overall parent conversion goes to [KtFunctionType], which will be [UTypeReferenceExpression].
+    if (parent is KtParameter && parent.isFunctionTypeParameter) {
         parent = parent.parent
     }
 
     if (parent is KtUserType &&  parent.parent.parent is KtConstructorCalleeExpression) {
         parent =  parent.parent.parent.parent
     } 
-    
+
     if (psi is KtSuperTypeCallEntry) {
         parent = parent?.parent
     }
@@ -220,11 +228,21 @@ internal fun convertParentImpl(
         }.expressions.single()
     }
 
-    if (result is KotlinULambdaExpression.Body && element is UExpression && result.implicitReturn?.returnExpression == element) {
-        return result.implicitReturn!!
+    if (result is KotlinULambdaExpression.Body && element is UExpression && element.sourcePsi?.canBeImplicitReturnIn(result) == true) {
+        result.implicitReturn?.takeIf { it.returnExpression.sourcePsi == element.sourcePsi }?.let { return it }
     }
 
     return result
+}
+
+private fun PsiElement.canBeImplicitReturnIn(body: KotlinULambdaExpression.Body): Boolean {
+    val lastStatement = body.sourcePsi.statements.lastOrNull() ?: return false
+    // It is _explicit_ return so we skip
+    if (lastStatement is KtReturnExpression) return false
+
+    // We can't be sure that lastStatement after transformations will contain exactly the last statement element,
+    // so we play safe here
+    return lastStatement.isAncestor(this, strict = false)
 }
 
 private fun isInConditionBranch(element: UElement, result: USwitchClauseExpressionWithBody) =

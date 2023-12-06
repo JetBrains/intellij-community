@@ -12,7 +12,7 @@ class WorkspaceModelGenerationAction: AnAction() {
     val project = event.project ?: return
     val module = event.getData(LangDataKeys.MODULE) ?: return
 
-    WorkspaceModelGenerator.generate(project, module)
+    WorkspaceModelGenerator.getInstance(project).generate(module)
   }
 
   override fun update(event: AnActionEvent) {

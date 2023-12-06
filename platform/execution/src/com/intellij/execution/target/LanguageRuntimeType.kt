@@ -66,7 +66,7 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
 
   companion object {
     @JvmField
-    val EXTENSION_NAME = ExtensionPointName.create<LanguageRuntimeType<*>>("com.intellij.executionTargetLanguageRuntimeType")
+    val EXTENSION_NAME: ExtensionPointName<LanguageRuntimeType<*>> = ExtensionPointName.create("com.intellij.executionTargetLanguageRuntimeType")
 
     fun LanguageRuntimeType<*>.findVolumeDescriptor(type: VolumeType): VolumeDescriptor? =
       this.volumeDescriptors().firstOrNull { it.type == type }
@@ -98,14 +98,14 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
     open fun promiseExecuteScript(script: String): CompletableFuture<String?> =
       promiseExecuteScript(ParametersListUtil.parse(script)).thenApply(ProcessOutput::getStdout)
 
-    open fun shutdown() = Unit
+    open fun shutdown() {}
   }
 
   interface Introspector<C : LanguageRuntimeConfiguration> {
     fun introspect(subject: Introspectable): CompletableFuture<C>
 
     companion object {
-      val DONE = CompletableFuture.completedFuture("")
+      val DONE: CompletableFuture<String>? = CompletableFuture.completedFuture("")
     }
   }
 

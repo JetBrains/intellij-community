@@ -11,14 +11,14 @@ import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.ide.impl.DisposableCachedValue
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.DisposableCachedValue
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -42,7 +42,7 @@ class ModuleRootComponentBridge(
         rootModel = this,
         updater = null
       )
-    }, "Root Model Bridge (${currentModule.name})").also { Disposer.register(this, it) }
+    }, "Root Model Bridge (${currentModule.name})", currentModule.project).also { Disposer.register(this, it) }
 
   internal val moduleLibraryTable: ModuleLibraryTableBridgeImpl = ModuleLibraryTableBridgeImpl(moduleBridge)
 
@@ -51,6 +51,7 @@ class ModuleRootComponentBridge(
   }
 
   init {
+    @Suppress("DEPRECATION")
     MODULE_EXTENSION_NAME.getPoint(moduleBridge).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension> {
       override fun extensionAdded(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
         dropRootModelCache()
@@ -98,7 +99,7 @@ class ModuleRootComponentBridge(
 
   override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor.DEFAULT_INSTANCE)
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
-    MutableEntityStorage.from(moduleBridge.entityStorage.current),
+    MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()),
     moduleBridge,
     accessor)
 
@@ -112,10 +113,15 @@ class ModuleRootComponentBridge(
   @ApiStatus.Internal
   fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor, cacheStorageResult: Boolean): ModifiableRootModel = ModifiableRootModelBridgeImpl(
     (moduleBridge.diff as? MutableEntityStorage) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
-    ?: MutableEntityStorage.from(moduleBridge.entityStorage.current),
+    ?: MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()),
     moduleBridge,
     accessor,
     cacheStorageResult)
+
+  @ApiStatus.Internal
+  fun getModifiableModelWithoutCaching(): ModifiableRootModel {
+    return getModifiableModel(MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()), RootConfigurationAccessor.DEFAULT_INSTANCE)
+  }
 
   fun getModifiableModel(diff: MutableEntityStorage, accessor: RootConfigurationAccessor): ModifiableRootModel {
     return ModifiableRootModelBridgeImpl(diff, moduleBridge, accessor, false)

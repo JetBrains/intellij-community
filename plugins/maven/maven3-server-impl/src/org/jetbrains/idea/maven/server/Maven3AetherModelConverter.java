@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.Comparing;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Model;
@@ -19,11 +18,11 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 /**
- * {@link Maven3AetherModelConverter} provides adapted methods of {@link MavenModelConverter} for aether models conversion
+ * {@link Maven3AetherModelConverter} provides adapted methods of {@link Maven3ModelConverter} for aether models conversion
  *
  * @author Vladislav.Soroka
  */
-public final class Maven3AetherModelConverter extends MavenModelConverter {
+public final class Maven3AetherModelConverter extends Maven3ModelConverter {
   @NotNull
   public static MavenModel convertModelWithAetherDependencyTree(Model model,
                                                                 List<String> sources,

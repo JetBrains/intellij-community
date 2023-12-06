@@ -7,3 +7,5 @@ fun Int.foo(
 fun main() {
     1.foo(3, 2)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReorderParametersFix

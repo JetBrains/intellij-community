@@ -5,6 +5,8 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValu
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
+import java.net.URLEncoder
 
 @Serializable
 data class GitLabMergeRequestsFiltersValue(
@@ -20,13 +22,20 @@ data class GitLabMergeRequestsFiltersValue(
   @Transient
   override val filterCount: Int = calcFilterCount()
 
-  fun toSearchQuery(): String = filters.mapNotNull { it }.joinToString(separator = "&") { filter ->
-    "${filter.queryField()}=${filter.queryValue()}"
+  @SinceGitLab("10.4")
+  fun toSearchQuery(): String {
+    val result = mutableListOf("scope=all")
+    if (searchQuery != null) {
+      result.add("search=${URLEncoder.encode(searchQuery, Charsets.UTF_8)}")
+    }
+    return filters.asSequence()
+      .filterNotNull()
+      .mapTo(result) { "${it.queryField()}=${URLEncoder.encode(it.queryValue(), Charsets.UTF_8)}" }
+      .joinToString(separator = "&")
   }
 
   private fun calcFilterCount(): Int {
     var count = 0
-    if (searchQuery != null) count++
     if (state != null) count++
     if (author != null) count++
     if (assignee != null) count++
@@ -54,33 +63,44 @@ data class GitLabMergeRequestsFiltersValue(
   }
 
   @Serializable
-  sealed class MergeRequestsMemberFilterValue(val username: @NlsSafe String, val fullname: @NlsSafe String) : FilterValue {
+  sealed class MergeRequestsMemberFilterValue : FilterValue {
+    abstract val username: @NlsSafe String
+    abstract val fullname: @NlsSafe String
+
     override fun queryValue(): String = username
-  }
 
-  internal class MergeRequestsAuthorFilterValue(username: String, fullname: String)
-    : MergeRequestsMemberFilterValue(username, fullname) {
-    override fun queryField(): String = "author_username"
-  }
+    @Serializable
+    internal data class MergeRequestsAuthorFilterValue(
+      override val username: @NlsSafe String,
+      override val fullname: @NlsSafe String
+    ) : MergeRequestsMemberFilterValue() {
+      override fun queryField(): String = "author_username"
+    }
 
-  internal class MergeRequestsAssigneeFilterValue(username: String, fullname: String)
-    : MergeRequestsMemberFilterValue(username, fullname) {
-    override fun queryField(): String = "assignee_username"
-  }
+    @Serializable
+    internal data class MergeRequestsAssigneeFilterValue(
+      override val username: @NlsSafe String,
+      override val fullname: @NlsSafe String
+    ) : MergeRequestsMemberFilterValue() {
+      override fun queryField(): String = "assignee_username"
+    }
 
-  internal class MergeRequestsReviewerFilterValue(username: String, fullname: String)
-    : MergeRequestsMemberFilterValue(username, fullname) {
-    override fun queryField(): String = "reviewer_username"
+    @Serializable
+    internal data class MergeRequestsReviewerFilterValue(
+      override val username: @NlsSafe String,
+      override val fullname: @NlsSafe String
+    ) : MergeRequestsMemberFilterValue() {
+      override fun queryField(): String = "reviewer_username"
+    }
   }
 
   @Serializable
-  class LabelFilterValue(val title: String) : FilterValue {
+  data class LabelFilterValue(val title: String) : FilterValue {
     override fun queryField(): String = "labels"
     override fun queryValue(): String = title
   }
 
   companion object {
     val EMPTY = GitLabMergeRequestsFiltersValue()
-    val DEFAULT = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.OPENED)
   }
 }

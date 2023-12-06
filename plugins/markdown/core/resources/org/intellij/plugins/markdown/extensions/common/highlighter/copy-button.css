@@ -21,3 +21,27 @@
   content: url("copy-button-copy-icon-hovered.png");
   cursor: pointer;
 }
+
+.code-fence-highlighter-copy-button .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: rgba(85, 85, 85, 0.4);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 2px 0;
+  position: absolute;
+  font-size: 10px;
+
+  z-index: 1;
+  top: -4px;
+  left: 120%;
+
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.code-fence-highlighter-copy-button:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}

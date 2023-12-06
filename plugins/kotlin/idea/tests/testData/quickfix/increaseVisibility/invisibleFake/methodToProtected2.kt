@@ -12,3 +12,4 @@ class C : B() {
         <caret>doSth()
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToProtectedFix

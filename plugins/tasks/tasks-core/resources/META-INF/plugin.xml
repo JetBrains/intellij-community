@@ -29,7 +29,7 @@
   <actions resource-bundle="messages.TaskBundle">
 
     <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction">
-      <add-to-group group-id="MainToolbarLeft" anchor="last"/>
+      <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
       <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
     </action>
 
@@ -116,7 +116,6 @@
     <projectService serviceInterface="com.intellij.tasks.TaskManager" serviceImplementation="com.intellij.tasks.impl.TaskManagerImpl"/>
     <postStartupActivity implementation="com.intellij.tasks.impl.TaskManagerImpl$Activity"/>
     <projectService serviceImplementation="com.intellij.tasks.impl.TaskProjectConfiguration"/>
-    <applicationService serviceImplementation="com.intellij.tasks.config.PasswordConversionEnforcer" preload="notHeadless"/>
     <applicationService serviceImplementation="com.intellij.tasks.config.TaskSettings"/>
     <search.optionContributor implementation="com.intellij.tasks.config.TaskSearchableOptionContributor"/>
 
@@ -156,5 +155,9 @@
 
     <vcs.changeListDecorator implementation="com.intellij.tasks.impl.TaskManagerDecorator"/>
     <notificationGroup id="Task Group" displayType="BALLOON" bundle="messages.TaskBundle" key="notification.group.tasks"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.tasks.impl.TaskManagementUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.tasks.impl.TaskManagementConfigurationCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.tasks.core.fus.TasksStateCollector"/>
   </extensions>
 </idea-plugin>

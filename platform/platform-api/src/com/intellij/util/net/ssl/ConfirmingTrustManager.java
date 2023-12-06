@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.DigestUtil;
+import com.intellij.util.io.DigestUtilKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -33,6 +33,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.util.io.DigestUtilKt.sha3_256;
+
 /**
  * The central piece of our SSL support - special kind of trust manager, that asks user to confirm
  * untrusted certificate, e.g. if it wasn't found in system-wide storage.
@@ -46,15 +48,13 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   private static final Logger LOG = Logger.getInstance(ConfirmingTrustManager.class);
   private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
 
-  public final ThreadLocal<@Nullable UntrustedCertificateStrategy> myUntrustedCertificateStrategy =
-    ThreadLocal.withInitial(() -> null);
+  public final ThreadLocal<@Nullable UntrustedCertificateStrategy> myUntrustedCertificateStrategy = ThreadLocal.withInitial(() -> null);
 
   public static ConfirmingTrustManager createForStorage(@NotNull String path, @NotNull String password) {
     return new ConfirmingTrustManager(getSystemTrustManagers(), new MutableTrustManager(path, password));
   }
 
-  @NotNull
-  private static List<X509TrustManager> getSystemTrustManagers() {
+  private static @NotNull List<X509TrustManager> getSystemTrustManagers() {
     List<X509TrustManager> result = new ArrayList<>();
 
     X509TrustManager osManager = getOperatingSystemTrustManager();
@@ -70,8 +70,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     return result;
   }
 
-  @Nullable
-  private static X509TrustManager getJavaRuntimeDefaultTrustManager() {
+  private static @Nullable X509TrustManager getJavaRuntimeDefaultTrustManager() {
     try {
       TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       // hacky way to get default trust store
@@ -88,14 +87,16 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     return null;
   }
 
-  @Nullable
-  private static X509TrustManager getOperatingSystemTrustManager() {
+  private static @Nullable X509TrustManager getOperatingSystemTrustManager() {
     try {
       Collection<X509Certificate> additionalTrustedCertificates =
         OsCertificatesService.getInstance().getCustomOsSpecificTrustedCertificates();
       if (additionalTrustedCertificates.isEmpty()) {
-        LOG.warn(
-          "Received an empty list of custom trusted root certificates from the system. Check log above for possible errors, enable debug logging in category 'org.jetbrains.nativecerts' for more information");
+        // don't nag developers, on jetbrains developer's machine this list is usually empty on MacOs and Windows
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.warn(
+            "Received an empty list of custom trusted root certificates from the system. Check log above for possible errors, enable debug logging in category 'org.jetbrains.nativecerts' for more information");
+        }
         return null;
       }
 
@@ -116,14 +117,13 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   }
 
-  @NotNull
-  static X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<? extends X509Certificate> certificates) throws Exception {
+  static @NotNull X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<? extends X509Certificate> certificates) throws Exception {
     KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
     ks.load(null, null);
     for (X509Certificate certificate : certificates) {
       ks.setCertificateEntry(
-        certificate.getSubjectDN().toString() + "-" +
-        DigestUtil.sha256Hex(certificate.getEncoded()), certificate);
+        certificate.getSubjectX500Principal().toString() + "-" +
+        DigestUtilKt.hashToHexString(certificate.getEncoded(), sha3_256()), certificate);
     }
 
     TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -162,8 +162,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   }
 
-  @Nullable
-  private static X509TrustManager findX509TrustManager(TrustManager[] managers) {
+  private static @Nullable X509TrustManager findX509TrustManager(TrustManager[] managers) {
     for (TrustManager manager : managers) {
       if (manager instanceof X509TrustManager) {
         return (X509TrustManager)manager;
@@ -254,8 +253,8 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     boolean accepted = false;
     if (parameters.myAskUser) {
 
-      String acceptLogMessage = "Going to ask user about certificate for: " + endPoint.getSubjectDN().toString() +
-                       ", issuer: " + endPoint.getIssuerDN().toString();
+      String acceptLogMessage = "Going to ask user about certificate for: " + endPoint.getSubjectX500Principal().toString() +
+                       ", issuer: " + endPoint.getIssuerX500Principal().toString();
       if (parameters.myAskOrRejectReason != null) {
         acceptLogMessage += ". Reason: " + parameters.myAskOrRejectReason;
       }
@@ -266,8 +265,8 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       });
     }
     else {
-      String rejectLogMessage = "Didn't show certificate dialog for: " + endPoint.getSubjectDN().toString() +
-                       ", issuer: " + endPoint.getIssuerDN().toString();
+      String rejectLogMessage = "Didn't show certificate dialog for: " + endPoint.getSubjectX500Principal().toString() +
+                       ", issuer: " + endPoint.getIssuerX500Principal().toString();
       if (parameters.myAskOrRejectReason != null) {
         rejectLogMessage += ". Reason: " + parameters.myAskOrRejectReason;
       }
@@ -395,7 +394,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         }
         myKeyStore.setCertificateEntry(createAlias(certificate), certificate);
         flushKeyStore();
-        LOG.info("Added certificate for '" + certificate.getSubjectDN().toString() + "' to " + myPath);
+        LOG.info("Added certificate for '" + certificate.getSubjectX500Principal().toString() + "' to " + myPath);
         // trust manager should be updated each time its key store was modified
         myTrustManager = initFactoryAndGetManager();
         myDispatcher.getMulticaster().certificateAdded(certificate);
@@ -475,8 +474,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
      * @param alias certificate's alias
      * @return certificate or null if it's not present
      */
-    @Nullable
-    public X509Certificate getCertificate(@NotNull String alias) {
+    public @Nullable X509Certificate getCertificate(@NotNull String alias) {
       myReadLock.lock();
       try {
         return (X509Certificate)myKeyStore.getCertificate(alias);

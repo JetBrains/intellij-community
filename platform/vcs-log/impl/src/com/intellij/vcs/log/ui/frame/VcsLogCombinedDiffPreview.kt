@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame
 
+import com.intellij.diff.tools.combined.DISABLE_LOADING_BLOCKS
+import com.intellij.diff.util.DiffPlaces
+import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
@@ -9,7 +12,10 @@ import com.intellij.vcs.log.VcsLogBundle
 
 class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : CombinedDiffPreview(browser.viewer, browser) {
 
-  override fun createModel(): CombinedDiffPreviewModel = VcsLogCombinedDiffPreviewModel(browser)
+  override fun createModel(): CombinedDiffPreviewModel = VcsLogCombinedDiffPreviewModel(browser).apply {
+    val blocks = CombinedDiffPreviewModel.prepareCombinedDiffModelRequests(browser.viewer.project, iterateAllChanges().toList())
+    setBlocks(blocks)
+  }
 
   override fun getCombinedDiffTabTitle(): String {
     val filePath = model.selected?.filePath
@@ -20,10 +26,15 @@ class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : Com
 }
 
 class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser) :
-  CombinedDiffPreviewModel(browser.viewer, emptyMap(), browser) {
+  CombinedDiffPreviewModel(browser.viewer, browser) {
+
+  init {
+    context.putUserData(DISABLE_LOADING_BLOCKS, true)
+    context.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.VCS_LOG_VIEW)
+  }
 
   override fun iterateSelectedChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
-   return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.selected(tree))
+    return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.selected(tree))
   }
 
   override fun iterateAllChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.execution.ExecutionException
@@ -16,6 +17,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
 import com.intellij.xdebugger.attach.XAttachHost
@@ -38,7 +40,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
-internal abstract class AttachToProcessView(
+abstract class AttachToProcessView(
   private val project: Project,
   protected val state: AttachDialogState,
   private val columnsLayout: AttachDialogColumnsLayout,
@@ -71,7 +73,7 @@ internal abstract class AttachToProcessView(
   fun getMainComponent() = centerPanel
 
   fun updateProcesses() {
-    application.assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (state.dialogDisposable.isNotAlive) return
     showLoadingPanel()
     updateJob?.cancel()

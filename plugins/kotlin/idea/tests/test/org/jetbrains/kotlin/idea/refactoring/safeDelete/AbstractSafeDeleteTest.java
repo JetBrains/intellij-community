@@ -126,7 +126,14 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
         try {
             SafeDeleteHandler.invoke(getProject(), new PsiElement[] {element}, null, true, null);
             for (int j = 0; j < filePaths.length; j++) {
-                assertSameLinesWithFile(new File(filePaths[j] + ".after").getAbsolutePath(), editors[j].getDocument().getText());
+                File file = new File(filePaths[j] + ".after");
+                if (isFirPlugin()) {
+                    File firSpecific = new File(filePaths[j] + ".fir.after");
+                    if (firSpecific.exists()) {
+                        file = firSpecific;
+                    }
+                }
+                assertSameLinesWithFile(file.getAbsolutePath(), editors[j].getDocument().getText());
             }
         }
         catch (BaseRefactoringProcessor.ConflictsInTestsException e) {

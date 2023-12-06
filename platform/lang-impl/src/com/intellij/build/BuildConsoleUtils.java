@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.Failure;
@@ -173,7 +173,7 @@ public final class BuildConsoleUtils {
     return null;
   }
 
-  private static class MyDelegatingDataContext implements DataContext {
+  private static final class MyDelegatingDataContext implements DataContext {
     private final AtomicNotNullLazyValue<DataContext> myDelegatedDataContextValue;
 
     private MyDelegatingDataContext(@NotNull BuildView buildView) {

@@ -1,18 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui.command.line
 
 import com.intellij.ide.IdeCoreBundle
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.ColumnInfo
@@ -24,6 +28,7 @@ import javax.swing.ListSelectionModel
 
 class CommandLineDialog(
   project: Project,
+  private val commandLineField: CommandLineField,
   private val commandLineInfo: CommandLineInfo
 ) : DialogWrapper(project) {
 
@@ -51,9 +56,7 @@ class CommandLineDialog(
   }
 
   override fun createCenterPanel() = panel {
-    val tables = commandLineInfo.tablesInfo
-      .filter { it.tableCompletionInfo.isNotEmpty() }
-      .map { Table(it) }
+    val tables = commandLineInfo.tablesInfo.map { Table(it, commandLineField) }
 
     for ((i, tableToUpdate) in tables.withIndex()) {
       for ((j, tableToListen) in tables.withIndex()) {
@@ -65,14 +68,12 @@ class CommandLineDialog(
 
     for (table in tables) {
       row {
-        scrollPane(table)
-      }
+        scrollCell(table).align(Align.FILL)
+      }.resizableRow()
     }
 
-    onGlobalApply {
-      val selectedVariant = tables
-        .mapNotNull { it.selectedVariant }
-        .firstOrNull()
+    onApply {
+      val selectedVariant = tables.firstNotNullOfOrNull { it.selectedVariant }
       fireVariantChosen(selectedVariant)
     }
   }
@@ -83,7 +84,8 @@ class CommandLineDialog(
     init()
   }
 
-  private inner class Table(tableInfo: CompletionTableInfo) : JBTable() {
+  private class Table(tableInfo: CompletionTableInfo, commandLineField: CommandLineField) : JBTable() {
+
     val selectedVariant: TextCompletionInfo?
       get() {
         if (selectedRow != -1) {
@@ -109,15 +111,15 @@ class CommandLineDialog(
       setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     }
 
-    private fun column(@NlsContexts.ColumnName name: String, valueOf: (TextCompletionInfo) -> String) =
-      object : ColumnInfo<TextCompletionInfo, String>(name) {
-        override fun valueOf(item: TextCompletionInfo) = valueOf(item)
-      }
-
     init {
+      val completionProgressOwner = ModalTaskOwner.component(commandLineField)
+      val completionProgressTitle = ExternalSystemBundle.message("command.line.dialog.completion.collecting")
+      val completionInfo = runWithModalProgressBlocking(completionProgressOwner, completionProgressTitle) {
+        tableInfo.collectTableCompletionInfo()
+      }
       val dataColumnInfo = column(tableInfo.dataColumnName) { it.text }
       val descriptionColumnInfo = column(tableInfo.descriptionColumnName) { it.description ?: "" }
-      model = ListTableModel(arrayOf(dataColumnInfo, descriptionColumnInfo), tableInfo.tableCompletionInfo)
+      model = ListTableModel(arrayOf(dataColumnInfo, descriptionColumnInfo), completionInfo)
     }
 
     init {
@@ -131,6 +133,13 @@ class CommandLineDialog(
       visibleRowCount = 8
       nameColumn.preferredWidth = JBUIScale.scale(250)
       descriptionColumn.preferredWidth = JBUIScale.scale(500)
+    }
+
+    companion object {
+      private fun column(@NlsContexts.ColumnName name: String, valueOf: (TextCompletionInfo) -> String) =
+        object : ColumnInfo<TextCompletionInfo, String>(name) {
+          override fun valueOf(item: TextCompletionInfo) = valueOf(item)
+        }
     }
   }
 

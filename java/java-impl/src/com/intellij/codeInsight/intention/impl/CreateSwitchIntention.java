@@ -1,30 +1,16 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,31 +18,34 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
+public class CreateSwitchIntention extends PsiUpdateModCommandAction<PsiExpressionStatement> {
+  public CreateSwitchIntention() {
+    super(PsiExpressionStatement.class);
+  }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, false);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionStatement expressionStatement, @NotNull ModPsiUpdater updater) {
     String valueToSwitch = expressionStatement.getExpression().getText();
-    PsiSwitchStatement switchStatement = (PsiSwitchStatement)new CommentTracker().replaceAndRestoreComments(expressionStatement, "switch (" + valueToSwitch + ") {}");
-    CodeStyleManager.getInstance(project).reformat(switchStatement);
+    PsiSwitchStatement switchStatement = (PsiSwitchStatement)new CommentTracker().replaceAndRestoreComments(
+      expressionStatement, "switch (" + valueToSwitch + ") {}");
+    CodeStyleManager.getInstance(context.project()).reformat(switchStatement);
 
     PsiCodeBlock body = switchStatement.getBody();
-    PsiJavaToken lBrace = body == null ? null : body.getLBrace();
-    if (lBrace != null) {
-      editor.getCaretModel().moveToOffset(lBrace.getTextRange().getEndOffset());
+    PsiJavaToken rBrace = body == null ? null : body.getRBrace();
+    if (rBrace != null) {
+      updater.moveTo(rBrace);
+      updater.moveToPrevious('\n');
     }
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, false);
-    return expressionStatement != null &&
-           expressionStatement.getParent() instanceof PsiCodeBlock &&
-           !(expressionStatement.getExpression() instanceof PsiAssignmentExpression) &&
-           !(expressionStatement.getExpression() instanceof PsiLiteralExpression) &&
-           PsiTreeUtil.findChildOfType(expressionStatement.getExpression(), PsiErrorElement.class) == null &&
-           isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionStatement expressionStatement) {
+    boolean valid = expressionStatement.getParent() instanceof PsiCodeBlock &&
+                    !(expressionStatement.getExpression() instanceof PsiAssignmentExpression) &&
+                    !(expressionStatement.getExpression() instanceof PsiLiteralExpression) &&
+                    PsiTreeUtil.findChildOfType(expressionStatement.getExpression(), PsiErrorElement.class) == null &&
+                    isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
+    return valid ? Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.LOW) : null;
   }
 
   private static boolean isValidTypeForSwitch(@Nullable PsiType type, PsiElement context) {
@@ -83,11 +72,5 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction imp
   @Override
   public String getFamilyName() {
     return JavaBundle.message("intention.create.switch.statement");
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
   }
 }

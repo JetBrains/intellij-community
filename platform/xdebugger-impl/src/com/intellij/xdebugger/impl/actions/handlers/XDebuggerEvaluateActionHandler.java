@@ -6,12 +6,14 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -43,6 +45,13 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
 
     // replace data context, because we need to have it for the focused component, not the target component (if from the toolbar)
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
+    if (focusOwner == null) {
+      // maybe this is in the toolbar menu - use getMostRecentFocusOwner
+      Window window = ComponentUtil.getWindow(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+      if (window != null) {
+        focusOwner = window.getMostRecentFocusOwner();
+      }
+    }
     if (focusOwner != null) {
       dataContext = DataManager.getInstance().getDataContext(focusOwner);
     }

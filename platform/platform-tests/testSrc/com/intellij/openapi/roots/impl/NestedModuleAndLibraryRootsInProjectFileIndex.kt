@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
@@ -10,20 +11,20 @@ import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_CONTENT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
-import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class NestedModuleAndLibraryRootsInProjectFileIndex {
   @JvmField
   @RegisterExtension
@@ -91,12 +92,7 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
     fileIndex.assertInModule(file, module, moduleDir, IN_CONTENT or IN_LIBRARY)
 
     PsiTestUtil.addExcludedRoot(module, excludedDir)
-    if (WorkspaceFileIndexEx.IS_ENABLED) {
-      fileIndex.assertInModule(file, module, moduleDir, IN_LIBRARY or EXCLUDED_FROM_MODULE_ONLY)
-    }
-    else {
-      fileIndex.assertScope(file, IN_LIBRARY)
-    }
+    fileIndex.assertInModule(file, module, moduleDir, IN_LIBRARY or EXCLUDED_FROM_MODULE_ONLY)
 
     projectModel.modifyLibrary(library) {
       it.addExcludedRoot(excludedDir.url)
@@ -121,6 +117,8 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
       it.addRoot(file.parent, OrderRootType.SOURCES)
     }
     fileIndex.assertInModule(file, module, file.parent, IN_CONTENT or IN_LIBRARY or IN_SOURCE)
+    val psiFile = PsiManager.getInstance(projectModel.project).findFile(file)!!
+    assertEquals(module, ModuleUtilCore.findModuleForPsiElement(psiFile))
   }
 
   @Test
@@ -132,6 +130,8 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
       it.addRoot(file.parent, OrderRootType.CLASSES)
     }
     fileIndex.assertInModule(file, module, file.parent, IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE)
+    val psiFile = PsiManager.getInstance(projectModel.project).findFile(file)!!
+    assertEquals(module, ModuleUtilCore.findModuleForPsiElement(psiFile))
   }
 
   @Test
@@ -158,13 +158,7 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
     projectModel.addModuleLevelLibrary(module, "lib") {
       it.addRoot(root, OrderRootType.CLASSES)
     }
-    if (WorkspaceFileIndexEx.IS_ENABLED) {
-      fileIndex.assertInModule(file, module, root, IN_LIBRARY or EXCLUDED_FROM_MODULE_ONLY)
-      fileIndex.assertInModule(root, module, root, IN_LIBRARY or EXCLUDED_FROM_MODULE_ONLY)
-    }
-    else {
-      fileIndex.assertScope(file, IN_LIBRARY)
-      fileIndex.assertScope(root, IN_LIBRARY)
-    }
+    fileIndex.assertInModule(file, module, root, IN_LIBRARY or EXCLUDED_FROM_MODULE_ONLY)
+    fileIndex.assertInModule(root, module, root, IN_LIBRARY or EXCLUDED_FROM_MODULE_ONLY)
   }
 }

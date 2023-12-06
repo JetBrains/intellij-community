@@ -12,4 +12,6 @@ class My {
             return 3.14
         }
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention

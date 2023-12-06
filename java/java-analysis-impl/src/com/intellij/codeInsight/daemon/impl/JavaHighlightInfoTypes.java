@@ -2,11 +2,13 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.unusedImport.MissortedImportsInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaHighlightInfoTypes {
@@ -15,6 +17,9 @@ public final class JavaHighlightInfoTypes {
   
   public final static HighlightInfoType UNUSED_IMPORT = new HighlightInfoType.HighlightInfoTypeSeverityByKey(
     HighlightDisplayKey.findOrRegister(UnusedImportInspection.SHORT_NAME, UnusedImportInspection.getDisplayNameText()), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
+  @NonNls
+  public static final HighlightInfoType MISSORTED_IMPORTS = new HighlightInfoType.HighlightInfoTypeSeverityByKey(
+    HighlightDisplayKey.findOrRegister(MissortedImportsInspection.SHORT_NAME, MissortedImportsInspection.getDisplayNameText()), JavaHighlightingColors.MISSORTED_IMPORTS_ATTRIBUTES);
 
   public final static HighlightInfoType JAVA_KEYWORD = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, JavaHighlightingColors.KEYWORD);
 
@@ -52,9 +57,9 @@ public final class JavaHighlightInfoTypes {
   public final static HighlightInfoType IMPLICIT_ANONYMOUS_CLASS_PARAMETER
     = new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY,
                                                   JavaHighlightingColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES);
-  
+
+  @NotNull
   private static HighlightInfoType createSymbolTypeInfo(@NotNull TextAttributesKey attributesKey) {
     return new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, attributesKey, false);
   }
-  
 }

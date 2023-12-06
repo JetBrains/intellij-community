@@ -34,8 +34,8 @@ abstract class ReplaceEndInsertHandler : InsertHandler<LookupElement> {
       groupId = artifactInfo.groupId,
       artifactId = artifactInfo.artifactId,
       version = artifactInfo.version ?: "",
-      buildSystem = MavenDependencyInsertionCollector.Companion.BuildSystem.GRADLE,
-      dependencyDeclarationNotation = MavenDependencyInsertionCollector.Companion.DependencyDeclarationNotation.GRADLE_STRING_STYLE,
+      buildSystem = MavenDependencyInsertionCollector.BuildSystem.GRADLE,
+      dependencyDeclarationNotation = MavenDependencyInsertionCollector.DependencyDeclarationNotation.GRADLE_STRING_STYLE,
       completionPrefixLength = completionPrefix.length,
       selectedLookupIndex = selectedLookupIndex
     )

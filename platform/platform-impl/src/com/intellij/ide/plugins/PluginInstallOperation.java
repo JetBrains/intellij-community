@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -9,19 +9,20 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -148,17 +149,17 @@ public final class PluginInstallOperation {
     }
     if (!unknownNodes) return;
 
-    List<String> hosts = new SmartList<>();
-    ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
-    hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
+    List<String> hosts = RepositoryHelper.getPluginHosts();
     Map<PluginId, PluginNode> allPlugins = new HashMap<>();
     for (String host : hosts) {
-      try {
-        for (PluginNode descriptor : RepositoryHelper.loadPlugins(host, null, myIndicator)) {
-          allPlugins.put(descriptor.getPluginId(), descriptor);
+      if (host != null) {
+        try {
+          for (PluginNode descriptor : RepositoryHelper.loadPlugins(host, null, myIndicator)) {
+            allPlugins.put(descriptor.getPluginId(), descriptor);
+          }
         }
-      }
-      catch (IOException ignored) {
+        catch (IOException ignored) {
+        }
       }
     }
 
@@ -166,9 +167,13 @@ public final class PluginInstallOperation {
       if (Strings.areSameInstance(node.getRepositoryName(), PluginInstaller.UNKNOWN_HOST_MARKER)) {
         PluginNode descriptor = allPlugins.get(node.getPluginId());
         node.setRepositoryName(descriptor != null ? descriptor.getRepositoryName() : null);
+        String oldUrl = node.getDownloadUrl();
         if (descriptor != null) {
           node.setDownloadUrl(descriptor.getDownloadUrl());
         }
+        LOG.info("updateUrls for node: " +
+                 node.getPluginId() + " | " + node.getVersion() + " | " + oldUrl +
+                 " to: " + node.getRepositoryName() + " | " + node.getDownloadUrl());
       }
     }
   }
@@ -226,7 +231,7 @@ public final class PluginInstallOperation {
   private boolean prepareToInstall(@NotNull PluginNode pluginNode,
                                    @NotNull List<PluginId> pluginIds) throws IOException {
     if (!checkMissingDependencies(pluginNode, pluginIds)) return false;
-    if (!PluginManagerFilters.getInstance().allowInstallingPlugin(pluginNode)) {
+    if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginNode)) {
       LOG.warn("The plugin " + pluginNode.getPluginId() + " is not allowed to install for the organization");
       return false;
     }
@@ -253,7 +258,10 @@ public final class PluginInstallOperation {
       }
 
       boolean allowNoRestart = myAllowInstallWithoutRestart &&
-                               DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
+                               DynamicPlugins.allowLoadUnloadWithoutRestart(
+                                 descriptor, null,
+                                 ContainerUtil.map(myPendingDynamicPluginInstalls, pluginInstall -> pluginInstall.getPluginDescriptor())
+                               );
       if (allowNoRestart) {
         myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFilePath(), descriptor));
         InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
@@ -326,7 +334,7 @@ public final class PluginInstallOperation {
       PluginId depPluginId = dependency.getPluginId();
 
       if (PluginManagerCore.isModuleDependency(depPluginId)) {
-        IdeaPluginDescriptorImpl descriptorByModule = PluginManagerCore.findPluginByModuleDependency(depPluginId);
+        IdeaPluginDescriptorImpl descriptorByModule = PluginManagerCore.INSTANCE.findPluginByModuleDependency(depPluginId);
         PluginId pluginIdByModule = descriptorByModule != null ?
                                     descriptorByModule.getPluginId() :
                                     getCachedPluginId(depPluginId.getIdString());
@@ -349,25 +357,27 @@ public final class PluginInstallOperation {
     }
 
     if (!prepareDependencies(pluginNode, depends, "plugin.manager.dependencies.detected.title",
-                             "plugin.manager.dependencies.detected.message")) {
+                             "plugin.manager.dependencies.detected.message", false)) {
       return false;
     }
 
     return !Registry.is("ide.plugins.suggest.install.optional.dependencies") ||
            prepareDependencies(pluginNode, optionalDeps, "plugin.manager.optional.dependencies.detected.title",
-                               "plugin.manager.optional.dependencies.detected.message");
+                               "plugin.manager.optional.dependencies.detected.message", true);
   }
 
   private boolean prepareDependencies(@NotNull IdeaPluginDescriptor pluginNode,
                                       @NotNull List<PluginNode> dependencies,
                                       @NotNull @NonNls String titleKey,
-                                      @NotNull @NonNls String messageKey) {
+                                      @NotNull @NonNls String messageKey,
+                                      boolean askConfirmation) {
     if (dependencies.isEmpty()) {
       return true;
     }
 
     try {
-      final boolean[] result = new boolean[1];
+      Ref<Boolean> result = new Ref<>(false);
+
       ApplicationManager.getApplication().invokeAndWait(() -> {
         synchronized (ourInstallLock) {
           InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
@@ -388,29 +398,37 @@ public final class PluginInstallOperation {
           }
 
           if (dependenciesToShow.isEmpty()) {
-            result[0] = true;
+            result.set(true);
             return;
           }
 
-          String deps = getPluginsText(dependencies);
-          int dialogResult =
-            Messages.showYesNoDialog(IdeBundle.message(messageKey, pluginNode.getName(), deps),
-                                     IdeBundle.message(titleKey),
-                                     IdeBundle.message("plugins.configurable.install"),
-                                     Messages.getCancelButton(),
-                                     Messages.getWarningIcon());
-
-          result[0] = dialogResult == Messages.YES;
-          if (result[0]) {
+          if (!askConfirmation) {
             for (PluginId dependency : dependenciesToShow) {
               createInstallCallback(dependency);
+            }
+            result.set(true);
+          }
+          else {
+            String deps = getPluginsText(dependencies);
+            int dialogResult =
+              Messages.showYesNoDialog(IdeBundle.message(messageKey, pluginNode.getName(), deps),
+                                       IdeBundle.message(titleKey),
+                                       IdeBundle.message("plugins.configurable.install"),
+                                       Messages.getCancelButton(),
+                                       Messages.getWarningIcon());
+
+            result.set(dialogResult == Messages.YES);
+            if (result.get()) {
+              for (PluginId dependency : dependenciesToShow) {
+                createInstallCallback(dependency);
+              }
             }
           }
         }
       }, ModalityState.any());
 
       return dependencies.isEmpty() ||
-             result[0] && prepareToInstall(dependencies);
+             result.get() && prepareToInstall(dependencies);
     }
     catch (Exception e) {
       return false;

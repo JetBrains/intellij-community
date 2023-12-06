@@ -7,3 +7,5 @@ sealed class Foo {
         val BAR: Foo by lazy { <caret>Foo.BAR }
     }
 }
+
+// IGNORE_K2

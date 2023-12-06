@@ -1,16 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public final class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair<Long, T>>> {
   private final Function<? super H, ? extends T> myFunction;
@@ -32,10 +34,9 @@ public final class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReferenc
     return result;
   }
 
-  @Nullable
-  public T getCachedValueOrNull(@NotNull H h) {
+  public @Nullable T getCachedValueOrNull(@NotNull H h) {
     SoftReference<Pair<Long, T>> ref = h.getUserData(this);
-    Pair<Long, T> data = SoftReference.dereference(ref);
+    Pair<Long, T> data = dereference(ref);
     if (data == null || data.getFirst() != getModificationCount(h)) {
       return null;
     }
@@ -53,11 +54,6 @@ public final class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReferenc
   private static long getModificationCount(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     long nonPhysicalStamp = file == null || file.isPhysical() ? 0 : file.getModificationStamp();
-
-    ModelBranch branch = file == null ? null : ModelBranch.getPsiBranch(file);
-    if (branch != null) {
-      nonPhysicalStamp += branch.getBranchedPsiModificationCount();
-    }
 
     PsiElement root = file != null ? file : element;
     return nonPhysicalStamp + root.getManager().getModificationTracker().getModificationCount();

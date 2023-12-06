@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
@@ -29,13 +29,12 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     super(new DefaultComboBoxModel<>());
     setRenderer(new GroupedComboBoxRenderer<>(this) {
       @Override
-      public void customize(@NotNull SimpleColoredComponent item, MySchemeListItem<T> value, int index) {
+      public void customize(@NotNull SimpleColoredComponent item, MySchemeListItem<T> value, int index, boolean isSelected, boolean hasFocus) {
         customizeComponent(item, value, index);
       }
 
-      @Nullable
       @Override
-      public ListSeparator separatorFor(MySchemeListItem<T> value) {
+      public @Nullable ListSeparator separatorFor(MySchemeListItem<T> value) {
         if (!supportsProjectSchemes()) return null;
         if (firstProjectScheme != null && firstProjectScheme.equals(value.getScheme()))
           return new ListSeparator(IdeBundle.message("separator.scheme.stored.in", PROJECT_LEVEL.get()));
@@ -70,15 +69,13 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     }
   }
 
-  @Nullable
-  public T getSelectedScheme() {
+  public @Nullable T getSelectedScheme() {
     SchemesCombo.MySchemeListItem<T> item = getSelectedItem();
     return item != null ? item.getScheme() : null;
   }
 
   @Override
-  @Nullable
-  public SchemesCombo.MySchemeListItem<T> getSelectedItem() {
+  public @Nullable SchemesCombo.MySchemeListItem<T> getSelectedItem() {
     int i = getSelectedIndex();
     return i >= 0 ? getItemAt(i) : null;
   }
@@ -89,12 +86,15 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     throw new UnsupportedOperationException();
   }
 
+  protected boolean isDefaultScheme(@NotNull T scheme) {
+    return false;
+  }
+
   protected int getIndent(@NotNull T scheme) {
     return 0;
   }
 
-  @NotNull
-  protected abstract SimpleTextAttributes getSchemeAttributes(T scheme);
+  protected abstract @NotNull SimpleTextAttributes getSchemeAttributes(T scheme);
 
   private void addItems(@NotNull Collection<? extends T> schemes, Predicate<? super T> filter) {
     for (T scheme : schemes) {
@@ -106,25 +106,22 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     }
   }
 
-  static class MySchemeListItem<T extends Scheme> {
-    private @Nullable final T myScheme;
+  static final class MySchemeListItem<T extends Scheme> {
+    private final @Nullable T myScheme;
 
     MySchemeListItem(@Nullable T scheme) {
       myScheme = scheme;
     }
 
-    @Nullable
-    public String getSchemeName() {
+    public @Nullable String getSchemeName() {
       return myScheme != null ? myScheme.getName() : null;
     }
 
-    @Nullable
-    public T getScheme() {
+    public @Nullable T getScheme() {
       return myScheme;
     }
 
-    @NotNull
-    public @NlsContexts.ListItem String getPresentableText() {
+    public @NotNull @NlsContexts.ListItem String getPresentableText() {
       return myScheme != null ? myScheme.getDisplayName() : "";
     }
   }
@@ -133,6 +130,9 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     final var scheme = value.getScheme();
     if (scheme != null) {
       item.append(value.getPresentableText(), getSchemeAttributes(scheme));
+      if (isDefaultScheme(scheme)) {
+        item.append(" *", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
       if (supportsProjectSchemes()) {
         if (index == -1) {
           item.append("  " + (isProjectScheme(scheme) ? PROJECT_LEVEL.get() : IDE_LEVEL.get()),

@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -15,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
  * Represents a destination of Move Classes/Packages refactoring.
@@ -43,11 +44,11 @@ public interface MoveDestination {
   PsiDirectory getTargetIfExists(PsiDirectory source);
   PsiDirectory getTargetIfExists(@NotNull PsiFile source);
 
-  @Nullable @NlsContexts.DialogMessage
+  @Nullable @DialogMessage
   String verify(PsiFile source);
-  @Nullable @NlsContexts.DialogMessage
+  @Nullable @DialogMessage
   String verify(PsiDirectory source);
-  @Nullable @NlsContexts.DialogMessage
+  @Nullable @DialogMessage
   String verify(PsiPackage source);
 
   /**
@@ -59,7 +60,7 @@ public interface MoveDestination {
    * Impl note: do nothing if elements are kept in the same module
    */
   void analyzeModuleConflicts(@NotNull Collection<? extends PsiElement> elements, 
-                              @NotNull MultiMap<PsiElement,String> conflicts, 
+                              @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                               final UsageInfo[] usages);
 
   /**

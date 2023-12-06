@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.vcs.log.impl.CommonUiProperties
@@ -10,9 +12,8 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import com.intellij.vcs.log.impl.isColumnVisible
 import com.intellij.vcs.log.ui.table.column.*
-import com.intellij.vcs.log.ui.table.column.Date
-import java.util.*
 import kotlin.collections.set
 
 @State(name = "Vcs.Log.History.Properties", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
@@ -38,7 +39,7 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
 
     val result: Any = when (property) {
       is TableColumnWidthProperty -> _state.columnIdWidth[property.name] ?: -1
-      is TableColumnVisibilityProperty -> isColumnVisible(property)
+      is TableColumnVisibilityProperty -> isColumnVisible(_state.columnIdVisibility, property)
       CommonUiProperties.COLUMN_ID_ORDER -> getColumnOrder()
       CommonUiProperties.SHOW_DETAILS -> _state.isShowDetails
       SHOW_ALL_BRANCHES -> _state.isShowOtherBranches
@@ -48,18 +49,6 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
     }
     @Suppress("UNCHECKED_CAST")
     return result as T
-  }
-
-  private fun isColumnVisible(visibilityProperty: TableColumnVisibilityProperty): Boolean {
-    val isVisible = _state.columnIdVisibility[visibilityProperty.name]
-    if (isVisible != null) return isVisible
-
-    // visibility is not set, so we will get it from current/default order
-    // otherwise column will be visible but not exist in order
-    val column = visibilityProperty.column
-    if (get(CommonUiProperties.COLUMN_ID_ORDER).contains(column.id)) return true
-    if (column is VcsLogCustomColumn<*>) return column.isEnabledByDefault()
-    return false
   }
 
   private fun getColumnOrder(): List<String> {
@@ -119,8 +108,20 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
     eventDispatcher.addListener(listener)
   }
 
+  override fun addChangeListener(listener: PropertiesChangeListener, parent: Disposable) {
+    if (!eventDispatcher.hasListeners()) {
+      appSettings.addChangeListener(applicationSettingsListener)
+      Disposer.register(parent) { removeAppSettingsListenerIfNeeded() }
+    }
+    eventDispatcher.addListener(listener, parent)
+  }
+
   override fun removeChangeListener(listener: PropertiesChangeListener) {
     eventDispatcher.removeListener(listener)
+    removeAppSettingsListenerIfNeeded()
+  }
+
+  private fun removeAppSettingsListenerIfNeeded() {
     if (!eventDispatcher.hasListeners()) {
       appSettings.removeChangeListener(applicationSettingsListener)
     }

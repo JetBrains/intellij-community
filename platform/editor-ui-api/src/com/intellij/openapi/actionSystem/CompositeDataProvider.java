@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,14 +27,19 @@ public final class CompositeDataProvider implements DataProvider {
     return new CompositeDataProvider(new ArrayList<>(ContainerUtil.concat(p1, p2)));
   }
 
-  public static @NotNull DataProvider compose(@NotNull Iterable<? extends DataProvider> providers) {
+  public static @Nullable DataProvider compose(@NotNull Iterable<? extends @Nullable DataProvider> providers) {
     List<DataProvider> list = null;
     for (DataProvider provider : providers) {
-      if (list == null) list = new SmartList<>();
-      if (provider instanceof CompositeDataProvider) list.addAll(((CompositeDataProvider)provider).myProviders);
-      else list.add(provider);
+      if (provider == null) continue;
+      if (list == null) list = new ArrayList<>();
+      if (provider instanceof CompositeDataProvider) {
+        list.addAll(((CompositeDataProvider)provider).myProviders);
+      }
+      else {
+        list.add(provider);
+      }
     }
-    return list == null ? dataId -> null :
+    return list == null ? null :
            list.size() == 1 ? list.get(0) :
            new CompositeDataProvider(new ArrayList<>(list));
   }

@@ -1,20 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
-import com.intellij.platform.workspaceModel.jps.JpsFileDependentEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
-import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Child
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 
 /**
@@ -38,8 +37,8 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   val srcPlace: Map<String, Int>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder : EclipseProjectPropertiesEntity, WorkspaceEntity.Builder<EclipseProjectPropertiesEntity>, ObjBuilder<EclipseProjectPropertiesEntity> {
+  @GeneratedCodeApiVersion(2)
+  interface Builder : EclipseProjectPropertiesEntity, WorkspaceEntity.Builder<EclipseProjectPropertiesEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var variablePaths: Map<String, String>
@@ -51,7 +50,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
     override var srcPlace: Map<String, Int>
   }
 
-  companion object : Type<EclipseProjectPropertiesEntity, Builder>() {
+  companion object : EntityType<EclipseProjectPropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -83,7 +82,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: EclipseProjectPropertiesEntity,
-                                      modification: EclipseProjectPropertiesEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: EclipseProjectPropertiesEntity.Builder.() -> Unit): EclipseProjectPropertiesEntity = modifyEntity(
   EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
 
 var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?

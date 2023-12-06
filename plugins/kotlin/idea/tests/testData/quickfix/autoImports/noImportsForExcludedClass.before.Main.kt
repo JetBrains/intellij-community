@@ -7,4 +7,3 @@
 // ERROR: Unresolved reference: ExcludedClass
 
 val x = <caret>ExcludedClass()
-/* IGNORE_FIR */

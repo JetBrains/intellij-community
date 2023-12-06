@@ -1,3 +1,4 @@
+// HIGHLIGHT: INFORMATION
 fun test(){
     /* aaa */
     when(1) { /* bbb */ /* ccc */

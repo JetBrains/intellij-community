@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.vm.NavBarPopupItem
@@ -6,12 +6,12 @@ import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CompletableDeferred
 
-internal class NavBarPopupVmImpl(
-  override val items: List<NavBarVmItem>,
+internal class NavBarPopupVmImpl<T : NavBarPopupItem>(
+  override val items: List<T>,
   override val initialSelectedItemIndex: Int,
-) : NavBarPopupVm {
+) : NavBarPopupVm<T> {
 
-  var selectedItems: List<NavBarVmItem> = if (initialSelectedItemIndex == -1) emptyList() else listOf(items[initialSelectedItemIndex])
+  var selectedItems: List<T> = if (initialSelectedItemIndex == -1) emptyList() else listOf(items[initialSelectedItemIndex])
     get() {
       EDT.assertIsEdt()
       return field
@@ -21,12 +21,11 @@ internal class NavBarPopupVmImpl(
       field = value
     }
 
-  override fun itemsSelected(selectedItems: List<NavBarPopupItem>) {
-    @Suppress("UNCHECKED_CAST")
-    this.selectedItems = selectedItems as List<NavBarVmItem>
+  override fun itemsSelected(selectedItems: List<T>) {
+    this.selectedItems = selectedItems
   }
 
-  val result: CompletableDeferred<NavBarVmItem> = CompletableDeferred()
+  val result: CompletableDeferred<T> = CompletableDeferred()
 
   override fun cancel() {
     result.cancel()

@@ -3,37 +3,33 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.FileModificationService
-import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.*
+import com.intellij.internal.statistic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 
 open class QuickFixWithDelegateFactory(
-    private val delegateFactory: () -> IntentionAction?
-) : IntentionAction {
-    @Nls
-    private val familyName: String
-    @Nls
-    private val text: String
-    private val startInWriteAction: Boolean
+    delegateFactory: () -> IntentionAction?
+) : IntentionAction, ReportingClassSubstitutor {
+    private val delegate: IntentionAction? = delegateFactory()
 
-    init {
-        val delegate = delegateFactory()
-        familyName = delegate?.familyName ?: ""
-        text = delegate?.text ?: ""
-        startInWriteAction = delegate != null && delegate.startInWriteAction()
-    }
+    @Nls
+    private val familyName: String = delegate?.familyName ?: ""
+
+    @Nls
+    private val text: String = delegate?.text ?: ""
+    private val startInWriteAction: Boolean = delegate != null && delegate.startInWriteAction()
+
+    override fun getSubstitutedClass(): Class<*> = delegate?.javaClass ?: javaClass
 
     override fun getFamilyName() = familyName
 
     override fun getText() = text
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean {
-        val action = delegateFactory() ?: return false
-        return action.isAvailable(project, editor, file)
+        return delegate?.isAvailable(project, editor, file) ?: false
     }
 
     override fun startInWriteAction() = startInWriteAction
@@ -43,7 +39,7 @@ open class QuickFixWithDelegateFactory(
             return
         }
 
-        val action = delegateFactory() ?: return
+        val action = delegate ?: return
 
         assert(action.detectPriority() == this.detectPriority()) {
             "Incorrect priority of QuickFixWithDelegateFactory wrapper for ${action::class.java.name}"

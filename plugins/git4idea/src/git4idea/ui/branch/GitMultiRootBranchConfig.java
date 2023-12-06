@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsMultiRootBranchConfig;
@@ -40,8 +26,7 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
   }
 
   @Override
-  @NotNull
-  public Collection<String> getLocalBranchNames() {
+  public @NotNull Collection<String> getLocalBranchNames() {
     return GitBranchUtil.getCommonBranches(myRepositories, true);
   }
 
@@ -55,9 +40,7 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
    * returns the name of this remote branch. Otherwise returns null. <br/>
    * For one repository just returns the tracked branch or null if there is no tracked branch.
    */
-  @NlsSafe
-  @Nullable
-  public String getTrackedBranch(@NotNull String branch) {
+  public @NlsSafe @Nullable String getTrackedBranch(@NotNull String branch) {
     String trackedName = null;
     for (GitRepository repository : myRepositories) {
       GitRemoteBranch tracked = getTrackedBranch(repository, branch);
@@ -80,8 +63,7 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
    * <p>If the remote branch is being tracked not in all repositories, or if its local tracking branches have different names
    * in different repositories, it means that there is no common tracking branches, so an empty list is returned.</p>
    */
-  @NotNull
-  public Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch) {
+  public @NotNull Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch) {
     Collection<String> trackingBranches = null;
     for (GitRepository repository : myRepositories) {
       Collection<String> tb = getTrackingBranches(repository, remoteBranch);
@@ -95,8 +77,7 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
     return trackingBranches == null ? Collections.emptyList() : trackingBranches;
   }
 
-  @NotNull
-  private static Collection<String> getTrackingBranches(@NotNull GitRepository repository, @NotNull String remoteBranch) {
+  private static @NotNull Collection<String> getTrackingBranches(@NotNull GitRepository repository, @NotNull String remoteBranch) {
     Collection<String> trackingBranches = new ArrayList<>(1);
     for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
       if (remoteBranch.equals(trackInfo.getRemoteBranch().getNameForLocalOperations())) {
@@ -106,8 +87,7 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
     return trackingBranches;
   }
 
-  @Nullable
-  private static GitRemoteBranch getTrackedBranch(@NotNull GitRepository repository, @NotNull String branchName) {
+  private static @Nullable GitRemoteBranch getTrackedBranch(@NotNull GitRepository repository, @NotNull String branchName) {
     GitLocalBranch branch = repository.getBranches().findLocalBranch(branchName);
     return branch == null ? null : branch.findTrackedBranch(repository);
   }

@@ -6,14 +6,20 @@ import com.intellij.ide.util.gotoByName.FilteringGotoByModel
 import com.intellij.ide.util.gotoByName.LanguageRef
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.junit.Assert
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 object GotoCheck {
+
+    private const val SEARCH_TEXT_DIRECTIVE: String = "// SEARCH_TEXT:"
+    private const val DUMB_MODE_DIRECTIVE: String = "// DUMB_MODE"
+
     @JvmStatic
     @JvmOverloads
     fun checkGotoDirectives(
@@ -23,9 +29,9 @@ object GotoCheck {
         checkNavigation: Boolean = false
     ) {
         val documentText = editor.document.text
-        val searchTextList = InTextDirectivesUtils.findListWithPrefixes(documentText, "// SEARCH_TEXT:")
+        val searchTextList = InTextDirectivesUtils.findListWithPrefixes(documentText, SEARCH_TEXT_DIRECTIVE)
         Assert.assertFalse(
-            "There's no search text in test data file given. Use '// SEARCH_TEXT:' directive",
+            "There's no search text in test data file given. Use '$SEARCH_TEXT_DIRECTIVE' directive",
             searchTextList.isEmpty()
         )
 
@@ -33,10 +39,26 @@ object GotoCheck {
             InTextDirectivesUtils.findLinesWithPrefixesRemoved(documentText, "// REF:").map { input -> input.trim { it <= ' ' } }
         val includeNonProjectSymbols = nonProjectSymbols || InTextDirectivesUtils.isDirectiveDefined(documentText, "// CHECK_BOX")
 
+        val dumbMode = InTextDirectivesUtils.isDirectiveDefined(documentText, DUMB_MODE_DIRECTIVE)
+
         val searchText = searchTextList.first()
 
-        val foundSymbols = model.getNames(includeNonProjectSymbols).filter { it?.startsWith(searchText) ?: false }.flatMap {
-            model.getElementsByName(it, includeNonProjectSymbols, "$it*").toList()
+        val symbolsTask: () -> List<Any?> = {
+            val names = model.getNames(includeNonProjectSymbols)
+            names.filter { it?.startsWith(searchText) == true }.flatMap {
+                model.getElementsByName(it, includeNonProjectSymbols, "$it*").toList()
+            }
+        }
+        val foundSymbols = if (dumbMode) {
+            val project = editor.project!!
+            // to trigger indexing
+            symbolsTask()
+
+            val result = AtomicReference<List<Any?>>(emptyList<Any?>())
+            DumbModeTestUtils.runInDumbModeSynchronously(project) { result.set(symbolsTask()) }
+            result.get()
+        } else {
+            symbolsTask()
         }
 
         val inexactMatching = InTextDirectivesUtils.isDirectiveDefined(documentText, "// ALLOW_MORE_RESULTS")

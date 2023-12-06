@@ -18,6 +18,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.hasErrorElementInRange
+import com.intellij.util.SlowOperations
 
 class SuggestedRefactoringChangeListener(
   private val project: Project,
@@ -285,7 +286,9 @@ class SuggestedRefactoringChangeListener(
       }
 
       if (!editingState.isRefactoringSuppressed) {
-        watcher.nextSignature(anchor, refactoringSupport)
+        SlowOperations.knownIssue("IDEA-322957, EA-765399").use {
+          watcher.nextSignature(anchor, refactoringSupport)
+        }
       }
     }
   }

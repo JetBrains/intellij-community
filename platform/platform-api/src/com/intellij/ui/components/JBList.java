@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
@@ -41,6 +41,10 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
   private @Nullable AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
+
+  private int myDropTargetIndex = -1;
+  private @NotNull Function<? super Integer, Integer> offsetFromElementTopForDnD = dropTargetIndex -> 0;
+
 
   public JBList() {
     init();
@@ -82,7 +86,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
     if (myBusyIcon != null) {
       remove(myBusyIcon);
-      Disposer.dispose(myBusyIcon);
+      myBusyIcon.dispose();
       myBusyIcon = null;
     }
   }
@@ -169,10 +173,40 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
   }
 
+  public void setDropTargetIndex(int index) {
+    if (index != myDropTargetIndex) {
+      myDropTargetIndex = index;
+      repaint();
+    }
+  }
+
+  public void setOffsetFromElementTopForDnD(@NotNull Function<? super Integer, Integer> offsetFromElementTopForDnD) {
+    this.offsetFromElementTopForDnD = offsetFromElementTopForDnD;
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     myEmptyText.paint(this, g);
+    if (myDropTargetIndex < 0) {
+      return;
+    }
+    int dropLineY;
+    Rectangle rc;
+    if (myDropTargetIndex == getModel().getSize()) {
+      rc = getCellBounds(myDropTargetIndex-1, myDropTargetIndex-1);
+      dropLineY = (int)rc.getMaxY()-1;
+    }
+    else {
+      rc = getCellBounds(myDropTargetIndex, myDropTargetIndex);
+      dropLineY = rc.y + offsetFromElementTopForDnD.fun(myDropTargetIndex);
+    }
+    Graphics2D g2d = (Graphics2D) g;
+    g2d.setColor(PlatformColors.BLUE);
+    g2d.setStroke(new BasicStroke(2.0f));
+    g2d.drawLine(rc.x, dropLineY, rc.x+rc.width, dropLineY);
+    g2d.drawLine(rc.x, dropLineY-2, rc.x, dropLineY+2);
+    g2d.drawLine(rc.x+rc.width, dropLineY-2, rc.x+rc.width, dropLineY+2);
   }
 
   @Override

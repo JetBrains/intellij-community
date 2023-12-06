@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale.standalone;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -29,7 +29,7 @@ public class Java2DUiScaleEnabledPropTest {
 
     assertTrue(JAVA2D_UI_SCALE_ENABLED_PROP + " system property is ignored", JreHiDpiUtil.isJreHiDPIEnabled());
     if (!SystemInfoRt.isMac) {
-      assertEquals(JAVA2D_UI_SCALE_PROP + " system property is ignored", 3f, JBUIScale.sysScale());
+      assertEquals(JAVA2D_UI_SCALE_PROP + " system property is ignored", 3f, JBUIScale.INSTANCE.computeSystemScaleFactor(() -> null));
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.execution.configurations.RemoteRunProfile;
@@ -130,6 +130,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final XValueMarkers<?,?> myValueMarkers;
   private final TreeExpansionListener myTreeExpansionListener;
   private final XDebuggerPinToTopManager myPinToTopManager;
+  private XDebuggerTreeRestorer myCurrentRestorer;
 
   public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -142,8 +143,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     mySourcePosition = sourcePosition;
     myTreeModel = (DefaultTreeModel)getModel();
     myPinToTopManager = XDebuggerPinToTopManager.Companion.getInstance(project);
-    setCellRenderer(new XDebuggerTreeRenderer());
-    new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
+    setCellRenderer(new XDebuggerTreeRenderer(myProject));
+    new TreeLinkMouseListener(new XDebuggerTreeRenderer(myProject)) {
       @Override
       protected boolean doCacheLastNode() {
         return false;
@@ -231,7 +232,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         handleExpansion(event, false);
       }
 
-      private void handleExpansion(TreeExpansionEvent event, boolean expanded) {
+      private static void handleExpansion(TreeExpansionEvent event, boolean expanded) {
         final TreePath path = event.getPath();
         final Object component = path != null ? path.getLastPathComponent() : null;
         if (component instanceof XValueGroupNodeImpl) {
@@ -250,7 +251,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       XDebuggerTreeSpeedSearch.installOn(this, SPEED_SEARCH_CONVERTER);
     }
     else {
-      TreeSpeedSearch.installOn(this, false, SPEED_SEARCH_CONVERTER.asFunction());
+      TreeSpeedSearch.installOn(this, false, SPEED_SEARCH_CONVERTER);
     }
   }
 
@@ -408,6 +409,19 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     removeComponentListener(myMoveListener);
     removeTreeExpansionListener(myTreeExpansionListener);
     myListeners.clear();
+    disposeRestorer();
+  }
+
+  void setCurrentRestorer(@NotNull XDebuggerTreeRestorer restorer) {
+    disposeRestorer();
+    myCurrentRestorer = restorer;
+  }
+
+  private void disposeRestorer() {
+    if (myCurrentRestorer != null) {
+      myCurrentRestorer.dispose();
+      myCurrentRestorer = null;
+    }
   }
 
   private void registerShortcuts() {

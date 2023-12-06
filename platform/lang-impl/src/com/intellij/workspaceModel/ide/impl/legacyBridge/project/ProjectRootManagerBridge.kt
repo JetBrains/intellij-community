@@ -14,8 +14,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRoots
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
+import kotlinx.coroutines.CoroutineScope
 
-class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
+class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope) : ProjectRootManagerComponent(project, coroutineScope) {
   init {
     if (!project.isDefault) {
       moduleDependencyIndex.addListener(ModuleDependencyListenerImpl())
@@ -25,25 +26,27 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   private val moduleDependencyIndex
     get() = ModuleDependencyIndex.getInstance(project)
 
-  override fun getActionToRunWhenProjectJdkChanges(): Runnable {
-    return Runnable {
-      super.getActionToRunWhenProjectJdkChanges().run()
-      if (moduleDependencyIndex.hasProjectSdkDependency()) fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk())
+  override val actionToRunWhenProjectJdkChanges: Runnable
+    get() {
+      return Runnable {
+        super.actionToRunWhenProjectJdkChanges.run()
+        if (moduleDependencyIndex.hasProjectSdkDependency()) {
+          val info = BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk().buildInfo()
+          fireRootsChanged(info)
+        }
+      }
     }
-  }
 
   override fun getOrderRootsCache(project: Project): OrderRootsCache {
     return OrderRootsCacheBridge(project, project)
   }
 
-  fun isFiringEvent(): Boolean = isFiringEvent
-
-  fun setupTrackedLibrariesAndJdks() {
+  internal fun setupTrackedLibrariesAndJdks() {
     moduleDependencyIndex.setupTrackedLibrariesAndJdks()
   }
 
   private fun fireRootsChanged(info: RootsChangeRescanningInfo) {
-    if (myProject.isOpen) {
+    if (project.isOpen) {
       makeRootsChange(EmptyRunnable.INSTANCE, info)
     }
   }
@@ -53,7 +56,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
 
     override fun referencedLibraryAdded(library: Library) {
       if (shouldListen(library)) {
-        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library))
+        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library).buildInfo())
       }
     }
 
@@ -61,7 +64,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (insideRootsChange || !shouldListen(library)) return
       insideRootsChange = true
       try {
-        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library))
+        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library).buildInfo())
       }
       finally {
         insideRootsChange = false
@@ -84,11 +87,11 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     }
 
     override fun referencedSdkAdded(sdk: Sdk) {
-      fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addSdk(sdk))
+      fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addSdk(sdk).buildInfo())
     }
 
     override fun referencedSdkChanged(sdk: Sdk) {
-      fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addSdk(sdk))
+      fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addSdk(sdk).buildInfo())
     }
 
     override fun referencedSdkRemoved(sdk: Sdk) {

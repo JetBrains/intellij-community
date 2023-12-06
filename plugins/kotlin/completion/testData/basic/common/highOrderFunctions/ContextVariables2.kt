@@ -20,6 +20,7 @@ val X.extension: () -> Unit
 val String.wrongExtension: () -> Unit
     get() = {}
 
+// IGNORE_K2
 // EXIST: { itemText: "xfoo", tailText: " {...} (p: () -> Unit) for String in <root>", typeText:"Unit" }
 // EXIST: { itemText: "xfoo", tailText: "(p1) for String in <root>", typeText: "Unit" }
 // EXIST: { itemText: "xfoo", tailText: "(p3) for String in <root>", typeText: "Unit" }

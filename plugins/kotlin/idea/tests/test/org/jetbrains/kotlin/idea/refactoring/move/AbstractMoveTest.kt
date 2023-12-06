@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.move.changePackage.KotlinChangePackageRefactoring
 import org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAwareDelegatingMoveDestination
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.MoveKotlinMethodProcessor
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
@@ -229,16 +229,22 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 } else {
                     destDirIfAny?.virtualFile
                 }
-                KotlinMoveTargetForDeferredFile(FqName(packageName), targetDir) {
+                KotlinMoveTarget.DeferredFile(FqName(packageName), targetDir) {
                     createKotlinFile(guessNewFileName(elementsToMove)!!, moveDestination.getTargetDirectory(mainFile))
                 }
             } ?: config.getString("targetFile").let { filePath ->
-                KotlinMoveTargetForExistingElement(
+                KotlinMoveTarget.ExistingElement(
                     PsiManager.getInstance(project).findFile(rootDir.findFileByRelativePath(filePath)!!) as KtFile
                 )
             }
 
-            val descriptor = MoveDeclarationsDescriptor(project, MoveSource(elementsToMove), moveTarget, MoveDeclarationsDelegate.TopLevel)
+            val descriptor = MoveDeclarationsDescriptor(
+                project,
+                KotlinMoveSource(elementsToMove),
+                moveTarget,
+                KotlinMoveDeclarationDelegate.TopLevel,
+                deleteSourceFiles = true
+            )
             MoveKotlinDeclarationsProcessor(descriptor).run()
         }
     },
@@ -285,22 +291,22 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 if (targetClassName != null) {
                     KotlinFullClassNameIndex.get(targetClassName, project, project.projectScope()).first()!!
                 } else null
-            val delegate = MoveDeclarationsDelegate.NestedClass(
+            val delegate = KotlinMoveDeclarationDelegate.NestedClass(
                 config.getNullableString("newName"),
                 config.getNullableString("outerInstanceParameter")
             )
             val moveTarget =
                 if (targetClass != null) {
-                    KotlinMoveTargetForExistingElement(targetClass)
+                    KotlinMoveTarget.ExistingElement(targetClass)
                 } else {
                     val fileName = (delegate.newClassName ?: elementToMove.name!!) + ".kt"
                     val targetPackageFqName = (mainFile as KtFile).packageFqName
                     val targetDir = mainFile.containingDirectory!!
-                    KotlinMoveTargetForDeferredFile(targetPackageFqName, targetDir.virtualFile) {
+                    KotlinMoveTarget.DeferredFile(targetPackageFqName, targetDir.virtualFile) {
                         createKotlinFile(fileName, targetDir, targetPackageFqName.asString())
                     }
                 }
-            val descriptor = MoveDeclarationsDescriptor(project, MoveSource(elementToMove), moveTarget, delegate)
+            val descriptor = MoveDeclarationsDescriptor(project, KotlinMoveSource(elementToMove), moveTarget, delegate)
             MoveKotlinDeclarationsProcessor(descriptor).run()
         }
     },

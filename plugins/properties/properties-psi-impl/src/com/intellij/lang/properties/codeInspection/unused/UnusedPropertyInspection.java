@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeInspection.unused;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -19,6 +19,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -62,7 +63,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
 
   @Override
   public @NotNull OptionController getOptionController() {
-    return super.getOptionController().onValueSet("fineNameMask", value -> {
+    return super.getOptionController().onValueSet("fileNameMask", value -> {
       if ("".equals(value)) fileNameMask = ".*";
     });
   }
@@ -111,6 +112,12 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
+    VirtualFile virtualFile = holder.getFile().getVirtualFile();
+    if (virtualFile == null ||
+        !ProjectFileIndex.getInstance(module.getProject()).isInSource(virtualFile)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
 
     final Set<PsiElement> propertiesBeingCommitted = getBeingCommittedProperties(file);
@@ -128,7 +135,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
 
         ASTNode[] nodes = propertyNode.getChildren(null);
         PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
-        LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix();
+        LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix(property);
         holder.registerProblem(key, isOnTheFly ? PropertiesBundle.message("unused.property.problem.descriptor.name")
                                                : PropertiesBundle
                                       .message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()), fix);

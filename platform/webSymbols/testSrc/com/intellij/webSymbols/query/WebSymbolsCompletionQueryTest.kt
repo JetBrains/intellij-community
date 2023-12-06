@@ -1,13 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.query
 
-import com.intellij.webSymbols.webSymbolsTestsDataPath
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.webSymbolsTestsDataPath
 import com.intellij.webSymbols.webTypes.json.parseWebTypesPath
 
 class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
@@ -210,7 +212,7 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNamingRules2() {
-    doTest("js/properties", 0, "vue", "naming-rules")
+    doTest("js/custom-properties", 0, "vue", "naming-rules")
   }
 
   fun testNestedNamingRules1() {
@@ -230,12 +232,10 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
       object : WebSymbolsScope {
         override fun createPointer(): Pointer<out WebSymbolsScope> = Pointer.hardPointer(this)
 
-        override fun getCodeCompletions(namespace: SymbolNamespace,
-                                        kind: SymbolKind,
-                                        name: String?,
+        override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
                                         scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> {
-          return if (kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
+          return if (qualifiedName.kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
             listOf(WebSymbolCodeCompletionItem.create("bar"))
           }
           else emptyList()
@@ -267,19 +267,19 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testOptionalPatternNoRepeat1() {
-    doTest("html/elements/icon-vuetify", 0, null,"optional-pattern-no-repeat")
+    doTest("html/elements/icon-vuetify", 0, null, "optional-pattern-no-repeat")
   }
 
   fun testOptionalPatternNoRepeat2() {
-    doTest("html/elements/icon-vuetify", 5, null,"optional-pattern-no-repeat")
+    doTest("html/elements/icon-vuetify", 5, null, "optional-pattern-no-repeat")
   }
 
   fun testOptionalPatternNoRepeat3() {
-    doTest("html/elements/icon-vue", 8, null,"optional-pattern-no-repeat")
+    doTest("html/elements/icon-vue", 8, null, "optional-pattern-no-repeat")
   }
 
   fun testOptionalPatternNoRepeat4() {
-    doTest("html/elements/icon-vue-", 9, null,"optional-pattern-no-repeat")
+    doTest("html/elements/icon-vue-", 9, null, "optional-pattern-no-repeat")
   }
 
   fun testRecursiveQuery() {
@@ -301,9 +301,25 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/elements/demo-test/attributes/", 0, null, "mixed-component", "reference-with-complex-name-conversion")
   }
 
+  fun testBasicCustomElementsManifest1() {
+    doTest("html/elements/", customElementsManifests = listOf("basic"))
+  }
+
+  fun testBasicCustomElementsManifest2() {
+    doTest("html/elements/my-EleMeNt/attributes/", customElementsManifests = listOf("basic"))
+  }
+
   private fun doTest(path: String, position: Int, framework: String?, vararg webTypes: String) {
+    doTest(path, position, framework, webTypes = webTypes.toList())
+  }
+
+  private fun doTest(path: String,
+                     position: Int = 0,
+                     framework: String? = null,
+                     webTypes: List<String> = emptyList(),
+                     customElementsManifests: List<String> = emptyList()) {
     doTest(testPath) {
-      registerFiles(framework, *webTypes)
+      registerFiles(framework, webTypes, customElementsManifests)
       val matches = webSymbolsQueryExecutorFactory.create(null)
         .runCodeCompletionQuery(parseWebTypesPath(path, null), position)
       printCodeCompletionItems(matches)

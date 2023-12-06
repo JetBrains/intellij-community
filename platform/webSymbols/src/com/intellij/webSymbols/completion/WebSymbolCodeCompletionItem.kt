@@ -9,8 +9,9 @@ import com.intellij.model.Pointer
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
+import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import javax.swing.Icon
 
@@ -33,8 +34,7 @@ interface WebSymbolCodeCompletionItem {
   val priority: WebSymbol.Priority?
   val proximity: Int?
 
-  @get:JvmName("isDeprecated")
-  val deprecated: Boolean
+  val apiStatus: WebSymbolApiStatus
   val aliases: Set<String>
   val symbol: WebSymbol?
   val insertHandler: WebSymbolCodeCompletionItemInsertHandler?
@@ -59,7 +59,7 @@ interface WebSymbolCodeCompletionItem {
 
   fun withProximity(proximity: Int): WebSymbolCodeCompletionItem
 
-  fun withDeprecated(deprecated: Boolean): WebSymbolCodeCompletionItem
+  fun withApiStatus(apiStatus: WebSymbolApiStatus): WebSymbolCodeCompletionItem
 
   fun withAliasesReplaced(aliases: Set<String>): WebSymbolCodeCompletionItem
 
@@ -92,7 +92,7 @@ interface WebSymbolCodeCompletionItem {
            symbol: WebSymbol? = this.symbol,
            priority: WebSymbol.Priority? = this.priority,
            proximity: Int? = this.proximity,
-           deprecated: Boolean = this.deprecated,
+           apiStatus: WebSymbolApiStatus = this.apiStatus,
            icon: Icon? = this.icon,
            typeText: String? = this.typeText,
            tailText: String? = this.tailText): WebSymbolCodeCompletionItem
@@ -107,7 +107,7 @@ interface WebSymbolCodeCompletionItem {
                symbol: WebSymbol? = null,
                priority: WebSymbol.Priority? = symbol?.priority,
                proximity: Int? = symbol?.proximity,
-               deprecated: Boolean = symbol?.deprecated ?: false,
+               apiStatus: WebSymbolApiStatus = symbol?.apiStatus ?: WebSymbolApiStatus.Stable,
                aliases: Set<String> = emptySet(),
                icon: Icon? = symbol?.let {
                  it.icon
@@ -119,7 +119,7 @@ interface WebSymbolCodeCompletionItem {
                insertHandler: WebSymbolCodeCompletionItemInsertHandler? = null): WebSymbolCodeCompletionItem =
       WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, if (!completeAfterInsert) completeAfterChars else emptySet(),
                                       displayName, symbol, priority, proximity,
-                                      deprecated, aliases, icon, typeText, tailText, insertHandler)
+                                      apiStatus, aliases, icon, typeText, tailText, insertHandler)
 
     @JvmStatic
     fun getPsiElement(lookupElement: LookupElement): PsiElement? =

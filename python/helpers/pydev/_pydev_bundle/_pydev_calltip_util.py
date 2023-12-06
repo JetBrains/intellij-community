@@ -5,7 +5,7 @@ Author: Yuli Fitterman
 # noinspection PyBroadException
 import types
 
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY3K, IS_PY311
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY3K, IS_PY311_OR_GREATER
 
 try:
     import inspect
@@ -101,7 +101,7 @@ def get_description(obj):
     fn_class = None
     if callable(fob):
         try:
-            if IS_PY311:
+            if IS_PY311_OR_GREATER:
                 spec_info = inspect.signature(fob)
                 argspec = str(spec_info)
             else:

@@ -1,0 +1,115 @@
+MODULES
+project
+
+project.appleMain
+
+project.appleTest
+
+project.commonMain
+
+project.commonTest
+    fqName: CommonTest
+    name: CommonTest
+    type: Gradle
+    tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "CommonTest"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: CommonTest.test in commonTest - failure
+    name: CommonTest.test in commonTest - failure
+    type: Gradle
+    tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "CommonTest.test in commonTest - failure"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: CommonTest.test in commonTest - success
+    name: CommonTest.test in commonTest - success
+    type: Gradle
+    tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "CommonTest.test in commonTest - success"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+
+project.iosArm64Main
+
+project.iosArm64Test
+
+project.iosMain
+
+project.iosSimulatorArm64Main
+
+project.iosSimulatorArm64Test
+
+project.iosTest
+    fqName: IosTest
+    name: IosTest
+    type: Gradle
+    tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "IosTest"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: IosTest.test in iosTest - failure
+    name: IosTest.test in iosTest - failure
+    type: Gradle
+    tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "IosTest.test in iosTest - failure"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: IosTest.test in iosTest - success
+    name: IosTest.test in iosTest - success
+    type: Gradle
+    tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "IosTest.test in iosTest - success"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+
+project.iosX64Main
+
+project.iosX64Test
+
+project.jvmMain
+
+project.jvmTest
+    fqName: null
+    name: JvmTest
+    type: Gradle
+    tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: JvmTest.test in jvmTest - failure
+    name: JvmTest.test in jvmTest - failure
+    type: Gradle
+    tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest.test in jvmTest - failure"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: JvmTest.test in jvmTest - success
+    name: JvmTest.test in jvmTest - success
+    type: Gradle
+    tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest.test in jvmTest - success"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+
+project.nativeMain
+
+project.nativeTest
+
+
+Test configuration:
+- Showing runConfiguration detail: name
+- Showing runConfiguration detail: type
+- Showing runConfiguration detail: tasks
+- Showing runConfiguration detail: scriptParameters
+- Showing runConfiguration detail: isDebugAllEnabled
+- Showing runConfiguration detail: isRunAsTest

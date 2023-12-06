@@ -7,6 +7,9 @@ import com.intellij.debugger.engine.RequestHint;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.statistics.Engine;
+import com.intellij.debugger.statistics.StatisticsStorage;
+import com.intellij.debugger.statistics.SteppingAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
@@ -21,9 +24,10 @@ public final class KotlinStepActionFactory {
             DebugProcessImpl debugProcess,
             SuspendContextImpl suspendContext,
             boolean ignoreBreakpoints,
-            @NotNull KotlinMethodFilter methodFilter
+            @NotNull KotlinMethodFilter methodFilter,
+            int stepSize
     ) {
-        return debugProcess.new StepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, StepRequest.STEP_LINE) {
+        return debugProcess.new StepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, stepSize) {
             @Override
             protected @NotNull String getStatusText() {
                 return KotlinDebuggerCoreBundle.message("stepping.over.inline");
@@ -31,7 +35,7 @@ public final class KotlinStepActionFactory {
 
             @Override
             public @NotNull RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, @Nullable RequestHint parentHint) {
-                KotlinStepOverRequestHint hint = new KotlinStepOverRequestHint(stepThread, suspendContext, methodFilter, parentHint);
+                KotlinStepOverRequestHint hint = new KotlinStepOverRequestHint(stepThread, suspendContext, methodFilter, parentHint, stepSize);
                 hint.setResetIgnoreFilters(!debugProcess.getSession().shouldIgnoreSteppingFilters());
                 hint.setRestoreBreakpoints(ignoreBreakpoints);
                 try {
@@ -40,6 +44,11 @@ public final class KotlinStepActionFactory {
                     LOG.info(e);
                 }
                 return hint;
+            }
+
+            @Override
+            public Object createCommandToken() {
+                return StatisticsStorage.createSteppingToken(SteppingAction.STEP_OVER, Engine.KOTLIN);
             }
         };
     }
@@ -57,6 +66,11 @@ public final class KotlinStepActionFactory {
                 KotlinStepIntoRequestHint hint = new KotlinStepIntoRequestHint(stepThread, suspendContext, methodFilter, parentHint);
                 hint.setResetIgnoreFilters(myMethodFilter != null && !debugProcess.getSession().shouldIgnoreSteppingFilters());
                 return hint;
+            }
+
+            @Override
+            public Object createCommandToken() {
+                return StatisticsStorage.createSteppingToken(SteppingAction.STEP_INTO, Engine.KOTLIN);
             }
         };
     }
@@ -76,6 +90,11 @@ public final class KotlinStepActionFactory {
                 hint.setResetIgnoreFilters(myMethodFilter != null && !debugProcess.getSession().shouldIgnoreSteppingFilters());
                 return hint;
             }
+
+            @Override
+            public Object createCommandToken() {
+                return StatisticsStorage.createSteppingToken(SteppingAction.STEP_INTO, Engine.KOTLIN);
+            }
         };
     }
 
@@ -90,6 +109,11 @@ public final class KotlinStepActionFactory {
                 RequestHint hint = new KotlinRequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OUT, null, parentHint);
                 hint.setIgnoreFilters(debugProcess.getSession().shouldIgnoreSteppingFilters());
                 return hint;
+            }
+
+            @Override
+            public Object createCommandToken() {
+                return StatisticsStorage.createSteppingToken(SteppingAction.STEP_OUT, Engine.KOTLIN);
             }
         };
     }

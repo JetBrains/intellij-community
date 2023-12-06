@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.toUnscaled
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * List of all configurable spacings for building Kotlin UI DSL panels. All returned values are unscaled
@@ -44,7 +47,7 @@ interface SpacingConfiguration {
   val verticalSmallGap: Int
 
   /**
-   * Vertical medium gap between unrelated settings, before and after groups
+   * Vertical medium gap, for example used before and after groups
    */
   val verticalMediumGap: Int
 
@@ -66,35 +69,44 @@ interface SpacingConfiguration {
   /**
    * Gaps between dialog content and its content
    */
-  val dialogGap: UnscaledGaps
+  val dialogGap: Gaps
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use dialogUnscaledGaps instead",
+                ReplaceWith("dialogUnscaledGaps", "com.intellij.ui.dsl.gridLayout.UnscaledGaps"))
+    get() = Gaps.EMPTY
+
+  /**
+   * Unscaled gaps between dialog content and its content
+   */
+  val dialogUnscaledGaps: UnscaledGaps get() = dialogGap.toUnscaled()
 }
 
 open class EmptySpacingConfiguration : SpacingConfiguration {
-  override val horizontalSmallGap = 0
-  override val horizontalDefaultGap = 0
-  override val horizontalColumnsGap = 0
-  override val horizontalIndent = 0
-  override val horizontalToggleButtonIndent = 0
-  override val verticalComponentGap = 0
-  override val verticalSmallGap = 0
-  override val verticalMediumGap = 0
-  override val buttonGroupHeaderBottomGap = 0
-  override val segmentedButtonVerticalGap = 0
-  override val segmentedButtonHorizontalGap = 0
-  override val dialogGap = UnscaledGaps.EMPTY
+  override val horizontalSmallGap: Int = 0
+  override val horizontalDefaultGap: Int = 0
+  override val horizontalColumnsGap: Int = 0
+  override val horizontalIndent: Int = 0
+  override val horizontalToggleButtonIndent: Int = 0
+  override val verticalComponentGap: Int = 0
+  override val verticalSmallGap: Int = 0
+  override val verticalMediumGap: Int = 0
+  override val buttonGroupHeaderBottomGap: Int = 0
+  override val segmentedButtonVerticalGap: Int = 0
+  override val segmentedButtonHorizontalGap: Int = 0
+  override val dialogUnscaledGaps: UnscaledGaps = UnscaledGaps.EMPTY
 }
 
 open class IntelliJSpacingConfiguration : SpacingConfiguration {
-  override val horizontalSmallGap = 6
-  override val horizontalDefaultGap = 16
-  override val horizontalColumnsGap = 60
-  override val horizontalIndent = 20
-  override val horizontalToggleButtonIndent = 20
-  override val verticalComponentGap = 6
-  override val verticalSmallGap = 8
-  override val verticalMediumGap = 20
-  override val buttonGroupHeaderBottomGap = 2
-  override val segmentedButtonVerticalGap = 3
-  override val segmentedButtonHorizontalGap = 12
-  override val dialogGap = UnscaledGaps(10, 12, 10, 12)
+  override val horizontalSmallGap: Int = 6
+  override val horizontalDefaultGap: Int = 16
+  override val horizontalColumnsGap: Int = 60
+  override val horizontalIndent: Int = 20
+  override val horizontalToggleButtonIndent: Int = 20
+  override val verticalComponentGap: Int = 6
+  override val verticalSmallGap: Int = 8
+  override val verticalMediumGap: Int = 20
+  override val buttonGroupHeaderBottomGap: Int = 2
+  override val segmentedButtonVerticalGap: Int = 3
+  override val segmentedButtonHorizontalGap: Int = 12
+  override val dialogUnscaledGaps: UnscaledGaps = UnscaledGaps(10, 12, 10, 12)
 }

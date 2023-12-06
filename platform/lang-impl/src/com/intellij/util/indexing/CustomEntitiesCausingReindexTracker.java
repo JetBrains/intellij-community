@@ -4,25 +4,23 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider;
+import com.intellij.platform.workspace.jps.entities.*;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
-import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class CustomEntitiesCausingReindexTracker {
-  private final boolean useWorkspaceFileIndexContributors = IndexableFilesIndex.isEnabled();
+final class CustomEntitiesCausingReindexTracker {
   @NotNull
   private Set<Class<? extends WorkspaceEntity>> customEntitiesToRescan;
 
@@ -45,9 +43,6 @@ class CustomEntitiesCausingReindexTracker {
     IndexableEntityProvider.EP_NAME.addExtensionPointListener(
       (ExtensionPointListener<IndexableEntityProvider<? extends WorkspaceEntity>>)listener);
     //noinspection unchecked
-    CustomEntityProjectModelInfoProvider.EP.addExtensionPointListener(
-      (ExtensionPointListener<CustomEntityProjectModelInfoProvider<?>>)listener);
-    //noinspection unchecked
     WorkspaceFileIndexImpl.Companion.getEP_NAME().addExtensionPointListener(
       (ExtensionPointListener<WorkspaceFileIndexContributor<?>>)listener);
 
@@ -59,18 +54,12 @@ class CustomEntitiesCausingReindexTracker {
     customEntitiesToRescan = listCustomEntitiesCausingRescan();
   }
 
-  private Set<Class<? extends WorkspaceEntity>> listCustomEntitiesCausingRescan() {
-    Stream<Class<? extends WorkspaceEntity>> allClasses =
-      CustomEntityProjectModelInfoProvider.EP.getExtensionList().stream().map(provider -> provider.getEntityClass());
-    allClasses = Stream.concat(allClasses,
-                               WorkspaceFileIndexImpl.Companion.getEP_NAME().getExtensionList().stream()
-                                 .filter(contributor -> useWorkspaceFileIndexContributors ||
-                                                        !(contributor instanceof PlatformInternalWorkspaceFileIndexContributor))
-                                 .flatMap(contributor -> getEntityClassesToCauseReindexing(contributor)));
+  private static Set<Class<? extends WorkspaceEntity>> listCustomEntitiesCausingRescan() {
+    Stream<Class<? extends WorkspaceEntity>> allClasses = WorkspaceFileIndexImpl.Companion.getEP_NAME().getExtensionList().stream()
+      .flatMap(contributor -> getEntityClassesToCauseReindexing(contributor));
     allClasses = Stream.concat(allClasses,
                                IndexableEntityProvider.EP_NAME.getExtensionList().stream()
-                                 .filter(provider -> !useWorkspaceFileIndexContributors ||
-                                                     provider instanceof IndexableEntityProvider.Enforced<? extends WorkspaceEntity>)
+                                 .filter(provider -> provider instanceof IndexableEntityProvider.Enforced<? extends WorkspaceEntity>)
                                  .map(provider -> provider.getEntityClass()));
     return Set.copyOf(allClasses.filter(aClass -> !isEntityReindexingCustomised(aClass)).collect(Collectors.toSet()));
   }
@@ -90,7 +79,21 @@ class CustomEntitiesCausingReindexTracker {
            LibraryPropertiesEntity.class.isAssignableFrom(entityClass);
   }
 
-  boolean shouldRescan(@NotNull WorkspaceEntity entity, @NotNull Project project) {
+  /**
+   * If we have a custom logic for entity on reindexing, it should be mentioned in {@link #isEntityReindexingCustomised} method
+   */
+  boolean shouldRescan(@Nullable WorkspaceEntity oldEntity, @Nullable WorkspaceEntity newEntity, @NotNull Project project) {
+    if (oldEntity == null && newEntity == null) throw new RuntimeException("Either old or new entity should not be null");
+
+    // ModuleEntity should throw rootChanged only on change of dependencies.
+    if (newEntity instanceof ModuleEntity newModuleEntity && oldEntity instanceof ModuleEntity oldModuleEntity) {
+      boolean haveSameDependencies = newModuleEntity.getDependencies().equals(oldModuleEntity.getDependencies());
+      return !haveSameDependencies;
+    }
+
+    WorkspaceEntity entity = newEntity != null ? newEntity : oldEntity;
+
+    // `rootsChanged` should not be thrown for changes in global libraries that are not presented in a project
     if (entity instanceof LibraryEntity) {
       return hasDependencyOn((LibraryEntity)entity, project);
     }

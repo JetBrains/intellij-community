@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.Disposable;
@@ -7,6 +7,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +23,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param project the project for which the PSI manager is requested.
    * @return the PSI manager instance.
    */
-  @NotNull
-  public static PsiManager getInstance(@NotNull Project project) {
+  public static @NotNull PsiManager getInstance(@NotNull Project project) {
     return project.getService(PsiManager.class);
   }
 
@@ -30,8 +32,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the project instance
    */
-  @NotNull
-  public abstract Project getProject();
+  public abstract @NotNull Project getProject();
 
   /**
    * Returns the PSI file corresponding to the specified virtual file.
@@ -40,11 +41,10 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the PSI file, or {@code null} if {@code file} is a directory, an invalid virtual file,
    * or the current project is a dummy or default project.
    */
-  @Nullable
-  public abstract PsiFile findFile(@NotNull VirtualFile file);
+  @RequiresReadLock
+  public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
-  @Nullable
-  public abstract FileViewProvider findViewProvider(@NotNull VirtualFile file);
+  public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file);
 
   /**
    * Returns the PSI directory corresponding to the specified virtual file system directory.
@@ -52,8 +52,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param file the directory for which the PSI is requested.
    * @return the PSI directory, or {@code null} if there is no PSI for the specified directory in this project.
    */
-  @Nullable
-  public abstract PsiDirectory findDirectory(@NotNull VirtualFile file);
+  public abstract @Nullable PsiDirectory findDirectory(@NotNull VirtualFile file);
 
   /**
    * Checks if the specified two PSI elements (possibly invalid) represent the same source element
@@ -61,7 +60,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * <p>
    * Can be used to match two versions of the PSI tree with each other after a reparse.
    * <p>
-   * For example, Java classes with the same fully-qualified name are equivalent, which is useful when working
+   * For example, Java classes with the same fully qualified name are equivalent, which is useful when working
    * with both library source and class roots. Source and compiled classes are definitely different ({@code equals()} returns {@code false}),
    * but for reference resolve or inheritance checks, they're equivalent.
    *
@@ -109,8 +108,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the modification tracker instance.
    */
-  @NotNull
-  public abstract PsiModificationTracker getModificationTracker();
+  public abstract @NotNull PsiModificationTracker getModificationTracker();
 
   /**
    * Notifies the PSI manager that a batch operation sequentially processing multiple files
@@ -154,8 +152,8 @@ public abstract class PsiManager extends UserDataHolderBase {
   /**
    * Clears all {@link com.intellij.psi.util.CachedValue} depending on {@link PsiModificationTracker#MODIFICATION_COUNT} and resolve caches.
    * Can be used to reduce memory consumption in batch operations sequentially processing multiple files.
-   * Should be invoked on Write thread.
    */
+  @RequiresEdt
   public abstract void dropPsiCaches();
 
   /**
@@ -165,4 +163,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return {@code true} if the element belongs to the sources of the project, {@code false} otherwise.
    */
   public abstract boolean isInProject(@NotNull PsiElement element);
+
+  @ApiStatus.Internal
+  public abstract @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile);
 }

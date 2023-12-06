@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -28,15 +28,15 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
 
   private List<@NlsSafe String> myWorkingCollection;
   private final List<@NlsSafe String> myInitialCollection;
-  @Nullable private final Project myProject;
+  private final @Nullable Project myProject;
 
-  public PathsChooserComponent(@NotNull final List<String> collection, @NotNull final PathProcessor processor) {
+  public PathsChooserComponent(final @NotNull List<String> collection, final @NotNull PathProcessor processor) {
     this(collection, processor, null);
   }
 
-  public PathsChooserComponent(@NotNull final List<String> collection,
-                               @NotNull final PathProcessor processor,
-                               @Nullable final Project project) {
+  public PathsChooserComponent(final @NotNull List<String> collection,
+                               final @NotNull PathProcessor processor,
+                               final @Nullable Project project) {
     myList = new JBList();
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myInitialCollection = collection;
@@ -80,9 +80,8 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
     reset();
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myList.getEmptyText();
   }
 

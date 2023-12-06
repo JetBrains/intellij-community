@@ -10,3 +10,5 @@ fun newFun(separator: Char){}
 fun foo() {
     newFun(File.separatorChar)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

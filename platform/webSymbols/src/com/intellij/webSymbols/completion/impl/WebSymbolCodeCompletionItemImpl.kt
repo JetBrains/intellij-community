@@ -5,7 +5,11 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.psi.PsiElement
+import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemInsertHandler
 import com.intellij.webSymbols.impl.scaleToHeight
@@ -20,7 +24,7 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
                                                     override val symbol: WebSymbol? = null,
                                                     override val priority: WebSymbol.Priority? = null,
                                                     override val proximity: Int? = null,
-                                                    override val deprecated: Boolean = false,
+                                                    override val apiStatus: WebSymbolApiStatus = WebSymbolApiStatus.Stable,
                                                     override val aliases: Set<String> = emptySet(),
                                                     override val icon: Icon? = null,
                                                     override val typeText: String? = null,
@@ -38,13 +42,15 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
         completionPrefix.substring(offset) == name)
       return
     val priorityOffset = baselinePriorityValue - WebSymbol.Priority.NORMAL.value
-    LookupElementBuilder.create(symbol?.createPointer() ?: name, name)
+    val deprecatedOrObsolete = apiStatus.isDeprecatedOrObsolete()
+    LookupElementBuilder
+      .create(wrapSymbolForDocumentation(symbol, parameters.position)?.createPointer() ?: name, name)
       .withLookupStrings(aliases)
       .withIcon(icon?.scaleToHeight(16))
       .withTypeText(typeText, true)
       .withTailText(tailText, true)
-      .withBoldness(!deprecated && priority == WebSymbol.Priority.HIGHEST)
-      .withStrikeoutness(deprecated)
+      .withBoldness(!deprecatedOrObsolete && priority == WebSymbol.Priority.HIGHEST)
+      .withStrikeoutness(deprecatedOrObsolete)
       .let {
         if (displayName != null)
           it.withPresentableText(displayName)
@@ -64,7 +70,7 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
           it.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE)
         else it
       }.let {
-        val priorityValue = if (deprecated) WebSymbol.Priority.LOWEST.value
+        val priorityValue = if (deprecatedOrObsolete) WebSymbol.Priority.LOWEST.value
         else (priority ?: WebSymbol.Priority.NORMAL).value + priorityOffset
         PrioritizedLookupElement.withPriority(it, priorityValue)
       }.let {
@@ -74,6 +80,13 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
         else result).addElement(it)
       }
   }
+
+  private fun wrapSymbolForDocumentation(symbol: WebSymbol?, location: PsiElement) =
+    when (symbol) {
+      is PsiSourcedWebSymbol -> PsiSourcedCodeCompletionWebSymbolWithDocumentation(symbol, location)
+      is WebSymbol -> CodeCompletionWebSymbolWithDocumentation(symbol, location)
+      else -> null
+    }
 
   override fun withName(name: String): WebSymbolCodeCompletionItem =
     copy(name = name)
@@ -107,8 +120,8 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
   override fun withProximity(proximity: Int): WebSymbolCodeCompletionItem =
     copy(proximity = proximity)
 
-  override fun withDeprecated(deprecated: Boolean): WebSymbolCodeCompletionItem =
-    copy(deprecated = deprecated)
+  override fun withApiStatus(apiStatus: WebSymbolApiStatus): WebSymbolCodeCompletionItem =
+    copy(apiStatus = apiStatus)
 
   override fun withAliasesReplaced(aliases: Set<String>): WebSymbolCodeCompletionItem =
     copy(aliases = aliases)
@@ -152,13 +165,13 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
                     symbol: WebSymbol?,
                     priority: WebSymbol.Priority?,
                     proximity: Int?,
-                    deprecated: Boolean,
+                    apiStatus: WebSymbolApiStatus,
                     icon: Icon?,
                     typeText: String?,
                     tailText: String?): WebSymbolCodeCompletionItem =
     copy(name = name, offset = offset, completeAfterInsert = completeAfterInsert,
          completeAfterChars = if (!completeAfterInsert) completeAfterChars else emptySet(),
          displayName = displayName, symbol = symbol, priority = priority, proximity = proximity,
-         deprecated = deprecated, icon = icon, typeText = typeText, tailText = tailText)
+         apiStatus = apiStatus, icon = icon, typeText = typeText, tailText = tailText)
 
 }

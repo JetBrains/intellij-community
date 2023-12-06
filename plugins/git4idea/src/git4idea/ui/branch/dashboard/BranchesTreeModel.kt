@@ -51,7 +51,7 @@ internal data class BranchNodeDescriptor(val type: NodeType,
                                          val branchInfo: BranchInfo? = null,
                                          val repository: GitRepository? = null,
                                          val displayName: @Nls String? = resolveDisplayName(branchInfo, repository),
-                                         val parent: BranchNodeDescriptor? = null) {
+                                         var parent: BranchNodeDescriptor? = null) {
   override fun toString(): String {
     val suffix = branchInfo?.branchName ?: displayName
     return if (suffix != null) "$type:$suffix" else "$type"
@@ -111,6 +111,9 @@ internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchN
 
   fun populateFrom(branches: Sequence<BranchInfo>, groupingConfig: Map<GroupingKey, Boolean>) {
     branches.forEach { branch -> populateFrom(branch, groupingConfig) }
+    branchNodeDescriptors.forEach { (parent, children)  ->
+      children.forEach { it.parent = parent }
+    }
   }
 
   private fun populateFrom(br: BranchInfo, groupingConfig: Map<GroupingKey, Boolean>) {

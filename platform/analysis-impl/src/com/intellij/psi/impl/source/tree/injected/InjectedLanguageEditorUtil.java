@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.EditorWindow;
@@ -7,8 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class InjectedLanguageEditorUtil {
 
-  @NotNull
-  public static Editor getTopLevelEditor(@NotNull Editor editor) {
+  public static @NotNull Editor getTopLevelEditor(@NotNull Editor editor) {
     return editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
   }
 }

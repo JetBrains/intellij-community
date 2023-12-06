@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.XmlMatchUtil;
@@ -13,6 +14,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.ListNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class XmlMatchingVisitor extends XmlElementVisitor {
   private final GlobalMatchingVisitor myMatchingVisitor;
@@ -60,7 +62,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     final XmlTag another = myMatchingVisitor.getElement(XmlTag.class);
     if (another == null) return;
     final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
-    final XmlToken name = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_NAME);
+    final XmlToken name = getTagNameToken(tag);
     final boolean isTypedVar = pattern.isTypedVar(name);
 
     if (!myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.matchText(tag.getName(), another.getName())) &&
@@ -84,8 +86,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     }
     if (isTypedVar) {
       final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(name);
-      myMatchingVisitor.setResult(handler.handle(XmlUtil.getTokenOfType(another, XmlTokenType.XML_NAME),
-                                                 myMatchingVisitor.getMatchContext()));
+      myMatchingVisitor.setResult(handler.handle(getTagNameToken(another), myMatchingVisitor.getMatchContext()));
     }
   }
 
@@ -124,5 +125,22 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
       myMatchingVisitor.setResult(myMatchingVisitor.matchText(MatchUtil.normalize(text.getText()),
                                                               MatchUtil.normalize(other.getCommentText())));
     }
+  }
+
+  @Nullable
+  private static XmlToken getTagNameToken(XmlTag tag) {
+    PsiElement child = tag.getFirstChild();
+    while (child != null) {
+      if (child instanceof XmlToken token) {
+        IElementType tokenType = token.getTokenType();
+        if (tokenType == XmlTokenType.XML_NAME || tokenType == XmlTokenType.XML_TAG_NAME) {
+          // regular xml parser uses XML_NAME, but xml nested in js (JSX) uses XML_TAG_NAME
+          return token;
+        }
+      }
+      child = child.getNextSibling();
+    }
+
+    return null;
   }
 }

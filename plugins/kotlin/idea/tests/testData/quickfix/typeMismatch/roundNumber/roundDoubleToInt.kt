@@ -5,3 +5,4 @@ fun test(d: Double) {
 }
 
 fun foo(x: Int) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RoundNumberFix

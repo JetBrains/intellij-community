@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class GroupedSearchListModel extends SearchListModel {
+final class GroupedSearchListModel extends SearchListModel {
 
   @Override
   public boolean hasMoreElements(SearchEverywhereContributor contributor) {
@@ -131,6 +132,11 @@ class GroupedSearchListModel extends SearchListModel {
 
     if (!alreadyHas && newVal) {
       index += 1;
+      int elementsCount = index - contributors().indexOf(contributor);
+      SearchEverywhereUsageTriggerCollector.MORE_ITEM_SHOWN.log(
+        SearchEverywhereUsageTriggerCollector.ITEM_NUMBER_BEFORE_MORE.with(elementsCount),
+        SearchEverywhereUsageTriggerCollector.IS_ONLY_MORE.with(false)
+      );
       listElements.add(index, new SearchEverywhereFoundElementInfo(MORE_ELEMENT, 0, contributor));
       fireIntervalAdded(this, index, index);
     }

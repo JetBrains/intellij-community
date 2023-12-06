@@ -23,8 +23,8 @@ import java.io.IOException;
 import java.util.List;
 
 public class JavaPackageAccessibilityStatementElementType extends JavaStubElementType<PsiPackageAccessibilityStatementStub, PsiPackageAccessibilityStatement> {
-  public JavaPackageAccessibilityStatementElementType(@NotNull String debugName) {
-    super(debugName);
+  public JavaPackageAccessibilityStatementElementType(@NotNull String debugName, @NotNull IElementType parentElementType) {
+    super(debugName, parentElementType);
   }
 
   @Override

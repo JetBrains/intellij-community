@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -432,7 +432,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
-    class Listener implements DumbService.DumbModeListener {
+    final class Listener implements DumbService.DumbModeListener {
       volatile boolean isDumbMode;
 
       @Override
@@ -543,7 +543,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
         .setHideOnClickOutside(true)
         .createBalloon();
       balloon.showInCenterOf(statusBarComponent);
-    }, 500, ModalityState.NON_MODAL);
+    }, 500, ModalityState.nonModal());
   }
 
   private enum WidgetStatus {

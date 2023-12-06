@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.scratch.ui
 
@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -31,19 +32,25 @@ import org.jetbrains.kotlin.psi.UserDataProperty
 
 private const val KTS_SCRATCH_EDITOR_PROVIDER: String = "KtsScratchFileEditorProvider"
 
-class KtScratchFileEditorProvider : FileEditorProvider, DumbAware {
+private class KtScratchFileEditorProvider : FileEditorProvider, DumbAware {
     override fun getEditorTypeId(): String = KTS_SCRATCH_EDITOR_PROVIDER
 
     override fun accept(project: Project, file: VirtualFile): Boolean {
-        if (!file.isValid) return false
-        if (!(file.isKotlinScratch || file.isKotlinWorksheet)) return false
-        val psiFile = PsiManager.getInstance(project).findFile(file) ?: return false
+        if (!file.isValid) {
+            return false
+        }
+        if (!file.isKotlinScratch && !file.isKotlinWorksheet) {
+            return false
+        }
+        val psiFile = ApplicationManager.getApplication().runReadAction(Computable { PsiManager.getInstance(project).findFile(file) })
+            ?: return false
         return ScratchFileLanguageProvider.get(psiFile.fileType) != null
     }
 
+    override fun acceptRequiresReadAction(): Boolean = false
+
     override fun createEditor(project: Project, file: VirtualFile): FileEditor {
         val scratchFile = createScratchFile(project, file) ?: return TextEditorProvider.getInstance().createEditor(project, file)
-
         return KtScratchFileEditorWithPreview.create(scratchFile)
     }
 

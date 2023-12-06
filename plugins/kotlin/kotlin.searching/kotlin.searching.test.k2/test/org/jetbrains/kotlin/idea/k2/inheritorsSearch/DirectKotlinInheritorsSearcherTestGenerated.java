@@ -55,15 +55,38 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inheritorsSearch/javaMethod")
+    public static class JavaMethod extends AbstractDirectKotlinInheritorsSearcherTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestJavaMethod, this, testDataFilePath);
+        }
+
+        @TestMetadata("fromJavaMethod.java")
+        public void testFromJavaMethod() throws Exception {
+            runTest("../testData/inheritorsSearch/javaMethod/fromJavaMethod.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inheritorsSearch/kotlinFunction")
     public static class KotlinFunction extends AbstractDirectKotlinInheritorsSearcherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCallable, this, testDataFilePath);
         }
 
+        @TestMetadata("enumEntryInheritor.kt")
+        public void testEnumEntryInheritor() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/enumEntryInheritor.kt");
+        }
+
         @TestMetadata("hierarchyWithMissedLevel.kt")
         public void testHierarchyWithMissedLevel() throws Exception {
             runTest("../testData/inheritorsSearch/kotlinFunction/hierarchyWithMissedLevel.kt");
+        }
+
+        @TestMetadata("inEnum.kt")
+        public void testInEnum() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/inEnum.kt");
         }
 
         @TestMetadata("objectLiteralInheritor.kt")

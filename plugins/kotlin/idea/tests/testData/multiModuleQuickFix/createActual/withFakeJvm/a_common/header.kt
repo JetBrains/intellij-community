@@ -1,3 +1,4 @@
-// "Create actual function for module a_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
+// IGNORE_K2
 
 expect fun <caret>foo(arg: Int): String

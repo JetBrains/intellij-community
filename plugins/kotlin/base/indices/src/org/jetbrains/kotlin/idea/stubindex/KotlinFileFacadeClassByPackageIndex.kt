@@ -11,11 +11,12 @@ import org.jetbrains.kotlin.psi.KtFile
 class KotlinFileFacadeClassByPackageIndex internal constructor() : StringStubIndexExtension<KtFile>() {
     companion object Helper : KotlinStringStubIndexHelper<KtFile>(KtFile::class.java) {
         override val indexKey: StubIndexKey<String, KtFile> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeClassByPackageIndex")
+            StubIndexKey.createIndexKey(KotlinFileFacadeClassByPackageIndex::class.java.simpleName)
     }
 
     override fun getKey(): StubIndexKey<String, KtFile> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinFileFacadeClassByPackageIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
         return Helper[key, project, scope]
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.icons.AllIcons;
@@ -28,6 +28,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.Supplier;
 
+import static com.intellij.util.ui.UIUtil.getDeprecatedBackground;
+
+/**
+ * @deprecated Provides incorrect spacing between components and out-dated. The functionality is covered by Kotlin UI DSL,
+ * which should be used instead. ComponentPanelBuilder will be removed after moving Kotlin UI DSL into platform API package
+ */
+@Deprecated
 public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   public static final int MAX_COMMENT_WIDTH = 70;
@@ -190,9 +197,16 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   @Override
-  @NotNull
-  public JPanel createPanel() {
-    JPanel panel = new NonOpaquePanel(new GridBagLayout());
+  public @NotNull JPanel createPanel() {
+    JPanel panel;
+    if (getDeprecatedBackground() == null) {
+      panel = new NonOpaquePanel(new GridBagLayout());
+    }
+    else {
+      panel = new JPanel(new GridBagLayout());
+      UIUtil.applyDeprecatedBackground(panel);
+      UIUtil.applyDeprecatedBackground(myComponent);
+    }
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
                                                    null, 0, 0);
     addToPanel(panel, gc, false);
@@ -224,8 +238,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
   }
 
-  @NotNull
-  public static Insets computeCommentInsets(@NotNull JComponent component, boolean commentBelow) {
+  public static @NotNull Insets computeCommentInsets(@NotNull JComponent component, boolean commentBelow) {
     boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
     boolean isWin10 = UIUtil.isUnderWin10LookAndFeel();
 
@@ -381,8 +394,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
       comment = createCommentComponent(() -> new CommentLabel("") {
         @Override
-        @NotNull
-        protected HyperlinkListener createHyperlinkListener() {
+        protected @NotNull HyperlinkListener createHyperlinkListener() {
           return myHyperlinkListener;
         }
       }, myCommentText, myCommentBelow, MAX_COMMENT_WIDTH, myCommentAllowAutoWrapping);

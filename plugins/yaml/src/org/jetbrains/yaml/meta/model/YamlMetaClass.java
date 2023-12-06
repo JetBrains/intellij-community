@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -25,6 +25,10 @@ public class YamlMetaClass extends YamlMetaType {
 
   public YamlMetaClass(@NonNls @NotNull String typeName) {
     super(typeName);
+  }
+
+  protected YamlMetaClass(@NotNull String typeName, @NotNull String displayName) {
+    super(typeName, displayName);
   }
 
   @Override

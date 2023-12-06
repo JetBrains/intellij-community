@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.util.registry
@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointPriorityListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
@@ -34,14 +34,15 @@ class RegistryKeyBean private constructor() {
     @ApiStatus.Internal
     @JvmStatic
     fun addKeysFromPlugins() {
-      val point = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-        .getExtensionPoint<RegistryKeyBean>("com.intellij.registryKey")
-      val contributedKeys = HashMap<String, RegistryKeyDescriptor>(point.size())
-      point.processWithPluginDescriptor(false) { bean, pluginDescriptor ->
-        val descriptor = createRegistryKeyDescriptor(bean, pluginDescriptor)
-        contributedKeys.put(descriptor.name, descriptor)
-      }
-      Registry.setKeys(java.util.Map.copyOf(contributedKeys))
+      val point = (ApplicationManager.getApplication().extensionArea)
+        .getExtensionPoint<RegistryKeyBean>("com.intellij.registryKey") as ExtensionPointImpl
+      Registry.setKeys(HashMap<String, RegistryKeyDescriptor>().let { mutator ->
+        point.processUnsortedWithPluginDescriptor { bean, pluginDescriptor ->
+          val descriptor = createRegistryKeyDescriptor(bean, pluginDescriptor)
+          mutator.put(descriptor.name, descriptor)
+        }
+        java.util.Map.copyOf(mutator)
+      })
 
       point.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean>, ExtensionPointPriorityListener {
         override fun extensionAdded(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
@@ -88,17 +89,17 @@ class RegistryKeyBean private constructor() {
 
   @RequiredElement
   @Attribute("key")
-  @JvmField var key = ""
+  @JvmField var key: String = ""
 
   @RequiredElement
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Attribute("description")
-  @JvmField var description = ""
+  @JvmField var description: String = ""
 
   @RequiredElement(allowEmpty = true)
   @Attribute("defaultValue")
-  @JvmField var defaultValue = ""
+  @JvmField var defaultValue: String = ""
 
   @Attribute("restartRequired")
-  @JvmField var restartRequired = false
+  @JvmField var restartRequired: Boolean = false
 }

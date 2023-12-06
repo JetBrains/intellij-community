@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.LayeredIcon;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
@@ -17,5 +16,5 @@ public interface PoolOfTestIcons {
   Icon IGNORED_ICON = AllIcons.RunConfigurations.TestIgnored;
   Icon PASSED_IGNORED = AllIcons.RunConfigurations.TestPassedIgnored;
   Icon ERROR_ICON_MARK = AllIcons.Nodes.ErrorMark;
-  Icon TEAR_DOWN_FAILURE = new LayeredIcon(PASSED_ICON, ERROR_ICON_MARK);
+  Icon TEAR_DOWN_FAILURE = LayeredIcon.layeredIcon(() -> new Icon[]{PASSED_ICON, ERROR_ICON_MARK});
 }

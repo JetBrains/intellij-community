@@ -21,13 +21,13 @@ private const val NAME_ATT = "name"
 class IntentionManagerSettings : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun getInstance() = service<IntentionManagerSettings>()
+    fun getInstance(): IntentionManagerSettings = service<IntentionManagerSettings>()
   }
 
   @Volatile
   private var ignoredActions = emptySet<String>()
 
-  fun isShowLightBulb(action: IntentionAction) = !ignoredActions.contains(action.familyName)
+  fun isShowLightBulb(action: IntentionAction): Boolean = !ignoredActions.contains(action.familyName)
 
   override fun loadState(element: Element) {
     val children = element.getChildren(IGNORE_ACTION_TAG)
@@ -50,7 +50,7 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
     return IntentionsMetadataService.getInstance().getUniqueMetadata()
   }
 
-  fun isEnabled(metaData: IntentionActionMetaData) = !ignoredActions.contains(getFamilyName(metaData))
+  fun isEnabled(metaData: IntentionActionMetaData): Boolean = !ignoredActions.contains(getFamilyName(metaData))
 
   fun setEnabled(metaData: IntentionActionMetaData, enabled: Boolean) {
     ignoredActions = if (enabled) ignoredActions - getFamilyName(metaData) else ignoredActions + getFamilyName(metaData)
@@ -74,10 +74,9 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
     IntentionsMetadataService.getInstance().unregisterMetaData(intentionAction)
   }
 
-  private class IntentionSearchableOptionContributor : SearchableOptionContributor() {
-    companion object {
-      private val HTML_PATTERN = Pattern.compile("<[^<>]*>")
-    }
+  internal class IntentionSearchableOptionContributor : SearchableOptionContributor() {
+
+    private val HTML_PATTERN = Pattern.compile("<[^<>]*>")
 
     override fun processOptions(processor: SearchableOptionProcessor) {
       for (metaData in getInstance().getMetaData()) {

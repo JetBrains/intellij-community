@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -76,7 +75,7 @@ public abstract class FileIndentOptionsProvider {
    * @deprecated Use {@link #notifyIndentOptionsChanged(Project, VirtualFile)} or {@link #notifyIndentOptionsChanged(Project)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
   }
@@ -95,9 +94,6 @@ public abstract class FileIndentOptionsProvider {
   }
 
   public final boolean isAllowed(boolean isFullReformat) {
-    return (!isFullReformat || useOnFullReformat()) &&
-           (!(this instanceof PsiBasedFileIndentOptionsProvider) ||
-            !ApplicationManager.getApplication().isDispatchThread() ||
-            ApplicationManager.getApplication().isHeadlessEnvironment());
+    return !isFullReformat || useOnFullReformat();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
@@ -51,7 +51,6 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
@@ -65,10 +64,12 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.reference.SoftReference.dereference;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class ClsFileImpl extends PsiBinaryFileImpl
@@ -181,7 +182,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  public void setPackageName(String packageName) throws IncorrectOperationException {
+  public void setPackageName(@NotNull String packageName) throws IncorrectOperationException {
     throw new IncorrectOperationException("Cannot set package name for compiled files");
   }
 
@@ -325,10 +326,10 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
   @Override
   public @NotNull PsiElement getMirror() {
-    TreeElement mirrorTreeElement = SoftReference.dereference(myMirrorFileElement);
+    TreeElement mirrorTreeElement = dereference(myMirrorFileElement);
     if (mirrorTreeElement == null) {
       synchronized (myMirrorLock) {
-        mirrorTreeElement = SoftReference.dereference(myMirrorFileElement);
+        mirrorTreeElement = dereference(myMirrorFileElement);
         if (mirrorTreeElement == null) {
           VirtualFile file = getVirtualFile();
           AstLoadingFilter.assertTreeLoadingAllowed(file);
@@ -399,7 +400,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   public @Nullable PsiFile getCachedMirror() {
-    TreeElement mirrorTreeElement = SoftReference.dereference(myMirrorFileElement);
+    TreeElement mirrorTreeElement = dereference(myMirrorFileElement);
     return mirrorTreeElement == null ? null : (PsiFile)mirrorTreeElement.getPsi();
   }
 
@@ -471,7 +472,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   public @NotNull StubTree getStubTree() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    StubTree stubTree = SoftReference.dereference(myStub);
+    StubTree stubTree = dereference(myStub);
     if (stubTree != null) return stubTree;
 
     // build newStub out of lock to avoid deadlock
@@ -491,7 +492,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     }
 
     synchronized (myStubLock) {
-      stubTree = SoftReference.dereference(myStub);
+      stubTree = dereference(myStub);
       if (stubTree != null) return stubTree;
 
       stubTree = newStubTree;
@@ -520,7 +521,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     synchronized (myStubLock) {
-      StubTree stubTree = SoftReference.dereference(myStub);
+      StubTree stubTree = dereference(myStub);
       myStub = null;
       if (stubTree != null) {
         ((PsiFileStubImpl<?>)stubTree.getRoot()).clearPsi("cls onContentReload");
@@ -574,9 +575,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       else {
         PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, getPackageName(internalName), level, true);
         try {
-          FileContentPair source = new FileContentPair(file, bytes);
+          FileContentPair source = new FileContentPair(file, reader);
           StubBuildingVisitor<FileContentPair> visitor = new StubBuildingVisitor<>(source, STRATEGY, stub, 0, className);
-          reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+          reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.VISIT_LOCAL_VARIABLES);
           if (visitor.getResult() != null) return stub;
         }
         catch (OutOfOrderInnerClassException e) {
@@ -599,12 +600,12 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     return p > 0 ? internalName.substring(0, p).replace('/', '.') : "";
   }
 
-  static class FileContentPair extends Pair<VirtualFile, byte[]> {
-    FileContentPair(@NotNull VirtualFile file, byte @NotNull [] content) {
+  static class FileContentPair extends Pair<VirtualFile, ClassReader> {
+    FileContentPair(@NotNull VirtualFile file, @NotNull ClassReader content) {
       super(file, content);
     }
 
-    public byte @NotNull [] getContent() {
+    public @NotNull ClassReader getContent() {
       return second;
     }
 
@@ -624,7 +625,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       if (innerClass != null) {
         try {
           byte[] bytes = innerClass.contentsToByteArray(false);
-          return new FileContentPair(innerClass, bytes);
+          return new FileContentPair(innerClass, new ClassReader(bytes));
         }
         catch (IOException ignored) { }
       }
@@ -634,7 +635,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     @Override
     public void accept(FileContentPair innerClass, StubBuildingVisitor<FileContentPair> visitor) {
       try {
-        new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+        innerClass.second.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.VISIT_LOCAL_VARIABLES);
       }
       catch (Exception e) {  // workaround for bug in skipping annotations when a first parameter of inner class is dropped (IDEA-204145)
         VirtualFile file = innerClass.first;

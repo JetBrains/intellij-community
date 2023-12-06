@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.intellij.build.images.sync.findProjectHomePath
 import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -32,7 +33,7 @@ data class IntellijIconClassGeneratorModuleConfig(
 
 abstract class IconClasses {
   open val homePath: String
-    get() = System.getProperty("user.dir")
+    get() = findProjectHomePath()
 
   open val modules: List<JpsModule>
     get() = jpsProject(homePath).modules

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -52,13 +52,13 @@ final class ReadMostlyAnyThreadRWLock {
   }
 
   // Each reader thread has instance of this struct in its thread local. it's also added to global "readers" list.
-  static class Reader {
+  static final class Reader {
     enum State {
       CALM, READ, READ_REQ, WRITE_INTENT, WRITE
     }
-    @NotNull private final Thread thread;   // its thread
+    private final @NotNull Thread thread;   // its thread
     // State of this thread
-    @NotNull volatile State state;
+    volatile @NotNull State state;
     private boolean impatientReads; // true if we should throw PCE on contented read lock
     Reader(@NotNull Thread tread) {
       thread = tread;
@@ -68,8 +68,7 @@ final class ReadMostlyAnyThreadRWLock {
     private ProcessingContext processingContext;
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return "Reader{" +
              "thread=" + thread +
              ", state=" + state +

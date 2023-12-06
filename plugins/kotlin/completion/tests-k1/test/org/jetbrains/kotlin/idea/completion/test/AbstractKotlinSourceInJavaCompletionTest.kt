@@ -15,7 +15,7 @@ abstract class AbstractKotlinSourceInJavaCompletionTest : KotlinFixtureCompletio
 
         val files = mockLibDir.walk().filter { it.isFile }
         for (file in files) {
-            val localPath = file.toRelativeString(File(testDataPath))
+            val localPath = file.toRelativeString(testDataDirectory)
             val vFile = myFixture.copyFileToProject(localPath)
             myFixture.configureFromExistingVirtualFile(vFile)
         }

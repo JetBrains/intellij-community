@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("uast/uast-kotlin/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../uast-kotlin-fir/testData/value")
+@TestMetadata("../../uast-kotlin-fir/tests/testData/value")
 public class FE1UastValuesTestGenerated extends AbstractFE1UastValuesTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,11 +25,11 @@ public class FE1UastValuesTestGenerated extends AbstractFE1UastValuesTest {
 
     @TestMetadata("parametersWithDefaultValue.kt")
     public void testParametersWithDefaultValue() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/value/parametersWithDefaultValue.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/value/parametersWithDefaultValue.kt");
     }
 
     @TestMetadata("topLevelConstant.kt")
     public void testTopLevelConstant() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/value/topLevelConstant.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/value/topLevelConstant.kt");
     }
 }

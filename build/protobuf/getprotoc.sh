@@ -1,7 +1,7 @@
-# Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+# Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 # Usage: . "$(git rev-parse --show-toplevel)/build/protobuf/getprotoc.sh"
-PROTOC_VERSION=${PROTOC_VERSION:-3.19.4}
+PROTOC_VERSION=${PROTOC_VERSION:-24.2}
 
 PROTOC_BIN_DIR="${PROTOC_BIN_DIR:-$(git rev-parse --show-toplevel)/build/protobuf/bin}"
 PROTOC_CACHE_DIR="${PROTOC_CACHE_DIR:-$(dirname "$PROTOC_BIN_DIR")/cache}"
@@ -10,7 +10,12 @@ mkdir -p "$PROTOC_BIN_DIR"
 mkdir -p "$PROTOC_CACHE_DIR"
 
 case "$(uname -s)" in
-  Darwin)  PROTOC_OS_NAME="osx-$(uname -m)" ;;
+  Darwin)
+    case "$(uname -m)" in
+      arm64)   PROTOC_OS_NAME="osx-aarch_64" ;;
+      x86_64)  PROTOC_OS_NAME="osx-x86_64" ;;
+      *)       echo "unrecognized operating system"; exit 1 ;;
+    esac;;
   Linux)   PROTOC_OS_NAME="linux-$(uname -m)" ;;
   *)       echo "unrecognized operating system"; exit 1 ;;
 esac
@@ -40,8 +45,6 @@ getprotoc() {
   fi
 }
 
-getprotoc 3.5.1
-mv -f "$PROTOC_BIN_DIR/protoc-3.5.1" "$PROTOC_BIN_DIR/protoc-java6"
 getprotoc
 
 export PATH="$PROTOC_BIN_DIR:$PATH"

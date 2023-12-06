@@ -4,6 +4,8 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
@@ -76,9 +78,9 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
 
       private void register(CompareInfo info, PsiElement nameElement) {
         if (!suggestFloatingCompare && info.myMayChangeSemantics) return;
-        LocalQuickFix turnOffFloating = info.myMayChangeSemantics ? new SetInspectionOptionFix(
+        LocalQuickFix turnOffFloating = info.myMayChangeSemantics ? LocalQuickFix.from(new UpdateInspectionOptionFix(
           UseCompareMethodInspection.this, "suggestFloatingCompare",
-          JavaAnalysisBundle.message("inspection.use.compare.method.turn.off.double"), false) : null;
+          JavaAnalysisBundle.message("inspection.use.compare.method.turn.off.double"), false)) : null;
         holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.expression.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
                                LocalQuickFix.notNullElements(new ReplaceWithPrimitiveCompareFix(info.getReplacementText()), turnOffFloating));
       }
@@ -340,7 +342,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     }
   }
 
-  private static class ReplaceWithPrimitiveCompareFix implements LocalQuickFix {
+  private static class ReplaceWithPrimitiveCompareFix extends PsiUpdateModCommandQuickFix {
     private final String myReplacementText;
 
     ReplaceWithPrimitiveCompareFix(String replacementText) {
@@ -362,8 +364,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement toReplace;
       List<PsiElement> toDelete = new ArrayList<>();
       CompareInfo info;

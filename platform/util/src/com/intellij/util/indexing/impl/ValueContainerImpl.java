@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IntIdsIterator;
@@ -23,10 +24,12 @@ import java.util.*;
 import java.util.function.IntPredicate;
 
 @ApiStatus.Internal
-public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
+public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
   private static final boolean DO_EXPENSIVE_CHECKS = (IndexDebugProperties.IS_UNIT_TEST_MODE ||
                                                      IndexDebugProperties.EXTRA_SANITY_CHECKS) && !IndexDebugProperties.IS_IN_STRESS_TESTS;
+  private static final boolean USE_SYNCHRONIZED_VALUE_CONTAINER =
+    SystemProperties.getBooleanProperty("idea.use.synchronized.value.container", false);
 
   // there is no volatile as we modify under write lock and read under read lock
   // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
@@ -36,16 +39,28 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   private Int2ObjectMap<Object> myPresentInputIds;
   private List<UpdateOp> myUpdateOps;
 
-  public ValueContainerImpl() {
+  public static <Value> ValueContainerImpl<Value> createNewValueContainer() {
+    return USE_SYNCHRONIZED_VALUE_CONTAINER
+           ? new SynchronizedValueContainerImpl<>()
+           : new ValueContainerImpl<>();
+  }
+
+  public static <Value> ValueContainerImpl<Value> createNewValueContainer(boolean doExpensiveChecks) {
+    return USE_SYNCHRONIZED_VALUE_CONTAINER
+           ? new SynchronizedValueContainerImpl<>(doExpensiveChecks)
+           : new ValueContainerImpl<>(doExpensiveChecks);
+  }
+
+  ValueContainerImpl() {
     this(DO_EXPENSIVE_CHECKS);
   }
 
-  public ValueContainerImpl(boolean doExpensiveChecks) {
+  ValueContainerImpl(boolean doExpensiveChecks) {
     myPresentInputIds = doExpensiveChecks ? new Int2ObjectOpenHashMap<>() : null;
     myUpdateOps = doExpensiveChecks ? new SmartList<>() : null;
   }
 
-  private static class UpdateOp {
+  private static final class UpdateOp {
     private UpdateOp(Type type, int id, Object value) {
       myType = type;
       myInputId = id;
@@ -113,8 +128,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     }
   }
 
-  @Nullable
-  private ValueToInputMap<Value> asMapping() {
+  private @Nullable ValueToInputMap<Value> asMapping() {
     //noinspection unchecked
     return myInputIdMapping instanceof ValueToInputMap ? (ValueToInputMap<Value>)myInputIdMapping : null;
   }
@@ -209,8 +223,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     }
   }
 
-  @NotNull
-  static <Value> Value wrapValue(Value value) {
+  static @NotNull <Value> Value wrapValue(Value value) {
     //noinspection unchecked
     return value == null ? (Value)ObjectUtils.NULL : value;
   }
@@ -219,9 +232,8 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     return value == ObjectUtils.NULL ? null : value;
   }
 
-  @NotNull
   @Override
-  public InvertedIndexValueIterator<Value> getValueIterator() {
+  public @NotNull InvertedIndexValueIterator<Value> getValueIterator() {
     if (myInputIdMapping == null) {
       //noinspection unchecked
       return (InvertedIndexValueIterator<Value>)EmptyValueIterator.INSTANCE;
@@ -247,15 +259,13 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
         return unwrap(next);
       }
 
-      @NotNull
       @Override
-      public IntIterator getInputIdsIterator() {
+      public @NotNull IntIterator getInputIdsIterator() {
         return getIntIteratorOutOfFileSetObject(getFileSetObject());
       }
 
-      @NotNull
       @Override
-      public IntPredicate getValueAssociationPredicate() {
+      public @NotNull IntPredicate getValueAssociationPredicate() {
         return getPredicateOutOfFileSetObject(getFileSetObject());
       }
 
@@ -267,18 +277,16 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     };
   }
 
-  private static class EmptyValueIterator<Value> implements InvertedIndexValueIterator<Value> {
+  private static final class EmptyValueIterator<Value> implements InvertedIndexValueIterator<Value> {
     private static final EmptyValueIterator<Object> INSTANCE = new EmptyValueIterator<>();
 
-    @NotNull
     @Override
-    public ValueContainer.IntIterator getInputIdsIterator() {
+    public @NotNull ValueContainer.IntIterator getInputIdsIterator() {
       throw new IllegalStateException();
     }
 
-    @NotNull
     @Override
-    public IntPredicate getValueAssociationPredicate() {
+    public @NotNull IntPredicate getValueAssociationPredicate() {
       throw new IllegalStateException();
     }
 
@@ -314,8 +322,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     return ((ChangeBufferingList)input).intPredicate();
   }
 
-  @NotNull
-  private static
+  private static @NotNull
   ValueContainer.IntIterator getIntIteratorOutOfFileSetObject(@Nullable Object input) {
     if (input == null) return EMPTY_ITERATOR;
     if (input instanceof Integer) {
@@ -397,8 +404,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     }
   };
 
-  @Nullable
-  private ChangeBufferingList ensureFileSetCapacityForValue(Value value, int count) {
+  private @Nullable ChangeBufferingList ensureFileSetCapacityForValue(Value value, int count) {
     if (count <= 1) return null;
     Object fileSetObject = getFileSetObject(value);
 

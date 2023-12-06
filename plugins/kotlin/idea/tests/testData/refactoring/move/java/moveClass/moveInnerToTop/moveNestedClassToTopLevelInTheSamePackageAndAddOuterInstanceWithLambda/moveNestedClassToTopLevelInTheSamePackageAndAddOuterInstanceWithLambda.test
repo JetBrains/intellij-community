@@ -3,5 +3,6 @@
   "type": "MOVE_INNER_CLASS",
   "targetPackage": "a",
   "outerInstanceParameterName": "outer",
-  "withRuntime": "true"
+  "withRuntime": "true",
+  "enabledInK2": "true"
 }

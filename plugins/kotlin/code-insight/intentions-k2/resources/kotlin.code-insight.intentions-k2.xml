@@ -1,5 +1,17 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.intentions">
   <extensions defaultExtensionNs="com.intellij">
+
+    <testDiffProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.KotlinTestDiffProvider"/>
+    <testFinder implementation="org.jetbrains.kotlin.idea.k2.codeinsight.intentions.testIntegration.K2TestFinder"/>
+    <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.intentions.testIntegration.K2TestCreator"/>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.testIntegration.KotlinCreateTestIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
     <intentionAction>
       <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceUnderscoreWithTypeArgumentIntention</className>
@@ -149,6 +161,13 @@
 
     <intentionAction>
       <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddFullQualifierIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.InsertExplicitTypeArgumentsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
@@ -202,5 +221,27 @@
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertBinaryExpressionWithDemorgansLawIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.SplitPropertyDeclarationIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.InvertIfConditionIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
   </extensions>
 </idea-plugin>

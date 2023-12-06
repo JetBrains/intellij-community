@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import kotlinx.coroutines.CoroutineScope;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,9 @@ public interface PluginAwareClassLoader {
 
   @NotNull PluginId getPluginId();
 
-  int getInstanceId();
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @Nullable String getModuleId();
 
   long getEdtTime();
 

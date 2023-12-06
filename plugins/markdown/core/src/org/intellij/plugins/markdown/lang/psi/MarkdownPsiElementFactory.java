@@ -13,8 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellij.plugins.markdown.editor.images.ImageUtils;
-import org.intellij.plugins.markdown.editor.images.MarkdownImageData;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.intellij.plugins.markdown.lang.psi.impl.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -58,32 +56,6 @@ public final class MarkdownPsiElementFactory {
     final MarkdownFile file = createFile(project, content);
 
     return (MarkdownCodeFence)file.getFirstChild();
-  }
-
-  @NotNull
-  public static PsiElement createImage(@NotNull Project project,
-                                       @Nullable String description,
-                                       @NotNull String path,
-                                       @Nullable String title) {
-    String text = ImageUtils.createMarkdownImageText(
-      Objects.requireNonNullElse(description, ""),
-      path,
-      Objects.requireNonNullElse(title, "")
-    );
-    return createFile(project, text).getFirstChild().getFirstChild();
-  }
-
-  @NotNull
-  public static PsiElement createHtmlBlockWithImage(@NotNull Project project, @NotNull MarkdownImageData imageData) {
-    String text = ImageUtils.createHtmlImageText(imageData);
-    return createFile(project, text).getFirstChild();
-  }
-
-  @NotNull
-  public static PsiElement createHtmlImageTag(@NotNull Project project, @NotNull MarkdownImageData imageData) {
-    String text = ImageUtils.createHtmlImageText(imageData);
-    PsiElement root = createFile(project, "Prefix text" + text).getFirstChild();
-    return root.getFirstChild().getNextSibling();
   }
 
   @NotNull

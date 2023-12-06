@@ -29,6 +29,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+/**
+ * Command runs single inspection by short name
+ * Syntax: %runSingleInspection <name>
+ */
 public class SingleInspectionCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "runSingleInspection";
   private static final Logger LOGGER = Logger.getInstance(SingleInspectionCommand.class);
@@ -65,7 +69,8 @@ public class SingleInspectionCommand extends AbstractCommand {
             File tempDirectory = FileUtil.createTempDirectory("inspection", "result");
             final InspectionResultsView view = getView();
             if (view != null) {
-              ExportToXMLAction.Companion.dumpToXml(view.getCurrentProfile(), view.getTree(), view.getProject(), view.getGlobalInspectionContext(), tempDirectory.toPath());
+              ExportToXMLAction.Util.dumpToXml(view.getCurrentProfile(), view.getTree(), view.getProject(),
+                                               view.getGlobalInspectionContext(), tempDirectory.toPath());
 
               File[] files = tempDirectory.listFiles();
               if (files != null) {
@@ -74,7 +79,7 @@ public class SingleInspectionCommand extends AbstractCommand {
                     continue;
                   }
                   Path path = file.toPath();
-                  try(Stream<String> lines = Files.lines(path).filter(line -> line.contains("<problem>"))) {
+                  try (Stream<String> lines = Files.lines(path).filter(line -> line.contains("<problem>"))) {
                     this.numberOfProblems = lines.count();
                   }
                 }

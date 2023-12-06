@@ -1,19 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings
 
-import com.intellij.openapi.components.SimplePersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.messages.Topic
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
 
+@Service(Service.Level.PROJECT)
 @State(name = "MarkdownSettings", storages = [(Storage("markdown.xml"))])
 class MarkdownSettings(internal val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
   var areInjectionsEnabled
@@ -60,19 +56,6 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.isFileGroupingEnabled
     set(value) { state.isFileGroupingEnabled = value }
 
-  var fontSize
-    get() = state.fontSize
-    set(value) { state.fontSize = value }
-
-  var fontFamily
-    get() = state.fontFamily
-    set(value) { state.fontFamily = value }
-
-  override fun loadState(state: MarkdownSettingsState) {
-    val migrated = possiblyMigrateSettings(state)
-    super.loadState(migrated)
-  }
-
   override fun noStateLoaded() {
     super.noStateLoaded()
     loadState(MarkdownSettingsState())
@@ -84,37 +67,6 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     publisher.beforeSettingsChanged(this)
     block(this)
     publisher.settingsChanged(this)
-  }
-
-  private fun possiblyMigrateSettings(from: MarkdownSettingsState): MarkdownSettingsState {
-    @Suppress("DEPRECATION")
-    val old = MarkdownApplicationSettings.getInstance().takeIf { it.state != null }
-    val migration = MarkdownSettingsMigration.getInstance(project)
-    if (old == null || migration.state.stateVersion == 1) {
-      return from
-    }
-    logger.info("Migrating Markdown settings")
-    val migrated = MarkdownSettingsState()
-    with(migrated) {
-      old.markdownPreviewSettings.let {
-        previewPanelProviderInfo = it.htmlPanelProviderInfo
-        splitLayout = it.splitEditorLayout
-        isAutoScrollEnabled = it.isAutoScrollPreview
-        isVerticalSplit = it.isVerticalSplit
-      }
-      old.markdownCssSettings.let {
-        customStylesheetPath = it.customStylesheetPath.takeIf { _ -> it.isCustomStylesheetEnabled }
-        customStylesheetText = it.customStylesheetText.takeIf { _ -> it.isTextEnabled }
-        fontFamily = it.fontFamily
-        fontSize = it.fontSize
-      }
-      enabledExtensions = old.extensionsEnabledState
-      areInjectionsEnabled = !old.isDisableInjections
-      showProblemsInCodeBlocks = !old.isHideErrors
-      resetModificationCount()
-    }
-    migration.state.stateVersion = 1
-    return migrated
   }
 
   interface ChangeListener {
@@ -132,12 +84,10 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
   }
 
   companion object {
-    private val logger = logger<MarkdownSettings>()
-
-    val defaultFontSize
+    internal val defaultFontSize
       get() = JBCefApp.normalizeScaledSize((checkNotNull(AppEditorFontOptions.getInstance().state).FONT_SIZE + 0.5).toInt())
 
-    val defaultFontFamily
+    internal val defaultFontFamily
       get() = checkNotNull(AppEditorFontOptions.getInstance().state).FONT_FAMILY
 
     @JvmStatic
@@ -151,9 +101,5 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
 
     @JvmStatic
     fun getInstance(project: Project): MarkdownSettings = project.service()
-
-    fun getInstanceForDefaultProject(): MarkdownSettings {
-      return ProjectManager.getInstance().defaultProject.service()
-    }
   }
 }

@@ -11,11 +11,11 @@
     <psi.referenceContributor language="JSON" implementation="org.jetbrains.idea.devkit.themes.ThemeJsonPsiReferenceContributor"/>
     <spellchecker.support language="JSON" order="first" implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
     <editorNotificationProvider implementation="org.jetbrains.idea.devkit.themes.actions.ThemeEditorToolbar"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService"/>
     <lang.documentationProvider language="JSON" order="first"
                                 implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.themes.ThemeEPPathReferenceContributor"/>
     <localInspection language="UAST" shortName="UnregisteredNamedColor"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" isInternal="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.themes.UnregisteredNamedColorInspection"

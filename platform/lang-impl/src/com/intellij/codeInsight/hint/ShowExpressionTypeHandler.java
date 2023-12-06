@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hint;
 
@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -37,7 +38,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
+public final class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   private final boolean myRequestFocus;
 
   public ShowExpressionTypeHandler(boolean requestFocus) {
@@ -51,7 +52,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final Set<ExpressionTypeProvider> handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
@@ -84,7 +85,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
       if (typeInfo.isRepeating() && provider.hasAdvancedInformation()) {
         displayHint(typeInfo, true);
       } else {
-        callback.pass(expression);
+        callback.accept(expression);
       }
     }
     else {

@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
@@ -38,7 +39,7 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
  * [notifier] will call first applicable [ScriptChangesNotifier.listeners] when editor is activated or document changed.
  * Listener should do something to invalidate configuration and schedule reloading.
  */
-class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigurationManager {
+class CompositeScriptConfigurationManager(val project: Project, val scope: CoroutineScope) : ScriptConfigurationManager {
     private val notifier = ScriptChangesNotifier(project)
 
     private val classpathRoots: ScriptClassRootsCache
@@ -49,7 +50,7 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
 
     val default = DefaultScriptingSupport(this)
 
-    val updater = object : ScriptClassRootsUpdater(project, this) {
+    val updater = object : ScriptClassRootsUpdater(project, this, scope) {
         override fun gatherRoots(builder: ScriptClassRootsBuilder) {
             default.collectConfigurations(builder)
             plugins.forEach { it.collectConfigurations(builder) }
@@ -106,7 +107,7 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
             ?: default.isConfigurationLoadingInProgress(file)
 
     fun getLightScriptInfo(file: String): ScriptClassRootsCache.LightScriptInfo? =
-        classpathRoots.getLightScriptInfo(file)
+        updater.classpathRoots.getLightScriptInfo(file)
 
     override fun updateScriptDefinitionReferences() {
         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()

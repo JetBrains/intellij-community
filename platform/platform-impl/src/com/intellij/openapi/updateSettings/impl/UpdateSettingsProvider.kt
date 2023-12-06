@@ -13,10 +13,8 @@ interface UpdateSettingsProvider {
   fun getPluginRepositories(): List<String>
 }
 
-internal fun addPluginRepositories(to: MutableList<String>) {
-  for (provider in UPDATE_SETTINGS_PROVIDER_EP.extensionList) {
-    LOG.runAndLogException {
-      to.addAll(provider.getPluginRepositories())
-    }
-  }
+internal fun getPluginRepositories(): List<String> = UPDATE_SETTINGS_PROVIDER_EP.extensionList.flatMap {
+  LOG.runAndLogException {
+    it.getPluginRepositories()
+  } ?: emptyList()
 }

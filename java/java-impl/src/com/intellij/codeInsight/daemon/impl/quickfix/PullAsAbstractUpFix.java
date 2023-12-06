@@ -108,7 +108,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
         navigator.navigate(editor, JavaBundle.message("choose.super.class.popup.title"), processor);
       }
       else {
-        navigator.performSilently(project, processor);
+        navigator.performSilently(processor);
       }
 
       if (noClassesFound.get()) {

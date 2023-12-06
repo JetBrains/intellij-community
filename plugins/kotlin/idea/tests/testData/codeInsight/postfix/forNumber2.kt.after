@@ -1,5 +1,5 @@
-fun foo(i: Int) {
-    for (i1 in 0..i) {
+fun foo(int: Int) {
+    for (i in 0 until int) {
         <caret>
     }
 }

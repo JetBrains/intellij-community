@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.ide.IdeBundle;
@@ -40,12 +40,12 @@ public abstract class SchemesToImportPopup<T> {
   private void showList(JList list, Runnable selectAction) {
     JBPopupFactory.getInstance().createListPopupBuilder(list).
       setTitle(IdeBundle.message("popup.title.import.scheme")).
-      setItemChoosenCallback(selectAction).
+      setItemChosenCallback(selectAction).
       createPopup().
       showInCenterOf(myParent);
   }
 
-  private static class SchemesToImportListCellRenderer implements ListCellRenderer {
+  private static final class SchemesToImportListCellRenderer implements ListCellRenderer {
     private final JPanel myPanel = new JPanel(new BorderLayout());
     private final JLabel myNameLabel = new JLabel("", SwingConstants.LEFT);
 
@@ -77,5 +77,5 @@ public abstract class SchemesToImportPopup<T> {
     }
   }
 
-  abstract protected void onSchemeSelected(T scheme);
+  protected abstract void onSchemeSelected(T scheme);
 }

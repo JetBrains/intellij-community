@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.actions.GitInit;
@@ -44,6 +45,7 @@ final class GitRepositoryInitializerImpl implements GitRepositoryInitializer {
 
       try {
         GitFileUtils.addFiles(project, root, Collections.singletonList(root));
+        VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(root);
       }
       catch (VcsException e) {
         VcsNotifier.getInstance(project).notifyError(INIT_STAGE_FAILED, GitBundle.message("action.Git.Init.Stage.error"),

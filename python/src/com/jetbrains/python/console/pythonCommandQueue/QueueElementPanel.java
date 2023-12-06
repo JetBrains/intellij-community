@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console.pythonCommandQueue;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.actions.ContentChooser;
 import com.intellij.openapi.ui.popup.IconButton;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
@@ -41,7 +40,6 @@ public final class QueueElementPanel {
   private static final int ROOT_PANEL_PREFERRED_SIZE_HEIGHT = 20;
 
   private volatile boolean isCanceled;
-  private final @NlsContexts.Tooltip String myCancelTooltipText = CoreBundle.message("button.cancel");
 
   public QueueElementPanel(@NotNull ConsoleCommunication.ConsoleCodeFragment codeFragment, @Nullable Icon icon) {
     myCodeFragment = codeFragment;
@@ -84,7 +82,7 @@ public final class QueueElementPanel {
   @NotNull
   private QueueElementButton createCancelButton() {
     InplaceButton cancelButton = new InplaceButton(
-      new IconButton(myCancelTooltipText,
+      new IconButton(CoreBundle.message("button.cancel"),
                      AllIcons.Process.StopHovered,
                      AllIcons.Process.StopHovered),
       __ -> cancelRequest());

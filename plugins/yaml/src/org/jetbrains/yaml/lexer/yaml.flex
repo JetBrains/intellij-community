@@ -49,7 +49,6 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   public boolean isCleanState() {
     return yystate() == YYINITIAL
            && myBraceCount == 0
-           && yycolumn == 0
            && myPrevElementIndent == 0
            && !myPossiblePlainTextScalarContinue;
   }
@@ -61,9 +60,13 @@ import org.jetbrains.yaml.YAMLTokenTypes;
     yycolumn = 0;
     myReturnState = YYINITIAL;
 
+    prepareForNewDocument();
+    yybegin(YYINITIAL);
+  }
+
+  private void prepareForNewDocument() {
     myPrevElementIndent = 0;
     myPossiblePlainTextScalarContinue = false;
-    yybegin(YYINITIAL);
   }
 
   //-------------------------------------------------------------------------------------------------------------------
@@ -264,6 +267,7 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
   ("---" | "...") / {NS_CHAR} { goToState(getStateAfterLineStart(0)); }
 
   "---" {
+        prepareForNewDocument();
         return DOCUMENT_MARKER;
       }
 

@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider2
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
@@ -17,15 +17,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.InputStream
+import java.nio.file.FileSystemException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.io.path.exists
+import kotlin.io.path.fileSize
+import kotlin.io.path.inputStream
+import kotlin.io.path.isHidden
 
 abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManager {
-
   protected val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()
 
   override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {
@@ -67,21 +70,22 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
   protected open fun isPathIgnored(path: String): Boolean = false
 
   override fun <R> read(path: String, consumer: (InputStream?) -> R): R {
-    var fileToDelete: Path? = null
+    var fileToDelete: Path?
     lock.read {
       val file = dir.resolve(path)
-      when (file.sizeOrNull()) {
-        -1L -> return consumer(null)
-        0L -> {
-          // we ignore empty files as well - delete if corrupted
-          fileToDelete = file
+      val size = try { file.fileSize() } catch (_: FileSystemException) {
+        return consumer(null)
+      }
+      when (size) {
+        0L -> fileToDelete = file  // we ignore empty files as well - delete if corrupted
+        else -> {
+          return file.inputStream().use(consumer)
         }
-        else -> return file.inputStream().use(consumer)
       }
     }
-
     LOG.runAndLogException {
-      if (fileToDelete!!.sizeOrNull() == 0L) {
+      val size = try { fileToDelete!!.fileSize() } catch (_: FileSystemException) { -1L }
+      if (size == 0L) {
         LOG.warn("File $path is empty (length 0), will be removed")
         delete(fileToDelete!!, path)
       }
@@ -165,7 +169,9 @@ suspend fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvi
   return processedFiles!!
 }
 
-class RepositoryVirtualFile(private val path: String) : LightVirtualFile(PathUtilRt.getFileName(path), StdFileTypes.XML, "", Charsets.UTF_8, 1L) {
+class RepositoryVirtualFile(private val path: String) :
+  LightVirtualFile(PathUtilRt.getFileName(path), FileTypeManager.getInstance().getStdFileType("XML"), "", Charsets.UTF_8, 1L)
+{
   var byteContent: ByteArray? = null
     private set
 

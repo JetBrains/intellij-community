@@ -84,11 +84,7 @@ class PyInvertIfConditionIntention : PyBaseIntentionAction() {
     }
 
     val elsePart = statement.elsePart
-    if (elsePart != null && parents.contains(elsePart.statementList)) {
-      return false
-    }
-
-    return true
+    return elsePart == null || !parents.contains(elsePart.statementList)
   }
 
   override fun doInvoke(project: Project, editor: Editor, file: PsiFile) {

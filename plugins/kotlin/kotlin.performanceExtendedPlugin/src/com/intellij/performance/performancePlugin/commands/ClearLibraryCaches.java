@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performance.performancePlugin.commands;
 
+import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
@@ -9,7 +10,6 @@ import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
-import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker;
 
 public class ClearLibraryCaches extends AbstractCommand {
 
@@ -23,7 +23,7 @@ public class ClearLibraryCaches extends AbstractCommand {
   protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     WriteAction.runAndWait(() -> {
-      LibraryModificationTracker.getInstance(context.getProject()).incModificationCount();
+        JavaLibraryModificationTracker.incModificationCount(context.getProject());
       actionCallback.setDone();
     });
     return Promises.toPromise(actionCallback);

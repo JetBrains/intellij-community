@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class IgnoredFilesAndFoldersPanel extends JPanel {
+final class IgnoredFilesAndFoldersPanel extends JPanel {
 
   private final DefaultListModel<String> myModel = new DefaultListModel<>();
   private final JBList<String> myPatternList;
@@ -114,7 +114,7 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
     }
   }
 
-  private class PatternEditField extends JBTextField {
+  private final class PatternEditField extends JBTextField {
     private final         PatternValueEditor myValueEditor;
     private @Nls @NlsSafe String             myOldValue;
 
@@ -204,14 +204,14 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
                                       .setHideOnKeyOutside(true)
                                       .setFadeoutTime(1000)
                                       .createBalloon();
-      int xLoc = (int) getGraphics().getFontMetrics().getStringBounds(getText(), getGraphics()).getWidth();
+      int xLoc = getFontMetrics(getFont()).stringWidth(getText());
       RelativePoint relativePoint =
         new RelativePoint(this, new Point(xLoc, this.getHeight()));
       balloon.show(relativePoint, Balloon.Position.below);
     }
   }
 
-  private static class PatternValueEditor extends TextFieldValueEditor<String> {
+  private static final class PatternValueEditor extends TextFieldValueEditor<String> {
 
     PatternValueEditor(@NotNull JTextField field) {
       super(field, FileTypesBundle.message("filetype.ignore.pattern"), "");

@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.paint;
 
+import com.intellij.ui.icons.HiDPIImage;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.junit.Assert;
@@ -33,9 +33,9 @@ public class JBHiDPIScaledImageTest {
       // for testing purpose
       image = ImageUtil.createImage(ctx, testIcon.getIconWidth(), testIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.ROUND);
     } else {
-      if (StartupUiUtil.isJreHiDPI(ctx)) {
-        image = new JBHiDPIScaledImage(ctx, testIcon.getIconWidth(), testIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB_PRE,
-                                       PaintUtil.RoundingMode.ROUND);
+      if (StartupUiUtil.INSTANCE.isJreHiDPI(ctx)) {
+        image = new HiDPIImage(ctx, testIcon.getIconWidth(), testIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB_PRE,
+                               PaintUtil.RoundingMode.ROUND);
       } else {
         image = GraphicsEnvironment.getLocalGraphicsEnvironment()
           .getDefaultScreenDevice().getDefaultConfiguration()

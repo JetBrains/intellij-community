@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -644,19 +643,19 @@ public final class PyUtil {
    * @param <P>     key type
    */
   @NotNull
-  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull NotNullFunction<P, T> f) {
+  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull Function<P, @NotNull T> f) {
     final T result = getNullableParameterizedCachedValue(element, param, f);
     assert result != null;
     return result;
   }
 
   /**
-   * Same as {@link #getParameterizedCachedValue(PsiElement, Object, NotNullFunction)} but allows nulls.
+   * Same as {@link #getParameterizedCachedValue(PsiElement, Object, Function)} but allows nulls.
    */
   @Nullable
   public static <T, P> T getNullableParameterizedCachedValue(@NotNull PsiElement element,
                                                              @Nullable P param,
-                                                             @NotNull NullableFunction<P, T> f) {
+                                                             @NotNull Function<P, @Nullable T> f) {
     final CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
     final Map<Optional<P>, Optional<T>> cache = CachedValuesManager.getCachedValue(element, manager.getKeyForClass(f.getClass()), () -> {
       // concurrent hash map is a null-hostile collection
@@ -914,6 +913,22 @@ public final class PyUtil {
     } // don't touch non-dirs
   }
 
+  @Nullable
+  public static PsiElement turnDirIntoInitPy(@Nullable PsiElement target) {
+    if (!(target instanceof PsiDirectory psiDirectory)) return target;
+    return psiDirectory.findFile(PyNames.INIT_DOT_PY);
+  }
+
+  @Nullable
+  public static PsiElement turnDirIntoInitPyi(@Nullable PsiElement target) {
+    if (!(target instanceof PsiDirectory psiDirectory)) return target;
+    final PsiFile initStub = psiDirectory.findFile(PyNames.INIT_DOT_PYI);
+    if (initStub != null && !PyiStubSuppressor.isIgnoredStub(initStub)) {
+      return initStub;
+    }
+    return null;
+  }
+
   /**
    * If directory is a PsiDirectory, that is also a valid Python package, return PsiFile that points to __init__.py,
    * if such file exists, or directory itself (i.e. namespace package). Otherwise, return {@code null}.
@@ -973,7 +988,8 @@ public final class PyUtil {
    */
   public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
     if (isExplicitPackage(directory)) return true;
-    final LanguageLevel level = anchor != null ? LanguageLevel.forElement(anchor) : LanguageLevel.forElement(directory);
+    @NotNull PsiElement element = anchor != null ? anchor : directory;
+    final LanguageLevel level = LanguageLevel.forElement(element);
     if (!level.isPython2()) {
       return true;
     }
@@ -1158,12 +1174,7 @@ public final class PyUtil {
   public static Collection<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
     if (module != null) {
-      Collection<VirtualFile> roots = getSourceRoots(module);
-      ModelBranch branch = ModelBranch.getPsiBranch(foothold);
-      if (branch != null) {
-        return ContainerUtil.map(roots, branch::findFileCopy);
-      }
-      return roots;
+      return getSourceRoots(module);
     }
     return Collections.emptyList();
   }

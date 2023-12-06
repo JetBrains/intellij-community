@@ -15,7 +15,13 @@ import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.UNDER_IGNORED
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -23,25 +29,19 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ThreeState
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.test.assertFalse
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class ModuleRootsInProjectFileIndexTest {
   @JvmField
   @RegisterExtension
@@ -385,7 +385,6 @@ class ModuleRootsInProjectFileIndexTest {
 
   @Test
   fun `is in content by url for existing file`() {
-    assumeTrue(WorkspaceFileIndexEx.IS_ENABLED)
     val file = projectModel.baseProjectDir.newVirtualFile("module/file.txt")
     PsiTestUtil.addContentRoot(module, moduleDir)
     assertEquals(ThreeState.YES, WorkspaceFileIndex.getInstance(projectModel.project).isUrlInContent(file.url))
@@ -393,17 +392,21 @@ class ModuleRootsInProjectFileIndexTest {
 
   @Test
   fun `is url in content for non existing file`() {
-    assumeTrue(WorkspaceFileIndexEx.IS_ENABLED)
     val moduleUrl = moduleDir.url
     val rootUrl = "$moduleUrl/root"
     val excludedUrl = "$moduleUrl/root/excluded"
     val urlManager = VirtualFileUrlManager.getInstance(projectModel.project)
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        it.addContentRootEntity(urlManager.fromUrl(rootUrl),             
-                                listOf(urlManager.fromUrl(excludedUrl)), 
-                                emptyList(),
-                                it.resolve(ModuleId(module.name))!!)
+        val module = it.resolve(ModuleId(module.name))!!
+        it addEntity ContentRootEntity(urlManager.fromUrl(rootUrl),
+                                       emptyList<@NlsSafe String>(),
+                                       module.entitySource) {
+          excludedUrls = listOf(urlManager.fromUrl(excludedUrl)).map {
+            ExcludeUrlEntity(it, module.entitySource)
+          }
+          this.module = module
+        }
       }
     }
     val workspaceFileIndex = WorkspaceFileIndex.getInstance(projectModel.project)

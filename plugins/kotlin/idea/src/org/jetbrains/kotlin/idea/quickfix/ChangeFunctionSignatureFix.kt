@@ -5,13 +5,16 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.SYNTHESIZED
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -28,6 +31,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
+import org.jetbrains.kotlin.resolve.isValueClass
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
@@ -50,7 +54,7 @@ abstract class ChangeFunctionSignatureFix(
             ?: (expression as? KtNameReferenceExpression)?.getReferencedName()?.takeIf { !isSpecialName(it) }
 
         return when {
-            argumentName != null -> Fe10KotlinNameSuggester.suggestNameByName(argumentName, validator)
+            argumentName != null -> KotlinNameSuggester.suggestNameByName(argumentName, validator)
             expression != null -> {
                 val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
                 val expressionText = expression.text
@@ -62,12 +66,12 @@ abstract class ChangeFunctionSignatureFix(
                 }
                 Fe10KotlinNameSuggester.suggestNamesByExpressionAndType(expression, null, bindingContext, validator, "param").first()
             }
-            else -> Fe10KotlinNameSuggester.suggestNameByName("param", validator)
+            else -> KotlinNameSuggester.suggestNameByName("param", validator)
         }
     }
 
     private fun isSpecialName(name: String): Boolean {
-        return name == "it" || name == "field"
+        return name == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier || name == "field"
     }
 
     companion object : KotlinSingleIntentionActionFactoryWithDelegate<KtCallElement, CallableDescriptor>() {
@@ -91,6 +95,10 @@ abstract class ChangeFunctionSignatureFix(
                 val arguments = originalElement.valueArguments
 
                 if (arguments.size > parameters.size) {
+                    if (functionDescriptor is ConstructorDescriptor &&
+                        functionDescriptor.containingDeclaration.isValueClass()
+                    ) return null
+
                     val bindingContext = originalElement.analyze()
                     val call = originalElement.getCall(bindingContext) ?: return null
                     val argumentToParameter = call.mapArgumentsToParameters(functionDescriptor)

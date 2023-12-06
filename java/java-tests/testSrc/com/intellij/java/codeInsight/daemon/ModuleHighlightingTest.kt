@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
+import com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.IllegalDependencyOnInternalPackageInspection
 import com.intellij.codeInspection.deprecation.DeprecationInspection
@@ -14,10 +15,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaCompilerConfigurationProxy
+import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.testFramework.ExtensionTestUtil
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile
 
@@ -76,6 +79,11 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testFileDuplicateInTestRoot() {
     addTestFile("module-info.java", """module M.test { }""")
+    highlight("""module M { }""")
+  }
+
+  fun testFileDuplicateInResourceRoot() {
+    addResourceFile("module-info.java", """module M.test { }""")
     highlight("""module M { }""")
   }
 
@@ -400,7 +408,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     """.trimIndent())
     }
   }
-  
+
   fun testNoModuleInfoSamePackageAsInAttachedLibraryWithModuleInfo() {
     highlight("Main.java", """
       package lib.named;
@@ -589,6 +597,35 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         """.trimIndent())
   }
 
+  fun testAutomaticModuleFromVirtualManifest() {
+    val m6Attributes = mapOf(PsiJavaModule.AUTO_MODULE_NAME to "m6.bar")
+    val attributesMap = mapOf(M6.moduleName to m6Attributes)
+    ExtensionTestUtil.maskExtensions(VirtualManifestProvider.EP_NAME, listOf(TestVirtualManifestProvider(attributesMap)),
+                                     testRootDisposable)
+    highlight("module-info.java", "module M { requires m6.bar; }")
+
+    addFile("p/B.java", "package p; public class B {}", module = M6)
+    addFile("p/C.java", "package p; public class C {}", module = M4)
+    highlight("A.java", """
+        public class A extends p.B {
+          private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
+        }
+        """.trimIndent())
+  }
+
+  fun testAutomaticModuleWithoutVirtualManifest() {
+    ExtensionTestUtil.maskExtensions(VirtualManifestProvider.EP_NAME, listOf(TestVirtualManifestProvider(emptyMap())), testRootDisposable)
+    highlight("module-info.java", "module M { requires <error descr=\"Module not found: m6.bar\">m6.bar</error>; }")
+
+    addFile("p/B.java", "package p; public class B {}", module = M6)
+    addFile("p/C.java", "package p; public class C {}", module = M4)
+    highlight("A.java", """
+        public class A extends <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.B {
+          private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
+        }
+        """.trimIndent())
+  }
+
   fun testAutomaticModuleFromManifestHighlighting() {
     addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: m6.bar\n", module = M6)
     addFile("p/B.java", "package p; public class B {}", M7)
@@ -646,11 +683,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
-    val available = myFixture.availableIntentions
-      .map { IntentionActionDelegate.unwrap(it)::class.java }
-      .filter { it.name.startsWith("com.intellij.codeInsight.") }
+    val availableIntentions = myFixture.availableIntentions
+    val available = availableIntentions
+      .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
+      .filter { it.name.startsWith("com.intellij.codeInsight.") &&
+                !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))}
       .map { it.simpleName }
-    assertThat(available).containsExactlyInAnyOrder(*fixes)
+    assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>
 }

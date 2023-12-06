@@ -79,7 +79,7 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
     }
   }
 
-  fun clone(clear: Boolean, clearable: Boolean) = OneTimeString(toCharArray(clear), clearable = clearable)
+  fun clone(clear: Boolean, clearable: Boolean): OneTimeString = OneTimeString(toCharArray(clear), clearable = clearable)
 
   override fun equals(other: Any?): Boolean {
     if (other is CharSequence) {

@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("uast/uast-kotlin/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../uast-kotlin-fir/testData/declaration")
+@TestMetadata("../../uast-kotlin-fir/tests/testData/declaration")
 public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,96 +25,146 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
 
     @TestMetadata("annotationOnElvis.kt")
     public void testAnnotationOnElvis() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/annotationOnElvis.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/annotationOnElvis.kt");
+    }
+
+    @TestMetadata("build.gradle.kts")
+    public void testBuild_gradle() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/build.gradle.kts");
     }
 
     @TestMetadata("commentsOnDataClass.kt")
     public void testCommentsOnDataClass() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/commentsOnDataClass.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/commentsOnDataClass.kt");
     }
 
     @TestMetadata("commentsOnProperties.kt")
     public void testCommentsOnProperties() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/commentsOnProperties.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/commentsOnProperties.kt");
     }
 
     @TestMetadata("companionInAnnotation.kt")
     public void testCompanionInAnnotation() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/companionInAnnotation.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/companionInAnnotation.kt");
     }
 
     @TestMetadata("constructorProperties.kt")
     public void testConstructorProperties() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/constructorProperties.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/constructorProperties.kt");
     }
 
     @TestMetadata("constructorWithJvmOverloads.kt")
     public void testConstructorWithJvmOverloads() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/constructorWithJvmOverloads.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/constructorWithJvmOverloads.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_accessors.kt")
+    public void testDeprecatedHiddenProperty_accessors() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_accessors.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_getter.kt")
+    public void testDeprecatedHiddenProperty_getter() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_getter.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_interface.kt")
+    public void testDeprecatedHiddenProperty_interface() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_interface.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_noAccesor.kt")
+    public void testDeprecatedHiddenProperty_noAccesor() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_noAccesor.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_setter.kt")
+    public void testDeprecatedHiddenProperty_setter() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_setter.kt");
     }
 
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/doWhile.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/doWhile.kt");
     }
 
     @TestMetadata("facade.kt")
     public void testFacade() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/facade.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/facade.kt");
     }
 
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/if.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/if.kt");
+    }
+
+    @TestMetadata("implicitItOfLambdaOverEnumEntries.kt")
+    public void testImplicitItOfLambdaOverEnumEntries() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/implicitItOfLambdaOverEnumEntries.kt");
     }
 
     @TestMetadata("importOnDemand.kt")
     public void testImportOnDemand() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/importOnDemand.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/importOnDemand.kt");
     }
 
     @TestMetadata("init.kt")
     public void testInit() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/init.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/init.kt");
     }
 
     @TestMetadata("interfaceCompanionObject.kt")
     public void testInterfaceCompanionObject() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/interfaceCompanionObject.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/interfaceCompanionObject.kt");
     }
 
     @TestMetadata("labeledExpression.kt")
     public void testLabeledExpression() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/labeledExpression.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/labeledExpression.kt");
     }
 
     @TestMetadata("mangling.kt")
     public void testMangling() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/mangling.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/mangling.kt");
+    }
+
+    @TestMetadata("missingNames.kt")
+    public void testMissingNames() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/missingNames.kt");
+    }
+
+    @TestMetadata("nullabilityOfTypeParameter.kt")
+    public void testNullabilityOfTypeParameter() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/nullabilityOfTypeParameter.kt");
     }
 
     @TestMetadata("objects.kt")
     public void testObjects() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/objects.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/objects.kt");
     }
 
     @TestMetadata("overriddenYetDeprecated.kt")
     public void testOverriddenYetDeprecated() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/overriddenYetDeprecated.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/overriddenYetDeprecated.kt");
     }
 
     @TestMetadata("reflectKclassExperimental.kt")
     public void testReflectKclassExperimental() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/reflectKclassExperimental.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/reflectKclassExperimental.kt");
     }
 
     @TestMetadata("retention.kt")
     public void testRetention() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/retention.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/retention.kt");
     }
 
     @TestMetadata("returns.kt")
     public void testReturns() throws Exception {
-        runTest("../../uast-kotlin-fir/testData/declaration/returns.kt");
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/returns.kt");
+    }
+
+    @TestMetadata("suspendReturnsResult.kt")
+    public void testSuspendReturnsResult() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/suspendReturnsResult.kt");
     }
 }

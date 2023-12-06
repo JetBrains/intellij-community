@@ -14,9 +14,9 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.commit.CommitWorkflowHandler;
+import com.intellij.vcs.commit.CommitWorkflowUi;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.io.File;
 import java.util.List;
 
 
@@ -32,8 +32,6 @@ public interface VcsDataKeys {
   DataKey<VcsRevisionNumber[]> VCS_REVISION_NUMBERS = DataKey.create("VCS_REVISION_NUMBERS");
   DataKey<String[]> VCS_COMMIT_SUBJECTS = DataKey.create("VCS_COMMIT_SUBJECTS");
 
-  DataKey<File> IO_FILE = DataKey.create("IO_FILE");
-  DataKey<File[]> IO_FILE_ARRAY = DataKey.create("IO_FILE_ARRAY");
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create("VCS_VIRTUAL_FILE");
   DataKey<FilePath> FILE_PATH = DataKey.create("FILE_PATH");
 
@@ -91,6 +89,7 @@ public interface VcsDataKeys {
   DataKey<CommitMessageI> COMMIT_MESSAGE_CONTROL = DataKey.create("COMMIT_MESSAGE_CONTROL");
   DataKey<Document> COMMIT_MESSAGE_DOCUMENT = DataKey.create("COMMIT_MESSAGE_DOCUMENT");
   DataKey<CommitWorkflowHandler> COMMIT_WORKFLOW_HANDLER = DataKey.create("Vcs.CommitWorkflowHandler");
+  DataKey<CommitWorkflowUi> COMMIT_WORKFLOW_UI = DataKey.create("Vcs.CommitWorkflowUI");
 
   DataKey<VcsHistorySession> HISTORY_SESSION = DataKey.create("VCS_HISTORY_SESSION");
   /**

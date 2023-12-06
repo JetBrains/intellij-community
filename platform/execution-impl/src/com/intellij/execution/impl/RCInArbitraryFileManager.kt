@@ -1,32 +1,41 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.execution.impl
 
-import com.intellij.configurationStore.digest
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.*
+import com.intellij.util.ModalityUiUtil
+import com.intellij.util.PathUtil
+import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
-import java.io.ByteArrayInputStream
 import java.util.*
+import java.util.concurrent.CancellationException
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+
+private val LOG: Logger
+  get() = logger<RCInArbitraryFileManager>()
 
 /**
- * Manages run configurations that are stored in arbitrary `*.run.xml` files in project (not in .idea/runConfigurations or project.ipr file).
+ * Manages run configurations that are stored in arbitrary `*.run.xml` files in a project
+ * (not in .idea/runConfigurations or project.ipr file).
  */
 internal class RCInArbitraryFileManager(private val project: Project) {
-  private val LOG = logger<RCInArbitraryFileManager>()
-
   internal class DeletedAndAddedRunConfigs(deleted: Collection<RunnerAndConfigurationSettingsImpl>,
                                            added: Collection<RunnerAndConfigurationSettingsImpl>) {
-    // new lists are created to make sure that lists used in model are not available outside this class
+    // new lists are created to make sure that lists used in a model are not available outside this class
     val deletedRunConfigs: Collection<RunnerAndConfigurationSettingsImpl> = if (deleted.isEmpty()) emptyList() else ArrayList(deleted)
     val addedRunConfigs: Collection<RunnerAndConfigurationSettingsImpl> = if (added.isEmpty()) emptyList() else ArrayList(added)
   }
@@ -34,12 +43,13 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   private val filePathToRunConfigs = mutableMapOf<String, MutableList<RunnerAndConfigurationSettingsImpl>>()
 
   // Remember digest in order not to overwrite file with an equivalent content (e.g. different line endings or smth non-meaningful)
-  private val filePathToDigests = Collections.synchronizedMap(mutableMapOf<String, MutableList<ByteArray>>())
+  private val filePathToDigest = Collections.synchronizedMap(HashMap<String, LongArray>())
 
+  @Volatile
   private var saveInProgress = false
 
   /**
-   *  This function should be called with RunManagerImpl.lock.write
+   * this function should be called with RunManagerImpl.lock.write
    */
   internal fun addRunConfiguration(runConfig: RunnerAndConfigurationSettingsImpl) {
     val filePath = runConfig.pathIfStoredInArbitraryFileInProject
@@ -48,14 +58,14 @@ internal class RCInArbitraryFileManager(private val project: Project) {
       return
     }
 
-    val runConfigs = filePathToRunConfigs[filePath]
+    val runConfigs = filePathToRunConfigs.get(filePath)
     if (runConfigs != null) {
       if (!runConfigs.contains(runConfig)) {
         runConfigs.add(runConfig)
       }
     }
     else {
-      filePathToRunConfigs[filePath] = mutableListOf(runConfig)
+      filePathToRunConfigs.put(filePath, mutableListOf(runConfig))
     }
   }
 
@@ -76,7 +86,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
             runConfigIterator.remove()
             if (fileEntry.value.isEmpty()) {
               fileEntryIterator.remove()
-              filePathToDigests.remove(filePath)
+              filePathToDigest.remove(filePath)
               if (deleteContainingFile) {
                 LocalFileSystem.getInstance().findFileByPath(filePath)?.let { deleteFile(it) }
               }
@@ -90,7 +100,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
   private fun deleteFile(file: VirtualFile) {
     ModalityUiUtil.invokeLaterIfNeeded(
-      ModalityState.NON_MODAL) { runWriteAction { file.delete(this@RCInArbitraryFileManager) } }
+      ModalityState.nonModal()) { runWriteAction { file.delete(this@RCInArbitraryFileManager) } }
   }
 
   /**
@@ -108,33 +118,25 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     val file = LocalFileSystem.getInstance().findFileByPath(filePath)
     if (file == null) {
       LOG.warn("It's unexpected that the file doesn't exist at this point ($filePath)")
-      val rcsToDelete = filePathToRunConfigs[filePath] ?: emptyList()
+      val rcsToDelete = filePathToRunConfigs.get(filePath) ?: emptyList()
       return DeletedAndAddedRunConfigs(rcsToDelete, emptyList())
     }
 
     if (!ProjectFileIndex.getInstance(project).isInContent(file)) {
-      val rcsToDelete = filePathToRunConfigs[filePath] ?: emptyList()
+      val rcsToDelete = filePathToRunConfigs.get(filePath) ?: emptyList()
       if (rcsToDelete.isNotEmpty()) {
         LOG.warn("It's unexpected that the model contains run configurations for file, which is not within the project content ($filePath)")
       }
       return DeletedAndAddedRunConfigs(rcsToDelete, emptyList())
     }
 
-    val previouslyLoadedRunConfigs = filePathToRunConfigs[filePath] ?: emptyList()
-
-    val bytes = try {
-      VfsUtil.loadBytes(file)
-    }
-    catch (e: Exception) {
-      LOG.warn("Failed to load file $filePath: $e")
-      return DeletedAndAddedRunConfigs(previouslyLoadedRunConfigs, emptyList())
-    }
+    val previouslyLoadedRunConfigs = filePathToRunConfigs.get(filePath) ?: emptyList()
 
     val element = try {
-      JDOMUtil.load(CharsetToolkit.inputStreamSkippingBOM(ByteArrayInputStream(bytes)))
+      JDOMUtil.load(file.inputStream)
     }
     catch (e: Exception) {
-      LOG.info("Failed to parse file $filePath: $e")
+      LOG.warn("Failed to parse file $filePath", e)
       return DeletedAndAddedRunConfigs(previouslyLoadedRunConfigs, emptyList())
     }
 
@@ -144,27 +146,28 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     }
 
     val loadedRunConfigs = mutableListOf<RunnerAndConfigurationSettingsImpl>()
-    val loadedDigests = mutableListOf<ByteArray>()
-
+    val rootElementForLoadedDigest = createRootElement()
     for (configElement in element.getChildren("configuration")) {
       try {
         val runConfig = RunnerAndConfigurationSettingsImpl(runManager)
         runConfig.readExternal(configElement, true)
         runConfig.storeInArbitraryFileInProject(filePath)
         loadedRunConfigs.add(runConfig)
-        loadedDigests.add(runConfig.writeScheme().digest())
+        rootElementForLoadedDigest.addContent(runConfig.writeScheme())
       }
       catch (e: Throwable /* classloading problems are expected too */) {
         LOG.warn("Failed to read run configuration in $filePath", e)
       }
     }
 
-    val previouslyLoadedDigests = filePathToDigests[filePath] ?: emptyList()
-    if (sameDigests(loadedDigests, previouslyLoadedDigests)) {
+    val loadedDigest = computeDigest(rootElementForLoadedDigest.toBufferExposingByteArray())
+
+    val previouslyLoadedDigests = filePathToDigest.get(filePath)
+    if (previouslyLoadedDigests != null && previouslyLoadedDigests.contentEquals(loadedDigest)) {
       return DeletedAndAddedRunConfigs(emptyList(), emptyList())
     }
     else {
-      filePathToDigests[filePath] = loadedDigests
+      filePathToDigest.put(filePath, loadedDigest)
       return DeletedAndAddedRunConfigs(previouslyLoadedRunConfigs, loadedRunConfigs)
     }
   }
@@ -207,7 +210,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   internal fun getRunConfigsFromFiles(filePaths: Collection<String>): Collection<RunnerAndConfigurationSettingsImpl> {
     val result = mutableListOf<RunnerAndConfigurationSettingsImpl>()
     for (filePath in filePaths) {
-      filePathToRunConfigs[filePath]?.let { result.addAll(it) }
+      filePathToRunConfigs.get(filePath)?.let(result::addAll)
     }
     return result
   }
@@ -215,63 +218,73 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   /**
    * This function should be called with RunManagerImpl.lock.read
    */
-  internal fun saveRunConfigs() {
-    val errors = SmartList<Throwable>()
-    for (entry in filePathToRunConfigs.entries) {
-      val filePath = entry.key
-      val runConfigs = entry.value
+  internal fun hasRunConfigsFromFile(filePath: String): Boolean {
+    return filePathToRunConfigs.containsKey(filePath)
+  }
+
+  /**
+   * This function should be called with RunManagerImpl.lock.read
+   */
+  internal suspend fun saveRunConfigs(lock: ReentrantReadWriteLock) {
+    var error: Throwable? = null
+
+    val filePaths = lock.read { filePathToRunConfigs.keys.sorted() }
+    for (filePath in filePaths) {
+      val rootElement = lock.read {
+        val rootElement = createRootElement()
+        for (runConfig in (filePathToRunConfigs.get(filePath) ?: return@read null)) {
+          rootElement.addContent(runConfig.writeScheme())
+        }
+        rootElement
+      } ?: continue
 
       saveInProgress = true
       try {
-        val rootElement = Element("component").setAttribute("name", "ProjectRunConfigurationManager")
-        val newDigests = mutableListOf<ByteArray>()
-        for (runConfig in runConfigs) {
-          val element = runConfig.writeScheme()
-          rootElement.addContent(element)
-          newDigests.add(element.digest())
-        }
-
-        val previouslyLoadedDigests = filePathToDigests[filePath] ?: emptyList()
-        if (!sameDigests(newDigests, previouslyLoadedDigests)) {
-          saveToFile(filePath, rootElement.toBufferExposingByteArray())
-          filePathToDigests[filePath] = newDigests
+        val previouslyLoadedDigest = filePathToDigest.get(filePath)
+        val data = rootElement.toBufferExposingByteArray()
+        val newDigest = computeDigest(data)
+        if (previouslyLoadedDigest == null || !newDigest.contentEquals(previouslyLoadedDigest)) {
+          saveToFile(filePath = filePath, data = data)
+          filePathToDigest.put(filePath, newDigest)
         }
       }
+      catch (e: CancellationException) {
+        throw e
+      }
       catch (e: Exception) {
-        errors.add(RuntimeException("Cannot save run configuration in $filePath", e))
+        val wrappedException = RuntimeException("Cannot save run configuration in $filePath", e)
+        if (error == null) {
+          error = wrappedException
+        }
+        else {
+          error.addSuppressed(wrappedException)
+        }
       }
       finally {
         saveInProgress = false
       }
     }
 
-    throwIfNotEmpty(errors)
+    error?.let {
+      throw it
+    }
   }
 
-  private fun sameDigests(digests1: List<ByteArray>, digests2: List<ByteArray>): Boolean {
-    if (digests1.size != digests2.size) return false
-
-    val iterator2 = digests2.iterator()
-    digests1.forEach { if (!it.contentEquals(iterator2.next())) return@sameDigests false }
-
-    return true
-  }
-
-  private fun saveToFile(filePath: String, byteOut: BufferExposingByteArrayOutputStream) {
-    runWriteAction {
+  private suspend fun saveToFile(filePath: String, data: BufferExposingByteArrayOutputStream) {
+    writeAction {
       var file = LocalFileSystem.getInstance().findFileByPath(filePath)
       if (file == null) {
         val parentPath = PathUtil.getParentPath(filePath)
         val dir = VfsUtil.createDirectoryIfMissing(parentPath)
         if (dir == null) {
           LOG.error("Failed to create directory $parentPath")
-          return@runWriteAction
+          return@writeAction
         }
 
         file = dir.createChildData(this@RCInArbitraryFileManager, PathUtil.getFileName(filePath))
       }
 
-      file.getOutputStream(this@RCInArbitraryFileManager).use { byteOut.writeTo(it) }
+      file.getOutputStream(this@RCInArbitraryFileManager).use { data.writeTo(it) }
     }
   }
 
@@ -281,7 +294,16 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   internal fun clearAllAndReturnFilePaths(): Collection<String> {
     val filePaths = filePathToRunConfigs.keys.toList()
     filePathToRunConfigs.clear()
-    filePathToDigests.clear()
+    filePathToDigest.clear()
     return filePaths
   }
 }
+
+private fun createRootElement() = Element("component").setAttribute("name", "ProjectRunConfigurationManager")
+
+private fun computeDigest(data: BufferExposingByteArrayOutputStream): LongArray {
+  // 128-bit
+  return longArrayOf(Hashing.komihash5_0().hashBytesToLong(data.internalBuffer, 0, data.size()),
+                     Hashing.komihash5_0(745726263).hashBytesToLong(data.internalBuffer, 0, data.size()))
+}
+

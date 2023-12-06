@@ -6,3 +6,5 @@ fun bar() {
     val (x<caret>, y) = A("", 1)
     y.hashCode()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RenameToUnderscoreFix

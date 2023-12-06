@@ -1,3 +1,4 @@
+// ERROR: Unresolved reference: somethingElse
 fun foo(o: Any) {
     if (o !is String) return
     val l = o.length

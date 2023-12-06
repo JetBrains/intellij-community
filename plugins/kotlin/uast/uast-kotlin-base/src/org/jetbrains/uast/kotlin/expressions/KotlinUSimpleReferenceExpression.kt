@@ -6,9 +6,14 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.findAssignment
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
@@ -23,9 +28,16 @@ class KotlinUSimpleReferenceExpression(
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression, KotlinUElementWithType, KotlinEvaluatableUElement {
 
-    private val resolvedDeclaration: PsiElement? by lz {
-        baseResolveProviderService.resolveToDeclaration(sourcePsi)
-    }
+    private var resolvedDeclarationPart: Any? = UNINITIALIZED_UAST_PART
+    private var referenceNameElementPart: Any? = UNINITIALIZED_UAST_PART
+
+    private val resolvedDeclaration: PsiElement?
+        get() {
+            if (resolvedDeclarationPart == UNINITIALIZED_UAST_PART) {
+                resolvedDeclarationPart = baseResolveProviderService.resolveToDeclaration(sourcePsi)
+            }
+            return resolvedDeclarationPart as PsiElement?
+        }
 
     override val identifier get() = sourcePsi.getReferencedName()
 
@@ -34,10 +46,16 @@ class KotlinUSimpleReferenceExpression(
     override val resolvedName: String?
         get() = (resolvedDeclaration as? PsiNamedElement)?.name
 
-    override val referenceNameElement: UElement? by lz { sourcePsi.getIdentifier()?.toUElement() }
+    override val referenceNameElement: UElement?
+        get() {
+            if (referenceNameElementPart == UNINITIALIZED_UAST_PART) {
+                referenceNameElementPart = sourcePsi.getIdentifier()?.toUElement()
+            }
+            return referenceNameElementPart as UElement?
+        }
 
     override fun accept(visitor: UastVisitor) {
-        visitor.visitSimpleNameReferenceExpression(this)
+        if (visitor.visitSimpleNameReferenceExpression(this)) return
 
         if (sourcePsi.parent.destructuringDeclarationInitializer != true) {
             visitAccessorCalls(visitor)
@@ -76,6 +94,11 @@ class KotlinUSimpleReferenceExpression(
         private val resolvedMethod: PsiMethod,
         val setterValue: KtExpression?
     ) : KotlinAbstractUExpression(givenParent), UCallExpression, DelegatedMultiResolve {
+
+        private val receiverTypePart = UastLazyPart<PsiType?>()
+        private val methodIdentifierPart = UastLazyPart<UIdentifier?>()
+        private val valueArgumentsPart = UastLazyPart<List<UExpression>>()
+
         override val methodName: String
             get() = resolvedMethod.name
 
@@ -94,13 +117,15 @@ class KotlinUSimpleReferenceExpression(
         override val uAnnotations: List<UAnnotation>
             get() = emptyList()
 
-        override val receiverType by lz {
-            baseResolveProviderService.getAccessorReceiverType(sourcePsi, this)
-        }
+        override val receiverType: PsiType?
+            get() = receiverTypePart.getOrBuild {
+                baseResolveProviderService.getAccessorReceiverType(sourcePsi, this)
+            }
 
-        override val methodIdentifier: UIdentifier? by lz {
-            KotlinUIdentifier(sourcePsi.getReferencedNameElement(), this)
-        }
+        override val methodIdentifier: UIdentifier?
+            get() = methodIdentifierPart.getOrBuild {
+                KotlinUIdentifier(sourcePsi.getReferencedNameElement(), this)
+            }
 
         override val classReference: UReferenceExpression?
             get() = null
@@ -108,12 +133,13 @@ class KotlinUSimpleReferenceExpression(
         override val valueArgumentCount: Int
             get() = if (setterValue != null) 1 else 0
 
-        override val valueArguments by lz {
-            if (setterValue != null)
-                listOf(baseResolveProviderService.baseKotlinConverter.convertOrEmpty(setterValue, this))
-            else
-                emptyList()
-        }
+        override val valueArguments: List<UExpression>
+            get() = valueArgumentsPart.getOrBuild {
+                if (setterValue != null)
+                    listOf(baseResolveProviderService.baseKotlinConverter.convertOrEmpty(setterValue, this))
+                else
+                    emptyList()
+            }
 
         override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 

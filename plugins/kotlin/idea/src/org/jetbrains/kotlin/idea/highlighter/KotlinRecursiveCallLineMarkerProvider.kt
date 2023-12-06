@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.LineMarkerProvider
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.progress.ProgressManager
@@ -12,12 +12,14 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.idea.highlighter.markers.LineMarkerInfos
 import org.jetbrains.kotlin.idea.inspections.RecursivePropertyAccessorInspection
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -29,10 +31,14 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
+class KotlinRecursiveCallLineMarkerProvider : LineMarkerProviderDescriptor() {
+    override fun getName() = KotlinBundle.message("highlighter.tool.tip.text.recursive.call")
+    override fun getIcon() = AllIcons.Gutter.RecursiveMethod
+
     override fun getLineMarkerInfo(element: PsiElement) = null
 
     override fun collectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
+        if (!KotlinLineMarkerOptions.recursiveOption.isEnabled) return
         val markedLineNumbers = HashSet<Int>()
 
         for (element in elements) {
@@ -140,21 +146,24 @@ private fun PsiElement.getLineNumber(): Int {
 
 private fun getCallNameFromPsi(element: KtElement): Name? {
     when (element) {
-        is KtSimpleNameExpression -> when (val elementParent = element.getParent()) {
-            is KtCallExpression -> return Name.identifier(element.getText())
-            is KtOperationExpression -> {
-                val operationReference = elementParent.operationReference
-                if (element == operationReference) {
-                    val node = operationReference.getReferencedNameElementType()
-                    return if (node is KtToken) {
-                        val conventionName = if (elementParent is KtPrefixExpression)
-                            OperatorConventions.getNameForOperationSymbol(node, true, false)
-                        else
-                            OperatorConventions.getNameForOperationSymbol(node)
+        is KtSimpleNameExpression -> {
+            val identifier = lazy { Name.identifier(element.text.unquoteKotlinIdentifier()) }
+            when (val elementParent = element.getParent()) {
+                is KtCallExpression -> return identifier.value
+                is KtOperationExpression -> {
+                    val operationReference = elementParent.operationReference
+                    if (element == operationReference) {
+                        val node = operationReference.getReferencedNameElementType()
+                        return if (node is KtToken) {
+                            val conventionName = if (elementParent is KtPrefixExpression)
+                                OperatorConventions.getNameForOperationSymbol(node, true, false)
+                            else
+                                OperatorConventions.getNameForOperationSymbol(node)
 
-                        conventionName ?: Name.identifier(element.getText())
-                    } else {
-                        Name.identifier(element.getText())
+                            conventionName ?: identifier.value
+                        } else {
+                            identifier.value
+                        }
                     }
                 }
             }

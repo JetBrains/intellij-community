@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.actions;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class SuppressByJavaCommentFix extends SuppressByCommentFix {
+public class SuppressByJavaCommentFix extends SuppressByCommentModCommandFix {
   public SuppressByJavaCommentFix(@NotNull HighlightDisplayKey key) {
     super(key, PsiStatement.class);
   }
@@ -30,17 +29,12 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
   protected void createSuppression(@NotNull Project project,
                                    @NotNull PsiElement element,
                                    @NotNull PsiElement container) throws IncorrectOperationException {
     PsiElement declaredElement = getElementToAnnotate(element, container);
     if (declaredElement == null) {
-      WriteCommandAction.runWriteCommandAction(project, null, null, () -> super.createSuppression(project, element, container), container.getContainingFile());
+      super.createSuppression(project, element, container);
     }
     else {
       JavaSuppressionUtil.addSuppressAnnotation(project, container, (PsiVariable)declaredElement, myID);

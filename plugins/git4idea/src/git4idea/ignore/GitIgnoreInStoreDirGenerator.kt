@@ -13,6 +13,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.IgnoredFileProvider
 import com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl
@@ -30,13 +31,16 @@ import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import git4idea.GitNotificationIdsHolder
 import git4idea.GitVcs
+import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.SystemIndependent
+import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -49,8 +53,10 @@ private class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
     }
 
     val completableDeferred = CompletableDeferred<Unit>()
-    ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-      completableDeferred.complete(Unit)
+    blockingContext {
+      ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
+        completableDeferred.complete(Unit)
+      }
     }
     completableDeferred.join()
     project.service<GitIgnoreInStoreDirGenerator>().run()
@@ -140,11 +146,20 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
       return
     }
 
-    if (skipGeneration(project, projectConfigDirVFile, projectConfigDirPath)) {
+    if (blockingContext { skipGeneration(project, projectConfigDirVFile, projectConfigDirPath) }) {
       return
     }
 
-    doGenerate(project, projectConfigDirPath, projectConfigDirVFile)
+    try {
+      doGenerate(project, projectConfigDirPath, projectConfigDirVFile)
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+      VcsNotifier.getInstance(project).notifyError(
+        GitNotificationIdsHolder.IGNORE_FILE_GENERATION_ERROR,
+        GitBundle.message("notification.ignore.file.generation.error.text.files.progress.title"),
+        e.message.orEmpty())
+    }
   }
 
   private fun skipGeneration(project: Project,
@@ -171,6 +186,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
     }
   }
 
+  @Throws(IOException::class)
   private suspend fun doGenerate(project: Project, projectConfigDirPath: Path, projectConfigDirVFile: VirtualFile) {
     val gitVcsKey = GitVcs.getKey()
     val gitIgnoreContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, gitVcsKey) ?: return
@@ -199,14 +215,14 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
   }
 
   private fun haveNotGitVcs(project: Project, projectConfigDirPath: Path): Boolean {
-    val projectConfigDir = VcsUtil.getFilePath(projectConfigDirPath.toFile())
+    val projectConfigDir = VcsUtil.getFilePath(projectConfigDirPath.toFile(), true)
     val vcs = VcsUtil.getVcsFor(project, projectConfigDir) ?: return false
     return vcs.keyInstanceMethod != GitVcs.getKey()
   }
 
   private fun isProjectSharedInGit(project: Project): Boolean {
     val storeDir: @SystemIndependent String = project.stateStore.directoryStorePath?.systemIndependentPath ?: return false
-    val storeDirPath = VcsUtil.getFilePath(storeDir)
+    val storeDirPath = VcsUtil.getFilePath(storeDir, true)
     val vcsRoot = VcsUtil.getVcsRootFor(project, storeDirPath) ?: return false
 
     return try {

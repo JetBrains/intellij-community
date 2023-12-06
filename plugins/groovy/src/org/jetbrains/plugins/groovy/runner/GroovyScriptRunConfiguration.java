@@ -188,7 +188,7 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
               if (!ApplicationManager.getApplication().isDisposed()) {
-                VirtualFileManager.getInstance().asyncRefresh(null);
+                VirtualFileManager.getInstance().asyncRefresh();
               }
             }
           });

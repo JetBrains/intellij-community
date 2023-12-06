@@ -21,7 +21,6 @@ import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,15 +31,14 @@ import java.util.function.ObjIntConsumer;
 
 public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogFullDetailsIndex.class);
-  protected static final @NonNls String INDEX = "index";
   private final @NotNull MyMapReduceIndex myMapReduceIndex;
-  protected final @NotNull StorageId myStorageId;
+  protected final @NotNull StorageId.Directory myStorageId;
   protected final @NotNull String myName;
   protected final @NotNull DataIndexer<Integer, T, D> myIndexer;
   private final @NotNull VcsLogErrorHandler myErrorHandler;
   private volatile boolean myDisposed = false;
 
-  public VcsLogFullDetailsIndex(@NotNull StorageId storageId,
+  public VcsLogFullDetailsIndex(@NotNull StorageId.Directory storageId,
                                 @NotNull String name,
                                 @NotNull DataIndexer<Integer, T, D> indexer,
                                 @NotNull DataExternalizer<T> externalizer,
@@ -129,6 +127,10 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     myMapReduceIndex.mapInputAndPrepareUpdate(commitId, details).compute();
   }
 
+  public void clearCaches() {
+    myMapReduceIndex.clearCaches();
+  }
+
   public void flush() throws StorageException {
     checkDisposed();
     myMapReduceIndex.flush();
@@ -166,9 +168,9 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   private static final class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
     private final @NotNull String myName;
 
-    MyMapIndexStorage(@NotNull String name, @NotNull StorageId storageId, @NotNull DataExternalizer<T> externalizer)
+    MyMapIndexStorage(@NotNull String name, @NotNull StorageId.Directory storageId, @NotNull DataExternalizer<T> externalizer)
       throws IOException {
-      super(storageId.getStorageFile(name, true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
+      super(storageId.getStorageFile(name, true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 500, false);
       myName = name;
     }
 

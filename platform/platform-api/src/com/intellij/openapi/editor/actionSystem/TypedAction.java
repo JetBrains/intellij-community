@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.diagnostic.PluginException;
@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.reporting.FreezeLogger;
 import com.intellij.util.SlowOperations;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ public abstract class TypedAction {
       if (handler != null) {
         myHandler = handler;
       }
+      return Unit.INSTANCE;
     });
   }
 
@@ -100,6 +102,7 @@ public abstract class TypedAction {
       if (handler != null) {
         myRawHandler = handler;
       }
+      return Unit.INSTANCE;
     });
   }
 
@@ -131,8 +134,7 @@ public abstract class TypedAction {
    *
    * @return the current typing handler.
    */
-  @NotNull
-  public TypedActionHandler getHandler() {
+  public @NotNull TypedActionHandler getHandler() {
     ensureHandlersLoaded();
     return myHandler;
   }
@@ -146,8 +148,7 @@ public abstract class TypedAction {
    * @deprecated Use &lt;typedHandler&gt; extension point for registering typing handlers
    */
   @Deprecated
-  @NotNull
-  public TypedActionHandler setupHandler(@NotNull TypedActionHandler handler) {
+  public @NotNull TypedActionHandler setupHandler(@NotNull TypedActionHandler handler) {
     ensureHandlersLoaded();
     TypedActionHandler tmp = myHandler;
     myHandler = handler;
@@ -159,8 +160,7 @@ public abstract class TypedAction {
    *
    * @see #setupRawHandler(TypedActionHandler)
    */
-  @NotNull
-  public TypedActionHandler getRawHandler() {
+  public @NotNull TypedActionHandler getRawHandler() {
     return myRawHandler;
   }
 
@@ -194,7 +194,7 @@ public abstract class TypedAction {
     }
   }
 
-  public final void actionPerformed(@NotNull final Editor editor, final char charTyped, @NotNull DataContext dataContext) {
+  public final void actionPerformed(final @NotNull Editor editor, final char charTyped, @NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       FreezeLogger.getInstance().runUnderPerformanceMonitor(

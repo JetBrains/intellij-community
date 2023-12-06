@@ -5,13 +5,13 @@
 
 package org.toml.ide.annotator
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
 
 abstract class AnnotatorBase : Annotator {
@@ -25,7 +25,7 @@ abstract class AnnotatorBase : Annotator {
     protected abstract fun annotateInternal(element: PsiElement, holder: AnnotationHolder)
 
     companion object {
-        private val enabledAnnotators: MutableSet<Class<out AnnotatorBase>> = ContainerUtil.newConcurrentSet()
+        private val enabledAnnotators: MutableSet<Class<out AnnotatorBase>> = ConcurrentCollectionFactory.createConcurrentSet()
 
         @TestOnly
         fun enableAnnotator(annotatorClass: Class<out AnnotatorBase>, parentDisposable: Disposable) {

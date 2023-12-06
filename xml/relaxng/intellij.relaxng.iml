@@ -27,7 +27,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="isorelax" type="repository">
-        <properties maven-id="isorelax:isorelax:20030108" />
+        <properties maven-id="isorelax:isorelax:20030108">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/isorelax/isorelax/20030108/isorelax-20030108.jar">
+              <sha256sum>3427152431cf7f967f92e69e5cac16147c5d8fb4b4e5a8a72f5291788efcff8c</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/isorelax/isorelax/20030108/isorelax-20030108.jar!/" />
         </CLASSES>
@@ -46,15 +52,23 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="jing" type="repository">
-        <properties maven-id="thaiopensource:jing:20030619" />
+        <properties maven-id="thaiopensource:jing:20030619">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/thaiopensource/jing/20030619/jing-20030619.jar">
+              <sha256sum>600acd9ebd37dd46e3a006bc6e748d68dfeb31cbf4881a84d06e6dc5cc5eed26</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/thaiopensource/jing/20030619/jing-20030619.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/thaiopensource/jing/20030619/jing-20030619-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="NanoXML" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
@@ -25,11 +25,11 @@ import javax.swing.JComponent
 import javax.swing.JList
 
 /**
- * An actions list with search field and control buttons: add, remove, move and reset.
+ * An action list with search field and control buttons: add, remove, move and reset.
  *
- * @param [groupId] id of group that is used to show actions
+ * @param [groupId] id of a group that is used to show actions
  * @param [addActionGroupIds] ids of groups that are shown when Add action is called.
- * If empty all actions are shown by default.
+ * If empty, all actions are shown by default.
  * Use [addActionHandler] to override default dialog.
  *
  * @see showDialog
@@ -38,7 +38,6 @@ class CustomizeActionGroupPanel(
   val groupId: String,
   private val addActionGroupIds: List<String> = emptyList(),
 ) : BorderLayoutPanel() {
-
   private val list: JBList<Any>
 
   /**
@@ -165,7 +164,7 @@ class CustomizeActionGroupPanel(
   private inner class AddAction(
     text: Supplier<String>,
     val block: (selected: Int, model: CollectionListModel<Any>) -> Unit
-  ) : DumbAwareAction(text, Presentation.NULL_STRING, null) {
+  ) : DumbAwareAction(text) {
     override fun actionPerformed(e: AnActionEvent) {
       val selected = list.selectedIndices?.lastOrNull() ?: (list.model.size - 1)
       val model = (list.model as CollectionListModel)
@@ -178,7 +177,6 @@ class CustomizeActionGroupPanel(
     text: Supplier<String>,
     icon: Icon
   ) : DumbAwareAction(text, Presentation.NULL_STRING, icon) {
-
     init {
       registerCustomShortcutSet(direction.shortcut, list)
     }
@@ -234,7 +232,7 @@ class CustomizeActionGroupPanel(
     icon: Icon
   ) : DumbAwareAction(text, Presentation.NULL_STRING, icon) {
 
-    private val defaultActions = collectActions(groupId, CustomActionsSchema())
+    private val defaultActions = collectActions(groupId, CustomActionsSchema(null))
 
     override fun actionPerformed(e: AnActionEvent) {
       list.model = CollectionListModel(defaultActions)

@@ -11,6 +11,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +35,13 @@ public abstract class Compressor implements Closeable {
   public static class Tar extends Compressor {
     public enum Compression {GZIP, BZIP2, NONE}
 
+    @ApiStatus.Obsolete
+    public Tar(@NotNull Path file, @NotNull Compression compression) throws IOException {
+      this(Files.newOutputStream(file), compression);
+    }
+
     public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
-      this(Files.newOutputStream(file.toPath()), compression);
+      this(file.toPath(), compression);
     }
 
     //<editor-fold desc="Implementation">
@@ -105,6 +111,7 @@ public abstract class Compressor implements Closeable {
    * ZIP extensions (file modes, symlinks, etc.) are not supported.
    */
   public static class Zip extends Compressor {
+    @ApiStatus.Obsolete
     public Zip(@NotNull File file) throws IOException {
       this(file.toPath());
     }
@@ -163,7 +170,7 @@ public abstract class Compressor implements Closeable {
     //</editor-fold>
   }
 
-  public static class Jar extends Zip {
+  public static final class Jar extends Zip {
     public Jar(@NotNull File file) throws IOException {
       this(file.toPath());
     }
@@ -172,7 +179,7 @@ public abstract class Compressor implements Closeable {
       super(new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(file))));
     }
 
-    public final void addManifest(@NotNull Manifest manifest) throws IOException {
+    public void addManifest(@NotNull Manifest manifest) throws IOException {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       manifest.write(buffer);
       addFile(JarFile.MANIFEST_NAME, buffer.toByteArray());
@@ -184,7 +191,7 @@ public abstract class Compressor implements Closeable {
   /**
    * Filtering entries being added to the archive.
    * Please note that the second parameter of a filter ({@code Path}) <b>might be {@code null}</b> when it is applied
-   * to an entry not present on a disk - e.g. via {@link #addFile(String, byte[])}.
+   * to an entry not present on a disk - e.g., via {@link #addFile(String, byte[])}.
    */
   public Compressor filter(@Nullable BiPredicate<? super String, ? super @Nullable Path> filter) {
     myFilter = filter;
@@ -239,6 +246,7 @@ public abstract class Compressor implements Closeable {
     }
   }
 
+  @ApiStatus.Obsolete
   public final void addDirectory(@NotNull File directory) throws IOException {
     addDirectory(directory.toPath());
   }
@@ -256,8 +264,8 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull Path directory, long timestampInMillis) throws IOException {
-    String entryName = prefix.isEmpty() ? "" : entryName(prefix);
-    addRecursively(entryName, directory, timestampInMillis);
+    prefix = prefix.isEmpty() ? "" : entryName(prefix);
+    addRecursively(prefix, directory, timestampInMillis);
   }
 
   //<editor-fold desc="Internal interface">

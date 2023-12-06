@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.Disposable;
@@ -19,7 +19,7 @@ import static com.intellij.openapi.util.Disposer.isDisposed;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-@Service
+@Service(Service.Level.PROJECT)
 final class SvnCompatibilityChecker implements Disposable {
   private final Project myProject;
   private final static long ourFrequency = 10;
@@ -70,7 +70,7 @@ final class SvnCompatibilityChecker implements Disposable {
         if (isDisposed(this)) return;
         new VcsBalloonProblemNotifier(myProject, message, MessageType.WARNING).run();
       },
-      ModalityState.NON_MODAL
+      ModalityState.nonModal()
     );
   }
 

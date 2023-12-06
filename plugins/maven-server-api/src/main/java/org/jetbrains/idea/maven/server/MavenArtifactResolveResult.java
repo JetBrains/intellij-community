@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MavenArtifactResolveResult implements Serializable {
@@ -28,7 +29,7 @@ public class MavenArtifactResolveResult implements Serializable {
   @Nullable public final MavenProjectProblem problem;
 
   public MavenArtifactResolveResult(@NotNull List<MavenArtifact> artifacts, @Nullable MavenProjectProblem problem) {
-    this.mavenResolvedArtifacts = artifacts;
+    this.mavenResolvedArtifacts = new ArrayList<>(artifacts);
     this.problem = problem;
   }
 }

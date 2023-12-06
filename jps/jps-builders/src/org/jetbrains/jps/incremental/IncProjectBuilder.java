@@ -64,6 +64,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.jps.builders.java.JavaBuilderUtil.isDepGraphEnabled;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -113,7 +115,8 @@ public final class IncProjectBuilder {
   private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = new ConcurrentHashMap<>();
   private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = new ConcurrentHashMap<>();
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs, final boolean isTestMode) {
+  public IncProjectBuilder(@NotNull ProjectDescriptor pd, @NotNull BuilderRegistry builderRegistry,
+                           @NotNull Map<String, String> builderParams, @NotNull CanceledStatus cs, final boolean isTestMode) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
@@ -126,12 +129,13 @@ public final class IncProjectBuilder {
     myMessageHandlers.add(handler);
   }
 
-  public void checkUpToDate(CompileScope scope) {
+  public void checkUpToDate(@NotNull CompileScope scope) {
     CompileContextImpl context = null;
     try {
       context = createContext(scope);
       final BuildFSState fsState = myProjectDescriptor.fsState;
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
+        context.checkCanceled();
         if (scope.isAffected(target)) {
           BuildOperations.ensureFSStateInitialized(context, target, true);
           final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);
@@ -263,6 +267,9 @@ public final class IncProjectBuilder {
     if (myIsTestMode || isAutoBuild()) {
       // do not use the heuristic in tests in order to properly test all cases
       // automatic builds should not cause start full project rebuilds to avoid situations when rebuild is not expected by user
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Rebuild heuristic: skipping the check; isTestMode = " + myIsTestMode + "; isAutoBuild = " + isAutoBuild());
+      }
       return;
     }
     final BuildTargetsState targetsState = myProjectDescriptor.getTargetsState();
@@ -276,7 +283,16 @@ public final class IncProjectBuilder {
     // check that this is a whole-project incremental build
     // checking only JavaModuleBuildTargetType because these target types directly correspond to project modules
     for (BuildTargetType<?> type : JavaModuleBuildTargetType.ALL_TYPES) {
-      if (!scope.isBuildIncrementally(type) || !scope.isAllTargetsOfTypeAffected(type)) {
+      if (!scope.isBuildIncrementally(type)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Rebuild heuristic: skipping the check because rebuild is forced for targets of type " + type.getTypeId());
+        }
+        return;
+      }
+      if (!scope.isAllTargetsOfTypeAffected(type)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Rebuild heuristic: skipping the check because some targets are excluded from compilation scope, e.g. targets of type " + type.getTypeId());
+        }
         return;
       }
     }
@@ -304,7 +320,7 @@ public final class IncProjectBuilder {
     }
   }
 
-  public static long calculateEstimatedBuildTime(ProjectDescriptor projectDescriptor, Predicate<BuildTarget<?>> isAffected) {
+  public static long calculateEstimatedBuildTime(@NotNull ProjectDescriptor projectDescriptor, @NotNull Predicate<BuildTarget<?>> isAffected) {
     final BuildTargetsState targetsState = projectDescriptor.getTargetsState();
     // compute estimated times for dirty targets
     long estimatedBuildTime = 0L;
@@ -406,7 +422,9 @@ public final class IncProjectBuilder {
              "; isMake:" +
              context.isMake() +
              " parallel compilation:" +
-             isParallelBuild());
+             isParallelBuild() +
+             "; dependency graph enabled:" +
+             isDepGraphEnabled());
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
 
@@ -541,7 +559,7 @@ public final class IncProjectBuilder {
     return null;
   }
 
-  private CompileContextImpl createContext(CompileScope scope) {
+  private CompileContextImpl createContext(@NotNull CompileScope scope) {
     return new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher, myBuilderParams, myCancelStatus);
   }
 
@@ -1049,7 +1067,7 @@ public final class IncProjectBuilder {
       span.complete();
     }
 
-    public void buildInParallel() throws IOException, ProjectBuildException {
+    public void buildInParallel() throws ProjectBuildException {
       List<BuildChunkTask> initialTasks = new ArrayList<>();
       for (BuildChunkTask task : myTasks) {
         if (task.isReady()) {
@@ -1243,7 +1261,7 @@ public final class IncProjectBuilder {
       pd.fsState.processFilesToRecompile(context, target, new FileProcessor<>() {
         private SourceToOutputMapping srcToOut;
         @Override
-        public boolean apply(T target, File file, R root) throws IOException {
+        public boolean apply(@NotNull T target, @NotNull File file, @NotNull R root) throws IOException {
           final String src = FileUtil.toSystemIndependentName(file.getPath());
           if (affectedSources.add(src)) {
             if (srcToOut == null) { // lazy init

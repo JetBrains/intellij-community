@@ -74,8 +74,7 @@ public final class DataStreamUtil {
     change.write(out);
   }
 
-  @NotNull
-  public static String readString(DataInput in) throws IOException {
+  public static @NotNull String readString(DataInput in) throws IOException {
     return IOUtil.readUTF(in);
   }
 
@@ -83,8 +82,7 @@ public final class DataStreamUtil {
     IOUtil.writeUTF(out, s);
   }
 
-  @Nullable
-  public static String readStringOrNull(DataInput in) throws IOException {
+  public static @Nullable String readStringOrNull(DataInput in) throws IOException {
     if (!in.readBoolean()) return null;
     return readString(in);
   }

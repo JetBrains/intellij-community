@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -10,6 +10,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.RecursionManager;
@@ -242,8 +244,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (target == null && ref != null &&
         JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().resolveReferencedVariable(variable.getName(), ref) == null) {
       BringVariableIntoScopeFix fix = BringVariableIntoScopeFix.fromReference(ref);
-      if (fix != null && fix.isAvailable(context.getProject(), context.getEditor(), context.getFile())) {
-        fix.invoke(context.getProject(), context.getEditor(), context.getFile());
+      if (fix != null) {
+        ActionContext actionContext = ActionContext.from(context.getEditor(), context.getFile());
+        if (fix.getPresentation(actionContext) != null) {
+          ModCommandExecutor.getInstance().executeInteractively(actionContext, fix.perform(actionContext), context.getEditor());
+        }
       }
     }
 
@@ -252,14 +257,14 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       context.setAddCompletionChar(false);
       EqTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
     }
-    else if (completionChar == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+    else if (completionChar == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.unknownType()) {
       context.setAddCompletionChar(false);
       CommaTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
-    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN && isTernaryCondition(ref)) {
+    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.unknownType() && isTernaryCondition(ref)) {
       context.setAddCompletionChar(false);
-      TailType.COND_EXPR_COLON.processTail(context.getEditor(), context.getTailOffset());
+      TailTypes.conditionalExpressionColonType().processTail(context.getEditor(), context.getTailOffset());
     }
     else if (completionChar == '.') {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);

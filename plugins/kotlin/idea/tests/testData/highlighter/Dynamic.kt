@@ -1,8 +1,9 @@
-// IGNORE_FIR
+// IGNORE_K2
+// EXPECTED_DUPLICATED_HIGHLIGHTING
 package testing
 
-fun <info textAttributesKey="KOTLIN_FUNCTION_DECLARATION">tst</info>(<info textAttributesKey="KOTLIN_PARAMETER">d</info>: <error><info>dynamic</info></error>) {
-    <info textAttributesKey="KOTLIN_PARAMETER">d</info>.<info textAttributesKey="KOTLIN_DYNAMIC_FUNCTION_CALL">foo</info>()
-    <info textAttributesKey="KOTLIN_PARAMETER">d</info>.<info textAttributesKey="KOTLIN_DYNAMIC_PROPERTY_CALL">foo</info>
-    <info textAttributesKey="KOTLIN_PARAMETER">d</info>.<info textAttributesKey="KOTLIN_DYNAMIC_PROPERTY_CALL">foo</info> = 1
+fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">tst</symbolName>(<symbolName textAttributesKey="KOTLIN_PARAMETER">d</symbolName>: <error><symbolName>dynamic</symbolName></error>) {
+    <symbolName textAttributesKey="KOTLIN_PARAMETER">d</symbolName>.<symbolName textAttributesKey="KOTLIN_DYNAMIC_FUNCTION_CALL">foo</symbolName>()
+    <symbolName textAttributesKey="KOTLIN_PARAMETER">d</symbolName>.<symbolName textAttributesKey="KOTLIN_DYNAMIC_PROPERTY_CALL">foo</symbolName>
+    <symbolName textAttributesKey="KOTLIN_PARAMETER">d</symbolName>.<symbolName textAttributesKey="KOTLIN_DYNAMIC_PROPERTY_CALL">foo</symbolName> = 1
 }

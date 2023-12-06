@@ -1,58 +1,37 @@
-_collections_abc.AsyncGenerator.ag_await
-_collections_abc.AsyncGenerator.ag_code
-_collections_abc.AsyncGenerator.ag_frame
-_collections_abc.AsyncGenerator.ag_running
 _collections_abc.AsyncIterable.__class_getitem__
 _collections_abc.Awaitable.__class_getitem__
 _collections_abc.Container.__class_getitem__
-_collections_abc.ItemsView.__reversed__
 _collections_abc.Iterable.__class_getitem__
-_collections_abc.KeysView.__reversed__
 _collections_abc.MappingView.__class_getitem__
-_collections_abc.ValuesView.__reversed__
 _csv.Reader
 _csv.Writer
-_operator.attrgetter.__vectorcalloffset__
-_operator.itemgetter.__vectorcalloffset__
-argparse._MutuallyExclusiveGroup.add_mutually_exclusive_group
-asynchat.__warningregistry__  # Removal planned for 3.12, can add if someone needs this
+bz2.BZ2Decompressor.__init__  # function does not accept parameters but C signature is set
 configparser.LegacyInterpolation.__init__
-distutils.util.get_host_platform
+configparser.ParsingError.filename
 enum.Enum.__init__
-fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
-ftplib.FTP.trust_server_pasv_ipv4_address
-functools.partial.__vectorcalloffset__
-ipaddress.IPv4Interface.hostmask
-ipaddress.IPv6Interface.hostmask
-ipaddress._BaseNetwork.broadcast_address
-ipaddress._BaseNetwork.hostmask
-multiprocessing.managers.SharedMemoryServer.create
-multiprocessing.managers.SharedMemoryServer.list_segments
-multiprocessing.managers.SharedMemoryServer.public
-multiprocessing.managers.SharedMemoryServer.release_segment
-multiprocessing.managers.SharedMemoryServer.shutdown
-multiprocessing.managers.SharedMemoryServer.track_segment
-multiprocessing.spawn._main
-operator.attrgetter.__vectorcalloffset__
-operator.itemgetter.__vectorcalloffset__
-# platform.uname_result's processor field is now dynamically made to exist
-platform.uname_result.__match_args__
-platform.uname_result.__new__
-platform.uname_result._fields
-platform.uname_result.processor
-queue.SimpleQueue.__init__
-sys.UnraisableHookArgs  # Not exported from sys
+enum.Enum._generate_next_value_
+# Not strictly speaking a staticmethod on 3.11, but it acts like one:
+enum.StrEnum._generate_next_value_
+importlib.abc.Finder.find_module
 tkinter._VersionInfoType.__doc__
-typing.ForwardRef._evaluate
 typing.NewType.__call__
 typing.NewType.__mro_entries__
-weakref.WeakValueDictionary.update
 
-# stubtest complains that in 3.10 the default argument is inconsistent with the annotation,
-# but in 3.10+ calling the function without the default argument is in fact deprecated,
-# so it's better to ignore stubtest
-ssl.SSLContext.__new__
-ssl._create_unverified_context
+# Modules that exist at runtime, but are missing from typeshed
+importlib.readers
+importlib.resources.readers
+importlib.resources.simple
+importlib.simple
+
+# Modules that exist at runtime, but shouldn't be added to typeshed
+ctypes.test
+ctypes\.test\..+
+lib2to3.tests
+lib2to3\.tests\..+
+tkinter.test
+tkinter\.test\..+
+unittest.test
+unittest\.test\..+
 
 # ==========
 # Related to positional-only arguments
@@ -65,14 +44,14 @@ _collections_abc.MutableMapping.setdefault
 
 # typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
 # to mark these as positional-only for compatibility with existing sub-classes.
-typing.BinaryIO.write
-typing.IO.read
-typing.IO.readline
-typing.IO.readlines
-typing.IO.seek
-typing.IO.truncate
-typing.IO.write
-typing.IO.writelines
+typing(_extensions)?\.BinaryIO\.write
+typing(_extensions)?\.IO\.read
+typing(_extensions)?\.IO\.readline
+typing(_extensions)?\.IO\.readlines
+typing(_extensions)?\.IO\.seek
+typing(_extensions)?\.IO\.truncate
+typing(_extensions)?\.IO\.write
+typing(_extensions)?\.IO\.writelines
 
 # positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
 _collections_abc.Coroutine.send
@@ -92,87 +71,71 @@ os.path.join
 # Allowlist entries that cannot or should not be fixed
 # ==========
 
+_ast.ImportFrom.level  # None on the class, but never None on instances
 _collections_abc.AsyncGenerator.athrow  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
 _weakref.ProxyType.__reversed__  # Doesn't really exist
+ast.ImportFrom.level  # None on the class, but never None on instances
+argparse._MutuallyExclusiveGroup.add_mutually_exclusive_group  # deprecated, forwards arguments to super
 builtins.property.__set_name__  # Doesn't actually exist
-enum.StrEnum.value  # read-only property at runtime but too magical for stubtest
-hmac.new  # Stub is a white lie; see comments in the stub
+dataclasses.KW_ONLY  # white lies around defaults
+enum.auto.__init__  # The stub for enum.auto is nothing like the implementation
+enum.auto.value  # The stub for enum.auto is nothing like the implementation
+functools._lru_cache_wrapper.cache_parameters  # Cannot be detected statically
 http.HTTPMethod.description  # mutable instance attribute at runtime but we pretend it's a property
-pickle.Pickler.reducer_override  # implemented in C pickler
+inspect._ParameterKind.description  # Still exists, but stubtest can't see it
+os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
+poplib.POP3_SSL.stls  # bad declaration of inherited function. See poplib.pyi
 types.GenericAlias.__call__  # Would be complicated to fix properly, Any could silence problems. #6392
 types.GenericAlias.__getattr__
 types.GenericAlias.__mro_entries__
 weakref.ProxyType.__reversed__  # Doesn't really exist
-inspect._ParameterKind.description  # Still exists, but stubtest can't see it
-
-# Inherits __init__ from typing.Protocol (https://github.com/python/mypy/issues/12820)
-importlib.abc.Traversable.__init__
-importlib.metadata.EntryPoint.__init__
-importlib.metadata.PackageMetadata.__init__
-importlib.metadata._meta.PackageMetadata.__init__
-importlib.metadata._meta.SimplePath.__init__
-typing.SupportsAbs.__init__
-typing.SupportsBytes.__init__
-typing.SupportsComplex.__init__
-typing.SupportsFloat.__init__
-typing.SupportsIndex.__init__
-typing.SupportsInt.__init__
-typing.SupportsRound.__init__
-wsgiref.types.ErrorStream.__init__
-wsgiref.types.FileWrapper.__init__
-wsgiref.types.InputStream.__init__
-wsgiref.types.StartResponse.__init__
-wsgiref.types._Readable.__init__
 
 # C signature is broader than what is actually accepted
-ast.Bytes.__new__
-ast.Ellipsis.__new__
 ast.ExtSlice.__new__
 ast.Index.__new__
-ast.NameConstant.__new__
-ast.Num.__new__
-ast.Str.__new__
-asyncio.futures.Future.__init__
-asyncio.Future.__init__
 contextvars.Context.__init__
-queue.SimpleQueue.__init__
-xml.etree.ElementTree.XMLParser.__init__
-xml.etree.cElementTree.XMLParser.__init__
-
-os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
-types.CodeType.replace  # stubtest thinks default values are None but None doesn't work at runtime
-_ast.ImportFrom.level  # None on the class, but never None on instances
-ast.ImportFrom.level  # None on the class, but never None on instances
 
 # Treated an alias of a typing class in the stubs,
 # they are generic to type checkers anyway.
 contextlib.AbstractAsyncContextManager.__class_getitem__
 contextlib.AbstractContextManager.__class_getitem__
 
-# The argument to is_python_build() is deprecated since Python 3.11 and
-# has a default value of None to check for its existence and warn if it's
-# supplied. None is not supposed to be passed by user code and therefore
-# not included in the stubs.
-sysconfig.is_python_build
+# platform.uname_result's processor field is now dynamically made to exist
+platform.uname_result.__match_args__
+platform.uname_result.__new__
+platform.uname_result.processor
+
+# Runtime has *args, **kwargs, but will error if any are supplied
+unittest.TestCase.__init_subclass__
+unittest.case.TestCase.__init_subclass__
 
 # Super-special typing primitives
-typing._SpecialForm.__mro_entries__
-typing._TypedDict.__delitem__
-typing._TypedDict.__ior__
-typing._TypedDict.__or__
-typing._TypedDict.copy
-typing._TypedDict.items
-typing._TypedDict.keys
-typing._TypedDict.pop
-typing._TypedDict.setdefault
-typing._TypedDict.update
-typing._TypedDict.values
+typing\._SpecialForm.*
+typing\.NamedTuple
+typing\.LiteralString
+typing\.Annotated
 
-# White lies around defaults
-dataclasses.KW_ONLY
+# We pretend it's a read-only property for forward compatibility with 3.12
+typing.ParamSpec(Args|Kwargs).__origin__
+typing\.TypeVar\.__.*__
+typing\.ParamSpec\.__.*__
 
-# https://github.com/python/mypy/issues/13114
-wsgiref.types.WSGIEnvironment
+# Exist at runtime for internal reasons, no need to put them in the stub
+typing_extensions\.TypeAliasType\.__call__
+typing_extensions\.TypeAliasType\.__init_subclass__
+# We call them read-only properties, runtime implementation is slightly different
+typing_extensions\.TypeAliasType\.__(parameters|type_params|name|module|value)__
 
-# https://github.com/python/mypy/issues/12821 (stubtest bug with Callable type alias)
-wsgiref.types.WSGIApplication
+# We lie about the existence of these methods
+.*.__buffer__
+.*.__release_buffer__
+
+# Removed in 3.12
+distutils\..*
+asyncore.dispatcher.addr
+asyncore.dispatcher.handle_accepted
+asynchat.async_chat.encoding
+asynchat.async_chat.use_encoding
+asynchat.find_prefix_at_end
+pkgutil.ImpImporter\..*
+pkgutil.ImpLoader\..*

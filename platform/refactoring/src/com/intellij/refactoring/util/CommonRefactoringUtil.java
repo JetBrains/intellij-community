@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.ide.ui.IdeUiService;
@@ -7,11 +7,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -21,16 +23,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
@@ -244,14 +245,6 @@ public final class CommonRefactoringUtil {
     });
   }
 
-  /**
-   * @deprecated use {@link StringUtil#capitalize(String)}
-   */
-  @Deprecated(forRemoval = true)
-  public static String capitalize(@NotNull String text) {
-    return StringUtil.capitalize(text);
-  }
-
   public static boolean isAncestor(@NotNull PsiElement resolved, @NotNull Collection<? extends PsiElement> scopes) {
     for (final PsiElement scope : scopes) {
       if (PsiTreeUtil.isAncestor(scope, resolved, false)) return true;
@@ -268,6 +261,60 @@ public final class CommonRefactoringUtil {
     }
 
     return caret;
+  }
+
+  /**
+   * Finds selected elements or elements under the caret of the specified type in the editor.
+   * Handles multi-carets and multiple selections.
+   *
+   * @param editor  the editor from which carets and selections are used
+   * @param file  the file in the editor
+   * @param stopAt  when traversing up the psi tree, stop when reaching an element of this type
+   * @param accept  predicate to test the found elements match some condition.
+   * @return a list of found elements.
+   */
+  public static <T extends PsiElement> List<T> findElementsFromCaretsAndSelections(
+    @NotNull Editor editor, @NotNull PsiFile file, @Nullable Class<?> stopAt, @NotNull Predicate<? super PsiElement> accept) {
+    List<PsiElement> elements = new SmartList<>();
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      TextRange selectionRange = caret.getSelectionRange();
+      PsiElement start = file.findElementAt(selectionRange.getStartOffset());
+      if (start == null) continue;
+      PsiElement end = file.findElementAt(selectionRange.getEndOffset());
+      if (end == null) continue;
+
+      PsiElement element = PsiTreeUtil.findCommonParent(start, end);
+      if (element == null) continue;
+
+      int size = elements.size();
+      // first, go down into the psi tree
+      PsiTreeUtil.processElements(element, e -> {
+        if (accept.test(e)) {
+          TextRange range = e.getTextRange();
+          if (selectionRange.intersects(range)) {
+            elements.add(e);
+          }
+        }
+        return true;
+      });
+      // we have found something, continue with the next caret
+      if (size < elements.size()) continue;
+
+      // second, climb up into the psi tree
+      while (element != null && !(element instanceof PsiFile)) {
+        if (stopAt != null && stopAt.isInstance(element)) {
+          break;
+        }
+
+        if (accept.test(element)) {
+          elements.add(element);
+          break;
+        }
+        element = element.getParent();
+      }
+    }
+    //noinspection unchecked
+    return (List<T>)elements;
   }
 
   public static PsiElement getElementAtCaret(@NotNull final Editor editor, final PsiFile file) {

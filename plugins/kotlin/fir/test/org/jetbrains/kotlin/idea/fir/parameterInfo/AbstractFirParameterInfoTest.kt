@@ -19,7 +19,7 @@ abstract class AbstractFirParameterInfoTest : AbstractParameterInfoTest() {
     }
 
     override fun doTest(fileName: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(fileName), IgnoreTests.DIRECTIVES.IGNORE_FIR) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(fileName), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             super.doTest(fileName)
         }
     }

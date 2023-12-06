@@ -10,7 +10,6 @@ class LambdaTest implements ILambdaTest {
     else {
       return 42;
     }
-  }
   };
   @Override
   public int getResult() {

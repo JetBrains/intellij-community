@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.idea.projectView.getStructureDeclarations
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinStructureViewElement
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
@@ -91,7 +92,7 @@ class KotlinFirStructureViewElement(
             else -> emptyList()
         }
 
-        return children.map { KotlinFirStructureViewElement(it, it, isInherited = false) }
+        return children.map { KotlinFirStructureViewElement(it.originalElement as KtElement, it, isInherited = false) }
     }
 
     private fun PsiElement.collectLocalDeclarations(): List<KtDeclaration> {
@@ -156,10 +157,3 @@ private class AssignableLazyProperty<in R, T : Any>(val init: () -> T) : ReadWri
         _value = value
     }
 }
-
-fun KtClassOrObject.getStructureDeclarations() =
-    buildList {
-        primaryConstructor?.let { add(it) }
-        primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
-        addAll(declarations)
-    }

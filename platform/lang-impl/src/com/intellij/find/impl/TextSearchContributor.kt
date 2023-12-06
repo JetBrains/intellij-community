@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl
 
 import com.intellij.find.FindBundle
@@ -6,44 +6,54 @@ import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.find.FindSettings
 import com.intellij.find.impl.TextSearchRightActionAction.*
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.SearchEverywhereClassifier
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
-import com.intellij.ide.util.RunOnceUtil
+import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.Companion.SE_TAB_TOPIC
+import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.SETabSwitchedEvent
+import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Key
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.reference.SoftReference
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
-import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
+import com.intellij.util.ui.StatusText
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import javax.swing.ListCellRenderer
 
-internal class TextSearchContributor(
-  val event: AnActionEvent
-) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
-    SearchFieldActionsContributor,
-    PossibleSlowContributor,
-    DumbAware, ScopeSupporting, Disposable {
+@ApiStatus.Internal
+class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
+                                                        SearchFieldActionsContributor,
+                                                        SearchEverywhereExtendedInfoProvider,
+                                                        PossibleSlowContributor,
+                                                        SearchEverywhereEmptyTextProvider,
+                                                        SearchEverywherePreviewProvider,
+                                                        DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
   private val model = FindManager.getInstance(project).findInProjectModel
@@ -77,18 +87,18 @@ internal class TextSearchContributor(
     return if (secondScope != null) secondScope.scope as GlobalSearchScope? else everywhereScope
   }
 
-  override fun getSearchProviderId() = ID
-  override fun getGroupName() = FindBundle.message("search.everywhere.group.name")
-  override fun getSortWeight() = 1500
-  override fun showInFindResults() = enabled()
-  override fun isShownInSeparateTab() = true
+  override fun getSearchProviderId(): String = ID
+  override fun getGroupName(): @Nls String = FindBundle.message("search.everywhere.group.name")
+  override fun getSortWeight(): Int = 1500
+  override fun showInFindResults(): Boolean = enabled()
+  override fun isShownInSeparateTab(): Boolean = true
 
   override fun fetchWeightedElements(pattern: String,
                                      indicator: ProgressIndicator,
                                      consumer: Processor<in FoundItemDescriptor<SearchEverywhereItem>>) {
     FindModel.initStringToFind(model, pattern)
 
-    val presentation = FindInProjectUtil.setupProcessPresentation(project, UsageViewPresentation())
+    val presentation = FindInProjectUtil.setupProcessPresentation(UsageViewPresentation())
 
     val scope = GlobalSearchScope.projectScope(project) // TODO use scope from model ?
     val recentItemRef = ThreadLocal<Reference<SearchEverywhereItem>>()
@@ -99,11 +109,13 @@ internal class TextSearchContributor(
       val recentItem = SoftReference.dereference(recentItemRef.get())
       val newItem = if (recentItem != null && recentItem.usage.merge(usage)) {
         // recompute merged presentation
+        recentItem.usage.updateCachedPresentation()
         recentItem.withPresentation(usagePresentation(project, scope, recentItem.usage))
       }
       else {
+        usage.updateCachedPresentation()
         SearchEverywhereItem(usage, usagePresentation(project, scope, usage)).also {
-         if (!consumer.process(FoundItemDescriptor(it, 0))) return@findUsages false
+          if (!consumer.process(FoundItemDescriptor(it, 0))) return@findUsages false
         }
       }
       recentItemRef.set(WeakReference(newItem))
@@ -124,15 +136,39 @@ internal class TextSearchContributor(
   }
 
   override fun getActions(onChanged: Runnable): List<AnAction> =
-    listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask })
+    listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask }, PreviewAction())
 
-  override fun createRightActions(onChanged: Runnable): List<TextSearchRightActionAction> {
-    lateinit var regexp: AtomicBooleanProperty
-    val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply { afterChange { model.isWholeWordsOnly = it; if (it) regexp.set(false) } }
+  override fun createRightActions(registerShortcut: (AnAction) -> Unit, onChanged: Runnable): List<TextSearchRightActionAction> {
+    val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply { afterChange { model.isWholeWordsOnly = it } }
     val case = AtomicBooleanProperty(model.isCaseSensitive).apply { afterChange { model.isCaseSensitive = it } }
-    regexp = AtomicBooleanProperty(model.isRegularExpressions).apply { afterChange { model.isRegularExpressions = it; if (it) word.set(false) } }
+    val regexp = AtomicBooleanProperty(model.isRegularExpressions).apply { afterChange { model.isRegularExpressions = it } }
 
-    return listOf(CaseSensitiveAction(case, onChanged), WordAction(word, onChanged), RegexpAction(regexp, onChanged))
+    val findModelObserver = FindModel.FindModelObserver {
+      if (model.isCaseSensitive != case.get()) case.set(model.isCaseSensitive)
+      if (model.isRegularExpressions != regexp.get()) regexp.set(model.isRegularExpressions)
+      if (model.isWholeWordsOnly != word.get()) word.set(model.isWholeWordsOnly)
+    }
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe<SETabSwitcherListener>(
+      SE_TAB_TOPIC, object : SETabSwitcherListener {
+      override fun tabSwitched(event: SETabSwitchedEvent) {
+        case.set(false)
+        regexp.set(false)
+        word.set(false)
+      }
+    })
+
+    val onDisposeLocal = onDispose
+    onDispose = {
+      onDisposeLocal.invoke()
+      model.removeObserver(findModelObserver)
+    }
+
+    model.addObserver(findModelObserver)
+
+    return listOf(CaseSensitiveAction(case, registerShortcut, onChanged),
+                  WordAction(word, registerShortcut, onChanged),
+                  RegexpAction(regexp, registerShortcut, onChanged))
   }
 
   override fun getDataForItem(element: SearchEverywhereItem, dataId: String): Any? {
@@ -151,7 +187,8 @@ internal class TextSearchContributor(
 
   private fun setSelectedScope(scope: ScopeDescriptor) {
     selectedScopeDescriptor = scope
-    SE_TEXT_SELECTED_SCOPE.set(project, if (scope.scopeEquals(everywhereScope) || scope.scopeEquals(projectScope)) null else scope.displayName)
+    SE_TEXT_SELECTED_SCOPE.set(project,
+                               if (scope.scopeEquals(everywhereScope) || scope.scopeEquals(projectScope)) null else scope.displayName)
     FindSettings.getInstance().customScope = selectedScopeDescriptor.scope?.displayName
 
     model.customScopeName = selectedScopeDescriptor.scope?.displayName
@@ -164,8 +201,8 @@ internal class TextSearchContributor(
                                           setOf(ScopeModel.Option.LIBRARIES, ScopeModel.Option.EMPTY_SCOPES)))
   }
 
-  override fun getScope() = selectedScopeDescriptor
-  override fun getSupportedScopes() = createScopes()
+  override fun getScope(): ScopeDescriptor = selectedScopeDescriptor
+  override fun getSupportedScopes(): MutableList<ScopeDescriptor> = createScopes()
 
   override fun setScope(scope: ScopeDescriptor) {
     setSelectedScope(scope)
@@ -198,6 +235,40 @@ internal class TextSearchContributor(
     if (this::onDispose.isInitialized) onDispose()
   }
 
+  override fun createExtendedInfo() = createTextExtendedInfo()
+
+  override fun updateEmptyStatus(statusText: StatusText, rebuild: () -> Unit) {
+    statusText.appendLine(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere")).appendText(".").appendLine("")
+
+    if (!(model.isCaseSensitive || model.isWholeWordsOnly || model.isRegularExpressions || model.fileFilter?.isNotBlank() == true)) return
+
+    statusText.appendLine(FindBundle.message("message.nothingFound.used.options")).appendLine("")
+
+    if (model.isCaseSensitive) {
+      statusText.appendText(FindBundle.message("find.popup.case.sensitive.label"))
+    }
+    if (model.isWholeWordsOnly) {
+      statusText.appendText(" ").appendText(FindBundle.message("find.whole.words.label"))
+    }
+    if (model.isRegularExpressions) {
+      statusText.appendText(" ").appendText(FindBundle.message("find.regex.label"))
+    }
+    if (model.fileFilter?.isNotBlank() == true) {
+      statusText.appendText(" ").appendText(FindBundle.message("find.popup.filemask.label"))
+    }
+
+    val clear = {
+      model.isCaseSensitive = false
+      model.isWholeWordsOnly = false
+      model.isRegularExpressions = false
+      model.fileFilter = null
+    }
+
+    statusText.appendLine(FindBundle.message("find.popup.clear.all.options"),
+                          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                          ActionListener { _: ActionEvent? -> clear.invoke(); rebuild.invoke() })
+  }
+
   companion object {
     private const val ID = "TextSearchContributor"
     private const val ADVANCED_OPTION_ID = "se.text.search"
@@ -206,8 +277,8 @@ internal class TextSearchContributor(
     private fun enabled() = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
 
     class Factory : SearchEverywhereContributorFactory<SearchEverywhereItem> {
-      override fun isAvailable() = enabled()
-      override fun createContributor(event: AnActionEvent) = TextSearchContributor(event)
+      override fun isAvailable(project: Project): Boolean = enabled()
+      override fun createContributor(event: AnActionEvent): TextSearchContributor = TextSearchContributor(event)
     }
 
     class TextSearchAction : SearchEverywhereBaseAction(), DumbAware {
@@ -218,14 +289,6 @@ internal class TextSearchContributor(
 
       override fun actionPerformed(e: AnActionEvent) {
         showInSearchEverywherePopup(ID, e, true, true)
-      }
-    }
-
-    internal class TextSearchActivity : ProjectActivity {
-      override suspend fun execute(project: Project) {
-        RunOnceUtil.runOnceForApp(ADVANCED_OPTION_ID) {
-          AdvancedSettings.setBoolean(ADVANCED_OPTION_ID, PlatformUtils.isRider())
-        }
       }
     }
   }

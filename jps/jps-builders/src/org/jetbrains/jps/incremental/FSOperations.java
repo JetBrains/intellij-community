@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -38,7 +37,7 @@ public final class FSOperations {
   /**
    * @return true if file is marked as "dirty" in the specified compilation round
    */
-  public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, final File file) throws IOException {
+  public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, final File file) {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
@@ -122,7 +121,7 @@ public final class FSOperations {
 
       @Override
       public DirtyFilesHolder<R, T> create() {
-        return new DirtyFilesHolder<R, T>() {
+        return new DirtyFilesHolder<>() {
           @Override
           public void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException {
             for (Map.Entry<T, Map<R, Set<File>>> entry : dirtyFiles.entrySet()) {
@@ -277,24 +276,64 @@ public final class FSOperations {
                                              final BuildRootDescriptor rd,
                                              final CompilationRound round,
                                              final File file,
-                                             @NotNull final StampsStorage<? extends StampsStorage.Stamp> stampStorage,
+                                             final @NotNull StampsStorage<? extends StampsStorage.Stamp> stampStorage,
                                              final boolean forceDirty,
                                              @Nullable Set<? super File> currentFiles, @Nullable FileFilter filter) throws IOException {
 
-    final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
-    final Ref<Boolean> allFilesMarked = Ref.create(Boolean.TRUE);
+    var fileConsumer = new FileConsumer() {
+      boolean allFilesMarked = true;
+      @Override
+      public void consume(@NotNull File file, @Nullable BasicFileAttributes attrs) throws IOException {
+        if (filter != null && !filter.accept(file)) {
+          allFilesMarked = false;
+        }
+        else {
+          boolean markDirty = forceDirty;
+          if (!markDirty) {
+            markDirty = attrs != null?
+              stampStorage.isDirtyStamp(stampStorage.getPreviousStamp(file, rd.getTarget()), file, attrs) :
+              stampStorage.isDirtyStamp(stampStorage.getPreviousStamp(file, rd.getTarget()), file);
+          }
+          if (markDirty) {
+            // if it is full project rebuild, all storages are already completely cleared;
+            // so passing null because there is no need to access the storage to clear non-existing data
+            final StampsStorage<? extends StampsStorage.Stamp> marker = context.isProjectRebuild()? null : stampStorage;
+            context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker, false);
+          }
+          if (currentFiles != null) {
+            currentFiles.add(file);
+          }
+          if (!markDirty) {
+            allFilesMarked = false;
+          }
+        }
+      }
+    };
+    traverseRecursively(context.getProjectDescriptor().getBuildRootIndex(), rd, file, fileConsumer);
+    return fileConsumer.allFilesMarked;
+  }
 
-    Files.walkFileTree(file.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+  @FunctionalInterface
+  public interface FileConsumer {
+    void consume(@NotNull File file, @Nullable BasicFileAttributes attrs) throws IOException;
+  }
+  
+  public static void traverseRecursively(BuildRootIndex rootIndex, final BuildRootDescriptor rd, final File fromFile, @NotNull FSOperations.FileConsumer processor) throws IOException {
+    traverseRecursively(fromFile, f -> rootIndex.isDirectoryAccepted(f, rd), f -> rootIndex.isFileAccepted(f, rd), processor);
+  }
+
+  private static void traverseRecursively(final File fromFile, @NotNull FileFilter dirFilter, @NotNull FileFilter fileFilter, @NotNull FSOperations.FileConsumer processor) throws IOException {
+    Files.walkFileTree(fromFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
+        if (e instanceof NoSuchFileException) {
+          return FileVisitResult.TERMINATE;
+        }
         if (e instanceof FileSystemLoopException) {
           LOG.info(e);
           // in some cases (e.g. Google Drive File Stream) loop detection for directories works incorrectly
           // fallback: try to traverse in the old IO-way
-          final boolean marked = traverseRecursivelyIO(context, rd, round, file.toFile(), stampStorage, forceDirty, currentFiles, filter);
-          if (!marked) {
-            allFilesMarked.set(Boolean.FALSE);
-          }
+          traverseRecursivelyIO(file.toFile(), dirFilter, fileFilter, processor);
           return FileVisitResult.SKIP_SUBTREE;
         }
         return super.visitFileFailed(file, e);
@@ -302,89 +341,40 @@ public final class FSOperations {
 
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-        return rootIndex.isDirectoryAccepted(dir.toFile(), rd)? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
+        return dirFilter.accept(dir.toFile())? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
       }
 
       @Override
       public FileVisitResult visitFile(Path f, BasicFileAttributes attrs) throws IOException {
         final File _file = f.toFile();
-        if (!rootIndex.isFileAccepted(_file, rd)) { // ignored file
-          return FileVisitResult.CONTINUE;
-        }
-        if (filter != null && !filter.accept(_file)) {
-          allFilesMarked.set(Boolean.FALSE);
-        }
-        else {
-          boolean markDirty = forceDirty;
-          if (!markDirty) {
-            markDirty = stampStorage.isDirtyStamp(stampStorage.getPreviousStamp(_file, rd.getTarget()), _file, attrs);
-          }
-          if (markDirty) {
-            // if it is full project rebuild, all storages are already completely cleared;
-            // so passing null because there is no need to access the storage to clear non-existing data
-            final StampsStorage<? extends StampsStorage.Stamp> marker = context.isProjectRebuild() ? null : stampStorage;
-            context.getProjectDescriptor().fsState.markDirty(context, round, _file, rd, marker, false);
-          }
-          if (currentFiles != null) {
-            currentFiles.add(_file);
-          }
-          if (!markDirty) {
-            allFilesMarked.set(Boolean.FALSE);
-          }
+        if (fileFilter.accept(_file)) {
+          processor.consume(_file, attrs);
         }
         return FileVisitResult.CONTINUE;
       }
-
     });
-
-    return allFilesMarked.get();
   }
 
-  private static boolean traverseRecursivelyIO(CompileContext context,
-                                             final BuildRootDescriptor rd,
-                                             final CompilationRound round,
-                                             final File file,
-                                             @NotNull final StampsStorage<? extends StampsStorage.Stamp> stampsStorage,
-                                             final boolean forceDirty,
-                                             @Nullable Set<? super File> currentFiles, @Nullable FileFilter filter) throws IOException {
-    BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
-    final File[] children = file.listFiles();
-    if (children != null) { // is directory
-      boolean allMarkedDirty = true;
-      if (children.length > 0 && rootIndex.isDirectoryAccepted(file, rd)) {
+  private static void traverseRecursivelyIO(final File fromFile, @NotNull FileFilter dirFilter, @NotNull FileFilter fileFilter, @NotNull FSOperations.FileConsumer processor) throws IOException {
+    final File[] children = fromFile.listFiles();
+    if (children != null) { // is a directory
+      if (children.length > 0 && dirFilter.accept(fromFile)) {
         for (File child : children) {
-          allMarkedDirty &= traverseRecursivelyIO(context, rd, round, child, stampsStorage, forceDirty, currentFiles, filter);
+          traverseRecursivelyIO(child, dirFilter, fileFilter, processor);
         }
       }
-      return allMarkedDirty;
     }
-    // is file
-
-    if (!rootIndex.isFileAccepted(file, rd)) {
-      return true;
+    else { // is a file
+      if (fileFilter.accept(fromFile)) {
+        processor.consume(fromFile, null);
+      }
     }
-    if (filter != null && !filter.accept(file)) {
-      return false;
-    }
-
-    boolean markDirty = forceDirty;
-    if (!markDirty) {
-      markDirty = stampsStorage.isDirtyStamp(stampsStorage.getPreviousStamp(file, rd.getTarget()), file);
-    }
-    if (markDirty) {
-      // if it is full project rebuild, all storages are already completely cleared;
-      // so passing null because there is no need to access the storage to clear non-existing data
-      final StampsStorage<? extends StampsStorage.Stamp> marker = context.isProjectRebuild() ? null : stampsStorage;
-      context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker, false);
-    }
-    if (currentFiles != null) {
-      currentFiles.add(file);
-    }
-    return markDirty;
   }
 
-  public static void pruneEmptyDirs(CompileContext context, @Nullable final Set<File> dirsToDelete) {
-    if (dirsToDelete == null || dirsToDelete.isEmpty()) return;
+  public static void pruneEmptyDirs(CompileContext context, final @Nullable Set<File> dirsToDelete) {
+    if (dirsToDelete == null || dirsToDelete.isEmpty()) {
+      return;
+    }
 
     Set<File> doNotDelete = ALL_OUTPUTS_KEY.get(context);
     if (doNotDelete == null) {

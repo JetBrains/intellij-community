@@ -2,14 +2,21 @@
 package com.intellij.ide.navbar.ui
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.awt.Color
 import java.awt.Font
 import java.awt.Insets
+import java.awt.Window
+import javax.swing.JComponent
 
 internal fun navBarItemBackground(selected: Boolean, focused: Boolean): Color {
   return if (selected && focused) {
@@ -21,7 +28,7 @@ internal fun navBarItemBackground(selected: Boolean, focused: Boolean): Color {
 }
 
 internal fun  navBarItemForeground(selected: Boolean, focused: Boolean, inactive: Boolean): Color? {
-  return if (StartupUiUtil.isUnderDarcula()) {
+  return if (StartupUiUtil.isUnderDarcula) {
     if (inactive) {
       Gray._140
     }
@@ -48,7 +55,7 @@ internal fun defaultNavBarItemForeground(selected: Boolean, focused: Boolean, in
 
 internal fun navBarItemFont(): Font? {
   if (!ExperimentalUI.isNewUI() && UISettings.getInstance().useSmallLabelsOnTabs) {
-    return RelativeFont.SMALL.derive(StartupUiUtil.getLabelFont())
+    return RelativeFont.SMALL.derive(StartupUiUtil.labelFont)
   }
   return JBUI.CurrentTheme.StatusBar.font()
 }
@@ -81,4 +88,19 @@ internal fun navBarItemPadding(floating: Boolean): Insets {
 
 internal fun navBarPopupOffset(firstItem: Boolean): Int {
   return if (firstItem) 0 else JBUIScale.scale(5)
+}
+
+internal fun trackCurrentWindow(panel: JComponent): StateFlow<Window?> {
+  val window = MutableStateFlow<Window?>(null)
+  UiNotifyConnector.installOn(panel, object : Activatable {
+
+    override fun showNotify() {
+      window.value = ComponentUtil.getWindow(panel)
+    }
+
+    override fun hideNotify() {
+      window.value = null
+    }
+  }, false)
+  return window
 }

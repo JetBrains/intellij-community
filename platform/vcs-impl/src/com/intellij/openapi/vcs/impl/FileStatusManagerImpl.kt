@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
-import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,12 +36,15 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+@VisibleForTesting
 class FileStatusManagerImpl(private val project: Project) : FileStatusManager(), Disposable {
   private val queue = MergingUpdateQueue("FileStatusManagerImpl", 100, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
@@ -99,18 +101,15 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
       refreshFileStatus(document)
     }
 
-    companion object {
-      private fun refreshFileStatus(document: Document) {
-        val file = FileDocumentManager.getInstance().getFile(document)
-        if (file?.isTrackable != true) {
-          return
-        }
+    private fun refreshFileStatus(document: Document) {
+      val file = FileDocumentManager.getInstance().getFile(document) ?: return
+      if (!file.isInLocalFileSystem) return // no VCS
+      if (!isSupported(file)) return
 
-        val projectManager = ProjectManager.getInstanceIfCreated() ?: return
-        for (project in projectManager.openProjects) {
-          val manager = project.getServiceIfCreated(FileStatusManager::class.java) as FileStatusManagerImpl?
-          manager?.refreshFileStatusFromDocument(file)
-        }
+      val projectManager = ProjectManager.getInstanceIfCreated() ?: return
+      for (project in projectManager.openProjects) {
+        val manager = project.getServiceIfCreated(FileStatusManager::class.java) as FileStatusManagerImpl?
+        manager?.refreshFileStatusFromDocument(file)
       }
     }
   }
@@ -206,8 +205,11 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
       return
     }
 
-    if (file.isTrackable
-        && cachedStatuses.get(file) == null) {
+    if (!isSupported(file)) {
+      // do not leak light files via cache
+      return
+    }
+    if (cachedStatuses.get(file) == null) {
       return
     }
 
@@ -224,8 +226,7 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
     }
     val updatedFiles = ArrayList<VirtualFile>()
     for (file in toRefresh) {
-      val wasUpdated = file.fileSystem is NonPhysicalFileSystem && file.isTrackable
-                       || updateFileStatusFor(file)
+      val wasUpdated = updateFileStatusFor(file)
       if (wasUpdated) {
         updatedFiles.add(file)
       }
@@ -259,7 +260,7 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
   }
 
   override fun getStatus(file: VirtualFile): FileStatus {
-    if (file.fileSystem is NonPhysicalFileSystem) {
+    if (!isSupported(file)) {
       // do not leak light files via cache
       return FileStatus.SUPPRESSED
     }
@@ -314,29 +315,31 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
       )
     }
 
-    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return
-    val cachedStatus = cachedStatuses[file]
+    val vcsFile = VcsUtil.resolveSymlinkIfNeeded(project, file)
+
+    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(vcsFile) ?: return
+    val cachedStatus = cachedStatuses[vcsFile]
     if (cachedStatus === FileStatus.MODIFIED && !isDocumentModified) {
       val unlockWithPrompt = (ReadonlyStatusHandler.getInstance(project) as ReadonlyStatusHandlerImpl).state.SHOW_DIALOG
       if (!unlockWithPrompt) {
         val rollbackEnvironment = vcs.rollbackEnvironment
-        rollbackEnvironment?.rollbackIfUnchanged(file)
+        rollbackEnvironment?.rollbackIfUnchanged(vcsFile)
       }
     }
 
     if (cachedStatus != null) {
       val isStatusChanged = cachedStatus !== FileStatus.NOT_CHANGED
       if (isStatusChanged != isDocumentModified) {
-        fileStatusChanged(file)
+        fileStatusChanged(vcsFile)
       }
     }
 
     val cp = vcs.changeProvider
     if (cp != null && cp.isModifiedDocumentTrackingRequired) {
-      val status = ChangeListManager.getInstance(project).getStatus(file)
+      val status = ChangeListManager.getInstance(project).getStatus(vcsFile)
       val isClmStatusChanged = status !== FileStatus.NOT_CHANGED
       if (isClmStatusChanged != isDocumentModified) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(file)
+        VcsDirtyScopeManager.getInstance(project).fileDirty(vcsFile)
       }
     }
   }
@@ -353,8 +356,9 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
   }
 }
 
-private inline val VirtualFile.isTrackable: Boolean
-  get() = FileDocumentManagerBase.isTrackable(this)
+private fun isSupported(file: VirtualFile): Boolean {
+  return FileDocumentManagerBase.isTrackable(file)
+}
 
 private fun isDocumentModified(virtualFile: VirtualFile): Boolean {
   return if (virtualFile.isDirectory) false else FileDocumentManager.getInstance().isFileModified(virtualFile)

@@ -34,6 +34,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/actualTypeAlias.kt");
             }
 
+            @TestMetadata("annotations.kt")
+            public void testAnnotations() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/annotations.kt");
+            }
+
             @TestMetadata("builtinType.kt")
             public void testBuiltinType() throws Exception {
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/builtinType.kt");
@@ -42,6 +47,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
             @TestMetadata("class.kt")
             public void testClass() throws Exception {
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/class.kt");
+            }
+
+            @TestMetadata("enumEntry.kt")
+            public void testEnumEntry() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/enumEntry.kt");
             }
 
             @TestMetadata("unnamedCompanion.kt")
@@ -55,6 +65,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
         public static class Constructors extends AbstractKotlinNavigationToLibrarySourceTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractList.kt")
+            public void testAbstractList() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/constructors/abstractList.kt");
             }
 
             @TestMetadata("byteArrayPrimaryConstructorCall.kt")
@@ -116,6 +131,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
         public static class Properties extends AbstractKotlinNavigationToLibrarySourceTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("dataClass.kt")
+            public void testDataClass() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/properties/dataClass.kt");
             }
 
             @TestMetadata("list_size.kt")

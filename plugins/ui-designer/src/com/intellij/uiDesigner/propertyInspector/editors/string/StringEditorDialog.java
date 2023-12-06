@@ -2,14 +2,15 @@
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -39,6 +40,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,13 +102,15 @@ public final class StringEditorDialog extends DialogWrapper{
       if (descriptor != null && descriptor.getKey().length() > 0) {
         final String value = myForm.myTfRbValue.getText();
         final PropertiesFile propFile = getPropertiesFile(descriptor);
-        if (propFile != null && propFile.findPropertyByKey(descriptor.getKey()) == null) {
-          saveCreatedProperty(propFile, descriptor.getKey(), value, myEditor.getPsiFile());
-        }
-        else {
-          final String newKeyName = saveModifiedPropertyValue(myEditor.getModule(), descriptor, myLocale, value, myEditor.getPsiFile());
-          if (newKeyName != null) {
-            myForm.myTfKey.setText(newKeyName);
+        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-687662")) {
+          if (propFile != null && propFile.findPropertyByKey(descriptor.getKey()) == null) {
+            saveCreatedProperty(propFile, descriptor.getKey(), value, myEditor.getPsiFile());
+          }
+          else {
+            final String newKeyName = saveModifiedPropertyValue(myEditor.getModule(), descriptor, myLocale, value, myEditor.getPsiFile());
+            if (newKeyName != null) {
+              myForm.myTfKey.setText(newKeyName);
+            }
           }
         }
       }
@@ -354,8 +358,8 @@ public final class StringEditorDialog extends DialogWrapper{
             PropertiesFile file = PropertiesUtilBase.getPropertiesFile(bundleNameText, myEditor.getModule(), myLocale);
             PsiFile initialPropertiesFile = file == null ? null : file.getContainingFile();
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myEditor.getModule());
-            TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
-                                                                                                         PropertiesFileType.INSTANCE, new TreeFileChooser.PsiFileFilter() {
+            TreeFileChooser fileChooser = TreeFileChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
+                                                                                                        PropertiesFileType.INSTANCE, new TreeFileChooser.PsiFileFilter() {
               @Override
               public boolean accept(PsiFile file) {
                 final VirtualFile virtualFile = file.getVirtualFile();

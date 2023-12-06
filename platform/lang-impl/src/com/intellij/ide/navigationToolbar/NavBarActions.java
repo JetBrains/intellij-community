@@ -1,22 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navbar.actions.NavBarActionHandler;
-import com.intellij.ide.navbar.ide.NavBarIdeUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 import static com.intellij.ide.navbar.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER;
-import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
-public sealed abstract class NavBarActions extends AnAction implements DumbAware {
+public sealed abstract class NavBarActions extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   NavBarActions() {
     setEnabledInModalContext(true);
   }
@@ -34,9 +32,7 @@ public sealed abstract class NavBarActions extends AnAction implements DumbAware
   }
 
   private @Nullable NavBarActionHandler actionHandler(@NotNull AnActionEvent event) {
-    return NavBarIdeUtil.isNavbarV2Enabled()
-           ? isEnabledInV2() ? event.getData(NAV_BAR_ACTION_HANDLER) : null
-           : ComponentUtil.getParentOfType(NavBarPanel.class, event.getData(CONTEXT_COMPONENT));
+    return isEnabledInV2() ? event.getData(NAV_BAR_ACTION_HANDLER) : null;
   }
 
   @Override

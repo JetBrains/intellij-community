@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -7,12 +7,14 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,7 +32,7 @@ import java.util.Objects;
  */
 public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
 
-  public static final String INSPECTION_GADGETS_TEST_DATA_PATH = "/plugins/InspectionGadgets/test/";
+  public static final String INSPECTION_GADGETS_TEST_DATA_PATH = "/java/java-tests/testData/ig/";
 
   @Override
   protected void setUp() throws Exception {
@@ -53,8 +55,8 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
     }
 
     Sdk sdk = ModuleRootManager.getInstance(ModuleManager.getInstance(getProject()).getModules()[0]).getSdk();
-    if (Objects.requireNonNull(JAVA_1_7.getSdk()).getName().equals(sdk == null ? null : sdk.getName())) {
-      final PsiClass object = JavaPsiFacade.getInstance(getProject()).findClass("java.lang.Object", GlobalSearchScope.allScope(getProject()));
+    if (((ProjectDescriptor)JAVA_1_7).getSdkName().equals(sdk == null ? null : sdk.getName())) {
+      final PsiClass object = JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
       assertNotNull(object);
 
       final PsiClass component = JavaPsiFacade.getInstance(getProject()).findClass("java.awt.Component", GlobalSearchScope.allScope(getProject()));
@@ -94,6 +96,7 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
     final IntentionAction intention = myFixture.getAvailableIntention(name);
     assertNotNull(intention);
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResult(result);
   }
 
@@ -101,6 +104,7 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
     final IntentionAction intention = myFixture.getAvailableIntention(intentionName);
     assertNotNull(intention);
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 

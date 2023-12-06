@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
@@ -106,12 +106,12 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
   }
 
   private void updateByteCode(PsiElement element, ByteCodeViewerComponent component, Content content) {
-    updateByteCode(element, component, content, getByteCode(element));
+    updateByteCode(element, -1, component, content, getByteCode(element));
   }
 
-  private void updateByteCode(PsiElement element, ByteCodeViewerComponent component, Content content, String byteCode) {
+  private void updateByteCode(PsiElement element, int lineNumber, ByteCodeViewerComponent component, Content content, String byteCode) {
     if (!StringUtil.isEmpty(byteCode)) {
-      component.setText(byteCode, element);
+      component.setText(byteCode, element, lineNumber);
     }
     else {
       PsiElement presentableElement = getContainingClass(element);
@@ -155,13 +155,13 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
 
   @Override
   protected void doUpdateComponent(@NotNull PsiElement element) {
-    doUpdateComponent(element, getByteCode(element));
+    doUpdateComponent(element, -1, getByteCode(element));
   }
 
-  void doUpdateComponent(@NotNull PsiElement element, final String newText) {
+  void doUpdateComponent(@NotNull PsiElement element, int lineNumber, final String newText) {
     Content content = myToolWindow.getContentManager().getSelectedContent();
     if (content != null) {
-      updateByteCode(element, (ByteCodeViewerComponent)content.getComponent(), content, newText);
+      updateByteCode(element, lineNumber, (ByteCodeViewerComponent)content.getComponent(), content, newText);
     }
   }
 
@@ -254,7 +254,7 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
 
   @Nullable
   public static PsiClass getContainingClass(@NotNull PsiElement psiElement) {
-    for (ClassSearcher searcher : CLASS_SEARCHER_EP.getExtensions()) {
+    for (ClassSearcher searcher : CLASS_SEARCHER_EP.getExtensionList()) {
       PsiClass aClass = searcher.findClass(psiElement);
       if (aClass != null) {
         return aClass;

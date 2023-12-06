@@ -37,7 +37,7 @@ class ModalityConversion(context: NewJ2kConverterContext) : RecursiveApplicableC
 
     private fun JKMethod.process() {
         val psiMethod = psi<PsiMethod>() ?: return
-        val containingClass = parentOfType<JKClass>() ?: return
+        val containingClass: JKClass? = parentOfType<JKClass>()
         when {
             visibility == PRIVATE -> modality = FINAL
 
@@ -50,18 +50,20 @@ class ModalityConversion(context: NewJ2kConverterContext) : RecursiveApplicableC
 
             modality == OPEN
                     && context.converter.settings.openByDefault
-                    && containingClass.modality == OPEN
+                    && containingClass?.modality == OPEN
                     && visibility != PRIVATE -> {
-                modality = OPEN
+                // do nothing, i.e. preserve the open modality
             }
 
             modality == OPEN
-                    && containingClass.classKind != INTERFACE
+                    && containingClass?.classKind != INTERFACE
                     && !hasOverrides(psiMethod) -> {
                 modality = FINAL
             }
 
-            else -> modality = modality
+            else -> {
+                // do nothing
+            }
         }
     }
 

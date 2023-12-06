@@ -1,8 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.asSafely
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 
@@ -14,9 +17,9 @@ import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 class IndexingFileSetStatistics(private val project: Project, val fileSetName: String) {
 
   companion object {
-    const val SLOW_FILES_LIMIT = 10
+    const val SLOW_FILES_LIMIT: Int = 10
 
-    const val SLOW_FILE_PROCESSING_THRESHOLD_MS = 500
+    const val SLOW_FILE_PROCESSING_THRESHOLD_MS: Int = 500
   }
 
   var processingTimeInAllThreads: TimeNano = 0
@@ -25,54 +28,66 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
 
   var numberOfIndexedFiles: Int = 0
 
-  var listOfFilesFullyIndexedByExtensions = arrayListOf<String>()
+  var listOfFilesFullyIndexedByExtensions: ArrayList<String> = arrayListOf()
 
   var numberOfFilesFullyIndexedByExtensions: Int = 0
 
+  var numberOfNothingToWriteFiles: Int = 0
+
   var numberOfTooLargeForIndexingFiles: Int = 0
 
-  val statsPerIndexer = hashMapOf<String /* ID.name() */, StatsPerIndexer>()
+  val statsPerIndexer: HashMap<String, StatsPerIndexer> = hashMapOf()
 
-  val statsPerFileType = hashMapOf<String /* File type name */, StatsPerFileType>()
+  val statsPerFileType: HashMap<String, StatsPerFileType> = hashMapOf()
 
-  val indexedFiles = arrayListOf<IndexedFile>()
+  val indexedFiles: ArrayList<IndexedFile> = arrayListOf()
 
-  val slowIndexedFiles = LimitedPriorityQueue<SlowIndexedFile>(SLOW_FILES_LIMIT, compareBy { it.processingTime })
+  val slowIndexedFiles: LimitedPriorityQueue<SlowIndexedFile> = LimitedPriorityQueue(SLOW_FILES_LIMIT, compareBy { it.processingTime })
 
-  var allValuesAppliedSeparately = true
-  var allSeparateApplicationTimeInAllThreads: TimeNano = 0 //is 0 when !allValuesAppliedSeparately
+  var allSeparateApplicationTimeInAllThreads: TimeNano = 0
 
-  data class IndexedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByExtensions: Boolean)
+  data class IndexedFile(val portableFilePath: PortableFilePath, val indexesEvaluated: IndexesEvaluated)
 
   data class StatsPerIndexer(
     var evaluateIndexValueChangerTime: TimeNano,
     var numberOfFiles: Int,
     var numberOfFilesIndexedByExtensions: Int,
-    var totalBytes: BytesNumber
+    var totalBytes: NumberOfBytes
   )
 
   data class StatsPerFileType(
     var processingTimeInAllThreads: TimeNano,
     var contentLoadingTimeInAllThreads: TimeNano,
     var numberOfFiles: Int,
-    var totalBytes: BytesNumber
-  )
+    var totalBytes: NumberOfBytes,
+    val parentLanguages: MutableList<String> = mutableListOf()
+  ) {
+    constructor(fileType: FileType) : this(0, 0, 0, 0) {
+      var language = fileType.asSafely<LanguageFileType>()?.language
+      while (language != null){
+        parentLanguages.add(language.id)
+        language = language.baseLanguage
+      }
+    }
+  }
 
   fun addFileStatistics(
     file: VirtualFile,
     fileStatistics: FileIndexingStatistics,
     processingTime: TimeNano,
     contentLoadingTime: TimeNano,
-    fileSize: BytesNumber,
-    valuesAppliedSeparately: Boolean,
+    fileSize: NumberOfBytes,
     separateApplicationTime: TimeNano
   ) {
     numberOfIndexedFiles++
-    if (fileStatistics.wasFullyIndexedByExtensions) {
+    if (fileStatistics.indexesEvaluated == IndexesEvaluated.BY_EXTENSIONS) {
       numberOfFilesFullyIndexedByExtensions++
       if (IndexDiagnosticDumper.shouldDumpPathsOfFilesIndexedByInfrastructureExtensions) {
         listOfFilesFullyIndexedByExtensions.add(file.toString())
       }
+    }
+    if (fileStatistics.indexesEvaluated == IndexesEvaluated.NOTHING_TO_WRITE) {
+      numberOfNothingToWriteFiles++
     }
     processingTimeInAllThreads += processingTime
     contentLoadingTimeInAllThreads += contentLoadingTime
@@ -93,7 +108,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     }
     val fileTypeName = fileStatistics.fileType.name
     val stats = statsPerFileType.getOrPut(fileTypeName) {
-      StatsPerFileType(0, 0, 0, 0)
+      StatsPerFileType(fileStatistics.fileType)
     }
     stats.contentLoadingTimeInAllThreads += contentLoadingTime
     val evaluationOfIndexValueChangerTime = perIndexerEvaluationOfValueChangerTimes.values.sum()
@@ -101,12 +116,11 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
+      indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.indexesEvaluated)
     }
     if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS * 1_000_000) {
       slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, evaluationOfIndexValueChangerTime, contentLoadingTime))
     }
-    allValuesAppliedSeparately = allValuesAppliedSeparately && valuesAppliedSeparately
     allSeparateApplicationTimeInAllThreads += separateApplicationTime
   }
 
@@ -114,7 +128,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     numberOfIndexedFiles++
     numberOfTooLargeForIndexingFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += IndexedFile(getIndexedFilePath(file), false)
+      indexedFiles += IndexedFile(getIndexedFilePath(file), IndexesEvaluated.NOTHING_TO_WRITE)
     }
   }
 

@@ -3,7 +3,6 @@ package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.Alarm
 import org.jetbrains.annotations.ApiStatus
@@ -49,7 +48,7 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
         .bindIntText(model::intTextField)
     }
     row("comboBox:") {
-      comboBox(Color.values().toList())
+      comboBox(Color.entries)
         .bindItem(model::comboBoxColor.toNullableProperty())
     }
     row("slider:") {
@@ -60,8 +59,8 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
       spinner(0..100)
         .bindIntValue(model::spinner)
     }
-    buttonsGroup(title = "radioButton:") {
-      for (value in Color.values()) {
+    buttonsGroup("radioButton:") {
+      for (value in Color.entries) {
         row {
           radioButton(value.name, value)
         }
@@ -83,10 +82,6 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
       }
     }
   }
-
-  val disposable = Disposer.newDisposable()
-  panel.registerValidators(disposable)
-  Disposer.register(parentDisposable, disposable)
 
   SwingUtilities.invokeLater {
     initValidation()

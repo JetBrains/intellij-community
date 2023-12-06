@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
@@ -38,8 +38,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return LanguageCodeStyleSettingsProviderService.getInstance().getAllProviders();
   }
 
-  @Nullable
-  public abstract String getCodeSample(@NotNull SettingsType settingsType);
+  public abstract @Nullable String getCodeSample(@NotNull SettingsType settingsType);
 
   public int getRightMargin(@NotNull SettingsType settingsType) {
     return settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS ? 30 : -1;
@@ -57,8 +56,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
   }
 
-  @Nullable
-  public static CommonCodeStyleSettings getDefaultCommonSettings(Language lang) {
+  public static @Nullable CommonCodeStyleSettings getDefaultCommonSettings(Language lang) {
     LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     return provider != null ? provider.getDefaultCommonSettings() : null;
   }
@@ -68,8 +66,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    *
    * @return The file extension for samples (null by default).
    */
-  @Nullable
-  public String getFileExt() {
+  public @Nullable String getFileExt() {
     return null;
   }
 
@@ -78,17 +75,32 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    *
    * @return The language name to show in preview tab (null by default).
    */
-  @Nullable
-  public @NlsContexts.Label String getLanguageName() {
+  public @Nullable @NlsContexts.Label String getLanguageName() {
     return null;
   }
 
   /**
-   * @return Language ID to be used in external formats like Json and .editorconfig. Must consist only of low case {@code 'a'...'z'} characters.
+   * @return Language ID to be used in external formats like Json and .editorconfig. Must consist only of low case {@code 'a'...'z'} and
+   * '-' characters. Base implementation uses {@link Language#getID()}, converts it to lower case letters and replaces any non-latin
+   * characters with '-'.
    */
-  @NotNull
-  public String getExternalLanguageId() {
-    return StringUtil.toLowerCase(getLanguage().getID());
+  public @NotNull String getExternalLanguageId() {
+    return sanitizeLanguageId(StringUtil.toLowerCase(getLanguage().getID()));
+  }
+
+  private static String sanitizeLanguageId(@NotNull String id) {
+    StringBuilder sb = new StringBuilder(id.length());
+    id.chars().forEach(
+      c-> {
+        if (c >= 'a' && c <= 'z') {
+          sb.appendCodePoint(c);
+        }
+        else {
+          sb.append('-');
+        }
+      }
+    );
+    return sb.toString();
   }
 
   /**
@@ -102,8 +114,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * @param text    code sample to demonstrate formatting settings (see {@link #getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType)}
    * @return a PSI file instance with given text, or null for default implementation using provider's language.
    */
-  @Nullable
-  public PsiFile createFileFromText(@NotNull Project project, @NotNull String text) {
+  public @Nullable PsiFile createFileFromText(@NotNull Project project, @NotNull String text) {
     return null;
   }
 
@@ -116,9 +127,8 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * @deprecated Override {@link #customizeDefaults(CommonCodeStyleSettings, IndentOptions)} method instead.
    */
   @Override
-  @NotNull
   @Deprecated
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
+  public @NotNull CommonCodeStyleSettings getDefaultCommonSettings() {
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(getLanguage());
     defaultSettings.initIndentOptions();
     //noinspection ConstantConditions
@@ -156,8 +166,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * @return A list of languages with code style settings, namely for which {@code LanguageCodeStyleSettingsProvider} exists.
    *         The list is ordered by language names as returned by {@link #getLanguageName(Language)} method.
    */
-  @NotNull
-  public static List<Language> getLanguagesWithCodeStyleSettings() {
+  public static @NotNull List<Language> getLanguagesWithCodeStyleSettings() {
     final ArrayList<Language> languages = new ArrayList<>();
     for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
       languages.add(provider.getLanguage());
@@ -166,8 +175,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return languages;
   }
 
-  @Nullable
-  public static String getCodeSample(Language lang, @NotNull SettingsType settingsType) {
+  public static @Nullable String getCodeSample(Language lang, @NotNull SettingsType settingsType) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     return provider != null ? provider.getCodeSample(settingsType) : null;
   }
@@ -177,12 +185,10 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return provider != null ? provider.getRightMargin(settingsType) : -1;
   }
 
-  @NotNull
   @Override
-  public abstract Language getLanguage();
+  public abstract @NotNull Language getLanguage();
 
-  @Nullable
-  public static Language getLanguage(String langName) {
+  public static @Nullable Language getLanguage(String langName) {
     for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
       String name = provider.getLanguageName();
       if (name == null) name = provider.getLanguage().getDisplayName();
@@ -193,8 +199,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return null;
   }
 
-  @Nullable
-  public static String getFileExt(Language lang) {
+  public static @Nullable String getFileExt(Language lang) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     return provider != null ? provider.getFileExt() : null;
   }
@@ -207,15 +212,13 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * @return Alternative UI name defined by provider.getLanguageName() method or (if the method returns null)
    *         language's own display name.
    */
-  @NotNull
-  public static @NlsSafe String getLanguageName(Language lang) {
+  public static @NotNull @NlsSafe String getLanguageName(Language lang) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     String providerLangName = provider != null ? provider.getLanguageName() : null;
     return providerLangName != null ? providerLangName : lang.getDisplayName();
   }
 
-  @Nullable
-  public static LanguageCodeStyleSettingsProvider forLanguage(final Language language) {
+  public static @Nullable LanguageCodeStyleSettingsProvider forLanguage(final Language language) {
     for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
       if (provider.getLanguage().equals(language)) {
         return provider;
@@ -230,8 +233,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * @param language The original language.
    * @return Found provider or {@code null} if it doesn't exist neither for the language itself nor for any of its base languages.
    */
-  @Nullable
-  public static LanguageCodeStyleSettingsProvider findUsingBaseLanguage(@NotNull final Language language) {
+  public static @Nullable LanguageCodeStyleSettingsProvider findUsingBaseLanguage(final @NotNull Language language) {
     for (Language currLang = language; currLang != null;  currLang = currLang.getBaseLanguage()) {
       LanguageCodeStyleSettingsProvider curr = forLanguage(currLang);
       if (curr != null) return curr;
@@ -239,13 +241,11 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return null;
   }
 
-  @Nullable
-  public static LanguageCodeStyleSettingsProvider findByExternalLanguageId(@NotNull String languageId) {
+  public static @Nullable LanguageCodeStyleSettingsProvider findByExternalLanguageId(@NotNull String languageId) {
     return ContainerUtil.find(getAllProviders(), provider -> provider.getExternalLanguageId().equals(languageId));
   }
 
-  @Nullable
-  public IndentOptionsEditor getIndentOptionsEditor() {
+  public @Nullable IndentOptionsEditor getIndentOptionsEditor() {
     return null;
   }
 
@@ -341,8 +341,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    *         settings related to doc comment. The object is used then by common platform doc comment handling algorithms.
    */
   @Override
-  @NotNull
-  public DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
+  public @NotNull DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
     return DocCommentSettings.DEFAULTS;
   }
 
@@ -355,9 +354,8 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    *
    * @see CodeStyleConfigurable
    */
-  @NotNull
   @Override
-  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings, @NotNull CodeStyleSettings modelSettings) {
+  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings, @NotNull CodeStyleSettings modelSettings) {
     throw new RuntimeException(
       this.getClass().getCanonicalName() + " for language #" + getLanguage().getID() + " doesn't implement createConfigurable()");
   }
@@ -371,8 +369,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return ourSettingsPagesProviders.updateAndGet(providers -> providers != null ? providers : calcSettingPagesProviders());
   }
 
-  @NotNull
-  private static Set<LanguageCodeStyleSettingsProvider> calcSettingPagesProviders() {
+  private static @NotNull Set<LanguageCodeStyleSettingsProvider> calcSettingPagesProviders() {
     Set<LanguageCodeStyleSettingsProvider> settingsPagesProviders = new HashSet<>();
     for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
       registerSettingsPageProvider(settingsPagesProviders, provider);
@@ -406,15 +403,13 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public final AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
+  public final @NotNull AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
     return new LanguageCodeStylePropertyMapper(settings, getLanguage(), getExternalLanguageId());
   }
 
   @SuppressWarnings("rawtypes")
   @ApiStatus.Experimental
-  @Nullable
-  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+  public @Nullable CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     return null;
   }
 

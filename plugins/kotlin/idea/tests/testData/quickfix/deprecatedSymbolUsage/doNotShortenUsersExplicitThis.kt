@@ -12,3 +12,5 @@ class X {
 fun X.foo() {
     this.<caret>oldFun(this.toString())
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

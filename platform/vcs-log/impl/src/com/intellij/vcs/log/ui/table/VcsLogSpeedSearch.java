@@ -15,7 +15,7 @@ import java.util.ListIterator;
 
 public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
   public VcsLogSpeedSearch(@NotNull VcsLogGraphTable component) {
-    super(component);
+    super(component, null);
   }
 
   @Override

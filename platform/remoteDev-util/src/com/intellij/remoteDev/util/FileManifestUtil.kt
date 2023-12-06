@@ -1,12 +1,12 @@
 package com.intellij.remoteDev.util
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.isDirectory
 import com.intellij.util.io.toByteArray
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -29,10 +29,20 @@ object FileManifestUtil {
 
   private fun isSymlink(file: Path) = FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
 
-  class ManifestGenerator(private val targetDir: Path, private val includeInManifest: (Path) -> Boolean, private val includeModifiedDate: Boolean = true) : BiConsumer<Decompressor.Entry, Path> {
+  class ManifestGenerator(
+    private val targetDir: Path,
+    private val includeInManifest: (Path) -> Boolean,
+    private val includeModifiedDate: Boolean = true,
+    private val progress: ProgressIndicator? = null,
+    private val archiveSize: Long? = null,
+  ) : BiConsumer<Decompressor.Entry, Path> {
     private val list = mutableListOf<String>()
 
     override fun accept(entry: Decompressor.Entry, path: Path) {
+      if (progress != null && archiveSize != null && archiveSize != 0L) {
+        progress.fraction += entry.size.toDouble()/archiveSize
+      }
+
       if (!includeInManifest(path)) return
 
       require(entry.name != ManifestFileName) { "There already is a manifest file in archive." }
@@ -167,24 +177,30 @@ object FileManifestUtil {
     return start.toByteArray()
   }
 
-  fun decompressWithManifest(archiveFile: Path, targetDir: Path, includeModifiedDate: Boolean, includeInManifest: (Path) -> Boolean) {
+  fun decompressWithManifest(
+    archiveFile: Path,
+    targetDir: Path,
+    includeModifiedDate: Boolean,
+    includeInManifest: (Path) -> Boolean,
+    progress: ProgressIndicator? = null,
+  ) {
     if (targetDir.exists()) error("$targetDir already exists, refusing to extract to it")
 
     val start = getFileFirstBytes(archiveFile, 2)
 
-    val manifestor = ManifestGenerator(targetDir, includeInManifest, includeModifiedDate)
+    val manifestor = ManifestGenerator(targetDir, includeInManifest, includeModifiedDate, progress, archiveFile.fileSize())
     when {
       // 'PK' for zip files
       start[0] == 0x50.toByte() && start[1] == 0x4B.toByte() ->
         Decompressor.Zip(archiveFile)
           .withZipExtensions()
-          .allowEscapingSymlinks(false)
+          .escapingSymlinkPolicy(Decompressor.EscapingSymlinkPolicy.DISALLOW)
           .postProcessor(manifestor)
           .extract(targetDir)
       // 0x1F 0x8B for gzip
       start[0] == 0x1F.toByte() && start[1] == 0x8B.toByte() ->
         Decompressor.Tar(archiveFile)
-          .allowEscapingSymlinks(false)
+          .escapingSymlinkPolicy(Decompressor.EscapingSymlinkPolicy.DISALLOW)
           .postProcessor(manifestor)
           .extract(targetDir)
       else -> error("Unsupported archive: " +

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -37,40 +37,36 @@ public final class GitPushRepoResult {
 
   static Comparator<Type> TYPE_COMPARATOR = Comparator.naturalOrder();
 
-  @NotNull private final Type myType;
+  private final @NotNull Type myType;
   private final int myCommits;
-  @NotNull private final String mySourceBranch;
-  @NotNull private final String myTargetBranch;
-  @NotNull private final String myTargetRemote;
-  @NotNull private final List<String> myPushedTags;
-  @Nullable private final String myError;
-  @Nullable private final GitUpdateResult myUpdateResult;
+  private final @NotNull String mySourceBranch;
+  private final @NotNull String myTargetBranch;
+  private final @NotNull String myTargetRemote;
+  private final @NotNull List<String> myPushedTags;
+  private final @Nullable String myError;
+  private final @Nullable GitUpdateResult myUpdateResult;
 
-  @NotNull
-  public static GitPushRepoResult convertFromNative(@NotNull GitPushNativeResult result,
-                                                    @NotNull List<? extends GitPushNativeResult> tagResults,
-                                                    int commits,
-                                                    @NotNull GitPushSource source,
-                                                    @NotNull GitRemoteBranch target) {
+  public static @NotNull GitPushRepoResult convertFromNative(@NotNull GitPushNativeResult result,
+                                                             @NotNull List<? extends GitPushNativeResult> tagResults,
+                                                             int commits,
+                                                             @NotNull GitPushSource source,
+                                                             @NotNull GitRemoteBranch target) {
     List<String> tags = ContainerUtil.map(tagResults, result1 -> result1.getSourceRef());
     return new GitPushRepoResult(convertType(result), commits, source.getRevision(), target.getFullName(),
                                  target.getRemote().getName(), tags, result.getReason(), null);
   }
 
-  @NotNull
-  public static GitPushRepoResult error(@NotNull GitPushSource source, @NotNull GitRemoteBranch target, @NotNull String error) {
+  public static @NotNull GitPushRepoResult error(@NotNull GitPushSource source, @NotNull GitRemoteBranch target, @NotNull String error) {
     return new GitPushRepoResult(Type.ERROR, -1, source.getRevision(), target.getFullName(),
                                  target.getRemote().getName(), Collections.emptyList(), error, null);
   }
 
-  @NotNull
-  public static GitPushRepoResult notPushed(@NotNull GitPushSource source, @NotNull GitRemoteBranch target) {
+  public static @NotNull GitPushRepoResult notPushed(@NotNull GitPushSource source, @NotNull GitRemoteBranch target) {
     return new GitPushRepoResult(Type.NOT_PUSHED, -1, source.getRevision(), target.getFullName(),
                                  target.getRemote().getName(), Collections.emptyList(), null, null);
   }
 
-  @NotNull
-  static GitPushRepoResult addUpdateResult(GitPushRepoResult original, GitUpdateResult updateResult) {
+  static @NotNull GitPushRepoResult addUpdateResult(GitPushRepoResult original, GitUpdateResult updateResult) {
     return new GitPushRepoResult(original.getType(), original.getNumberOfPushedCommits(), original.getSourceBranch(),
                                  original.getTargetBranch(), original.getTargetRemote(), original.getPushedTags(),
                                  original.getError(), updateResult);
@@ -89,8 +85,7 @@ public final class GitPushRepoResult {
     myUpdateResult = result;
   }
 
-  @NotNull
-  public Type getType() {
+  public @NotNull Type getType() {
     return myType;
   }
 
@@ -99,15 +94,14 @@ public final class GitPushRepoResult {
     return myUpdateResult;
   }
 
-  int getNumberOfPushedCommits() {
+  public int getNumberOfPushedCommits() {
     return myCommits;
   }
 
   /**
    * Returns the branch we were pushing from, in the full-name format, e.g. {@code refs/heads/master} or a revision hash.
    */
-  @NotNull
-  String getSourceBranch() {
+  public @NotNull String getSourceBranch() {
     return mySourceBranch;
   }
 
@@ -119,9 +113,7 @@ public final class GitPushRepoResult {
     return myTargetBranch;
   }
 
-  @NlsSafe
-  @Nullable
-  public String getError() {
+  public @NlsSafe @Nullable String getError() {
     return myError;
   }
 
@@ -130,14 +122,11 @@ public final class GitPushRepoResult {
     return myPushedTags;
   }
 
-  @NlsSafe
-  @NotNull
-  public String getTargetRemote() {
+  public @NlsSafe @NotNull String getTargetRemote() {
     return myTargetRemote;
   }
 
-  @NotNull
-  private static Type convertType(@NotNull GitPushNativeResult nativeResult) {
+  private static @NotNull Type convertType(@NotNull GitPushNativeResult nativeResult) {
     return switch (nativeResult.getType()) {
       case SUCCESS -> Type.SUCCESS;
       case FORCED_UPDATE -> Type.FORCED;
@@ -153,9 +142,8 @@ public final class GitPushRepoResult {
     };
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return String.format("%s (%d, '%s'), update: %s}", myType, myCommits, mySourceBranch, myUpdateResult);
   }
 }

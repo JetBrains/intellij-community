@@ -363,9 +363,9 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       assertEventAccepted(validator, elg, "BBB")
       assertEventAccepted(validator, elg, "CCC")
 
-      assertEventRejected(validator, elg, "DDD")
+      assertThirdPartyRule(validator, elg, "DDD")
       assertEventAccepted(validator, elg, "FIRST")
-      assertEventRejected(validator, elg, "SECOND")
+      assertThirdPartyRule(validator, elg, "SECOND")
     }
   }
 
@@ -461,9 +461,9 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       assertEventDataAccepted(validator, elg, "data_1", "BBB")
       assertEventDataAccepted(validator, elg, "data_1", "CCC")
 
-      assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "data_1", "DDD")
+      assertEventDataNotAccepted(validator, elg, ValidationResultType.THIRD_PARTY, "data_1", "DDD")
       assertEventDataAccepted(validator, elg, "data_1", "FIRST")
-      assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "data_1", "SECOND")
+      assertEventDataNotAccepted(validator, elg, ValidationResultType.THIRD_PARTY, "data_1", "SECOND")
     }
   }
 

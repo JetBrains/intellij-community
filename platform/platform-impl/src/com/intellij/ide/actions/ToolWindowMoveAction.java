@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -14,6 +15,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.impl.SquareStripeButton;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.toolWindow.ToolWindowDragHelper;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
@@ -26,13 +28,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public final class ToolWindowMoveAction extends DumbAwareAction implements FusAwareAction {
+public final class ToolWindowMoveAction extends DumbAwareAction implements FusAwareAction, ActionRemoteBehaviorSpecification.Frontend {
   public enum Anchor {
     LeftTop, LeftBottom, BottomLeft, BottomRight, RightBottom, RightTop, TopRight, TopLeft;
 
     @Override
-    @Nls
-    public String toString() {
+    public @Nls String toString() {
       String top = UIBundle.message("tool.window.move.to.top.action.name");
       String left = UIBundle.message("tool.window.move.to.left.action.name");
       String bottom = UIBundle.message("tool.window.move.to.bottom.action.name");
@@ -49,24 +50,26 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       };
     }
 
-    @NotNull
-    public static Anchor fromWindowInfo(@NotNull WindowInfo info) {
-      if (info.isSplit()) {
-        if (info.getAnchor() == ToolWindowAnchor.LEFT) return LeftBottom;
-        if (info.getAnchor() == ToolWindowAnchor.BOTTOM) return BottomRight;
-        if (info.getAnchor() == ToolWindowAnchor.RIGHT) return RightBottom;
-        if (info.getAnchor() == ToolWindowAnchor.TOP) return TopRight;
+    public static @NotNull Anchor fromWindowInfo(@NotNull WindowInfo info) {
+      return getAnchor(info.getAnchor(), info.isSplit());
+    }
+
+    public static @NotNull Anchor getAnchor(@NotNull ToolWindowAnchor anchor, boolean split) {
+      if (split) {
+        if (anchor == ToolWindowAnchor.LEFT) return LeftBottom;
+        if (anchor == ToolWindowAnchor.BOTTOM) return BottomRight;
+        if (anchor == ToolWindowAnchor.RIGHT) return RightBottom;
+        if (anchor == ToolWindowAnchor.TOP) return TopRight;
       }
 
-      if (info.getAnchor() == ToolWindowAnchor.LEFT) return LeftTop;
-      if (info.getAnchor() == ToolWindowAnchor.BOTTOM) return BottomLeft;
-      if (info.getAnchor() == ToolWindowAnchor.RIGHT) return RightTop;
-      /*if (info.getAnchor() == ToolWindowAnchor.TOP) */
+      if (anchor == ToolWindowAnchor.LEFT) return LeftTop;
+      if (anchor == ToolWindowAnchor.BOTTOM) return BottomLeft;
+      if (anchor == ToolWindowAnchor.RIGHT) return RightTop;
+      /*if (anchor == ToolWindowAnchor.TOP) */
       return TopLeft;
     }
 
-    @NotNull
-    public ToolWindowAnchor getAnchor() {
+    public @NotNull ToolWindowAnchor getAnchor() {
       return switch (this) {
         case LeftTop, LeftBottom -> ToolWindowAnchor.LEFT;
         case BottomLeft, BottomRight -> ToolWindowAnchor.BOTTOM;
@@ -79,8 +82,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       return Arrays.asList(LeftBottom, BottomRight, RightBottom, TopRight).contains(this);
     }
 
-    @NotNull
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return switch (this) {
         case LeftTop -> AllIcons.Actions.MoveToLeftTop;
         case LeftBottom -> AllIcons.Actions.MoveToLeftBottom;
@@ -112,14 +114,12 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     }
   }
 
-  @Nullable
-  private static ToolWindowManager getToolWindowManager(@NotNull AnActionEvent e) {
+  private static @Nullable ToolWindowManager getToolWindowManager(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     return (project == null || project.isDisposed()) ? null : ToolWindowManager.getInstance(project);
   }
 
-  @Nullable
-  public static ToolWindow getToolWindow(@NotNull AnActionEvent e) {
+  public static @Nullable ToolWindow getToolWindow(@NotNull AnActionEvent e) {
     ToolWindowManager manager = getToolWindowManager(e);
     if (manager == null) {
       return null;
@@ -134,16 +134,18 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     if (component instanceof SquareStripeButton) {
       return ((SquareStripeButton)component).getToolWindow();
     }
-
+    if (component instanceof ToolWindowDragHelper.ToolWindowProvider twp) {
+      return twp.getToolWindow();
+    }
     String id = manager.getActiveToolWindowId();
     return id == null ? null : manager.getToolWindow(id);
   }
 
-  @NotNull
-  private final Anchor myAnchor;
+  private final @NotNull Anchor myAnchor;
 
   public ToolWindowMoveAction(@NotNull Anchor anchor) {
-    super(anchor.toString(), null, anchor.getIcon());
+    super(() -> anchor.toString(), null, () -> anchor.getIcon());
+
     myAnchor = anchor;
   }
 
@@ -176,20 +178,21 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     return Collections.emptyList();
   }
 
-  public static class Group extends DefaultActionGroup implements DumbAware {
+  public static final class Group extends DefaultActionGroup implements DumbAware {
     public Group() {
       super(UIBundle.messagePointer("tool.window.move.to.action.group.name"), true);
       addAll(generateActions());
     }
 
-    protected @NotNull List<? extends AnAction> generateActions() {
+    @NotNull
+    private static List<? extends AnAction> generateActions() {
       return Arrays.stream(Anchor.values())
         .filter(x -> isAllowed(x))
         .map(x -> new ToolWindowMoveAction(x))
         .toList();
     }
 
-    protected boolean isAllowed(Anchor anchor) {
+    private static boolean isAllowed(Anchor anchor) {
       if (ExperimentalUI.isNewUI()) {
         return anchor != Anchor.TopLeft && anchor != Anchor.TopRight;
       }

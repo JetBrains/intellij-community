@@ -29,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,7 @@ import static java.util.Arrays.asList;
 public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable {
   private static final int POSTPONE_MAPPINGS_LOADING_PANEL = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final @Nls String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<MapInfo> myDirectoryMappingTable;
@@ -310,6 +311,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
   private void scheduleUnregisteredRootsLoading() {
     if (myProject.isDefault() || !TrustedProjects.isTrusted(myProject)) return;
     if (myRootDetectionIndicator != null) myRootDetectionIndicator.cancel();
+    if (!VcsUtil.shouldDetectVcsMappingsFor(myProject)) return;
 
     myRootDetectionIndicator = BackgroundTaskUtil.executeAndTryWait(indicator -> {
       List<VcsDirectoryMapping> unregisteredRoots = VcsRootErrorsFinder.getInstance(myProject).getOrFind().stream()
@@ -437,6 +439,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
       .setDefaultInsets(JBUI.insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
       .setDefaultWeightX(1)
       .setDefaultFill(GridBagConstraints.HORIZONTAL);
+
+    if (!TrustedProjects.isTrusted(myProject)) {
+      EditorNotificationPanel notificationPanel = new EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error);
+      notificationPanel.setText(VcsBundle.message("configuration.project.not.trusted.label"));
+      panel.add(notificationPanel, gb.nextLine().next());
+    }
 
     JComponent mappingsTable = createMappingsTable();
     // don't start loading automatically

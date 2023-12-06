@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -79,21 +79,12 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   /**
-   * @deprecated override {@link #getCopyDialogTitle()}, {@link #getCreateNewDialogTitle()}, {@link #getNewLabelText()} instead
-   */
-  @SuppressWarnings({"DeprecatedIsStillUsed", "HardCodedStringLiteral"})
-  @Deprecated(forRemoval = true)
-  protected String subjDisplayName() {
-    return "item";
-  }
-
-  /**
    * Returns title for "Copy" dialog. The method must be overriden in the implementations because the default implementation isn't friendly
    * for localization.
    */
   protected @NlsContexts.DialogTitle String getCopyDialogTitle() {
     //noinspection HardCodedStringLiteral
-    return "Copy " + subjDisplayName();
+    return "Copy item";
   }
 
   /**
@@ -102,7 +93,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
    */
   protected @NlsContexts.Label String getNewLabelText() {
     //noinspection HardCodedStringLiteral
-    return "New " + subjDisplayName() + " name:";
+    return "New item name:";
   }
 
   /**
@@ -111,12 +102,11 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
    */
   protected @NlsContexts.DialogTitle String getCreateNewDialogTitle() {
     //noinspection HardCodedStringLiteral
-    return "Create New " + subjDisplayName();
+    return "Create New item";
   }
 
 
-  @Nullable
-  public String askForProfileName(@NlsContexts.DialogTitle String title) {
+  public @Nullable String askForProfileName(@NlsContexts.DialogTitle String title) {
     return Messages.showInputDialog(getNewLabelText(), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String s) {
@@ -130,8 +120,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     });
   }
 
-  @Nullable
-  protected T findByName(@NlsSafe String name) {
+  protected @Nullable T findByName(@NlsSafe String name) {
     for (T item : myItems) {
       if (Objects.equals(name, myNamer.getName(item))) return item;
     }
@@ -140,8 +129,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   @Override
-  @Nullable
-  protected List<AnAction> createActions(boolean fromPopup) {
+  protected @Nullable List<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
     result.add(new AddAction());
     //noinspection unchecked
@@ -179,8 +167,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     myShowIcons = showIcons;
   }
 
-  @Nullable
-  protected UnnamedConfigurable getItemConfigurable(final T item) {
+  protected @Nullable UnnamedConfigurable getItemConfigurable(final T item) {
     final Ref<UnnamedConfigurable> result = new Ref<>();
     TreeUtil.traverse((TreeNode)myTree.getModel().getRoot(), node -> {
       final NamedConfigurable<?> configurable = (NamedConfigurable<?>)((DefaultMutableTreeNode)node).getUserObject();
@@ -353,8 +340,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     selectNodeInTree(findByName(myNamer.getName(item)));
   }
 
-  @Nullable
-  protected T createItem() {
+  protected @Nullable T createItem() {
     String name = askForProfileName(getCreateNewDialogTitle());
     if (name == null) return null;
     final T newItem = myFactory.create();

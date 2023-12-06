@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.CLONE
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.CLONE
 import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
@@ -31,7 +31,7 @@ class VcsCloneDialog private constructor(private val project: Project) : DialogW
   private val cardLayout = CardLayout()
   private val mainPanel = JPanel(cardLayout)
   private val extensionComponents: MutableMap<String, VcsCloneDialogExtensionComponent> = HashMap()
-  private val listModel = CollectionListModel<VcsCloneDialogExtension>(VcsCloneDialogExtension.EP_NAME.extensionList)
+  private val listModel = CollectionListModel(VcsCloneDialogExtension.EP_NAME.extensionList)
 
   private val listener = object : VcsCloneDialogComponentStateListener {
     override fun onOkActionNameChanged(name: String) = setOKButtonText(name)
@@ -52,7 +52,7 @@ class VcsCloneDialog private constructor(private val project: Project) : DialogW
     }
   }
 
-  override fun getStyle() = DialogStyle.COMPACT
+  override fun getStyle(): DialogStyle = DialogStyle.COMPACT
 
   override fun createCenterPanel(): JComponent {
     extensionList = VcsCloneDialogExtensionList(listModel).apply {

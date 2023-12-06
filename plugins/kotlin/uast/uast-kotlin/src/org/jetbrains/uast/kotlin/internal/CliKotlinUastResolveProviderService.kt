@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
@@ -23,15 +24,12 @@ import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
 
     private val Project.analysisCompletedHandler: UastAnalysisHandlerExtension?
-        get() = getExtensions(AnalysisHandlerExtension.extensionPointName)
+        get() {
+            return extensionArea.getExtensionPoint(AnalysisHandlerExtension.extensionPointName).extensionList
                 .filterIsInstance<UastAnalysisHandlerExtension>()
                 .firstOrNull()
+        }
 
-    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
-        @Suppress("DEPRECATION")
-        return element.project.analysisCompletedHandler?.getTypeMapper()
-    }
     @Deprecated(
         "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
                 "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
@@ -56,21 +54,6 @@ class UastAnalysisHandlerExtension : AnalysisHandlerExtension {
     fun getBindingContext() = context
 
     fun getLanguageVersionSettings() = languageVersionSettings
-
-    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
-    fun getTypeMapper(): KotlinTypeMapper? {
-        if (typeMapper != null) return typeMapper
-        val bindingContext = context ?: return null
-
-        val typeMapper = KotlinTypeMapper(
-            bindingContext, ClassBuilderMode.LIGHT_CLASSES,
-            JvmProtoBufUtil.DEFAULT_MODULE_NAME,
-            KotlinTypeMapper.LANGUAGE_VERSION_SETTINGS_DEFAULT, // TODO use proper LanguageVersionSettings
-            useOldInlineClassesManglingScheme = false
-        )
-        this.typeMapper = typeMapper
-        return typeMapper
-    }
 
     override fun doAnalysis(
         project: Project,

@@ -1,43 +1,44 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
-import com.intellij.platform.workspaceModel.jps.JpsFileDependentEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
-import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
-import com.intellij.workspaceModel.storage.EntityInformation
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.EntityLink
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
-import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Child
+import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntityInformation
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.impl.EntityLink
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
+import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
-@GeneratedCodeApiVersion(1)
-@GeneratedCodeImplVersion(1)
-open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectPropertiesEntityData) : EclipseProjectPropertiesEntity, WorkspaceEntityBase() {
+@GeneratedCodeApiVersion(2)
+@GeneratedCodeImplVersion(3)
+open class EclipseProjectPropertiesEntityImpl(private val dataSource: EclipseProjectPropertiesEntityData) : EclipseProjectPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
                                                                           EclipseProjectPropertiesEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
     )
 
@@ -69,6 +70,7 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
     return connections
   }
 
+
   class Builder(result: EclipseProjectPropertiesEntityData?) : ModifiableWorkspaceEntityBase<EclipseProjectPropertiesEntity, EclipseProjectPropertiesEntityData>(
     result), EclipseProjectPropertiesEntity.Builder {
     constructor() : this(EclipseProjectPropertiesEntityData())
@@ -98,7 +100,7 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -320,13 +322,13 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
   var expectedModuleSourcePlace: Int = 0
   lateinit var srcPlace: Map<String, Int>
 
-  fun isVariablePathsInitialized(): Boolean = ::variablePaths.isInitialized
-  fun isEclipseUrlsInitialized(): Boolean = ::eclipseUrls.isInitialized
-  fun isUnknownConsInitialized(): Boolean = ::unknownCons.isInitialized
-  fun isKnownConsInitialized(): Boolean = ::knownCons.isInitialized
+  internal fun isVariablePathsInitialized(): Boolean = ::variablePaths.isInitialized
+  internal fun isEclipseUrlsInitialized(): Boolean = ::eclipseUrls.isInitialized
+  internal fun isUnknownConsInitialized(): Boolean = ::unknownCons.isInitialized
+  internal fun isKnownConsInitialized(): Boolean = ::knownCons.isInitialized
 
 
-  fun isSrcPlaceInitialized(): Boolean = ::srcPlace.isInitialized
+  internal fun isSrcPlaceInitialized(): Boolean = ::srcPlace.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EclipseProjectPropertiesEntity> {
     val modifiable = EclipseProjectPropertiesEntityImpl.Builder(null)
@@ -336,13 +338,19 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): EclipseProjectPropertiesEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): EclipseProjectPropertiesEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = EclipseProjectPropertiesEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity") as EntityMetadata
   }
 
   override fun clone(): EclipseProjectPropertiesEntityData {
@@ -432,14 +440,5 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
     result = 31 * result + expectedModuleSourcePlace.hashCode()
     result = 31 * result + srcPlace.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.knownCons?.let { collector.add(it::class.java) }
-    this.eclipseUrls?.let { collector.add(it::class.java) }
-    this.unknownCons?.let { collector.add(it::class.java) }
-    this.variablePaths?.let { collector.add(it::class.java) }
-    this.srcPlace?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

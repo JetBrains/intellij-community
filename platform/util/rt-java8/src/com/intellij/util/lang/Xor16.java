@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
  * (a minimal perfect hash function algorithm).
  * <p>
  * [1] paper: Simple and Space-Efficient Minimal Perfect Hash Functions -
- * http://cmph.sourceforge.net/papers/wads07.pdf
+ * https://cmph.sourceforge.net/papers/wads07.pdf
  */
 public final class Xor16 {
   private static final int BITS_PER_FINGERPRINT = 16;
@@ -50,10 +50,6 @@ public final class Xor16 {
   private static int getArrayLength(int size) {
     return (int)(OFFSET + (long)FACTOR_TIMES_100 * size / 100);
   }
-
-    public static int getBlockLength(int keyCount) {
-      return getArrayLength(keyCount) / HASHES;
-    }
 
   private static long mix(final long x) {
     long h = x * 0x9E3779B97F4A7C15L;
@@ -175,7 +171,7 @@ public final class Xor16 {
   }
 
   private static int reduce(int hash, int n) {
-    // http://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
+    // https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
     return (int)(((hash & 0xffffffffL) * n) >>> 32);
   }
 }

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Method;
 
@@ -141,9 +142,17 @@ final class Win7TaskBar {
     User32Ex.INSTANCE.FlashWindow(getHandle(frame), true);
   }
 
-  private static WinDef.HWND getHandle(@NotNull JFrame frame) {
+  static void setForegroundWindow(@NotNull Window window) {
+    if (!ourInitialized || !window.isShowing()) {
+      return;
+    }
+
+    User32Ex.INSTANCE.SetForegroundWindow(getHandle(window));
+  }
+
+  private static WinDef.HWND getHandle(@NotNull Window window) {
     try {
-      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(window);
       Method getHWnd = peer.getClass().getMethod("getHWnd");
       return new WinDef.HWND(new Pointer((Long)getHWnd.invoke(peer)));
     }

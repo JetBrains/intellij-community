@@ -495,7 +495,7 @@ public class CommanderPanel extends JPanel {
             }
           });
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
 
     private PsiDirectory getDirectory() {

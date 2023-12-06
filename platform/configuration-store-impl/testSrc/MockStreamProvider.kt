@@ -2,10 +2,15 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
-import com.intellij.util.io.*
+import com.intellij.util.io.basicAttributesIfExists
+import com.intellij.util.io.delete
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.write
 import java.io.InputStream
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.inputStream
+import kotlin.io.path.isHidden
 
 class MockStreamProvider(private val dir: Path) : StreamProvider {
   override val isExclusive = true

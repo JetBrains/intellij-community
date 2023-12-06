@@ -11,3 +11,5 @@ fun newFun(p: LongArray){}
 fun foo() {
     <caret>newFun(longArrayOf(1L))
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

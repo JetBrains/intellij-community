@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -59,7 +59,7 @@ public abstract class TransactionGuard {
   /**
    * @deprecated in a definitely write-safe context, just replace this call with {@code transaction} contents.
    * Otherwise, replace with {@link Application#invokeLater} and take care that the default or explicitly passed modality state is write-safe.
-   * When in doubt, use {@link ModalityState#NON_MODAL}.
+   * When in doubt, use {@link ModalityState#nonModal()}.
    */
   @Deprecated
   public static void submitTransaction(@NotNull Disposable parentDisposable, @NotNull Runnable transaction) {
@@ -70,7 +70,7 @@ public abstract class TransactionGuard {
   /**
    * Logs an error if the given modality state was created in a write-unsafe context. For modalities created in write-safe contexts,
    * {@link Application#invokeLater(Runnable, ModalityState)} and similar calls will be guaranteed to also run in a write-safe context.
-   * {@link ModalityState#NON_MODAL} is always write-safe, {@link ModalityState#any()} is always write-unsafe.
+   * {@link ModalityState#nonModal()} is always write-safe, {@link ModalityState#any()} is always write-unsafe.
    */
   public abstract void assertWriteSafeContext(@NotNull ModalityState modality);
 
@@ -90,7 +90,7 @@ public abstract class TransactionGuard {
 
   /**
    * @deprecated Replace with {@link Application#invokeLater} and take care that the default or explicitly passed modality state is write-safe.
-   * When in doubt, use {@link ModalityState#NON_MODAL}.
+   * When in doubt, use {@link ModalityState#nonModal()}.
    */
   @Deprecated
   public abstract void submitTransactionLater(@NotNull Disposable parentDisposable, @NotNull Runnable transaction);
@@ -98,7 +98,7 @@ public abstract class TransactionGuard {
   /**
    * @deprecated if called on Swing thread, just replace this call with {@code transaction} contents.
    * Otherwise, replace with {@link Application#invokeAndWait} and take care that the default or explicitly passed modality state is write-safe.
-   * When in doubt, use {@link ModalityState#NON_MODAL}.
+   * When in doubt, use {@link ModalityState#nonModal()}.
    */
   @Deprecated
   public abstract void submitTransactionAndWait(@NotNull Runnable transaction) throws ProcessCanceledException;
@@ -112,7 +112,6 @@ public abstract class TransactionGuard {
   /**
    * @deprecated replace with {@link ModalityState#defaultModalityState()} and use the result for "invokeLater" when replacing "submitTransaction" calls.
    */
-  @Nullable
   @Deprecated
-  public abstract TransactionId getContextTransaction();
+  public abstract @Nullable TransactionId getContextTransaction();
 }

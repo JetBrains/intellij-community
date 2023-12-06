@@ -13,13 +13,16 @@ public class ArithmeticExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
-    if (e instanceof PsiJavaToken && (e.textMatches("%") || e.textMatches("/")) &&
-        e.getParent() instanceof PsiPolyadicExpression) {
-      PsiExpression prevOperand = PsiTreeUtil.getPrevSiblingOfType(e, PsiExpression.class);
-      PsiExpression nextOperand = PsiUtil.skipParenthesizedExprDown(PsiTreeUtil.getNextSiblingOfType(e, PsiExpression.class));
+  ExceptionLineRefiner.RefinerMatchResult matchSpecificExceptionElement(@NotNull PsiElement current) {
+    PsiElement nextElement = PsiTreeUtil.nextVisibleLeaf(current);
+    if (nextElement == null) return null;
+    if (nextElement instanceof PsiJavaToken && (nextElement.textMatches("%") || nextElement.textMatches("/")) &&
+        nextElement.getParent() instanceof PsiPolyadicExpression) {
+      PsiExpression prevOperand = PsiTreeUtil.getPrevSiblingOfType(nextElement, PsiExpression.class);
+      PsiExpression nextOperand = PsiUtil.skipParenthesizedExprDown(PsiTreeUtil.getNextSiblingOfType(nextElement, PsiExpression.class));
       if (prevOperand != null && TypeConversionUtil.isIntegralNumberType(prevOperand.getType()) &&
           nextOperand != null && TypeConversionUtil.isIntegralNumberType(nextOperand.getType())) {
+        if(!PsiTreeUtil.isAncestor(prevOperand, current, false)) return null;
         while (nextOperand instanceof PsiUnaryExpression && ((PsiUnaryExpression)nextOperand).getOperationTokenType().equals(
           JavaTokenType.MINUS)) {
           nextOperand = PsiUtil.skipParenthesizedExprDown(((PsiUnaryExpression)nextOperand).getOperand());
@@ -28,7 +31,10 @@ public class ArithmeticExceptionInfo extends ExceptionInfo {
           Object value = ((PsiLiteral)nextOperand).getValue();
           if (value instanceof Number && ((Number)value).longValue() != 0) return null;
         }
-        return nextOperand;
+        if (nextOperand == null) {
+          return null;
+        }
+        return onTheSameLineFor(current, nextOperand, true);
       }
     }
     return null;

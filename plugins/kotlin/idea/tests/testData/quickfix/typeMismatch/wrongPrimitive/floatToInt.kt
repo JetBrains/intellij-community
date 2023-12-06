@@ -5,3 +5,5 @@
 // ACTION: Convert to lazy property
 
 val a : Int = 1.0F<caret>
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrongPrimitiveLiteralFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.WrongPrimitiveLiteralFix

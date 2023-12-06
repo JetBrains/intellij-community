@@ -6,13 +6,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.FileBasedIndexExtension;
-import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
-import com.intellij.util.indexing.storage.SnapshotInputMappingIndex;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
 
 public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
   extends VfsAwareMapReduceIndex<Key, Value, FileCachedData> {
@@ -40,11 +38,6 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
             @Override
             public @NotNull IndexStorage<Key, Value> openIndexStorage() throws IOException {
               return new TransientChangesIndexStorage<>(indexStorageLayout.openIndexStorage(), extension);
-            }
-
-            @Override
-            public @Nullable SnapshotInputMappingIndex<Key, Value, FileContent> createOrClearSnapshotInputMappings() throws IOException {
-              return indexStorageLayout.createOrClearSnapshotInputMappings();
             }
 
             @Override
@@ -79,6 +72,10 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
   @Override
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
+    if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+      LOG.info("updateForwardIndex,inputId=" + myIndexId + ",index=" + myIndexId + ",inMemory=" + myInMemoryMode.get());
+    }
+
     if (myInMemoryMode.get()) {
       myInMemoryKeysAndValues.put(inputId, data.getKeyValues());
     }
@@ -109,6 +106,9 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
           @Override
           public void memoryStorageCleared() {
+            if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+              LOG.info("memoryStorageCleared,index=" + myIndexId);
+            }
             myInMemoryKeysAndValues.clear();
           }
         });
@@ -127,6 +127,9 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
     }
     getLock().writeLock().lock();
     try {
+      if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+        LOG.info("removeTransientDataForFile,inputId=" + inputId + ",index=" + myIndexId);
+      }
       Map<Key, Value> keyValueMap = myInMemoryKeysAndValues.remove(inputId);
       if (keyValueMap == null) return;
 

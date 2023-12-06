@@ -3,13 +3,9 @@ package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.application.ApplicationConfiguration
-import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.psi.PsiClass
 import com.intellij.task.ExecuteRunConfigurationTask
 
 /**
@@ -18,22 +14,11 @@ import com.intellij.task.ExecuteRunConfigurationTask
 open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironmentProvider<ApplicationConfiguration>() {
   override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean = task.runProfile is ApplicationConfiguration
 
-  override fun generateInitScript(applicationConfiguration: ApplicationConfiguration,
-                                  module: Module,
-                                  params: JavaParameters,
-                                  gradleTaskPath: String,
-                                  runAppTaskName: String,
-                                  mainClass: PsiClass,
-                                  javaExePath: String,
-                                  sourceSetName: String,
-                                  javaModuleName: String?): String {
-    val workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, module.project, module)?.let {
-      FileUtil.toSystemIndependentName(it)
-    }
-
-    val useManifestJar = applicationConfiguration.shortenCommandLine === ShortenCommandLine.MANIFEST
-    val useArgsFile = applicationConfiguration.shortenCommandLine === ShortenCommandLine.ARGS_FILE
-    var useClasspathFile = applicationConfiguration.shortenCommandLine === ShortenCommandLine.CLASSPATH_FILE
+  override fun generateInitScript(params: GradleInitScriptParameters): String? {
+    val shortenCommandLine = params.configuration.shortenCommandLine
+    val useManifestJar = shortenCommandLine === ShortenCommandLine.MANIFEST
+    val useArgsFile = shortenCommandLine === ShortenCommandLine.ARGS_FILE
+    var useClasspathFile = shortenCommandLine === ShortenCommandLine.CLASSPATH_FILE
     var intelliJRtPath: String? = null
     if (useClasspathFile) {
       try {
@@ -47,16 +32,15 @@ open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironme
     }
 
     // @formatter:off
-    @Suppress("UnnecessaryVariable")
-    //      @Language("Groovy")
+    // @Language("Groovy")
     val initScript = """
-    def gradlePath = '$gradleTaskPath'
-    def runAppTaskName = '$runAppTaskName'
-    def mainClassToRun = '${mainClass.qualifiedName}'
-    def javaExePath = mapPath('$javaExePath')
-    def _workingDir = ${if (workingDir.isNullOrEmpty()) "null\n" else "mapPath('$workingDir')\n"}
-    def sourceSetName = '$sourceSetName'
-    def javaModuleName = ${if (javaModuleName == null) "null\n" else "'$javaModuleName'\n"}
+    def gradlePath = '${params.gradleTaskPath}'
+    def runAppTaskName = '${params.runAppTaskName}'
+    def mainClassToRun = '${params.mainClass}'
+    def javaExePath = mapPath('${params.javaExePath}')
+    def _workingDir = ${if (params.workingDirectory.isNullOrEmpty()) "null\n" else "mapPath('${params.workingDirectory}')\n"}
+    def sourceSetName = '${params.sourceSetName}'
+    def javaModuleName = ${if (params.javaModuleName == null) "null\n" else "'${params.javaModuleName}'\n"}
     def isOlderThan64 = GradleVersion.current().baseVersion < GradleVersion.version("6.4")
     def isOlderThan33 = GradleVersion.current().baseVersion < GradleVersion.version("3.3")
     ${if (useManifestJar) "gradle.addListener(new ManifestTaskActionListener(runAppTaskName))\n" else ""}
@@ -82,7 +66,7 @@ open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironme
             } else {
               mainClass = mainClassToRun
             }
-            ${argsString(params)}
+            ${params.params}
             if (_workingDir) workingDir = _workingDir
             standardInput = System.in
             if (javaModuleName) {

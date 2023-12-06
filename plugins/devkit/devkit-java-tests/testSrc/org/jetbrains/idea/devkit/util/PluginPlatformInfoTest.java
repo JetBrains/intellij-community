@@ -1,16 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class PluginPlatformInfoTest extends JavaCodeInsightFixtureTestCase {
+public class PluginPlatformInfoTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testGradle2020_1() {
     doTestResolved("something:2020.1", "201");
@@ -51,10 +53,15 @@ public class PluginPlatformInfoTest extends JavaCodeInsightFixtureTestCase {
   private void doTestResolved(String libraryName, String expectedBuildNumber) {
     setupPlatformLibrary(libraryName);
 
-    final PluginPlatformInfo info = PluginPlatformInfo.forModule(getModule());
-    assertEquals(PluginPlatformInfo.PlatformResolveStatus.GRADLE, info.getResolveStatus());
-    assertEquals(BuildNumber.fromString(expectedBuildNumber), info.getSinceBuildNumber());
-    assertNull(info.getMainIdeaPlugin());
+    try {
+      final PluginPlatformInfo info = PluginPlatformInfo.forModule(getModule());
+      assertEquals(PluginPlatformInfo.PlatformResolveStatus.GRADLE, info.getResolveStatus());
+      assertEquals(BuildNumber.fromString(expectedBuildNumber), info.getSinceBuildNumber());
+      assertNull(info.getMainIdeaPlugin());
+    }
+    finally {
+      removePlatformLibrary(libraryName);
+    }
   }
 
   public void testGradleUnresolvedNoPlatformClass() {
@@ -83,14 +90,26 @@ public class PluginPlatformInfoTest extends JavaCodeInsightFixtureTestCase {
       setupPlatformLibrary(libraryName);
     }
 
-    final PluginPlatformInfo info = PluginPlatformInfo.forModule(getModule());
-    assertEquals(PluginPlatformInfo.PlatformResolveStatus.UNRESOLVED, info.getResolveStatus());
-    assertNull(info.getSinceBuildNumber());
+    try {
+      final PluginPlatformInfo info = PluginPlatformInfo.forModule(getModule());
+      assertEquals(PluginPlatformInfo.PlatformResolveStatus.UNRESOLVED, info.getResolveStatus());
+      assertNull(info.getSinceBuildNumber());
+    }
+    finally {
+      if (libraryName != null) {
+        removePlatformLibrary(libraryName);
+      }
+    }
   }
 
   private void setupPlatformLibrary(String libraryName) {
     String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
     File file = new File(platformApiJar);
     PsiTestUtil.addLibrary(getModule(), libraryName, file.getParent(), file.getName());
+  }
+
+  private void removePlatformLibrary(String libraryName) {
+    Library library = LibraryUtil.findLibrary(getModule(), libraryName);
+    PsiTestUtil.removeLibrary(getModule(), library);
   }
 }

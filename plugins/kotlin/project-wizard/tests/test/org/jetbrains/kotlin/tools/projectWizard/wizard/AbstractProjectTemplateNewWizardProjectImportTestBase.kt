@@ -8,7 +8,7 @@ import java.nio.file.Path
 
 abstract class AbstractProjectTemplateNewWizardProjectImportTestBase : AbstractNewWizardProjectImportTest() {
     override fun createWizard(directory: Path, buildSystem: BuildSystem, projectDirectory: Path): Wizard =
-        ProjectTemplateBasedTestWizard.createByDirectory(directory, buildSystem, projectDirectory, IDE_WIZARD_TEST_SERVICES_MANAGER)
+        ProjectTemplateBasedTestWizard.createByDirectory(directory, buildSystem, projectDirectory, createWizardTestServiceManager())
 }
 
 abstract class AbstractProjectTemplateNewWizardProjectImportTest : AbstractProjectTemplateNewWizardProjectImportTestBase()

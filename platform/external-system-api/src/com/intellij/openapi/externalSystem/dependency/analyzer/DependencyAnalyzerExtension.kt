@@ -15,7 +15,7 @@ interface DependencyAnalyzerExtension {
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<DependencyAnalyzerExtension>("com.intellij.externalSystemDependencyAnalyzer")
+    val EP_NAME: ExtensionPointName<DependencyAnalyzerExtension> = ExtensionPointName.create<DependencyAnalyzerExtension>("com.intellij.externalSystemDependencyAnalyzer")
 
     fun getExtension(systemId: ProjectSystemId): DependencyAnalyzerExtension =
       EP_NAME.findFirstSafe { it.isApplicable(systemId) }!!

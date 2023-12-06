@@ -12,13 +12,22 @@ class CoroutineContext(context: DefaultExecutionContext) :
     private val coroutineNameRef = CoroutineName(context)
     private val coroutineIdRef = CoroutineId(context)
     private val dispatcherRef = CoroutineDispatcher(context)
+    private val jobRef = CoroutineJob(context)
     private val getContextElement by MethodDelegate<ObjectReference>("get")
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfCoroutineContext {
         val coroutineName = getElementValue(value, context, coroutineNameRef)
         val coroutineId = getElementValue(value, context, coroutineIdRef)
         val dispatcher = getElementValue(value, context, dispatcherRef)
-        return MirrorOfCoroutineContext(coroutineName, coroutineId, dispatcher)
+        val job = getElementValue(value, context, jobRef)
+        val summary = JavaLangObjectToString(context).mirror(value, context)
+        return MirrorOfCoroutineContext(coroutineName, coroutineId, dispatcher, job, summary)
+    }
+
+    fun fetchMirror(coroutineName: String?, coroutineId: Long?, dispatcher: String?, value: ObjectReference, context: DefaultExecutionContext): MirrorOfCoroutineContext {
+        val job = getElementValue(value, context, jobRef)
+        val summary = JavaLangObjectToString(context).mirror(value, context)
+        return MirrorOfCoroutineContext(coroutineName, coroutineId, dispatcher, job, summary)
     }
 
     private fun <T> getElementValue(value: ObjectReference, context: DefaultExecutionContext, keyProvider: ContextKey<T>): T? {
@@ -60,6 +69,28 @@ class CoroutineDispatcher(context: DefaultExecutionContext) : ContextKey<String>
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): String? {
         return jlm.mirror(value, context)
+    }
+
+    override fun key() = key.staticValue()
+}
+
+class CoroutineJob(context: DefaultExecutionContext) : ContextKey<MirrorOfJob>("kotlinx.coroutines.Job", context) {
+    private val key by FieldDelegate<ObjectReference>("Key")
+    private val parent by MethodDelegate<ObjectReference>("getParent")
+    private val jlm = JavaLangObjectToString(context)
+
+    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfJob? {
+        val parentMirrorProvider = getParentJobMirrorProvider(value, context)
+        return jlm.mirror(value, context)?.let { MirrorOfJob(it, parentMirrorProvider) }
+    }
+
+    private fun getParentJobMirrorProvider(job: ObjectReference, context: DefaultExecutionContext): JobMirrorProvider {
+        return JobMirrorProvider {
+            parent.value(job, context)?.let { parentJob ->
+                val details = jlm.mirror(parentJob, context) ?: "Unknown job"
+                MirrorOfJob(details, getParentJobMirrorProvider(parentJob, context))
+            }
+        }
     }
 
     override fun key() = key.staticValue()

@@ -57,13 +57,17 @@ public final class NotificationsUtil {
     if (isContent) {
       content = StringUtil.replace(content, P_TAG, BR_TAG);
     }
+    boolean boldTitle = false;
+    if (!Notification.isEmpty(title) || !Notification.isEmpty(subtitle)) {
+      boldTitle = !Notification.isEmpty(notification.getContent());
+    }
     String colorText = color == null ? null : "#" + ColorUtil.toHex(color);
-    return buildHtml(title, subtitle, content, style, isContent ? null : colorText, isContent ? colorText : null, contentStyle);
+    return buildHtml(title, subtitle, boldTitle, content, style, isContent ? null : colorText, isContent ? colorText : null, contentStyle);
   }
 
   public static @NotNull @Nls String buildFullContent(@NotNull Notification notification) {
     String content = StringUtil.replace(notification.getContent(), P_TAG, BR_TAG);
-    return buildHtml(null, null, content, null, null, null, null);
+    return buildHtml(null, null, false, content, null, null, null, null);
   }
 
   public static @NotNull @Nls String buildStatusMessage(@NotNull Notification notification) {
@@ -109,6 +113,7 @@ public final class NotificationsUtil {
 
   public static @NotNull @Nls String buildHtml(@Nullable @Nls String title,
                                                @Nullable @Nls String subtitle,
+                                               boolean boldTitle,
                                                @Nullable @Nls String content,
                                                @Nullable String style,
                                                @Nullable String titleColor,
@@ -124,12 +129,19 @@ public final class NotificationsUtil {
 
     HtmlBuilder htmlBuilder = new HtmlBuilder();
     if (!Notification.isEmpty(title)) {
-      HtmlChunk.Element titleChunk = HtmlChunk.raw(title).bold();
-      if (StringUtil.isNotEmpty(titleColor)) {
-        titleChunk = titleChunk.attr("color", titleColor);
-      }
+      if (boldTitle) {
+        HtmlChunk.Element titleChunk = HtmlChunk.raw(title).bold();
+        if (StringUtil.isNotEmpty(titleColor)) {
+          titleChunk = titleChunk.attr("color", titleColor);
+        }
 
-      htmlBuilder.append(titleChunk);
+        htmlBuilder.append(titleChunk);
+      }
+      else {
+        htmlBuilder.append(StringUtil.isNotEmpty(titleColor) ?
+                           HtmlChunk.span().attr("color", titleColor).addText(title) :
+                           HtmlChunk.raw(title));
+      }
     }
 
     if (!Notification.isEmpty(subtitle)) {
@@ -161,13 +173,12 @@ public final class NotificationsUtil {
     return StringUtil.isEmpty(fontName) ? null : "font-family:" + fontName + ";";
   }
 
-  public static @Nullable Float getFontSize() {
+  public static @NotNull Float getFontSize() {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getOverrideLafFonts()) {
       return uiSettings.getFontSize2D();
     }
-    Font font = StartupUiUtil.getLabelFont();
-    return font == null ? null : font.getSize2D();
+    return StartupUiUtil.getLabelFont().getSize2D();
   }
 
   public static @Nullable String getFontName() {
@@ -175,8 +186,7 @@ public final class NotificationsUtil {
     if (uiSettings.getOverrideLafFonts()) {
       return uiSettings.getFontFace();
     }
-    Font font = StartupUiUtil.getLabelFont();
-    return font == null ? null : font.getName();
+    return StartupUiUtil.getLabelFont().getName();
   }
 
   public static @Nullable HyperlinkListener wrapListener(final @NotNull Notification notification) {

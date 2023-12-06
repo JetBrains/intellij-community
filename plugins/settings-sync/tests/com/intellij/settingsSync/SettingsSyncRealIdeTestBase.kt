@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -14,7 +15,7 @@ import java.lang.reflect.Constructor
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 
-internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
+internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   protected lateinit var componentStore: TestComponentStore
 
   @Before
@@ -30,7 +31,7 @@ internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
 
   protected fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit) {
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
-    val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(initMode)
@@ -74,7 +75,7 @@ internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
     return this
   }
 
-  class TestComponentStore(configDir: Path) : ApplicationStoreImpl() {
+  class TestComponentStore(configDir: Path) : ApplicationStoreImpl(ApplicationManager.getApplication()) {
     override val loadPolicy: StateLoadPolicy
       get() = StateLoadPolicy.LOAD
 

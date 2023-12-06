@@ -8,12 +8,15 @@ import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+
+    protected var userNotificationInfo: String? = null
 
     protected open fun doTest(unused: String) {
         val testPath = dataFilePath(fileName())
@@ -60,6 +63,12 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 codeStyleSettings.PACKAGES_TO_USE_STAR_IMPORTS.addEntry(KotlinPackageEntry(it.trim(), true))
             }
 
+            InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// CLASS_IMPORT_FILTER_VETO_REGEX:").forEach {
+                val regex = Regex(".*${it.trim()}.*")
+                val filterExtension = ClassImportFilter { classInfo, _ -> !classInfo.fqName.asString().matches(regex) }
+                ClassImportFilter.EP_NAME.point.registerExtension(filterExtension, testRootDisposable)
+            }
+
             val log = if (runTestInWriteCommand) {
                 project.executeWriteCommand<String?>("") { doTest(file) }
             } else {
@@ -74,6 +83,12 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 } else {
                     TestCase.assertFalse(logFile.exists())
                 }
+            }
+
+            val message = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// WITH_MESSAGE: ")
+            if (message != null) {
+                assertNotNull("No user notification info was provided", userNotificationInfo)
+                assertEquals(message, userNotificationInfo)
             }
         }
     }

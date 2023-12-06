@@ -9,19 +9,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class AntActionsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.AntActionsBundle";
-  private static final AntActionsBundle INSTANCE = new AntActionsBundle();
+public final class AntActionsBundle {
+  private static final @NonNls String BUNDLE = "messages.AntActionsBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(AntActionsBundle.class, BUNDLE);
 
-  private AntActionsBundle() { super(BUNDLE); }
+  private AntActionsBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

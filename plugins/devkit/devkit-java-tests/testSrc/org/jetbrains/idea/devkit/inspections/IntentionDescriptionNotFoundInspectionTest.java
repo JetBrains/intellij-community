@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
-import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -14,8 +13,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
-
-import java.nio.file.Paths;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/intentionDescription")
 public class IntentionDescriptionNotFoundInspectionTest extends JavaCodeInsightFixtureTestCase {
@@ -57,6 +54,11 @@ public class IntentionDescriptionNotFoundInspectionTest extends JavaCodeInsightF
   public void testHighlightingForBeforeAfter() {
     myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
     myFixture.testHighlighting("MyIntentionActionWithoutBeforeAfter.java");
+  }
+
+  public void testHighlightingOptionalBeforeAfter() {
+    myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
+    myFixture.testHighlighting("MyIntentionActionOptionalBeforeAfter.java");
   }
 
   public void testQuickFix() {

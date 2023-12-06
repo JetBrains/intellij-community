@@ -3,6 +3,7 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -24,6 +25,12 @@ import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,13 +40,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
   private final List<ExcludeEntryDescription> myExcludedDescriptions = new SmartList<>(); // guarded by myLock
   private boolean myCompilationPhase; // guarded by myLock
   private volatile GlobalSearchScope myExcludedFilesScope; // calculated outside myLock
-  private final Set<String> myCompilationAffectedModules = ContainerUtil.newConcurrentSet(); // used outside myLock
+  private final Set<String> myCompilationAffectedModules = ConcurrentCollectionFactory.createConcurrentSet(); // used outside myLock
 
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
@@ -96,27 +97,15 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
     connect.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
       @Override
-      public void beforeChanged(@NotNull VersionedStorageChange event) {
-        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
-          ModuleEntity oldEntity = change.getOldEntity();
-          if (oldEntity != null) {
-            addToDirtyModules(ModuleEntityUtils.findModule(oldEntity, event.getStorageBefore()));
-          }
-        }
-        for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
-          ContentRootEntity oldEntity = change.getOldEntity();
-          if (oldEntity != null) {
-            addToDirtyModules(ModuleEntityUtils.findModule(oldEntity.getModule(), event.getStorageBefore()));
-          }
-        }
-      }
-
-      @Override
       public void changed(@NotNull VersionedStorageChange event) {
         for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
           ModuleEntity newEntity = change.getNewEntity();
           if (newEntity != null) {
             addToDirtyModules(ModuleEntityUtils.findModule(newEntity, event.getStorageAfter()));
+          }
+          ModuleEntity oldEntity = change.getOldEntity();
+          if (oldEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(oldEntity, event.getStorageBefore()));
           }
         }
         for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
@@ -124,7 +113,12 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
           if (newEntity != null) {
             addToDirtyModules(ModuleEntityUtils.findModule(newEntity.getModule(), event.getStorageAfter()));
           }
+          ContentRootEntity oldEntity = change.getOldEntity();
+          if (oldEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(oldEntity.getModule(), event.getStorageBefore()));
+          }
         }
+        clearDisposedModules();
       }
     });
   }
@@ -193,6 +187,9 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
   private GlobalSearchScope calculateDirtyScope() {
     final Set<Module> dirtyModules = getAllDirtyModules();
     if (dirtyModules.isEmpty()) return myExcludedFilesScope;
+    if (dirtyModules.size() == ModuleManager.getInstance(myProject).getModules().length) {
+      return GlobalSearchScope.allScope(myProject);
+    }
     GlobalSearchScope dirtyModuleScope = GlobalSearchScope.union(dirtyModules
                                                                    .stream()
                                                                    .map(Module::getModuleWithDependentsScope)
@@ -333,14 +330,10 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     }
   }
 
-  private void removeFromDirtyModules(@NotNull Module module) {
+  private void clearDisposedModules() {
     synchronized (myLock) {
-      if (myCompilationPhase) {
-        myChangedModulesDuringCompilation.remove(module);
-      }
-      else {
-        myVFSChangedModules.remove(module);
-      }
+      myChangedModulesDuringCompilation.removeIf(module -> module.isDisposed());
+      myVFSChangedModules.removeIf(module -> module.isDisposed());
     }
   }
 

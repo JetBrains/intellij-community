@@ -31,6 +31,7 @@ import com.intellij.util.IJSwingUtilities
 import com.intellij.util.Processor
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -39,8 +40,8 @@ import javax.swing.JComponent
 abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) :
   EditorTabPreviewBase(diffProcessor.project!!, diffProcessor) {
 
-  override val previewFile: VirtualFile = EditorTabDiffPreviewVirtualFile(diffProcessor, ::getCurrentName)
   override val updatePreviewProcessor: DiffPreviewUpdateProcessor get() = diffProcessor as DiffPreviewUpdateProcessor
+  override val previewFile: VirtualFile = EditorTabDiffPreviewVirtualFile(diffProcessor, updatePreviewProcessor, ::getCurrentName)
 }
 
 abstract class EditorTabPreviewBase(protected val project: Project,
@@ -130,7 +131,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
 
   protected open fun skipPreviewUpdate(): Boolean = ToolWindowManager.getInstance(project).isEditorComponentActive
 
-  override fun updatePreview(fromModelRefresh: Boolean) {
+  open fun updatePreview(fromModelRefresh: Boolean) {
     if (isPreviewOpen()) {
       updatePreviewProcessor.refresh(false)
     }
@@ -182,11 +183,15 @@ abstract class EditorTabPreviewBase(protected val project: Project,
     return openPreviewEditor(true)
   }
 
-  internal class EditorTabDiffPreviewVirtualFile(diffProcessor: DiffRequestProcessor, tabNameProvider: () -> @Nls String?)
+  internal class EditorTabDiffPreviewVirtualFile(diffProcessor: DiffRequestProcessor,
+                                                 updatePreviewProcessor: DiffPreviewUpdateProcessor,
+                                                 tabNameProvider: () -> @Nls String?)
     : PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(diffProcessor, tabNameProvider)) {
     init {
       // EditorTabDiffPreviewProvider does not create new processor, so general assumptions of DiffVirtualFile are violated
-      diffProcessor.putContextUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, true)
+      diffProcessor.putContextUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, Runnable {
+        updatePreviewProcessor.clear()
+      })
     }
   }
 
@@ -218,6 +223,9 @@ private class EditorTabDiffPreviewProvider(
 ) : ChainBackedDiffPreviewProvider {
   override fun createDiffRequestProcessor(): DiffRequestProcessor {
     IJSwingUtilities.updateComponentTreeUI(diffProcessor.component)
+    if (diffProcessor is DiffPreviewUpdateProcessor) {
+      diffProcessor.refresh(false) // ensureHasContent
+    }
     return diffProcessor
   }
 

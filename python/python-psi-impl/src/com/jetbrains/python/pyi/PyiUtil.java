@@ -70,7 +70,20 @@ public final class PyiUtil {
     if (originalFile == null) return null;
 
     PsiElement result = findSimilarElement(element, originalFile);
-    if (result == null && element instanceof PyFunction) {
+    
+    // If a name is defined in a .pyi stub and the corresponding .py module in a different manner, e.g.
+    // it's exported through an assignment to a top-level attribute in a .pyi stub, but though a regular
+    // "from" import in .py file, we might end up in another stub file again. It happens because resolving 
+    // an imported name in a .py file in findSimilarElement() still prioritizes .pyi stubs over implementations
+    // as PyResolveContext doesn't retain the PyQualifiedNameResolveContext.getWithoutStubs flag.
+    // TODO propagate "without stubs" property through PyResolveContext
+    if (result instanceof PyElement && isInsideStub(result) && result.getContainingFile() != file) {
+      result = getOriginalElement((PyElement)result);
+    }
+
+    if (result != null) return result;
+
+    if (element instanceof PyFunction) {
       PyClass containingClass = PyUtil.turnConstructorIntoClass((PyFunction)element);
       if (containingClass != null) {
         result = findSimilarElement(containingClass, originalFile);
@@ -147,7 +160,7 @@ public final class PyiUtil {
   }
 
   public static boolean isPyiFileOfPackage(@NotNull PsiElement element) {
-    return element instanceof PyiFile || PyUtil.turnDirIntoInit(element) instanceof PyiFile;
+    return element instanceof PyiFile || PyUtil.turnDirIntoInitPyi(element) instanceof PyiFile;
   }
 
   private static boolean pyButNotPyiFile(@Nullable PsiFile file) {
@@ -164,7 +177,7 @@ public final class PyiUtil {
     return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
       .stream()
       .findFirst()
-      .map(PyUtil::turnDirIntoInit)
+      .map(PyUtil::turnDirIntoInitPyi)
       .orElse(null), PyiFile.class);
   }
 
@@ -178,7 +191,7 @@ public final class PyiUtil {
     return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
                        .stream()
                        .findFirst()
-                       .map(PyUtil::turnDirIntoInit)
+                       .map(PyUtil::turnDirIntoInitPy)
                        .orElse(null), PyFile.class);
   }
 

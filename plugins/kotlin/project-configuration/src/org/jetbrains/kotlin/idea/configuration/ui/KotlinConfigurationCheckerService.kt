@@ -1,20 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration.ui
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.progressStep
-import com.intellij.openapi.progress.runBlockingModal
-import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.util.progress.progressStep
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
@@ -32,6 +33,7 @@ private class KotlinConfigurationCheckerStartupActivity : ProjectActivity {
     }
 }
 
+@Service(Service.Level.PROJECT)
 class KotlinConfigurationCheckerService(private val project: Project) {
     private val syncDepth = AtomicInteger()
 
@@ -46,20 +48,23 @@ class KotlinConfigurationCheckerService(private val project: Project) {
     }
 
     fun performProjectPostOpenActionsInEdt() {
-        runBlockingModal(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings")) {
+        runWithModalProgressBlocking(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings")) {
             doPerformProjectPostOpenActions()
         }
     }
 
     private suspend fun doPerformProjectPostOpenActions() {
-        val kotlinLanguageVersionConfigured = runReadAction { isKotlinLanguageVersionConfigured(project) }
+        val propertiesComponent = PropertiesComponent.getInstance(project)
+        if (propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME)) return
+
+        val kotlinLanguageVersionConfigured = readAction { isKotlinLanguageVersionConfigured(project) }
 
         val ktModules = if (kotlinLanguageVersionConfigured) {
             // we already have `.idea/kotlinc` so it's ok to add the jps version there
             KotlinJpsPluginSettings.validateSettings(project)
 
             // pick up modules with kotlin faces those use custom (non project) settings
-            val modulesWithKotlinFacets = runReadAction { project.modules }
+            val modulesWithKotlinFacets = readAction { project.modules }
                 .filter {
                     val facetSettings = KotlinFacet.get(it)?.configuration?.settings ?: return@filter false
                     // module uses custom (not a project-wide) kotlin facet settings and LV or ApiVersion is missed
@@ -67,6 +72,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
                 }
 
             if (modulesWithKotlinFacets.isEmpty()) {
+                propertiesComponent.setValue(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME, true)
                 return
             }
 
@@ -76,6 +82,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
         }
 
         if (ktModules.isEmpty()) {
+            propertiesComponent.setValue(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME, true)
             return
         }
         if (!kotlinLanguageVersionConfigured) {
@@ -101,7 +108,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
                 writeActionContinuations.forEach { it.invoke() }
             }
         }
-        return
+        propertiesComponent.setValue(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME, true)
     }
 
     @IntellijInternalApi
@@ -152,8 +159,8 @@ class KotlinConfigurationCheckerService(private val project: Project) {
 
     companion object {
         const val CONFIGURE_NOTIFICATION_GROUP_ID = "Configure Kotlin in Project"
+        const val KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME = "kotlin-language-version-configured"
 
         fun getInstance(project: Project): KotlinConfigurationCheckerService = project.service()
-
     }
 }

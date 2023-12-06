@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.LeafBlockWrapper;
@@ -44,8 +44,7 @@ public final class BlockRangesMap {
     return false;
   }
 
-  @Nullable
-  public LeafBlockWrapper getBlockAtOrAfter(final int startOffset) {
+  public @Nullable LeafBlockWrapper getBlockAtOrAfter(final int startOffset) {
     int current = startOffset;
     LeafBlockWrapper result = null;
     while (current < myLastBlock.getEndOffset()) {
@@ -67,8 +66,7 @@ public final class BlockRangesMap {
     }
   }
 
-  @Nullable
-  private LeafBlockWrapper getPrevBlock(@Nullable final LeafBlockWrapper result) {
+  private @Nullable LeafBlockWrapper getPrevBlock(final @Nullable LeafBlockWrapper result) {
     if (result != null) {
       return result.getPreviousBlock();
     }

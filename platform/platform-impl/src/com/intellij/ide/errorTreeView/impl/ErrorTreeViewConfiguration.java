@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView.impl;
 
 import com.intellij.openapi.components.*;
@@ -47,7 +47,7 @@ public final class ErrorTreeViewConfiguration implements PersistentStateComponen
   }
 
   @Override
-  public void loadState(@NotNull final ErrorTreeViewConfiguration state) {
+  public void loadState(final @NotNull ErrorTreeViewConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

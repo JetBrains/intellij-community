@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.process.ProcessOutputTypes
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
@@ -36,4 +37,10 @@ abstract class AbstractCoroutineDumpTest : KotlinDescriptorTestCaseWithStackFram
             appendLine("\"${it.descriptor.name}#${it.descriptor.id}\", state: ${it.descriptor.state}")
         }
     }
+}
+
+abstract class AbstractK1IdeK2CodeCoroutineDumpTest : AbstractCoroutineDumpTest() {
+    override val compileWithK2 = true
+
+    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
 }

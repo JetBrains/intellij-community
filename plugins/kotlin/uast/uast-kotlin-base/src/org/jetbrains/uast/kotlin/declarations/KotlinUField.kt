@@ -20,7 +20,7 @@ open class KotlinUField(
 ) : AbstractKotlinUVariable(givenParent), UFieldEx, PsiField by psi {
     override fun getSourceElement() = sourcePsi ?: this
 
-    override val javaPsi  = unwrap<UField, PsiField>(psi)
+    override val javaPsi = unwrap<UField, PsiField>(psi)
 
     override val psi = javaPsi
 
@@ -76,5 +76,5 @@ open class KotlinUField(
 // original function should be used instead as soon as becomes public
 private fun PsiModifierListOwner.renderModifiers(): String {
     val modifiers = PsiModifier.MODIFIERS.filter { hasModifierProperty(it) }.joinToString(" ")
-    return if (modifiers.isEmpty()) "" else modifiers + " "
+    return if (modifiers.isEmpty()) "" else "$modifiers "
 }

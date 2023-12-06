@@ -1,7 +1,7 @@
 //old comment
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.platform.workspace.storage.impl.*
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)

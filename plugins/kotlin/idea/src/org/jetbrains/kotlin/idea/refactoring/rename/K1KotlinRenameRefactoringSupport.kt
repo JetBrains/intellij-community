@@ -45,34 +45,20 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
-    override fun checkRedeclarations(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkRedeclarations(declaration, newName, result)
-    }
-
-    override fun checkOriginalUsagesRetargeting(
+    override fun checkUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,
         originalUsages: MutableList<UsageInfo>,
         newUsages: MutableList<UsageInfo>
     ) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkOriginalUsagesRetargeting(declaration, newName, originalUsages, newUsages)
-    }
 
-    override fun checkNewNameUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkNewNameUsagesRetargeting(declaration, newName, newUsages)
-    }
-
-    override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkAccidentalPropertyOverrides(declaration, newName, result)
+        checkOriginalUsagesRetargeting(declaration, newName, originalUsages, newUsages)
+        checkNewNameUsagesRetargeting(declaration, newName, newUsages)
     }
 
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
         val descriptor = function.unsafeResolveToDescriptor() as FunctionDescriptor
         return descriptor.overriddenDescriptors.mapNotNull { it.source.getPsi() }
-    }
-
-    override fun getModuleNameSuffixForMangledName(mangledName: String): String? {
-        return KotlinTypeMapper.InternalNameMapper.getModuleNameSuffix(mangledName)
     }
 
     override fun mangleInternalName(name: String, moduleName: String): String {

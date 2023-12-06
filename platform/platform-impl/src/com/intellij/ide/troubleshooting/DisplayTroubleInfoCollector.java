@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.troubleshooting;
 
 import com.intellij.openapi.project.Project;
@@ -8,25 +8,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class DisplayTroubleInfoCollector implements GeneralTroubleInfoCollector {
-  @NotNull
+public final class DisplayTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return "Displays";
   }
 
-  @NotNull
   @Override
-  public String collectInfo(@NotNull Project project) {
+  public @NotNull String collectInfo(@NotNull Project project) {
     StringBuilder output = new StringBuilder();
-    output.append("Displays: \n");
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     for (int i = 0; i < devices.length; i++) {
       DisplayMode displayMode = devices[i].getDisplayMode();
       float scale = JBUIScale.sysScale(devices[i].getDefaultConfiguration());
       Rectangle bounds = devices[i].getDefaultConfiguration().getBounds();
       output.append(
-        String.format("Display %d: %2.0fx%3.0f; scale: %.2f, bounds: %dx%d @ (%d; %d)\n", i, displayMode.getWidth() * scale, displayMode.getHeight() * scale, scale,
+        String.format("Display %d: %dx%d; scale: %.2f, bounds: %dx%d @ (%d; %d)\n", i, displayMode.getWidth(), displayMode.getHeight(), scale,
                       bounds.width, bounds.height, bounds.x, bounds.y));
     }
     return output.toString();

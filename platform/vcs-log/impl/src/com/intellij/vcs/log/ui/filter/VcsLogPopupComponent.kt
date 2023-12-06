@@ -4,26 +4,27 @@ package com.intellij.vcs.log.ui.filter
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionGroupUtil
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.FilterComponent
+import java.awt.Component
 import java.util.function.Supplier
 
 internal abstract class VcsLogPopupComponent(displayName: Supplier<@NlsContexts.Label String>) : FilterComponent(displayName) {
-  private val myPopupState = PopupState.forPopup()
-
   init {
     setShowPopupAction(Runnable { showPopupMenu() })
   }
 
   fun showPopupMenu() {
-    if (myPopupState.isRecentlyHidden) return  // do not show new popup
+    val start = System.nanoTime()
     val popup = createPopupMenu()
-    myPopupState.prepareToShow(popup)
-    popup.showUnderneathOf(this)
+    Utils.showPopupElapsedMillisIfConfigured(start, popup.content);
+    popup.showUnderneathOf(getTargetComponent())
   }
+
+  open fun getTargetComponent(): Component = this
 
   /**
    * Create popup actions available under this filter.

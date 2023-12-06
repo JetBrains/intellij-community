@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.highlighting;
 
@@ -15,8 +15,7 @@ public final class DomElementsHighlightingUtil {
   private DomElementsHighlightingUtil() {
   }
 
-  @Nullable
-  public static ProblemDescriptor createProblemDescriptors(final InspectionManager manager, final DomElementProblemDescriptor problemDescriptor) {
+  public static @Nullable ProblemDescriptor createProblemDescriptors(final InspectionManager manager, final DomElementProblemDescriptor problemDescriptor) {
     final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
     return createProblemDescriptors(problemDescriptor, s -> manager
       .createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, true, problemDescriptor.getFixes()));
@@ -36,9 +35,7 @@ public final class DomElementsHighlightingUtil {
     return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
   }
 
-  @Nullable
-  private static <T> T createProblemDescriptors(DomElementProblemDescriptor problemDescriptor, Function<? super Pair<TextRange, PsiElement>, ? extends T> creator) {
-
+  public static @Nullable <T> T createProblemDescriptors(DomElementProblemDescriptor problemDescriptor, Function<? super Pair<TextRange, PsiElement>, ? extends T> creator) {
     final Pair<TextRange, PsiElement> range = ((DomElementProblemDescriptorImpl)problemDescriptor).getProblemRange();
     return range == DomElementProblemDescriptorImpl.NO_PROBLEM || !range.second.isPhysical() ? null : creator.fun(range);
   }

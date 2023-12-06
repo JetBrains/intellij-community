@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rest.editor;
 
 import com.intellij.openapi.fileEditor.*;
@@ -10,13 +10,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.rest.RestFileType;
 import org.jetbrains.annotations.NotNull;
 
-public class RestSplitEditorProvider implements FileEditorProvider, DumbAware {
-  public RestSplitEditorProvider() {
+final class RestSplitEditorProvider implements FileEditorProvider, DumbAware {
+  RestSplitEditorProvider() {
   }
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return FileTypeRegistry.getInstance().isFileOfType(file, RestFileType.INSTANCE);
+  }
+
+  @Override
+  public boolean acceptRequiresReadAction() {
+    return false;
   }
 
   @NotNull

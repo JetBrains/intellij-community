@@ -5,13 +5,13 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnSnapshot;
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +71,7 @@ public class GradleProjectResolverUtilTest {
         return Unit.INSTANCE;
       }));
     ModuleManagerBridgeImpl.getMutableModuleMap(builder).addMapping(moduleEntity, module);
-    when(module.getEntityStorage()).thenReturn(new VersionedEntityStorageOnStorage(builder.toSnapshot()));
+    when(module.getEntityStorage()).thenReturn(new VersionedEntityStorageOnSnapshot(builder.toSnapshot()));
     
     ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManagerBridge(module);
     when(module.getService(ExternalSystemModulePropertyManager.class)).thenReturn(modulePropertyManager);

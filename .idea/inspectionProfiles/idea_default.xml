@@ -4,6 +4,11 @@
     <inspection_tool class="03c8b094-627d-3aaa-8d8b-4a66542826cd" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Production" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="2b82dee6-0e1c-36ce-846f-749c578bd315" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="807b1a20-1c6f-3175-b372-e193a137c304" enabled="true" level="TYPO" enabled_by_default="true" editorAttributes="TYPO" />
+    <inspection_tool class="81c39993-de39-3a30-9c64-ab89d04bb566" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
+      <scope name="Production" level="TEXT ATTRIBUTES" enabled="true" editorAttributes="INFO_ATTRIBUTES" />
+    </inspection_tool>
     <inspection_tool class="AbstractMethodCallInConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidDomInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidElementNotAllowed" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -222,6 +227,29 @@
     <inspection_tool class="Convert2MethodRef" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="CovariantCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="CovariantEquals" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="CustomRegExpInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myConfigurations">
+        <list>
+          <RegExpInspectionConfiguration>
+            <option name="description" value="Reports properties ending with &lt;code&gt;[space]…&lt;/code&gt; instead of &lt;code&gt;…&lt;/code&gt;.&lt;br/&gt;&#10;See &lt;a href=&quot;https://jetbrains.design/intellij/text/punctuation/&quot;&gt;punctuation guidelines&lt;/a&gt;." />
+            <option name="name" value="Extra space before ellipsis" />
+            <option name="problemDescriptor" value="Property has an extra space before the ellipsis" />
+            <option name="suppressId" value="SpaceBeforeEllipsis" />
+            <option name="uuid" value="807b1a20-1c6f-3175-b372-e193a137c304" />
+            <option name="patterns">
+              <list>
+                <InspectionPattern>
+                  <option name="regExp" value=" …$" />
+                  <option name="_fileType" value="Properties" />
+                  <option name="searchContext" value="ANY" />
+                  <option name="replacement" value="…" />
+                </InspectionPattern>
+              </list>
+            </option>
+          </RegExpInspectionConfiguration>
+        </list>
+      </option>
+    </inspection_tool>
     <inspection_tool class="DeclareParentsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="DeprecatedGemInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DialogTitleCapitalization" enabled="true" level="WARNING" enabled_by_default="true">
@@ -667,7 +695,7 @@
           <module name="intellij.platform.externalSystem.impl" />
         </modules-set>
         <modules-set>
-          <module name="intellij.idea.community.resources" />
+          <module name="intellij.idea.community.customization" />
           <module name="intellij.java" />
           <module name="intellij.java.aetherDependencyResolver" />
           <module name="intellij.java.analysis" />
@@ -750,6 +778,9 @@
     <inspection_tool class="PrivatePropertyName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="namePattern" value="([A-Z_][A-Z_\d]*)|(_?[a-z][A-Za-z\d]*)" />
     </inspection_tool>
+    <inspection_tool class="PublicApiImplicitType" enabled="true" level="INFORMATION" enabled_by_default="false" editorAttributes="INFORMATION_ATTRIBUTES">
+      <scope name="platform API" level="WARNING" enabled="true" editorAttributes="WARNING_ATTRIBUTES" />
+    </inspection_tool>
     <inspection_tool class="PublicConstructorInNonPublicClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PublicFieldAccessedInSynchronizedContext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Query_bound_parameters" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -758,7 +789,7 @@
     <inspection_tool class="RawUseOfParameterizedType" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="ignoreParametersOfOverridingMethods" value="true" />
     </inspection_tool>
-    <inspection_tool class="RedundantSamConstructor" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="RedundantSamConstructor" enabled="true" level="INFORMATION" enabled_by_default="true" editorAttributes="INFORMATION_ATTRIBUTES" />
     <inspection_tool class="RedundantScopeBinding" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="RedundantToBinding" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="RedundantToProviderBinding" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -782,6 +813,14 @@
         <constraint name="var" within="" contains="" />
         <constraint name="field" script="&quot;import com.intellij.psi.PsiField&#10;import com.intellij.psi.PsiModifier&#10;import com.intellij.psi.PsiReferenceExpression&#10;import com.intellij.psi.PsiVariable&#10;&#10;field instanceof PsiReferenceExpression &amp;&amp;&#10;((PsiReferenceExpression)field).resolve() instanceof PsiField &amp;&amp;&#10;((PsiField)((PsiReferenceExpression)field).resolve()).hasModifierProperty(PsiModifier.VOLATILE) &amp;&amp;&#10;var instanceof PsiReferenceExpression &amp;&amp;&#10;((PsiReferenceExpression)var).resolve() instanceof PsiVariable &amp;&amp;&#10;!((PsiVariable)((PsiReferenceExpression)var).resolve()).hasModifierProperty(PsiModifier.VOLATILE)&quot;" within="" contains="" />
         <constraint name="__context__" target="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="'suspendCoroutine' lacks cancellation guarantees" description="'suspendCoroutine' does not react on cancellation of the context 'Job', which may result in infinite suspension of the enclosing coroutine.&#10;It is better to use 'suspendCancellableCoroutine' if the intention is to work in the structured concurrency area." text="suspendCoroutine { &#10;  $Expr$ &#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="kotlinx.coroutines.suspendCancellableCoroutine {&#10;  $Expr$&#10;}">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expr" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="'suspendCoroutine' lacks cancellation guarantees" text="suspendCoroutine($Block$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="kotlinx.coroutines.suspendCancellableCoroutine($Block$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Block" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="@HardwareAgentRequired should be applied only for performance tests" text="@com.intellij.idea.HardwareAgentRequired&#10;class $class$ {&#10;  &#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
@@ -872,6 +911,16 @@
         <constraint name="Expression" nameOfExprType="java\.util\.stream\.Stream" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
         <constraint name="params" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Call to 'equals()' on KtType" description="Calling `equals` on two types only checks whether the structure of the types is equal, not whether the types are actually equal." suppressId="EqualsOnKtType" text="$lType$ == $rType$" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$lType$.isEqualTo($rType$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="lType" nameOfExprType="org\.jetbrains\.kotlin\.analysis\.api\.types\.KtType" within="" contains="" />
+        <constraint name="rType" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Call to 'equals()' on KtType" text="$lType$ != $rType$" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$lType$.isEqualTo($rType$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="lType" nameOfExprType="org\.jetbrains\.kotlin\.analysis\.api\.types\.KtType" within="" contains="" />
+        <constraint name="rType" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction(new $Computable$() {&#10;  public $SearchScope$ compute() {&#10;    return $e$;&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
         <constraint name="SearchScope" within="" contains="" />
         <constraint name="e" within="" contains="" />
@@ -943,8 +992,24 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="c" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap(new ConcurrentHashMap&lt;&gt;())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.newConcurrentSet()">
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap(new ConcurrentHashMap&lt;&gt;())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentSet()">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def ccf = JavaPsiFacade.getInstance(__context__.getProject()).findClass(&quot;com.intellij.concurrency.ConcurrentCollectionFactory&quot;, GlobalSearchScope.allScope(__context__.getProject()));&#10;def ccfVirtualFile = PsiUtil.getVirtualFile(ccf);&#10;&#10;ccfVirtualFile != null &amp;&amp;  &#10;__context__.getResolveScope().contains(ccfVirtualFile)&#10;&#10;&quot;" target="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap&lt;$T$&gt;(ConcurrentHashMap())" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentSet&lt;$T$&gt;()">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def ccf = JavaPsiFacade.getInstance(__context__.getProject()).findClass(&quot;com.intellij.concurrency.ConcurrentCollectionFactory&quot;, GlobalSearchScope.allScope(__context__.getProject()));&#10;def ccfVirtualFile = PsiUtil.getVirtualFile(ccf);&#10;&#10;ccfVirtualFile != null &amp;&amp;  &#10;__context__.getResolveScope().contains(ccfVirtualFile)&#10;&#10;&quot;" target="true" within="" contains="" />
+        <constraint name="T" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap&lt;$T$&gt;(ConcurrentHashMap())" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentSet()">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def ccf = JavaPsiFacade.getInstance(__context__.getProject()).findClass(&quot;com.intellij.concurrency.ConcurrentCollectionFactory&quot;, GlobalSearchScope.allScope(__context__.getProject()));&#10;def ccfVirtualFile = PsiUtil.getVirtualFile(ccf);&#10;&#10;ccfVirtualFile != null &amp;&amp;  &#10;__context__.getResolveScope().contains(ccfVirtualFile)&#10;&#10;&quot;" target="true" within="" contains="" />
+        <constraint name="T" minCount="0" maxCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="$info$ == null ? Collections.emptyList() : Collections.singletonList($info$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.createMaybeSingletonList($info$)">
         <constraint name="__context__" within="" contains="" />
+        <constraint name="info" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="$info$ != null ? Collections.singletonList($info$) : Collections.emptyList()" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.createMaybeSingletonList($info$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="info" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="can use StringUtil" uuid="e2009598-65b8-3ae6-a9f8-9159d2b2e27a" text="if ($s$.endsWith($e$)) {&#10;  $s$ = $s$.substring(0, $s$.length() - $e$.length());&#10;}" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$s$ = com.intellij.openapi.util.text.StringUtil.trimEnd($s$, $e$);&#10;">
         <constraint name="s" within="" contains="" />
@@ -1035,6 +1100,11 @@
         <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
         <constraint name="Var3" nameOfExprType="String" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="DB introspection query is not tested (Microsoft)" uuid="2b82dee6-0e1c-36ce-846f-749c578bd315" problemDescriptor="The introspection query is not tested. See class MsIntroQueriesTest" text="object MsIntroQueries {  &#10;    val $Field$ = $Init$&#10;}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Field" script="&quot;import com.intellij.psi.search.GlobalSearchScopesCore&#10;import com.intellij.psi.search.searches.ReferencesSearch&#10;&#10;!ReferencesSearch.search(__context__, GlobalSearchScopesCore.projectTestScope(__context__.getProject())).any()&quot;" nameOfExprType="com\.intellij\.database\.remote\.jdba\.sql\.SqlQuery&lt;.*&gt;" maxCount="2147483647" target="true" within="" contains="" />
+        <constraint name="Init" minCount="0" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="DBE model property must be public" uuid="0899a4c2-78e7-3f01-be3c-9c46451baec3" text="class $Class$ {&#10;  @StateProperty&#10;  @Modifier(&quot;packageLocal&quot;) $FieldType$ $FieldName$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" within="" contains="" />
@@ -1078,6 +1148,36 @@
       <replaceConfiguration name="Disposable instance by lambda" description="It's not safe to instantiate Disposable via lambda because lambdas does not guarantee their identity." text="Disposable { }" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Disposer.newDisposable()">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" description="It's very easy to forget to set the default return value&#10;Use the map that guarantee the default map like Int2IntWithDefaultMap&#10;See IDEA-338250 as issue example" suppressId="NoMapsWithPrimitiveValue" text="Int2IntMap" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Int2IntOpenHashMap()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Int2IntOpenHashMap($source$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap.from($source$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="source" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2IntOpenHashMap($source$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap.from($source$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="source" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2IntOpenHashMap()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2IntMap" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2LongMap" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2LongOpenHashMap()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2LongOpenHashMap($source$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap.from($source$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="source" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="Don't read channels with for, use consume/consumeEach" suppressId="CHAN_WITH_FOR" text="for ($Item$ in $Collection$) {&#10;  $Statement$&#10;}" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="false" replacement="$Collection$.consumeEach { $Item$ -&gt;&#10;  $Statement$&#10;}">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Item" within="" contains="" />
@@ -1119,24 +1219,6 @@
         <constraint name="key" within="" contains="" />
         <constraint name="value" regexp="[^{]*''[^{]*" target="true" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="Eager service initialization during classloading" description="This code is executed when JVM is loading the class, which may cause deadlocks, slowdowns and circular loading issues.&#10;&#10;An example of good API for service getters is&#10;fun instance(): Type = service()" suppressId="service_in_classloading" text="class $doesNotMatter$ {&#10;  companion object {&#10;    val $instance$ = service&lt;$cls$&gt;()&#10;  }&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="fun $instance$() = service&lt;$cls$&gt;()&#10;  &#10;@Deprecated(&quot;inline me&quot;)&#10;val $instance$ = $instance$()">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="instance" target="true" within="" contains="" />
-        <constraint name="doesNotMatter" within="" contains="" />
-        <constraint name="cls" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Eager service initialization during classloading" text="class $doesNotMatter$ {&#10;  companion object {&#10;    val $instance$ = ApplicationManager.getApplication().getService($cls$)&#10;  }&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="fun $instance$() = ApplicationManager.getApplication().getService($cls$)&#10;&#10;@Deprecated(&quot;inline me&quot;)&#10;val $instance$ get() = $instance$">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="instance" target="true" within="" contains="" />
-        <constraint name="doesNotMatter" within="" contains="" />
-        <constraint name="cls" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Eager service initialization during classloading" text="class $doesNotMatter$ {&#10;  companion object {&#10;    val $instance$: $cls$ = service()&#10;  }&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="fun $instance$(): $cls$ = service()&#10;@Deprecated(&quot;inline me&quot;) val $instance$: $cls$ get() = instance&#10;">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="instance" target="true" within="" contains="" />
-        <constraint name="doesNotMatter" within="" contains="" />
-        <constraint name="cls" within="" contains="" />
-      </replaceConfiguration>
       <searchConfiguration name="EventLogGroup version should be &gt; 0" text="EventLogGroup($Parameter1$, $Parameter2$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Parameter2" regexp="0" within="" contains="" />
@@ -1327,10 +1409,6 @@
       <replaceConfiguration name="new String(byte[]) is default locale dependent; use new String(byte[], Charset) instead" text="new String($b$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="new String($b$, java.nio.charset.StandardCharsets.UTF_8)">
         <constraint name="b" nameOfExprType="byte\[\]" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="new String(byte[]) is default locale dependent; use new String(byte[], Charset) instead" text="String($b$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="String($b$, java.nio.charset.StandardCharsets.UTF_8)">
-        <constraint name="b" nameOfExprType="ByteArray|Array&lt;Byte&gt;" exprTypeWithinHierarchy="true" within="" contains="" />
-        <constraint name="__context__" within="" contains="" />
-      </replaceConfiguration>
       <searchConfiguration name="non-static JamAnnotationMeta" text="class $Class$ {&#10;  $Type$ $Variable$ = $Init$;&#10;}" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="Class" within="" contains="" />
         <constraint name="Type" regexp="JamAnnotationMeta" within="" contains="" />
@@ -1439,6 +1517,22 @@
         <constraint name="presentation1" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" within="" contains="" />
         <constraint name="presentation2" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Problem highlight type override" uuid="92d42a73-fb88-340b-88e5-4f09e27f9db6" description="&lt;html&gt;&#10; &lt;body&gt;&#10;  &lt;p&gt;&#10;   Inspections have their severity and highlight types specified in inspection settings. &#10;   Having any other options than &lt;code&gt;ProblemHighlightType#GENERIC_ERROR_OR_WARNING&lt;/code&gt; &#10;   will override the user-defined highlighting.&#10;  &lt;/p&gt;&#10;  &lt;p&gt;&#10;   In cases when multiple severity levels are expected, consider one of the following options:&#10;  &lt;/p&gt;&#10;  &lt;ol&gt;&#10;   &lt;li&gt;&#10;    Implementing a separate inspection.&#10;    You should always prefer separating inspections so that a user can control them individually, as suggested by &lt;a href=&quot;https://jetbrains.design/intellij/text/inspections/#descriptions&quot;&gt;JetBrains design guideline&lt;/a&gt; &#10;   &lt;/li&gt;&#10;   &lt;li&gt;Extracting an intention, if the severity level is &lt;code&gt;INFORMATION&lt;/code&gt;.&lt;/li&gt;&#10;   &lt;li&gt;&#10;    Implementing an anemic inspection implementing &lt;code&gt;PairedUnfairLocalInspectionTool&lt;/code&gt; or &lt;code&gt;UnfairLocalInspectionTool&lt;/code&gt;.&#10;    That way, the inspection may act as a settings holder for the severity levels.&#10;   &lt;/li&gt;&#10;   &lt;li&gt;Implementing a custom settings panel for your inspection.&lt;/li&gt;&#10;  &lt;/ol&gt;&#10;  &lt;p&gt;&#10;   To fix this problem properly, it might be important to verify that the plugin.xml contains a valid &lt;code&gt;level&lt;/code&gt; &#10;   and &lt;code&gt;editorAttributes&lt;/code&gt; parameters.&#10;  &lt;/p&gt;&#10;  &#10;  &lt;p&gt;&#10;   Also avoid registering problems not related to inspections, unless they have &lt;code&gt;ERROR&lt;/code&gt; severity.&#10;  &lt;/p&gt;&#10;&lt;/body&gt;&#10;&lt;/html&gt;" suppressId="ProblemHighlightTypeShadowed" problemDescriptor="'#ref' might override the inspection severity" cleanup="true" text="$Instance$.$registerProblem$($paramsBefore$, $highlightingType$, $paramsAfter$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="ProblemHighlightType.GENERIC_ERROR_OR_WARNING">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder|com\.intellij\.codeInspection\.ProblemsHolder|com\.goide\.inspections\.fmtstring\.GoFmtStringUtil\.FmtStringProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem|reportToken" within="" contains="" />
+        <constraint name="highlightingType" regexp="(.*GENERIC_ERROR_OR_WARNING)" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" target="true" negateName="true" within="" contains="" />
+        <constraint name="paramsBefore" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="paramsAfter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Problem highlight type override" uuid="92d42a73-fb88-340b-88e5-4f09e27f9db6" text="$Instance$.$registerProblem$($paramsBefore$, $highlightingType$, $paramsAfter$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder|com\.intellij\.codeInspection\.ProblemsHolder|com\.goide\.inspections\.fmtstring\.GoFmtStringUtil\.FmtStringProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem|reportToken" within="" contains="" />
+        <constraint name="highlightingType" regexp="(.*GENERIC_ERROR_OR_WARNING)" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" target="true" negateName="true" within="" contains="" />
+        <constraint name="paramsBefore" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="paramsAfter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="PsiManager.getInstance(psiElement.getProject())" text="com.intellij.psi.PsiManager.getInstance($psiElement$.getProject())" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="$psiElement$.getManager()">
         <constraint name="psiElement" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
@@ -1447,6 +1541,10 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="QUALIFIER" nameOfExprType="com\.intellij\.psi\.PsiManager" minCount="0" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Raw coroutine scope creation" uuid="e11e9d2f-7cc2-3359-a78a-24f67cbe0850" description="Coroutine scope should be created:&#10;&lt;ul&gt;&#10;&lt;li&gt;by a coroutine builder (&lt;code&gt;launch&lt;/code&gt;, &lt;code&gt;async&lt;/code&gt;, &lt;code&gt;runBlockingCancellable&lt;/code&gt;);&lt;/li&gt;&#10;&lt;li&gt;by a scoping function (&lt;code&gt;withContext&lt;/code&gt;, &lt;code&gt;coroutineScope&lt;/code&gt;, &lt;code&gt;supervisorScope&lt;/code&gt;);&lt;/li&gt;&#10;&lt;li&gt;by injecting it into a service constructor;&lt;/li&gt;&#10;&lt;li&gt;by explicitly creating a child scope (&lt;code&gt;childScope&lt;/code&gt;, &lt;code&gt;namedChildScope&lt;/code&gt;)&lt;/li&gt;&#10;&lt;/ul&gt; " suppressId="RAW_SCOPE_CREATION" problemDescriptor="Raw scope might not be linked to any parent unintentionally (if passed context does not have any &lt;code&gt;Job&lt;/code&gt;, or if passed &lt;code&gt;Job&lt;/code&gt; does not have any parent). Use &lt;code&gt;namedChildScope()&lt;/code&gt; on some existing scope instead. If no parent is actually intended, use &lt;code&gt;GlobalScope.namedScope()&lt;/code&gt;." text="CoroutineScope($args$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="args" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="Raw runBlocking" description="Standard library `runBlocking` may block indefinitely because does not take thread context `Job` or thread `ProgressIndicator` into account.&#10;Use `com.intellij.openapi.progress.runBlockingCancellable` instead. Read its doc if it fails with an error that there is no job or indicator in the current thread." suppressId="RAW_RUN_BLOCKING" problemDescriptor="Use `runBlockingCancellable` instead" text="runBlocking {&#10;  $statement$&#10;}&#10;" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.progress.runBlockingCancellable {&#10;  $statement$&#10;}&#10;">
         <constraint name="__context__" within="" contains="" />
         <constraint name="statement" minCount="0" maxCount="2147483647" within="" contains="" />
@@ -1469,6 +1567,68 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="k" regexp="\w+" negateName="true" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Redundant 'ObjectUtils.tryCast()' call" description="The expression that is casted already has the requested type" text="ObjectUtils.tryCast($x$, $y$.class)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$x$">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.util.InheritanceUtil&#10;&#10;def type1 = x.getType()&#10;def type2 = y.getType()&#10;if (type1 == type2) return true&#10;type1 != null &amp;&amp; type2 != null &amp;&amp; InheritanceUtil.isInheritor(type1, type2.getCanonicalText())&quot;" within="" contains="" />
+        <constraint name="x" within="" contains="" />
+        <constraint name="y" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" description="&lt;html&gt;&#10;&lt;body&gt;&#10;Passing the &lt;code&gt;ProblemHighlightType#GENERIC_ERROR_OR_WARNING&lt;/code&gt; argument is unnecessary since it is the default option.&#10;Omit this argument where possible.&#10;&lt;/body&gt;&#10;&lt;/html&gt;" suppressId="RedundantProblemHighlightingType" problemDescriptor="Redundant GENERIC_ERROR_OR_WARNING argument" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, $fixes$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $message$, $fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" nameOfExprType="com\.intellij\.codeInspection\.LocalQuickFix|com\.intellij\.codeInspection\.LocalQuickFix\[\]" exprTypeWithinHierarchy="true" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, $fixes$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $message$, $fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" nameOfExprType="com\.intellij\.codeInspection\.LocalQuickFix|com\.intellij\.codeInspection\.LocalQuickFix\[\]" exprTypeWithinHierarchy="true" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, $range$, $fixes$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $range$, $message$, $fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" nameOfExprType="com\.intellij\.codeInspection\.LocalQuickFix|com\.intellij\.codeInspection\.LocalQuickFix\[\]" exprTypeWithinHierarchy="true" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, $range$, $fixes$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $range$, $message$, $fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" nameOfExprType="com\.intellij\.codeInspection\.LocalQuickFix|com\.intellij\.codeInspection\.LocalQuickFix\[\]" exprTypeWithinHierarchy="true" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, *$fixes$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $message$, *$fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, $range$, *$fixes$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $range$, $message$, *$fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" within="" contains="" />
+        <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents() in tests" uuid="07f04ba3-90ed-3e4d-9f88-e45dfaa05771" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$;&#10;} else {&#10;  $APP2$.$INV$($ARGS$);&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="APP" within="" contains="" />
@@ -1839,6 +1999,52 @@
         <constraint name="s1" nameOfExprType="java\.lang\.String" within="" contains="" />
         <constraint name="s2" nameOfExprType="java\.lang\.String" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Use `lt` instead of `lifetime` as argument name" uuid="75974233-e6df-342f-bb28-90fa3ddfde86" description="`lifetime` has higher priority as variable and shadows `lifetime` of nested scopes. It leads to subscription leaks.&#10;Just renaming it to `lt` helps a lot." text="class $Name$($Param1$: $T1$, $Param2$: $T2$, $Param3$: $T3$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Name" within="" contains="" />
+        <constraint name="Param1" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Param2" regexp="lifetime" nameOfExprType="libraries\.coroutines\.extra\.Lifetime" target="true" within="" contains="" />
+        <constraint name="Param3" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="T1" within="" contains="" />
+        <constraint name="T2" within="" contains="" />
+        <constraint name="T3" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use `lt` instead of `lifetime` as argument name" uuid="75974233-e6df-342f-bb28-90fa3ddfde86" text="fun $Name$($Param1$, $Param2$, $Param3$) : $Type$" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Name" within="" contains="" />
+        <constraint name="Type" within="" contains="" />
+        <constraint name="Param1" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Param2" regexp="lifetime" nameOfExprType="libraries\.coroutines\.extra\.Lifetime" target="true" within="" contains="" />
+        <constraint name="Param3" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use `lt` instead of `lifetime` as argument name" uuid="75974233-e6df-342f-bb28-90fa3ddfde86" text="var $Param2$" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Param2" regexp="lifetime" nameOfExprType="libraries\.coroutines\.extra\.Lifetime" target="true" within="" contains="" _kotlinAlsoMatchVal="enabled" />
+      </searchConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" description="Instances of SwiftExpression might still be a statement.&#10;Please be more explicit in what you are interested in by using either:&#10; - asSwiftExpressionThatMightBeStatement()&#10; - asSwiftExpression()&#10; - asSwiftExpressionThatIsNotUsedAsStatement()" suppressId="swift.explicit.expression.as" problemDescriptor="Use explicit function to cast as SwiftExpression" text="$ref$ as SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$ as? SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$.asSafely&lt;SwiftExpression&gt;()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$?.asSafely&lt;SwiftExpression&gt;()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast SwiftExpression" description="Instances of SwiftExpression might still be a statement.&#10;Please be more explicit in what you are interested in by using either:&#10; - isSwiftExpressionThatMightBeStatement()&#10; - isSwiftExpression()&#10; - isSwiftExpressionThatIsNotUsedAsStatement()" suppressId="swift.explicit.expression.is" problemDescriptor="Use explicit function to cast SwiftExpression" text="$ref$ is SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.isSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast SwiftExpression" text="$ref$ instanceof SwiftExpression" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="SwiftBranchStatementKt.isSwiftExpression($ref$, null)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="use explicit toArray() method" text="com.intellij.util.ArrayUtil.toObjectArray($collection$, $class$.class)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$collection$.toArray(new $class$[0])">
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" within="" contains="" />
@@ -2174,6 +2380,14 @@
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Use of Toolkit.getSystemClipboard()" description="IntelliJ platform's CopyPasteManager should be used in most cases.&#10;It supports clipboard history and works in remote development scenarios." suppressId="SystemClipboardAccess" problemDescriptor="Consider using IntelliJ platform's CopyPasteManager instead. It supports clipboard history and works in remote development scenarios." text="$Instance$.getSystemClipboard()" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="java\.awt\.Toolkit" exprTypeWithinHierarchy="true" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use of Toolkit.getSystemClipboard()" text="$Instance$.systemClipboard" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Use RecursionManager?" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" regexp="Collection" withinHierarchy="true" target="true" within="" contains="" />
@@ -2211,6 +2425,13 @@
     <inspection_tool class="SillyAssignmentJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SimplifiableIfStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SingletonInjectsScoped" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SizeReplaceableByIsEmpty" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredTypes">
+        <set>
+          <option value="com.intellij.util.containers.MultiMap" />
+        </set>
+      </option>
+    </inspection_tool>
     <inspection_tool class="SocketResource" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="insideTryAllowed" value="false" />
     </inspection_tool>
@@ -2332,6 +2553,7 @@
     <inspection_tool class="UnusedProperty" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="fileNameMask" value=".*Bundle\.properties" />
     </inspection_tool>
+    <inspection_tool class="UsagesOfObsoleteApi" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="true" editorAttributes="DEPRECATED_ATTRIBUTES" />
     <inspection_tool class="UseJBColor" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
@@ -2355,6 +2577,9 @@
     <inspection_tool class="XsltTemplateInvocation" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="XsltUnusedDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="XsltVariableShadowing" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="acb41802-9e8a-3e32-8b29-0e1d0a2aa770" enabled="true" level="WARNING" enabled_by_default="false">
+      <scope name="EntityStorage" level="WARNING" enabled="true" />
+    </inspection_tool>
     <inspection_tool class="osmorcClassInDefaultPackage" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="osmorcNonOsgiMavenDependency" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="osmorcUnknownManifestPackage" enabled="false" level="ERROR" enabled_by_default="false" />

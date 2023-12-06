@@ -139,30 +139,17 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     return myContextComponent;
   }
 
-  @NotNull
-  public DataContext getDataContext() {
+  public @NotNull DataContext getDataContext() {
     return DataManager.getInstance().getDataContext(getContextComponent());
   }
 
-  @NotNull
-  public final RelativePoint getPreferredPopupPoint() {
+  public final @NotNull RelativePoint getPreferredPopupPoint() {
     RelativePoint result = CommonActionsPanel.getPreferredPopupPoint(this, myContextComponent);
     if (result != null) {
       return result;
     }
     LOG.error("Can't find toolbar button");
     return RelativePoint.getCenterOf(myContextComponent);
-  }
-
-  /**
-   * Tries to calculate the 'under the toolbar button' position for a given action.
-   *
-   * @return the recommended popup position or null in case no toolbar button corresponds to the given action
-   * @deprecated use {@link CommonActionsPanel#getPreferredPopupPoint(AnAction)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable RelativePoint computePreferredPopupPoint(@NotNull JComponent toolbar, @NotNull AnAction action) {
-    return CommonActionsPanel.computePreferredPopupPoint(toolbar, action);
   }
 
   public void addActionButtonListener(ActionButtonListener l, Disposable parentDisposable) {
@@ -208,9 +195,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
       return myAction.isDumbAware();
     }
 
-    @NotNull
     @Override
-    public AnAction getDelegate() {
+    public @NotNull AnAction getDelegate() {
       return myAction;
     }
   }
@@ -221,7 +207,6 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   public static class GroupPopupWrapper extends AnActionButtonWrapper {
     public GroupPopupWrapper(@NotNull ActionGroup group) {
       super(group.getTemplatePresentation(), group);

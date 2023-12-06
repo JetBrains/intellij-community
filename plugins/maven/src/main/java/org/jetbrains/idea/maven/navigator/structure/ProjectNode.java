@@ -12,6 +12,7 @@ import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -34,6 +35,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   private final PluginsNode myPluginsNode;
   private final DependenciesNode myDependenciesNode;
   private final RunConfigurationsNode myRunConfigurationsNode;
+  private final RepositoriesNode myRepositoriesNode;
 
   private @NlsContexts.Tooltip String myTooltipCache;
 
@@ -43,6 +45,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
 
     myLifecycleNode = new LifecycleNode(structure, this);
     myPluginsNode = new PluginsNode(structure, this);
+    myRepositoriesNode = new RepositoriesNode(structure, this);
     myDependenciesNode = new DependenciesNode(structure, this, mavenProject);
     myRunConfigurationsNode = new RunConfigurationsNode(structure, this);
 
@@ -81,14 +84,22 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   protected List<? extends MavenSimpleNode> doGetChildren() {
     var children =
       new CopyOnWriteArrayList<MavenSimpleNode>(List.of(myLifecycleNode, myPluginsNode, myRunConfigurationsNode, myDependenciesNode));
+    if (isRoot()) {
+      children.add(myRepositoriesNode);
+    }
     children.addAll(super.doGetChildren());
     return children;
   }
 
   void updateProject() {
-    setErrorLevel(myMavenProject.getCacheProblems().isEmpty() ? MavenProjectsStructure.ErrorLevel.NONE : MavenProjectsStructure.ErrorLevel.ERROR);
+    setErrorLevel(
+      myMavenProject.getCacheProblems().isEmpty() ? MavenProjectsStructure.ErrorLevel.NONE : MavenProjectsStructure.ErrorLevel.ERROR);
     myLifecycleNode.updateGoalsList();
     myPluginsNode.updatePlugins(myMavenProject);
+
+    if (isRoot()) {
+      myRepositoriesNode.updateRepositories(myMavenProject);
+    }
 
     if (myMavenProjectsStructure.getDisplayMode() == MavenProjectsStructure.MavenStructureDisplayMode.SHOW_ALL) {
       myDependenciesNode.updateDependencies();
@@ -130,12 +141,16 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
     String hint = null;
 
     if (!getProjectsNavigator().getGroupModules()
-        && getProjectsManager().findAggregator(myMavenProject) == null
+        && isRoot()
         && getProjectsManager().getProjects().size() > getProjectsManager().getRootProjects().size()) {
       hint = "root";
     }
 
     setNameAndTooltip(presentation, getName(), myTooltipCache, hint);
+  }
+
+  private boolean isRoot() {
+    return getProjectsManager().findAggregator(myMavenProject) == null;
   }
 
   @Override
@@ -201,7 +216,11 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
                 "</tr>");
   }
 
-  private String wrappedText(MavenProjectProblem each) {
+  RepositoriesNode getRepositoriesNode() {
+    return myRepositoriesNode;
+  }
+
+  private static String wrappedText(MavenProjectProblem each) {
     String description = ObjectUtils.chooseNotNull(each.getDescription(), each.getPath());
     if (description == null) return "";
 
@@ -237,6 +256,11 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
       presentation.addText(":" + myMavenProject.getMavenId().getVersion(),
                            new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
     }
+  }
+
+  @TestOnly
+  public PluginsNode getPluginsNode() {
+    return myPluginsNode;
   }
 
   @Override

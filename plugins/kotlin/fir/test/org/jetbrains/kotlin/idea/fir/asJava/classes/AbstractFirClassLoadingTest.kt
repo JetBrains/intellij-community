@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.fir.findUsages.doTestWithFIRFlagsByPath
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -20,8 +21,8 @@ abstract class AbstractFirClassLoadingTest : AbstractIdeLightClassesByPsiTest() 
 
     override fun isFirPlugin(): Boolean = true
 
-    override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) = doTestWithFIRFlagsByPath(testDataPath) {
-        doTestImpl(testDataPath)
+    override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) = doTestWithFIRFlagsByPath(testDataDirectory.slashedPath) {
+        doTestImpl(testDataDirectory.slashedPath)
     }
 
     private fun doTestImpl(testDataPath: String) {

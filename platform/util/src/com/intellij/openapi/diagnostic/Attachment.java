@@ -124,4 +124,9 @@ public final class Attachment {
   public void setIncluded(boolean included) {
     myIncluded = included;
   }
+
+  @Override
+  public String toString() {
+    return "Attachment[" + myPath + "][" + getBytes().length + " bytes]";
+  }
 }

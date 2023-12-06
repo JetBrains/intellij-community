@@ -1,25 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchSort
-import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
-internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
-  fun buildApiSearchQuery(searchQueryBuilder: GithubApiSearchQueryBuilder) {
-    for (term in terms) {
-      when (term) {
-        is Term.QueryPart -> {
-          searchQueryBuilder.query(term.apiValue)
-        }
-        is Term.Qualifier -> {
-          searchQueryBuilder.qualifier(term.apiName, term.apiValue)
-        }
-      }
-    }
-  }
+@ApiStatus.Experimental
+class GHPRSearchQuery(val terms: List<Term<*>>) {
 
   fun isEmpty() = terms.isEmpty()
 
@@ -29,9 +18,7 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
     if (this === other) return true
     if (other !is GHPRSearchQuery) return false
 
-    if (terms != other.terms) return false
-
-    return true
+    return terms == other.terms
   }
 
   override fun hashCode(): Int = terms.hashCode()
@@ -43,47 +30,31 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
 
   @Suppress("EnumEntryName")
   enum class QualifierName(val apiName: String) {
-    `is`("is") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
+    `is`("is"),
+    after("created") {
+      override fun createTerm(value: String): Term<*> = Term.Qualifier.Date.After.from(this, value)
+    },
+    assignee("assignee"),
+    author("author"),
+    before("created") {
+      override fun createTerm(value: String): Term<*> = Term.Qualifier.Date.Before.from(this, value)
+    },
+    label("label"),
+    repo("repo"),
+    review("review"),
+    reviewRequested("review-requested"),
+    reviewedBy("reviewed-by"),
+    sortBy("sort") {
+      override fun createTerm(value: String): Term<*> = Term.Qualifier.Enum.from<GithubIssueSearchSort>(this, value)
     },
     state("state") {
-      override fun createTerm(value: String) = Term.Qualifier.Enum.from<GithubIssueState>(this, value)
+      override fun createTerm(value: String): Term<*> = Term.Qualifier.Enum.from<GithubIssueState>(this, value)
     },
-    assignee("assignee") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
-    },
-    author("author") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
-    },
-    label("label") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
-    },
-    after("created") {
-      override fun createTerm(value: String) = Term.Qualifier.Date.After.from(this, value)
-    },
-    before("created") {
-      override fun createTerm(value: String) = Term.Qualifier.Date.Before.from(this, value)
-    },
-    reviewedBy("reviewed-by") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
+    type("type");
 
-      override fun toString() = apiName
-    },
-    reviewRequested("review-requested") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
+    open fun createTerm(value: String): Term<*> = Term.Qualifier.Simple(this, value)
 
-      override fun toString() = apiName
-    },
-    review("review") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
-
-      override fun toString() = apiName
-    },
-    sortBy("sort") {
-      override fun createTerm(value: String) = Term.Qualifier.Enum.from<GithubIssueSearchSort>(this, value)
-    };
-
-    abstract fun createTerm(value: String): Term<*>
+    override fun toString() = apiName
   }
 
   /**
@@ -96,9 +67,7 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
       if (this === other) return true
       if (other !is Term<*>) return false
 
-      if (value != other.value) return false
-
-      return true
+      return value == other.value
     }
 
     override fun hashCode(): Int = value.hashCode()

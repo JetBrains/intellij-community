@@ -2,18 +2,19 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.ucache.KOTLIN_SCRIPTS_AS_ENTITIES
+import org.jetbrains.kotlin.idea.highlighter.KotlinProblemHighlightFilter
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.extensions.cloneWithCorruptedRoots
 import org.jetbrains.plugins.gradle.extensions.rootsFiles
@@ -21,60 +22,36 @@ import org.jetbrains.plugins.gradle.extensions.rootsUrls
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Ignore
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExternalResource
-import org.junit.runners.Parameterized
 
 abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase() {
 
-    companion object {
-        private val GRADLE_VERSION_AND_SCRIPT_FLAG = SUPPORTED_GRADLE_VERSIONS
-            .map { listOf(arrayOf(it, false), arrayOf(it, true)) }
-            .flatten()
-
-        @JvmStatic
-        @Suppress("ACCIDENTAL_OVERRIDE")
-        @Parameterized.Parameters(name = "{index}: with Gradle-{0}, scriptsAsEntities-{1}")
-        fun testInputData(): List<Array<out Any>> = GRADLE_VERSION_AND_SCRIPT_FLAG
-    }
-
-
-    @JvmField
-    @Parameterized.Parameter(1)
-    var scriptsAsEntities: Boolean? = null
-
-    @JvmField
-    @Rule
-    val setRegistryFlag = RegistryFlagRule()
-
-    inner class RegistryFlagRule : ExternalResource() {
-        override fun before() {
-            Registry.get(KOTLIN_SCRIPTS_AS_ENTITIES).setValue(scriptsAsEntities!!)
+    protected fun withHighLightingFilterChecked(file: VirtualFile, block: () -> Unit) = runBlocking {
+        val psiFile = readAction {
+            PsiManager.getInstance(myProject).findFile(file) as? KtFile
+                ?: error("Couldn't get PSI for $file")
         }
 
-        override fun after() {
-            Registry.get(KOTLIN_SCRIPTS_AS_ENTITIES).resetToDefault()
-        }
+        val highlightFilter = KotlinProblemHighlightFilter()
+
+        val highlightBefore = readAction { highlightFilter.shouldHighlight(psiFile) }
+        assertFalse("Script shouldn't be highlighted before the import is over", highlightBefore)
+
+        block.invoke()
+
+        val highlightAfter = readAction { highlightFilter.shouldHighlight(psiFile) }
+        assertTrue("Script should be highlighted after the import is over", highlightAfter)
     }
 
-
-    class KtsInJsProject2114 : GradleBuildFileHighlightingTest() {
-        @TargetVersions("4.8 <=> 6.0")
-        @Test
-        fun testKtsInJsProject() {
-            val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-            importProjectUsingSingeModulePerGradleProject()
-            checkHighlighting(buildGradleKts)
-        }
-    }
 
     class Simple : GradleBuildFileHighlightingTest() {
-        @TargetVersions("5.3+")
+        @TargetVersions("6.0.1+")
         @Test
         fun testSimple() {
             val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-            importProjectUsingSingeModulePerGradleProject()
+            withHighLightingFilterChecked(buildGradleKts) {
+                importProjectUsingSingeModulePerGradleProject()
+            }
             checkHighlighting(buildGradleKts)
         }
     }
@@ -85,7 +62,9 @@ abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase()
         @Test
         fun testComplexBuildGradleKts() {
             val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-            importProjectUsingSingeModulePerGradleProject()
+            withHighLightingFilterChecked(buildGradleKts) {
+                importProjectUsingSingeModulePerGradleProject()
+            }
             checkHighlighting(buildGradleKts)
         }
 
@@ -96,7 +75,9 @@ abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase()
         @TargetVersions("6.0.1+")
         fun testJavaLibraryPlugin() {
             val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-            importProject()
+            withHighLightingFilterChecked(buildGradleKts) {
+                importProject()
+            }
 
             checkHighlighting(buildGradleKts)
         }
@@ -118,7 +99,9 @@ abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase()
             assertTrue(validJdk.rootsFiles.isNotEmpty())
 
             val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-            importProject()
+            withHighLightingFilterChecked(buildGradleKts) {
+                importProject()
+            }
             checkHighlighting(buildGradleKts)
         }
 

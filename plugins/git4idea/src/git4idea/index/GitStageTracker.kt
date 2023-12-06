@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.openapi.Disposable
@@ -118,8 +118,21 @@ open class GitStageTracker(val project: Project) : Disposable {
   private fun doUpdateState(repository: GitRepository) {
     LOG.debug("Updating ${repository.root}")
 
-    val untracked = repository.untrackedFilesHolder.untrackedFilePaths.map { untrackedStatus(it) }
-    val status = repository.stagingAreaHolder.allRecords.union(untracked).associateBy { it.path }.toMutableMap()
+    val status = repository.stagingAreaHolder.allRecords.associateByTo(mutableMapOf()) { it.path }
+
+    for (filePath in repository.untrackedFilesHolder.untrackedFilePaths) {
+      val trackedStatus = status[filePath]
+      if (trackedStatus == null) {
+        status[filePath] = untrackedStatus(filePath)
+      }
+      else if (trackedStatus.workTree == ' ') {
+        // for example, file is deleted from the index, but not locally
+        status[filePath] = GitFileStatus(trackedStatus.index, '?', trackedStatus.path, trackedStatus.origPath)
+      }
+      else {
+        LOG.warn("Untracked file $filePath has a non-empty worktree status code: $trackedStatus.")
+      }
+    }
 
     for (document in FileDocumentManager.getInstance().unsavedDocuments) {
       val file = FileDocumentManager.getInstance().getFile(document) ?: continue
@@ -213,16 +226,18 @@ open class GitStageTracker(val project: Project) : Disposable {
       get() = rootStates.filterValues(RootState::hasStagedFiles).keys
     val changedRoots: Set<VirtualFile>
       get() = rootStates.filterValues(RootState::hasChangedFiles).keys
-
-    fun hasStagedRoots(): Boolean = rootStates.any { it.value.hasStagedFiles() }
-
-    fun hasChangedRoots(): Boolean = rootStates.any { it.value.hasChangedFiles() }
+    val conflictedRoots: Set<VirtualFile>
+      get() = rootStates.filterValues(RootState::hasConflictedFiles).keys
 
     internal fun updatedWith(root: VirtualFile, newState: RootState): State {
       val result = mutableMapOf<VirtualFile, RootState>()
       result.putAll(rootStates)
       result[root] = newState
       return State(result)
+    }
+
+    fun isEmpty(): Boolean {
+      return rootStates.values.all { it.isEmpty() }
     }
 
     @NonNls

@@ -37,7 +37,7 @@ class MarkdownLinkDestinationWithSpacesInspection: LocalInspectionTool() {
     if (range.isEmpty || range.endOffset > text.length) {
       return
     }
-    val content = range.substring(element.text)
+    val content = range.substring(text)
     if (!content.contains(' ')) {
       return
     }

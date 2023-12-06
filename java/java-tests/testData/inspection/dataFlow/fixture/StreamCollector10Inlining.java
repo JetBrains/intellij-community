@@ -1,19 +1,9 @@
-package <error descr="Package 'stream' exists in another module: java.base">java.util.stream</error>;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
-
-// Mock
-class Collectors {
-  public static native <T> Collector<T, ?, List<T>> toList();
-  public static native <T> Collector<T, ?, List<T>> toUnmodifiableList();
-  public static native <T> Collector<T, ?, Set<T>> toUnmodifiableSet();
-  public static native <T, K, U> Collector<T, ?, Map<K,U>> toUnmodifiableMap(Function<? super T, ? extends K> keyMapper, Function<? super T, ? extends U> valueMapper);
-}
 
 public class StreamCollector10Inlining {
 

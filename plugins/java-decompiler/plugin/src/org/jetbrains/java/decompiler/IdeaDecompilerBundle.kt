@@ -7,7 +7,9 @@ import org.jetbrains.annotations.PropertyKey
 
 private const val BUNDLE = "messages.IdeaDecompilerBundle"
 
-object IdeaDecompilerBundle : DynamicBundle(BUNDLE) {
+object IdeaDecompilerBundle  {
+  private val bundle = DynamicBundle(IdeaDecompilerBundle::class.java, BUNDLE)
+
   @JvmStatic @Nls
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = bundle.getMessage(key, *params)
 }

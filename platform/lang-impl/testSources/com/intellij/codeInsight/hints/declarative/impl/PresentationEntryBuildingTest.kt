@@ -148,7 +148,7 @@ class PresentationEntryBuildingTest : UsefulTestCase() {
   private fun testBuildText(expected: String, b: PresentationTreeBuilder.() -> Unit) {
     val treeBuilder = PresentationTreeBuilderImpl.createRoot()
     b(treeBuilder)
-    val entryBuilder = PresentationEntryBuilder(treeBuilder.complete())
+    val entryBuilder = PresentationEntryBuilder(treeBuilder.complete(), PresentationEntryBuildingTest::class.java)
     val entries = entryBuilder.buildPresentationEntries().toList()
     assertEquals(expected, entries.joinToString(separator = "") { (it as TextInlayPresentationEntry).text })
   }
@@ -156,7 +156,7 @@ class PresentationEntryBuildingTest : UsefulTestCase() {
   private fun testBuildEntries(vararg expected: InlayPresentationEntry, b: PresentationTreeBuilder.() -> Unit) {
     val treeBuilder = PresentationTreeBuilderImpl.createRoot()
     b(treeBuilder)
-    val entryBuilder = PresentationEntryBuilder(treeBuilder.complete())
+    val entryBuilder = PresentationEntryBuilder(treeBuilder.complete(), PresentationEntryBuildingTest::class.java)
     val entries = entryBuilder.buildPresentationEntries().toList()
     assertEquals(expected.toList(), entries)
   }
@@ -165,7 +165,7 @@ class PresentationEntryBuildingTest : UsefulTestCase() {
   private fun testClickSegments(vararg expected: ClickSegment, b: PresentationTreeBuilder.() -> Unit) {
     val treeBuilder = PresentationTreeBuilderImpl.createRoot()
     b(treeBuilder)
-    val entryBuilder = PresentationEntryBuilder(treeBuilder.complete())
+    val entryBuilder = PresentationEntryBuilder(treeBuilder.complete(), PresentationEntryBuildingTest::class.java)
     val entries = entryBuilder.buildPresentationEntries().toList()
     val clickSegments = ArrayList<ClickSegment>()
     var previousActionData: InlayActionData? = null

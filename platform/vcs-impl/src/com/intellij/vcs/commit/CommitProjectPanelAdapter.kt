@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
@@ -35,6 +36,8 @@ open class CommitProjectPanelAdapter(private val handler: AbstractCommitWorkflow
 
   override fun getCommitMessage(): String = ui.commitMessageUi.text
   override fun setCommitMessage(currentDescription: String?) {
+    VcsConfiguration.getInstance(project).saveCommitMessage(ui.commitMessageUi.text)
+
     ui.commitMessageUi.setText(currentDescription)
     ui.commitMessageUi.focus()
   }

@@ -867,7 +867,7 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
     """.trimIndent()
 
     test(javadoc + methodBody + "_" + suffix) {
-      (1 th "}_").insertAfter("_" + methodBody)
+      (1 th "}_").insertAfter("_$methodBody")
       ("Javadoc").insertAfter(" with modification")
 
       tracker.doFrozen(Runnable {
@@ -878,7 +878,7 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
     }
 
     testPartial(javadoc + methodBody + "_" + suffix) {
-      (1 th "}_").insertAfter("_" + methodBody)
+      (1 th "}_").insertAfter("_$methodBody")
       ("Javadoc").insertAfter(" with modification")
 
       createChangelist("Test")

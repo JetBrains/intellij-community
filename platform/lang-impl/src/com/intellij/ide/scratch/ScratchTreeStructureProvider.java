@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -10,7 +10,6 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -52,7 +51,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author gregsh
  */
-public class ScratchTreeStructureProvider implements TreeStructureProvider, DumbAware {
+public final class ScratchTreeStructureProvider implements TreeStructureProvider, DumbAware {
 
   public ScratchTreeStructureProvider(Project project) {
     registerUpdaters(project, project, new Runnable() {
@@ -249,7 +248,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     }
   }
 
-  private static class MyRootNode extends ProjectViewNode<RootType> implements PsiFileSystemItemFilter {
+  private static final class MyRootNode extends ProjectViewNode<RootType> implements PsiFileSystemItemFilter {
     MyRootNode(Project project, @NotNull RootType type, ViewSettings settings) {
       super(project, type, settings);
     }
@@ -351,12 +350,9 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
           return true;
         }
       };
-
-      return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
-        if (directory == null || !directory.isValid()) return Collections.emptyList();
-        directory.processChildren(processor);
-        return result;
-      });
+      if (directory == null || !directory.isValid()) return Collections.emptyList();
+      directory.processChildren(processor);
+      return result;
     }
   }
 }

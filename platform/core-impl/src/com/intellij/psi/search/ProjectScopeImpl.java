@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
@@ -37,9 +37,8 @@ public class ProjectScopeImpl extends GlobalSearchScope {
     return false;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return ProjectScope.getProjectFilesScopeName();
   }
 
@@ -48,22 +47,19 @@ public class ProjectScopeImpl extends GlobalSearchScope {
     return getDisplayName();
   }
 
-  @NotNull
   @Override
-  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return myFileIndex.getUnloadedModuleDescriptions();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
+  public @NotNull GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
     if (scope == this || !scope.isSearchInLibraries()) return this;
     return super.uniteWith(scope);
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
+  public @NotNull GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
     if (scope == this) return this;
     if (!scope.isSearchInLibraries()) return scope;
     return super.intersectWith(scope);

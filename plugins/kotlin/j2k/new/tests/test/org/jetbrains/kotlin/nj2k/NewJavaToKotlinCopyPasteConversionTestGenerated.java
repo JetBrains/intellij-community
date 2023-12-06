@@ -68,6 +68,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/ClassWithOverrides.java");
     }
 
+    @TestMetadata("Comments.java")
+    public void testComments() throws Exception {
+        runTest("testData/copyPaste/Comments.java");
+    }
+
     @TestMetadata("Constructor.java")
     public void testConstructor() throws Exception {
         runTest("testData/copyPaste/Constructor.java");
@@ -88,9 +93,19 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/CopyAnnotation.java");
     }
 
+    @TestMetadata("ExplicitApi.java")
+    public void testExplicitApi() throws Exception {
+        runTest("testData/copyPaste/ExplicitApi.java");
+    }
+
     @TestMetadata("ExtendsTypeRef.java")
     public void testExtendsTypeRef() throws Exception {
         runTest("testData/copyPaste/ExtendsTypeRef.java");
+    }
+
+    @TestMetadata("FacadeClassName.java")
+    public void testFacadeClassName() throws Exception {
+        runTest("testData/copyPaste/FacadeClassName.java");
     }
 
     @TestMetadata("FieldWithNoEndComment.java")
@@ -201,6 +216,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
     @TestMetadata("OpenPublicFunctionToTopLevel.java")
     public void testOpenPublicFunctionToTopLevel() throws Exception {
         runTest("testData/copyPaste/OpenPublicFunctionToTopLevel.java");
+    }
+
+    @TestMetadata("PrivateFunctionToOpenClass.java")
+    public void testPrivateFunctionToOpenClass() throws Exception {
+        runTest("testData/copyPaste/PrivateFunctionToOpenClass.java");
     }
 
     @TestMetadata("PrivateFunctionToTopLevel.java")

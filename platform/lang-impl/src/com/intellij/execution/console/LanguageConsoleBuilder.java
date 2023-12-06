@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -86,21 +86,26 @@ public final class LanguageConsoleBuilder {
   }
 
   @NotNull
-  public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
+  public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType, boolean moveCaretToTheFirstLine) {
     if (consoleView == null) {
       this.executeActionHandler = executeActionHandler;
       this.historyType = historyType;
     }
     else {
-      doInitAction(consoleView, executeActionHandler, historyType);
+      doInitAction(consoleView, executeActionHandler, historyType, moveCaretToTheFirstLine);
     }
     return this;
   }
 
-  private void doInitAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
+  @NotNull
+  public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
+    return initActions(executeActionHandler, historyType, false);
+  }
+
+  private void doInitAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType, boolean moveCaretToTheFirstLine) {
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, executeActionHandler, executionEnabled);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
-    new ConsoleHistoryController(new MyConsoleRootType(historyType), null, console).install();
+    new ConsoleHistoryController(new MyConsoleRootType(historyType), null, console, moveCaretToTheFirstLine).install();
   }
 
   /**
@@ -161,7 +166,7 @@ public final class LanguageConsoleBuilder {
     }
     if (executeActionHandler != null) {
       assert historyType != null;
-      doInitAction(consoleView, executeActionHandler, historyType);
+      doInitAction(consoleView, executeActionHandler, historyType, false);
     }
 
     if (processInputStateKey != null) {
@@ -176,7 +181,7 @@ public final class LanguageConsoleBuilder {
     return consoleView;
   }
 
-  public static class MyHelper extends LanguageConsoleImpl.Helper {
+  public static final class MyHelper extends LanguageConsoleImpl.Helper {
     private final PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
@@ -315,7 +320,7 @@ public final class LanguageConsoleBuilder {
       private final ConsoleGutterComponent lineEndGutter;
 
       private Task gutterSizeUpdater;
-      private RangeHighlighter lineSeparatorPainter;
+      private volatile RangeHighlighter lineSeparatorPainter;
 
       private final CustomHighlighterRenderer renderer = new CustomHighlighterRenderer() {
         @Override
@@ -348,7 +353,7 @@ public final class LanguageConsoleBuilder {
         // console view can invoke markupModel.removeAllHighlighters(), so, we must be aware of it
         getHistoryViewer().getMarkupModel().addMarkupModelListener(GutteredLanguageConsole.this, new MarkupModelListener() {
           @Override
-          public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+          public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
             if (lineSeparatorPainter == highlighter) {
               lineSeparatorPainter = null;
             }
@@ -439,7 +444,7 @@ public final class LanguageConsoleBuilder {
     }
   }
 
-  public static class MyConsoleRootType extends ConsoleRootType {
+  public static final class MyConsoleRootType extends ConsoleRootType {
     public MyConsoleRootType(String historyType) {
       super(historyType, null);
     }

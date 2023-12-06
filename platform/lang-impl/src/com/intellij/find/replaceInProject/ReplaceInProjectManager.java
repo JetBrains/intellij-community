@@ -6,10 +6,13 @@ import com.intellij.find.actions.FindInPathAction;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -64,7 +67,7 @@ public final class ReplaceInProjectManager {
     myProject = project;
   }
 
-  static class ReplaceContext {
+  static final class ReplaceContext {
     private final UsageView usageView;
     private final FindModel findModel;
     private Set<Usage> excludedSet;
@@ -119,7 +122,7 @@ public final class ReplaceInProjectManager {
       findModel.setReplaceState(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
-      FindInProjectUtil.setDirectoryName(findModel, dataContext);
+      FindInProjectUtil.setScope(myProject, findModel, dataContext);
       FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
     }
     else {
@@ -152,14 +155,14 @@ public final class ReplaceInProjectManager {
     final FindModel findModelCopy = findModel.clone();
 
     final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
-    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(true, presentation);
     processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
 
     UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
     searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
   }
 
-  private static class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
+  private static final class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
     ReplaceInProjectTarget(@NotNull Project project, @NotNull FindModel findModel) {
       super(project, findModel);
     }
@@ -172,7 +175,7 @@ public final class ReplaceInProjectManager {
 
     @Override
     public KeyboardShortcut getShortcut() {
-      return ActionManager.getInstance().getKeyboardShortcut("ReplaceInPath");
+      return ActionManager.getInstance().getKeyboardShortcut(IdeActions.ACTION_REPLACE_IN_PATH);
     }
 
     @Override
@@ -213,8 +216,7 @@ public final class ReplaceInProjectManager {
         public void findingUsagesFinished(final UsageView usageView) {
           if (context[0] != null && !processPresentation.isShowFindOptionsPrompt()) {
             ApplicationManager.getApplication().invokeLater(() -> {
-              replaceUsagesUnderCommand(context[0], usageView.getUsages());
-              context[0].invalidateExcludedSetCache();
+              replaceUsagesUnderCommand(context[0], usageView.getUsages(), true);
             }, myProject.getDisposed());
           }
         }
@@ -260,7 +262,7 @@ public final class ReplaceInProjectManager {
           replaceContext.getFindModel().getStringToFind(),
           String.valueOf(files.size()),
           replaceContext.getFindModel().getStringToReplace())) {
-          replaceUsagesUnderCommand(replaceContext, usages);
+          replaceUsagesUnderCommand(replaceContext, usages, true);
         }
       }
 
@@ -281,7 +283,7 @@ public final class ReplaceInProjectManager {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        replaceUsagesUnderCommand(replaceContext, getSelectedUsages());
+        replaceUsagesUnderCommand(replaceContext, getSelectedUsages(), false);
       }
 
       @Override
@@ -433,7 +435,8 @@ public final class ReplaceInProjectManager {
     return true;
   }
 
-  private void replaceUsagesUnderCommand(@NotNull final ReplaceContext replaceContext, @NotNull final Set<? extends Usage> usagesSet) {
+  private void replaceUsagesUnderCommand(@NotNull ReplaceContext replaceContext, @NotNull Set<? extends Usage> usagesSet,
+                                         boolean replaceAll) {
     if (usagesSet.isEmpty()) {
       return;
     }
@@ -443,14 +446,31 @@ public final class ReplaceInProjectManager {
 
     if (!ensureUsagesWritable(usages)) return;
 
-    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+    Runnable runnable = () -> {
       final boolean success = replaceUsages(replaceContext, usages);
       final UsageView usageView = replaceContext.getUsageView();
 
       if (closeUsageViewIfEmpty(usageView, success)) return;
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
         () -> IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true));
-    }, FindBundle.message("find.replace.command"), null);
+    };
+    if (replaceAll) {
+      FindModel findModel = replaceContext.getFindModel();
+      LocalHistoryAction action =
+        LocalHistory.getInstance().startAction(FindBundle.message("find.in.files.replace.all.local.history.action",
+                                                                  findModel.getStringToFind(),
+                                                                  findModel.getStringToReplace(),
+                                                                  FindInProjectUtil.getTitleForScope(findModel)));
+      try {
+        CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
+      }
+      finally {
+        action.finish();
+      }
+    }
+    else {
+      CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
+    }
 
     replaceContext.invalidateExcludedSetCache();
   }

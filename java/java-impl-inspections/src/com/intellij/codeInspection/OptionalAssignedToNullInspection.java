@@ -6,6 +6,8 @@ import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -98,15 +100,15 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
           boolean useIsEmpty =
             binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
             PsiUtil.isLanguageLevel11OrHigher(binOp);
-          holder.registerProblem(binOp, JavaBundle.message("inspection.null.value.for.optional.assigned.message"),
-                                 new ReplaceWithIsPresentFix(useIsEmpty),
-                                 new SetInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",
-                                                            JavaBundle
-                                                              .message("inspection.null.value.for.optional.assigned.ignore.fix.name"), false));
+          holder.problem(binOp, JavaBundle.message("inspection.null.value.for.optional.assigned.message"))
+            .fix(new ReplaceWithIsPresentFix(useIsEmpty))
+            .fix(new UpdateInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",
+                                               JavaBundle.message("inspection.null.value.for.optional.assigned.ignore.fix.name"), false))
+            .register();
         }
       }
 
-      private boolean comesFromMapGet(PsiExpression value) {
+      private static boolean comesFromMapGet(PsiExpression value) {
         PsiLocalVariable local = ExpressionUtils.resolveLocalVariable(value);
         if (local != null) {
           PsiExpression initializer = ContainerUtil.getOnlyItem(DfaUtil.getVariableValues(local, value));
@@ -117,9 +119,9 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
         return MAP_GET.matches(ExpressionUtils.resolveExpression(value));
       }
 
-      private boolean hasSubsequentIsPresentCall(@NotNull PsiExpression optionalExpression,
-                                                 @NotNull PsiExpression previousExpression,
-                                                 boolean negated) {
+      private static boolean hasSubsequentIsPresentCall(@NotNull PsiExpression optionalExpression,
+                                                        @NotNull PsiExpression previousExpression,
+                                                        boolean negated) {
         PsiPolyadicExpression parent =
           ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(previousExpression.getParent()), PsiPolyadicExpression.class);
         if (parent == null) return false;
@@ -157,7 +159,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     };
   }
 
-  private static class ReplaceWithEmptyOptionalFix implements LocalQuickFix {
+  private static class ReplaceWithEmptyOptionalFix extends PsiUpdateModCommandQuickFix {
     private final String myTypeName;
     private final String myTypeParameter;
     private final String myMethodName;
@@ -186,8 +188,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiExpression)) return;
       String emptyCall = myTypeName + "." + myTypeParameter + myMethodName + "()";
       PsiElement result = new CommentTracker().replaceAndRestoreComments(element, emptyCall);
@@ -195,7 +196,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static class ReplaceWithIsPresentFix implements LocalQuickFix {
+  private static class ReplaceWithIsPresentFix extends PsiUpdateModCommandQuickFix {
     private final boolean myUseIsEmpty;
 
     private ReplaceWithIsPresentFix(boolean useIsEmpty) { myUseIsEmpty = useIsEmpty; }
@@ -213,8 +214,8 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiBinaryExpression binOp = ObjectUtils.tryCast(descriptor.getStartElement(), PsiBinaryExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiBinaryExpression binOp = ObjectUtils.tryCast(element, PsiBinaryExpression.class);
       if (binOp == null) return;
       PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
       if (value == null || !TypeUtils.isOptional(value.getType())) return;

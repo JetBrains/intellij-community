@@ -3,11 +3,11 @@ package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.getResolvedPath
@@ -21,6 +21,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.utils.vfs.getDirectory
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -28,7 +29,6 @@ import javax.swing.Icon
 
 @TestApplication
 abstract class AutoLinkTestCase {
-
   lateinit var testDisposable: Disposable
 
   private lateinit var fileFixture: TempDirTestFixture
@@ -43,8 +43,10 @@ abstract class AutoLinkTestCase {
       .createTempDirTestFixture()
     fileFixture.setUp()
 
-    runWriteActionAndWait {
-      testRoot = fileFixture.findOrCreateDir("AutoLinkTestCase")
+    runBlocking {
+      writeAction {
+        testRoot = fileFixture.findOrCreateDir("AutoLinkTestCase")
+      }
     }
   }
 
@@ -105,8 +107,8 @@ abstract class AutoLinkTestCase {
       }
 
       override fun canImportProjectAfterwards(): Boolean = true
-      override fun importProjectAfterwards(project: Project, file: VirtualFile) =
-        openProvider.linkToExistingProject(file, project)
+      override suspend fun importProjectAfterwardsAsync(project: Project, file: VirtualFile) =
+        openProvider.linkToExistingProjectAsync(file, project)
     }
   }
 

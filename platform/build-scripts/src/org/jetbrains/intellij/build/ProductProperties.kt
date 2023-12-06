@@ -1,24 +1,35 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.runtime.repository.ProductMode
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 import java.util.*
 import java.util.function.BiPredicate
 
 /**
- * Describes distribution of an IntelliJ-based IDE. Override this class and build distribution of your product.
+ * Describes distribution of an IntelliJ-based IDE. Override this class and build a distribution of your product.
  */
 abstract class ProductProperties {
   /**
-   *  The base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case
-   * (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip).
+   * The base name (i.e. a name without the extension and architecture suffix)
+   * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx),
+   * usually a short product name in lower case (`"idea"` for IntelliJ IDEA, `"webstorm"` for WebStorm, etc.).
+   *
+   * **Important:** please make sure that this property and the `//names@script` attribute in the product's `*ApplicationInfo.xml` file
+   * have the same value.
    */
   abstract val baseFileName: String
 
@@ -56,14 +67,15 @@ abstract class ProductProperties {
   var fastInstanceActivation: Boolean = true
 
   /**
-   * An entry point into application's Java code, usually [com.intellij.idea.Main].
+   * An entry point into application's Java code, usually [com.intellij.idea.Main]. 
+   * Use [BuildContext.ideMainClassName] if you need to access this value in the build scripts.
    */
   var mainClassName: String = "com.intellij.idea.Main"
 
   /**
    * Paths to directories containing images specified by 'logo/@url' and 'icon/@ico' attributes in ApplicationInfo.xml file.
    * <br>
-   * todo(nik) get rid of this and make sure that these resources are located in [applicationInfoModule] instead
+   * todo get rid of this and make sure that these resources are located in [applicationInfoModule] instead
    */
   var brandingResourcePaths: List<Path> = emptyList()
 
@@ -100,17 +112,24 @@ abstract class ProductProperties {
   var additionalIdeJvmArguments: MutableList<String> = mutableListOf()
 
   /**
+   * Additional arguments which will be added to VM options for all operating systems.
+   * Difference between this property and [org.jetbrains.intellij.build.ProductProperties.additionalIdeJvmArguments] is this one could be
+   * used to put options to `*.vmoptions` file while arguments from [org.jetbrains.intellij.build.ProductProperties.additionalIdeJvmArguments]
+   * are used in command line in `*.sh` scripts or similar
+   */
+  var additionalVmOptions: PersistentList<String> = persistentListOf()
+
+  /**
    * The specified options will be used instead of/in addition to the default JVM memory options for all operating systems.
    */
-  var customJvmMemoryOptions: PersistentMap<String, String> = persistentMapOf()
+  var customJvmMemoryOptions: Map<String, String> = persistentMapOf()
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with an added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1).
    */
-  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-    return "${appInfo.productName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
-  }
+  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
+    "${appInfo.fullProductName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
   /**
    * If `true`, Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
@@ -145,6 +164,22 @@ abstract class ProductProperties {
   val productLayout: ProductModulesLayout = ProductModulesLayout()
 
   /**
+   * Base part of URL (ending with `/`) where additional product resources are located.
+   * For example, for IntelliJ IDEA it's `https://download.jetbrains.com/idea/`.
+   * Note that it can be used only for published builds; there will be no resources for snapshot or nightly builds.
+   * It's used by the build scripts for the following:
+   * * to inject URL of *.manifest file produced by [RepairUtilityBuilder][org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder] and 
+   *   in `repair` executable;
+   * * to specify URL of distributions in [SBOM][SoftwareBillOfMaterials] files. 
+   */
+  var baseDownloadUrl: String? = null
+
+  /**
+   * See [SoftwareBillOfMaterials]
+   */
+  val sbomOptions = SoftwareBillOfMaterials.Options()
+
+  /**
    * If `true`, a cross-platform ZIP archive containing binaries for all OSes will be built.
    * The archive will be generated in [BuildPaths.artifactDir] directory and have ".portable" suffix by default
    * (override [getCrossPlatformZipFileName] to change the file name).
@@ -153,21 +188,59 @@ abstract class ProductProperties {
   var buildCrossPlatformDistribution: Boolean = false
 
   /**
+   * Set to `true` if the product can be started using [com.intellij.platform.runtime.loader.IntellijLoader]. 
+   * [BuildOptions.useModularLoader] will be used to determine whether the produced distribution will actually use this way.
+   */
+  @ApiStatus.Experimental
+  var supportModularLoading: Boolean = false
+
+  /**
+   * Specifies the main module of JetBrains Client product which distribution should be embedded into the IDE's distribution to allow 
+   * running JetBrains Client. 
+   * If it's set to a non-null value and [BuildOptions.enableEmbeddedJetBrainsClient] is set to `true`, product-modules.xml from the 
+   * specified module is used to compute [JetBrainsClientModuleFilter]. 
+   */
+  @ApiStatus.Experimental
+  var embeddedJetBrainsClientMainModule: String? = null
+
+  /**
+   * Specifies a factory function for an instance which will be used to generate launchers for the embedded JetBrains Client. 
+   */
+  @ApiStatus.Experimental
+  var embeddedJetBrainsClientProperties: (() -> ProductProperties)? = null
+
+  /**
+   * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 
+   * [the modular loader][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy].
+   * This property makes sense only if [supportModularLoading] is set to `true`.
+   */
+  @ApiStatus.Experimental
+  var productMode: ProductMode = ProductMode.LOCAL_IDE
+
+  /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
    */
-  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =
-    getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  }
 
   /**
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker],
    * when .class file version verification is needed.
    */
-  var versionCheckerConfig: PersistentMap<String, String> = persistentMapOf()
+  var versionCheckerConfig: Map<String, String> = java.util.Map.of()
 
   /**
-   * Strings which are forbidden as a part of resulting class file path
+   * Strings which are forbidden as a part of resulting class file path. E.g.:
+   * "license"
    */
   var forbiddenClassFileSubPaths: PersistentList<String> = persistentListOf()
+
+  /**
+   * Exceptions from forbiddenClassFileSubPaths. Must contain full string with the offending class, including the jar path. E.g.:
+   * "plugins/sample/lib/sample.jar!/com/sample/license/ThirdPartyLicensesDialog.class"
+   */
+  var forbiddenClassFileSubPathExceptions: PersistentList<String> = persistentListOf()
 
   /**
    * Paths to properties files the content of which should be appended to idea.properties file.
@@ -183,6 +256,22 @@ abstract class ProductProperties {
    * Base file name (without an extension) for product archives and installers (*.exe, *.tar.gz, *.dmg).
    */
   abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String
+
+  /**
+   * `<productName>-<releaseVersion>` for release builds, e.g. ideaIC-2023.2
+   * `<productName>-<buildNumber>` for other builds, e.g. ideaIC-232.9999
+   *
+   * See [getBaseArtifactName].
+   */
+  open fun getBaseArtifactName(context: BuildContext): String {
+    val buildNumber = if (context.applicationInfo.isRelease) {
+      context.applicationInfo.fullVersion
+    }
+    else {
+      context.buildNumber
+    }
+    return getBaseArtifactName(context.applicationInfo, buildNumber)
+  }
 
   /**
    * @return an instance of the class containing properties specific for Windows distribution,
@@ -220,37 +309,36 @@ abstract class ProductProperties {
 
   /**
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
-   * todo(nik) get rid of this
+   * todo get rid of this
    */
   var additionalModulesToCompile: PersistentList<String> = persistentListOf()
 
   /**
    * Specified modules which tests need to be compiled when product is built.
-   * todo(nik) get rid of this
+   * todo get rid of this
    */
   var modulesToCompileTests: PersistentList<String> = persistentListOf()
 
   var runtimeDistribution: JetBrainsRuntimeDistribution = JetBrainsRuntimeDistribution.JCEF
 
   /**
-   * A prefix for names of environment variables used by Windows and Linux distributions
+   * A prefix for names of environment variables used by product distributions
    * to allow users to customize location of the product runtime (`<PRODUCT>_JDK` variable),
    * *.vmoptions file (`<PRODUCT>_VM_OPTIONS`), `idea.properties` file (`<PRODUCT>_PROPERTIES`).
    */
-  open fun getEnvironmentVariableBaseName(appInfo: ApplicationInfoProperties) = appInfo.upperCaseProductName
+  open fun getEnvironmentVariableBaseName(appInfo: ApplicationInfoProperties) = appInfo.launcherName.uppercase().replace('-', '_')
 
   /**
    * Override this method to copy additional files to distributions of all operating systems.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-  }
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) { }
 
   /**
    * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.
    * @return the name of a subdirectory under `projectHome/out` where build artifacts will be placed,
    * must be unique among all products built from the same sources.
    */
-  open fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = appInfo.productName.lowercase(Locale.ROOT)
+  open fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = appInfo.fullProductName.lowercase(Locale.ROOT)
 
   /**
    * Paths to externally built plugins to be included in the IDE.
@@ -268,6 +356,12 @@ abstract class ProductProperties {
    */
   @ApiStatus.Internal
   open fun addRemoteDevelopmentLibraries(): Boolean = productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+
+  /**
+   * Checks whether some necessary conditions specific for the product are met and report errors via [BuildContext.messages] if they aren't.
+   */
+  @ApiStatus.Experimental
+  open fun validateLayout(platformLayout: PlatformLayout, context: BuildContext) {}
 
   /**
    * Build steps which are always skipped for this product.
@@ -294,4 +388,29 @@ abstract class ProductProperties {
    * authoring tools and builds.
    */
   var buildDocAuthoringAssets: Boolean = false
+
+  /**
+   * Allows to override product name in ApplicationInfo.xml
+   * todo: remove me when platform is ready
+   */
+  @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
+  open fun productNameOverride(project: JpsProject): ApplicationNamesInfoOverride? = null
+
+  @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
+  data class ApplicationNamesInfoOverride(
+    val fullProductName: String,
+    val editionName: String?,
+    val motto: String?,
+  )
+
+  /**
+   * Allows customizing [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
+   * @return list of plugin validation errors.
+   */
+  open fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
+    return when (result) {
+      is PluginCreationSuccess -> result.unacceptableWarnings
+      is PluginCreationFail -> result.errorsAndWarnings
+    }
+  }
 }

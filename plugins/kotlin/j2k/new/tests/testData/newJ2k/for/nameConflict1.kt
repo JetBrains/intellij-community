@@ -7,6 +7,7 @@ internal class A {
                 i *= 2
             }
         }
+
         var i = 1
         while (i < 2000) {
             println(i)

@@ -1,13 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import com.intellij.psi.PsiElement
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -17,15 +22,12 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.parsing.*
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
-import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 
 fun KtContainerNode.getControlFlowElementDescription(): String? {
     when (node.elementType) {
@@ -339,19 +341,63 @@ tailrec fun KtDotQualifiedExpression.expressionWithoutClassInstanceAsReceiver():
     if (hasNoClassInstanceReceiver()) this
     else (receiverExpression as? KtDotQualifiedExpression)?.expressionWithoutClassInstanceAsReceiver()
 
-val ENUM_STATIC_METHODS = listOf(StandardNames.ENUM_VALUES.asString(), StandardNames.ENUM_VALUE_OF.asString())
+fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
+fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 
-fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
-    return when (this) {
-        /**
-         * TODO: Handle [KtTypeReference], [KtCallExpression], and [KtCallableReferenceExpression].
-         *  See [org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction].
-         */
-        is KtQualifiedExpression -> {
-            var target: KtQualifiedExpression = this
-            while (target.callExpression == null) target = target.parent as? KtQualifiedExpression ?: break
-            target.callExpression?.calleeExpression?.text in ENUM_STATIC_METHODS
+context(KtAnalysisSession)
+fun KtExpression.isSynthesizedFunction(): Boolean {
+    val symbol =
+        resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
+    return symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
+}
+
+fun KtCallExpression.isCalling(fqNames: List<FqName>): Boolean {
+    val calleeText = calleeExpression?.text ?: return false
+    val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
+    if (targetFqNames.isEmpty()) return false
+    return analyze(this) {
+        val symbol = resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KtCallableSymbol ?: return false
+        targetFqNames.any { symbol.callableIdIfNonLocal?.asSingleFqName() == it }
+    }
+}
+
+private val KOTLIN_BUILTIN_ENUM_FUNCTIONS = listOf(FqName("kotlin.enumValues"), FqName("kotlin.enumValueOf"))
+
+context(KtAnalysisSession)
+fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
+    val target = (parent.getStrictParentOfType<KtTypeArgumentList>() ?: this)
+        .getParentOfTypes(true, KtCallExpression::class.java, KtCallableDeclaration::class.java)
+    return when (target) {
+        is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS)
+        is KtCallableDeclaration -> {
+            target.anyDescendantOfType<KtCallExpression> {
+                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS) && it.isUsedAsExpression()
+            }
         }
+
         else -> false
     }
 }
+
+context(KtAnalysisSession)
+fun KtCallExpression.isReferenceToBuiltInEnumFunction(): Boolean {
+    val calleeExpression = this.calleeExpression ?: return false
+    return (calleeExpression as? KtSimpleNameExpression)?.getReferencedNameAsName() in ENUM_STATIC_METHOD_NAMES && calleeExpression.isSynthesizedFunction()
+}
+
+context(KtAnalysisSession)
+fun KtCallableReferenceExpression.isReferenceToBuiltInEnumFunction(): Boolean {
+    return this.canBeReferenceToBuiltInEnumFunction() && this.callableReference.isSynthesizedFunction()
+}
+
+val KtIfExpression.branches: List<KtExpression?>
+    get() {
+        fun KtExpression.ifBranchesOrThis(): List<KtExpression?> {
+            if (this !is KtIfExpression) return listOf(this)
+            return listOf(then) + `else`?.ifBranchesOrThis().orEmpty()
+        }
+
+        return ifBranchesOrThis()
+    }
+
+fun KtClass.isFunInterface(): Boolean = isInterface() && getFunKeyword() != null

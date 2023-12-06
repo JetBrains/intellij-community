@@ -29,19 +29,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -62,6 +57,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   protected final Project myProject;
   protected final PushController myController;
   private final Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> myAdditionalPanels;
+  private final Map<String, VcsPushOptionsPanel> myCustomPanels;
   private final PushLog myListPanel;
   private final JComponent myTopPanel;
 
@@ -84,6 +80,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       new PushController(project, this, allRepos, selectedRepositories, currentRepo,
                          pushSource);
     myAdditionalPanels = myController.createAdditionalPanels();
+    myCustomPanels = myController.createCustomPanels(allRepos);
     myListPanel = myController.getPushPanelLog();
     myTopPanel = myController.createTopPanel();
 
@@ -170,7 +167,11 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   protected JPanel createOptionsPanel() {
     JPanel optionsPanel = new OptionsPanel();
     optionsPanel.setBorder(JBUI.Borders.emptyTop(2));
-    for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
+
+    List<VcsPushOptionsPanel> panels = new ArrayList<>(myAdditionalPanels.values());
+    panels.addAll(myCustomPanels.values());
+
+    for (VcsPushOptionsPanel panel : panels) {
       if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.DEFAULT) {
         optionsPanel.add(panel);
       }
@@ -182,7 +183,11 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   private JPanel createSouthOptionsPanel() {
     JPanel optionsPanel =
       new JPanel(new MigLayout("ins 0 20 0 0, flowx, gapx 16")); //NON-NLS
-    for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
+
+    List<VcsPushOptionsPanel> panels = new ArrayList<>(myAdditionalPanels.values());
+    panels.addAll(myCustomPanels.values());
+
+    for (VcsPushOptionsPanel panel : panels) {
       if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.SOUTH) {
         optionsPanel.add(panel);
       }
@@ -368,6 +373,17 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return null;
   }
 
+  @ApiStatus.Experimental
+  @NotNull
+  public Map<String, VcsPushOptionValue> getCustomParams() {
+    Map<String, VcsPushOptionValue> ret = new HashMap<>();
+    myCustomPanels.forEach((id, panel) -> {
+      VcsPushOptionValue value = panel.getValue();
+      if (value != null) ret.put(id, value);
+    });
+    return ret;
+  }
+
   private static final class ComplexPushAction extends AbstractAction implements OptionAction {
     private final ActionWrapper myDefaultAction;
     private final List<? extends ActionWrapper> myOptions;
@@ -441,7 +457,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   private static class OptionsPanel extends JPanel {
     OptionsPanel() {
-      super(new MigLayout("ins 0 0, flowy"));
+      super(new MigLayout("ins 0 0, flowy, gap 0"));
     }
 
     @Override

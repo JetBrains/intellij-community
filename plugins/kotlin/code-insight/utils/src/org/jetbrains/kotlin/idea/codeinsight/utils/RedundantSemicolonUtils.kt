@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.nextLeafs
+import com.intellij.psi.util.prevLeafs
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.util.isLineBreak
@@ -72,17 +75,23 @@ private fun PsiElement?.isBeforeLeftBrace(): Boolean {
 }
 
 private fun isSemicolonRequired(semicolon: PsiElement): Boolean {
-    if (isRequiredForCompanion(semicolon)) {
-        return true
-    }
-
     val prevSibling = semicolon.getPrevSiblingIgnoringWhitespaceAndComments()
     val nextSibling = semicolon.getNextSiblingIgnoringWhitespaceAndComments()
+
+    if (prevSibling is KtObjectDeclaration && prevSibling.isCompanion() && prevSibling.nameIdentifier == null && prevSibling.body == null) {
+        return true
+    }
 
     if (prevSibling is KtNameReferenceExpression && prevSibling.text in softModifierKeywords && nextSibling is KtDeclaration) {
         // enum; class Foo
         return true
     }
+
+    if (prevSibling is KtClass &&
+        prevSibling.isLocal &&
+        semicolon.nextLeafs.firstOrNull { it !is PsiWhiteSpace && it !is PsiComment }.elementType == KtTokens.LPAR &&
+        semicolon.prevLeafs.firstOrNull { it !is PsiWhiteSpace && it !is PsiComment }.elementType != KtTokens.RPAR
+    ) return true
 
     if (nextSibling is KtPrefixExpression && nextSibling.operationToken == KtTokens.EXCL) {
         val typeElement = semicolon.prevLeaf()?.getStrictParentOfType<KtTypeReference>()?.typeElement
@@ -92,18 +101,6 @@ private fun isSemicolonRequired(semicolon: PsiElement): Boolean {
     }
 
     return false
-}
-
-private fun isRequiredForCompanion(semicolon: PsiElement): Boolean {
-    val prev = semicolon.getPrevSiblingIgnoringWhitespaceAndComments() as? KtObjectDeclaration ?: return false
-    if (!prev.isCompanion()) return false
-    if (prev.nameIdentifier != null || prev.getChildOfType<KtClassBody>() != null) return false
-
-    val next = semicolon.getNextSiblingIgnoringWhitespaceAndComments() ?: return false
-    val firstChildNode = next.firstChild?.node ?: return false
-    if (KtTokens.KEYWORDS.contains(firstChildNode.elementType)) return false
-
-    return true
 }
 
 private val softModifierKeywords: List<String> = KtTokens.SOFT_KEYWORDS.types.mapNotNull { (it as? KtModifierKeywordToken)?.toString() }

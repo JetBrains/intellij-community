@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -14,16 +13,12 @@ import java.util.Collections;
 import java.util.List;
 
 public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
-  private static final String PACKAGE_NAME = "org.jspecify.nullness";
+  private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final String NULLABLE = PACKAGE_NAME + "." + "Nullable";
   private static final String NOT_NULL = PACKAGE_NAME + "." + "NonNull";
   private static final String NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "NullnessUnspecified";
   private static final String DEFAULT_NOT_NULL = PACKAGE_NAME + "." + "NullMarked";
-  private static final String DEFAULT_NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "DefaultNullnessUnspecified";
-
-  private static boolean isAvailable() {
-    return Registry.is("java.jspecify.annotations.available");
-  }
+  private static final String DEFAULT_NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "NullUnmarked";
 
   @Nullable
   @Override
@@ -31,7 +26,6 @@ public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
                                                                        @NotNull PsiElement context,
                                                                        PsiAnnotation.TargetType @NotNull [] types,
                                                                        boolean superPackage) {
-    if (!isAvailable()) return null;
     if (superPackage) return null;
     String name = anno.getQualifiedName();
     if (name == null) return null;
@@ -58,13 +52,10 @@ public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
-    if (!isAvailable()) {
-      return Collections.emptyList();
-    }
     return switch (nullability) {
       case NOT_NULL -> Collections.singletonList(NOT_NULL);
       case NULLABLE -> Collections.singletonList(NULLABLE);
-      case UNKNOWN -> Collections.singletonList(NULLNESS_UNKNOWN);
+      case UNKNOWN -> List.of(NULLNESS_UNKNOWN);
     };
   }
 

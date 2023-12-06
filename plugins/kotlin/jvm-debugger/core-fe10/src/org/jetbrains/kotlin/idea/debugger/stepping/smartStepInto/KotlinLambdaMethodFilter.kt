@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
@@ -11,9 +11,10 @@ import com.intellij.util.Range
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
-import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.core.stepping.StopOnReachedMethodFilter
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtFunction
@@ -23,7 +24,7 @@ class KotlinLambdaMethodFilter(
     lambda: KtFunction,
     private val callingExpressionLines: Range<Int>?,
     private val lambdaInfo: KotlinLambdaInfo
-) : BreakpointStepMethodFilter {
+) : BreakpointStepMethodFilter, StopOnReachedMethodFilter {
     private val lambdaPtr = lambda.createSmartPointer()
     private val firstStatementPosition: SourcePosition?
     private val lastStatementLine: Int
@@ -62,13 +63,12 @@ class KotlinLambdaMethodFilter(
                 return@runReadAction true
             }
 
-            val blockAt = elementAt.parentOfType<KtBlockExpression>(withSelf = true)
+            val blockAt = elementAt?.parentOfType<KtBlockExpression>(withSelf = true)
             blockAt == bodyExpression
         }
     }
 
-    override fun getCallingExpressionLines() =
-        if (lambdaInfo.isInline) Range(0, Int.MAX_VALUE) else callingExpressionLines
+    override fun getCallingExpressionLines() = callingExpressionLines
 
     fun isTargetLambdaName(name: String): Boolean {
         val actualName = name.trimIfMangledInBytecode(lambdaInfo.isNameMangledInBytecode)

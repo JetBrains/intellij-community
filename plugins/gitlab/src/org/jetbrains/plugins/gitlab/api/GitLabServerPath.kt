@@ -6,6 +6,7 @@ import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import java.net.URI
+import java.net.URL
 
 /**
  * @property uri should be a normalized server uri like "https://server.com/path"
@@ -32,6 +33,11 @@ class GitLabServerPath : ServerPath {
 
   val restApiUri: URI
     get() = toURI().resolveRelative("api/v4/")
+
+  val isDefault: Boolean
+    get() = toURI().host.startsWith("gitlab.com", true) || uri.contains("/gitlab.com", true)
+
+  fun toURL(): URL = URL("$uri/")
 
   override fun toURI(): URI = URI.create("$uri/")
 

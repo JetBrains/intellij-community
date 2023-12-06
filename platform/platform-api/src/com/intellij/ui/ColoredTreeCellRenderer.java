@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -8,11 +8,14 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -39,6 +42,8 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   protected JTree myTree;
 
   private boolean myOpaque = true;
+
+  private @Nullable @Nls String myAccessibleStatusText = null;
 
   @Override
   public final Component getTreeCellRendererComponent(JTree tree,
@@ -120,7 +125,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     if (!myUsedCustomSpeedSearchHighlighting && !(value instanceof LoadingNode)) {
-      SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)this, true, selected);
+      SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, this, true, selected);
     }
   }
 
@@ -163,7 +168,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    */
   @Override
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
-    if (mySelected && isFocused()) {
+    if (mySelected && isFocused() && JBUI.CurrentTheme.Tree.Selection.forceFocusedSelectionForeground()) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground(true)), isMainText);
     }
     else {
@@ -188,6 +193,11 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
                                              int row,
                                              boolean hasFocus);
 
+  @ApiStatus.Experimental
+  public void setAccessibleStatusText(@Nullable @Nls String accessibleStatusText) {
+    myAccessibleStatusText = accessibleStatusText;
+  }
+
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
@@ -200,6 +210,21 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
         @Override
         protected Container getDelegateParent() {
           return getParent();
+        }
+
+        @Override
+        public String getAccessibleName() {
+          String name = super.getAccessibleName();
+
+          if (myAccessibleStatusText != null && !myAccessibleStatusText.isEmpty()) {
+            if (name == null) name = myAccessibleStatusText;
+            else {
+              if (!name.endsWith(",")) name += ",";
+              name += " " + myAccessibleStatusText + ".";
+            }
+          }
+
+          return name;
         }
       };
     }

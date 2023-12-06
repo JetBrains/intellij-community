@@ -1,6 +1,6 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class Inliner:
     def __init__(self) -> None: ...
 
-def __getattr__(name: str) -> Any: ...  # incomplete
+def __getattr__(name: str) -> Incomplete: ...

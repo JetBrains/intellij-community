@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.usageView.UsageInfo;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
  * Marker interface to distinguish custom usage info from possible existing platform ones.
@@ -43,14 +44,14 @@ class RenameMethodUsageInfo extends UsageInfo implements ConvertToRecordUsageInf
  * Encapsulates the method or the field which becomes more accessible.
  */
 class BrokenEncapsulationUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
-  final String myErrMsg;
+  final @DialogMessage String myErrMsg;
 
-  BrokenEncapsulationUsageInfo(@NotNull PsiField psiField, @NotNull @Nls String errMsg) {
+  BrokenEncapsulationUsageInfo(@NotNull PsiField psiField, @NotNull @DialogMessage String errMsg) {
     super(psiField.getNameIdentifier());
     myErrMsg = errMsg;
   }
 
-  BrokenEncapsulationUsageInfo(@NotNull PsiMethod psiMethod, @NotNull @Nls String errMsg) {
+  BrokenEncapsulationUsageInfo(@NotNull PsiMethod psiMethod, @NotNull @DialogMessage String errMsg) {
     super(psiMethod);
     myErrMsg = errMsg;
   }

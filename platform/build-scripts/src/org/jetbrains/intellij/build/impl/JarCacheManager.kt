@@ -3,42 +3,62 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.sha3_224
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
-import org.jetbrains.intellij.build.tasks.MAVEN_REPO
-import org.jetbrains.intellij.build.tasks.ZipSource
 import java.math.BigInteger
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
+import java.security.MessageDigest
 import java.time.Instant
-import java.util.*
 
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".json"
 
-internal sealed interface JarCacheManager {
-  suspend fun computeIfAbsent(item: JarDescriptor,
-                              nativeFiles: MutableMap<ZipSource, List<String>>?,
-                              span: Span,
-                              producer: suspend () -> Unit)
+private const val cacheVersion: Byte = 6
+
+internal interface SourceBuilder {
+  val useCacheAsTargetFile: Boolean
+
+  // one module (source) can be included in different plugins - cache per plugin
+  fun updateDigest(digest: MessageDigest)
+
+  suspend fun produce()
 }
 
-internal object NonCachingJarCacheManager : JarCacheManager {
-  override suspend fun computeIfAbsent(item: JarDescriptor,
+internal sealed interface JarCacheManager {
+  suspend fun computeIfAbsent(sources: List<Source>,
+                              targetFile: Path,
+                              nativeFiles: MutableMap<ZipSource, List<String>>?,
+                              span: Span,
+                              producer: SourceBuilder): Path
+
+  fun validateHash(source: Source)
+}
+
+internal data object NonCachingJarCacheManager : JarCacheManager {
+  override suspend fun computeIfAbsent(sources: List<Source>,
+                                       targetFile: Path,
                                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                                        span: Span,
-                                       producer: suspend () -> Unit) {
-    producer()
+                                       producer: SourceBuilder): Path {
+    producer.produce()
+    return targetFile
+  }
+
+  override fun validateHash(source: Source) {
   }
 }
 
@@ -51,122 +71,165 @@ private val json by lazy {
   }
 }
 
-internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheManager {
+internal class LocalDiskJarCacheManager(private val cacheDir: Path,
+                                        private val classOutDirectory: Path) : JarCacheManager {
   init {
     Files.createDirectories(cacheDir)
     CacheDirCleanup(cacheDir).runCleanupIfRequired()
   }
 
-  override suspend fun computeIfAbsent(item: JarDescriptor,
+  override suspend fun computeIfAbsent(sources: List<Source>,
+                                       targetFile: Path,
                                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                                        span: Span,
-                                       producer: suspend () -> Unit) {
-    val sourceToRelativePath = TreeMap<String, ZipSource>()
-    for (source in item.sources) {
-      if (source !is ZipSource) {
-        producer()
-        return
-      }
-      else if (!source.file.startsWith(MAVEN_REPO)) {
-        span.addEvent("library file should be from maven repository", Attributes.of(AttributeKey.stringKey("file"), source.file.toString()))
-        producer()
-        return
-      }
-
-      val path = MAVEN_REPO.relativize(source.file).toString()
-      sourceToRelativePath.put(path, source)
-    }
+                                       producer: SourceBuilder): Path {
+    val items = createSourceAndCacheStrategyList(sources = sources, classOutDirectory = classOutDirectory)
 
     // 224 bit and not 256/512 - use a slightly shorter filename
-    // xxh3 is not used as it is not secure and moreover better to stick to JDK API
-    val hash = DigestUtil.sha3_224()
-    for (string in sourceToRelativePath.keys) {
-      hash.update(string.encodeToByteArray())
-      hash.update('-'.code.toByte())
+    // xxh3 is not used as it is not secure and moreover, better to stick to JDK API
+    val hash = sha3_224()
+    hash.update(cacheVersion)
+    hash.update(items.size.toByte())
+    hash.update((items.size shr 8).toByte())
+    for (source in items) {
+      val pathLength = source.path.length
+      hash.update(pathLength.toByte())
+      hash.update((pathLength shr 8).toByte())
+      hash.update(source.path.encodeToByteArray())
+
+      source.updateDigest(hash)
     }
 
-    val targetFile = item.file
-    val cacheName = targetFile.fileName.toString().removeSuffix(jarSuffix) +
-                    "-" +
-                    BigInteger(1, hash.digest()).toString(Character.MAX_RADIX)
-    val cacheFileName = cacheName.take(255 - jarSuffix.length) + jarSuffix
+    producer.updateDigest(hash)
+
+    val hashString = BigInteger(1, hash.digest()).toString(Character.MAX_RADIX)
+    val cacheName = "${targetFile.fileName.toString().removeSuffix(jarSuffix)}-$hashString"
+    val cacheFileName = (cacheName + jarSuffix).takeLast(255)
     val cacheFile = cacheDir.resolve(cacheFileName)
-    val cacheMetadataFile = cacheDir.resolve(cacheName.take(255 - metaSuffix.length) + metaSuffix)
+    val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
     if (checkCache(cacheMetadataFile = cacheMetadataFile,
                    cacheFile = cacheFile,
-                   item = item,
-                   sourceToRelativePath = sourceToRelativePath,
+                   sources = sources,
+                   items = items,
                    span = span,
                    nativeFiles = nativeFiles)) {
-      Files.createDirectories(targetFile.parent)
-      Files.copy(cacheFile, targetFile)
+      if (!producer.useCacheAsTargetFile) {
+        Files.createDirectories(targetFile.parent)
+        Files.copy(cacheFile, targetFile)
+      }
       span.addEvent(
         "use cache",
         Attributes.of(
-          AttributeKey.stringKey("file"), item.file.toString(),
+          AttributeKey.stringKey("file"), targetFile.toString(),
           AttributeKey.stringKey("cacheFile"), cacheFileName,
         ),
       )
 
-      // update file modification time to maintain FIFO caches i.e. in persistent cache folder on TeamCity agent and for CacheDirCleanup
+      // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
       Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
-      return
+
+      if (producer.useCacheAsTargetFile) {
+        return cacheFile
+      }
+      return targetFile
     }
 
-    producer()
+    producer.produce()
 
-    val metadata = json.encodeToString(JarCacheItem(sources = sourceToRelativePath.map { (path, source) ->
-      SourceCacheItem(path = path,
-                      size = Files.size(source.file).toInt(),
-                      nativeFiles = nativeFiles?.get(source) ?: emptyList())
-    }))
-
-    // first, write metadata
-    Files.writeString(cacheMetadataFile, metadata)
-
-    try {
-      Files.copy(targetFile, cacheFile)
-    }
-    catch (e: FileAlreadyExistsException) {
-      // concurrent access?
-      span.addEvent("Cache file $cacheFile already exists")
-      check(Files.size(targetFile) == Files.size(cacheFile))
-    }
-  }
-
-  private fun checkCache(cacheMetadataFile: Path,
-                         cacheFile: Path,
-                         item: JarDescriptor,
-                         sourceToRelativePath: Map<String, ZipSource>,
-                         nativeFiles: MutableMap<ZipSource, List<String>>?,
-                         span: Span): Boolean {
-    if (Files.notExists(cacheMetadataFile) || Files.notExists(cacheFile)) {
-      return false
+    val sourceCacheItems = items.map { source ->
+      SourceCacheItem(path = source.path,
+                      size = source.getSize().toInt(),
+                      hash = source.getHash(),
+                      nativeFiles = (source.source as? ZipSource)?.let { nativeFiles?.get(it) } ?: emptyList())
     }
 
-    val metadataString = Files.readString(cacheMetadataFile)
-    val metadata = try {
-      json.decodeFromString<JarCacheItem>(metadataString)
-    }
-    catch (e: SerializationException) {
-      span.addEvent("Metadata $metadataString not equal to ${item.sources}",
-                    Attributes.of(AttributeKey.stringKey("error"), e.toString()))
-      return false
-    }
+    coroutineScope {
+      launch {
+        try {
+          Files.copy(targetFile, cacheFile)
+        }
+        catch (e: FileAlreadyExistsException) {
+          // concurrent access?
+          span.addEvent("Cache file $cacheFile already exists")
+          check(Files.size(targetFile) == Files.size(cacheFile)) {
+            "targetFile=$targetFile, cacheFile=$cacheFile, sources=$sources"
+          }
+        }
+      }
 
-    if (metadata.sources.size != item.sources.size || !metadata.sources.all { sourceToRelativePath.containsKey(it.path) }) {
-      span.addEvent("Metadata $metadataString not equal to ${item.sources}")
-      return false
-    }
+      launch {
+        Files.writeString(cacheMetadataFile, json.encodeToString(JarCacheItem(sources = sourceCacheItems)))
+      }
 
-    for (sourceCacheItem in metadata.sources) {
-      val source = sourceToRelativePath.getValue(sourceCacheItem.path)
-      source.sizeConsumer?.accept(sourceCacheItem.size)
-      if (sourceCacheItem.nativeFiles.isNotEmpty()) {
-        nativeFiles?.put(source, sourceCacheItem.nativeFiles)
+      launch(Dispatchers.Default) {
+        notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles)
       }
     }
-    return true
+
+    if (producer.useCacheAsTargetFile) {
+      return cacheFile
+    }
+    return targetFile
+  }
+
+  override fun validateHash(source: Source) {
+    if (source.hash == 0L && (source !is DirSource || Files.exists(source.dir))) {
+      Span.current().addEvent("Zero hash for $source")
+    }
+  }
+}
+
+private fun checkCache(cacheMetadataFile: Path,
+                       cacheFile: Path,
+                       sources: List<Source>,
+                       items: List<SourceAndCacheStrategy>,
+                       nativeFiles: MutableMap<ZipSource, List<String>>?,
+                       span: Span): Boolean {
+  if (Files.notExists(cacheMetadataFile) || Files.notExists(cacheFile)) {
+    return false
+  }
+
+  val metadataString = Files.readString(cacheMetadataFile)
+  val metadata = try {
+    json.decodeFromString<JarCacheItem>(metadataString)
+  }
+  catch (e: SerializationException) {
+    span.addEvent("Metadata $metadataString not equal to ${sources}", Attributes.of(AttributeKey.stringKey("error"), e.toString()))
+    return false
+  }
+
+  if (!checkSavedAndActualSources(metadata = metadata, sources = sources, items = items)) {
+    span.addEvent("Metadata $metadataString not equal to $sources")
+    return false
+  }
+
+  notifyAboutMetadata(sources = metadata.sources, items = items, nativeFiles = nativeFiles)
+  return true
+}
+
+private fun checkSavedAndActualSources(metadata: JarCacheItem, sources: List<Source>, items: List<SourceAndCacheStrategy>): Boolean {
+  if (metadata.sources.size != sources.size) {
+    return false
+  }
+
+  for ((index, metadataItem) in metadata.sources.withIndex()) {
+    if (items.get(index).path != metadataItem.path) {
+      return false
+    }
+  }
+  return true
+}
+
+private fun notifyAboutMetadata(sources: List<SourceCacheItem>,
+                                items: List<SourceAndCacheStrategy>,
+                                nativeFiles: MutableMap<ZipSource, List<String>>?) {
+  for ((index, sourceCacheItem) in sources.withIndex()) {
+    val source = items.get(index).source
+    source.size = sourceCacheItem.size
+    source.hash = sourceCacheItem.hash
+    if (sourceCacheItem.nativeFiles.isNotEmpty()) {
+      nativeFiles?.put(source as ZipSource, sourceCacheItem.nativeFiles)
+    }
   }
 }
 
@@ -179,5 +242,6 @@ private class JarCacheItem(
 private class SourceCacheItem(
   @JvmField val path: String,
   @JvmField val size: Int,
+  @JvmField val hash: Long,
   @JvmField val nativeFiles: List<String> = emptyList(),
 )

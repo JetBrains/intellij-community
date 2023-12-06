@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.openapi.application.PluginPathManager
@@ -16,7 +16,6 @@ import git4idea.test.createRepository
 import git4idea.test.git
 import git4idea.test.tac
 import java.io.File
-import java.util.*
 
 class GitConfigTest : GitPlatformTest() {
   private val HOOK_FAILURE_MESSAGE = "IJ_TEST_GIT_HOOK_FAILED"
@@ -75,7 +74,7 @@ class GitConfigTest : GitPlatformTest() {
     createRepository()
     addRemote("git@github.com:foo/bar.git")
     val pushUrl = "git@github.com:foo/push.git"
-    git("config remote.origin.pushurl " + pushUrl)
+    git("config remote.origin.pushurl $pushUrl")
 
     val config = readConfig()
     val remote = getFirstItem(config.parseRemotes())
@@ -317,7 +316,7 @@ class GitConfigTest : GitPlatformTest() {
           file.name.endsWith("_result.txt") -> resultFile = file
         }
       }
-      val message = " file not found in $testDir among ${Arrays.toString(testDir.list())}"
+      val message = " file not found in $testDir among ${testDir.list().contentToString()}"
       assertNotNull("description $message", descriptionFile)
       assertNotNull("config $message", configFile)
       assertNotNull("result $message", resultFile)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -26,15 +26,15 @@ import java.util.Set;
  * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
  */
 public final class LookupElementBuilder extends LookupElement {
-  @NotNull private final String myLookupString;
-  @NotNull private final Object myObject;
-  @Nullable private final SmartPsiElementPointer<?> myPsiElement;
+  private final @NotNull String myLookupString;
+  private final @NotNull Object myObject;
+  private final @Nullable SmartPsiElementPointer<?> myPsiElement;
   private final boolean myCaseSensitive;
-  @Nullable private final InsertHandler<LookupElement> myInsertHandler;
-  @Nullable private final LookupElementRenderer<LookupElement> myRenderer;
-  @Nullable private final LookupElementRenderer<LookupElement> myExpensiveRenderer;
-  @Nullable private final LookupElementPresentation myHardcodedPresentation;
-  @NotNull private final Set<String> myAllLookupStrings;
+  private final @Nullable InsertHandler<LookupElement> myInsertHandler;
+  private final @Nullable LookupElementRenderer<LookupElement> myRenderer;
+  private final @Nullable LookupElementRenderer<LookupElement> myExpensiveRenderer;
+  private final @Nullable LookupElementPresentation myHardcodedPresentation;
+  private final @NotNull Set<String> myAllLookupStrings;
 
   private LookupElementBuilder(@NotNull String lookupString, @NotNull Object object, @Nullable InsertHandler<LookupElement> insertHandler,
                                @Nullable LookupElementRenderer<LookupElement> renderer,
@@ -54,7 +54,7 @@ public final class LookupElementBuilder extends LookupElement {
     myCaseSensitive = caseSensitive;
   }
 
-  private String validate(String string) {
+  private static String validate(String string) {
     StringUtil.assertValidSeparators(string);
     return string;
   }
@@ -127,8 +127,7 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   @Override
-  @NotNull
-  public Set<String> getAllLookupStrings() {
+  public @NotNull Set<String> getAllLookupStrings() {
     return myAllLookupStrings;
   }
 
@@ -140,8 +139,7 @@ public final class LookupElementBuilder extends LookupElement {
                              myAllLookupStrings, myCaseSensitive);
   }
 
-  @NotNull
-  private LookupElementPresentation copyPresentation() {
+  private @NotNull LookupElementPresentation copyPresentation() {
     final LookupElementPresentation presentation = new LookupElementPresentation();
     if (myHardcodedPresentation != null) {
       presentation.copyFrom(myHardcodedPresentation);
@@ -158,6 +156,13 @@ public final class LookupElementBuilder extends LookupElement {
     return cloneWithUserData(myLookupString, myObject, myInsertHandler, myRenderer, myExpensiveRenderer, myHardcodedPresentation,
                              myPsiElement, Collections.unmodifiableSet(set), myCaseSensitive);
   }
+
+  @Contract(pure=true)
+  public @NotNull LookupElementBuilder withBaseLookupString(@NotNull String lookupString) {
+    return cloneWithUserData(lookupString, myObject, myInsertHandler, myRenderer, myExpensiveRenderer, myHardcodedPresentation,
+                             myPsiElement, myAllLookupStrings, myCaseSensitive);
+  }
+
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withLookupStrings(@NotNull Collection<String> another) {
     Set<String> set = new HashSet<>(myAllLookupStrings.size() + another.size());
@@ -303,19 +308,16 @@ public final class LookupElementBuilder extends LookupElement {
     return policy.applyPolicy(this);
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myLookupString;
   }
 
-  @Nullable
-  public InsertHandler<LookupElement> getInsertHandler() {
+  public @Nullable InsertHandler<LookupElement> getInsertHandler() {
     return myInsertHandler;
   }
 
-  @Nullable
-  public LookupElementRenderer<LookupElement> getRenderer() {
+  public @Nullable LookupElementRenderer<LookupElement> getRenderer() {
     return myRenderer;
   }
 
@@ -324,15 +326,13 @@ public final class LookupElementBuilder extends LookupElement {
     return myExpensiveRenderer;
   }
 
-  @NotNull
   @Override
-  public Object getObject() {
+  public @NotNull Object getObject() {
     return myObject;
   }
 
-  @Nullable
   @Override
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     if (myPsiElement != null) return myPsiElement.getElement();
     return super.getPsiElement();
   }

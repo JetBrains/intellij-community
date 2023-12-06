@@ -47,6 +47,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
@@ -60,6 +61,7 @@ import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 public class MavenPropertyPsiReference extends MavenPsiReference implements LocalQuickFixProvider {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
+  public static final String MULTIPROJECT_DIR_PROP = "maven.multiModuleProjectDirectory";
 
   @Nullable
   protected final MavenDomProjectModel myProjectDom;
@@ -153,8 +155,15 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       return getBaseDir(mavenProject);
     }
 
+
     if (myText.equals(TIMESTAMP_PROP)) {
       return myElement;
+    }
+
+    if (myText.equals(MULTIPROJECT_DIR_PROP)) {
+      MavenProject rootProject = myProjectsManager.findRootProject(myMavenProject);
+      if(rootProject == null) return null;
+      return getBaseDir(rootProject);
     }
 
     if (hasPrefix) {
@@ -393,6 +402,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       result.add(createLookupElement(baseDir, "project.baseUri", RepositoryLibraryLogo));
       result.add(createLookupElement(baseDir, "pom.baseUri", RepositoryLibraryLogo));
       result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(RepositoryLibraryLogo));
+      result.add(LookupElementBuilder.create(MULTIPROJECT_DIR_PROP).withIcon(RepositoryLibraryLogo));
     }
 
     processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, (property, descriptor) -> {

@@ -17,13 +17,12 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.types.FlexibleTypeImpl
 import java.io.File
 import java.util.regex.Pattern
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
-    val testHeaderPattern = Pattern.compile("//(element|expression|statement|method|class|file|comp)\n")
+    private val testHeaderPattern: Pattern = Pattern.compile("//(element|expression|statement|method|class|file|comp)\n")
 
     // FIXME: remove after KTIJ-5630
     private fun doTestWithSlowAssertion(directives: Directives, block: () -> Unit) {
@@ -85,10 +84,8 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             var actual = reformat(rawConverted, project, reformatInFun)
 
             if (prefix == "file") {
-                actual = createKotlinFile(actual)
-                    .dumpTextWithErrors(setOf(element = ErrorsJvm.INTERFACE_STATIC_METHOD_CALL_FROM_JAVA6_TARGET.errorFactory))
+                actual = createKotlinFile(actual).dumpTextWithErrors()
             }
-
 
             val expectedFile = provideExpectedFile(javaPath)
             compareResults(expectedFile, actual)
@@ -171,7 +168,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         return myFixture.configureByText("converterTestFile.java", text) as PsiJavaFile
     }
 
-    protected fun createKotlinFile(text: String): KtFile {
+    private fun createKotlinFile(text: String): KtFile {
         return myFixture.configureByText("converterTestFile.kt", text) as KtFile
     }
 }

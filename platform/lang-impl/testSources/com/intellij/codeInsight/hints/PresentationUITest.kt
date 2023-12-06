@@ -15,7 +15,7 @@ import java.io.File
 import javax.imageio.ImageIO
 
 class PresentationUITest : LightPlatformCodeInsightTestCase() {
-  val factory by lazy { PresentationFactory(editor as EditorImpl) }
+  val factory: PresentationFactory by lazy { PresentationFactory(editor) }
 
   override fun setUp() {
     super.setUp()
@@ -95,6 +95,6 @@ class PresentationUITest : LightPlatformCodeInsightTestCase() {
   }
 
   companion object {
-    var REPLACE_WITH_ACTUAL = false
+    var REPLACE_WITH_ACTUAL: Boolean = false
   }
 }

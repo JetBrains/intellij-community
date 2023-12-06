@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.*;
 
 public class PyDebugValue extends XNamedValue {
-  private static final Logger LOG = Logger.getInstance(PyDebugValue.class);
+  protected static final Logger LOG = Logger.getInstance(PyDebugValue.class);
   private static final String DATA_FRAME = "DataFrame";
   private static final String SERIES = "Series";
   private static final Map<String, String> EVALUATOR_POSTFIXES = ImmutableMap.of(
@@ -38,7 +38,7 @@ public class PyDebugValue extends XNamedValue {
     SERIES, SERIES,
     "GeoDataFrame", DATA_FRAME,
     "GeoSeries", SERIES
-    );
+  );
   private static final int MAX_ITEMS_TO_HANDLE = 100;
   public static final int MAX_VALUE = 256;
   public static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
@@ -48,26 +48,22 @@ public class PyDebugValue extends XNamedValue {
   private @Nullable String myTempName = null;
   private final @Nullable String myType;
   private final @Nullable String myTypeQualifier;
-  private @Nullable String myValue;
+  protected @Nullable String myValue;
   private final boolean myContainer;
   private final @Nullable String myShape;
   private final boolean myIsReturnedVal;
   private final boolean myIsIPythonHidden;
   private @Nullable PyDebugValue myParent;
   private @Nullable String myId = null;
-  private ValuesPolicy myLoadValuePolicy;
+  protected ValuesPolicy myLoadValuePolicy;
   private @NotNull PyFrameAccessor myFrameAccessor;
-  private @NotNull final List<XValueNode> myValueNodes = new ArrayList<>();
+  protected @NotNull final List<XValueNode> myValueNodes = new ArrayList<>();
   private final boolean myErrorOnEval;
   private final @Nullable String myTypeRendererId;
   private int myOffset;
   private int myCollectionLength = -1;
 
   private @NotNull PyDebugValueDescriptor myDescriptor = new PyDebugValueDescriptor();
-
-  public enum ValuesPolicy {
-    SYNC, ASYNC, ON_DEMAND
-  }
 
   private static final Map<String, ValuesPolicy> POLICY_DEFAULT_VALUES = ImmutableMap.of("__pydevd_value_async", ValuesPolicy.ASYNC,
                                                                                          "__pydevd_value_on_demand",
@@ -87,7 +83,8 @@ public class PyDebugValue extends XNamedValue {
                       boolean errorOnEval,
                       @Nullable String typeRendererId,
                       @NotNull final PyFrameAccessor frameAccessor) {
-    this(name, type, typeQualifier, value, container, shape, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, null, frameAccessor);
+    this(name, type, typeQualifier, value, container, shape, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, null,
+         frameAccessor);
   }
 
   /**
@@ -438,7 +435,9 @@ public class PyDebugValue extends XNamedValue {
     return variables;
   }
 
-  public static void getAsyncValues(@Nullable XStackFrame frame, @NotNull PyFrameAccessor frameAccessor, @NotNull XValueChildrenList childrenList) {
+  public static void getAsyncValues(@Nullable XStackFrame frame,
+                                    @NotNull PyFrameAccessor frameAccessor,
+                                    @NotNull XValueChildrenList childrenList) {
     List<PyFrameAccessor.PyAsyncValue<String>> variables = getAsyncValuesFromChildren(childrenList);
     int chunkSize = Math.max(1, variables.size() / AVAILABLE_PROCESSORS);
     int left = 0;
@@ -490,14 +489,15 @@ public class PyDebugValue extends XNamedValue {
 
         restoreChildrenRenderers(values);
 
-        if (!node.isObsolete()) {
+        if (values != null && !node.isObsolete()) {
           updateLengthIfIsCollection(values);
 
           if (isLargeCollection()) {
             values = processLargeCollection(values);
           }
           if (myFrameAccessor.isSimplifiedView()) {
-            extractChildrenToGroup(PydevBundle.message("pydev.value.protected.attributes.group.name"), AllIcons.Nodes.C_protected, node, values, (String name) -> name.startsWith("_"),
+            extractChildrenToGroup(PydevBundle.message("pydev.value.protected.attributes.group.name"), AllIcons.Nodes.C_protected, node,
+                                   values, (String name) -> name.startsWith("_"),
                                    getPROTECTED_ATTRS_EXCLUDED());
           }
           else {
@@ -547,7 +547,8 @@ public class PyDebugValue extends XNamedValue {
           return new PyReferringObjectsValue(PyDebugValue.this);
         }
       };
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -591,7 +592,7 @@ public class PyDebugValue extends XNamedValue {
     return true;
   }
 
-  private static final  Pattern IS_TYPE_DECLARATION = Pattern.compile("<(?:class|type)\\s*'(?<TYPE>.*?)'>");
+  private static final Pattern IS_TYPE_DECLARATION = Pattern.compile("<(?:class|type)\\s*'(?<TYPE>.*?)'>");
 
   @Override
   public void computeTypeSourcePosition(@NotNull XNavigatable navigatable) {
@@ -613,8 +614,9 @@ public class PyDebugValue extends XNamedValue {
 
   @Nullable
   public String getQualifiedType() {
-    if (Strings.isNullOrEmpty(myType))
+    if (Strings.isNullOrEmpty(myType)) {
       return null;
+    }
     return (myTypeQualifier == null) ? myType : (myTypeQualifier + "." + myType);
   }
 
@@ -639,7 +641,7 @@ public class PyDebugValue extends XNamedValue {
     return myCollectionLength > MAX_ITEMS_TO_HANDLE;
   }
 
-  private void updateLengthIfIsCollection(final XValueChildrenList values) {
+  private void updateLengthIfIsCollection(@NotNull final XValueChildrenList values) {
     if (myCollectionLength > 0 && values.size() == 0) return;
 
     final int lastIndex = values.size() - 1;
@@ -648,19 +650,22 @@ public class PyDebugValue extends XNamedValue {
     if (values.size() > 0 && isLen(values.getName(lastIndex))) {
       PyDebugValue len = (PyDebugValue)values.getValue(lastIndex);
       try {
-        if (myCollectionLength == -1 && len.getValue() != null)
+        if (myCollectionLength == -1 && len.getValue() != null) {
           myCollectionLength = Integer.parseInt(len.getValue());
-      } catch (NumberFormatException ex) {
+        }
+      }
+      catch (NumberFormatException ex) {
         // Do nothing.
       }
     }
   }
 
-  private XValueChildrenList processLargeCollection(final XValueChildrenList values) {
+  @NotNull
+  private XValueChildrenList processLargeCollection(@NotNull final XValueChildrenList values) {
     if (values.size() > 0 && isLargeCollection()) {
       if (myOffset + Math.min(MAX_ITEMS_TO_HANDLE, values.size()) < myCollectionLength) {
         XValueChildrenList newValues = new XValueChildrenList();
-        for(int i = 0; i < values.size() - 1; i++) {
+        for (int i = 0; i < values.size() - 1; i++) {
           newValues.add(values.getName(i), values.getValue(i));
         }
         return newValues;
@@ -669,7 +674,7 @@ public class PyDebugValue extends XNamedValue {
     return values;
   }
 
-  private void updateOffset(final XCompositeNode node, final XValueChildrenList values) {
+  private void updateOffset(final XCompositeNode node, final @NotNull XValueChildrenList values) {
     if (myContainer && isLargeCollection()) {
       if (myOffset + Math.min(values.size(), MAX_ITEMS_TO_HANDLE) >= myCollectionLength) {
         myOffset = myCollectionLength;
@@ -690,7 +695,7 @@ public class PyDebugValue extends XNamedValue {
     myDescriptor = descriptor;
   }
 
-  private void restoreChildrenRenderers(XValueChildrenList values) {
+  private void restoreChildrenRenderers(@Nullable XValueChildrenList values) {
     PyDebugValueDescriptor descriptor = getDescriptor();
     Map<String, PyDebugValueDescriptor> childrenDescriptors = descriptor.getChildrenDescriptors();
 

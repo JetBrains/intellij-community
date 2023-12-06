@@ -1,15 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics.Companion.getInstance
-import com.intellij.workspaceModel.storage.VersionedStorageChange
 import org.junit.Assert
 
 class MavenEventsTestHelper {
@@ -19,7 +17,7 @@ class MavenEventsTestHelper {
 
   fun setUp(project: Project) {
     val connection: MessageBusConnection = project.messageBus.connect()
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun beforeRootsChange(event: ModuleRootEvent) {
         beforeRootsChangedCount++
       }

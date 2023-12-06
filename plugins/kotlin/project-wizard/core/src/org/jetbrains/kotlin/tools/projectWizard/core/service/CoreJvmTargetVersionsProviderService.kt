@@ -12,7 +12,7 @@ class CoreJvmTargetVersionsProviderService : JvmTargetVersionsProviderService(),
         private val KOTLIN_14_JVM_TARGETS = setOf(JVM_1_8, JVM_9, JVM_10, JVM_11, JVM_12, JVM_13, JVM_14, JVM_15)
 
         private val kotlinToJvmTargetVersions: Map<Version, Set<TargetJvmVersion>> = mapOf(
-            Versions.KOTLIN to KOTLIN_14_JVM_TARGETS,
+          Versions.KOTLIN to KOTLIN_14_JVM_TARGETS,
         )
 
         private fun listSupportedJvmTargetVersions(kotlinVersion: Version) =

@@ -11,4 +11,4 @@ fun f(h: H) {
     h / 3
 }
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

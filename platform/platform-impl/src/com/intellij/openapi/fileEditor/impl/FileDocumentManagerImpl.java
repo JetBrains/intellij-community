@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.model.ModelBranch;
-import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -48,6 +46,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
@@ -57,6 +56,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +82,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
-  private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
+  private final Set<Document> myUnsavedDocuments = ConcurrentCollectionFactory.createConcurrentSet();
 
   private final FileDocumentManagerListener myMultiCaster;
   private final TrailingSpacesStripper myTrailingSpacesStripper = new TrailingSpacesStripper();
@@ -104,11 +104,14 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       }
       Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
+      VirtualFile virtualFile = getFile(document);
       if (project == null) {
-        VirtualFile virtualFile = getFile(document);
         project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
       }
-      String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
+      CodeStyleSettings settings = project != null && virtualFile != null
+                                   ? CodeStyle.getSettings(project, virtualFile)
+                                   : CodeStyle.getProjectOrDefaultSettings(project);
+      String lineSeparator = settings.getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
 
       // avoid documents piling up during batch processing
@@ -168,7 +171,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @SuppressWarnings("OverlyBroadCatchBlock")
   private void multiCast(@NotNull Method method, Object[] args) {
     try {
-      method.invoke(ApplicationManager.getApplication().getMessageBus().syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
+      method.invoke(ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListener.TOPIC), args);
     }
     catch (ClassCastException e) {
       LOG.error("Arguments: "+ Arrays.toString(args), e);
@@ -207,8 +210,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  @NotNull
-  protected Document createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
+  protected @NotNull DocumentEx createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
     boolean acceptSlashR = file instanceof LightVirtualFile && StringUtil.indexOf(text, '\r') >= 0;
     boolean freeThreaded = Boolean.TRUE.equals(file.getUserData(AbstractFileViewProvider.FREE_THREADED));
     DocumentImpl document = (DocumentImpl)((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, freeThreaded);
@@ -271,7 +273,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private void saveDocuments(@Nullable Predicate<? super Document> filter, boolean isExplicit) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     myMultiCaster.beforeAllDocumentsSaving();
@@ -312,9 +314,10 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   public void saveDocument(@NotNull Document document, boolean explicit) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
+    myMultiCaster.beforeAnyDocumentSaving(document, explicit);
     if (!myUnsavedDocuments.contains(document)) return;
 
     try {
@@ -345,7 +348,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
   }
 
-  private static class SaveVetoException extends Exception {}
+  private static final class SaveVetoException extends Exception {}
 
   private void doSaveDocument(@NotNull Document document, boolean isExplicit) throws IOException, SaveVetoException {
     VirtualFile file = getFile(document);
@@ -374,8 +377,16 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
-    return !myConflictResolver.hasConflict(file) &&
-           FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList().stream().allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
+    if (myConflictResolver.hasConflict(file)) {
+      return false;
+    }
+
+    for (FileDocumentSynchronizationVetoer vetoer : FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList()) {
+      if (!vetoer.maySaveDocument(document, isExplicit)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void doSaveDocumentInWriteAction(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
@@ -460,8 +471,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return fs instanceof NewVirtualFileSystem && file.getTimeStamp() != ((NewVirtualFileSystem)fs).getTimeStamp(file);
   }
 
-  @NotNull
-  public static String getLineSeparator(@NotNull Document document, @NotNull VirtualFile file) {
+  public static @NotNull String getLineSeparator(@NotNull Document document, @NotNull VirtualFile file) {
     String lineSeparator = file.getDetectedLineSeparator();
     if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
@@ -471,11 +481,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  @NotNull
-  public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
+  public @NotNull String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
     String lineSeparator = file == null ? null : file.getDetectedLineSeparator();
     if (lineSeparator == null) {
-      lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
+      CodeStyleSettings settings =
+        project != null && file != null ? CodeStyle.getSettings(project, file) : CodeStyle.getProjectOrDefaultSettings(project);
+      lineSeparator = settings.getLineSeparator();
     }
     return lineSeparator;
   }
@@ -485,9 +496,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return requestWritingStatus(document, project).hasWriteAccess();
   }
 
-  @NotNull
   @Override
-  public WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
+  public @NotNull WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
     VirtualFile file = getInstance().getFile(document);
     if (project != null && file != null && file.isValid()) {
       if (file.getFileType().isBinary()) return WriteAccessStatus.NON_WRITABLE;
@@ -543,10 +553,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public boolean isFileModified(@NotNull VirtualFile file) {
-    ModelBranch branch = ModelBranch.getFileBranch(file);
-    if (branch != null && ((ModelBranchImpl)branch).hasModifications(file)) {
-      return true;
-    }
     Document doc = getCachedDocument(file);
     return doc != null && isDocumentUnsaved(doc) && doc.getModificationStamp() != file.getModificationStamp();
   }
@@ -699,9 +705,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  public void reloadFromDisk(@NotNull Document document) {
+  public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
     try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       VirtualFile file = getFile(document);
       assert file != null;
@@ -711,7 +717,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         return;
       }
 
-      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
       boolean[] isReloadable = {isReloadable(file, document, project)};
       if (isReloadable[0]) {
         CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
@@ -795,8 +800,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return true;
   }
 
-  @NotNull
-  private static List<FileDocumentManagerListener> getListeners() {
+  private static @NotNull List<FileDocumentManagerListener> getListeners() {
     return FileDocumentManagerListener.EP_NAME.getExtensionList();
   }
 

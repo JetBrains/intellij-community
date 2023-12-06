@@ -1,5 +1,6 @@
 package com.intellij.externalSystem;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,7 +11,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.VfsTestUtil;
 import junit.framework.AssertionFailedError;
-import com.intellij.maven.testFramework.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -26,7 +26,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 
-abstract public class MavenDependencyUpdaterTestBase extends MavenImportingTestCase {
+abstract public class MavenDependencyUpdaterTestBase extends MavenMultiVersionImportingTestCase {
   protected File myTestDataDir;
   protected File myProjectDataDir;
   protected File myExpectedDataDir;

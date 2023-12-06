@@ -9,4 +9,4 @@ fun foo(b: Boolean) {
     }
 }
 
-// IGNORE_FIR
+// IGNORE_K2

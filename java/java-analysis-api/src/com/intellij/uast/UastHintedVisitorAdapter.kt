@@ -2,6 +2,7 @@
 package com.intellij.uast
 
 import com.intellij.lang.Language
+import com.intellij.psi.HintedPsiElementVisitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.uast.UElement
@@ -9,10 +10,16 @@ import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class UastHintedVisitorAdapter(private val plugin: UastLanguagePlugin,
-                                    private val visitor: AbstractUastNonRecursiveVisitor,
-                                    private val directOnly: Boolean,
-                                    private val uElementTypesHint: Array<Class<out UElement>>
-) : PsiElementVisitor() {
+                               private val visitor: AbstractUastNonRecursiveVisitor,
+                               private val directOnly: Boolean,
+                               private val uElementTypesHint: Array<Class<out UElement>>
+) : PsiElementVisitor(), HintedPsiElementVisitor {
+
+  override fun getHintPsiElements(): List<Class<*>> {
+    if (uElementTypesHint.isEmpty()) return emptyList()
+
+    return plugin.getPossiblePsiSourceTypes(*uElementTypesHint).toList()
+  }
 
   override fun visitElement(element: PsiElement) {
     super.visitElement(element)
@@ -30,16 +37,28 @@ class UastHintedVisitorAdapter(private val plugin: UastLanguagePlugin,
                directOnly: Boolean = true): PsiElementVisitor {
       val plugin = UastLanguagePlugin.byLanguage(language) ?: return EMPTY_VISITOR
       if (uElementTypesHint.size == 1) {
-        return object: PsiElementVisitor() {
-          override fun visitElement(element: PsiElement) {
-            val uElement = plugin.convertElementWithParent(element, uElementTypesHint[0]) ?: return
-            if (!directOnly || uElement.sourcePsi === element) {
-              uElement.accept(visitor)
-            }
-          }
-        }
+        return SimpleUastHintedVisitorAdapter(plugin, visitor, uElementTypesHint[0], directOnly)
       }
+
       return UastHintedVisitorAdapter(plugin, visitor, directOnly, uElementTypesHint)
     }
+  }
+}
+
+private class SimpleUastHintedVisitorAdapter(val plugin: UastLanguagePlugin,
+                                             val visitor: AbstractUastNonRecursiveVisitor,
+                                             val uElementTypesHint: Class<out UElement>,
+                                             val directOnly: Boolean
+) : PsiElementVisitor(), HintedPsiElementVisitor {
+
+  override fun visitElement(element: PsiElement) {
+    val uElement = plugin.convertElementWithParent(element, uElementTypesHint) ?: return
+    if (!directOnly || uElement.sourcePsi === element) {
+      uElement.accept(visitor)
+    }
+  }
+
+  override fun getHintPsiElements(): List<Class<*>> {
+    return plugin.getPossiblePsiSourceTypes(uElementTypesHint).toList()
   }
 }

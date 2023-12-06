@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase
@@ -20,10 +20,9 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.util.*
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class ContentRootWithExcludedPatternsInProjectFileIndexTest {
   @JvmField
   @RegisterExtension
@@ -114,7 +113,7 @@ class ContentRootWithExcludedPatternsInProjectFileIndexTest {
     assertExcluded(underExcUnderDir)
     assertNotExcluded(dir)
     assertNotExcluded(underDir)
-    assertIteratedContent(module, listOf(underDir), Arrays.asList(underExc, underDirUnderExc, underExcUnderDir))
+    assertIteratedContent(module, listOf(underDir), listOf(underExc, underDirUnderExc, underExcUnderDir))
   }
 
   @Test

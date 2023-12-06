@@ -271,9 +271,9 @@ public open class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JS
 }
 
 public class DarculaSliderUIThemes {
-  val thumbHalfWidth = JBUI.scale(7)
-  val thumbHeight = JBUI.scale(24)
-  val focusedThumbHalfWidth = thumbHalfWidth + focusBorderThickness
+  val thumbHalfWidth: Int = JBUI.scale(7)
+  val thumbHeight: Int = JBUI.scale(24)
+  val focusedThumbHalfWidth: Int = thumbHalfWidth + focusBorderThickness
   val arc: Int
     get() = JBUI.scale(1)
   val trackThickness: Int

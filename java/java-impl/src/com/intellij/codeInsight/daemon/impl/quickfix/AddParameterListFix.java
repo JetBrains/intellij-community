@@ -2,39 +2,31 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AddParameterListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class AddParameterListFix extends PsiUpdateModCommandAction<PsiMethod> {
   public AddParameterListFix(@NotNull PsiMethod method) {
     super(method);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    if (!(startElement instanceof PsiMethod method)) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethod method, @NotNull ModPsiUpdater updater) {
     PsiIdentifier identifier = method.getNameIdentifier();
     if (identifier == null) return;
-    method.addAfter(JavaPsiFacade.getElementFactory(project).createParameterList(ArrayUtil.EMPTY_STRING_ARRAY, PsiType.EMPTY_ARRAY),
-                identifier);
-  }
-
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
+    method.addAfter(JavaPsiFacade.getElementFactory(context.project())
+                      .createParameterList(ArrayUtil.EMPTY_STRING_ARRAY, PsiType.EMPTY_ARRAY), identifier);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -45,12 +37,8 @@ public class AddParameterListFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @Nullable Editor editor,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    return super.isAvailable(project, file, editor, startElement, endElement) &&
-           startElement instanceof PsiMethod && JavaPsiRecordUtil.isCompactConstructor((PsiMethod)startElement);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethod method) {
+    if (!JavaPsiRecordUtil.isCompactConstructor(method)) return null;
+    return Presentation.of(getFamilyName());
   }
 }

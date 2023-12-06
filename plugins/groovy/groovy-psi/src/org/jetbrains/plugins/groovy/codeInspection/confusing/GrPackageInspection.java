@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -95,7 +96,7 @@ public class GrPackageInspection extends BaseInspection {
     return null;
   }
 
-  public static class ChangePackageQuickFix implements LocalQuickFix {
+  public static class ChangePackageQuickFix extends PsiUpdateModCommandQuickFix {
     private final String myNewPackageName;
 
     public ChangePackageQuickFix(String newPackageName) {
@@ -109,8 +110,8 @@ public class GrPackageInspection extends BaseInspection {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiFile file = descriptor.getPsiElement().getContainingFile();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiFile file = element.getContainingFile();
       ((GroovyFile)file).setPackageName(myNewPackageName);
     }
   }

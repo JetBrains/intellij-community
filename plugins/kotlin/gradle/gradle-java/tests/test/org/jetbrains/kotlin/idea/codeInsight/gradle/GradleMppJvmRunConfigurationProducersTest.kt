@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRe
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducerTestCase
+import org.jetbrains.plugins.gradle.execution.test.producer.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -114,7 +114,7 @@ class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationPro
         }
 
         createBuildFile {
-            withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.lastStable.toString())
+            withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.latestStable.toString())
             withPrefix {
                 code(
                     """

@@ -68,7 +68,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val hashMap = myRepositories.map { it to it.currentRevision!! }.toMap()
     myRepositories.forEach { cd(it); it.tac("f.txt") }
 
-    GitBranchWorker(project, git, TestUiHandler(project)).createBranch("feature", myRepositories.map{ it to "HEAD^" }.toMap())
+    GitBranchWorker(project, git, TestUiHandler(project)).createBranch("feature", myRepositories.map { it to "HEAD^" }.toMap())
 
     assertCurrentBranch("master")
     myRepositories.forEach {
@@ -80,7 +80,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun `test if create new branch fails with error in first repo, then notification should be shown`() {
-    git.onCheckoutNewBranch { if (it == first) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null}
+    git.onCheckoutNewBranch { if (it == first) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null }
 
     checkoutNewBranch("feature", TestUiHandler(project))
 
@@ -88,7 +88,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun `test if create new branch fails with error in second repo, then we should propose to rollback`() {
-    git.onCheckoutNewBranch { if (it == second) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null}
+    git.onCheckoutNewBranch { if (it == second) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null }
 
     var rollbackProposed = false
     checkoutNewBranch("feature", object : TestUiHandler(project) {
@@ -102,7 +102,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun `test rollback create new branch should delete branch`() {
-    git.onCheckoutNewBranch { if (it == second) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null}
+    git.onCheckoutNewBranch { if (it == second) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null }
 
     checkoutNewBranch("feature", object : TestUiHandler(project) {
       override fun notifyErrorWithRollbackProposal(title: String, message: String, rollbackProposal: String): Boolean {
@@ -115,7 +115,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun `test deny rollback create new branch should leave new branch`() {
-    git.onCheckoutNewBranch { if (it == second) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null}
+    git.onCheckoutNewBranch { if (it == second) GitCommandResult.error(UNKNOWN_ERROR_TEXT) else null }
 
     checkoutNewBranch("feature", object : TestUiHandler(project) {
       override fun notifyErrorWithRollbackProposal(title: String, message: String, rollbackProposal: String): Boolean {
@@ -216,7 +216,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertCurrentBranch("master")
     assertCurrentRevision("master")
-    assertErrorNotification("Couldn't checkout unknown_ref", "Revision not found in community, contrib and ${project.stateStore.projectBasePath.fileName}")
+    assertErrorNotification("Couldn't checkout unknown_ref",
+                            "Revision not found in community, contrib and ${project.stateStore.projectBasePath.fileName}")
   }
 
   fun `test checkout revision checkout ref with partial success`() {
@@ -338,8 +339,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
     cd(last)
     val actual = cat(localChanges[0])
     val expectedContent = LOCAL_CHANGES_OVERWRITTEN_BY.branchLine +
-        LOCAL_CHANGES_OVERWRITTEN_BY.initial +
-        LOCAL_CHANGES_OVERWRITTEN_BY.masterLine
+                          LOCAL_CHANGES_OVERWRITTEN_BY.initial +
+                          LOCAL_CHANGES_OVERWRITTEN_BY.masterLine
     assertContentIgnoreLineSeparators(expectedContent, actual)
   }
 
@@ -350,8 +351,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
     cd(last)
     val actual = cat(localChanges.first())
     val expectedContent = LOCAL_CHANGES_OVERWRITTEN_BY.branchLine +
-        LOCAL_CHANGES_OVERWRITTEN_BY.initial +
-        LOCAL_CHANGES_OVERWRITTEN_BY.masterLine
+                          LOCAL_CHANGES_OVERWRITTEN_BY.initial +
+                          LOCAL_CHANGES_OVERWRITTEN_BY.masterLine
     assertContentIgnoreLineSeparators(expectedContent, actual)
   }
 
@@ -644,7 +645,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
       repository.git("branch todelete")
     }
     git.onBranchDelete {
-      if (second == it) GitCommandResult(false, 1, listOf("Couldn't remove branch"), listOf())
+      if (second == it) GitCommandResult.error("Couldn't remove branch")
       else null
     }
   }
@@ -711,7 +712,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     mergeBranch("master2", TestUiHandler(project))
 
     assertNotNull("Success message wasn't shown", vcsNotifier.lastNotification)
-    assertEquals("Success message is incorrect", "Already up-to-date<br/><a href=\"delete\">Delete master2</a>",
+    assertEquals("Success message is incorrect", "Already up to date<br/><a href=\"delete\">Delete master2</a>",
                  vcsNotifier.lastNotification.content)
   }
 

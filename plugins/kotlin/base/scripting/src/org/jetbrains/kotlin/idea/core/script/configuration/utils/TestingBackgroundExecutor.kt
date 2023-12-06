@@ -25,9 +25,7 @@ class TestingBackgroundExecutor internal constructor(
 
             other as BackgroundTask
 
-            if (file != other.file) return false
-
-            return true
+            return file == other.file
         }
 
         override fun hashCode(): Int {

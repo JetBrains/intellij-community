@@ -8,9 +8,10 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 
-open class SingleHeightTabs(project: Project?, focusManager: IdeFocusManager?, parent: Disposable) : JBEditorTabs(project, focusManager, parent) {
+open class SingleHeightTabs(project: Project?, @Suppress("UNUSED_PARAMETER") focusManager: IdeFocusManager?, parent: Disposable) :
+  JBEditorTabs(project, parent) {
   companion object {
-    const val UNSCALED_PREF_HEIGHT = 28
+    const val UNSCALED_PREF_HEIGHT: Int = 28
   }
 
   constructor(project: Project?, parent: Disposable) : this(project = project, focusManager = null, parent = parent)
@@ -19,12 +20,9 @@ open class SingleHeightTabs(project: Project?, focusManager: IdeFocusManager?, p
 
   open inner class SingleHeightLabel(tabs: JBTabsImpl, info: TabInfo) : TabLabel(tabs, info) {
     override fun getPreferredSize(): Dimension {
-      val size = super.getPreferredSize()
-      return Dimension(size.width, getPreferredHeight())
+      return Dimension(super.getPreferredSize().width, getPreferredHeight())
     }
 
-    protected open fun getPreferredHeight(): Int {
-      return JBUI.scale(UNSCALED_PREF_HEIGHT)
-    }
+    protected open fun getPreferredHeight(): Int = JBUI.scale(UNSCALED_PREF_HEIGHT)
   }
 }

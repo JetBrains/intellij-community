@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.concurrency.ContextAwareRunnable;
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
@@ -27,8 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public final class BoundedTaskExecutor extends AbstractExecutorService {
   private volatile boolean myShutdown;
-  @NotNull
-  private final String myName;
+  private final @NotNull String myName;
   private final Executor myBackendExecutor;
   private final int myMaxThreads;
   // low 32 bits: number of tasks running (or trying to run)
@@ -92,9 +93,8 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     myShutdown = true;
   }
 
-  @NotNull
   @Override
-  public List<Runnable> shutdownNow() {
+  public @NotNull List<Runnable> shutdownNow() {
     shutdown();
     return clearAndCancelAll();
   }
@@ -110,7 +110,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   // can be executed even after shutdown
-  static class LastTask extends FutureTask<Void> {
+  static final class LastTask extends FutureTask<Void> {
     LastTask(@NotNull Runnable runnable) {
       super(runnable, null);
     }
@@ -147,11 +147,11 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   @Override
-  public void execute(@NotNull @Async.Schedule Runnable command) {
-    if (isShutdown() && !(command instanceof LastTask)) {
-      throw new RejectedExecutionException(this+" is already shutdown, trying to execute "+command+" ("+command.getClass()+")");
+  public void execute(@NotNull Runnable command) {
+    Runnable task = command instanceof LastTask ? command : AppScheduledExecutorService.capturePropagationAndCancellationContext(command);
+    if (isShutdown() && !(task instanceof LastTask)) {
+      throw new RejectedExecutionException(this+" is already shutdown, trying to execute "+task+" ("+task.getClass()+")");
     }
-    Runnable task = AppScheduledExecutorService.capturePropagationAndCancellationContext(command);
     long status = incrementCounterAndTimestamp(); // increment inProgress and queue-stamp atomically
 
     int inProgress = getTasksInProgress(status);
@@ -198,19 +198,20 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   private void wrapAndExecute(@NotNull Runnable firstTask, long status) {
     try {
-      Runnable command = new Runnable() {
+      Runnable command = new ContextAwareRunnable() {
         final AtomicReference<Runnable> currentTask = new AtomicReference<>(firstTask);
         @Override
         public void run() {
-          if (myChangeThreadName) {
-            String name = myName;
-            if (StartUpMeasurer.isEnabled()) {
-              name += "[" + Thread.currentThread().getName() + "]";
+          try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+            // This runnable is intended to be used for offloading the queue by executing stored tasks.
+            // It means that it shall not possess a thread context,
+            // but the executed tasks must have a context.
+            if (myChangeThreadName) {
+              ConcurrencyUtil.runUnderThreadName(myName, this::executeFirstTaskAndHelpQueue);
             }
-            ConcurrencyUtil.runUnderThreadName(name, this::executeFirstTaskAndHelpQueue);
-          }
-          else {
-            executeFirstTaskAndHelpQueue();
+            else {
+              executeFirstTaskAndHelpQueue();
+            }
           }
         }
 
@@ -229,12 +230,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
           return String.valueOf(info(currentTask.get()));
         }
       };
-      if (myBackendExecutor instanceof ContextPropagatingExecutor) {
-        ((ContextPropagatingExecutor)myBackendExecutor).executeRaw(command);
-      }
-      else {
-        myBackendExecutor.execute(command);
-      }
+      myBackendExecutor.execute(command);
     }
     catch (Error | RuntimeException e) {
       myStatus.decrementAndGet();
@@ -311,11 +307,11 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     return getTasksInProgress(myStatus.get()) == 0;
   }
 
-  @NotNull
-  public List<Runnable> clearAndCancelAll() {
+  public @NotNull List<Runnable> clearAndCancelAll() {
     List<Runnable> queued = new ArrayList<>(myTaskQueue.size());
     myTaskQueue.drainTo(queued);
-    for (Runnable task : queued) {
+    for (Runnable fromQueue : queued) {
+      Runnable task = fromQueue instanceof ContextRunnable ? ((ContextRunnable)fromQueue).getDelegate() : fromQueue;
       if (task instanceof FutureTask && !(task instanceof LastTask)) {
         ((FutureTask<?>)task).cancel(false);
       }

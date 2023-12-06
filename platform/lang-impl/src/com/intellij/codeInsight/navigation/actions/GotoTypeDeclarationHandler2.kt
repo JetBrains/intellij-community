@@ -1,16 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -33,7 +33,8 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
       }
     }
     catch (e: IndexNotReadyException) {
-      dumbService.showDumbModeNotification(CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"))
+      dumbService.showDumbModeNotificationForFunctionality(CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
+                                                           DumbModeBlockedFunctionality.GotoTypeDeclaration)
       return
     }
     if (result == null) {
@@ -45,7 +46,7 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
   private fun gotoTypeDeclaration(project: Project, editor: Editor, actionResult: NavigationActionResult) {
     when (actionResult) {
       is SingleTarget -> {
-        navigateRequest(project, actionResult.request)
+        navigateRequestLazy(project, actionResult.requestor)
       }
       is MultipleTargets -> {
         val popup = createTargetPopup(
@@ -62,13 +63,6 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
   private fun handleLookup(project: Project, editor: Editor, offset: Int): NavigationActionResult? {
     val fromLookup = TargetElementUtil.getTargetElementFromLookup(project) ?: return null
     return result(elementTypeTargets(editor, offset, listOf(fromLookup)))
-  }
-
-  @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
-  @Deprecated("Unused in v2 implementation")
-  @JvmStatic
-  fun getCtrlMouseInfo(file: PsiFile, offset: Int): CtrlMouseInfo? {
-    return gotoTypeDeclaration(file, offset)?.ctrlMouseInfo()
   }
 
   @JvmStatic

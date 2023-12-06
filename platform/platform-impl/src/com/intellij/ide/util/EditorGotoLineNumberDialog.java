@@ -1,20 +1,43 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.impl.RelativeLineHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class EditorGotoLineNumberDialog extends GotoLineNumberDialog {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public final class EditorGotoLineNumberDialog extends GotoLineNumberDialog {
   private final Editor myEditor;
+  private static final Pattern relativeNumberPattern = PatternUtil.compileSafe("\\s*([+-]\\d+)\\s*", null);
 
   public EditorGotoLineNumberDialog(Project project, Editor editor) {
     super(project);
     myEditor = editor;
     init();
+  }
+
+  @Override
+  protected Coordinates getCoordinates() {
+    Coordinates c = super.getCoordinates();
+    if (c != null) return c;
+
+    Matcher relativeMatcher = relativeNumberPattern.matcher(getText());
+    if (relativeMatcher.matches()) {
+      int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
+      int relativeLine = Integer.parseInt(relativeMatcher.group(1));
+      int logicalLine = RelativeLineHelper.INSTANCE.getLogicalLine(myEditor, caretLine, relativeLine);
+
+      int linesTotal = myEditor.getDocument().getLineCount();
+      return new Coordinates(Math.max(0, Math.min(logicalLine, linesTotal - 1)), 0);
+    }
+    return null;
   }
 
   @Override
@@ -57,9 +80,8 @@ public class EditorGotoLineNumberDialog extends GotoLineNumberDialog {
     return myEditor.logicalPositionToOffset(position);
   }
 
-  @NotNull
   @Override
-  protected Coordinates offsetToCoordinates(int offset) {
+  protected @NotNull Coordinates offsetToCoordinates(int offset) {
     LogicalPosition position = myEditor.offsetToLogicalPosition(offset);
     return new Coordinates(position.line, position.column);
   }

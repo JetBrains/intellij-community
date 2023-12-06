@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.ide.plugins.BrokenPluginFileKt.updateBrokenPlugins;
 import static org.junit.Assert.*;
 
 public class RepositoryHelperTest {
@@ -87,7 +88,7 @@ public class RepositoryHelperTest {
     String id = "BrokenPlugin";
     String version = "1.0";
     Map<PluginId, Set<String>> brokenPluginsMap = Collections.singletonMap(PluginId.getId(id), Collections.singleton(version));
-    PluginManagerCore.updateBrokenPlugins(brokenPluginsMap);
+    updateBrokenPlugins(brokenPluginsMap);
 
     List<PluginNode> list = loadPlugins(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +

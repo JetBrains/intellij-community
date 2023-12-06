@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -7,13 +7,13 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.SdkAppearanceService;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.OpaquePanel;
-import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.EmptyIcon;
@@ -27,6 +27,8 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 
@@ -35,15 +37,31 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
 
   private final @NotNull Producer<? extends SdkListModel> myGetModel;
 
+  public static <T> ListCellRenderer<T> create(
+    @Nullable ComboBox<T> combo,
+    Supplier<SdkListModel> modelSupplier,
+    Function<T, SdkListItem> listItemProducer
+  ) {
+    return new SdkListPresenter2<T>(combo, modelSupplier, listItemProducer);
+  }
+
+  /**
+   * @deprecated Use {@link SdkListPresenter#create} instead. The new renderer is New UI compliant.
+   */
+  @Deprecated
   public SdkListPresenter(@NotNull Producer<? extends SdkListModel> getSdkListModel) {
     myGetModel = getSdkListModel;
   }
 
+  /**
+   * @deprecated Use {@link SdkListPresenter#create} instead. Wrapping is handled by {@code listItemSupplier}.
+   */
+  @Deprecated
   public @NotNull <T> ListCellRenderer<T> forType(@NotNull Function<? super T, ? extends SdkListItem> unwrap) {
     return new ListCellRenderer<>() {
       @Override
       public Component getListCellRendererComponent(JList<? extends T> list, @Nullable T value, int index, boolean selected, boolean focused) {
-        SdkListItem item = value == null ? null : unwrap.fun(value);
+        SdkListItem item = value == null ? null : unwrap.apply(value);
         @SuppressWarnings("unchecked") JList<SdkItem> cast = (JList<SdkItem>)list;
         return SdkListPresenter.this.getListCellRendererComponent(cast, item, index, selected, focused);
       }
@@ -235,7 +253,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
     return accessibleContext;
   }
 
-  static private class AccessibleSdkListPresenter extends AccessibleContextDelegate {
+  static private final class AccessibleSdkListPresenter extends AccessibleContextDelegate {
     private @Nls String myAccessibleString = null;
 
     AccessibleSdkListPresenter(AccessibleContext context) {

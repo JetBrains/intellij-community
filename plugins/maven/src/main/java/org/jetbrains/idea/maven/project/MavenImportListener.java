@@ -2,9 +2,9 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,7 +16,27 @@ public interface MavenImportListener {
   @Topic.ProjectLevel
   Topic<MavenImportListener> TOPIC = Topic.create("Maven import notifications", MavenImportListener.class);
 
-  default void importStarted(MavenImportSpec spec) { }
+  /**
+   * consider usage {@link MavenSyncListener#importStarted(com.intellij.openapi.project.Project) application level listener} instead
+   */
+  default void importStarted() { }
 
-  void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<Module> newModules);
+  /**
+   * consider usage {@link MavenSyncListener#importFinished(Project, Collection, List) application level listener} instead
+   */
+  void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<@NotNull Module> newModules);
+
+  default void pomReadingStarted() { }
+
+  default void pomReadingFinished() { }
+
+  default void pluginResolutionStarted() { }
+
+  default void pluginResolutionFinished() { }
+
+  default void artifactDownloadingScheduled() { }
+
+  default void artifactDownloadingStarted() { }
+
+  default void artifactDownloadingFinished() { }
 }

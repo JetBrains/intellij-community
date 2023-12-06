@@ -17,13 +17,13 @@ import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.util.RefactoringMessageUtil
 import com.intellij.util.CommonJavaRefactoringUtil
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
-import org.jetbrains.kotlin.idea.refactoring.move.getTargetPackageFqName
+import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
 import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector.MoveRefactoringDestination
@@ -165,20 +165,20 @@ internal abstract class MoveKotlinNestedClassesToUpperLevelModel(
             val targetPackageFqName = getTargetPackageFqName(target)
                 ?: throw ConfigurationException(KotlinBundle.message("text.cannot.find.target.package.name"))
 
-            val suggestedName = Fe10KotlinNameSuggester.suggestNameByName(className) {
+            val suggestedName = KotlinNameSuggester.suggestNameByName(className) {
                 target.findFile(it + "." + KotlinFileType.EXTENSION) == null
             }
 
             val targetFileName = suggestedName + "." + KotlinFileType.EXTENSION
 
-            val target = KotlinMoveTargetForDeferredFile(
+            val target = KotlinMoveTarget.DeferredFile(
                 targetPackageFqName,
                 target.virtualFile
             ) { createKotlinFile(targetFileName, target, targetPackageFqName.asString()) }
 
             target to MoveRefactoringDestination.FILE
         } else {
-            KotlinMoveTargetForExistingElement(target as KtElement) to MoveRefactoringDestination.DECLARATION
+            KotlinMoveTarget.ExistingElement(target as KtElement) to MoveRefactoringDestination.DECLARATION
         }
     }
 
@@ -191,10 +191,10 @@ internal abstract class MoveKotlinNestedClassesToUpperLevelModel(
         val moveTarget = getMoveTarget()
 
         val outerInstanceParameterName = if (passOuterClass) packageName else null
-        val delegate = MoveDeclarationsDelegate.NestedClass(className, outerInstanceParameterName)
+        val delegate = KotlinMoveDeclarationDelegate.NestedClass(className, outerInstanceParameterName)
         val moveDescriptor = MoveDeclarationsDescriptor(
             project,
-            MoveSource(innerClass),
+            KotlinMoveSource(innerClass),
             moveTarget.first,
             delegate,
             searchInComments,
@@ -204,7 +204,7 @@ internal abstract class MoveKotlinNestedClassesToUpperLevelModel(
             openInEditor = isOpenInEditor
         )
 
-        val processor = MoveKotlinDeclarationsProcessor(moveDescriptor, Mover.Default, throwOnConflicts)
+        val processor = MoveKotlinDeclarationsProcessor(moveDescriptor, KotlinMover.Default, throwOnConflicts)
 
         return ModelResultWithFUSData(
           processor = processor,

@@ -22,7 +22,6 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
@@ -165,7 +164,7 @@ public final class VcsLogUiUtil {
 
     @Override
     public void queryPlace(@NotNull Place place) {
-      List<CommitId> commits = myUi.getTable().getSelection().getCommits();
+      List<Integer> commits = myUi.getTable().getSelection().getIds();
       if (!commits.isEmpty()) {
         place.putPath(PLACE_KEY, commits.get(0));
       }
@@ -176,12 +175,11 @@ public final class VcsLogUiUtil {
       if (place == null) return ActionCallback.DONE;
 
       Object value = place.getPath(PLACE_KEY);
-      if (!(value instanceof CommitId commitId)) return ActionCallback.REJECTED;
+      if (!(value instanceof Integer commitIndex)) return ActionCallback.REJECTED;
 
       ActionCallback callback = new ActionCallback();
 
-      ListenableFuture<Boolean> future = VcsLogNavigationUtil.jumpToCommit(myUi, commitId.getHash(), commitId.getRoot(),
-                                                                           false, true);
+      ListenableFuture<Boolean> future = VcsLogNavigationUtil.jumpToCommit(myUi, commitIndex, false, true);
 
       Futures.addCallback(future, new FutureCallback<>() {
         @Override

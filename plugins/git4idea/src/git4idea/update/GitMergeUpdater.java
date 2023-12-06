@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,8 +45,8 @@ import static java.util.Arrays.asList;
 public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
-  @NotNull private final ChangeListManager myChangeListManager;
-  @NotNull private final GitBranchPair myBranchPair;
+  private final @NotNull ChangeListManager myChangeListManager;
+  private final @NotNull GitBranchPair myBranchPair;
 
   public GitMergeUpdater(@NotNull Project project,
                          @NotNull Git git,
@@ -60,8 +60,7 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   @Override
-  @NotNull
-  protected GitUpdateResult doUpdate() {
+  protected @NotNull GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
     final GitMerger merger = new GitMerger(myProject);
 
@@ -85,11 +84,10 @@ public class GitMergeUpdater extends GitUpdater {
     }
   }
 
-  @NotNull
-  private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
-                                             GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
-                                             final GitMerger merger,
-                                             GitCommandResult commandResult) {
+  private @NotNull GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
+                                                      GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
+                                                      final GitMerger merger,
+                                                      GitCommandResult commandResult) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("merge error: " + error);
     if (error == MergeError.CONFLICT) {
@@ -102,7 +100,7 @@ public class GitMergeUpdater extends GitUpdater {
       LOG.info("Local changes would be overwritten by merge");
       final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      UIUtil.invokeAndWaitIfNeeded(() -> {
         LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
         panel.setChanges(changes, null);
         panel.setDescription(LocalChangesWouldBeOverwrittenHelper.getErrorNotificationDescription());

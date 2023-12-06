@@ -12,11 +12,13 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.i18n.PluginXmlI18nInspection"
                      key="inspection.plugin.xml.i18n.display.name"/>
     <localInspection language="XML" shortName="PluginXmlCapitalization" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.i18n.PluginXmlCapitalizationInspection"
@@ -24,12 +26,11 @@
 
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="Properties"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle" groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.i18n.DevKitPropertiesMessageValidationInspection"
                      key="inspection.dev.kit.properties.message.validation.display.name"/>
     <inspectionElementsMerger implementation="org.jetbrains.idea.devkit.i18n.DevKitPropertiesMessageValidationInspectionMerger"/>
-
-    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.i18n.IntentionsImplicitPropertyUsageProvider"/>
   </extensions>
 </idea-plugin>

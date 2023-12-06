@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,22 +18,15 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final SwitchMigrationCase[] ourCases = new SwitchMigrationCase[]{
-    EnhancedSwitchBackwardMigrationInspection::inspectReturningSwitch,
-    EnhancedSwitchBackwardMigrationInspection::inspectVariableSavingSwitch,
-    EnhancedSwitchBackwardMigrationInspection::inspectSwitchStatement,
-    EnhancedSwitchBackwardMigrationInspection::inspectAssignmentSwitch,
-  };
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -52,7 +47,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
         holder.registerProblem(statement.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
       }
 
-      private boolean isNonemptyRuleFormatSwitch(PsiSwitchBlock block) {
+      private static boolean isNonemptyRuleFormatSwitch(PsiSwitchBlock block) {
         PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
         return label instanceof PsiSwitchLabeledRuleStatement;
       }
@@ -60,10 +55,20 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
   }
 
   private static Replacer findReplacer(@NotNull PsiSwitchBlock block) {
-    for (SwitchMigrationCase migrationCase : ourCases) {
-      Replacer replacer = migrationCase.suggestReplacer(block);
-      if (replacer != null) return replacer;
-    }
+    Replacer replacer;
+
+    replacer = inspectReturningSwitch(block);
+    if (replacer != null) return replacer;
+
+    replacer = inspectVariableSavingSwitch(block);
+    if (replacer != null) return replacer;
+
+    replacer = inspectSwitchStatement(block);
+    if (replacer != null) return replacer;
+
+    replacer = inspectAssignmentSwitch(block);
+    if (replacer != null) return replacer;
+
     return null;
   }
 
@@ -94,17 +99,11 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
     return new SwitchStatementReplacer();
   }
 
-  private interface SwitchMigrationCase {
-    @Nullable
-    Replacer suggestReplacer(@NotNull PsiSwitchBlock switchBlock);
-  }
-
   private interface Replacer {
     void replace(PsiSwitchBlock block);
   }
 
-  private static class ReplaceWithOldStyleSwitchFix implements LocalQuickFix {
-
+  private static class ReplaceWithOldStyleSwitchFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -113,8 +112,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiSwitchBlock switchBlock = tryCast(element instanceof PsiSwitchBlock ? element : element.getParent(), PsiSwitchBlock.class);
       if (switchBlock == null) return;
       Replacer replacer = findReplacer(switchBlock);
@@ -126,7 +124,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
   private static final class ReturningReplacer implements Replacer {
     private final PsiReturnStatement myReturnStatement;
 
-    private ReturningReplacer(PsiReturnStatement returnStatement) {myReturnStatement = returnStatement;}
+    private ReturningReplacer(PsiReturnStatement returnStatement) { myReturnStatement = returnStatement; }
 
     @Override
     public void replace(PsiSwitchBlock block) {
@@ -215,10 +213,14 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       for (PsiSwitchLabeledRuleStatement rule : rules) {
         CommentTracker ct = new CommentTracker();
         branchTrackers.add(ct);
-        String generate = generateBranch(rule, ct, switchCopy);
+        String generate = collectCommentsBefore(rule, mainCommentTracker);
+        generate += generateBranch(rule, ct, switchCopy);
         PsiCaseLabelElementList labelElementList = rule.getCaseLabelElementList();
         int caseCount = labelElementList == null ? 1 : labelElementList.getElementCount();
         caseCounts.add(caseCount);
+        if (joiner.length() != 0 && generate.startsWith("\n")) {
+          generate = generate.substring(1);
+        }
         joiner.add(generate);
         mainCommentTracker.markUnchanged(rule);
         addDefaultBranch &= !SwitchUtils.isDefaultLabel(rule);
@@ -247,10 +249,27 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       return newBlock;
     }
 
+    @NotNull
+    private static String collectCommentsBefore(@NotNull PsiSwitchLabeledRuleStatement rule, @NotNull CommentTracker ct) {
+      List<String> lists = new ArrayList<>();
+      PsiElement previous = rule.getPrevSibling();
+      while (true) {
+        if (previous instanceof PsiComment || previous instanceof PsiWhiteSpace) {
+          lists.add(ct.text(previous));
+          previous = previous.getPrevSibling();
+        }
+        else {
+          break;
+        }
+      }
+      Collections.reverse(lists);
+      return String.join("", lists);
+    }
+
     // rule changes inside, must be copied
     private String generateBranch(PsiSwitchLabeledRuleStatement rule,
-                                         CommentTracker ct,
-                                         PsiSwitchBlock switchBlock) {
+                                  CommentTracker ct,
+                                  PsiSwitchBlock switchBlock) {
       StreamEx.ofTree((PsiElement)rule, el -> StreamEx.of(el.getChildren()))
         .select(PsiYieldStatement.class)
         .filter(statement -> statement.getExpression() != null && statement.findEnclosingExpression() == switchBlock)
@@ -260,20 +279,38 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       if (labelElementList == null || labelElementList.getElementCount() == 0) {
         if (SwitchUtils.isDefaultLabel(rule)) {
           caseExpressionsText = "default:";
-        } else {
+        }
+        else {
           caseExpressionsText = "case:";
         }
-      } else {
+      }
+      else {
         PsiCaseLabelElement[] labelElements = labelElementList.getElements();
-        caseExpressionsText = StreamEx.of(labelElements).map(e -> "case " + ct.text(e) + ":").joining("\n");
+        if (ContainerUtil.exists(labelElements, label -> label instanceof PsiPattern)) {
+          //to preserve the style, when labels are listed separated by commas
+          PsiExpression guardExpression = rule.getGuardExpression();
+          String guardText = guardExpression == null ? "" : " when " + ct.text(guardExpression);
+          caseExpressionsText = StreamEx.of(labelElements)
+            .map(e -> ct.text(e))
+            .joining(",", "case " , guardText + ":");
+        }
+        else {
+          caseExpressionsText = StreamEx.of(labelElements)
+            .map(e -> e instanceof PsiDefaultCaseLabelElement ?
+                      (ct.text(e) + ":") :
+                      ("case " + ct.text(e) + ":"))
+            .joining("\n");
+        }
       }
       PsiStatement body = rule.getBody();
       String finalBody;
       if (body == null) {
         finalBody = "";
-      } else if (!(body instanceof PsiBlockStatement)) {
+      }
+      else if (!(body instanceof PsiBlockStatement)) {
         finalBody = generateExpressionBranch(body, ct);
-      } else {
+      }
+      else {
         finalBody = generateBlockBranch(body, ct);
       }
       ct.grabComments(rule);
@@ -281,9 +318,20 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
     }
 
     String generateBlockBranch(@NotNull PsiStatement statement, CommentTracker ct) {
-      return StreamEx.of(ControlFlowUtils.unwrapBlock(statement))
-        .map(ct::text)
-        .joining("\n");
+      if (statement instanceof PsiBlockStatement blockStatement) {
+        StringBuilder builder = new StringBuilder();
+        PsiCodeBlock block = blockStatement.getCodeBlock();
+        for (PsiElement element = block.getLBrace(); element != null && element != block.getRBrace(); element = element.getNextSibling()) {
+          if (element == block.getLBrace() || element == block.getRBrace()) {
+            continue;
+          }
+          builder.append(ct.text(element));
+        }
+        return builder.toString().strip();
+      }
+      else {
+        return ct.text(statement);
+      }
     }
 
     abstract void handleYieldInside(@NotNull PsiYieldStatement yieldStatement, CommentTracker ct);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions.internal.benchmark
 
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
-import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.codeInsight.navigation.openFileWithPsiElement
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -24,12 +24,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.addBoxWithLabel
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.collectSuitableKotlinFiles
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.shuffledSequence
-import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.*
@@ -157,7 +157,7 @@ class HighlightingBenchmarkAction : AnAction() {
     private suspend fun openFileAndMeasureTimeToHighlight(file: KtFile, project: Project, finishListener: DaemonFinishListener): Result {
         LOG.warn("Processing file " + file.virtualFilePath)
 
-        NavigationUtil.openFileWithPsiElement(file.navigationElement, true, true)
+        openFileWithPsiElement(file.navigationElement, true, true)
         val location = file.virtualFile.path
 
         val lines = file.getLineCount()
@@ -184,7 +184,7 @@ class HighlightingBenchmarkAction : AnAction() {
 
         val maxSeverity = model.allHighlighters
             .mapNotNull { highlighter ->
-                val info = highlighter.errorStripeTooltip as? HighlightInfo ?: return@mapNotNull null
+                val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return@mapNotNull null
                 info.severity
             }.maxWithOrNull(severityRegistrar)
         return Result.Success(location, lines, analysisTime, maxSeverity?.myName ?: "clean")

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.OverrideOnly
 open class MergeDialogCustomizer {
   companion object {
-    val DEFAULT_CUSTOMIZER_LIST = DiffEditorTitleCustomizerList(null, null, null)
+    val DEFAULT_CUSTOMIZER_LIST: DiffEditorTitleCustomizerList = DiffEditorTitleCustomizerList(null, null, null)
   }
 
   /**

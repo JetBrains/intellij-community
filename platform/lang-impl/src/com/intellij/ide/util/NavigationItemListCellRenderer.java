@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -7,7 +7,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
-import com.intellij.navigation.PsiElementNavigationItem;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -21,9 +21,9 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
@@ -77,12 +77,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
     return this;
   }
 
-  static PsiElement getPsiElement(Object o) {
-    return o instanceof PsiElement ? (PsiElement)o :
-           o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() : null;
-  }
-
-  private static class LeftRenderer extends ColoredListCellRenderer {
+  private static final class LeftRenderer extends ColoredListCellRenderer {
     public final boolean myRenderLocation;
     private final Matcher myMatcher;
 
@@ -121,7 +116,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
           isProblemFile = false;
         }
 
-        PsiElement psiElement = getPsiElement(item);
+        PsiElement psiElement = PSIRenderingUtils.getPsiElement(item);
 
         if (psiElement != null && psiElement.isValid()) {
           Project project = psiElement.getProject();
@@ -129,9 +124,11 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
           VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
           isProblemFile = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
 
-          Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
-          if (fileColor != null) {
-            bgColor = fileColor;
+          try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333526, EA-659478")) {
+            Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
+            if (fileColor != null) {
+              bgColor = fileColor;
+            }
           }
         }
 

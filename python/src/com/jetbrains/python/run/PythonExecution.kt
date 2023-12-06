@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.vfs.encoding.EncodingManager
@@ -13,8 +14,12 @@ import java.nio.charset.Charset
  */
 @ApiStatus.Experimental
 sealed class PythonExecution {
-  var workingDir: TargetEnvironmentFunction<out String?>? = null
+  /**
+   * Path to workdir on target
+   */
+  var workingDir: TargetEnvironmentFunction<out FullPathOnTarget?>? = null
 
+  /** Parameters that return [SKIP_ARGUMENT] are removed from the resulting argument list. */
   val parameters: MutableList<TargetEnvironmentFunction<String>> = mutableListOf()
 
   val envs: MutableMap<String, TargetEnvironmentFunction<String>> = mutableMapOf()
@@ -23,10 +28,20 @@ sealed class PythonExecution {
 
   var inputFile: File? = null
 
+  /** A place to store additional interpreter parameters, that are not set in a run configuration.
+
+   * Originally added to pass though additional parameters from [com.jetbrains.python.debugger.PyDebugRunner]
+   * which originally were lost.
+   *
+   * @see PythonCommandLineState.startProcess
+   * */
+  val additionalInterpreterParameters: MutableList<String> = mutableListOf()
+
   fun addParameter(value: String) {
     addParameter(constant(value))
   }
 
+  /** If the function returns [SKIP_ARGUMENT], the parameter will be removed from the resulting argument list. */
   fun addParameter(value: TargetEnvironmentFunction<String>) {
     parameters.add(value)
   }
@@ -60,6 +75,12 @@ sealed class PythonExecution {
     fun visit(pythonScriptExecution: PythonScriptExecution)
 
     fun visit(pythonModuleExecution: PythonModuleExecution)
+  }
+
+  companion object {
+    /** See docs for [parameters]. */
+    // python -c 'print(repr(__import__("random").randbytes(16))[2:-1])'
+    const val SKIP_ARGUMENT = """\xdc'S>\x02\x03%\x14\xee\xc0\xa1`\xcb\r\xf0\x95"""
   }
 }
 

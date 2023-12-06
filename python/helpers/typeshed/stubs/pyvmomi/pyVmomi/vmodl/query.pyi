@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from pyVmomi.vim import ManagedEntity
@@ -13,12 +14,12 @@ class PropertyCollector:
 
     class TraversalSpec:
         def __init__(
-            self, *, path: str = ..., skip: bool = ..., type: type[ContainerView] = ..., **kwargs: Any  # incomplete
+            self, *, path: str = ..., skip: bool = ..., type: type[ContainerView] = ..., **kwargs: Incomplete
         ) -> None: ...
         path: str
         skip: bool
         type: type[ContainerView]
-        def __getattr__(self, name: str) -> Any: ...  # incomplete
+        def __getattr__(self, name: str) -> Incomplete: ...
 
     class RetrieveOptions:
         def __init__(self, *, maxObjects: int | None = ...) -> None: ...
@@ -38,19 +39,17 @@ class PropertyCollector:
             *,
             propSet: list[PropertyCollector.PropertySpec] = ...,
             objectSet: list[PropertyCollector.ObjectSpec] = ...,
-            **kwargs: Any,  # incomplete
+            **kwargs: Incomplete,
         ) -> None: ...
         propSet: list[PropertyCollector.PropertySpec]
         objectSet: list[PropertyCollector.ObjectSpec]
-        def __getattr__(self, name: str) -> Any: ...  # incomplete
+        def __getattr__(self, name: str) -> Incomplete: ...
 
     class ObjectContent:
-        def __init__(
-            self, *, obj: ManagedEntity = ..., propSet: list[DynamicProperty] = ..., **kwargs: Any  # incomplete
-        ) -> None: ...
+        def __init__(self, *, obj: ManagedEntity = ..., propSet: list[DynamicProperty] = ..., **kwargs: Incomplete) -> None: ...
         obj: ManagedEntity
         propSet: list[DynamicProperty]
-        def __getattr__(self, name: str) -> Any: ...  # incomplete
+        def __getattr__(self, name: str) -> Incomplete: ...
 
     class RetrieveResult:
         def __init__(self, *, objects: list[PropertyCollector.ObjectContent] = ..., token: str | None = ...) -> None: ...
@@ -60,4 +59,4 @@ class PropertyCollector:
         self, specSet: list[PropertyCollector.FilterSpec], options: PropertyCollector.RetrieveOptions
     ) -> PropertyCollector.RetrieveResult: ...
     def ContinueRetrievePropertiesEx(self, token: str) -> PropertyCollector.RetrieveResult: ...
-    def __getattr__(self, name: str) -> Any: ...  # incomplete
+    def __getattr__(self, name: str) -> Incomplete: ...

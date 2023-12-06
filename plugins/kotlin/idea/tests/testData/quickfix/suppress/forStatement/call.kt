@@ -1,9 +1,10 @@
-// "Suppress 'REDUNDANT_NULLABLE' for statement " "true"
+// "Suppress 'DIVISION_BY_ZERO' for statement " "true"
 
 fun foo() {
-    call("" as String?<caret>?)
+    call(2 / <caret>0)
 }
 
-fun call(s: String?) {}
+fun call(i: Int) {}
 
-// IGNORE_FIR
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

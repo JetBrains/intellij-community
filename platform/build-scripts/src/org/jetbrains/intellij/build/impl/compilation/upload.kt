@@ -1,22 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.github.luben.zstd.Zstd
 import com.github.luben.zstd.ZstdDirectBufferCompressingStreamNoFinalizer
-import com.intellij.diagnostic.telemetry.forkJoinTask
-import com.intellij.diagnostic.telemetry.use
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import okio.*
+import okio.BufferedSink
+import okio.use
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -24,7 +26,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
@@ -70,7 +72,7 @@ internal fun uploadArchives(reportStatisticValue: (key: String, value: String) -
     }
 
     forkJoinTask(spanBuilder("upload archive").setAttribute("name", item.name).setAttribute("hash", item.hash!!)) {
-      val isUploaded = uploadFile(url = "${config.serverUrl}/$uploadPrefix/${item.name}/${item.hash!!}.jar",
+      val isUploaded = uploadFile(url = "${config.serverUrl}/$UPLOAD_PREFIX/${item.name}/${item.hash!!}.jar",
                                   file = item.archive,
                                   useHead = fallbackToHeads,
                                   span = Span.current(),

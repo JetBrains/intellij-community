@@ -47,7 +47,7 @@ kotlin {
 
 javafx {
   version = '${context.getProperty("javafx.version")}'
-  modules = ['javafx.controls', 'javafx.fxml'#if ($context.hasLibrary("tilesfx")), 'javafx.web'#end#if ($context.hasLibrary("fxgl")), 'javafx.media'#end]
+  modules = ['javafx.controls', 'javafx.fxml'#if ($context.hasLibrary("tilesfx")), 'javafx.web', 'javafx.swing' #end#if ($context.hasLibrary("fxgl")), 'javafx.media'#end]
 }
 
 dependencies {
@@ -81,6 +81,7 @@ dependencies {
 #if ($context.hasLibrary("fxgl"))
   implementation('com.github.almasb:fxgl:#if ($context.sdkFeatureVersion >= 17)${context.getBomProperty("fxgl17.version")}#else${context.getBomProperty("fxgl11.version")}#end') {
     exclude(group: 'org.openjfx')
+    exclude(group: 'org.jetbrains.kotlin')
   }
 #end
 

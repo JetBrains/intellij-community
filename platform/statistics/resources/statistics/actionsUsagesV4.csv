@@ -1591,7 +1591,7 @@ RunnerActionsTouchbar,,PLATFORM,1,2,300609
 Documentation.ToggleShowInPopup,,PLATFORM,1,1,300609
 SpaceVcsHistoryToolbar,,PLATFORM,1,1,300609
 GWT.GenerateCompileReport,com.intellij.gwt,JB_NOT_BUNDLED,1,1,300609
-DatabaseView.ForgetSchemaAction,com.intellij.database,JB_BUNDLED,1,2,300609
+DatabaseView.ForgetModelAction,com.intellij.database,JB_BUNDLED,1,2,300609
 com.jetbrains.rdclient.actions.base.BackendCustomComponentAction,,PLATFORM,1,5,300609
 MarkSourceRoot,,PLATFORM,1,1,300609
 GotoPrevElementUnderCaretUsage,,PLATFORM,1,1,300609

@@ -4,3 +4,4 @@ fun f() {
     val v : List<Int> = ArrayList(listOf())
     foo(<caret>v)
 }
+// IGNORE_K2

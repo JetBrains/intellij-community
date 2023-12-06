@@ -1,16 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.LazyRangeMarkerFactory;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -22,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -42,7 +40,7 @@ import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.io.File;
-import java.util.Objects;
+import java.util.*;
 
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
   implements XLineBreakpoint<P> {
@@ -82,6 +80,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     }
 
     ReadAction.nonBlocking(() -> {
+      if (isDisposed()) return;
+
       // try not to decompile files
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document == null) {
@@ -109,9 +109,11 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
       Document finalDocument = document;
       ApplicationManager.getApplication().invokeLater(() -> {
+        if (isDisposed()) return;
+
         if (myHighlighter != null && !(myHighlighter instanceof RangeHighlighter)) {
           removeHighlighter();
-          myHighlighter = null;
+          assert myHighlighter == null;
         }
 
         TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
@@ -130,6 +132,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
              // and highlighter is removed on line and file change anyway
               /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {
           removeHighlighter();
+          redrawInlineInlays();
           highlighter = null;
         }
 
@@ -161,6 +164,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
           highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
           myHighlighter = highlighter;
+
+          redrawInlineInlays();
         }
         else {
           markupModel = null;
@@ -172,7 +177,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), false);
           if (markupModel != null) {
             // renderersChanged false - we don't change gutter size
-            markupModel.fireAttributesChanged((RangeHighlighterEx)highlighter, false, false);
+            MarkupEditorFilter filter = highlighter.getEditorFilter();
+            highlighter.setEditorFilter(MarkupEditorFilter.EMPTY);
+            highlighter.setEditorFilter(filter); // to fireChanged
           }
         }
 
@@ -243,6 +250,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   @Override
   protected void doDispose() {
     removeHighlighter();
+    redrawInlineInlays();
   }
 
   private void removeHighlighter() {
@@ -257,6 +265,25 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     }
   }
 
+  private void redrawInlineInlays() {
+    redrawInlineInlays(getFile(), getLine());
+  }
+
+  private void redrawInlineInlays(@Nullable VirtualFile file, int line) {
+    if (!XDebuggerUtil.areInlineBreakpointsEnabled()) return;
+
+    if (file == null) return;
+
+    var document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return;
+
+    if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
+      document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
+    }
+
+    InlineBreakpointInlayManager.getInstance(getProject()).redrawLine(document, line);
+  }
+
   @Override
   protected GutterDraggableObject createBreakpointDraggableObject() {
     return new GutterDraggableObject() {
@@ -266,7 +293,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(getProject());
           XBreakpointManagerImpl breakpointManager = debuggerManager.getBreakpointManager();
           if (isCopyAction(actionId)) {
-            WriteAction.run(() -> breakpointManager.copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
+            breakpointManager.copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line);
           }
           else {
             setFileUrl(file.getUrl());
@@ -283,7 +310,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
       @Override
       public void remove() {
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(getProject(), XLineBreakpointImpl.this);
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(XLineBreakpointImpl.this);
       }
 
       @Override
@@ -295,7 +322,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         return DragSource.DefaultMoveNoDrop;
       }
 
-      private boolean isCopyAction(int actionId) {
+      private static boolean isCopyAction(int actionId) {
         return (actionId & DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY;
       }
     };
@@ -309,18 +336,27 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return false;
   }
 
+  int getOffset() {
+    return myHighlighter != null && myHighlighter.isValid() ? myHighlighter.getStartOffset() : -1;
+  }
+
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
-      setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()), false);
-      mySourcePosition = null; // need to clear this no matter what as the offset may be cached inside
+      mySourcePosition = null; // reset the source position even if the line number has not changed, as the offset may be cached inside
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-323746, EA-674953")) {
+        setLine(myHighlighter.getDocument().getLineNumber(getOffset()), false);
+      }
     }
   }
 
   public void setFileUrl(final String newUrl) {
     if (!Objects.equals(getFileUrl(), newUrl)) {
+      var oldFile = getFile();
       myState.setFileUrl(newUrl);
       mySourcePosition = null;
       removeHighlighter();
+      redrawInlineInlays(oldFile, getLine());
+      redrawInlineInlays(getFile(), getLine());
       fireBreakpointChanged();
     }
   }
@@ -330,13 +366,16 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     setLine(line, true);
   }
 
-  private void setLine(final int line, boolean removeHighlighter) {
+  private void setLine(final int line, boolean visualLineMightBeChanged) {
     if (getLine() != line) {
+      var oldLine = getLine();
       myState.setLine(line);
       mySourcePosition = null;
-      if (removeHighlighter) {
+      if (visualLineMightBeChanged) {
         removeHighlighter();
-      }
+        redrawInlineInlays(getFile(), oldLine);
+        redrawInlineInlays(getFile(), getLine());
+      } // otherwise highlighter and inlay would move together with line
       fireBreakpointChanged();
     }
   }

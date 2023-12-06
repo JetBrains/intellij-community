@@ -15,10 +15,10 @@ import javax.swing.tree.TreePath
 @Tag("profile-state")
 internal class VisibleTreeState : BaseState() {
   @get:XCollection(elementName = "expanded", valueAttributeName = "path", propertyElementName = "expanded-state")
-  var expandedNodes by treeSet<State>()
+  var expandedNodes: MutableSet<State> by treeSet()
 
   @get:XCollection(elementName = "selected", valueAttributeName = "path", propertyElementName = "selected-state")
-  var selectedNodes by treeSet<State>()
+  var selectedNodes: MutableSet<State> by treeSet()
 
   fun expandNode(node: InspectionConfigTreeNode) {
     expandedNodes.add(getState(node))
@@ -97,12 +97,12 @@ internal class VisibleTreeState : BaseState() {
 
   internal class State @JvmOverloads constructor(key: String? = null): Comparable<State>, BaseState() {
     @get:Tag("id")
-    var key by string()
+    var key: String? by string()
 
     init {
       this.key = key
     }
 
-    override fun compareTo(other: State) = StringUtil.compare(key, other.key, false)
+    override fun compareTo(other: State): Int = StringUtil.compare(key, other.key, false)
   }
 }

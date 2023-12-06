@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -143,13 +129,26 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     doTest("bar.B", "bar.A", 0);
   }
 
+  public void testStaticClassInitializer() {
+    doTest("B", "A", 0);
+  }
+
+  public void testStaticClassInitializerToInterface() {
+    try {
+      doTest("B", "A", 0);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Static class initializers are not allowed in interfaces.", e.getMessage());
+    }
+  }
+
   public void testWritableField() {
     try {
       doTest("B", "A", 0);
       fail("conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Field <b><code>B.ONE</code></b> has write access but is moved to an interface", e.getMessage());
+      assertEquals("Field <b><code>B.ONE</code></b> is written to, but an interface is only allowed to contain constants.", e.getMessage());
     }
   }
   
@@ -159,7 +158,27 @@ public class MoveMembersTest extends LightMultiFileTestCase {
       fail("conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("final variable initializer won't be available after move.", e.getMessage());
+      assertEquals("The initializer of final field <b><code>B.ONE</code></b> will be left behind.", e.getMessage());
+    }
+  }
+
+  public void testEnumConstantToInterface() {
+    try {
+      doTest("B", "A", 0);
+      fail("conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Enum constant <b><code>B.A</code></b> won't be compilable when moved to class <b><code>A</code></b>.", e.getMessage());
+    }
+  }
+
+  public void testNonConstantToInterface() {
+    try {
+      doTest("B", "A", 0);
+      fail("conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Non-constant field <b><code>B.i</code></b> will not be compilable when moved to an interface.", e.getMessage());
     }
   }
 
@@ -192,6 +211,10 @@ public class MoveMembersTest extends LightMultiFileTestCase {
   
   public void testEscalateVisibility1() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
+  }
+
+  public void testEscalateVisibilityWhenMoveStaticMemberToStaticClass() {
+    doTest("pack.A", "pack.A.B", true, VisibilityUtil.ESCALATE_VISIBILITY, 1, 2);
   }
 
   public void testStringConstantInSwitchLabelExpression() {

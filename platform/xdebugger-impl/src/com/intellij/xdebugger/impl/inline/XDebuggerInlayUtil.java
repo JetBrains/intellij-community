@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -14,6 +15,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
@@ -27,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class XDebuggerInlayUtil {
   public static final String INLINE_HINTS_DELIMETER = ":";
   @NotNull private final Project myProject;
@@ -61,7 +64,7 @@ public final class XDebuggerInlayUtil {
             }
           }
           DebuggerUIUtil.repaintCurrentEditor(project); // to update inline debugger data
-        }, project.getDisposed());
+        }, ModalityState.nonModal(), project.getDisposed());
       }
     });
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
@@ -78,7 +81,7 @@ public final class XDebuggerInlayUtil {
     if (valueNode.getValuePresentation() != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
         createInlayInt(session, new InlineDebugRenderer(valueNode, position, session));
-      }, session.getProject().getDisposed());
+      }, ModalityState.nonModal(), session.getProject().getDisposed());
       return true;
     }
     return false;
@@ -87,11 +90,22 @@ public final class XDebuggerInlayUtil {
   private static void createInlayInt(@NotNull XDebugSession session, InlineDebugRenderer renderer) {
     EDT.assertIsEdt();
     XSourcePosition position = renderer.getPosition();
-    FileEditor editor = FileEditorManager.getInstance(session.getProject()).getSelectedEditor(position.getFile());
+    FileEditor editor = XDebuggerUtil.getInstance().getSelectedEditor(session.getProject(), position.getFile());
     if (editor instanceof TextEditor) {
       Editor e = ((TextEditor)editor).getEditor();
-      int offset = e.getDocument().getLineEndOffset(position.getLine());
-      Inlay<InlineDebugRenderer> inlay = e.getInlayModel().addAfterLineEndElement(offset,
+      int line = position.getLine();
+      if (!DocumentUtil.isValidLine(line, e.getDocument())) return;
+      int lineStart = e.getDocument().getLineStartOffset(line);
+      int lineEnd = e.getDocument().getLineEndOffset(line);
+
+      // Don't add the same value twice.
+      List<Inlay<? extends InlineDebugRenderer>> existingInlays =
+        e.getInlayModel().getAfterLineEndElementsInRange(lineStart, lineEnd, InlineDebugRenderer.class);
+      if (ContainerUtil.exists(existingInlays, i -> i.getRenderer().getValueNode().equals(renderer.getValueNode()))) {
+        return;
+      }
+
+      Inlay<InlineDebugRenderer> inlay = e.getInlayModel().addAfterLineEndElement(lineEnd,
                                                                                   new InlayProperties()
                                                                                     .disableSoftWrapping(true)
                                                                                     .priority(renderer.isCustomNode() ? 0 : -1),
@@ -117,7 +131,7 @@ public final class XDebuggerInlayUtil {
   }
 
   public void clearInlays() {
-    ApplicationManager.getApplication().invokeLater(() -> clearInlaysInt(myProject), myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> clearInlaysInt(myProject), ModalityState.nonModal(), myProject.getDisposed());
   }
 
   private static List<Inlay> clearInlaysInEditor(@NotNull Editor editor) {

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories
 
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -12,20 +11,15 @@ import com.intellij.psi.impl.light.LightElement
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
-import org.jetbrains.kotlin.idea.refactoring.move.ContainerChangeInfo
-import org.jetbrains.kotlin.idea.refactoring.move.ContainerInfo
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
-import org.jetbrains.kotlin.idea.refactoring.move.updatePackageDirective
+import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.UserDataProperty
-
-internal var KtFile.allElementsToMove: List<PsiElement>? by UserDataProperty(Key.create("SCOPE_TO_MOVE"))
 
 class MoveKotlinFileHandler : MoveFileHandler() {
     internal class FileInfo(file: KtFile) : UsageInfo(file)
@@ -39,16 +33,16 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         override fun toString() = ""
     }
 
-    private fun KtFile.getPackageNameInfo(newParent: PsiDirectory?, clearUserData: Boolean): ContainerChangeInfo? {
+    private fun KtFile.getPackageNameInfo(newParent: PsiDirectory?, clearUserData: Boolean): MoveContainerChangeInfo? {
         val shouldUpdatePackageDirective = updatePackageDirective ?: packageMatchesDirectoryOrImplicit()
         updatePackageDirective = if (clearUserData) null else shouldUpdatePackageDirective
 
         if (!shouldUpdatePackageDirective) return null
 
         val oldPackageName = packageFqName
-        val newPackageName = newParent?.getFqNameWithImplicitPrefix() ?: return ContainerChangeInfo(
-            ContainerInfo.Package(oldPackageName),
-            ContainerInfo.UnknownPackage
+        val newPackageName = newParent?.getFqNameWithImplicitPrefix() ?: return MoveContainerChangeInfo(
+            MoveContainerInfo.Package(oldPackageName),
+            MoveContainerInfo.UnknownPackage
         )
 
         if (oldPackageName.asString() == newPackageName.asString()
@@ -56,7 +50,7 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         ) return null
         if (!newPackageName.hasIdentifiersOnly()) return null
 
-        return ContainerChangeInfo(ContainerInfo.Package(oldPackageName), ContainerInfo.Package(newPackageName))
+        return MoveContainerChangeInfo(MoveContainerInfo.Package(oldPackageName), MoveContainerInfo.Package(newPackageName))
     }
 
     fun initMoveProcessor(
@@ -72,12 +66,12 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         val project = psiFile.project
 
         val moveTarget = when (val newPackage = packageNameInfo.newContainer) {
-            ContainerInfo.UnknownPackage -> EmptyKotlinMoveTarget
+            MoveContainerInfo.UnknownPackage -> KotlinMoveTarget.Empty
 
             else -> if (newParent == null) {
                 return null
             } else {
-                KotlinMoveTargetForDeferredFile(newPackage.fqName!!, newParent.virtualFile) {
+                KotlinMoveTarget.DeferredFile(newPackage.fqName!!, newParent.virtualFile) {
                     MoveFilesOrDirectoriesUtil.doMoveFile(psiFile, newParent)
                     val file = newParent.findFile(psiFile.name) ?: error("Lost file after move")
                     file as KtFile
@@ -87,14 +81,14 @@ class MoveKotlinFileHandler : MoveFileHandler() {
 
         return MoveKotlinDeclarationsProcessor(
             MoveDeclarationsDescriptor(
-                project = project,
-                moveSource = MoveSource(psiFile),
-                moveTarget = moveTarget,
-                delegate = MoveDeclarationsDelegate.TopLevel,
-                allElementsToMove = psiFile.allElementsToMove,
-                analyzeConflicts = withConflicts,
-                searchInCommentsAndStrings = searchInCommentsAndStrings,
-                searchInNonCode = searchInNonCode,
+              project = project,
+              moveSource = KotlinMoveSource(psiFile),
+              moveTarget = moveTarget,
+              delegate = KotlinMoveDeclarationDelegate.TopLevel,
+              allElementsToMove = psiFile.allElementsToMove,
+              analyzeConflicts = withConflicts,
+              searchInCommentsAndStrings = searchInCommentsAndStrings,
+              searchInNonCode = searchInNonCode,
             )
         )
     }

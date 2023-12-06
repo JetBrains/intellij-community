@@ -2,7 +2,6 @@ package com.intellij.grazie.ide.inspection.detection
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
@@ -13,7 +12,7 @@ import com.intellij.grazie.ide.inspection.detection.problem.LanguageDetectionPro
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.PsiElement
@@ -21,9 +20,8 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 
 internal class LanguageDetectionInspection : LocalInspectionTool() {
-  companion object {
-    private val key = KeyWithDefaultValue.create("language-detection-inspection-key", DetectionContext.Local())
-  }
+
+  private val key = KeyWithDefaultValue.create("language-detection-inspection-key", DetectionContext.Local())
 
   override fun inspectionStarted(session: LocalInspectionToolSession, isOnTheFly: Boolean) {
     session.getUserData(key)!!.clear()
@@ -34,15 +32,21 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
     val context = session.getUserData(key)!!
     val languages = context.getToNotify((state.detectionContext.disabled + state.availableLanguages.map { it.toLanguage() }).toSet())
 
-    if (languages.isEmpty()) return
-
-    val descriptor = ReadAction.compute<ProblemDescriptor,RuntimeException>{ LanguageDetectionProblemDescriptor.create(holder.manager, holder.isOnTheFly, session.file, languages) }
-    holder.registerProblem(descriptor)
+    if (languages.isEmpty()) {
+      return
+    }
+    val descriptor = runReadAction {
+      LanguageDetectionProblemDescriptor.create(holder.manager, holder.isOnTheFly, session.file, languages)
+    }
+    if (descriptor != null) {
+      holder.registerProblem(descriptor)
+    }
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val file = holder.file
-    if (!isOnTheFly || InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(file) || GrazieInspection.ignoreGrammarChecking(file))
+    if (!isOnTheFly || InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(
+        file) || GrazieInspection.ignoreGrammarChecking(file))
       return PsiElementVisitor.EMPTY_VISITOR
 
     val domains = GrazieInspection.checkedDomains()

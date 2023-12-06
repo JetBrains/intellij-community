@@ -7,6 +7,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
@@ -22,7 +23,7 @@ public final class CopyPropertyKeyOrValueToClipboardIntentionTest extends BasePl
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.configureByText(PropertiesFileType.INSTANCE, "<caret>message.text=Hello, World!");
+    myFixture.configureByText(PropertiesFileType.INSTANCE, "<caret>message.text=Hello, World! This value is quite long to display in preview");
   }
 
   public void testCopyPropertyValue() throws IOException, UnsupportedFlavorException {
@@ -30,7 +31,7 @@ public final class CopyPropertyKeyOrValueToClipboardIntentionTest extends BasePl
     final Property property = getProperty();
     final String expected = property.getUnescapedValue();
 
-    doTest(actionText, expected);
+    doTest(actionText, expected, "Copy to clipboard the string &quot;Hello, World! This value is quite lon...in preview&quot;");
   }
 
   public void testCopyPropertyKey() throws IOException, UnsupportedFlavorException {
@@ -38,11 +39,13 @@ public final class CopyPropertyKeyOrValueToClipboardIntentionTest extends BasePl
     final Property property = getProperty();
     final String expected = property.getUnescapedKey();
 
-    doTest(actionText, expected);
+    doTest(actionText, expected, "Copy to clipboard the string &quot;message.text&quot;");
   }
 
-  private void doTest(String actionText, String expected) throws UnsupportedFlavorException, IOException {
+  private void doTest(String actionText, String expected, @Language("HTML") String expectedPreview) 
+    throws UnsupportedFlavorException, IOException {
     final IntentionAction action = getAction(actionText);
+    myFixture.checkIntentionPreviewHtml(action, expectedPreview);
     action.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
     final Object actual = CopyPasteManager.getInstance().getContents().getTransferData(DataFlavor.stringFlavor);
 
@@ -50,7 +53,7 @@ public final class CopyPropertyKeyOrValueToClipboardIntentionTest extends BasePl
   }
 
   private @NotNull Property getProperty() {
-    final Property property = CopyPropertyValueToClipboardIntention.getProperty(myFixture.getEditor(), myFixture.getFile());
+    final Property property = CopyPropertyValueToClipboardIntention.getProperty(myFixture.getActionContext());
     assert property != null : "A property at the caret not found";
     return property;
   }

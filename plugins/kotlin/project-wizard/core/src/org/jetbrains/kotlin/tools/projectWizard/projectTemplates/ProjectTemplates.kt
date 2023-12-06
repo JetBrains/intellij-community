@@ -286,7 +286,7 @@ object FrontendApplicationProjectTemplate : ProjectTemplate() {
         get() = KotlinIcons.Wizard.JS
 
     override fun isVisible(): Boolean =
-        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
+        Registry.`is`("kotlin.js.wizard", false)
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
@@ -317,7 +317,7 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
         get() = KotlinIcons.Wizard.REACT_JS
 
     override fun isVisible(): Boolean =
-        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
+        Registry.`is`("kotlin.js.wizard", false)
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
@@ -414,7 +414,7 @@ object NodeJsApplicationProjectTemplate : ProjectTemplate() {
         get() = KotlinIcons.Wizard.NODE_JS
 
     override fun isVisible(): Boolean =
-        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
+        Registry.`is`("kotlin.js.wizard", false)
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"

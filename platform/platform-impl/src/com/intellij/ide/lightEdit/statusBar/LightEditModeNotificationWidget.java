@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.statusBar;
 
 import com.intellij.ide.DataManager;
@@ -110,19 +110,18 @@ public final class LightEditModeNotificationWidget implements CustomStatusBarWid
     return tooltip;
   }
 
-  @NotNull
-  private static @Nls String getTooltipHtml() {
+  private static @NotNull @Nls String getTooltipHtml() {
     HtmlChunk.Element link = HtmlChunk.link("", ApplicationBundle.message("light.edit.status.bar.notification.tooltip.link.text"));
     link = link.child(HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow"));
     @NlsSafe String pTag = "<p>";
-    String tooltipText = ApplicationBundle.message("light.edit.status.bar.notification.tooltip") + pTag + link.toString();
+    String tooltipText = ApplicationBundle.message("light.edit.status.bar.notification.tooltip") + pTag + link;
     tooltipText = tooltipText.replace(pTag, HtmlChunk.tag("p").style("padding: " + JBUI.scale(3) + "px 0 0 0").toString());
     return tooltipText;
   }
 
   private void showPopupMenu(@NotNull JComponent actionLink) {
     if (!myPopupState.isRecentlyHidden()) {
-      DataManager.registerDataProvider(actionLink, dataId -> {
+      addDataProvider(actionLink, dataId -> {
         if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
           return LightEditService.getInstance().getSelectedFile();
         }
@@ -135,6 +134,16 @@ public final class LightEditModeNotificationWidget implements CustomStatusBarWid
       myPopupState.prepareToShow(menu);
       JBPopupMenu.showAbove(actionLink, menu);
     }
+  }
+
+  private static void addDataProvider(@NotNull JComponent component, @NotNull DataProvider dataProvider) {
+    DataProvider prev = DataManager.getDataProvider(component);
+    DataProvider result = dataProvider;
+    if (prev != null) {
+      DataManager.removeDataProvider(component);
+      result = CompositeDataProvider.compose(prev, dataProvider);
+    }
+    DataManager.registerDataProvider(component, result);
   }
 
   private static @NotNull ActionGroup createAccessFullIdeActionGroup() {
@@ -150,7 +159,7 @@ public final class LightEditModeNotificationWidget implements CustomStatusBarWid
     );
   }
 
-  private static class LightEditDelegatingAction extends DumbAwareAction implements LightEditCompatible {
+  private static final class LightEditDelegatingAction extends DumbAwareAction implements LightEditCompatible {
     private final AnAction myDelegate;
 
     private LightEditDelegatingAction(@Nullable AnAction delegate, @NotNull Supplier<@Nls String> textSupplier) {

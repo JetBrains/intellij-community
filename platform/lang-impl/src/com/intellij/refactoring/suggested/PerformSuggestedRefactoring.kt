@@ -62,6 +62,19 @@ internal fun performSuggestedRefactoring(
                 ?.let {
                   it.refactoringSupport.availability.refineSignaturesWithResolve(it)
                 } ?: return
+  performSuggestedRefactoring(state, originalEditor, project, actionPlace, showReviewBalloon, popupAnchorComponent, popupAnchorPoint)
+}
+
+/**
+ * Launch suggested refactoring based on the specified state
+ */
+fun performSuggestedRefactoring(state: SuggestedRefactoringState,
+                                originalEditor: Editor,
+                                project: Project,
+                                actionPlace: String,
+                                showReviewBalloon: Boolean,
+                                popupAnchorComponent: JComponent?,
+                                popupAnchorPoint: Point?) {
   if (state.errorLevel != ErrorLevel.NO_ERRORS || state.oldSignature == state.newSignature) return
   val refactoringSupport = state.refactoringSupport
 

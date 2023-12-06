@@ -130,7 +130,7 @@ Gradle reports tests execution status sending XML messages to IDEA.
 execution and reporting their status. See `GradleConstants.INIT_SCRIPT_CMD_OPTION` (Gradle Plugin).
 `KotlinTestTasksResolver.enhanceTaskProcessing()` and `JavaGradleProjectResolver.enhanceTaskProcessing()` are the places where init script
 is assembled. The first one adds `addKotlinMppTestListener.groovy` and `KotlinMppTestLogger.groovy`, the second - `addTestListener.groovy`
-and `IJTestEventLogger`. Loggers are the classes responsible for XML messages generation. 
+and `IjTestEventLogger`. Loggers are the classes responsible for XML messages generation. 
 
 An important part related to test naming resides in `TCServiceMessagesClient` (class resides in
 [Kotlin Gradle Plugin](https://github.com/JetBrains/kotlin/tree/master/libraries/tools/kotlin-gradle-plugin)) 

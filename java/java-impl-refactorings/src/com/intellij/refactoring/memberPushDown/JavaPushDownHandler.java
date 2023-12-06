@@ -5,7 +5,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -20,7 +19,6 @@ import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +30,8 @@ import java.util.Set;
 public class JavaPushDownHandler implements ElementsHandler, ContextAwareActionHandler {
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    final List<PsiElement> elements = getElements(editor, file, true);
+    final List<PsiElement> elements =
+      CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, PsiCodeBlock.class, e -> e instanceof PsiMember);
     if (elements.isEmpty()) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
     if (psiClass == null) return false;
@@ -43,28 +42,8 @@ public class JavaPushDownHandler implements ElementsHandler, ContextAwareActionH
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-    List<PsiElement> elements = getElements(editor, file, false);
+    List<PsiElement> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, e ->  e instanceof PsiMember);
     invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
-  }
-
-  private static List<PsiElement> getElements(Editor editor, PsiFile file, boolean stopAtCodeBlock) {
-    List<PsiElement> elements = new SmartList<>();
-    for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      int offset = caret.getOffset();
-      PsiElement element = file.findElementAt(offset);
-      while (element != null && !(element instanceof PsiFile)) {
-        if (stopAtCodeBlock && element instanceof PsiCodeBlock) {
-          break;
-        }
-
-        if (element instanceof PsiMember) {
-          elements.add(element);
-          break;
-        }
-        element = element.getParent();
-      }
-    }
-    return elements;
   }
 
   @Override

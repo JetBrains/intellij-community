@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.list
 
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.*
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.PopupHandler
@@ -28,10 +30,10 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
       DataManager.registerDataProvider(it) { dataId ->
         if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) it.selectedValue else null
       }
-      val groupId = "Github.PullRequest.ToolWindow.List.Popup"
-      PopupHandler.installSelectionListPopup(it, ActionManager.getInstance().getAction(groupId) as ActionGroup, groupId)
+      val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup
+      PopupHandler.installPopupMenu(it, actionGroup, ActionPlaces.POPUP)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
-      EmptyAction.registerWithShortcutSet("Github.PullRequest.Show", shortcuts, it)
+      ActionUtil.wrap("Github.PullRequest.Show").registerCustomShortcutSet(shortcuts, it)
     }
   }
 
@@ -81,13 +83,13 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): UserPresentation? {
     if (user == null) return null
-    return UserPresentation.Simple(user.login, null, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
+    return UserPresentation.Simple(user.login, null, avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE))
   }
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHUser): UserPresentation =
-    UserPresentation.Simple(user.login, user.name, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
+    UserPresentation.Simple(user.login, user.name, avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE))
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHPullRequestRequestedReviewer): UserPresentation {
-    return UserPresentation.Simple(user.shortName, user.name, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
+    return UserPresentation.Simple(user.shortName, user.name, avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE))
   }
 }

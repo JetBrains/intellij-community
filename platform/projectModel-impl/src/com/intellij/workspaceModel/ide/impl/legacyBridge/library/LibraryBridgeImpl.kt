@@ -18,22 +18,22 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
-import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -75,8 +75,7 @@ class LibraryBridgeImpl(
     LibraryStateSnapshot(
       libraryEntity = storage.findLibraryEntity(this) ?: error("Cannot find entity for library with ID $entityId"),
       storage = storage,
-      libraryTable = libraryTable,
-      parentDisposable = this
+      libraryTable = libraryTable
     )
   }
 
@@ -97,8 +96,18 @@ class LibraryBridgeImpl(
     return "Library '$name', roots: ${librarySnapshot.libraryEntity.roots}"
   }
 
+  /**
+   * **Please think twice before the usage.** This method was introduced to avoid redundant copying of
+   * the storage. You can use it only if you are sure that you wouldn't roll back your changes, and
+   * they will be applied by the parent modifiable model.
+   */
+  fun getModifiableModelToTargetBuilder(): LibraryEx.ModifiableModelEx {
+    val mutableEntityStorage = targetBuilder ?: error("Unexpected state. Target builder has to be not null")
+    return getModifiableModel(mutableEntityStorage)
+  }
+
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
-    return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage))
+    return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage.toSnapshot()))
   }
 
   override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {

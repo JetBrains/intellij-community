@@ -1,0 +1,7 @@
+0(1) element: null
+1(2) element: PyFunction('f')
+2(3) READ ACCESS: int
+3(4) READ ACCESS: int
+4(5) READ ACCESS: str
+5(6) WRITE ACCESS: f
+6() element: null

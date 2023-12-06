@@ -13,6 +13,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -29,9 +30,13 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
   private final String myFunctionName;
+  private final boolean myAsync;
 
   public UnresolvedRefCreateFunctionQuickFix(@NotNull PyReferenceExpression reference) {
     myFunctionName = reference.getReferencedName();
+    PyCallSiteExpression callSiteExpression = as(reference.getParent(), PyCallSiteExpression.class);
+    PyPrefixExpression prefixExpression = callSiteExpression != null ? as(callSiteExpression.getParent(), PyPrefixExpression.class) : null;
+    myAsync = prefixExpression != null && prefixExpression.getOperator() == PyTokenTypes.AWAIT_KEYWORD;
   }
 
   @Nls
@@ -75,6 +80,10 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
     }
     else {
       functionBuilder.parameter("args");
+    }
+
+    if (myAsync) {
+      functionBuilder.makeAsync();
     }
 
     PyFunction function = functionBuilder.buildFunction();

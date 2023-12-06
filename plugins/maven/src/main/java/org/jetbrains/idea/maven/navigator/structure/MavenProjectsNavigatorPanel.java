@@ -23,9 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenGoalLocation;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.model.MavenProfileKind;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
@@ -142,6 +140,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
 
     if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals(true, selectedNodes);
     if (MavenDataKeys.RUN_CONFIGURATION.is(dataId)) return extractRunSettings(selectedNodes);
+    if (MavenDataKeys.MAVEN_REPOSITORY.is(dataId)) return extractRepositoryInfo(selectedNodes);
     if (MavenDataKeys.MAVEN_PROFILES.is(dataId)) return extractProfiles(selectedNodes);
 
     if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) {
@@ -245,7 +244,18 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
     return parent;
   }
 
-  private static Object extractProfiles(@NotNull List<MavenSimpleNode> selectedNodes) {
+  @Nullable
+  private static MavenRepositoryInfo extractRepositoryInfo(@NotNull List<MavenSimpleNode> selectedNodes) {
+    List<RepositoryNode> repositoryNodes = filterNodesByClass(selectedNodes, RepositoryNode.class);
+    if (repositoryNodes == null || repositoryNodes.isEmpty()) {
+      return null;
+    }
+    RepositoryNode repositoryNode = repositoryNodes.get(0);
+    return new MavenRepositoryInfo(repositoryNode.getId(), repositoryNode.getUrl(),
+                                   repositoryNode.isLocal() ? IndexKind.LOCAL : IndexKind.REMOTE);
+  }
+
+  private static Map<String, MavenProfileKind> extractProfiles(@NotNull List<MavenSimpleNode> selectedNodes) {
     List<ProfileNode> profileNodes = filterNodesByClass(selectedNodes, ProfileNode.class);
     final Map<String, MavenProfileKind> profiles = new HashMap<>();
     for (ProfileNode node : profileNodes) {

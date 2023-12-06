@@ -5,7 +5,7 @@ Value: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt___ArraysKt.class
 Value file: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class
 
 Navigation item #0: KtFile: _Arrays.kt
-Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
+Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays.kt
 
 
 -Project
@@ -114,9 +114,6 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
        Array<out T>.contentDeepEquals(other: Array<out T>): Boolean
        Array<out T>.contentDeepHashCode(): Int
        Array<out T>.contentDeepToString(): String
-       Array<out T>.contentEquals(other: Array<out T>): Boolean
-       Array<out T>.contentHashCode(): Int
-       Array<out T>.contentToString(): String
        Array<out T>.copyInto(destination: Array<T>, destinationOffset: Int, startIndex: Int, endIndex: Int): Array<T>
        Array<out T>.count(): Int
        Array<out T>.count(predicate: (T) -> Boolean): Int
@@ -327,9 +324,6 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
        BooleanArray.component4(): Boolean
        BooleanArray.component5(): Boolean
        BooleanArray.contains(element: Boolean): Boolean
-       BooleanArray.contentEquals(other: BooleanArray): Boolean
-       BooleanArray.contentHashCode(): Int
-       BooleanArray.contentToString(): String
        BooleanArray.copyInto(destination: BooleanArray, destinationOffset: Int, startIndex: Int, endIndex: Int): BooleanArray
        BooleanArray.copyOf(): BooleanArray
        BooleanArray.copyOf(newSize: Int): BooleanArray
@@ -509,9 +503,6 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
        ByteArray.component4(): Byte
        ByteArray.component5(): Byte
        ByteArray.contains(element: Byte): Boolean
-       ByteArray.contentEquals(other: ByteArray): Boolean
-       ByteArray.contentHashCode(): Int
-       ByteArray.contentToString(): String
        ByteArray.copyInto(destination: ByteArray, destinationOffset: Int, startIndex: Int, endIndex: Int): ByteArray
        ByteArray.copyOf(): ByteArray
        ByteArray.copyOf(newSize: Int): ByteArray
@@ -703,9 +694,6 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
        CharArray.component4(): Char
        CharArray.component5(): Char
        CharArray.contains(element: Char): Boolean
-       CharArray.contentEquals(other: CharArray): Boolean
-       CharArray.contentHashCode(): Int
-       CharArray.contentToString(): String
        CharArray.copyInto(destination: CharArray, destinationOffset: Int, startIndex: Int, endIndex: Int): CharArray
        CharArray.copyOf(): CharArray
        CharArray.copyOf(newSize: Int): CharArray
@@ -897,9 +885,6 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
        DoubleArray.component4(): Double
        DoubleArray.component5(): Double
        DoubleArray.contains(element: Double): Boolean
-       DoubleArray.contentEquals(other: DoubleArray): Boolean
-       DoubleArray.contentHashCode(): Int
-       DoubleArray.contentToString(): String
        DoubleArray.copyInto(destination: DoubleArray, destinationOffset: Int, startIndex: Int, endIndex: Int): DoubleArray
        DoubleArray.copyOf(): DoubleArray
        DoubleArray.copyOf(newSize: Int): DoubleArray
@@ -1092,9 +1077,6 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
        FloatArray.component4(): Float
        FloatArray.component5(): Float
        FloatArray.contains(element: Float): Boolean
-       FloatArray.contentEquals(other: FloatArray): Boolean
-       FloatArray.contentHashCode(): Int
-       FloatArray.contentToString(): String
        FloatArray.copyInto(destination: FloatArray, destinationOffset: Int, startIndex: Int, endIndex: Int): FloatArray
        FloatArray.copyOf(): FloatArray
        FloatArray.copyOf(newSize: Int): FloatArray
@@ -1296,9 +1278,6 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
        IntArray.component4(): Int
        IntArray.component5(): Int
        IntArray.contains(element: Int): Boolean
-       IntArray.contentEquals(other: IntArray): Boolean
-       IntArray.contentHashCode(): Int
-       IntArray.contentToString(): String
        IntArray.copyInto(destination: IntArray, destinationOffset: Int, startIndex: Int, endIndex: Int): IntArray
        IntArray.copyOf(): IntArray
        IntArray.copyOf(newSize: Int): IntArray
@@ -1500,9 +1479,6 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
        LongArray.component4(): Long
        LongArray.component5(): Long
        LongArray.contains(element: Long): Boolean
-       LongArray.contentEquals(other: LongArray): Boolean
-       LongArray.contentHashCode(): Int
-       LongArray.contentToString(): String
        LongArray.copyInto(destination: LongArray, destinationOffset: Int, startIndex: Int, endIndex: Int): LongArray
        LongArray.copyOf(): LongArray
        LongArray.copyOf(newSize: Int): LongArray
@@ -1695,9 +1671,6 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
        ShortArray.component4(): Short
        ShortArray.component5(): Short
        ShortArray.contains(element: Short): Boolean
-       ShortArray.contentEquals(other: ShortArray): Boolean
-       ShortArray.contentHashCode(): Int
-       ShortArray.contentToString(): String
        ShortArray.copyInto(destination: ShortArray, destinationOffset: Int, startIndex: Int, endIndex: Int): ShortArray
        ShortArray.copyOf(): ShortArray
        ShortArray.copyOf(newSize: Int): ShortArray
@@ -1885,7 +1858,7 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
       GroupingKt
       +GroupingKt__GroupingJVMKt
       +GroupingKt__GroupingKt
-      +MapAccessorsKt
+      MapAccessorsKt
       MapsKt
       +MapsKt___MapsJvmKt
       +MapsKt___MapsKt
@@ -1896,10 +1869,10 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
       +SetsKt___SetsKt
       +SetsKt__SetsJVMKt
       +SetsKt__SetsKt
-      +SlidingWindowKt
+      SlidingWindowKt
       +TypeAliasesKt
-      +UArraySortingKt
-      +UCollectionsKt
+      UArraySortingKt
+      UCollectionsKt
       +UCollectionsKt___UCollectionsKt
      +PsiDirectory: comparisons
      +PsiDirectory: concurrent
@@ -1981,13 +1954,13 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
      +WasExperimental
      +ArrayIntrinsicsKt
      +CharCodeJVMKt
-     +CharCodeKt
-     +CompareToKt
-     +DeepRecursiveKt
+     CharCodeKt
+     CompareToKt
+     DeepRecursiveKt
      +ExceptionsKt
      +ExceptionsKt__ExceptionsKt
-     +HashCodeKt
-     +LateinitKt
+     HashCodeKt
+     LateinitKt
      LazyKt
      +LazyKt__LazyJVMKt
      +LazyKt__LazyKt
@@ -2000,24 +1973,24 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
      PreconditionsKt
      +PreconditionsKt__AssertionsJVMKt
      +PreconditionsKt__PreconditionsKt
-     +PropertyReferenceDelegatesKt
-     +ResultKt
+     PropertyReferenceDelegatesKt
+     ResultKt
      StandardKt
      +StandardKt__StandardKt
      +StandardKt__SynchronizedKt
-     +SuspendKt
+     SuspendKt
      +ThrowsKt
-     +TuplesKt
+     TuplesKt
      +TypeAliasesKt
-     +UByteArrayKt
-     +UByteKt
-     +UIntArrayKt
-     +UIntKt
-     +ULongArrayKt
-     +ULongKt
-     +UnsignedKt
-     +UNumbersKt
-     +UShortArrayKt
-     +UShortKt
+     UByteArrayKt
+     UByteKt
+     UIntArrayKt
+     UIntKt
+     ULongArrayKt
+     ULongKt
+     UnsignedKt
+     UNumbersKt
+     UShortArrayKt
+     UShortKt
     +PsiDirectory: META-INF
    +PsiDirectory: kotlin-stdlib-common.jar

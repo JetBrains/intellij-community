@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableToElement
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import kotlin.reflect.KClass
 
 /**
@@ -29,15 +29,7 @@ abstract class AbstractKotlinApplicableIntentionBase<ELEMENT : KtElement>(
      * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange]. An override must invoke
      * [setTextGetter] to configure the action name.
      */
-    override fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean {
-        if (!isApplicableByPsi(element)) return false
-        val ranges = getApplicabilityRange().getApplicabilityRanges(element)
-        if (ranges.isEmpty()) return false
-
-        // A KotlinApplicabilityRange should be relative to the element, while `caretOffset` is absolute.
-        val relativeCaretOffset = caretOffset - element.startOffset
-        return ranges.any { it.containsOffset(relativeCaretOffset) }
-    }
+    override fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean = isApplicableToElement(element, caretOffset)
 
     final override fun applyTo(element: ELEMENT, editor: Editor?) = applyTo(element, element.project, editor)
 }

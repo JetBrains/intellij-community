@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.util.Processor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -9,15 +8,16 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
  * In-memory (not persistent) implementation of {@linkplain ScannableDataEnumeratorEx} for
- * arbitrary data type. Useful as a building block for more elaborate impls, and for tests.
+ * an arbitrary data type. Useful as a building block for more elaborate impls, and for tests.
  * <br/>
  * <b>Not thread safe</b> -- external synchronization required for use in multithreaded environment.
  */
-public class InMemoryEnumerator<Data> implements ScannableDataEnumeratorEx<Data> {
+public final class InMemoryEnumerator<Data> implements ScannableDataEnumeratorEx<Data> {
 
   private final Object2IntMap<Data> idByValue = new Object2IntOpenHashMap<>();
   private final Int2ObjectMap<Data> valueById = new Int2ObjectOpenHashMap<>();
@@ -44,14 +44,19 @@ public class InMemoryEnumerator<Data> implements ScannableDataEnumeratorEx<Data>
   }
 
   @Override
-  public boolean processAllDataObjects(final @NotNull Processor<? super Data> processor) {
-    for (final Data value : idByValue.keySet()) {
-      final boolean shouldContinue = processor.process(value);
+  public boolean forEach(@NotNull ValueReader<? super Data> reader) throws IOException {
+    for (Int2ObjectMap.Entry<Data> entry : valueById.int2ObjectEntrySet()) {
+      boolean shouldContinue = reader.read(entry.getIntKey(), entry.getValue());
       if (!shouldContinue) {
         return false;
       }
     }
     return true;
+  }
+
+  @Override
+  public int recordsCount() throws IOException {
+    return valueById.size();
   }
 
   public Iterable<Data> enumeratedValues() {

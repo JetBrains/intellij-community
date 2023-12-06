@@ -115,7 +115,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
                 usageHelper.shouldCheckContributors = false;
               }
               try {
-                if (!UnusedSymbolUtil.isMethodReferenced(method.getProject(), method.getContainingFile(), method, progress, usageHelper)) {
+                if (!UnusedSymbolUtil.isMethodUsed(method.getProject(), method.getContainingFile(), method, progress, usageHelper)) {
                   String message;
                   if (method.isConstructor()) {
                     message = GroovyBundle.message("text.constructor.0.is.unused", name);
@@ -127,7 +127,8 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
                   builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedDefKey), null, unusedDefKey);
                   ContainerUtil.addIfNotNull(unusedDeclarations, builder.create());
                 }
-              } finally {
+              }
+              finally {
                 usageHelper.shouldCheckContributors = true;
               }
             }
@@ -149,7 +150,8 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         super.visitElement(element);
       }
     });
-    myUnusedImports = unusedImports(myFile);
+    Set<GrImportStatement> unusedImports;
+    myUnusedImports = unusedImports = unusedImports(myFile);
 
     if (deadCodeEnabled) {
       for (GrParameter parameter : usedParams.keySet()) {
@@ -172,6 +174,16 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     myUnusedDeclarations = unusedDeclarations;
+    List<HighlightInfo> infos = convertUnusedImportsToInfos(unusedDeclarations, unusedImports);
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myFile, myDocument, 0, myFile.getTextLength(), infos, getId());
+  }
+
+  @Override
+  public void doApplyInformationToEditor() {
+    Set<GrImportStatement> unusedImports = myUnusedImports;
+    if (myUnusedDeclarations != null && unusedImports != null) {
+      optimizeImports(unusedImports);
+    }
   }
 
   private static boolean methodMayHaveUnusedParameters(GrMethod method) {
@@ -185,7 +197,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isFieldUnused(GrField field, ProgressIndicator progress, GlobalUsageHelper usageHelper) {
-    if (!UnusedSymbolUtil.isFieldUnused(field.getProject(), field.getContainingFile(), field, progress, usageHelper)) return false;
+    if (UnusedSymbolUtil.isFieldUsed(field.getProject(), field.getContainingFile(), field, progress, usageHelper)) return false;
     final GrAccessorMethod[] getters = field.getGetters();
     final GrAccessorMethod setter = field.getSetter();
 
@@ -209,14 +221,20 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     return overrides || OverridingMethodsSearch.search(method).findFirst() != null;
   }
 
-  @Override
-  public void doApplyInformationToEditor() {
-    if (myUnusedDeclarations == null || myUnusedImports == null) {
-      return;
+  private void optimizeImports(@NotNull Collection<GrImportStatement> unusedImports) {
+    if (!unusedImports.isEmpty()) {
+      IntentionAction fix = GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(true);
+      if (fix.isAvailable(myProject, myEditor, myFile) && myFile.isWritable()) {
+        fix.invoke(myProject, myEditor, myFile);
+      }
     }
+  }
 
-    List<HighlightInfo> infos = new ArrayList<>(myUnusedDeclarations);
-    for (GrImportStatement unusedImport : myUnusedImports) {
+  @NotNull
+  private static List<HighlightInfo> convertUnusedImportsToInfos(@NotNull List<? extends HighlightInfo> unusedDeclarations,
+                                                                 @NotNull Set<? extends GrImportStatement> unusedImports) {
+    List<HighlightInfo> infos = new ArrayList<>(unusedDeclarations);
+    for (GrImportStatement unusedImport : unusedImports) {
       IntentionAction action = GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(false);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.UNUSED_SYMBOL).range(calculateRangeToUse(unusedImport))
         .descriptionAndTooltip(GroovyBundle.message("unused.import"))
@@ -226,15 +244,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         infos.add(info);
       }
     }
-
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
-
-    if (myUnusedImports != null && !myUnusedImports.isEmpty()) {
-      IntentionAction fix = GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(true);
-      if (fix.isAvailable(myProject, myEditor, myFile) && myFile.isWritable()) {
-        fix.invoke(myProject, myEditor, myFile);
-      }
-    }
+    return infos;
   }
 
 

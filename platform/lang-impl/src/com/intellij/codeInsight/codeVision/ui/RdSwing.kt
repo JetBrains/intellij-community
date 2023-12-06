@@ -57,6 +57,24 @@ fun Editor.mousePressed(): ISource<EditorMouseEvent> {
   }
 }
 
+fun Editor.mouseClicked(): ISource<EditorMouseEvent> {
+  return object : ISource<EditorMouseEvent> {
+    override fun advise(lifetime: Lifetime, handler: (EditorMouseEvent) -> Unit) {
+      val clickListener = object : EditorMouseListener {
+        override fun mouseClicked(event: EditorMouseEvent) {
+          handler(event)
+        }
+      }
+
+      this@mouseClicked.addEditorMouseListener(clickListener)
+      lifetime.onTermination {
+        this@mouseClicked.removeEditorMouseListener(clickListener)
+      }
+    }
+
+  }
+}
+
 fun Editor.mouseReleased(): ISource<EditorMouseEvent> {
   return object : ISource<EditorMouseEvent> {
     override fun advise(lifetime: Lifetime, handler: (EditorMouseEvent) -> Unit) {

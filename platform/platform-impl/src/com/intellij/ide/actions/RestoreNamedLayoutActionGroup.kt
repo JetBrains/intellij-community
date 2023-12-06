@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,13 +15,15 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
 class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
-  private val childrenCache = NamedLayoutListBasedCache<AnAction> {
+  private val childrenCache = NamedLayoutListBasedCache<AnAction>(
+    listOf(ActionManager.getInstance().getAction(RestoreFactoryDefaultLayoutAction.ID)), 1
+  ) {
     RestoreNamedLayoutAction(it)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private class RestoreNamedLayoutAction(@NlsSafe private val layoutName: String) : DumbAwareToggleAction() {
 
@@ -36,7 +39,7 @@ class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
     override fun update(e: AnActionEvent) {
       super.update(e)
       e.presentation.isEnabled = e.project != null
-      e.presentation.text = layoutName
+      e.presentation.setText({ layoutName }, false)
       e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutName)
     }
 

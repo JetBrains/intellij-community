@@ -17,15 +17,12 @@ class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
 
 private const val FUS_GROUP_ID = "plugins.advertiser"
 
-private val GROUP = EventLogGroup(
-  FUS_GROUP_ID,
-  6,
-)
+private val GROUP = EventLogGroup(FUS_GROUP_ID, 9)
 
 private val SOURCE_FIELD = EventFields.Enum(
   "source",
   FUSEventSource::class.java,
-) { it.name.toLowerCase(ROOT) }
+) { it.name.lowercase(ROOT) }
 
 private val CONFIGURE_PLUGINS_EVENT = GROUP.registerEvent(
   "configure.plugins",
@@ -68,6 +65,7 @@ private val OPEN_DOWNLOAD_PAGE_EVENT = GROUP.registerEvent(
 private val LEARN_MORE_EVENT = GROUP.registerEvent(
   "learn.more",
   SOURCE_FIELD,
+  PLUGIN_FIELD
 )
 
 private val IGNORE_EXTENSIONS_EVENT = GROUP.registerEvent(
@@ -80,9 +78,22 @@ private val IGNORE_UNKNOWN_FEATURES_EVENT = GROUP.registerEvent(
   SOURCE_FIELD,
 )
 
+private val SUGGESTED_PLUGIN_EVENT = GROUP.registerEvent(
+  "suggestion.shown",
+  SOURCE_FIELD,
+  PLUGIN_FIELD
+)
+
 enum class FUSEventSource {
   EDITOR,
   NOTIFICATION,
+  PLUGINS_SEARCH,
+  PLUGINS_SUGGESTED_GROUP,
+  ACTIONS,
+  SETTINGS,
+  NEW_PROJECT_WIZARD,
+
+  @Deprecated("Use PLUGINS_SEARCH instead")
   SEARCH;
 
   fun doIgnoreUltimateAndLog(project: Project? = null) {
@@ -91,19 +102,19 @@ enum class FUSEventSource {
   }
 
   @JvmOverloads
-  fun logConfigurePlugins(project: Project? = null) = CONFIGURE_PLUGINS_EVENT.log(project, this)
+  fun logConfigurePlugins(project: Project? = null): Unit = CONFIGURE_PLUGINS_EVENT.log(project, this)
 
   @JvmOverloads
   fun logEnablePlugins(
     plugins: List<String>,
     project: Project? = null,
-  ) = ENABLE_PLUGINS_EVENT.log(project, plugins, this)
+  ): Unit = ENABLE_PLUGINS_EVENT.log(project, plugins, this)
 
   @JvmOverloads
   fun logInstallPlugins(
     plugins: List<String>,
     project: Project? = null,
-  ) = INSTALL_PLUGINS_EVENT.log(project, plugins, this)
+  ): Unit = INSTALL_PLUGINS_EVENT.log(project, plugins, this)
 
   @JvmOverloads
   fun openDownloadPageAndLog(project: Project? = null, url: String, pluginId: PluginId? = null) {
@@ -114,12 +125,23 @@ enum class FUSEventSource {
   @JvmOverloads
   fun learnMoreAndLog(project: Project? = null) {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/products.html#type=ide"))
-    LEARN_MORE_EVENT.log(project, this)
+    LEARN_MORE_EVENT.log(project, this, null)
   }
 
   @JvmOverloads
-  fun logIgnoreExtension(project: Project? = null) = IGNORE_EXTENSIONS_EVENT.log(project, this)
+  fun learnMoreAndLog(project: Project? = null, url: String, pluginId: PluginId?) {
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
+    LEARN_MORE_EVENT.log(project, this, pluginId?.idString)
+  }
 
   @JvmOverloads
-  fun logIgnoreUnknownFeatures(project: Project? = null) = IGNORE_UNKNOWN_FEATURES_EVENT.log(project, this)
+  fun logIgnoreExtension(project: Project? = null): Unit = IGNORE_EXTENSIONS_EVENT.log(project, this)
+
+  @JvmOverloads
+  fun logIgnoreUnknownFeatures(project: Project? = null): Unit = IGNORE_UNKNOWN_FEATURES_EVENT.log(project, this)
+
+  @JvmOverloads
+  fun logPluginSuggested(project: Project? = null, pluginId: PluginId?) {
+    SUGGESTED_PLUGIN_EVENT.log(project, this, pluginId?.idString)
+  }
 }

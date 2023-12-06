@@ -1,17 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
-import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
+import com.intellij.collaboration.ui.util.popup.PopupConfig
+import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.popup.PopupState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestFilterErrorPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 
@@ -25,9 +30,10 @@ internal class GitLabFiltersPanelFactory(
     StringBuilder().apply {
       if (searchQuery != null) append(""""$searchQuery"""").append(" ")
       if (state != null) append("""state:"${getShortText(state)}"""").append(" ")
-      if (author != null) append("""author:"${author}"""").append(" ")
-      if (assignee != null) append("""assignee:"${assignee}"""").append(" ")
-      if (reviewer != null) append("""reviewer:"${reviewer}"""").append(" ")
+      if (author != null) append("""author:"${author.username}"""").append(" ")
+      if (assignee != null) append("""assignee:"${assignee.username}"""").append(" ")
+      if (reviewer != null) append("""reviewer:"${reviewer.username}"""").append(" ")
+      if (label != null) append("""label:"${label.title}"""").append(" ")
     }.toString()
   }
 
@@ -82,11 +88,11 @@ internal class GitLabFiltersPanelFactory(
     viewScope,
     filterName = GitLabBundle.message("merge.request.list.filter.category.label"),
     valuePresenter = { labelFilterValue -> labelFilterValue.title },
-    chooseValue = { point, popupState ->
-      ChooserPopupUtil.showAsyncChooserPopup(
-        point, popupState,
-        itemsLoader = { vm.getLabels().map { label -> LabelFilterValue(label.title) } },
-        presenter = { labelFilterValue -> ChooserPopupUtil.PopupItemPresentation.Simple(shortText = labelFilterValue.title) }
+    chooseValue = { point ->
+      ChooserPopupUtil.showAsyncChooserPopup<LabelFilterValue>(
+        point,
+        itemsLoader = vm.labels.mapResultList { label -> LabelFilterValue(label.title) },
+        presenter = { labelFilterValue -> PopupItemPresentation.Simple(shortText = labelFilterValue.title) }
       )
     }
   )
@@ -100,30 +106,38 @@ internal class GitLabFiltersPanelFactory(
     viewScope,
     filterName,
     valuePresenter = { participant -> participant.fullname },
-    chooseValue = { point, popupState ->
-      val selectedAuthor = showParticipantChooser(point, popupState, participantsLoader = {
-        vm.getMergeRequestMembers().map { member -> member.user }
-      })
+    chooseValue = { point ->
+      val selectedAuthor = showParticipantChooser(point, participantsLoader = vm.mergeRequestMembers)
       selectedAuthor?.let { user -> participantCreator(user) }
     })
 
   private suspend fun showParticipantChooser(
     point: RelativePoint,
-    popupState: PopupState<JBPopup>,
-    participantsLoader: suspend () -> List<GitLabUserDTO>
-  ): GitLabUserDTO? {
-    return ChooserPopupUtil.showAsyncChooserPopup(point, popupState, itemsLoader = { participantsLoader() }) { user ->
-      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, AVATAR_SIZE))
-    }
-  }
+    participantsLoader: Flow<Result<List<GitLabUserDTO>>>
+  ): GitLabUserDTO? = ChooserPopupUtil.showAsyncChooserPopup(
+    point, itemsLoader = participantsLoader,
+    presenter = { user ->
+      PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE))
+    },
+    popupConfig = PopupConfig(errorPresenter = GitLabMergeRequestFilterErrorPresenter(vm))
+  )
 
   companion object {
-    private const val AVATAR_SIZE = 20
-
     private fun getShortText(stateFilterValue: MergeRequestStateFilterValue): @Nls String = when (stateFilterValue) {
       MergeRequestStateFilterValue.OPENED -> GitLabBundle.message("merge.request.list.filter.state.open")
       MergeRequestStateFilterValue.MERGED -> GitLabBundle.message("merge.request.list.filter.state.merged")
       MergeRequestStateFilterValue.CLOSED -> GitLabBundle.message("merge.request.list.filter.state.closed")
+    }
+  }
+}
+
+private fun <T, R> Flow<Result<List<T>>>.mapResultList(mapper: (T) -> R): Flow<Result<List<R>>> {
+  val flow = this
+  return flow.map { result: Result<List<T>> ->
+    result.map { list: List<T> ->
+      list.map { item: T ->
+        mapper(item)
+      }
     }
   }
 }

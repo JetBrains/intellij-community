@@ -121,9 +121,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         myKeptReferences.clear();
       }
 
-      for (SuspendContextCommandImpl cmd = pollPostponedCommand(); cmd != null; cmd = pollPostponedCommand()) {
-        cmd.notifyCancelled();
-      }
+      cancelAllPostponed();
       if (callResume) {
         resumeImpl();
       }
@@ -187,6 +185,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return mySuspendPolicy;
   }
 
+  @SuppressWarnings("unused")
   public void doNotResumeHack() {
     assertNotResumed();
     myVotesToVote = 1000000000;
@@ -254,6 +253,12 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
   }
 
+  public final void cancelAllPostponed() {
+    for (SuspendContextCommandImpl postponed = pollPostponedCommand(); postponed != null; postponed = pollPostponedCommand()) {
+      postponed.notifyCancelled();
+    }
+  }
+
   public final SuspendContextCommandImpl pollPostponedCommand() {
     return myPostponedCommands.poll();
   }
@@ -283,7 +288,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         List<ThreadReferenceProxyImpl> pausedThreads =
-          StreamEx.of(((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts())
+          StreamEx.of(myDebugProcess.getSuspendManager().getPausedContexts())
             .map(SuspendContextImpl::getThread)
             .nonNull()
             .toList();

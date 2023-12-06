@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -53,12 +54,12 @@ import java.util.stream.IntStream;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public class MultipleBuildsView implements BuildProgressListener, Disposable {
+public final class MultipleBuildsView implements BuildProgressListener, Disposable {
   private static final Logger LOG = Logger.getInstance(MultipleBuildsView.class);
   @NonNls private static final String SPLITTER_PROPERTY = "MultipleBuildsView.Splitter.Proportion";
 
-  protected final Project myProject;
-  protected final BuildContentManager myBuildContentManager;
+  private final Project myProject;
+  private final BuildContentManager myBuildContentManager;
   private final AtomicBoolean isInitializeStarted;
   private final AtomicBoolean isFirstErrorShown = new AtomicBoolean();
   private final List<Runnable> myPostponedRunnables;
@@ -267,19 +268,15 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           tb.getComponent().setBorder(JBUI.Borders.merge(tb.getComponent().getBorder(), JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1), true));
           consoleComponent.add(tb.getComponent(), BorderLayout.WEST);
 
-          myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true);
-          Disposer.register(myContent, new Disposable() {
+          myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true) {
             @Override
             public void dispose() {
+              super.dispose();
               Disposer.dispose(MultipleBuildsView.this);
-            }
-          });
-          Disposer.register(myContent, new Disposable() {
-            @Override
-            public void dispose() {
               myViewManager.onBuildsViewRemove(MultipleBuildsView.this);
             }
-          });
+          };
+
           Icon contentIcon = myViewManager.getContentIcon();
           if (contentIcon != null) {
             myContent.setIcon(contentIcon);
@@ -379,7 +376,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     return myViewMap.get(buildInfo);
   }
 
-  private class MultipleBuildsPanel extends JPanel implements OccurenceNavigator {
+  private final class MultipleBuildsPanel extends JPanel implements OccurenceNavigator {
     MultipleBuildsPanel() {super(new BorderLayout());}
 
     @Override
@@ -464,10 +461,10 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     }
   }
 
-  private class ProgressWatcher implements Runnable {
+  private final class ProgressWatcher implements Runnable {
 
     private final Alarm myRefreshAlarm = new Alarm();
-    private final Set<AbstractViewManager.BuildInfo> myBuilds = ContainerUtil.newConcurrentSet();
+    private final Set<AbstractViewManager.BuildInfo> myBuilds = ConcurrentCollectionFactory.createConcurrentSet();
 
     private volatile boolean myIsStopped = false;
 

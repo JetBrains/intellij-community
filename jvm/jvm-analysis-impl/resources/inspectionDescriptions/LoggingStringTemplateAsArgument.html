@@ -5,12 +5,12 @@ The method <code>org.apache.logging.log4j.Logger.log()</code> and its overloads 
 String templates are evaluated at runtime even when the logging message is not logged; this can negatively impact performance.
 It is recommended to use a parameterized log message instead, which will not be evaluated when logging is disabled.
 <p><b>Example (for Kotlin):</b></p>
-<pre><code>
+<pre><code lang="kotlin">
       val variable1 = getVariable()
       logger.info("variable1: $variable1")
 </code></pre>
 <p><b>After the quick-fix is applied (for Kotlin):</b></p>
-<pre><code>
+<pre><code lang="kotlin">
       val variable1 = getVariable()
       logger.info("variable1: {}", variable1)
 </code></pre>

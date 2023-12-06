@@ -6,3 +6,4 @@ fun foo(x: Int) {
 }
 
 fun bar() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SimplifyComparisonFix

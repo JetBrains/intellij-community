@@ -4,6 +4,16 @@
                     interface="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.nonBlockingContextChecker"
                     interface="com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInspection.sourceToSinkProvider"
+                    dynamic="true"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.sourceToSink.SourceToSinkProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.codeInspection.suppressionAnnotationUtil"
+                    dynamic="true"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.SuppressionAnnotationUtil"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--Test frameworks-->
@@ -23,6 +33,12 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.test.method.without.assertion.display.name"
                      implementationClass="com.intellij.codeInspection.test.TestMethodWithoutAssertionInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestCaseWithNoTestMethods"
+                     suppressId="JUnitTestCaseWithNoTests"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.test.case.without.test.methods.display.name"
+                     implementationClass="com.intellij.codeInspection.test.TestCaseWithoutTestsInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestCaseWithConstructor"
                      suppressId="JUnitTestCaseWithNonTrivialConstructors"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
@@ -63,6 +79,11 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit4.converter.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnit4ConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="Junit4RunWithInspection"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit4.inherited.runwith.display.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.TestCaseWithMultipleRunnersInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5AssertionsConverter"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
@@ -88,7 +109,7 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit.assertequals.may.be.assertsame.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnitAssertEqualsMayBeAssertSameInspection"/>
-    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnitMalformedDeclaration"
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="JUnitMalformedDeclaration"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit.malformed.declaration.name"
@@ -101,12 +122,35 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.logging.frameworks.group.name"
                      key="jvm.inspection.logging.string.template.as.argument.display.name"
                      implementationClass="com.intellij.codeInspection.logging.LoggingStringTemplateAsArgumentInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="LoggingConditionDisagreesWithLogLevelStatement"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.logging.frameworks.group.name"
+                     key="jvm.inspection.logging.condition.disagrees.with.log.statement.display.name"
+                     implementationClass="com.intellij.codeInspection.logging.LoggingConditionDisagreesWithLogLevelStatementInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionMerger"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="LoggingPlaceholderCountMatchesArgumentCount"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.logging.frameworks.group.name"
+                     key="jvm.inspection.logging.placeholder.count.matches.argument.count.display.name"
+                     implementationClass="com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionMerger"/>
+
+    <!-- Performance -->
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UrlHashCode"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.equals.hashcode.called.on.url.display.name"
+                     implementationClass="com.intellij.codeInspection.performance.UrlHashCodeInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.performance.UrlHashCodeInspectionMerger"/>
 
 
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.unstable.api.usage.display.name"
                      implementationClass="com.intellij.codeInspection.UnstableApiUsageInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="TEXT ATTRIBUTES" shortName="UsagesOfObsoleteApi"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.usages.of.obsolete.api.display.name"
+                     implementationClass="com.intellij.codeInspection.ObsoleteApiUsageInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="UnstableTypeUsedInSignature"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.unstable.type.used.in.signature.display.name"
@@ -159,14 +203,27 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.display.name"
                      implementationClass="com.intellij.codeInspection.JavaApiUsageInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="SystemGetProperty"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.system.get.property.display.name"
+                     implementationClass="com.intellij.codeInspection.SystemGetPropertyInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING"
+                     shortName="SuppressionAnnotation"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="inspection.suppression.annotation.display.name"
+                     implementationClass="com.intellij.codeInspection.SuppressionAnnotationInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
-    <codeInsight.externalLibraryResolver implementation="com.intellij.codeInspection.sourceToSink.CheckerQualExternalLibraryResolver"/>
+    <gotoRelatedProvider implementation="com.intellij.codeInspection.test.junit.JUnitParameterizedSourceGotoRelatedProvider"/>
     <inspectionCustomComponent implementation="com.intellij.codeInsight.options.JavaInspectionButtons"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij.codeInspection">
+    <sourceToSinkProvider language="JAVA" implementationClass="com.intellij.codeInspection.sourceToSink.JavaSourceToSinkProvider"/>
+    <suppressionAnnotationUtil language="JAVA" implementationClass="com.intellij.codeInspection.JavaSuppressionAnnotationUtil"/>
   </extensions>
   <actions>
     <group id="UastInternal" text="UAST" internal="true" popup="true">

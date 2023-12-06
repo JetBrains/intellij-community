@@ -1,27 +1,29 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
-import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class BuildableRootsChangeRescanningInfoImpl extends BuildableRootsChangeRescanningInfo {
+public final class BuildableRootsChangeRescanningInfoImpl extends BuildableRootsChangeRescanningInfoEx {
   private final Set<ModuleId> modules = new SmartHashSet<>();
   private boolean hasInheritedSdk;
   private final List<Pair<String, String>> sdks = new SmartList<>();
   private final List<LibraryId> libraries = new SmartList<>();
+  private final List<WorkspaceEntity> entities = new SmartList<>();
 
   @Override
   @NotNull
@@ -61,22 +63,22 @@ public class BuildableRootsChangeRescanningInfoImpl extends BuildableRootsChange
     return this;
   }
 
-  @NotNull
-  Collection<ModuleId> getModules() {
-    return modules;
+  @Override
+  public @NotNull BuildableRootsChangeRescanningInfoEx addWorkspaceEntity(@NotNull WorkspaceEntity entity) {
+    entities.add(entity);
+    return this;
   }
 
-  public boolean hasInheritedSdk() {
-    return hasInheritedSdk;
+  @Override
+  public @NotNull RootsChangeRescanningInfo buildInfo() {
+    return new BuiltRescanningInfo(Set.copyOf(modules), hasInheritedSdk, List.copyOf(sdks), List.copyOf(libraries), List.copyOf(entities));
   }
 
-  @NotNull
-  Collection<Pair<String, String>> getSdks() {
-    return sdks;
-  }
-
-  @NotNull
-  Collection<LibraryId> getLibraries() {
-    return libraries;
+  record BuiltRescanningInfo(@NotNull Set<ModuleId> modules,
+                             boolean hasInheritedSdk,
+                             @NotNull List<Pair<String, String>> sdks,
+                             @NotNull List<LibraryId> libraries,
+                             @NotNull List<WorkspaceEntity> entities)
+    implements RootsChangeRescanningInfo {
   }
 }

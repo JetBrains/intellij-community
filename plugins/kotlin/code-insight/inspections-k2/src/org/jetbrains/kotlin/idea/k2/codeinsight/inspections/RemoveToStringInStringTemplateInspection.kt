@@ -2,16 +2,21 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
-import org.jetbrains.kotlin.name.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -19,9 +24,16 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 private val TO_STRING_CALLABLE_ID = CallableId(StandardClassIds.Any, OperatorNameConventions.TO_STRING)
 
 internal class RemoveToStringInStringTemplateInspection :
-    AbstractKotlinApplicableInspection<KtDotQualifiedExpression>(KtDotQualifiedExpression::class),
+    AbstractKotlinApplicableInspection<KtDotQualifiedExpression>(),
     CleanupLocalInspectionTool {
 
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        return object : KtVisitorVoid() {
+            override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
+                visitTargetElement(expression, holder, isOnTheFly)
+            }
+        }
+    }
     override fun getProblemDescription(element: KtDotQualifiedExpression): String = KotlinBundle.message("remove.to.string.fix.text")
     override fun getActionFamilyName(): String = KotlinBundle.message("remove.to.string.fix.text")
 

@@ -19,22 +19,32 @@ interface KotlinVersionInfoProvider {
     }
 
     fun getCompilerVersion(module: Module): IdeKotlinVersion?
+
+    fun getCompilerVersion(): IdeKotlinVersion?
+
+    @Deprecated("use getLibraryVersionSequence(Module, IdePlatformKind, ModuleRootModel)")
     fun getLibraryVersions(
         module: Module,
         platformKind: IdePlatformKind,
         rootModel: ModuleRootModel?
     ): Collection<IdeKotlinVersion>
+
+    fun getLibraryVersionsSequence(
+        module: Module,
+        platformKind: IdePlatformKind,
+        rootModel: ModuleRootModel?
+    ): Sequence<IdeKotlinVersion> =
+        getLibraryVersions(module, platformKind, rootModel).asSequence()
 }
 
 fun getRuntimeLibraryVersions(
     module: Module,
     rootModel: ModuleRootModel?,
     platformKind: IdePlatformKind
-): Collection<IdeKotlinVersion> {
-    return KotlinVersionInfoProvider.EP_NAME.extensionList.asSequence()
-        .map { it.getLibraryVersions(module, platformKind, rootModel) }
-        .firstOrNull { it.isNotEmpty() } ?: emptyList()
-}
+): Sequence<IdeKotlinVersion> =
+    KotlinVersionInfoProvider.EP_NAME.extensionList.asSequence()
+        .map { it.getLibraryVersionsSequence(module, platformKind, rootModel) }
+        .firstOrNull { it.any() } ?: emptySequence()
 
 fun getLibraryLanguageLevel(
     module: Module,
@@ -52,11 +62,21 @@ fun getLibraryVersion(
     val minVersion = getRuntimeLibraryVersions(module, rootModel, platformKind ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind)
         .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
         .minOrNull()
-    return getDefaultVersion(module, minVersion, coerceRuntimeLibraryVersionToReleased)
+    return getDefaultVersion(minVersion, coerceRuntimeLibraryVersionToReleased)
+}
+
+fun getKotlinStdlibVersionOrNull(
+    module: Module,
+    rootModel: ModuleRootModel?,
+    platformKind: IdePlatformKind?,
+    coerceRuntimeLibraryVersionToReleased: Boolean = true
+): IdeKotlinVersion? {
+    return getRuntimeLibraryVersions(module, rootModel, platformKind ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind)
+        .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
+        .minOrNull()
 }
 
 fun getDefaultVersion(
-    module: Module,
     explicitVersion: IdeKotlinVersion? = null,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
 ): IdeKotlinVersion {
@@ -65,7 +85,8 @@ fun getDefaultVersion(
     }
 
     val libVersion = KotlinVersionInfoProvider.EP_NAME.extensionList
-        .mapNotNull { it.getCompilerVersion(module) }
+        .asSequence()
+        .mapNotNull { it.getCompilerVersion() }
         .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
         .minOrNull()
 
@@ -73,12 +94,11 @@ fun getDefaultVersion(
 }
 
 fun getDefaultLanguageLevel(
-    module: Module,
     explicitVersion: IdeKotlinVersion? = null,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
-): LanguageVersion = getDefaultVersion(module, explicitVersion, coerceRuntimeLibraryVersionToReleased).languageVersion
+): LanguageVersion = getDefaultVersion(explicitVersion, coerceRuntimeLibraryVersionToReleased).languageVersion
 
-private fun Iterable<IdeKotlinVersion>.addReleaseVersionIfNecessary(shouldAdd: Boolean): Iterable<IdeKotlinVersion> =
+private fun Sequence<IdeKotlinVersion>.addReleaseVersionIfNecessary(shouldAdd: Boolean): Sequence<IdeKotlinVersion> =
     if (shouldAdd) this + KotlinPluginLayout.standaloneCompilerVersion else this
 
 fun getRuntimeLibraryVersion(module: Module): IdeKotlinVersion? {

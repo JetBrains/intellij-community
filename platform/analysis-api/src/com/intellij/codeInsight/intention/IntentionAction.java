@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Intention actions are context-specific actions related to the caret position in the editor.
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * Can be {@link com.intellij.openapi.project.DumbAware}.
  */
-public interface IntentionAction extends FileModifier {
+public interface IntentionAction extends FileModifier, CommonIntentionAction {
 
   IntentionAction[] EMPTY_ARRAY = new IntentionAction[0];
 
@@ -41,19 +42,6 @@ public interface IntentionAction extends FileModifier {
   @IntentionName
   @NotNull
   String getText();
-
-  /**
-   * Returns the name of the family of intentions.
-   * It is used to externalize the "auto-show" state of intentions.
-   * When the user clicks on a light bulb in the intention list,
-   * all intentions with the same family name get enabled/disabled.
-   * The name is also shown in the Settings tree.
-   *
-   * @return the intention family name.
-   */
-  @NotNull
-  @IntentionFamilyName
-  String getFamilyName();
 
   /**
    * Checks whether this intention is available at the caret position in the file.
@@ -124,5 +112,19 @@ public interface IntentionAction extends FileModifier {
     if (writable == null || writable.getContainingFile() != file) return IntentionPreviewInfo.FALLBACK_DIFF;
     copy.invoke(project, editor, file);
     return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
+  default @NotNull IntentionAction asIntention() {
+    return this;
+  }
+
+  @Override
+  @Nullable
+  default ModCommandAction asModCommandAction() {
+    if (this instanceof IntentionActionDelegate delegate) {
+      return delegate.getDelegate().asModCommandAction();
+    }
+    return null;
   }
 }

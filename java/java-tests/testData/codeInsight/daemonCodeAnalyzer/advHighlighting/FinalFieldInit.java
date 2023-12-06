@@ -4,7 +4,7 @@ import java.io.*;
 class a  {
   /**
    * javadoc should not be highlighted
-   */ 
+   */
   <error descr="Variable 'javaDoced' might not have been initialized">final int javaDoced</error>;
 
   <error descr="Variable 'sfi1' might not have been initialized">static final int sfi1</error>;
@@ -21,7 +21,7 @@ class a  {
 
   static final int csfi1 = 0;
   static final int csfi2 = csfi1 + 13 / 5;
-  static final int csfi3; 
+  static final int csfi3;
   static {
    if (csfi1 < 13) {
      csfi3 = csfi2 + (csfi1 == 4 ? 5 : csfi2/13);
@@ -37,9 +37,9 @@ class a  {
   final int cifi2 = ff();
   final int cifi3;
 
-  int ff() { 
+  int ff() {
     int i = cifi1 + cifi2 + cifi3 + fi3 + fi4;
-    return i; 
+    return i;
   }
 
   {
@@ -97,7 +97,7 @@ class Test {
     }
 }
 
-// multiple initalizers
+// multiple initializers
 class c1 {
  private final String x;
  {
@@ -106,7 +106,7 @@ class c1 {
 
  private final String y;
  {
-   y = x; 
+   y = x;
  }
  void f() {
    String s = x+y;
@@ -114,7 +114,7 @@ class c1 {
 }
 
 class c2 {
-    static { 
+    static {
     }
     private static final int limit;
     static {
@@ -202,7 +202,7 @@ class correct {
         o = new Object();
         new Object() {
           { o.toString(); }
-        }; 
+        };
     }
 }
 
@@ -228,11 +228,11 @@ class Y {
 class IDEA100237 {
     static class Foo {
         final int bar;
-    
+
         Foo() {
             bar = 1;
         }
-    
+
         final Object baz = new Object() {
             final int qux = <error descr="Variable 'bar' might not have been initialized">bar</error>.hashCode() + 1;
         };

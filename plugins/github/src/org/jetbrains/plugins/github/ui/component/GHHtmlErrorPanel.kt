@@ -1,25 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.component
 
-import com.intellij.collaboration.ui.util.getName
-import com.intellij.ide.BrowserUtil
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.setHtmlBody
+import com.intellij.collaboration.ui.util.name
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
-import javax.swing.Action
-import javax.swing.JComponent
-import javax.swing.KeyStroke
-import javax.swing.SwingConstants
+import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 
 object GHHtmlErrorPanel {
@@ -35,18 +31,14 @@ object GHHtmlErrorPanel {
 
   fun create(model: GHErrorPanelModel, horizontalAlignment: Int = SwingConstants.CENTER): JComponent {
 
-    val pane = HtmlEditorPane().apply {
+    val pane = SimpleHtmlPane(addBrowserListener = false).apply {
       foreground = NamedColorUtil.getErrorForeground()
       isFocusable = true
 
-      removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
       addHyperlinkListener(object : HyperlinkAdapter() {
         override fun hyperlinkActivated(e: HyperlinkEvent) {
           if (e.description == ERROR_ACTION_HREF) {
             model.errorAction?.actionPerformed(ActionEvent(this@apply, ActionEvent.ACTION_PERFORMED, "perform"))
-          }
-          else {
-            BrowserUtil.browse(e.description)
           }
         }
       })
@@ -60,7 +52,7 @@ object GHHtmlErrorPanel {
   }
 
   private class Controller(private val model: GHErrorPanelModel,
-                           private val pane: HtmlEditorPane,
+                           private val pane: JEditorPane,
                            horizontalAlignment: Int) {
 
     private val alignmentText = when (horizontalAlignment) {
@@ -83,13 +75,13 @@ object GHHtmlErrorPanel {
         val errorAction = model.errorAction
         if (errorAction != null) {
           errorTextBuilder.br()
-            .appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.getName()))
+            .appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.name.orEmpty()))
         }
-        pane.setBody(errorTextBuilder.toString())
+        pane.setHtmlBody(errorTextBuilder.toString())
       }
       else {
         pane.isVisible = false
-        pane.setBody("")
+        pane.setHtmlBody("")
       }
       // JDK bug - need to force height recalculation (see JBR-2256)
       pane.setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
@@ -101,7 +93,7 @@ object GHHtmlErrorPanel {
   }
 
   @Nls
-  private fun getLoadingErrorText(error: Throwable): String {
+  fun getLoadingErrorText(error: Throwable): String {
     if (error is GithubStatusCodeException && error.error != null && error.error!!.message != null) {
       val githubError = error.error!!
       val message = githubError.message!!.removePrefix("[").removeSuffix("]")

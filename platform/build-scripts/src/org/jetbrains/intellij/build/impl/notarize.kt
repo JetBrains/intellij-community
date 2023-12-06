@@ -28,7 +28,7 @@ private val keyId = System.getenv("APPLE_KEY_ID") ?: ""
 private val privateKey = System.getenv("APPLE_PRIVATE_KEY") ?: ""
 private val json = Json { prettyPrint = true }
 
-internal fun useNotaryRestApi() = keyId.isNotBlank() && privateKey.isNotBlank() && issuerId.isNotBlank()
+private fun useNotaryRestApi() = keyId.isNotBlank() && privateKey.isNotBlank() && issuerId.isNotBlank()
 
 internal suspend fun notarize(sitFile: Path, context: BuildContext) {
   context.executeStep(spanBuilder("Notarizing .sit via Notary REST API").setAttribute("sitFile", "$sitFile"), MAC_NOTARIZE_STEP) {
@@ -46,7 +46,6 @@ internal suspend fun notarize(sitFile: Path, context: BuildContext) {
       pollingPeriod = 1.minutes,
       ignoreServerError = true,
       ignoreTimeoutExceptions = true,
-      retryDelayAfterFailure = 10.minutes,
     )
     val result = withContext(Dispatchers.IO) {
       // only .zip or .dmg files can be notarized
@@ -73,5 +72,6 @@ internal suspend fun notarize(sitFile: Path, context: BuildContext) {
         context.messages.error("Notarization of $sitFile failed, see logs above")
       }
     }
+    context.notifyArtifactBuilt(logFile)
   }
 }

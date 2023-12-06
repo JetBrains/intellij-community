@@ -6,4 +6,5 @@ fun foo() {
     Bar.member()
 }
 
+// IGNORE_K2
 // ELEMENT: member

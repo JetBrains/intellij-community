@@ -1,24 +1,31 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.icons.FilteredIcon;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.GrayFilter;
+import com.intellij.util.ui.JBImageIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * @author Alexander Lobas
  */
 class PluginLogoIcon implements PluginLogoIconProvider {
-  static final Map<Icon, Icon> disabledIcons = new WeakHashMap<>(200);
+  private static final GrayFilter grayFilter = new GrayFilter();
+
+  static final LoadingCache<JBImageIcon, Icon> disabledIcons = Caffeine.newBuilder().weakKeys().maximumSize(256).build(key -> {
+    return new FilteredIcon(key, () -> new GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100));
+  });
+  static final LoadingCache<JBImageIcon, Icon> baseDisabledIcons = Caffeine.newBuilder().weakKeys().maximumSize(256).build(key -> {
+    return new FilteredIcon(key, () -> grayFilter);
+  });
 
   private final Icon myPluginLogo;
   private final Icon myPluginLogoError;
@@ -48,22 +55,12 @@ class PluginLogoIcon implements PluginLogoIconProvider {
     myPluginLogoDisabledErrorBig = setSouthWest(logoDisabledBig, errorLogo2x);
   }
 
-  protected @NotNull Icon getDisabledIcon(@NotNull Icon icon, boolean base) {
-    return createDisabledIcon(icon, base);
-  }
-
-  protected static @NotNull Icon createDisabledIcon(@NotNull Icon icon, boolean base) {
+  protected @NotNull Icon getDisabledIcon(@NotNull JBImageIcon icon, boolean base) {
     return calculateDisabledIcon(icon, base);
   }
 
-  private static @NotNull Icon calculateDisabledIcon(@NotNull Icon icon, boolean base) {
-    Icon i = icon instanceof RetrievableIcon ? ((RetrievableIcon)icon).retrieveIcon() : icon;
-    synchronized (disabledIcons) {
-      return disabledIcons.computeIfAbsent(i, __->
-        base
-             ? IconLoader.INSTANCE.filterIcon(i, () -> new UIUtil.GrayFilter())
-             : IconLoader.INSTANCE.filterIcon(i, () -> new UIUtil.GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100)));
-    }
+  static @NotNull Icon calculateDisabledIcon(@NotNull JBImageIcon icon, boolean base) {
+    return base ? baseDisabledIcons.get(icon) : disabledIcons.get(icon);
   }
 
   protected @NotNull Icon getScaled2xIcon(@NotNull Icon icon) {
@@ -80,7 +77,7 @@ class PluginLogoIcon implements PluginLogoIconProvider {
   }
 
   protected @NotNull Icon getErrorLogo2x() {
-    return PluginLogo.reloadIcon(AllIcons.Plugins.ModifierInvalid, 20, 20, PluginLogo.LOG);
+    return PluginLogoKt.reloadPluginIcon(AllIcons.Plugins.ModifierInvalid, 20, 20);
   }
 
   @Override

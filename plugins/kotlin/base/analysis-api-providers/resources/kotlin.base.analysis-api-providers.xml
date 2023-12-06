@@ -4,13 +4,23 @@
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinDeclarationProviderFactory"/>
     <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderMerger"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinDeclarationProviderMerger"/>
+    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinAnnotationsResolverFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinAnnotationsResolverFactory"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinAnchorModuleProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinAnchorModuleProvider"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinPackageProviderFactory"/>
     <projectService
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateTrackerProvider"/>
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderMerger"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinPackageProviderMerger"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinMessageBusProvider"
+            serviceImplementation="org.jetbrains.kotlin.analysis.providers.impl.KotlinProjectMessageBusProvider"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.PackagePartProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.PackagePartProviderFactoryIdeImpl"/>

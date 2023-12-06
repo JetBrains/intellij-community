@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.diff.actions.impl.OpenInEditorAction;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.HelpIdProvider;
@@ -160,7 +161,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<? extends Change> included,
                                       @Nullable LocalChangeList initialChangeList,
@@ -175,7 +176,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull List<? extends Change> included,
                                       @Nullable LocalChangeList initialChangeList,
@@ -207,7 +208,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @SuppressWarnings("unused") @Nullable List<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,
@@ -320,7 +321,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
 
-    setTitle(isDefaultCommitEnabled() ? DIALOG_TITLE : cleanActionText(executors.get(0).getActionText()));
+    setTitle(isDefaultCommitEnabled() ? DIALOG_TITLE : cleanActionText(executors.get(0).getActionText(), true));
     myHelpId = isDefaultCommitEnabled() ? HELP_ID : getHelpId(executors);
 
     myDiffDetails = new MyChangeProcessor(myProject, myWorkflow.isPartialCommitEnabled());
@@ -394,7 +395,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myCommitMessageArea.setChangesSupplier(new ChangeListChangesSupplier(getChangeList()));
     myCommitMessageArea.requestFocusInMessage();
 
-    for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
+    for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensionList(myProject)) {
       support.installSearch(myCommitMessageArea.getEditorField(), myCommitMessageArea.getEditorField());
     }
 
@@ -477,7 +478,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     if (executors.isEmpty()) return emptyList();
     List<CommitExecutorAction> result = new ArrayList<>();
 
-    if (isDefaultCommitEnabled() && UISettings.getShadowInstance().getAllowMergeButtons()) {
+    if (isDefaultCommitEnabled() && UISettings.getInstance().getAllowMergeButtons()) {
       ActionGroup primaryActions = (ActionGroup)ActionManager.getInstance().getAction(VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP);
       ActionGroup executorActions = (ActionGroup)ActionManager.getInstance().getAction(VcsActions.COMMIT_EXECUTORS_GROUP);
 
@@ -627,10 +628,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   public Project getProject() {
     return myProject;
   }
-
-  @SuppressWarnings("unused")
-  @Deprecated(forRemoval = true)
-  public void setCommitMessage(@Nullable String commitMessage) { }
 
   @Deprecated(forRemoval = true)
   @NotNull
@@ -886,16 +883,21 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     @NotNull
-    private Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends FilePath> unversioned) {
+    private static Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes,
+                                          @NotNull Collection<? extends FilePath> unversioned) {
       return JBIterable.<Wrapper>empty()
         .append(JBIterable.from(changes).map(ChangeWrapper::new))
         .append(JBIterable.from(unversioned).map(UnversionedFileWrapper::new));
     }
 
     @Override
-    protected void onAfterNavigate() {
-      doCancelAction();
+    protected @Nullable Object getData(@NotNull String dataId) {
+      if (OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.is(dataId)) {
+        return (Runnable)() -> doCancelAction();
+      }
+      return super.getData(dataId);
     }
+
   }
 
   private static class MyOptionsLayout extends AbstractLayoutManager {

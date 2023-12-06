@@ -24,7 +24,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.asSafely
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
@@ -159,7 +159,7 @@ internal class RenameDialog(
           }
         }
         // For some reason Scope and New name fields are misaligned - fix this here
-        .customize(Gaps(right = 3))
+        .customize(UnscaledGaps(right = 3))
         .label(FindBundle.message("find.scope.label"))
         .widthGroup("")
         .align(AlignX.RIGHT)

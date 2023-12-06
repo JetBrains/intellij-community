@@ -122,9 +122,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
             override fun buildFinished(project: Project, sessionId: UUID, isAutomake: Boolean) {
                 if (project === this@KotlinCompilerReferenceIndexService.project) {
                     executeOnBuildThread {
-                        if (!runReadAction { this@KotlinCompilerReferenceIndexService.project.isDisposed }) {
-                            compilationFinished()
-                        }
+                        compilationFinished()
                     }
                 }
             }
@@ -159,7 +157,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
                 val manager = ModuleManager.getInstance(it)
                 dirtyScopeHolder.compilationAffectedModules.mapNotNull(manager::findModuleByName)
             }
-        }
+        } ?: return
 
         val allModules = if (!initialized) allModules() else null
         compilationCounter.increment()
@@ -176,7 +174,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         }
     }
 
-    private fun DirtyScopeHolder.initialize(allModules: Array<Module>?, compiledModules: Collection<Module>?) {
+    private fun DirtyScopeHolder.initialize(allModules: Array<Module>?, compiledModules: Collection<Module>) {
         initialized = true
         LOG.info("initialized")
 

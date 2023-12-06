@@ -9,6 +9,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -28,12 +29,13 @@ public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactor
 
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
-    if ((element instanceof PsiField || element instanceof PsiRecordComponent) && !DumbService.isDumb(element.getProject())) {
-      final PsiMember psiMember = (PsiMember) element;
+    if ((element instanceof PsiField || element instanceof PsiRecordComponent)
+        && !DumbService.isDumb(element.getProject())) {
+      final PsiMember psiMember = (PsiMember)element;
       final PsiClass containingClass = psiMember.getContainingClass();
       if (containingClass != null) {
-        return Arrays.stream(containingClass.getMethods()).anyMatch(LombokLightMethodBuilder.class::isInstance) ||
-          Arrays.stream(containingClass.getInnerClasses()).anyMatch(LombokLightClassBuilder.class::isInstance);
+        return ContainerUtil.exists(containingClass.getMethods(), LombokLightMethodBuilder.class::isInstance) ||
+               ContainerUtil.exists(containingClass.getInnerClasses(), LombokLightClassBuilder.class::isInstance);
       }
     }
     return false;
@@ -44,7 +46,7 @@ public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactor
     return new FindUsagesHandler(element) {
       @Override
       public PsiElement @NotNull [] getSecondaryElements() {
-        final PsiMember psiMember = (PsiMember) getPsiElement();
+        final PsiMember psiMember = (PsiMember)getPsiElement();
         final PsiClass containingClass = psiMember.getContainingClass();
         if (containingClass != null) {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -48,7 +48,7 @@ public final class InitialInfoBuilder {
 
   private InitialInfoBuilder(final Block rootBlock,
                              final FormattingDocumentModel model,
-                             @Nullable final FormatTextRanges affectedRanges,
+                             final @Nullable FormatTextRanges affectedRanges,
                              final CommonCodeStyleSettings.IndentOptions options,
                              final int positionOfInterest,
                              @NotNull FormattingProgressCallback progressCallback)
@@ -62,8 +62,7 @@ public final class InitialInfoBuilder {
     myPositionOfInterest = positionOfInterest;
   }
 
-  @NotNull
-  static InitialInfoBuilder prepareToBuildBlocksSequentially(
+  static @NotNull InitialInfoBuilder prepareToBuildBlocksSequentially(
     Block root,
     FormattingDocumentModel model,
     FormatProcessor.FormatOptions formatOptions,
@@ -112,9 +111,9 @@ public final class InitialInfoBuilder {
 
   private AbstractBlockWrapper buildFrom(final Block rootBlock,
                                          final int index,
-                                         @Nullable final CompositeBlockWrapper parent,
+                                         final @Nullable CompositeBlockWrapper parent,
                                          @Nullable WrapImpl currentWrapParent,
-                                         @Nullable final Block parentBlock)
+                                         final @Nullable Block parentBlock)
   {
     final WrapImpl wrap = (WrapImpl)rootBlock.getWrap();
     if (wrap != null) {
@@ -239,7 +238,7 @@ public final class InitialInfoBuilder {
   }
 
   private AbstractBlockWrapper buildLeafBlock(final Block rootBlock,
-                                              @Nullable final CompositeBlockWrapper parent,
+                                              final @Nullable CompositeBlockWrapper parent,
                                               final boolean readOnly,
                                               final int index,
                                               @Nullable Block parentBlock)
@@ -250,7 +249,7 @@ public final class InitialInfoBuilder {
   }
 
   private LeafBlockWrapper doProcessSimpleBlock(final Block rootBlock,
-                                                @Nullable final CompositeBlockWrapper parent,
+                                                final @Nullable CompositeBlockWrapper parent,
                                                 final boolean readOnly,
                                                 final int index,
                                                 @Nullable Block parentBlock)

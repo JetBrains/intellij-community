@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -671,7 +671,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return null;
   }
 
-  private class MyTreeSelectionListener implements TreeSelectionListener {
+  private final class MyTreeSelectionListener implements TreeSelectionListener {
     @Override
     public void valueChanged(TreeSelectionEvent e) {
       TreePath[] paths = e.getPaths();
@@ -733,7 +733,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  protected static class MemberNodeImpl extends ElementNodeImpl implements MemberNode {
+  protected static final class MemberNodeImpl extends ElementNodeImpl implements MemberNode {
     public MemberNodeImpl(ParentNode parent, @NotNull ClassMember delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
@@ -745,13 +745,13 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  protected static class ContainerNode extends ParentNode {
+  protected static final class ContainerNode extends ParentNode {
     public ContainerNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
   }
 
-  private class SelectNoneAction extends AbstractAction {
+  private final class SelectNoneAction extends AbstractAction {
     SelectNoneAction() {
       super(IdeBundle.message("action.select.none"));
     }
@@ -759,11 +759,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     @Override
     public void actionPerformed(ActionEvent e) {
       myTree.clearSelection();
-      doOKAction();
     }
   }
 
-  private class TreeKeyListener extends KeyAdapter {
+  private final class TreeKeyListener extends KeyAdapter {
     @Override
     public void keyPressed(KeyEvent e) {
       TreePath path = myTree.getLeadSelectionPath();
@@ -795,7 +794,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private class SortEmAction extends ToggleAction {
+  private final class SortEmAction extends ToggleAction {
     SortEmAction() {
       super(PlatformEditorBundle.messagePointer("action.sort.alphabetically"), AllIcons.ObjectBrowser.Sorted);
     }
@@ -825,7 +824,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                                     IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class));
   }
 
-  protected class ShowContainersAction extends ToggleAction {
+  protected final class ShowContainersAction extends ToggleAction {
 
     public ShowContainersAction(@NotNull Supplier<@NlsActions.ActionText String> text, final Icon icon) {
       super(text, icon);
@@ -853,7 +852,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private class ExpandAllAction extends AnAction {
+  private final class ExpandAllAction extends AnAction {
     ExpandAllAction() {
       super(IdeBundle.messagePointer("action.expand.all"), AllIcons.Actions.Expandall);
     }
@@ -864,7 +863,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private class CollapseAllAction extends AnAction {
+  private final class CollapseAllAction extends AnAction {
     CollapseAllAction() {
       super(IdeBundle.messagePointer("action.collapse.all"), AllIcons.Actions.Collapseall);
     }
@@ -875,14 +874,14 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private static class AlphaComparator implements Comparator<ElementNode> {
+  private static final class AlphaComparator implements Comparator<ElementNode> {
     @Override
     public int compare(ElementNode n1, ElementNode n2) {
       return n1.getDelegate().getText().compareToIgnoreCase(n2.getDelegate().getText());
     }
   }
 
-  protected static class OrderComparator implements Comparator<ElementNode> {
+  protected static final class OrderComparator implements Comparator<ElementNode> {
     public OrderComparator() {
     } // To make this class instantiable from the subclasses
 
@@ -908,7 +907,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private static class ElementNodeComparatorWrapper<T> implements Comparator<ElementNode> {
+  private static final class ElementNodeComparatorWrapper<T> implements Comparator<ElementNode> {
     private final Comparator<? super T> myDelegate;
 
     ElementNodeComparatorWrapper(final Comparator<? super T> delegate) {

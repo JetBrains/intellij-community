@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.openapi.module.Module;
@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-class LightEditProjectFileIndex implements ProjectFileIndex {
+final class LightEditProjectFileIndex implements ProjectFileIndex {
   @Override
   public boolean isInProject(@NotNull VirtualFile file) {
     return isInContent(file);
@@ -26,51 +26,43 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
     return isInContent(file);
   }
 
-  @Nullable
   @Override
-  public Module getModuleForFile(@NotNull VirtualFile file) {
+  public @Nullable Module getModuleForFile(@NotNull VirtualFile file) {
     return null;
   }
 
-  @Nullable
   @Override
-  public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+  public @Nullable Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
+  public @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
     return Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  public VirtualFile getClassRootForFile(@NotNull VirtualFile file) {
+  public @Nullable VirtualFile getClassRootForFile(@NotNull VirtualFile file) {
     return null;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getSourceRootForFile(@NotNull VirtualFile file) {
+  public @Nullable VirtualFile getSourceRootForFile(@NotNull VirtualFile file) {
     return null;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getContentRootForFile(@NotNull VirtualFile file) {
+  public @Nullable VirtualFile getContentRootForFile(@NotNull VirtualFile file) {
     return null;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getContentRootForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+  public @Nullable VirtualFile getContentRootForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getPackageNameByDirectory(@NotNull VirtualFile dir) {
+  public @Nullable String getPackageNameByDirectory(@NotNull VirtualFile dir) {
     return null;
   }
 
@@ -96,11 +88,6 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
 
   @Override
   public boolean isInLibrarySource(@NotNull VirtualFile fileOrDir) {
-    return false;
-  }
-
-  @Override
-  public boolean isIgnored(@NotNull VirtualFile file) {
     return false;
   }
 
@@ -138,7 +125,7 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    return LightEditDirectoryIndex.getFileInfo().isInProject(fileOrDir);
+    return false;
   }
 
   @Override

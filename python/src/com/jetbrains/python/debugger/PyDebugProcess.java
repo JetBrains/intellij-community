@@ -16,9 +16,7 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -63,6 +61,7 @@ import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoContext;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoHandler;
@@ -231,6 +230,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             getSession().positionReached(createSuspendContext(threadInfo));
           }
         }
+        PyFrameListener.publisher().frameChanged();
         for (PyFrameListener listener : myFrameListeners) {
           listener.frameChanged();
         }
@@ -238,9 +238,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
       @Override
       public void sessionStopped() {
+        PyFrameListener.publisher().sessionStopped(null);
         XDebugSessionListener.super.sessionStopped();
         for (PyFrameListener listener : myFrameListeners) {
-          listener.sessionStopped();
+          listener.sessionStopped(null);
         }
       }
     });
@@ -248,9 +249,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     session.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionStopped() {
-        ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> {
-          PyUnitTestsDebuggingService.removeInlaysAssociatedWithSession(session);
-        }));
+        PyUnitTestsDebuggingService.removeInlaysAssociatedWithSession(session);
       }
     });
   }
@@ -514,6 +513,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     settings.add(new WatchReturnValuesAction(this));
     settings.add(new PyVariableViewSettings.SimplifiedView(this));
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
+    settings.add(new PyVariableViewSettings.QuotingPolicyGroup());
   }
 
   private static final class WatchReturnValuesAction extends ToggleAction {
@@ -794,9 +794,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public String execTableCommand(String command, TableCommandType commandType) throws PyDebuggerException {
+  public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    return myDebugger.execTableCommand(frame.getThreadId(), frame.getFrameId(), command, commandType);
+    return myDebugger.execTableCommand(frame.getThreadId(), frame.getFrameId(), command, commandType, tableCommandParameters);
   }
 
   @Override
@@ -820,9 +820,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         if (values == null) {
           return null;
         }
-        if (values != null) {
-          myStackFrameCache.put(frame.getThreadFrameId(), values);
-        }
+        myStackFrameCache.put(frame.getThreadFrameId(), values);
       }
       showFailedTestInfoIfNecessary(frame);
     }

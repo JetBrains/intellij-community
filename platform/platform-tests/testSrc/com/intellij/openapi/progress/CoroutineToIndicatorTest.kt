@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.openapi.progress.impl.ProgressState
+import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -23,13 +25,13 @@ class CoroutineToIndicatorTest : CancellationTest() {
     val modality = ModalityStateEx()
 
     withContext(modality.asContextElement()) {
-      assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
+      assertSame(ModalityState.nonModal(), ModalityState.defaultModalityState())
       coroutineToIndicator {
         assertNull(Cancellation.currentJob())
         assertNotNull(ProgressManager.getGlobalProgressIndicator())
         assertSame(modality, ModalityState.defaultModalityState())
       }
-      assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
+      assertSame(ModalityState.nonModal(), ModalityState.defaultModalityState())
     }
 
     assertNull(Cancellation.currentJob())
@@ -65,6 +67,15 @@ class CoroutineToIndicatorTest : CancellationTest() {
       }
     }
     assertSame(t, thrown)
+  }
+
+  private suspend inline fun testRunUnderIndicatorRethrow(t: ProcessCanceledException) {
+    val thrown = assertThrows<PceCancellationException> {
+      coroutineToIndicator {
+        throw t
+      }
+    }
+    assertSame(t, thrown.cause)
   }
 
   @Test

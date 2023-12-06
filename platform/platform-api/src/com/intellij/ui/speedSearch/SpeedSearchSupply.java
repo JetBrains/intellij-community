@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,13 +39,11 @@ public abstract class SpeedSearchSupply {
   protected static final JBColor ERROR_FOREGROUND_COLOR = namedColor("SpeedSearch.errorForeground", namedColor("SearchField.errorForeground", JBColor.RED));
 
 
-  @Nullable
-  public static SpeedSearchSupply getSupply(@NotNull final JComponent component) {
+  public static @Nullable SpeedSearchSupply getSupply(final @NotNull JComponent component) {
     return getSupply(component, false);
   }
 
-  @Nullable
-  public static SpeedSearchSupply getSupply(@NotNull final JComponent component, boolean evenIfInactive) {
+  public static @Nullable SpeedSearchSupply getSupply(final @NotNull JComponent component, boolean evenIfInactive) {
     SpeedSearchSupply speedSearch = (SpeedSearchSupply)component.getClientProperty(SPEED_SEARCH_COMPONENT_MARKER);
 
     if (evenIfInactive) {
@@ -53,8 +53,19 @@ public abstract class SpeedSearchSupply {
     return speedSearch != null && speedSearch.isPopupActive() ? speedSearch : null;
   }
 
-  @Nullable
-  public abstract Iterable<TextRange> matchingFragments(@NotNull final String text);
+  /**
+   * Checks if this implementation of speed search has its own navigation actions.
+   * <p>
+   *   Some implementations have their own actions for up/down, to go to the next/previous
+   *   match. This method is used to determine if it's the case.
+   * </p>
+   * @return true iff speed search has its own action for navigating the contents of the component
+   */
+  public boolean supportsNavigation() {
+    return false;
+  }
+
+  public abstract @Nullable Iterable<TextRange> matchingFragments(final @NotNull String text);
 
   /**
    * Selects element according to search criteria changes
@@ -63,8 +74,7 @@ public abstract class SpeedSearchSupply {
 
   public abstract boolean isPopupActive();
 
-  @Nullable
-  public String getEnteredPrefix() {
+  public @Nullable String getEnteredPrefix() {
     return null;
   }
 
@@ -88,5 +98,18 @@ public abstract class SpeedSearchSupply {
 
   public boolean isObjectFilteredOut(Object o) {
     return false;
+  }
+
+  @ApiStatus.Experimental
+  @FunctionalInterface
+  public interface SpeedSearchLocator {
+    /**
+     * Returns location and size of SpeedSearch popup invoked on the {@code target}
+     *
+     * @param target a component for speed search
+     * @return location and size
+     */
+    @Nullable
+    RelativeRectangle getSizeAndLocation(JComponent target);
   }
 }

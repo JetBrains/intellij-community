@@ -1,7 +1,0 @@
-f'{x:{y:<error descr="Expression fragment inside an f-string is nested too deeply">{<error descr="Expression expected">}</error></error>}}'
-f'{x:{y:<error descr="Expression fragment inside an f-string is nested too deeply">{<error descr="Expression expected"><error descr="Expression fragments inside f-strings cannot include line comments"># foo}}}'</error></error></error><EOLError descr="Type conversion, ':' or '}' expected"></EOLError><EOLError descr="' expected"></EOLError>
-f'{x:{y:<error descr="Expression fragment inside an f-string is nested too deeply">{z<error descr="An illegal conversion character 'z': should be one of 's', 'r', 'a'">!z</error>}</error>}}'
-f'{x:{y:<error descr="Expression fragment inside an f-string is nested too deeply">{z:<error descr="Expression fragment inside an f-string is nested too deeply">{42}</error>}</error>}}'
-f'{<error descr="Expression expected">:</error>{<error descr="Expression expected">:</error><error descr="Expression fragment inside an f-string is nested too deeply">{<error descr="Expression expected">:</error><error descr="Expression fragment inside an f-string is nested too deeply">{<error descr="Expression expected">}</error></error>}</error>}}'
-f'{x:{y:<error descr="Expression fragment inside an f-string is nested too deeply">{z</error><error descr="'}' expected">'</error>
-f'{x:{y:<error descr="Expression fragment inside an f-string is nested too deeply">{z</error><EOLError descr="Type conversion, ':' or '}' expected"></EOLError><EOLError descr="' expected"></EOLError>

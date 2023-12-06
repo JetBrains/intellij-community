@@ -1,27 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.XNamedTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import java.awt.Rectangle;
-import java.util.List;
-import java.util.Objects;
-import javax.swing.JViewport;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.util.List;
+import java.util.Objects;
 
 public final class XDebuggerTreeState {
   private final NodeInfo myRootInfo;
   private Rectangle myLastVisibleNodeRect;
 
   private XDebuggerTreeState(@NotNull XDebuggerTree tree) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     XDebuggerTreeNode root = tree.getRoot();
     myRootInfo = root != null ? new NodeInfo("", "", tree.isPathSelected(root.getPath())) : null;
     if (root != null) {
@@ -30,10 +31,11 @@ public final class XDebuggerTreeState {
   }
 
   public XDebuggerTreeRestorer restoreState(@NotNull XDebuggerTree tree) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     XDebuggerTreeRestorer restorer = null;
     if (myRootInfo != null) {
       restorer = new XDebuggerTreeRestorer(tree, myLastVisibleNodeRect);
+      tree.setCurrentRestorer(restorer);
       restorer.restore(tree.getRoot(), myRootInfo);
     }
     return restorer;

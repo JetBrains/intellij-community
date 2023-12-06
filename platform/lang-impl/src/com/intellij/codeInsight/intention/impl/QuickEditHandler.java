@@ -121,7 +121,8 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
     PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(injectedFile.getViewProvider());
     myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host));
-    myNewDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(myNewFile), "doc for file " + myNewFile.getName());
+    myNewDocument =
+      Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(myNewFile), "doc for file " + myNewFile.getName());
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new MyQuietHandler());
     myOrigCreationStamp = myOrigDocument.getModificationStamp(); // store creation stamp for UNDO tracking
     EditorFactory editorFactory = Objects.requireNonNull(EditorFactory.getInstance());
@@ -150,17 +151,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     }, this);
 
 
-    InjectedFileChangesHandlerProvider changesHandlerFactory =
-      InjectedFileChangesHandlerProvider.EP.forLanguage(firstShred.getHost().getLanguage());
-    if (changesHandlerFactory != null) {
-      myEditChangesHandler = changesHandlerFactory.createFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
-    }
-    else if (ContainerUtil.or(shreds, it -> InjectionMeta.INJECTION_INDENT.get(it.getHost()) != null)) {
-      myEditChangesHandler = new IndentAwareInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
-    }
-    else {
-      myEditChangesHandler = new CommonInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
-    }
+    myEditChangesHandler = getHandler(injectedFile, editor, shreds, myNewDocument);
     Disposer.register(this, myEditChangesHandler);
 
     StreamEx.of(shreds).map(it -> it.getHost()).nonNull().distinct().forEach(h -> {
@@ -178,6 +169,22 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
 
     myOrigDocument.addDocumentListener(this, this);
     myNewDocument.addDocumentListener(this, this);
+  }
+
+  static InjectedFileChangesHandler getHandler(@NotNull PsiFile injectedFile,
+                                               @NotNull Editor editor,
+                                               @NotNull Place shreds,
+                                               @NotNull Document document) {
+    PsiLanguageInjectionHost host = ContainerUtil.getFirstItem(shreds).getHost();
+    InjectedFileChangesHandlerProvider changesHandlerFactory =
+      host == null ? null : InjectedFileChangesHandlerProvider.EP.forLanguage(host.getLanguage());
+    if (changesHandlerFactory != null) {
+      return changesHandlerFactory.createFileChangesHandler(shreds, editor, document, injectedFile);
+    }
+    if (ContainerUtil.or(shreds, it -> InjectionMeta.INJECTION_INDENT.get(it.getHost()) != null)) {
+      return new IndentAwareInjectedFileChangesHandler(shreds, editor, document, injectedFile);
+    }
+    return new CommonInjectedFileChangesHandler(shreds, editor, document, injectedFile);
   }
 
   private static final Key<Set<QuickEditHandler>> QUICK_EDIT_HANDLERS = Key.create("QUICK_EDIT_HANDLERS");
@@ -332,7 +339,8 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   private void commitToOriginal(DocumentEvent e) {
     myCommittingToOriginal = true;
     try {
-      PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> myEditChangesHandler.commitToOriginal(e));
+      PostprocessReformattingAspect.getInstance(myProject)
+        .disablePostprocessFormattingInside(() -> myEditChangesHandler.commitToOriginal(e));
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
     }
     finally {
@@ -366,7 +374,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     return "QuickEditHandler@" + this.hashCode() + super.toString();
   }
 
-  private static class MyQuietHandler implements ReadonlyFragmentModificationHandler {
+  private static final class MyQuietHandler implements ReadonlyFragmentModificationHandler {
     @Override
     public void handle(ReadOnlyFragmentModificationException e) {
       //nothing

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement
 
 import com.intellij.openapi.components.*
@@ -8,12 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
-import com.intellij.util.ObjectUtils
 import org.editorconfig.Utils
 import org.editorconfig.Utils.configValueForKey
-import org.editorconfig.Utils.isApplicableTo
-import org.editorconfig.Utils.isEditorConfigFile
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.jdom.Attribute
 import org.jdom.DataConversionException
 import org.jdom.Element
@@ -28,7 +25,7 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
     for (url in myCharsetMap.keys) {
       val charsetData = myCharsetMap[url]
       if (charsetData != null) {
-        val charsetStr = ConfigEncodingManager.toString(charsetData.charset, charsetData.isUseBom)
+        val charsetStr = ConfigEncodingCharsetUtil.toString(charsetData.charset, charsetData.isUseBom)
         if (charsetStr != null) {
           val entryElement = Element(ENTRY_ELEMENT)
           val urlAttr = Attribute(URL_ATTR, url)
@@ -54,8 +51,8 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
       if (urlAttr != null && charsetAttr != null) {
         val url = urlAttr.value
         val charsetStr = charsetAttr.value
-        val charset = ConfigEncodingManager.toCharset(charsetStr)
-        val useBom = ConfigEncodingManager.UTF8_BOM_ENCODING == charsetStr
+        val charset = ConfigEncodingCharsetUtil.toCharset(charsetStr)
+        val useBom = ConfigEncodingCharsetUtil.UTF8_BOM_ENCODING == charsetStr
         if (charset != null) {
           val charsetData = CharsetData(charset, useBom)
           myCharsetMap[url] = charsetData
@@ -145,11 +142,11 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
     fun getInstance(): EditorConfigEncodingCache = service()
 
     private fun computeCharsetData(project: Project, virtualFile: VirtualFile): CharsetData? {
-      val properties = SettingsProviderComponent.getInstance(project).getProperties(virtualFile)
-      val charsetStr = properties.configValueForKey(ConfigEncodingManager.charsetKey)
+      val properties = EditorConfigPropertiesService.getInstance(project).getProperties(virtualFile)
+      val charsetStr = properties.configValueForKey(ConfigEncodingCharsetUtil.charsetKey)
       if (!charsetStr.isEmpty()) {
-        val charset = ConfigEncodingManager.toCharset(charsetStr)
-        val useBom = ConfigEncodingManager.UTF8_BOM_ENCODING == charsetStr
+        val charset = ConfigEncodingCharsetUtil.toCharset(charsetStr)
+        val useBom = ConfigEncodingCharsetUtil.UTF8_BOM_ENCODING == charsetStr
         if (charset != null) {
           return CharsetData(charset, useBom)
         }

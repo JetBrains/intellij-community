@@ -337,14 +337,20 @@ public final class ComparisonManagerImpl extends ComparisonManager {
       int startLine2 = ch.start2 + range.start2;
       int endLine1 = ch.end1 + range.start1;
       int endLine2 = ch.end2 + range.start2;
-
-      IntPair offsets1 = getOffsets(lineOffsets1, startLine1, endLine1);
-      IntPair offsets2 = getOffsets(lineOffsets2, startLine2, endLine2);
-
-      fragments.add(new LineFragmentImpl(startLine1, endLine1, startLine2, endLine2,
-                                         offsets1.first, offsets1.second, offsets2.first, offsets2.second));
+      fragments.add(createLineFragment(startLine1, endLine1, startLine2, endLine2, lineOffsets1, lineOffsets2));
     }
     return fragments;
+  }
+
+  @NotNull
+  public static LineFragment createLineFragment(int startLine1, int endLine1,
+                                                int startLine2, int endLine2,
+                                                @NotNull LineOffsets lineOffsets1,
+                                                @NotNull LineOffsets lineOffsets2) {
+    IntPair offsets1 = getOffsets(lineOffsets1, startLine1, endLine1);
+    IntPair offsets2 = getOffsets(lineOffsets2, startLine2, endLine2);
+    return new LineFragmentImpl(startLine1, endLine1, startLine2, endLine2,
+                                offsets1.first, offsets1.second, offsets2.first, offsets2.second);
   }
 
   @NotNull

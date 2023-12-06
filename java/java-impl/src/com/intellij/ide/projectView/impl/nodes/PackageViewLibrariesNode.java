@@ -4,7 +4,6 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -36,20 +35,19 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   @Override
   @NotNull
   public Collection<AbstractTreeNode<?>> getChildren() {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
-      final ArrayList<VirtualFile> roots = new ArrayList<>();
-      Module myModule = getValue().getModule();
-      if (myModule == null) {
-        final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-        for (Module module : modules) {
-          addModuleLibraryRoots(ModuleRootManager.getInstance(module), roots);
-        }
+    ArrayList<VirtualFile> roots = new ArrayList<>();
+    LibrariesElement value = getValue();
+    Module myModule = value == null ? null : value.getModule();
+    if (myModule == null) {
+      Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+      for (Module module : modules) {
+        addModuleLibraryRoots(ModuleRootManager.getInstance(module), roots);
       }
-      else {
-        addModuleLibraryRoots(ModuleRootManager.getInstance(myModule), roots);
-      }
-      return PackageUtil.createPackageViewChildrenOnFiles(roots, getProject(), getSettings(), null, true);
-    });
+    }
+    else {
+      addModuleLibraryRoots(ModuleRootManager.getInstance(myModule), roots);
+    }
+    return PackageUtil.createPackageViewChildrenOnFiles(roots, getProject(), getSettings(), null, true);
   }
 
   @Override

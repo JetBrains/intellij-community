@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Editor;
@@ -14,10 +14,8 @@ import org.jetbrains.annotations.Nullable;
  * Describes context in which live template supposed to be used.
  */
 public final class TemplateActionContext {
-  @NotNull
-  private final PsiFile myFile;
-  @Nullable
-  private final Editor myEditor;
+  private final @NotNull PsiFile myFile;
+  private final @Nullable Editor myEditor;
 
   private final int myStartOffset;
   private final int myEndOffset;

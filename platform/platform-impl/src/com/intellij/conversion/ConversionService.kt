@@ -2,11 +2,20 @@
 package com.intellij.conversion
 
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.nio.file.Path
 
 abstract class ConversionService {
-  abstract fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult
+  abstract suspend fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult
+
+  @RequiresBackgroundThread
+  fun blockingConvertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult {
+    return runBlockingMaybeCancellable {
+      convertSilently(projectPath, conversionListener)
+    }
+  }
 
   @Throws(CannotConvertException::class)
   abstract suspend fun convert(projectPath: Path): ConversionResult
@@ -29,10 +38,9 @@ interface ConversionResult {
   fun postStartupActivity(project: Project)
 }
 
-
 class CannotConvertException : RuntimeException {
-  @JvmOverloads
   constructor(message: String, cause: Throwable? = null) : super(message, cause)
+
   constructor(cause: Throwable) : super(cause)
 }
 

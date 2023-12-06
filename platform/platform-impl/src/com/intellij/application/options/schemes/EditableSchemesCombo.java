@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
@@ -9,6 +9,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
-public class EditableSchemesCombo<T extends Scheme> {
+public final class EditableSchemesCombo<T extends Scheme> {
 
   public static final int COMBO_WIDTH = 200;
   // endregion
@@ -34,9 +35,10 @@ public class EditableSchemesCombo<T extends Scheme> {
   private final JTextField myNameEditorField;
   private @Nullable NameEditData myNameEditData;
 
-  private final static KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
-  private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
-  private final static Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("ComboBox.modifiedItemForeground", JBColor.BLUE);
+  private static final KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
+  private static final KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
+  @ApiStatus.Internal
+  public static final Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("ComboBox.modifiedItemForeground", JBColor.BLUE);
 
   public EditableSchemesCombo(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
@@ -144,13 +146,18 @@ public class EditableSchemesCombo<T extends Scheme> {
       }
 
       @Override
+      protected boolean isDefaultScheme(@NotNull T scheme) {
+        SchemesModel<T> model = mySchemesPanel.getModel();
+        return model.isDefaultScheme(scheme);
+      }
+
+      @Override
       protected int getIndent(@NotNull T scheme) {
         return mySchemesPanel.getIndent(scheme);
       }
 
-      @NotNull
       @Override
-      protected SimpleTextAttributes getSchemeAttributes(T scheme) {
+      protected @NotNull SimpleTextAttributes getSchemeAttributes(T scheme) {
         SchemesModel<T> model = mySchemesPanel.getModel();
         SimpleTextAttributes baseAttributes = !useBoldForNonRemovableSchemes() || model.canDeleteScheme(scheme)
                                               ? SimpleTextAttributes.REGULAR_ATTRIBUTES
@@ -184,8 +191,7 @@ public class EditableSchemesCombo<T extends Scheme> {
     myComboBox.resetSchemes(schemes);
   }
 
-  @Nullable
-  public T getSelectedScheme() {
+  public @Nullable T getSelectedScheme() {
     return myComboBox.getSelectedScheme();
   }
 
@@ -201,9 +207,7 @@ public class EditableSchemesCombo<T extends Scheme> {
     return mySchemesPanel.useBoldForNonRemovableSchemes();
   }
 
-  @Nullable
-  @Nls
-  private String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
+  private @Nullable @Nls String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
     if (myNameEditData != null && name.equals(myNameEditData.initialName)) return null;
     if (isEmptyOrSpaces(name)) {
       return IdeBundle.message("error.empty.name");
@@ -215,8 +219,8 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private static final class NameEditData {
-    private @NotNull final String initialName;
-    private @NotNull final Consumer<? super String> nameConsumer;
+    private final @NotNull String initialName;
+    private final @NotNull Consumer<? super String> nameConsumer;
     private final boolean isProjectScheme;
 
     private NameEditData(@NotNull String name, @NotNull Consumer<? super String> nameConsumer, boolean isProjectScheme) {

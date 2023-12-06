@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 open class AddModifierFix(
     element: KtModifierListOwner,
@@ -35,18 +36,28 @@ open class AddModifierFix(
     override fun getFamilyName() = KotlinBundle.message("fix.add.modifier.family")
 
     protected fun invokeOnElement(element: KtModifierListOwner?) {
-        element?.addModifier(modifier)
+        if (element == null) return
 
-        if (modifier == KtTokens.ABSTRACT_KEYWORD && (element is KtProperty || element is KtNamedFunction)) {
-            element.containingClass()?.run {
-                if (!hasModifier(KtTokens.ABSTRACT_KEYWORD) && !hasModifier(KtTokens.SEALED_KEYWORD)) {
-                    addModifier(KtTokens.ABSTRACT_KEYWORD)
+        element.addModifier(modifier)
+
+        when (modifier) {
+            KtTokens.ABSTRACT_KEYWORD -> {
+                if (element is KtProperty || element is KtNamedFunction) {
+                    element.containingClass()?.let { klass ->
+                        if (!klass.hasModifier(KtTokens.ABSTRACT_KEYWORD) && !klass.hasModifier(KtTokens.SEALED_KEYWORD)) {
+                            klass.addModifier(KtTokens.ABSTRACT_KEYWORD)
+                        }
+                    }
                 }
             }
-        }
 
-        if (modifier == KtTokens.NOINLINE_KEYWORD) {
-            element?.removeModifier(KtTokens.CROSSINLINE_KEYWORD)
+            KtTokens.OVERRIDE_KEYWORD -> {
+                val visibility = element.visibilityModifierType()?.takeIf { it != KtTokens.PUBLIC_KEYWORD }
+                visibility?.let { element.removeModifier(it) }
+            }
+
+            KtTokens.NOINLINE_KEYWORD ->
+                element.removeModifier(KtTokens.CROSSINLINE_KEYWORD)
         }
     }
 
@@ -115,6 +126,7 @@ open class AddModifierFix(
         val addFinalToProperty = AddModifierFix.createFactory(KtTokens.FINAL_KEYWORD, KtProperty::class.java)
         val addInnerModifier = createFactory(KtTokens.INNER_KEYWORD)
         val addOverrideModifier = createFactory(KtTokens.OVERRIDE_KEYWORD)
+        val addDataModifier = createFactory(KtTokens.DATA_KEYWORD, KtClass::class.java)
 
         val modifiersWithWarning: Set<KtModifierKeywordToken> = setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.FINAL_KEYWORD)
         private val modalityModifiers = modifiersWithWarning + KtTokens.OPEN_KEYWORD

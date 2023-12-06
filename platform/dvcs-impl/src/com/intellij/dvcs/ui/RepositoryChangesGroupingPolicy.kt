@@ -18,8 +18,10 @@ import javax.swing.tree.DefaultTreeModel
 class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   private val repositoryManager = VcsRepositoryManager.getInstance(project)
 
-  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
+  override fun getParentNodeFor(nodePath: StaticFilePath,
+                                node: ChangesBrowserNode<*>,
+                                subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
+    val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, node, subtreeRoot)
 
     val colorManager = getColorManager(project)
     if (!colorManager.hasMultiplePaths()) return nextPolicyParent

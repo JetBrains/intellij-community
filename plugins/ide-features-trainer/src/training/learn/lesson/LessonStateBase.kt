@@ -15,10 +15,19 @@ private class LessonStateBase : PersistentStateComponent<LessonStateBase> {
   override fun getState(): LessonStateBase = this
 
   override fun loadState(persistedState: LessonStateBase) {
-    map = persistedState.map.mapKeys { it.key.toLowerCase() }.toMutableMap()
+    map = persistedState.map.mapKeys { it.key.lowercase() }.toMutableMap()
+    migrateLessonState("java.onboarding", "idea.onboarding")
   }
 
   var map: MutableMap<String, LessonState> = mutableMapOf()
+
+  @Suppress("SameParameterValue")
+  private fun migrateLessonState(oldId: String, newId: String) {
+    map[oldId]?.let {
+      map[newId] = it
+      map.remove(oldId)
+    }
+  }
 
   companion object {
     internal val instance: LessonStateBase
@@ -29,7 +38,7 @@ private class LessonStateBase : PersistentStateComponent<LessonStateBase> {
 internal object LessonStateManager {
 
   fun setPassed(lesson: Lesson) {
-    LessonStateBase.instance.map[lesson.id.toLowerCase()] = LessonState.PASSED
+    LessonStateBase.instance.map[lesson.id.lowercase()] = LessonState.PASSED
   }
 
   fun resetPassedStatus() {
@@ -41,5 +50,5 @@ internal object LessonStateManager {
   fun getPassedLessonsNumber(): Int = LessonStateBase.instance.map.values.filter { it == LessonState.PASSED }.size
 
   fun getStateFromBase(lessonId: String): LessonState =
-    LessonStateBase.instance.map.getOrPut(lessonId.toLowerCase()) { LessonState.NOT_PASSED }
+    LessonStateBase.instance.map.getOrPut(lessonId.lowercase()) { LessonState.NOT_PASSED }
 }

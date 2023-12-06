@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class TextMateWeigh implements Comparable<TextMateWeigh> {
+public final class TextMateWeigh implements Comparable<TextMateWeigh> {
   public static final TextMateWeigh ZERO = new TextMateWeigh(0, Priority.LOW);
 
   public enum Priority {

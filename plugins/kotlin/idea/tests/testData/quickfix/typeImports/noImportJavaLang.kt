@@ -6,3 +6,4 @@ class M {
         abstract val e = <caret>Thread()
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemovePartsFromPropertyFix

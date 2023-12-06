@@ -3,21 +3,30 @@
 package org.jetbrains.kotlin.idea.completion.test
 
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
-fun CodeInsightTestFixture.configureWithExtraFile(path: String, vararg extraNameParts: String = arrayOf(".Data")) {
-    val fileName = File(path).name
+fun CodeInsightTestFixture.configureByFilesWithSuffixes(mainFile: File, testDataDirectory: File, vararg suffixes: String) {
+    val parentFile = mainFile.parentFile ?: error("Parent file not found for $mainFile")
+    val baseName = mainFile.nameWithoutExtension.substringBefore(".fir")
 
-    val noExtensionPath = FileUtil.getNameWithoutExtension(fileName)
-    val extensions = arrayOf("kt", "java", "properties")
-    val extraPaths: List<String> = extraNameParts.flatMap { extensions.map { ext -> "$noExtensionPath$it.$ext" } }
-        .mapNotNull { File(testDataPath, it).takeIf { file -> file.exists() }?.name }
+    val extraFiles = buildList {
+        for (extension in listOf("kt", "java", "properties")) {
+            for (suffix in suffixes) {
+                val candidate = File(parentFile, "$baseName$suffix.$extension")
+                if (candidate != mainFile && candidate.exists()) {
+                    add(candidate)
+                }
+            }
+        }
+    }
 
-    configureByFiles(*(listOf(fileName) + extraPaths).toTypedArray())
+    val allFiles = listOf(mainFile) + extraFiles
+    val allPaths = allFiles.map { it.toRelativeString(testDataDirectory) }
+    configureByFiles(*allPaths.toTypedArray())
 }
 
 inline fun <reified T : Any> Any?.assertInstanceOf() = UsefulTestCase.assertInstanceOf(this, T::class.java)
@@ -32,4 +41,10 @@ inline fun <reified T : Any, R> ComponentManager.withComponentRegistered(instanc
     } finally {
         picoContainer.unregisterComponent(key)
     }
+}
+
+fun firFileName(originalFileName: String, testDataDirectory: File, vararg additionalExtensions: String): String {
+    val originalFile = File(testDataDirectory, originalFileName)
+    val refinedFile = IgnoreTests.getFirTestFileIfFirPassing(originalFile, IgnoreTests.DIRECTIVES.FIR_COMPARISON, *additionalExtensions)
+    return refinedFile.toRelativeString(testDataDirectory)
 }

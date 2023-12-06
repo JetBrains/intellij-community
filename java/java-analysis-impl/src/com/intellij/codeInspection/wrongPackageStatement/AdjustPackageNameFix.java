@@ -2,14 +2,15 @@
 package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class AdjustPackageNameFix implements LocalQuickFix {
+public class AdjustPackageNameFix extends ModCommandQuickFix {
   private final String myName;
 
   public AdjustPackageNameFix(String targetPackage) {
@@ -29,26 +30,33 @@ public class AdjustPackageNameFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
-    if (element == null) return;
+  public final @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiElement element = descriptor.getStartElement();
+    PsiFile origFile = element.getContainingFile();
+    PsiDirectory directory = origFile.getContainingDirectory();
+    if (directory == null) return ModCommand.nop();
+    return ModCommand.psiUpdate(element, (e, updater) -> applyFix(e, origFile, directory));
+  }
+
+  private static void applyFix(@NotNull PsiElement element, @NotNull PsiFile origFile, @NotNull PsiDirectory directory) {
     PsiFile file = element.getContainingFile();
-    PsiFile originalFile = IntentionPreviewUtils.getOriginalFile(file);
-    PsiDirectory directory = originalFile != null ? originalFile.getContainingDirectory() : file.getContainingDirectory();
-    if (directory == null) return;
     PsiPackage myTargetPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (myTargetPackage == null) return;
+    String myTargetPackageName = myTargetPackage.getQualifiedName();
+    SingleFileSourcesTracker singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(file.getProject());
+    String singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(origFile.getVirtualFile());
+    if (singleFileSourcePackageName != null) myTargetPackageName = singleFileSourcePackageName;
 
     PsiPackageStatement statement = ((PsiJavaFile)file).getPackageStatement();
 
-    if (myTargetPackage.getQualifiedName().isEmpty()) {
+    if (myTargetPackageName.isEmpty()) {
       if (statement != null) {
         statement.delete();
       }
     }
     else {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(file.getProject());
-      final PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackage.getQualifiedName());
+      final PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackageName);
       if (statement != null) {
         statement.getPackageReference().replace(packageStatement.getPackageReference());
       }

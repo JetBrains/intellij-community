@@ -1,3 +1,4 @@
+// HIGHLIGHT: INFORMATION
 fun test() = 42
 
 fun foo() {

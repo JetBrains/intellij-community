@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class CompilationPaths {
+public final class CompilationPaths {
   private final Iterable<? extends File> myPlatformClasspath;
   private final Iterable<? extends File> myClasspath;
   private final Iterable<? extends File> myUpgradeModulePath;
@@ -25,28 +25,23 @@ public class CompilationPaths {
     mySourcePath = sourcePath;
   }
 
-  @NotNull
-  public Iterable<? extends File> getPlatformClasspath() {
+  public @NotNull Iterable<? extends File> getPlatformClasspath() {
     return myPlatformClasspath;
   }
 
-  @NotNull
-  public Iterable<? extends File> getClasspath() {
+  public @NotNull Iterable<? extends File> getClasspath() {
     return myClasspath;
   }
 
-  @NotNull
-  public Iterable<? extends File> getUpgradeModulePath() {
+  public @NotNull Iterable<? extends File> getUpgradeModulePath() {
     return myUpgradeModulePath;
   }
 
-  @NotNull
-  public ModulePath getModulePath() {
+  public @NotNull ModulePath getModulePath() {
     return myModulePath;
   }
 
-  @NotNull
-  public Iterable<? extends File> getSourcePath() {
+  public @NotNull Iterable<? extends File> getSourcePath() {
     return mySourcePath;
   }
 

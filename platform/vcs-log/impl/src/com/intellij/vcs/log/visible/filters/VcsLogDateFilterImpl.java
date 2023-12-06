@@ -10,6 +10,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Date;
 import java.util.Objects;
 
+/**
+ * @see VcsLogFilterObject#fromDates 
+ */
 class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
   private final @Nullable Date myAfter;
   private final @Nullable Date myBefore;

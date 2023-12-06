@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column.util
 
 import com.intellij.openapi.Disposable
@@ -6,10 +6,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.table.JBTable
-import com.intellij.util.childScope
 import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.data.MiniDetailsGetter
 import com.intellij.vcs.log.data.VcsCommitExternalStatus
 import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
 import com.intellij.vcs.log.impl.VcsLogUiProperties
@@ -71,7 +72,9 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
       scope.launch(CoroutineName("Vcs log table ${table.id} rows visibility tracker")) {
         combine(
           table.columnVisibilityFlow(column),
-          combine(table.modelChangedFlow(), table.expandedVisibleRowsFlow(15)) { _, rowsRange -> rowsRange }
+          combine(table.modelChangedFlow(),
+                  table.logData.miniDetailsGetter.detailsLoadedFlow(),
+                  table.expandedVisibleRowsFlow(15)) { _, _, rowsRange -> rowsRange }
             .debounce(300L),
           ::Pair
         ).collectLatest { (isColumnVisible, rowsRange) ->
@@ -82,6 +85,17 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
             table.onColumnDataChanged(column)
           }
         }
+      }
+    }
+
+    private fun MiniDetailsGetter.detailsLoadedFlow(): Flow<Unit> {
+      return callbackFlow {
+        val listener = Runnable { trySend(Unit) }
+
+        trySend(Unit) // initial value
+
+        addDetailsLoadedListener(listener)
+        awaitClose { removeDetailsLoadedListener(listener) }
       }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonDependencyModificationTracker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNode;
+import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeBuilder;
+import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeKt;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,95 +45,99 @@ public final class JsonSchemaObject {
 
   public static final String MOCK_URL = "mock:///";
   public static final String TEMP_URL = "temp:///";
-  @NonNls public static final String DEFINITIONS = "definitions";
-  @NonNls public static final String DEFINITIONS_v9 = "$defs";
-  @NonNls public static final String PROPERTIES = "properties";
-  @NonNls public static final String ITEMS = "items";
-  @NonNls public static final String ADDITIONAL_ITEMS = "additionalItems";
-  @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
-  @NonNls public static final String X_INTELLIJ_LANGUAGE_INJECTION = "x-intellij-language-injection";
-  @NonNls public static final String X_INTELLIJ_CASE_INSENSITIVE = "x-intellij-case-insensitive";
-  @NonNls public static final String X_INTELLIJ_ENUM_METADATA = "x-intellij-enum-metadata";
-  @Nullable private final String myFileUrl;
-  @Nullable private JsonSchemaObject myBackRef;
-  @NotNull private final String myPointer;
-  @Nullable private final VirtualFile myRawFile;
-  @Nullable private Map<String, JsonSchemaObject> myDefinitionsMap;
-  @NotNull public static final JsonSchemaObject NULL_OBJ = new JsonSchemaObject("$_NULL_$");
-  @NotNull private Map<String, JsonSchemaObject> myProperties;
+  public static final @NonNls String DEFINITIONS = "definitions";
+  public static final @NonNls String DEFINITIONS_v9 = "$defs";
+  public static final @NonNls String PROPERTIES = "properties";
+  public static final @NonNls String ITEMS = "items";
+  public static final @NonNls String ADDITIONAL_ITEMS = "additionalItems";
+  public static final @NonNls String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
+  public static final @NonNls String X_INTELLIJ_LANGUAGE_INJECTION = "x-intellij-language-injection";
+  public static final @NonNls String X_INTELLIJ_CASE_INSENSITIVE = "x-intellij-case-insensitive";
+  public static final @NonNls String X_INTELLIJ_ENUM_METADATA = "x-intellij-enum-metadata";
+  private final @Nullable String myFileUrl;
+  private @Nullable JsonSchemaObject myBackRef;
+  private final @NotNull String myPointer;
+  private final @Nullable VirtualFile myRawFile;
+  private @Nullable Map<String, JsonSchemaObject> myDefinitionsMap;
+  public static final @NotNull JsonSchemaObject NULL_OBJ = new JsonSchemaObject("$_NULL_$");
+  private @NotNull Map<String, JsonSchemaObject> myProperties;
 
-  @Nullable private PatternProperties myPatternProperties;
-  @Nullable private PropertyNamePattern myPattern;
+  private @Nullable PatternProperties myPatternProperties;
+  private @Nullable PropertyNamePattern myPattern;
 
-  @Nullable private String myId;
-  @Nullable private String mySchema;
+  private @Nullable String myId;
+  private @Nullable String mySchema;
 
-  @Nullable private String myTitle;
-  @Nullable private String myDescription;
-  @Nullable private String myHtmlDescription;
-  @Nullable private String myLanguageInjection;
-  @Nullable private String myLanguageInjectionPrefix;
-  @Nullable private String myLanguageInjectionPostfix;
+  private @Nullable String myTitle;
+  private @Nullable String myDescription;
+  private @Nullable String myHtmlDescription;
+  private @Nullable String myLanguageInjection;
+  private @Nullable String myLanguageInjectionPrefix;
+  private @Nullable String myLanguageInjectionPostfix;
 
-  @Nullable private JsonSchemaType myType;
-  @Nullable private Object myDefault;
-  @Nullable private String myRef;
+  private @Nullable JsonSchemaType myType;
+  private @Nullable Object myDefault;
+  private @Nullable Map<String, Object> myExample;
+  private @Nullable String myRef;
   private boolean myRefIsRecursive;
   private boolean myIsRecursiveAnchor;
-  @Nullable private String myFormat;
-  @Nullable private Set<JsonSchemaType> myTypeVariants;
-  @Nullable private Number myMultipleOf;
-  @Nullable private Number myMaximum;
+  private @Nullable String myFormat;
+  private @Nullable Set<JsonSchemaType> myTypeVariants;
+  private @Nullable Number myMultipleOf;
+  private @Nullable Number myMaximum;
   private boolean myExclusiveMaximum;
-  @Nullable private Number myExclusiveMaximumNumber;
-  @Nullable private Number myMinimum;
+  private @Nullable Number myExclusiveMaximumNumber;
+  private @Nullable Number myMinimum;
   private boolean myExclusiveMinimum;
-  @Nullable private Number myExclusiveMinimumNumber;
-  @Nullable private Integer myMaxLength;
-  @Nullable private Integer myMinLength;
+  private @Nullable Number myExclusiveMinimumNumber;
+  private @Nullable Integer myMaxLength;
+  private @Nullable Integer myMinLength;
 
-  @Nullable private Boolean myAdditionalPropertiesAllowed;
-  @Nullable private Set<String> myAdditionalPropertiesNotAllowedFor;
-  @Nullable private JsonSchemaObject myAdditionalPropertiesSchema;
-  @Nullable private JsonSchemaObject myPropertyNamesSchema;
+  private @Nullable Boolean myAdditionalPropertiesAllowed;
+  private @Nullable Set<String> myAdditionalPropertiesNotAllowedFor;
+  private @Nullable JsonSchemaObject myAdditionalPropertiesSchema;
+  private @Nullable JsonSchemaObject myPropertyNamesSchema;
 
-  @Nullable private Boolean myAdditionalItemsAllowed;
-  @Nullable private JsonSchemaObject myAdditionalItemsSchema;
+  private @Nullable Boolean myAdditionalItemsAllowed;
+  private @Nullable JsonSchemaObject myAdditionalItemsSchema;
 
-  @Nullable private JsonSchemaObject myItemsSchema;
-  @Nullable private JsonSchemaObject myContainsSchema;
-  @Nullable private List<JsonSchemaObject> myItemsSchemaList;
+  private @Nullable JsonSchemaObject myItemsSchema;
+  private @Nullable JsonSchemaObject myContainsSchema;
+  private @Nullable List<JsonSchemaObject> myItemsSchemaList;
 
-  @Nullable private Integer myMaxItems;
-  @Nullable private Integer myMinItems;
+  private @Nullable Integer myMaxItems;
+  private @Nullable Integer myMinItems;
 
-  @Nullable private Boolean myUniqueItems;
+  private @Nullable Boolean myUniqueItems;
 
-  @Nullable private Integer myMaxProperties;
-  @Nullable private Integer myMinProperties;
-  @Nullable private Set<String> myRequired;
+  private @Nullable Integer myMaxProperties;
+  private @Nullable Integer myMinProperties;
+  private @Nullable Set<String> myRequired;
 
-  @Nullable private Map<String, List<String>> myPropertyDependencies;
-  @Nullable private Map<String, JsonSchemaObject> mySchemaDependencies;
+  private @Nullable Map<String, List<String>> myPropertyDependencies;
+  private @Nullable Map<String, JsonSchemaObject> mySchemaDependencies;
 
-  @Nullable private List<Object> myEnum;
+  private @Nullable List<Object> myEnum;
 
-  @Nullable private List<JsonSchemaObject> myAllOf;
-  @Nullable private List<JsonSchemaObject> myAnyOf;
-  @Nullable private List<JsonSchemaObject> myOneOf;
-  @Nullable private JsonSchemaObject myNot;
-  @Nullable private List<IfThenElse> myIfThenElse;
-  @Nullable private JsonSchemaObject myIf;
-  @Nullable private JsonSchemaObject myThen;
-  @Nullable private JsonSchemaObject myElse;
+  private @Nullable List<JsonSchemaObject> myAllOf;
+  private @Nullable List<JsonSchemaObject> myAnyOf;
+  private @Nullable List<JsonSchemaObject> myOneOf;
+  private @Nullable JsonSchemaObject myNot;
+  private @Nullable List<IfThenElse> myIfThenElse;
+  private @Nullable JsonSchemaObject myIf;
+  private @Nullable JsonSchemaObject myThen;
+  private @Nullable JsonSchemaObject myElse;
   private boolean myShouldValidateAgainstJSType;
 
-  @Nullable private String myDeprecationMessage;
-  @Nullable private Map<String, String> myIdsMap;
+  private @Nullable String myDeprecationMessage;
+  private @Nullable Map<String, String> myIdsMap;
 
-  @Nullable private Map<String, Map<String, String>> myEnumMetadata;
+  private @Nullable Map<String, Map<String, String>> myEnumMetadata;
 
   private boolean myForceCaseInsensitive = false;
+
+  /** @see JsonSchemaObject#applyBuilderOnNestedCompletionsRoot(Function1) */
+  private NestedCompletionsNode myNestedCompletionRoot = null;
 
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
@@ -176,13 +186,11 @@ public final class JsonSchemaObject {
     return myIdsMap == null ? null : myIdsMap.get(id);
   }
 
-  @NotNull
-  public String getPointer() {
+  public @NotNull String getPointer() {
     return myPointer;
   }
 
-  @Nullable
-  public String getFileUrl() {
+  public @Nullable String getFileUrl() {
     return myFileUrl;
   }
 
@@ -190,8 +198,7 @@ public final class JsonSchemaObject {
    * NOTE: Raw files are stored only in very specific cases such as mock files
    * This API should be used only as a fallback to trying to resolve file via its url returned by getFileUrl()
    */
-  @Nullable
-  public VirtualFile getRawFile() {
+  public @Nullable VirtualFile getRawFile() {
     return myRawFile;
   }
 
@@ -207,24 +214,33 @@ public final class JsonSchemaObject {
     myLanguageInjectionPostfix = postfix;
   }
 
-  @Nullable
-  public String getLanguageInjection() {
+  public @Nullable String getLanguageInjection() {
     return myLanguageInjection;
   }
 
-  @Nullable
-  public String getLanguageInjectionPrefix() {
+  public @Nullable String getLanguageInjectionPrefix() {
     return myLanguageInjectionPrefix;
   }
 
-  @Nullable
-  public String getLanguageInjectionPostfix() {
+  public @Nullable String getLanguageInjectionPostfix() {
     return myLanguageInjectionPostfix;
   }
 
-  @Nullable
-  private static JsonSchemaType getSubtypeOfBoth(@NotNull JsonSchemaType selfType,
-                                                 @NotNull JsonSchemaType otherType) {
+  /**
+   * Builds the nested completions root tree.
+   * @see NestedCompletionsNodeKt#buildNestedCompletionsRootTree(JsonSchemaObject, Function1) to see how the DSL is ideally used in Kotlin
+   */
+  @ApiStatus.Experimental
+  public void applyBuilderOnNestedCompletionsRoot(Function1<? super NestedCompletionsNodeBuilder, Unit> builder) {
+    myNestedCompletionRoot = NestedCompletionsNodeKt.buildNestedCompletionsTree(builder);
+  }
+
+  NestedCompletionsNode getNestedCompletionRoot() {
+    return myNestedCompletionRoot;
+  }
+
+  private static @Nullable JsonSchemaType getSubtypeOfBoth(@NotNull JsonSchemaType selfType,
+                                                           @NotNull JsonSchemaType otherType) {
     if (otherType == JsonSchemaType._any) return selfType;
     if (selfType == JsonSchemaType._any) return otherType;
     return switch (selfType) {
@@ -248,10 +264,9 @@ public final class JsonSchemaObject {
     };
   }
 
-  @Nullable
-  private JsonSchemaType mergeTypes(@Nullable JsonSchemaType selfType,
-                                    @Nullable JsonSchemaType otherType,
-                                    @Nullable Set<JsonSchemaType> otherTypeVariants) {
+  private @Nullable JsonSchemaType mergeTypes(@Nullable JsonSchemaType selfType,
+                                              @Nullable JsonSchemaType otherType,
+                                              @Nullable Set<JsonSchemaType> otherTypeVariants) {
     if (selfType == null) return otherType;
     if (otherType == null) {
       if (otherTypeVariants != null && !otherTypeVariants.isEmpty()) {
@@ -323,6 +338,7 @@ public final class JsonSchemaObject {
     myType = mergeTypes(myType, other.myType, other.myTypeVariants);
 
     if (other.myDefault != null) myDefault = other.myDefault;
+    if (other.myExample != null) myExample = other.myExample;
     if (other.myRef != null) myRef = other.myRef;
     if (other.myFormat != null) myFormat = other.myFormat;
     myTypeVariants = mergeTypeVariantSets(myTypeVariants, other.myTypeVariants);
@@ -378,6 +394,7 @@ public final class JsonSchemaObject {
     myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
     if (myLanguageInjection == null) myLanguageInjection = other.myLanguageInjection;
     myForceCaseInsensitive = myForceCaseInsensitive || other.myForceCaseInsensitive;
+    myNestedCompletionRoot = NestedCompletionsNodeKt.merge(myNestedCompletionRoot, other.myNestedCompletionRoot);
   }
 
   private static void mergeProperties(@NotNull JsonSchemaObject thisObject, @NotNull JsonSchemaObject otherObject) {
@@ -402,24 +419,21 @@ public final class JsonSchemaObject {
     return myShouldValidateAgainstJSType;
   }
 
-  @Nullable
-  private static <T> List<T> copyList(@Nullable List<T> target, @Nullable List<T> source) {
+  private static @Nullable <T> List<T> copyList(@Nullable List<T> target, @Nullable List<T> source) {
     if (source == null || source.isEmpty()) return target;
     if (target == null) target = new ArrayList<>(source.size());
     target.addAll(source);
     return target;
   }
 
-  @Nullable
-  private static <K, V> Map<K, V> copyMap(@Nullable Map<K, V> target, @Nullable Map<K, V> source) {
+  private static @Nullable <K, V> Map<K, V> copyMap(@Nullable Map<K, V> target, @Nullable Map<K, V> source) {
     if (source == null || source.isEmpty()) return target;
     if (target == null) target = new HashMap<>(source.size());
     target.putAll(source);
     return target;
   }
 
-  @Nullable
-  public Map<String, JsonSchemaObject> getDefinitionsMap() {
+  public @Nullable Map<String, JsonSchemaObject> getDefinitionsMap() {
     return myDefinitionsMap;
   }
 
@@ -427,8 +441,7 @@ public final class JsonSchemaObject {
     myDefinitionsMap = definitionsMap;
   }
 
-  @NotNull
-  public Map<String, JsonSchemaObject> getProperties() {
+  public @NotNull Map<String, JsonSchemaObject> getProperties() {
     return myProperties;
   }
 
@@ -444,8 +457,7 @@ public final class JsonSchemaObject {
     myPatternProperties = new PatternProperties(patternProperties);
   }
 
-  @Nullable
-  public JsonSchemaType getType() {
+  public @Nullable JsonSchemaType getType() {
     return myType;
   }
 
@@ -453,8 +465,7 @@ public final class JsonSchemaObject {
     myType = type;
   }
 
-  @Nullable
-  public Number getMultipleOf() {
+  public @Nullable Number getMultipleOf() {
     return myMultipleOf;
   }
 
@@ -462,8 +473,7 @@ public final class JsonSchemaObject {
     myMultipleOf = multipleOf;
   }
 
-  @Nullable
-  public Number getMaximum() {
+  public @Nullable Number getMaximum() {
     return myMaximum;
   }
 
@@ -475,8 +485,7 @@ public final class JsonSchemaObject {
     return myExclusiveMaximum;
   }
 
-  @Nullable
-  public Number getExclusiveMaximumNumber() {
+  public @Nullable Number getExclusiveMaximumNumber() {
     return myExclusiveMaximumNumber;
   }
 
@@ -484,8 +493,7 @@ public final class JsonSchemaObject {
     myExclusiveMaximumNumber = exclusiveMaximumNumber;
   }
 
-  @Nullable
-  public Number getExclusiveMinimumNumber() {
+  public @Nullable Number getExclusiveMinimumNumber() {
     return myExclusiveMinimumNumber;
   }
 
@@ -497,8 +505,7 @@ public final class JsonSchemaObject {
     myExclusiveMaximum = exclusiveMaximum;
   }
 
-  @Nullable
-  public Number getMinimum() {
+  public @Nullable Number getMinimum() {
     return myMinimum;
   }
 
@@ -514,8 +521,7 @@ public final class JsonSchemaObject {
     myExclusiveMinimum = exclusiveMinimum;
   }
 
-  @Nullable
-  public Integer getMaxLength() {
+  public @Nullable Integer getMaxLength() {
     return myMaxLength;
   }
 
@@ -523,8 +529,7 @@ public final class JsonSchemaObject {
     myMaxLength = maxLength;
   }
 
-  @Nullable
-  public Integer getMinLength() {
+  public @Nullable Integer getMinLength() {
     return myMinLength;
   }
 
@@ -532,8 +537,7 @@ public final class JsonSchemaObject {
     myMinLength = minLength;
   }
 
-  @Nullable
-  public String getPattern() {
+  public @Nullable String getPattern() {
     return myPattern == null ? null : myPattern.getPattern();
   }
 
@@ -541,8 +545,7 @@ public final class JsonSchemaObject {
     myPattern = pattern == null ? null : new PropertyNamePattern(pattern);
   }
 
-  @Nullable
-  public Boolean getAdditionalPropertiesAllowed() {
+  public @Nullable Boolean getAdditionalPropertiesAllowed() {
     return myAdditionalPropertiesAllowed == null || myAdditionalPropertiesAllowed;
   }
 
@@ -569,8 +572,7 @@ public final class JsonSchemaObject {
     myAdditionalPropertiesNotAllowedFor = newSet;
   }
 
-  @Nullable
-  public JsonSchemaObject getPropertyNamesSchema() {
+  public @Nullable JsonSchemaObject getPropertyNamesSchema() {
     return myPropertyNamesSchema;
   }
 
@@ -578,8 +580,7 @@ public final class JsonSchemaObject {
     myPropertyNamesSchema = propertyNamesSchema;
   }
 
-  @Nullable
-  public JsonSchemaObject getAdditionalPropertiesSchema() {
+  public @Nullable JsonSchemaObject getAdditionalPropertiesSchema() {
     return myAdditionalPropertiesSchema;
   }
 
@@ -587,8 +588,7 @@ public final class JsonSchemaObject {
     myAdditionalPropertiesSchema = additionalPropertiesSchema;
   }
 
-  @Nullable
-  public Boolean getAdditionalItemsAllowed() {
+  public @Nullable Boolean getAdditionalItemsAllowed() {
     return myAdditionalItemsAllowed == null || myAdditionalItemsAllowed;
   }
 
@@ -596,8 +596,7 @@ public final class JsonSchemaObject {
     myAdditionalItemsAllowed = additionalItemsAllowed;
   }
 
-  @Nullable
-  public String getDeprecationMessage() {
+  public @Nullable String getDeprecationMessage() {
     return myDeprecationMessage;
   }
 
@@ -605,8 +604,7 @@ public final class JsonSchemaObject {
     myDeprecationMessage = deprecationMessage;
   }
 
-  @Nullable
-  public JsonSchemaObject getAdditionalItemsSchema() {
+  public @Nullable JsonSchemaObject getAdditionalItemsSchema() {
     return myAdditionalItemsSchema;
   }
 
@@ -614,8 +612,7 @@ public final class JsonSchemaObject {
     myAdditionalItemsSchema = additionalItemsSchema;
   }
 
-  @Nullable
-  public JsonSchemaObject getItemsSchema() {
+  public @Nullable JsonSchemaObject getItemsSchema() {
     return myItemsSchema;
   }
 
@@ -623,8 +620,7 @@ public final class JsonSchemaObject {
     myItemsSchema = itemsSchema;
   }
 
-  @Nullable
-  public JsonSchemaObject getContainsSchema() {
+  public @Nullable JsonSchemaObject getContainsSchema() {
     return myContainsSchema;
   }
 
@@ -632,8 +628,7 @@ public final class JsonSchemaObject {
     myContainsSchema = containsSchema;
   }
 
-  @Nullable
-  public List<JsonSchemaObject> getItemsSchemaList() {
+  public @Nullable List<JsonSchemaObject> getItemsSchemaList() {
     return myItemsSchemaList;
   }
 
@@ -641,8 +636,7 @@ public final class JsonSchemaObject {
     myItemsSchemaList = itemsSchemaList;
   }
 
-  @Nullable
-  public Integer getMaxItems() {
+  public @Nullable Integer getMaxItems() {
     return myMaxItems;
   }
 
@@ -650,8 +644,7 @@ public final class JsonSchemaObject {
     myMaxItems = maxItems;
   }
 
-  @Nullable
-  public Integer getMinItems() {
+  public @Nullable Integer getMinItems() {
     return myMinItems;
   }
 
@@ -667,8 +660,7 @@ public final class JsonSchemaObject {
     myUniqueItems = uniqueItems;
   }
 
-  @Nullable
-  public Integer getMaxProperties() {
+  public @Nullable Integer getMaxProperties() {
     return myMaxProperties;
   }
 
@@ -676,8 +668,7 @@ public final class JsonSchemaObject {
     myMaxProperties = maxProperties;
   }
 
-  @Nullable
-  public Integer getMinProperties() {
+  public @Nullable Integer getMinProperties() {
     return myMinProperties;
   }
 
@@ -685,8 +676,7 @@ public final class JsonSchemaObject {
     myMinProperties = minProperties;
   }
 
-  @Nullable
-  public Set<String> getRequired() {
+  public @Nullable Set<String> getRequired() {
     return myRequired;
   }
 
@@ -694,8 +684,7 @@ public final class JsonSchemaObject {
     myRequired = required;
   }
 
-  @Nullable
-  public Map<String, List<String>> getPropertyDependencies() {
+  public @Nullable Map<String, List<String>> getPropertyDependencies() {
     return myPropertyDependencies;
   }
 
@@ -703,8 +692,7 @@ public final class JsonSchemaObject {
     myPropertyDependencies = propertyDependencies;
   }
 
-  @Nullable
-  public Map<String, JsonSchemaObject> getSchemaDependencies() {
+  public @Nullable Map<String, JsonSchemaObject> getSchemaDependencies() {
     return mySchemaDependencies;
   }
 
@@ -712,8 +700,7 @@ public final class JsonSchemaObject {
     mySchemaDependencies = schemaDependencies;
   }
 
-  @Nullable
-  public Map<String, Map<String, String>> getEnumMetadata() {
+  public @Nullable Map<String, Map<String, String>> getEnumMetadata() {
     return myEnumMetadata;
   }
 
@@ -721,8 +708,7 @@ public final class JsonSchemaObject {
     myEnumMetadata = enumMetadata;
   }
 
-  @Nullable
-  public List<Object> getEnum() {
+  public @Nullable List<Object> getEnum() {
     return myEnum;
   }
 
@@ -730,8 +716,7 @@ public final class JsonSchemaObject {
     myEnum = anEnum;
   }
 
-  @Nullable
-  public List<JsonSchemaObject> getAllOf() {
+  public @Nullable List<JsonSchemaObject> getAllOf() {
     return myAllOf;
   }
 
@@ -739,8 +724,7 @@ public final class JsonSchemaObject {
     myAllOf = allOf;
   }
 
-  @Nullable
-  public List<JsonSchemaObject> getAnyOf() {
+  public @Nullable List<JsonSchemaObject> getAnyOf() {
     return myAnyOf;
   }
 
@@ -748,8 +732,7 @@ public final class JsonSchemaObject {
     myAnyOf = anyOf;
   }
 
-  @Nullable
-  public List<JsonSchemaObject> getOneOf() {
+  public @Nullable List<JsonSchemaObject> getOneOf() {
     return myOneOf;
   }
 
@@ -757,8 +740,7 @@ public final class JsonSchemaObject {
     myOneOf = oneOf;
   }
 
-  @Nullable
-  public JsonSchemaObject getNot() {
+  public @Nullable JsonSchemaObject getNot() {
     return myNot;
   }
 
@@ -766,8 +748,7 @@ public final class JsonSchemaObject {
     myNot = not;
   }
 
-  @Nullable
-  public List<IfThenElse> getIfThenElse() {
+  public @Nullable List<IfThenElse> getIfThenElse() {
     return myIfThenElse;
   }
 
@@ -783,8 +764,7 @@ public final class JsonSchemaObject {
     myElse = anElse;
   }
 
-  @Nullable
-  public Set<JsonSchemaType> getTypeVariants() {
+  public @Nullable Set<JsonSchemaType> getTypeVariants() {
     return myTypeVariants;
   }
 
@@ -792,8 +772,7 @@ public final class JsonSchemaObject {
     myTypeVariants = typeVariants;
   }
 
-  @Nullable
-  public String getRef() {
+  public @Nullable String getRef() {
     return myRef;
   }
 
@@ -821,8 +800,7 @@ public final class JsonSchemaObject {
     myBackRef = object;
   }
 
-  @Nullable
-  public Object getDefault() {
+  public @Nullable Object getDefault() {
     if (JsonSchemaType._integer.equals(myType)) return myDefault instanceof Number ? ((Number)myDefault).intValue() : myDefault;
     return myDefault;
   }
@@ -831,8 +809,15 @@ public final class JsonSchemaObject {
     myDefault = aDefault;
   }
 
-  @Nullable
-  public String getFormat() {
+  public @Nullable Map<String, Object> getExample() {
+    return myExample;
+  }
+
+  public void setExample(@Nullable Map<String, Object> example) {
+    myExample = example;
+  }
+
+  public @Nullable String getFormat() {
     return myFormat;
   }
 
@@ -840,8 +825,7 @@ public final class JsonSchemaObject {
     myFormat = format;
   }
 
-  @Nullable
-  public String getId() {
+  public @Nullable String getId() {
     return myId;
   }
 
@@ -849,8 +833,7 @@ public final class JsonSchemaObject {
     myId = id;
   }
 
-  @Nullable
-  public String getSchema() {
+  public @Nullable String getSchema() {
     return mySchema;
   }
 
@@ -858,8 +841,7 @@ public final class JsonSchemaObject {
     mySchema = schema;
   }
 
-  @Nullable
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return myDescription;
   }
 
@@ -867,8 +849,7 @@ public final class JsonSchemaObject {
     myDescription = unescapeJsonString(description);
   }
 
-  @Nullable
-  public String getHtmlDescription() {
+  public @Nullable String getHtmlDescription() {
     return myHtmlDescription;
   }
 
@@ -876,8 +857,7 @@ public final class JsonSchemaObject {
     myHtmlDescription = unescapeJsonString(htmlDescription);
   }
 
-  @Nullable
-  public String getTitle() {
+  public @Nullable String getTitle() {
     return myTitle;
   }
 
@@ -885,12 +865,11 @@ public final class JsonSchemaObject {
     myTitle = unescapeJsonString(title);
   }
 
-  private static String unescapeJsonString(@NotNull final String text) {
+  private static String unescapeJsonString(final @NotNull String text) {
     return StringUtil.unescapeStringCharacters(text);
   }
 
-  @Nullable
-  public JsonSchemaObject getMatchingPatternPropertySchema(@NotNull String name) {
+  public @Nullable JsonSchemaObject getMatchingPatternPropertySchema(@NotNull String name) {
     if (myPatternProperties == null) return null;
     return myPatternProperties.getPatternPropertySchema(name);
   }
@@ -899,13 +878,11 @@ public final class JsonSchemaObject {
     return myPattern != null && myPattern.checkByPattern(value);
   }
 
-  @Nullable
-  public String getPatternError() {
+  public @Nullable String getPatternError() {
     return myPattern == null ? null : myPattern.getPatternError();
   }
 
-  @Nullable
-  public JsonSchemaObject findRelativeDefinition(@NotNull String ref) {
+  public @Nullable JsonSchemaObject findRelativeDefinition(@NotNull String ref) {
     if (isSelfReference(ref)) {
       return this;
     }
@@ -957,8 +934,7 @@ public final class JsonSchemaObject {
     return current;
   }
 
-  @Nullable
-  private static Integer tryParseInt(String s) {
+  private static @Nullable Integer tryParseInt(String s) {
     try {
       return Integer.parseInt(s);
     }
@@ -982,8 +958,7 @@ public final class JsonSchemaObject {
     return Objects.hash(myFileUrl, myPointer);
   }
 
-  @NotNull
-  private static String adaptSchemaPattern(String pattern) {
+  private static @NotNull String adaptSchemaPattern(String pattern) {
     pattern = pattern.startsWith("^") || pattern.startsWith("*") || pattern.startsWith(".") ? pattern : (".*" + pattern);
     pattern = pattern.endsWith("+") || pattern.endsWith("*") || pattern.endsWith("$") ? pattern : (pattern + ".*");
     pattern = pattern.replace("\\\\", "\\");
@@ -991,7 +966,7 @@ public final class JsonSchemaObject {
   }
 
 
-  private static Pair<Pattern, String> compilePattern(@NotNull final String pattern) {
+  private static Pair<Pattern, String> compilePattern(final @NotNull String pattern) {
     try {
       return Pair.create(Pattern.compile(adaptSchemaPattern(pattern)), null);
     } catch (PatternSyntaxException e) {
@@ -999,7 +974,7 @@ public final class JsonSchemaObject {
     }
   }
 
-  public static boolean matchPattern(@NotNull final Pattern pattern, @NotNull final String s) {
+  public static boolean matchPattern(final @NotNull Pattern pattern, final @NotNull String s) {
     try {
       return pattern.matcher(StringUtil.newBombedCharSequence(s, 300)).matches();
     } catch (ProcessCanceledException e) {
@@ -1014,8 +989,7 @@ public final class JsonSchemaObject {
     }
   }
 
-  @Nullable
-  public String getTypeDescription(boolean shortDesc) {
+  public @Nullable String getTypeDescription(boolean shortDesc) {
     JsonSchemaType type = getType();
     if (type != null) return type.getDescription();
 
@@ -1037,8 +1011,7 @@ public final class JsonSchemaObject {
     return null;
   }
 
-  @Nullable
-  public JsonSchemaType guessType() {
+  public @Nullable JsonSchemaType guessType() {
     // if we have an explicit type, here we are
     JsonSchemaType type = getType();
     if (type != null) return type;
@@ -1107,8 +1080,7 @@ public final class JsonSchemaObject {
            || getMaxProperties() != null;
   }
 
-  @Nullable
-  static String getTypesDescription(boolean shortDesc, @Nullable Collection<JsonSchemaType> possibleTypes) {
+  static @Nullable String getTypesDescription(boolean shortDesc, @Nullable Collection<JsonSchemaType> possibleTypes) {
     if (possibleTypes == null || possibleTypes.size() == 0) return null;
     if (possibleTypes.size() == 1) return possibleTypes.iterator().next().getDescription();
     if (possibleTypes.contains(JsonSchemaType._any)) return JsonSchemaType._any.getDescription();
@@ -1122,8 +1094,7 @@ public final class JsonSchemaObject {
     return typeDescriptions.collect(Collectors.joining(" | ", "", isShort ? "| ..." : ""));
   }
 
-  @Nullable
-  public JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaService service) {
+  public @Nullable JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaService service) {
     final String ref = getRef();
     assert !StringUtil.isEmptyOrSpaces(ref);
     ConcurrentMap<String, JsonSchemaObject> refsStorage = getComputedRefsStorage(service.getProject());
@@ -1156,11 +1127,10 @@ public final class JsonSchemaObject {
     );
   }
 
-  @Nullable
-  private static JsonSchemaObject fetchSchemaFromRefDefinition(@NotNull String ref,
-                                                               @NotNull final JsonSchemaObject schema,
-                                                               @NotNull JsonSchemaService service,
-                                                               boolean recursive) {
+  private static @Nullable JsonSchemaObject fetchSchemaFromRefDefinition(@NotNull String ref,
+                                                                         final @NotNull JsonSchemaObject schema,
+                                                                         @NotNull JsonSchemaService service,
+                                                                         boolean recursive) {
 
     final VirtualFile schemaFile = service.resolveSchemaFile(schema);
     if (schemaFile == null) return null;
@@ -1193,10 +1163,9 @@ public final class JsonSchemaObject {
     return findRelativeDefinition(rootSchema, splitter, service);
   }
 
-  @Nullable
-  private static JsonSchemaObject resolveSchemaByReference(@NotNull JsonSchemaService service,
-                                                           @NotNull VirtualFile schemaFile,
-                                                           @NotNull String schemaId) {
+  private static @Nullable JsonSchemaObject resolveSchemaByReference(@NotNull JsonSchemaService service,
+                                                                     @NotNull VirtualFile schemaFile,
+                                                                     @NotNull String schemaId) {
     final VirtualFile refFile = service.findSchemaFileByReference(schemaId, schemaFile);
     if (refFile == null) {
       LOG.debug(String.format("Schema file not found by reference: '%s' from %s", schemaId, schemaFile.getPath()));
@@ -1223,8 +1192,8 @@ public final class JsonSchemaObject {
     return refSchema;
   }
 
-  private static JsonSchemaObject findRelativeDefinition(@NotNull final JsonSchemaObject schema,
-                                                         @NotNull final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter,
+  private static JsonSchemaObject findRelativeDefinition(final @NotNull JsonSchemaObject schema,
+                                                         final @NotNull JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter,
                                                          @NotNull JsonSchemaService service) {
     final String path = splitter.getRelativePath();
     if (StringUtil.isEmptyOrSpaces(path)) {
@@ -1247,10 +1216,9 @@ public final class JsonSchemaObject {
     return definition;
   }
 
-  @NotNull
-  public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
-                                       @NotNull JsonSchemaObject other,
-                                       @NotNull JsonSchemaObject pointTo) {
+  public static @NotNull JsonSchemaObject merge(@NotNull JsonSchemaObject base,
+                                                @NotNull JsonSchemaObject other,
+                                                @NotNull JsonSchemaObject pointTo) {
     final JsonSchemaObject object = new JsonSchemaObject(pointTo.myRawFile, pointTo.myFileUrl, pointTo.getPointer());
     object.mergeValues(other);
     object.mergeValues(base);
@@ -1258,11 +1226,11 @@ public final class JsonSchemaObject {
     return object;
   }
 
-  private static class PropertyNamePattern {
-    @NotNull private final String myPattern;
-    @Nullable private final Pattern myCompiledPattern;
-    @Nullable private final String myPatternError;
-    @NotNull private final Map<String, Boolean> myValuePatternCache;
+  private static final class PropertyNamePattern {
+    private final @NotNull String myPattern;
+    private final @Nullable Pattern myCompiledPattern;
+    private final @Nullable String myPatternError;
+    private final @NotNull Map<String, Boolean> myValuePatternCache;
 
     PropertyNamePattern(@NotNull String pattern) {
       myPattern = StringUtil.unescapeBackSlashes(pattern);
@@ -1272,12 +1240,11 @@ public final class JsonSchemaObject {
       myValuePatternCache = CollectionFactory.createConcurrentWeakKeyWeakValueMap();
     }
 
-    @Nullable
-    public String getPatternError() {
+    public @Nullable String getPatternError() {
       return myPatternError;
     }
 
-    boolean checkByPattern(@NotNull final String name) {
+    boolean checkByPattern(final @NotNull String name) {
       if (myPatternError != null) return true;
       if (Boolean.TRUE.equals(myValuePatternCache.get(name))) return true;
       assert myCompiledPattern != null;
@@ -1286,18 +1253,17 @@ public final class JsonSchemaObject {
       return matches;
     }
 
-    @NotNull
-    public String getPattern() {
+    public @NotNull String getPattern() {
       return myPattern;
     }
   }
 
-  private static class PatternProperties {
-    @NotNull private final Map<String, JsonSchemaObject> mySchemasMap;
-    @NotNull private final Map<String, Pattern> myCachedPatterns;
-    @NotNull private final Map<String, String> myCachedPatternProperties;
+  private static final class PatternProperties {
+    private final @NotNull Map<String, JsonSchemaObject> mySchemasMap;
+    private final @NotNull Map<String, Pattern> myCachedPatterns;
+    private final @NotNull Map<String, String> myCachedPatternProperties;
 
-    PatternProperties(@NotNull final Map<String, JsonSchemaObject> schemasMap) {
+    PatternProperties(final @NotNull Map<String, JsonSchemaObject> schemasMap) {
       mySchemasMap = new HashMap<>();
       schemasMap.keySet().forEach(key -> mySchemasMap.put(StringUtil.unescapeBackSlashes(key), schemasMap.get(key)));
       myCachedPatterns = new HashMap<>();
@@ -1311,8 +1277,7 @@ public final class JsonSchemaObject {
       });
     }
 
-    @Nullable
-    public JsonSchemaObject getPatternPropertySchema(@NotNull final String name) {
+    public @Nullable JsonSchemaObject getPatternPropertySchema(final @NotNull String name) {
       String value = myCachedPatternProperties.get(name);
       if (value != null) {
         assert mySchemasMap.containsKey(value);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -27,7 +27,7 @@ import java.awt.*;
 
 import static com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelKt.getConfigureHighlightingLevelPopup;
 
-public class DaemonEditorPopup extends PopupHandler {
+public final class DaemonEditorPopup extends PopupHandler {
   private final Project myProject;
   private final Editor myEditor;
 
@@ -81,8 +81,7 @@ public class DaemonEditorPopup extends PopupHandler {
     }
   }
 
-  @NotNull
-  static DefaultActionGroup createGotoGroup() {
+  static @NotNull DefaultActionGroup createGotoGroup() {
     Shortcut shortcut = KeymapUtil.getPrimaryShortcut("GotoNextError");
     String shortcutText = shortcut != null ? " (" + KeymapUtil.getShortcutText(shortcut) + ")" : "";
     DefaultActionGroup gotoGroup = DefaultActionGroup.createPopupGroup(() -> CodeInsightBundle.message("popup.title.next.error.action.0.goes.through", shortcutText));

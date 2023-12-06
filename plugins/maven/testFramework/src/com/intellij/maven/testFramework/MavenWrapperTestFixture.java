@@ -7,8 +7,9 @@ import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import org.apache.maven.wrapper.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.BundledMaven3;
+import org.jetbrains.idea.maven.project.MavenInSpecificPath;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.net.SocketException;
@@ -59,7 +60,7 @@ public class MavenWrapperTestFixture {
 
   @NotNull
   protected URI createURI() throws Exception {
-    if(myMavenVersion.contains("4.0.0.")) {
+    if (myMavenVersion.contains("4.0.0.")) {
       return URI.create(MAVEN_4_URL_PATTERN.replace("$version$", myMavenVersion));
     }
     if (myMavenVersion.contains("SNAPSHOT")) {
@@ -78,16 +79,16 @@ public class MavenWrapperTestFixture {
       .toList();
     String timestamp = null;
     String build = null;
-    for(Element e: timestampAndBuild){
-      if("timestamp".equals(e.getName())) {
+    for (Element e : timestampAndBuild) {
+      if ("timestamp".equals(e.getName())) {
         timestamp = e.getValue();
       }
-      if("buildNumber".equals(e.getName())) {
+      if ("buildNumber".equals(e.getName())) {
         build = e.getValue();
       }
     }
 
-    if(build == null || timestamp == null){
+    if (build == null || timestamp == null) {
       throw new Exception("cannot find last version for " + myMavenVersion);
     }
     String versionWithoutSnapshot = myMavenVersion.replace("-SNAPSHOT", "");
@@ -100,10 +101,11 @@ public class MavenWrapperTestFixture {
   }
 
   public void setUp() throws Exception {
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(getMavenHome().getAbsolutePath());
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings()
+      .setMavenHomeType(new MavenInSpecificPath(getMavenHome().getAbsolutePath()));
   }
 
   public void tearDown() throws Exception {
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().setMavenHomeNoFire(BundledMaven3.INSTANCE);
   }
 }

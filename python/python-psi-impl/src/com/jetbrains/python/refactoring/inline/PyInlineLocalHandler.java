@@ -81,11 +81,14 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     invoke(project, editor, (PyTargetExpression)element, refExpr);
   }
 
-  private static boolean isStringAvailableInFStringFragment(boolean stringElementTripleQuoted, @NotNull String str) {
-    if (stringElementTripleQuoted) {
-      return !str.contains("\\");
+  private static boolean stringContentCanBeInlinedIntoFString(@NotNull PyStringElement inlinedStringElement, 
+                                                              @NotNull PyFormattedStringElement targetFString) {
+    if (LanguageLevel.forElement(targetFString).isAtLeast(LanguageLevel.PYTHON312)) return true;
+    String content = inlinedStringElement.getContent();
+    if (targetFString.isTripleQuoted()) {
+      return !content.contains("\\");
     }
-    return !str.contains("'") && !str.contains("\"") && !str.contains("\\");
+    return !content.contains("'") && !content.contains("\"") && !content.contains("\\");
   }
 
   @NotNull
@@ -98,13 +101,13 @@ public class PyInlineLocalHandler extends InlineActionHandler {
   }
 
   @NotNull
-  private static PyExpression replaceQuotesInExpression(@NotNull PyExpression expression, char stringElementQuote) {
+  private static PyExpression replaceQuotesInExpression(@NotNull PyExpression expression, char desiredQuote) {
     var expressionCopy = (PyExpression)expression.copy();
     var valueStringElements = getStringElements(expressionCopy);
     for (var valueStringElement : valueStringElements) {
       char actualQuote = valueStringElement.getQuote().charAt(0);
       PyStringElement elementToReplace = valueStringElement;
-      if (actualQuote == stringElementQuote) {
+      if (actualQuote != desiredQuote) {
         elementToReplace = PyQuotesUtil.createCopyWithConvertedQuotes(valueStringElement);
       }
       valueStringElement.replace(elementToReplace);
@@ -116,64 +119,57 @@ public class PyInlineLocalHandler extends InlineActionHandler {
                                                     @NotNull Project project, @NotNull Editor editor,
                                                     @NotNull Map<PsiElement, PsiElement> simpleReplacements,
                                                     @NotNull Map<PyFStringFragment, PyStringElement> fStringFragmentsReplacements) {
-    PyFStringFragment fStringParent = PsiTreeUtil.getParentOfType(element, PyFStringFragment.class);
-    if (fStringParent == null) {
+    PyFormattedStringElement targetFString = PsiTreeUtil.getParentOfType(element, PyFormattedStringElement.class, true, PyStatement.class);
+    if (targetFString == null) {
       simpleReplacements.put(element, value);
       return true;
     }
 
-    var valueStringElements = getStringElements(value);
-    boolean valueIsStringElement = value instanceof PyStringLiteralExpression && valueStringElements.size() == 1;
-
-    PyFormattedStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyFormattedStringElement.class);
-    assert (stringElement != null);
-    boolean stringElementTripleQuoted = stringElement.isTripleQuoted();
-
-    if (!stringElementTripleQuoted && value.textContains('\n')) {
+    boolean fStringCanContainArbitraryStrings = LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON312);
+    if (!fStringCanContainArbitraryStrings && !targetFString.isTripleQuoted() && value.textContains('\n')) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.inline.can.not.multiline.string.to.f.string"),
                                           getRefactoringName(), HELP_ID);
       return false;
     }
 
-    boolean pasteInFStringInFString = PsiTreeUtil.getParentOfType(stringElement, PyFormattedStringElement.class) != null;
+    boolean intoNestedFString = PsiTreeUtil.getParentOfType(targetFString, PyFormattedStringElement.class, true, PyStatement.class) != null;
+    List<PyStringElement> valueStringElements = getStringElements(value);
+    boolean entireValueIsSingleNonInterpolatedString = value instanceof PyStringLiteralExpression && valueStringElements.size() == 1;
+    if (entireValueIsSingleNonInterpolatedString && element.getParent() instanceof PyFStringFragment fStringFragment
+        && fStringFragment.getTypeConversion() == null && fStringFragment.getFormatPart() == null
+        && !(value.textContains('\n') && !targetFString.isTripleQuoted())) {
+      if (intoNestedFString && !stringContentCanBeInlinedIntoFString(valueStringElements.get(0), targetFString)) {
+        CommonRefactoringUtil.showErrorHint(project, editor,
+                                            PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string"),
+                                            getRefactoringName(), HELP_ID);
+        return false;
+      }
 
-    var elementParent = element.getParent();
-    if (valueIsStringElement && elementParent instanceof PyFStringFragment fStringFragment) {
-      var stringLiteralValue = (PyStringLiteralExpression)value;
-      if (fStringFragment.getTypeConversion() == null && fStringFragment.getFormatPart() == null) {
-        PyStringElement valueStringElement = valueStringElements.get(0);
-        if (pasteInFStringInFString && !isStringAvailableInFStringFragment(stringElementTripleQuoted, valueStringElement.getContent())) {
-          CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string"),
-                                              getRefactoringName(), HELP_ID);
-          return false;
-        }
-
-        char quote = PyStringLiteralUtil.flipQuote(stringElement.getQuote().charAt(0));
-        var valueReplacedQuotes = replaceQuotesInExpression(stringLiteralValue, quote);
-        var stringElements = getStringElements(valueReplacedQuotes);
-        if (stringElements.size() == 1) {
-          fStringFragmentsReplacements.put(fStringFragment, stringElements.get(0));
-          return true;
-        }
+      var valueReplacedQuotes = replaceQuotesInExpression(value, targetFString.getQuote().charAt(0));
+      var stringElements = getStringElements(valueReplacedQuotes);
+      if (stringElements.size() == 1) {
+        fStringFragmentsReplacements.put(fStringFragment, stringElements.get(0));
+        return true;
       }
     }
 
-    if (pasteInFStringInFString) {
+    if (!fStringCanContainArbitraryStrings && intoNestedFString) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.inline.can.not.string.to.nested.f.string"),
                                           getRefactoringName(), HELP_ID);
       return false;
     }
 
-    for (var valueStringElement: valueStringElements) {
-      if (!isStringAvailableInFStringFragment(stringElementTripleQuoted, valueStringElement.getContent())) {
-        final String message = PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string");
+    for (PyStringElement valueStringElement : valueStringElements) {
+      if (!stringContentCanBeInlinedIntoFString(valueStringElement, targetFString)) {
+        String message = PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string");
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
         return false;
       }
     }
 
-    var valueReplacedQuotes = replaceQuotesInExpression(value, stringElement.getQuote().charAt(0));
-    simpleReplacements.put(element, valueReplacedQuotes);
+    char newQuote = PyStringLiteralUtil.flipQuote(targetFString.getQuote().charAt(0));
+    var quoteSafeValue = fStringCanContainArbitraryStrings ? value.copy() : replaceQuotesInExpression(value, newQuote);
+    simpleReplacements.put(element, quoteSafeValue);
     return true;
   }
 

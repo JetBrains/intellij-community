@@ -8,12 +8,12 @@ internal object J {
         println(1 or (2 shl 3 and (4 ushr 5))) // 1
         println(1 or (2 shl 3 and (4 ushr 5)) or 6 or (7 and 8)) // 7
         println(1 or (2 and (3 shl 4 ushr 5)) or 6 or (7 and 8)) // 7
-        println(1 or (2 and (3 shl 4 ushr 5)) or 6 or (7 and 8)) // 7
+        println(1 or (2 and ((3 shl 4) ushr 5)) or 6 or (7 and 8)) // 7
         println(1 or (2 shl 3)) // 17
         println(5 shl 16 or (0 shr 8) or 1) // 327681
         println(5 or (16 shl 0) or (8 shl 1)) // 21
         println(2 or (1 and 5)) // 3
-        println(2 or 1 and 5) // 1
+        println((2 or 1) and 5) // 1
         println(false or (true and (5 == 5 ushr 7)))
         println(false or (true and (5 ushr 5 == 7)))
         println(false or ((5 ushr 5 == 7) and true))

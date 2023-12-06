@@ -9,15 +9,21 @@ import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.Nls
 
 object CodeReviewTitleUIUtil {
-
   fun createTitleText(title: @NlsSafe String, reviewNumber: @NlsSafe String, url: @NlsSafe String, tooltip: @Nls String): @NlsSafe String {
+    val reviewNumberLink = HtmlChunk
+      .link(url, reviewNumber)
+      .attr("title", tooltip)
+      .wrapWith(HtmlChunk.font(ColorUtil.toHex(NamedColorUtil.getInactiveTextColor())))
+
     return HtmlBuilder()
-      .append(title)
+      .appendRaw(title.unwrap())
       .nbsp()
-      .append(HtmlChunk
-                .link(url, reviewNumber)
-                .attr("title", tooltip)
-                .wrapWith(HtmlChunk.font(ColorUtil.toHex(NamedColorUtil.getInactiveTextColor()))))
+      .append(reviewNumberLink)
       .toString()
+  }
+
+  private fun String.unwrap(): @NlsSafe String {
+    return removePrefix("<body>").removeSuffix("</body>")
+      .removePrefix("<p>").removeSuffix("</p>")
   }
 }

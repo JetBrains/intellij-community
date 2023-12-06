@@ -1,7 +1,7 @@
 14 1.foo(<bold>s</bold>) (in bar(String) on I)
 4 	fun Int.foo(<bold>p: Any</bold>) (in foo(Any) on Int)
-3 		public void foo(int receiver, Object <bold>p</bold>) {
-4 			System.out.println(<bold>p</bold>);
+3 		JAVA: public void foo(int receiver, Object <bold>p</bold>) { (in JavaClass.foo(int, Object))
+4 			JAVA: System.out.println(<bold>p</bold>); (in JavaClass.foo(int, Object))
 8 		override fun Int.foo(<bold>p: Any</bold>) { (in foo(Any) on Int)
 9 			val v = <bold>p</bold> (in foo(Any) on Int)
 9 				<bold>val v</bold> = p (in foo(Any) on Int)

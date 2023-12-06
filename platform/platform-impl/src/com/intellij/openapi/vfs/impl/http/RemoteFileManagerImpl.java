@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.Disposable;
@@ -30,8 +30,7 @@ public final class RemoteFileManagerImpl extends RemoteFileManager implements Di
     myDefaultRemoteContentProvider = new DefaultRemoteContentProvider();
   }
 
-  @NotNull
-  public RemoteContentProvider findContentProvider(final @NotNull Url url) {
+  public @NotNull RemoteContentProvider findContentProvider(final @NotNull Url url) {
     for (RemoteContentProvider provider : myProviders) {
       if (provider.canProvideContent(url)) {
         return provider;
@@ -63,7 +62,7 @@ public final class RemoteFileManagerImpl extends RemoteFileManager implements Di
   }
 
   @Override
-  public void addRemoteContentProvider(@NotNull final RemoteContentProvider provider, @NotNull Disposable parentDisposable) {
+  public void addRemoteContentProvider(final @NotNull RemoteContentProvider provider, @NotNull Disposable parentDisposable) {
     addRemoteContentProvider(provider);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -84,7 +83,7 @@ public final class RemoteFileManagerImpl extends RemoteFileManager implements Di
   }
 
   @Override
-  public void addFileListener(@NotNull final HttpVirtualFileListener listener) {
+  public void addFileListener(final @NotNull HttpVirtualFileListener listener) {
     myDispatcher.addListener(listener);
   }
 
@@ -94,7 +93,7 @@ public final class RemoteFileManagerImpl extends RemoteFileManager implements Di
   }
 
   @Override
-  public void removeFileListener(@NotNull final HttpVirtualFileListener listener) {
+  public void removeFileListener(final @NotNull HttpVirtualFileListener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -111,7 +110,7 @@ public final class RemoteFileManagerImpl extends RemoteFileManager implements Di
     myStorage.deleteDownloadedFiles();
   }
 
-  private class MyDownloadingListener extends FileDownloadingAdapter {
+  private final class MyDownloadingListener extends FileDownloadingAdapter {
     private final HttpVirtualFileImpl myFile;
 
     MyDownloadingListener(final HttpVirtualFileImpl file) {
@@ -119,7 +118,7 @@ public final class RemoteFileManagerImpl extends RemoteFileManager implements Di
     }
 
     @Override
-    public void fileDownloaded(@NotNull final VirtualFile localFile) {
+    public void fileDownloaded(final @NotNull VirtualFile localFile) {
       fireFileDownloaded(myFile);
     }
   }

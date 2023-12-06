@@ -10,24 +10,18 @@ import org.jetbrains.kotlin.psi.KtTypeProjection
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-fun PsiElement.getLabel(): JKElementInfoLabel? =
-    prevSibling
-        ?.safeAs<PsiComment>()
-        ?.text
-        ?.asLabel()
-        ?: parent
-            ?.safeAs<KtTypeProjection>()
-            ?.getLabel()
-
+fun PsiElement.getInferenceLabel(): JKElementInfoLabel? =
+    prevSibling?.safeAs<PsiComment>()?.text?.asInferenceLabel()
+        ?: parent?.safeAs<KtTypeProjection>()?.getInferenceLabel()
 
 fun PsiElement.elementInfo(converterContext: NewJ2kConverterContext): List<JKElementInfo>? =
-    getLabel()?.let { label ->
+    getInferenceLabel()?.let { label ->
         converterContext.elementsInfoStorage.getInfoForLabel(label)
     }
 
 
 inline fun KtTypeReference.hasUnknownLabel(context: NewJ2kConverterContext, isUnknownLabel: (JKTypeInfo) -> Boolean) =
-    getLabel()?.let { label ->
+    getInferenceLabel()?.let { label ->
         context.elementsInfoStorage.getInfoForLabel(label)?.any { it.safeAs<JKTypeInfo>()?.let(isUnknownLabel) == true }
     } ?: false
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -98,6 +98,8 @@ public abstract class PropertiesComponent {
   public final boolean isTrueValue(@NonNls String name) {
     return Boolean.parseBoolean(getValue(name));
   }
+
+  public abstract boolean updateValue(@NotNull @NonNls String name, boolean newValue);
 
   public final boolean getBoolean(@NonNls @NotNull String name, boolean defaultValue) {
     String value = getValue(name);

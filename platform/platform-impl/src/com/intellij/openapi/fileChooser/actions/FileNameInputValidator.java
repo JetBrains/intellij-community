@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -14,7 +14,7 @@ import java.nio.file.InvalidPathException;
  * Ensures that an input string is non-blank and represents a valid relative path in the given file system.
  * Multi-component paths and traversals are allowed.
  */
-class FileNameInputValidator implements InputValidatorEx {
+final class FileNameInputValidator implements InputValidatorEx {
   private final FileSystem myFileSystem;
 
   FileNameInputValidator(@NotNull FileSystem fileSystem) {

@@ -13,3 +13,4 @@ interface C : A, B {
 fun usage(c: C) {
     c.f()
 }
+// IGNORE_K2

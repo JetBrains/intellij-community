@@ -27,27 +27,27 @@ public class JsonSchemaCatalogManagerTest extends BasePlatformTestCase {
   }
 
   public void testPackageJson() {
-    doTest("package.json", "https://json.schemastore.org/package");
+    doTest("package.json", "https://json.schemastore.org/package.json");
     doTest("package1.json", null);
   }
 
   public void testCircleCI() {
-    doTest(".circleci/config.yml", "https://json.schemastore.org/circleciconfig");
+    doTest(".circleci/config.yml", "https://json.schemastore.org/circleciconfig.json");
     doTest(".circleci/config.disable.yml", null);
   }
 
   public void testGithubWorkflow() {
-    doTest(".github/workflows/nodejs.yml", "https://json.schemastore.org/github-workflow");
-    doTest(".github/workflows/main.yaml", "https://json.schemastore.org/github-workflow");
-    doTest(".github/workflows/a/linter.yml", "https://json.schemastore.org/github-workflow");
-    doTest(".github/workflows/b/main.yaml", "https://json.schemastore.org/github-workflow");
+    doTest(".github/workflows/nodejs.yml", "https://json.schemastore.org/github-workflow.json");
+    doTest(".github/workflows/main.yaml", "https://json.schemastore.org/github-workflow.json");
+    doTest(".github/workflows/a/linter.yml", null);
+    doTest(".github/workflows/b/main.yaml", null);
   }
 
   public void testMisc() {
     doTest("jenkins-x.yml", "https://jenkins-x.io/schemas/jx-schema.json");
     doTest("jenkins-x1.yml", "https://jenkins-x.io/schemas/jx-schema.json");
     doTest("jenkins-y.yml", null);
-    doTest("my.schema.json", "https://jsonapi.org/schema");
+    doTest("my.schema.json", "https://json-schema.org/draft-07/schema");
     doTest("schema.json", null);
   }
 

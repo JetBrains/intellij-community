@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -23,7 +23,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -54,7 +53,6 @@ final class TrafficLightPopup {
   private final JPanel myContent = new JPanel(new GridBagLayout());
   private final Map<String, JProgressBar> myProgressBarMap = new HashMap<>();
   private final AncestorListener myAncestorListener;
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final Alarm popupAlarm = new Alarm();
   private final List<DropDownLink<?>> levelLinks = new ArrayList<>();
 
@@ -95,7 +93,7 @@ final class TrafficLightPopup {
   }
 
   private boolean canClose() {
-    return !insidePopup && levelLinks.stream().allMatch(l -> l.getPopupState().isHidden());
+    return !insidePopup && !StackingPopupDispatcher.getInstance().isPopupFocused();
   }
 
   void updateUI() {
@@ -118,7 +116,7 @@ final class TrafficLightPopup {
 
   private void showPopup(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
     hidePopup();
-    if (myPopupState.isRecentlyHidden() || analyzerStatus.isEmpty()) return; // do not show new popup
+    if (analyzerStatus.isEmpty()) return; // do not show new popup
 
     updateContentPanel(analyzerStatus);
 
@@ -136,7 +134,6 @@ final class TrafficLightPopup {
 
     myPopup = myPopupBuilder.createPopup();
     myPopup.addListener(myPopupListener);
-    myPopupState.prepareToShow(myPopup);
     myEditor.getComponent().addAncestorListener(myAncestorListener);
 
     JComponent owner = (JComponent)event.getComponent();
@@ -351,16 +348,14 @@ final class TrafficLightPopup {
                                 myPopup.setSize(size);
                               },
                               true) {
-      @NotNull
       @Override
-      protected String itemToString(@NotNull InspectionsLevel item) {
+      protected @NotNull String itemToString(@NotNull InspectionsLevel item) {
         return prefix + item;
       }
     };
   }
 
-  @NotNull
-  private static JLabel createNoChangeLabel(@NotNull LanguageHighlightLevel level, @NotNull @Nls String prefix, @NotNull @Nls String msg) {
+  private static @NotNull JLabel createNoChangeLabel(@NotNull LanguageHighlightLevel level, @NotNull @Nls String prefix, @NotNull @Nls String msg) {
     JLabel label = new JLabel(prefix + level.getLevel());
     new HelpTooltip().setDescription(msg).installOn(label);
     return label;

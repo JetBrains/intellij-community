@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
@@ -29,7 +31,7 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
 
-@NonNls const val NOTIFICATION_GROUP_ID = "Load Error"
+@NonNls const val NOTIFICATION_GROUP_ID: String = "Load Error"
 
 @TestOnly
 @NonNls
@@ -50,8 +52,7 @@ fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: M
                                       ApplicationNamesInfo.getInstance().productName)
   val message = HtmlBuilder().appendRaw(mainMessage).br().br().appendRaw(description).toString()
   val title = IdeBundle.message("notification.title.unknown.macros.error")
-  UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR,
-                                                                              null, macros).apply {
+  UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR, null, macros).apply {
     addAction(NotificationAction.createSimple(IdeBundle.message("notification.action.unknown.macros.error.fix")) {
       checkUnknownMacros(project, true, macros, substitutorToStore)
     })
@@ -112,7 +113,7 @@ private fun checkUnknownMacros(project: Project,
     else if (Messages.showYesNoDialog(project, IdeBundle.message("dialog.message.component.could.not.be.reloaded"),
                                       IdeBundle.message("dialog.title.configuration.changed"),
                                       Messages.getQuestionIcon()) == Messages.YES) {
-      StoreReloadManager.getInstance().reloadProject(project)
+      StoreReloadManager.getInstance(project).reloadProject()
     }
   }
 }

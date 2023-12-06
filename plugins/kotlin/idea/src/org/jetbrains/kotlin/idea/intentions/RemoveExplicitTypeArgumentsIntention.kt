@@ -39,7 +39,7 @@ class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArg
 
     override fun additionalFixes(element: KtTypeArgumentList): List<LocalQuickFix>? {
         val declaration = element.getStrictParentOfType<KtCallableDeclaration>() ?: return null
-        if (!RemoveExplicitTypeIntention.isApplicableTo(declaration)) return null
+        if (!RemoveExplicitTypeIntention.Holder.isApplicableTo(declaration)) return null
         return listOf(RemoveExplicitTypeFix(declaration.nameAsSafeName.asString()))
     }
 
@@ -51,7 +51,7 @@ class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArg
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val element = descriptor.psiElement as? KtTypeArgumentList ?: return
             val declaration = element.getStrictParentOfType<KtCallableDeclaration>() ?: return
-            RemoveExplicitTypeIntention.removeExplicitType(declaration)
+            RemoveExplicitTypeIntention.Holder.removeExplicitType(declaration)
         }
     }
 }

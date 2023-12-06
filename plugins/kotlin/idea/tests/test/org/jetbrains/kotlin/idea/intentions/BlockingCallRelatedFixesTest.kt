@@ -5,7 +5,7 @@ import com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlo
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.psi.impl.source.tree.injected.changesHandler.range
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -337,30 +337,29 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.configureByText(
             "UnknownContext.kt",
             """
-                <info descr="null">import</info> kotlinx.coroutines.<info descr="null">Dispatchers</info>
-                <info descr="null">import</info> kotlinx.coroutines.withContext
-                <info descr="null">import</info> kotlin.coroutines.<info descr="null">CoroutineContext</info>
-                
-                class <info descr="null">CustomContext</info>: <info descr="null">CoroutineContext</info> {
-                    <info descr="null">override</info> fun <<info descr="null">R</info>> <info descr="null">fold</info>(<info descr="null">initial</info>: <info descr="null">R</info>, <info descr="null">operation</info>: (<info descr="null">R</info>, <info descr="null">CoroutineContext</info>.<info descr="null">Element</info>) -> <info descr="null">R</info>): <info descr="null">R</info> = <info descr="TODO()"><info descr="null">TODO</info>()</info>
-                    <info descr="null">override</info> fun <<info descr="null">E</info> : <info descr="null">CoroutineContext</info>.<info descr="null">Element</info>> <info descr="null">get</info>(<info descr="null">key</info>: <info descr="null">CoroutineContext</info>.<info descr="null">Key</info><<info descr="null">E</info>>): <info descr="null">E</info>? = <info descr="TODO()"><info descr="null">TODO</info>()</info>
-                    <info descr="null">override</info> fun <info descr="null">minusKey</info>(<info descr="null">key</info>: <info descr="null">CoroutineContext</info>.<info descr="null">Key</info><*>): <info descr="null">CoroutineContext</info> = <info descr="TODO()"><info descr="null">TODO</info>()</info>
-                }
-                
-                <info descr="null">suspend</info> fun <info descr="null">unknownContext</info>() {
-                    <info descr="null">withContext</info>(<info descr="null">CustomContext</info>()) {
-                        <info descr="null"><info descr="Consider unknown contexts non-blocking">blo<caret>ck</info></info>()
-                    }
-                }
-        """.trimIndent()
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
+
+class CustomContext: CoroutineContext {
+    override fun <R> fold(initial: R, operation: (R, CoroutineContext.Element) -> R): R = <info descr="TODO()" textAttributesKey="TODO_DEFAULT_ATTRIBUTES">TODO()</info>
+    override fun <E : CoroutineContext.Element> get(key: CoroutineContext.Key<E>): E? = <info descr="TODO()" textAttributesKey="TODO_DEFAULT_ATTRIBUTES">TODO()</info>
+    override fun minusKey(key: CoroutineContext.Key<*>): CoroutineContext = <info descr="TODO()" textAttributesKey="TODO_DEFAULT_ATTRIBUTES">TODO()</info>
+}
+
+suspend fun unknownContext() {
+    withContext(CustomContext()) {
+        <info descr="Consider unknown contexts non-blocking" textAttributesKey="INFORMATION_ATTRIBUTES">blo<caret>ck</info>()
+    }
+}        """.trimIndent()
         )
         myFixture.checkHighlighting(false, true, false)
         val action = myFixture.getAvailableIntention("Consider unknown contexts non-blocking")
 
         myFixture.launchAction(action!!)
         val warning = myFixture.doHighlighting(HighlightSeverity.WARNING)
-            .firstOrNull {
-                it.description == "Possibly blocking call in non-blocking context could lead to thread starvation" && it.range.equalsToRange(511, 516)
+            .firstOrNull { info ->
+                info.description == "Possibly blocking call in non-blocking context could lead to thread starvation" && TextRange.create(info) == TextRange(511, 516)
             }
 
         Assert.assertNotNull("Inspection should report blocking call with unknown contexts considered non-blocking", warning)
@@ -368,7 +367,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.launchAction(reverseAction!!)
         val info = myFixture.doHighlighting(HighlightSeverity.INFORMATION)
             .firstOrNull {
-                it.description == "Consider unknown contexts non-blocking" && it.range.equalsToRange(511, 516)
+                it.description == "Consider unknown contexts non-blocking" && TextRange.create(it) == TextRange(511, 516)
             }
         Assert.assertNotNull("Inspection should NOT report blocking call with unknown contexts considered blocking," +
                                      " but should have intention to change behaviour instead", info)

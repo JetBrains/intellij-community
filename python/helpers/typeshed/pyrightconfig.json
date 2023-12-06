@@ -1,55 +1,41 @@
 {
+    "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/packages/vscode-pyright/schemas/pyrightconfig.schema.json",
     "typeshedPath": ".",
     "include": [
         "stdlib",
         "stubs",
-        "test_cases"
     ],
     "exclude": [
-        "**/@python2"
+        // test cases use a custom config file
+        "stubs/**/@tests/test_cases"
     ],
-    "typeCheckingMode": "basic",
-    "strictListInference": true,
-    "strictDictionaryInference": true,
-    "strictParameterNoneValue": true,
-    "strictSetInference": true,
-    "reportFunctionMemberAccess": "error",
-    "reportMissingModuleSource": "none",
-    "reportMissingTypeStubs": "error",
-    "reportUnusedImport": "error",
-    "reportUnusedClass": "error",
-    "reportUnusedFunction": "error",
-    "reportUnusedVariable": "error",
-    "reportDuplicateImport": "error",
-    "reportOptionalSubscript": "error",
-    "reportOptionalMemberAccess": "error",
-    "reportOptionalCall": "error",
-    "reportOptionalIterable": "error",
-    "reportOptionalContextManager": "error",
-    "reportOptionalOperand": "error",
-    "reportUntypedFunctionDecorator": "error",
-    "reportUntypedClassDecorator": "error",
-    "reportUntypedBaseClass": "error",
-    "reportUntypedNamedTuple": "error",
+    "typeCheckingMode": "strict",
+    // Allowed in base settings for incomplete stubs, checked in stricter settings
+    "reportIncompleteStub": "none",
+    "reportMissingParameterType": "none",
+    "reportUnknownMemberType": "none",
+    "reportUnknownParameterType": "none",
+    "reportUnknownVariableType": "none",
+    // Extra strict settings
+    "reportCallInDefaultInitializer": "error",
+    "reportImplicitStringConcatenation": "error",
+    "reportUnnecessaryTypeIgnoreComment": "error",
+    // Leave "type: ignore" comments to mypy
+    "enableTypeIgnoreComments": false,
+    // No effect in stubs
+    "reportMissingSuperCall": "none",
+    "reportUninitializedInstanceVariable": "none",
+    // stdlib stubs trigger reportShadowedImports
+    "reportShadowedImports": "none",
+    // Stubs are allowed to use private variables
     "reportPrivateUsage": "none",
-    "reportConstantRedefinition": "error",
-    "reportInvalidStringEscapeSequence": "error",
-    "reportUnknownArgumentType": "error",
-    "reportUnknownLambdaType": "error",
-    "reportMissingTypeArgument": "error",
-    "reportUndefinedVariable": "error",
-    "reportUnboundVariable": "error",
-    "reportInvalidStubStatement": "error",
-    "reportInvalidTypeVarUse": "error",
-    "reportUnsupportedDunderAll": "error",
-    "reportInconsistentConstructor": "error",
-    "reportTypeCommentUsage": "error",
-    "reportUnnecessaryComparison": "error",
+    // Stubs don't need the actual modules to be installed
+    "reportMissingModuleSource": "none",
     // Incompatible overrides and property type mismatches are out of typeshed's control
     // as they are inherited from the implementation.
-    "reportPropertyTypeMismatch": "none",
     "reportIncompatibleMethodOverride": "none",
     "reportIncompatibleVariableOverride": "none",
+    "reportPropertyTypeMismatch": "none",
     // Overlapping overloads are often necessary in a stub, meaning pyright's check
     // (which is stricter than mypy's; see mypy issue #10143 and #10157)
     // would cause many false positives and catch few bugs.

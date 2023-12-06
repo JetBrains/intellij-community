@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -9,20 +8,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.function.Predicate;
 
 public abstract class ModuleJdkConfigurable implements Disposable {
   private JdkComboBox myCbModuleJdk;
@@ -77,8 +75,8 @@ public abstract class ModuleJdkConfigurable implements Disposable {
   private void init() {
     final Project project = getRootModel().getModule().getProject();
 
-    myJdkPanel = new JPanel(new GridBagLayout());
-    myCbModuleJdk = new JdkComboBox(project, myJdksModel, SimpleJavaSdkType.notSimpleJavaSdkType(),
+    Predicate<SdkTypeId> predicate = SimpleJavaSdkType.notSimpleJavaSdkType();
+    myCbModuleJdk = new JdkComboBox(project, myJdksModel, predicate::test,
                                     WslSdkFilter.filterSdkByWsl(project), WslSdkFilter.filterSdkSuggestionByWsl(project),
                                     null, jdk -> {
       final Sdk projectJdk = myJdksModel.getProjectSdk();
@@ -105,21 +103,9 @@ public abstract class ModuleJdkConfigurable implements Disposable {
         clearCaches();
       }
     });
-    JLabel myCbModuleJdkLabel = new JLabel(JavaUiBundle.message("module.libraries.target.jdk.module.radio"));
-    myCbModuleJdkLabel.setLabelFor(myCbModuleJdk);
-    myJdkPanel.add(myCbModuleJdkLabel,
-                   new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                          JBUI.insetsRight(6), 0, 0));
-    myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(1, 0, 1, 1, 0, 1.0,
-                                                         GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                         JBUI.insetsRight(4), 0, 0));
     final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
     myCbModuleJdk.setEditButton(editButton, getRootModel().getModule().getProject(), () -> getRootModel().getSdk());
-    myJdkPanel.add(editButton,
-                   new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                          JBInsets.emptyInsets(), 0, 0));
-
-    myJdkPanel.setBorder(JBUI.Borders.empty(6));
+    myJdkPanel = new ModuleJdkConfigurableUi(myCbModuleJdk, editButton).getPanel();
   }
 
   private void clearCaches() {

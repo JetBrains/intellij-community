@@ -8,6 +8,9 @@
 :: Ensure IDE_HOME points to the directory where the IDE is installed.
 :: ---------------------------------------------------------------------
 SET "IDE_BIN_DIR=%~dp0"
+PUSHD %IDE_BIN_DIR%
+SET "IDE_BIN_DIR=%CD%"
+POPD
 FOR /F "delims=" %%i in ("%IDE_BIN_DIR%\..") DO SET "IDE_HOME=%%~fi"
 
 :: ---------------------------------------------------------------------
@@ -29,8 +32,7 @@ IF "%JRE%" == "" (
 )
 
 IF "%JRE%" == "" (
-  IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
-  IF "%PROCESSOR_ARCHITECTURE%" == "ARM64" IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
+  IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
 )
 
 IF "%JRE%" == "" (

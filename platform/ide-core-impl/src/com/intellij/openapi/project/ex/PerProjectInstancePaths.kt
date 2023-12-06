@@ -2,7 +2,6 @@
 package com.intellij.openapi.project.ex
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.util.io.isAncestor
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -62,7 +61,7 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
                       currentChildProcess: Boolean,
                       currentProjectStoreBaseDir: () -> Path?,
                       newProjectStoreBaseDir: Path): Path {
-      return if (currentConfig.isAncestor(currentPlugins)) {
+      return if (currentPlugins.startsWith(currentConfig)) {
         val newConfig = getConfigDir(currentConfig, currentChildProcess, currentProjectStoreBaseDir, newProjectStoreBaseDir)
         newConfig.resolve(currentConfig.relativize(currentPlugins))
       }
@@ -77,7 +76,7 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
                   currentChildProcess: Boolean,
                   currentProjectStoreBaseDir: () -> Path?,
                   newProjectStoreBaseDir: Path): Path {
-      return if (currentSystem.isAncestor(currentLog)) {
+      return if (currentLog.startsWith(currentSystem)) {
         val newSystem = getSystemDir(currentSystem, currentChildProcess, currentProjectStoreBaseDir, newProjectStoreBaseDir)
         newSystem.resolve(currentSystem.relativize(currentLog))
       }

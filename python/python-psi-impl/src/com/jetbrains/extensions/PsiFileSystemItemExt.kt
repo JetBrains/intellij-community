@@ -23,7 +23,7 @@ import com.jetbrains.python.psi.PyPsiFacade
  * @author Ilya.Kazakevich
  */
 
-fun PsiFileSystemItem.getQName():QualifiedName?  {
+fun PsiFileSystemItem.getQName(): QualifiedName?  {
   val name = PyPsiFacade.getInstance(this.project).findShortestImportableName(this.virtualFile, this) ?: return null
   return QualifiedName.fromDottedString(name)
 }

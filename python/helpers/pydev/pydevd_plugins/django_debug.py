@@ -333,7 +333,7 @@ def _is_django_exception_break_context(frame):
 # Django Step Commands
 #=======================================================================================================================
 
-def can_not_skip(plugin, main_debugger, pydb_frame, frame, info):
+def can_not_skip(plugin, main_debugger, frame, info):
     return main_debugger.django_breakpoints and _is_django_render_call(frame)
 
 
@@ -393,7 +393,7 @@ def stop(plugin, main_debugger, frame, event, args, stop_info, arg, step_cmd):
     return False
 
 
-def get_breakpoint(plugin, main_debugger, pydb_frame, frame, event, args):
+def get_breakpoint(plugin, main_debugger, frame, event, args):
     main_debugger = args[0]
     filename = args[1]
     info = args[2]
@@ -424,7 +424,7 @@ def suspend(plugin, main_debugger, thread, frame, bp_type):
         return suspend_django(main_debugger, thread, frame)
     return None
 
-def exception_break(plugin, main_debugger, pydb_frame, frame, args, arg):
+def exception_break(plugin, main_debugger, frame, args, arg):
     main_debugger = args[0]
     thread = args[3]
     exception, value, trace = arg

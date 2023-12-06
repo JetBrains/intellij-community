@@ -28,7 +28,7 @@ import java.awt.*;
  * @see AbstractNavBarUI
  * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface NavBarUI {
   /**
    * Returns offset for NavBarPopup
@@ -39,12 +39,6 @@ public interface NavBarUI {
   int getPopupOffset(@NotNull NavBarItem item);
 
   Insets getElementIpad(boolean isPopupElement);
-
-  /**
-   * @deprecated Use {@link #getElementPadding(NavBarItem)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  Insets getElementPadding();
 
   Insets getElementPadding(NavBarItem item);
 

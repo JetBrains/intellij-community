@@ -50,21 +50,7 @@ public abstract class JpsModelSerializerExtension {
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
   }
 
-  /**
-   * @deprecated the build process doesn't save project configuration, so there is no need to implement this method, it isn't called by the platform
-   */
-  @Deprecated
-  public void saveRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
-  }
-
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
-  }
-
-  /**
-   * @deprecated the build process doesn't save project configuration, so there is no need to implement this method, it isn't called by the platform
-   */
-  @Deprecated
-  public void saveModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
   }
 
   public List<JpsLibraryRootTypeSerializer> getLibraryRootTypeSerializers() {
@@ -77,13 +63,6 @@ public abstract class JpsModelSerializerExtension {
   }
 
   public void loadModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
-  }
-
-  /**
-   * @deprecated the build process doesn't save project configuration, so there is no need to implement this method, it isn't called by the platform
-   */
-  @Deprecated
-  public void saveModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
   }
 
   @Nullable

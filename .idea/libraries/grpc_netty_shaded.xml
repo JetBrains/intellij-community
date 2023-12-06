@@ -1,20 +1,18 @@
 <component name="libraryTable">
   <library name="grpc-netty-shaded" type="repository">
-    <properties maven-id="io.grpc:grpc-netty-shaded:1.53.0">
-      <exclude>
-        <dependency maven-id="com.google.guava:guava" />
-        <dependency maven-id="io.perfmark:perfmark-api" />
-        <dependency maven-id="io.grpc:grpc-core" />
-      </exclude>
+    <properties include-transitive-deps="false" maven-id="io.grpc:grpc-netty-shaded:1.59.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.59.0/grpc-netty-shaded-1.59.0.jar">
+          <sha256sum>0eb6f53b3f7461367eb0cafb40398209b26de685916369af977b11395799c3a5</sha256sum>
+        </artifact>
+      </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.53.0/grpc-netty-shaded-1.53.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.14.0/error_prone_annotations-2.14.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.59.0/grpc-netty-shaded-1.59.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.53.0/grpc-netty-shaded-1.53.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.14.0/error_prone_annotations-2.14.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.59.0/grpc-netty-shaded-1.59.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

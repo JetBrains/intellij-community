@@ -84,13 +84,12 @@ class ExtractedClassBuilder {
     this.interfaces.addAll(interfaces);
   }
 
-
   public String buildBeanClass(boolean normalizeDeclaration) {
     if (requiresBackPointer) {
       calculateBackpointerName();
     }
-    @NonNls final StringBuffer out = new StringBuffer(1024);
-    if (packageName.length() > 0) out.append("package " + packageName + ';');
+    final @NonNls StringBuilder out = new StringBuilder(1024);
+    if (packageName.length() > 0) out.append("package ").append(packageName).append(";\n");
 
     out.append("public ");
     fields.removeAll(enumConstantFields);
@@ -119,10 +118,10 @@ class ExtractedClassBuilder {
         first = false;
       }
     }
-    out.append('{');
+    out.append("{\n");
 
     if (requiresBackPointer) {
-      out.append("private final " + originalClassName);
+      out.append("private final ").append(originalClassName);
       if (!typeParams.isEmpty()) {
         out.append('<');
         boolean first = true;
@@ -135,7 +134,7 @@ class ExtractedClassBuilder {
         }
         out.append('>');
       }
-      out.append(' ' + backPointerName + ";");
+      out.append(' ').append(backPointerName).append(";");
     }
     outputFieldsAndInitializers(out, normalizeDeclaration);
     if (hasEnumConstants()) {
@@ -216,19 +215,19 @@ class ExtractedClassBuilder {
     return false;
   }
 
-  private void outputMethods(StringBuffer out) {
+  private void outputMethods(@NonNls StringBuilder out) {
     for (PsiMethod method : methods) {
       method.accept(new Mutator(out));
     }
   }
 
-  private void outputInnerClasses(StringBuffer out) {
+  private void outputInnerClasses(@NonNls StringBuilder out) {
     for (PsiClass innerClass : innerClasses) {
       outputMutatedInnerClass(out, innerClass, innerClassesToMakePublic.contains(innerClass));
     }
   }
 
-  private void outputMutatedInnerClass(StringBuffer out, PsiClass innerClass, boolean makePublic) {
+  private void outputMutatedInnerClass(@NonNls StringBuilder out, PsiClass innerClass, boolean makePublic) {
     if (makePublic) {
       try {
         PsiUtil.setModifierProperty(innerClass, PsiModifier.PUBLIC, false);
@@ -241,22 +240,23 @@ class ExtractedClassBuilder {
   }
 
 
-  private void outputFieldsAndInitializers(final StringBuffer out, boolean normalizeDeclaration) {
+  private void outputFieldsAndInitializers(@NonNls StringBuilder out, boolean normalizeDeclaration) {
     if (hasEnumConstants()) {
       out.append(StringUtil.join(enumConstantFields, field -> {
-        final StringBuffer fieldStr = new StringBuffer(field.getName() + "(");
+        final @NonNls StringBuilder fieldStr = new StringBuilder(field.getName());
+        fieldStr.append('(');
         final PsiExpression initializer = field.getInitializer();
         if (initializer != null) {
           initializer.accept(new Mutator(fieldStr));
         }
-        fieldStr.append(")");
+        fieldStr.append(')');
         return fieldStr.toString();
       }, ", "));
-      out.append(";");
+      out.append(";\n");
     }
 
     final List<PsiClassInitializer> remainingInitializers = new ArrayList<>(initializers);
-    for (final PsiField field : fields) {
+    for (PsiField field : fields) {
       if (normalizeDeclaration) {
         field.normalizeDeclaration();
       }
@@ -287,9 +287,8 @@ class ExtractedClassBuilder {
     }
   }
 
-
-  private void outputConstructor(@NonNls StringBuffer out) {
-    out.append("\t").append(hasEnumConstants() ? "" : "public ").append(className).append('(');
+  private void outputConstructor(@NonNls StringBuilder out) {
+    out.append(hasEnumConstants() ? "" : "public ").append(className).append('(');
     if (requiresBackPointer) {
       final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(backPointerName, VariableKind.PARAMETER);
       out.append(originalClassName);
@@ -305,35 +304,34 @@ class ExtractedClassBuilder {
         }
         out.append('>');
       }
-      out.append(' ' + parameterName);
+      out.append(' ').append(parameterName);
     } else if (hasEnumConstants()) {
       out.append(myEnumParameterType.getCanonicalText()).append(" ").append("value");
     }
 
-    out.append(")");
-    out.append("\t{");
+    out.append(") {\n");
     if (requiresBackPointer) {
       final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(backPointerName, VariableKind.PARAMETER);
       if (backPointerName.equals(parameterName)) {
-        out.append("\t\tthis." + backPointerName + " = " + parameterName + ";");
+        out.append("this.");
       }
-      else {
-        out.append("\t\t" + backPointerName + " = " + parameterName + ";");
-      }
+      out.append(backPointerName).append('=').append(parameterName).append(";\n");
 
     } else if (hasEnumConstants()) {
       final String fieldName = getValueFieldName();
-      out.append(fieldName.equals("value") ? "this." : "").append(fieldName).append(" = value;");
+      if (fieldName.equals("value")) {
+        out.append("this.");
+      }
+      out.append(fieldName).append("=value;\n");
     }
-    out.append("\t}");
+    out.append("}\n");
   }
 
   public void setRequiresBackPointer(boolean requiresBackPointer) {
     this.requiresBackPointer = requiresBackPointer;
   }
 
-
-  public void setProject(final Project project) {
+  public void setProject(Project project) {
     myProject = project;
     myJavaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
   }
@@ -363,10 +361,9 @@ class ExtractedClassBuilder {
   }
 
   private final class Mutator extends JavaElementVisitor {
-    @NonNls
-    private final StringBuffer out;
+    private final @NonNls StringBuilder out;
 
-    private Mutator(StringBuffer out) {
+    private Mutator(@NonNls StringBuilder out) {
       super();
       this.out = out;
     }
@@ -466,8 +463,7 @@ class ExtractedClassBuilder {
       }
     }
 
-    private void delegate(final PsiExpression rhs, final PsiField field, final PsiJavaToken sign, final IElementType tokenType,
-                          final String fieldName) {
+    private void delegate(PsiExpression rhs, PsiField field, PsiJavaToken sign, IElementType tokenType, String fieldName) {
       final String setterName = GenerateMembersUtil.suggestSetterName(field);
       out.append(fieldName).append('.').append(setterName).append('(');
       if (!tokenType.equals(JavaTokenType.EQ)) {
@@ -479,7 +475,6 @@ class ExtractedClassBuilder {
       rhs.accept(this);
       out.append(')');
     }
-
 
     @Override
     public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
@@ -501,14 +496,14 @@ class ExtractedClassBuilder {
         final PsiField field = (PsiField)reference.resolve();
         assert field != null;
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-          out.append(backPointerName +
-                     '.' + GenerateMembersUtil.suggestSetterName(field) +
-                     '(' +
-                     backPointerName +
-                     '.' + GenerateMembersUtil.suggestGetterName(field) +
-                     "()" +
-                     operator +
-                     "1)");
+          out.append(backPointerName)
+            .append('.').append(GenerateMembersUtil.suggestSetterName(field))
+            .append('(')
+            .append(backPointerName)
+            .append('.').append(GenerateMembersUtil.suggestGetterName(field))
+            .append("()")
+            .append(operator)
+            .append("1)");
         }
         else {
           visitElement(expression);
@@ -523,13 +518,10 @@ class ExtractedClassBuilder {
       return BackpointerUtil.isBackpointerReference(expression, psiField -> !fieldIsExtracted(psiField));
     }
 
-
     @Override
     public void visitThisExpression(@NotNull PsiThisExpression expression) {
       out.append(backPointerName);
     }
-
-
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -546,11 +538,11 @@ class ExtractedClassBuilder {
               final PsiClass targetClass = ((PsiImportStaticStatement)resolveScope).resolveTargetClass();
               out.append(targetClass != null ? targetClass.getQualifiedName() : "").append('.').append(methodName);
             } else {
-              out.append(originalClassName + '.' + methodName);
+              out.append(originalClassName).append('.').append(methodName);
             }
           }
           else {
-            out.append(backPointerName + '.' + methodName);
+            out.append(backPointerName).append('.').append(methodName);
           }
           final PsiExpressionList argumentList = call.getArgumentList();
           argumentList.accept(this);

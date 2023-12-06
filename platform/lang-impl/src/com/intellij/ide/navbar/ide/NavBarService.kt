@@ -7,20 +7,24 @@ import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
 import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.NewNavBarPanel
-import com.intellij.ide.navbar.ui.StaticNavBarPanel
 import com.intellij.ide.navbar.ui.showHint
+import com.intellij.ide.navbar.ui.staticNavBarPanel
 import com.intellij.ide.ui.UISettings
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
+import com.intellij.model.Pointer
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
-import com.intellij.util.flow.throttle
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
@@ -69,7 +73,7 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
 
   fun createNavBarPanel(): JComponent {
     EDT.assertIsEdt()
-    return StaticNavBarPanel(project, cs, updateRequests, ::requestNavigation)
+    return staticNavBarPanel(project, cs, updateRequests, ::requestNavigation)
   }
 
   fun showFloatingNavbar(dataContext: DataContext) {
@@ -82,7 +86,8 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
         defaultModel(project)
       }
       val barScope = this@launch
-      val vm = NavBarVmImpl(cs = barScope, model, contextItems = emptyFlow(), ::requestNavigation)
+      val vm = NavBarVmImpl(cs = barScope, model, contextItems = emptyFlow())
+      vm.activationRequests.onEach(::requestNavigation).launchIn(this)
       withContext(Dispatchers.EDT) {
         val component = NewNavBarPanel(barScope, vm, project, true)
         while (component.componentCount == 0) {
@@ -102,19 +107,21 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
     }
   }
 
-  private fun requestNavigation(item: NavBarVmItem) {
+  private fun requestNavigation(pointer: Pointer<out NavBarItem>) {
     cs.launch {
-      navigateTo(item)
+      navigateTo(pointer)
       updateRequests.emit(Unit)
     }
   }
 
-  private suspend fun navigateTo(item: NavBarVmItem) {
-    val navigationRequest = item.fetch(NavBarItem::navigationRequest)
-                            ?: return
+  private suspend fun navigateTo(pointer: Pointer<out NavBarItem>) {
+    val navigationRequest = readAction {
+      pointer.dereference()?.navigationRequest()
+    } ?: return
     withContext(Dispatchers.EDT) {
       navigateRequest(project, navigationRequest)
     }
+    updateRequests.emit(Unit)
   }
 }
 
@@ -161,7 +168,6 @@ private fun contextModelInner(ctx: DataContext): List<NavBarVmItem> {
 
 internal suspend fun defaultModel(project: Project): List<NavBarVmItem> {
   return readAction {
-    val item = ProjectNavBarItem(project)
-    listOf(NavBarVmItem(item.createPointer(), item.presentation(), true, item.javaClass))
+    listOf(IdeNavBarVmItem(ProjectNavBarItem(project)))
   }
 }

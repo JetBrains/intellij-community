@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,29 +11,24 @@ import com.intellij.openapi.fileTypes.impl.associate.ui.FileTypeAssociationDialo
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public final class OSAssociateFileTypesUtil {
-  public final static String ENABLE_REG_KEY = "system.file.type.associations.enabled";
-
-  private static final Logger LOG = Logger.getInstance(OSAssociateFileTypesUtil.class);
+  public static final String ENABLE_REG_KEY = "system.file.type.associations.enabled";
   public static final String EXTENSION_SEPARATOR = "-x-";
 
-  private OSAssociateFileTypesUtil() {
-  }
+  private static final Logger LOG = Logger.getInstance(OSAssociateFileTypesUtil.class);
+
+  private OSAssociateFileTypesUtil() { }
 
   public static void chooseAndAssociate(@NotNull Callback callback) {
     SystemFileTypeAssociator associator = SystemAssociatorFactory.getAssociator();
@@ -57,33 +52,31 @@ public final class OSAssociateFileTypesUtil {
     }
   }
 
-  public static List<FileType> restoreFileTypes() {
+  private static List<FileType> restoreFileTypes() {
     List<FileType> fileTypes = new ArrayList<>();
-    OSFileAssociationPreferences.getInstance().fileTypeNames.forEach(
-      name -> {
-        if (name.contains(EXTENSION_SEPARATOR)) {
-          int extPos = name.indexOf(EXTENSION_SEPARATOR);
-          String originalName = name.substring(0, extPos);
-          String extension =  name.substring(extPos + EXTENSION_SEPARATOR.length());
-          FileType originalType = getFileTypeByName(originalName);
-          if (originalType != null) {
-            for (FileNameMatcher matcher : FileTypeManager.getInstance().getAssociations(originalType)) {
-              if (matcher instanceof ExtensionFileNameMatcher) {
-                if (extension.equals(((ExtensionFileNameMatcher)matcher).getExtension())) {
-                  fileTypes.add(new MyFileSubtype(originalType, matcher, name, matcher.getPresentableString()));
-                }
+    for (String name : OSFileAssociationPreferences.getInstance().fileTypeNames) {
+      if (name.contains(EXTENSION_SEPARATOR)) {
+        int extPos = name.indexOf(EXTENSION_SEPARATOR);
+        String originalName = name.substring(0, extPos);
+        String extension = name.substring(extPos + EXTENSION_SEPARATOR.length());
+        FileType originalType = getFileTypeByName(originalName);
+        if (originalType != null) {
+          for (FileNameMatcher matcher : FileTypeManager.getInstance().getAssociations(originalType)) {
+            if (matcher instanceof ExtensionFileNameMatcher) {
+              if (extension.equals(((ExtensionFileNameMatcher)matcher).getExtension())) {
+                fileTypes.add(new MyFileSubtype(originalType, matcher, name, matcher.getPresentableString()));
               }
             }
           }
         }
-        else {
-          FileType type = getFileTypeByName(name);
-          if (type != null) {
-            fileTypes.add(type);
-          }
+      }
+      else {
+        FileType type = getFileTypeByName(name);
+        if (type != null) {
+          fileTypes.add(type);
         }
       }
-    );
+    }
     return fileTypes;
   }
 
@@ -95,8 +88,8 @@ public final class OSAssociateFileTypesUtil {
     return null;
   }
 
-  private static void doAssociate(@NotNull Callback callback, @NotNull SystemFileTypeAssociator associator, List<? extends FileType> fileTypes) {
-    if (fileTypes.size() > 0) {
+  private static void doAssociate(Callback callback, SystemFileTypeAssociator associator, List<FileType> fileTypes) {
+    if (!fileTypes.isEmpty()) {
       ApplicationManager.getApplication().executeOnPooledThread(
         () -> {
           try {
@@ -113,7 +106,6 @@ public final class OSAssociateFileTypesUtil {
       );
     }
   }
-
 
   public static boolean isAvailable() {
     return Registry.get(ENABLE_REG_KEY).asBoolean() && SystemAssociatorFactory.getAssociator() != null;
@@ -133,22 +125,20 @@ public final class OSAssociateFileTypesUtil {
 
   public static @NotNull List<ExtensionFileNameMatcher> getExtensionMatchers(@NotNull FileType fileType) {
     return getMatchers(fileType).stream()
-                                .filter(matcher -> matcher instanceof ExtensionFileNameMatcher)
-                                .map(matcher -> (ExtensionFileNameMatcher)matcher).collect(Collectors.toList());
+      .filter(matcher -> matcher instanceof ExtensionFileNameMatcher)
+      .map(matcher -> (ExtensionFileNameMatcher)matcher)
+      .toList();
   }
 
   public static @NotNull List<FileNameMatcher> getMatchers(@NotNull FileType fileType) {
     if (fileType instanceof MyFileSubtype) {
-      return Collections.singletonList(((MyFileSubtype)fileType).getMatcher());
+      return List.of(((MyFileSubtype)fileType).getMatcher());
     }
     else {
       List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
-      if (matchers.size() > 0) return matchers;
+      if (!matchers.isEmpty()) return matchers;
       String defaultExt = fileType.getDefaultExtension();
-      if (!StringUtil.isEmptyOrSpaces(defaultExt)) {
-        return Collections.singletonList(new ExtensionFileNameMatcher(defaultExt));
-      }
-      return Collections.emptyList();
+      return !defaultExt.isBlank() ? List.of(new ExtensionFileNameMatcher(defaultExt)) : List.of();
     }
   }
 
@@ -167,7 +157,7 @@ public final class OSAssociateFileTypesUtil {
   }
 
   private static String getSubtypeName(@NotNull String baseName, @NotNull ExtensionFileNameMatcher matcher) {
-    String ext = StringUtils.removeStart(matcher.getExtension(), ".");
+    String ext = Strings.trimStart(matcher.getExtension(), ".");
     return baseName + EXTENSION_SEPARATOR + ext;
   }
 
@@ -175,22 +165,17 @@ public final class OSAssociateFileTypesUtil {
     return fileType instanceof MyFileSubtype ? ((MyFileSubtype)fileType).getMatcher() : null;
   }
 
-
   static @NotNull FileType getOriginalType(@NotNull FileType fileType) {
     return fileType instanceof MyFileSubtype ? ((MyFileSubtype)fileType).myOriginalType : fileType;
   }
 
-
   private static class MyFileSubtype implements FileType {
-    private final          FileType        myOriginalType;
-    private final          FileNameMatcher myMatcher;
-    private final          String          myName;
-    private @NlsSafe final String          myDescription;
+    private final FileType myOriginalType;
+    private final FileNameMatcher myMatcher;
+    private final String myName;
+    private final @NlsSafe String myDescription;
 
-    private MyFileSubtype(@NotNull FileType originalType,
-                          @NotNull FileNameMatcher matcher,
-                          @NotNull @NonNls String name,
-                          @NotNull @NonNls String description) {
+    private MyFileSubtype(FileType originalType, FileNameMatcher matcher, String name, String description) {
       myOriginalType = originalType;
       myMatcher = matcher;
       myName = name;
@@ -198,7 +183,7 @@ public final class OSAssociateFileTypesUtil {
     }
 
     @Override
-    public @NonNls @NotNull String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
@@ -229,8 +214,7 @@ public final class OSAssociateFileTypesUtil {
     }
 
     @Override
-    public @NonNls @Nullable String getCharset(@NotNull VirtualFile file,
-                                               byte @NotNull [] content) {
+    public @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
       return myOriginalType.getCharset(file, content);
     }
 

@@ -1,6 +1,7 @@
+from _typeshed import Incomplete
 from typing import Any, NamedTuple
 
-from ._common import (
+from psutil._common import (
     AccessDenied as AccessDenied,
     NoSuchProcess as NoSuchProcess,
     ZombieProcess as ZombieProcess,
@@ -26,14 +27,14 @@ class scputimes(NamedTuple):
     idle: Any
 
 class svmem(NamedTuple):
-    total: Any
-    available: Any
-    percent: Any
-    used: Any
-    free: Any
-    active: Any
-    inactive: Any
-    wired: Any
+    total: int
+    available: int
+    percent: float
+    used: int
+    free: int
+    active: int
+    inactive: int
+    wired: int
 
 class pmem(NamedTuple):
     rss: Any
@@ -41,9 +42,14 @@ class pmem(NamedTuple):
     pfaults: Any
     pageins: Any
 
-pfullmem: Any
+class pfullmem(NamedTuple):
+    rss: Incomplete
+    vms: Incomplete
+    pfaults: Incomplete
+    pageins: Incomplete
+    uss: Incomplete
 
-def virtual_memory(): ...
+def virtual_memory() -> svmem: ...
 def swap_memory(): ...
 def cpu_times(): ...
 def per_cpu_times(): ...
@@ -95,7 +101,7 @@ class Process:
     def open_files(self): ...
     def connections(self, kind: str = ...): ...
     def num_fds(self): ...
-    def wait(self, timeout: Any | None = ...): ...
+    def wait(self, timeout: Incomplete | None = ...): ...
     def nice_get(self): ...
     def nice_set(self, value): ...
     def status(self): ...

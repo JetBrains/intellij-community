@@ -126,7 +126,7 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterInSingleLineFStringFragment() {
     doTestEnter("f'foo{1 +<caret> 2}bar'",
                 "f'foo{1 +\n" +
-                "2}bar'");
+                "      2}bar'");
   }
 
   public void testEnterInFStringTextPart() {
@@ -545,11 +545,24 @@ public class PyEditingTest extends PyTestCase {
   }
 
   private void doTestEnter(String before, final String after) {
-    int pos = before.indexOf("<caret>");
-    before = before.replace("<caret>", "");
-    doTestTyping(before, pos, '\n');
-    myFixture.checkResult(after);
+    doTestEnter(before, after, false);
   }
+
+  private void doTestEnter(String before, final String after, boolean parenthesiseOnEnter) {
+    boolean initialValue = PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER;
+    try {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = parenthesiseOnEnter;
+      int pos = before.indexOf("<caret>");
+      before = before.replace("<caret>", "");
+      doTestTyping(before, pos, '\n');
+      myFixture.checkResult(after);
+    }
+    finally {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = initialValue;
+    }
+  }
+
+
 
   // PY-21478
   public void testContinuationIndentForFunctionArguments() {
@@ -915,7 +928,18 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-49080
   public void testBackslashOnEnterInTopLevelStringLiteralPattern() {
-    doTypingTest('\n');
+    doTestEnter("""
+                  match x:
+                      case 'foo<caret>bar':
+                          pass
+                  """,
+                """
+                  match x:
+                      case 'foo' \\
+                           '<caret>bar':
+                          pass
+                  """
+                );
   }
 
   // PY-42200
@@ -1050,6 +1074,186 @@ public class PyEditingTest extends PyTestCase {
     doTestEnter("with (foo(), foo()):<caret>",
                 "with (foo(), foo()):\n" +
                 "    <caret>");
+  }
+
+  public void testParenthesiseBinaryExpression() {
+    doTestEnter(
+      """
+        x = a + b + <caret>c + d
+        """,
+      """
+        x = (a + b +\s
+             c + d)
+        """, true);
+  }
+
+  public void testParenthesiseImportStatement() {
+    doTestEnter(
+      """
+        from collections import Hashable, Iterable, <caret>KeysView, Mapping, MutableMapping
+        """,
+      """
+        from collections import (Hashable, Iterable,\s
+                                 KeysView, Mapping, MutableMapping)
+        """, true);
+  }
+
+  public void testParenthesiseCallChain() {
+    doTestEnter(
+      """
+        result = str.capitalize()<caret>.foo().bar().baz()
+        """,
+      """
+        result = (str.capitalize()
+                  .foo().bar().baz())
+        """, true);
+  }
+
+  public void testParenthesiseConditionalExpression() {
+    doTestEnter(
+      """
+        x = 3 if a == 10 or<caret> b == 13 or c < 4 else 3
+        """,
+      """
+        x = 3 if (a == 10 or
+                  b == 13 or c < 4) else 3
+        """, true);
+  }
+
+  public void testParenthesiseTupleExpression() {
+    doTestEnter(
+      """
+        for x in 'a',<caret> 'b', 'c':
+            pass
+        """,
+      """
+        for x in ('a',
+                  'b', 'c'):
+            pass
+        """, true);
+  }
+
+  public void testParenthesiseString() {
+    doTestEnter(
+      """
+        s = "str<caret>ing"
+        """,
+      """
+        s = ("str"
+             "ing")
+        """, true);
+  }
+
+  public void testStringNotParenthesisedRepeatedly() {
+    doTestEnter(
+      """
+        s = ("str<caret>ing")
+        """,
+      """
+        s = ("str"
+             "ing")
+        """, true);
+  }
+
+  public void testParenthesiseUnicodeString() {
+    doTestEnter(
+      """
+        s = u"uni<caret>code"
+        """,
+      """
+        s = (u"uni"
+             u"code")
+        """, true);
+  }
+
+  public void testParenthesiseEscapedQuote() {
+    doTestEnter(
+      """
+        a = 'some \\<caret>' string'
+        """,
+      """
+        a = ('some \\''
+             ' string')
+        """, true);
+  }
+
+  public void testParenthesiseSequencePattern() {
+    doTestEnter(
+      """
+        match (1, 2):
+            case int(),<caret> int():
+                pass
+        """,
+      """
+        match (1, 2):
+            case (int(),
+                  int()):
+                pass
+        """, true);
+  }
+
+  public void testParenthesiseAttributeAccessInCallChain() {
+    doTestEnter(
+      """
+        C().m().m().m()<caret>.attr
+        """,
+      """
+        (C().m().m().m()
+         .attr)
+        """, true);
+  }
+
+  public void testParenthesiseWithStatement() {
+    doTestEnter(
+      """
+        with open('foo.txt') as foo, <caret>open('bar.txt') as bar:
+            pass
+        """,
+      """
+        with (open('foo.txt') as foo,\s
+              open('bar.txt') as bar):
+            pass
+        """, true);
+  }
+
+  // PY-61854
+  public void testEnterInsideTypeParameterListInTypeAliasStatement() {
+    doTestEnter(
+      """
+        type myType[A, B, C,<caret> D, E, F] = None
+        """,
+      """
+        type myType[A, B, C,
+                    D, E, F] = None
+        """);
+  }
+
+  // PY-61854
+  public void testEnterInsideTypeParameterListInFunctionDeclaration() {
+    doTestEnter(
+      """
+        def foo[A, B, C,<caret> D, E, F]():
+            pass
+        """,
+      """
+        def foo[A, B, C,
+                D, E, F]():
+            pass
+        """);
+  }
+
+  // PY-61854
+  public void testEnterInsideTypeParameterListInClassDeclaration() {
+    doTestEnter(
+      """
+        class Clazz[A, B, C,<caret> D, E, F]:
+            pass
+        """,
+      """
+        class Clazz[A, B, C,
+                    D, E, F]:
+            pass
+        """);
   }
 
   @NotNull

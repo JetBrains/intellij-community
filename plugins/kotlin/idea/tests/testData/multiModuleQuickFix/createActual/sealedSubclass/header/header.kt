@@ -1,4 +1,5 @@
-// "Create actual class for module testModule_JS (JS)" "true"
+// "Add missing actual declarations" "true"
+// IGNORE_K2
 
 expect sealed class Sealed
 

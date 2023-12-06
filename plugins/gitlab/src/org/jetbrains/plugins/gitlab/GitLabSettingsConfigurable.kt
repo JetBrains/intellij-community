@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
@@ -28,11 +29,11 @@ internal class GitLabSettingsConfigurable(private val project: Project)
 
     val scope = DisposingMainScope(disposable!!) + ModalityState.any().asContextElement()
     val accountsModel = GitLabAccountsListModel()
-    val detailsProvider = GitLabAccountsDetailsProvider(scope) { account ->
+    val detailsProvider = GitLabAccountsDetailsProvider(scope, accountsModel) { account ->
       accountsModel.newCredentials.getOrElse(account) {
         accountManager.findCredentials(account)
       }?.let {
-        service<GitLabApiManager>().getClient(it)
+        service<GitLabApiManager>().getClient(account.server, it)
       }
     }
     val actionsController = GitLabAccountsPanelActionsController(project, accountsModel)
@@ -43,6 +44,12 @@ internal class GitLabSettingsConfigurable(private val project: Project)
         accountsPanelFactory.accountsPanelCell(this, detailsProvider, actionsController)
           .align(Align.FILL)
       }.resizableRow()
+
+      addWarningForMemoryOnlyPasswordSafe(
+        scope,
+        service<GitLabAccountManager>().canPersistCredentials,
+        ::panel
+      )
     }
   }
 }

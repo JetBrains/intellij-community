@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -45,12 +45,12 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
   private boolean mySkipImportStatements;
   private boolean mySkipImportStatementsWasSpecified;
 
-  @NonNls private static final String DENY_RULE_KEY = "deny_rule";
-  @NonNls private static final String FROM_SCOPE_KEY = "from_scope";
-  @NonNls private static final String TO_SCOPE_KEY = "to_scope";
-  @NonNls private static final String IS_DENY_KEY = "is_deny";
-  @NonNls private static final String UNNAMED_SCOPE = "unnamed_scope";
-  @NonNls private static final String VALUE = "value";
+  private static final @NonNls String DENY_RULE_KEY = "deny_rule";
+  private static final @NonNls String FROM_SCOPE_KEY = "from_scope";
+  private static final @NonNls String TO_SCOPE_KEY = "to_scope";
+  private static final @NonNls String IS_DENY_KEY = "is_deny";
+  private static final @NonNls String UNNAMED_SCOPE = "unnamed_scope";
+  private static final @NonNls String VALUE = "value";
 
   public DependencyValidationManagerImpl(@NotNull Project project) {
     super(project);
@@ -60,8 +60,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
   }
 
   @Override
-  @NotNull
-  public List<NamedScope> getPredefinedScopes() {
+  public @NotNull List<NamedScope> getPredefinedScopes() {
     return CustomScopesAggregator.getAllCustomScopes(myProject);
   }
 
@@ -84,8 +83,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
   }
 
   @Override
-  @Nullable
-  public DependencyRule getViolatorDependencyRule(@NotNull PsiFile from, @NotNull PsiFile to) {
+  public @Nullable DependencyRule getViolatorDependencyRule(@NotNull PsiFile from, @NotNull PsiFile to) {
     for (DependencyRule dependencyRule : myState.rules) {
       if (dependencyRule.isForbiddenToUse(from, to)) return dependencyRule;
     }
@@ -125,9 +123,8 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     mySkipImportStatements = skip;
   }
 
-  @NotNull
   @Override
-  public Map<String, PackageSet> getUnnamedScopes() {
+  public @NotNull Map<String, PackageSet> getUnnamedScopes() {
     return myState.unnamedScopes;
   }
 
@@ -162,9 +159,8 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     }
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return AnalysisBundle.message("shared.scopes.node.text");
   }
 
@@ -222,9 +218,8 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     }
   }
 
-  @NotNull
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element element = super.getState();
     if (mySkipImportStatements || mySkipImportStatementsWasSpecified) {
       element.addContent(new Element("option").setAttribute("name", "SKIP_IMPORT_STATEMENTS").setAttribute("value", Boolean.toString(mySkipImportStatements)));
@@ -253,8 +248,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
   }
 
   @Override
-  @Nullable
-  public NamedScope getScope(@Nullable String scopeId) {
+  public @Nullable NamedScope getScope(@Nullable String scopeId) {
     return getScope(scopeId, myState);
   }
 
@@ -273,8 +267,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     return scope;
   }
 
-  @Nullable
-  private static Element writeRule(DependencyRule rule) {
+  private static @Nullable Element writeRule(DependencyRule rule) {
     NamedScope fromScope = rule.getFromScope();
     NamedScope toScope = rule.getToScope();
     if (fromScope == null || toScope == null) return null;
@@ -285,8 +278,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     return ruleElement;
   }
 
-  @Nullable
-  private DependencyRule readRule(@NotNull Element ruleElement) {
+  private @Nullable DependencyRule readRule(@NotNull Element ruleElement) {
     String fromScope = ruleElement.getAttributeValue(FROM_SCOPE_KEY);
     String toScope = ruleElement.getAttributeValue(TO_SCOPE_KEY);
     String denyRule = ruleElement.getAttributeValue(IS_DENY_KEY);
@@ -298,21 +290,18 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
   }
 
   static final class ScopesStateSplitter extends MainConfigurationStateSplitter {
-    @NotNull
     @Override
-    protected String getSubStateFileName(@NotNull Element element) {
+    protected @NotNull String getSubStateFileName(@NotNull Element element) {
       return element.getAttributeValue("name");
     }
 
-    @NotNull
     @Override
-    protected String getComponentStateFileName() {
+    protected @NotNull String getComponentStateFileName() {
       return "scope_settings";
     }
 
-    @NotNull
     @Override
-    protected String getSubStateTagName() {
+    protected @NotNull String getSubStateTagName() {
       return "scope";
     }
   }
@@ -339,15 +328,14 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     });
   }
 
-  private static void addScopesToList(@NotNull final List<? super Pair<NamedScope, NamedScopesHolder>> scopeList,
-                                      @NotNull final NamedScopesHolder holder) {
+  private static void addScopesToList(final @NotNull List<? super Pair<NamedScope, NamedScopesHolder>> scopeList,
+                                      final @NotNull NamedScopesHolder holder) {
     for (NamedScope scope : holder.getScopes()) {
       scopeList.add(Pair.create(scope, holder));
     }
   }
 
-  @NotNull
-  public List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes() {
+  public @NotNull List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes() {
     return myScopePairs;
   }
 
