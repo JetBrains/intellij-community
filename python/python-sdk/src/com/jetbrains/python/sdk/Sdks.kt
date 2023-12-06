@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.io.Resources
@@ -114,6 +115,13 @@ class VersionDeserializer : JsonDeserializer<Version>() {
     return Version.parseVersion(p!!.valueAsString)!!
   }
 }
+class VersionSerializer : JsonSerializer<Version>() {
+  override fun serialize(value: Version?, gen: JsonGenerator?, serializers: SerializerProvider?) {
+    value?.let {
+      gen?.writeString(it.toString())
+    }
+  }
+}
 
 /**
  * This class replaces missed String-arg constructor in Url class for jackson deserialization.
@@ -123,6 +131,14 @@ class VersionDeserializer : JsonDeserializer<Version>() {
 class UrlDeserializer : JsonDeserializer<Url>() {
   override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): Url {
     return Urls.parseEncoded(p!!.valueAsString)!!
+  }
+}
+
+class UrlSerializer : JsonSerializer<Url>() {
+  override fun serialize(value: Url?, gen: JsonGenerator?, serializers: SerializerProvider?) {
+    value?.let {
+      gen?.writeString(it.toString())
+    }
   }
 }
 
@@ -150,6 +166,16 @@ object SdksKeeper {
   catch (ex: Exception) {
     LOG.error("Json syntax error in the $configUrl", ex)
     Sdks()
+  }
+  fun serialize(sdks: Sdks): String {
+    return jacksonObjectMapper()
+      .registerModule(
+        SimpleModule()
+          .addSerializer(Version::class.java, VersionSerializer())
+          .addSerializer(Url::class.java, UrlSerializer())
+      )
+      .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+      .writeValueAsString(sdks)
   }
 
   private fun load() = configUrl?.let { Resources.toString(it, StandardCharsets.UTF_8) }
