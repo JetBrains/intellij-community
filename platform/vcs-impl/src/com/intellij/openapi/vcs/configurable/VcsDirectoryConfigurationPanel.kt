@@ -47,7 +47,8 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   private val vcsConfiguration: VcsConfiguration = VcsConfiguration.getInstance(project)
 
   private val allSupportedVcss: List<AbstractVcs> = vcsManager.allSupportedVcss.asList()
-  private val vcsRootCheckers: MutableMap<String, VcsRootChecker> = mutableMapOf()
+  private val vcsRootCheckers: Map<String, VcsRootChecker> =
+    VcsRootChecker.EXTENSION_POINT_NAME.extensionList.associateBy { it.supportedVcs.name }
 
   private val tableLoadingPanel: JBLoadingPanel
   private val mappingTable: TableView<MapInfo>
@@ -200,8 +201,6 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
     scopeFilterConfigurable = VcsUpdateInfoScopeFilterConfigurable(project, vcsConfiguration)
 
-    updateRootCheckers()
-
     // don't start loading automatically
     tableLoadingPanel = JBLoadingPanel(BorderLayout(), this, POSTPONE_MAPPINGS_LOADING_PANEL * 2)
 
@@ -231,15 +230,6 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   override fun dispose() {
     rootDetectionIndicator?.cancel()
     scopeFilterConfigurable.disposeUIResources()
-  }
-
-  private fun updateRootCheckers() {
-    vcsRootCheckers.clear()
-    for (checker in VcsRootChecker.EXTENSION_POINT_NAME.extensionList) {
-      val key = checker.supportedVcs
-      val vcs = vcsManager.findVcsByName(key.name) ?: continue
-      vcsRootCheckers[key.name] = checker
-    }
   }
 
   private fun initializeModel() {
@@ -405,17 +395,14 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
         else {
           addSelectedUnregisteredMappings(unregisteredRoots)
         }
-        updateRootCheckers()
       }
       .setEditActionUpdater { !isEditingDisabled && onlyRegisteredRootsInSelection() }
       .setEditAction {
         editMapping()
-        updateRootCheckers()
       }
       .setRemoveActionUpdater { !isEditingDisabled && onlyRegisteredRootsInSelection() }
       .setRemoveAction {
         removeMapping()
-        updateRootCheckers()
       }
       .disableUpDownActions()
       .createPanel()
