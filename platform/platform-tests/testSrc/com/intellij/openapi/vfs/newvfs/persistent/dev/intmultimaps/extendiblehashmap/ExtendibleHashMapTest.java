@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendibleha
 import com.intellij.openapi.vfs.newvfs.persistent.StorageTestingUtils;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.dev.intmultimaps.IntToMultiIntMapTestBase;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -150,12 +151,34 @@ public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHa
 
   @AfterEach
   void tearDown() throws IOException {
+    //TODO RC: there is no .forEach() & .isClosed() in NonDurableNonParallelIntToMultiIntMap
+    //         to use the same approach in base class -- but probably it is worth to do also?
+    for (ExtendibleHashMap mapToCheck : multimapsToCloseAndClean) {
+      if(!mapToCheck.isClosed()) {
+        assertInvariant_ValuesForEachKeysAreUnique(mapToCheck);
+      }
+    }
+
     for (ExtendibleHashMap mapToClean : multimapsToCloseAndClean) {
       mapToClean.closeAndUnsafelyUnmap();
     }
+    //RC: maybe we can't remove the first once -- because second one is not yet unmapped?
     for (ExtendibleHashMap mapToClean : multimapsToCloseAndClean) {
-      //TODO RC: maybe we can't remove the first once -- because second one is not yet unmapped???
       mapToClean.closeAndClean();
+    }
+  }
+
+  private static void assertInvariant_ValuesForEachKeysAreUnique(@NotNull ExtendibleHashMap multimap) throws IOException {
+    IntOpenHashSet keys = new IntOpenHashSet();
+    multimap.forEach((key, value) -> keys.add(key));
+    for (int key : keys) {
+      IntOpenHashSet values = new IntOpenHashSet();
+      multimap.lookup(key, value -> {
+        if (!values.add(value)) {
+          fail("get(" + key + ") values are non-unique: value[" + value + "] was already reported " + values);
+        }
+        return true;
+      });
     }
   }
 }

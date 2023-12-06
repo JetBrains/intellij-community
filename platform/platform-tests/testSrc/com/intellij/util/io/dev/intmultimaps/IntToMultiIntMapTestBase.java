@@ -12,6 +12,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.LongStream;
 
 public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap> {
 
@@ -184,20 +185,6 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   /* ======================== infrastructure: ================================================================ */
 
 
-  //private static void assertInvariant_ValuesForEachKeysAreUnique(final DurableIntToMultiIntMap multimap) throws IOException {
-  //  IntOpenHashSet keys = new IntOpenHashSet();
-  //  multimap.forEach((key, value) -> keys.add(key));
-  //  for (int key : keys) {
-  //    IntOpenHashSet values = new IntOpenHashSet();
-  //    multimap.lookup(key, value -> {
-  //      if (!values.add(value)) {
-  //        fail("get(" + key + ") values are non-unique: value[" + value + "] was already reported " + values);
-  //      }
-  //      return true;
-  //    });
-  //  }
-  //}
-
   private int lookupSingleValue(int key,
                                 int value) throws IOException {
     return multimap.lookup(key, v -> (v == value));
@@ -225,6 +212,12 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
     return ThreadLocalRandom.current().longs()
       .filter(v -> key(v) != NO_VALUE
                    && value(v) != NO_VALUE)
+      //generate more multi-keys, to better check apt branches
+      .flatMap(v -> switch ((int)(v % 14)) {
+        case 13 -> LongStream.of(v, v + 1, v - 1, v + 42, v - 42);
+        case 10, 11, 12 -> LongStream.of(v, v + 1);
+        default -> LongStream.of(v);
+      })
       .distinct()
       .limit(size)
       .toArray();

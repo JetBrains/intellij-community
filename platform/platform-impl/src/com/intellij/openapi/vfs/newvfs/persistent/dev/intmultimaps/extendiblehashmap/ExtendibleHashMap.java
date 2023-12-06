@@ -76,6 +76,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   private static final boolean MARK_SAFELY_CLOSED_ON_FLUSH = getBooleanProperty("ExtendibleHashMap.MARK_SAFELY_CLOSED_ON_FLUSH", true);
 
   //TODO RC: unfinished work
+  //        0) remove 'synchronized' and put synchronization on clients to decide?
   //        1) prune tombstones (see comment in a .split() method for details)
   //        2) .size() is now O(N), make it O(1)
   //        3) Half-utilized segmentTable room (see HeaderLayout)
@@ -247,6 +248,22 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     return true;
   }
 
+  /** @return false if iteration was cancelled early, by processor returning false, true if all items were processed */
+  public synchronized boolean forEach(@NotNull KeyValueProcessor processor) throws IOException {
+    checkNotClosed();
+    int segmentSize = header.segmentSize();
+    int segmentsCount = header.actualSegmentsCount();
+    for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
+      HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, segmentSize);
+      if (segment.aliveEntriesCount() > 0) {
+        if (!hashMapAlgo.forEach(segment, processor)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
 
   @Override
   public synchronized void flush() throws IOException {
@@ -279,6 +296,10 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       header = null;
       bufferSource = null;
     }
+  }
+
+  public synchronized boolean isClosed() {
+    return !storage.isOpen();
   }
 
   @Override
@@ -1000,19 +1021,20 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       }
     }
 
-    public void forEach(@NotNull HashTableData table,
-                        KeyValueProcessor processor) {
+    public boolean forEach(@NotNull HashTableData table,
+                           KeyValueProcessor processor) {
       int capacity = capacity(table);
       for (int index = 0; index < capacity; index++) {
-        final int key = table.entryKey(index);
-        final int value = table.entryValue(index);
+        int key = table.entryKey(index);
+        int value = table.entryValue(index);
         if (isSlotOccupied(key)) {
           assert value != NO_VALUE : "value(table[" + (index + 1) + "]) = " + NO_VALUE + ", while key(table[" + index + "]) = " + key;
           if (!processor.process(key, value)) {
-            return;
+            return false;
           }
         }
       }
+      return true;
     }
 
     public boolean isSlotOccupied(int key) {
@@ -1052,8 +1074,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       table.updateAliveEntriesCount(table.aliveEntriesCount() - 1);
     }
 
-    private static void checkNotNoValue(final String paramName,
-                                        final int value) {
+    private static void checkNotNoValue(String paramName,
+                                        int value) {
       if (value == NO_VALUE) {
         throw new IllegalArgumentException(paramName + " can't be = " + NO_VALUE + " -- it is special value used as NO_VALUE");
       }
@@ -1062,7 +1084,6 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
   @FunctionalInterface
   public interface KeyValueProcessor {
-    boolean process(final int key,
-                    final int value);
+    boolean process(int key, int value);
   }
 }
