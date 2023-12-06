@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizar
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_RESOURCES_PATH
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard.Companion.getKotlinWizardVersion
+import org.jetbrains.kotlin.tools.projectWizard.addMultiPlatformLink
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 import java.nio.file.Path
@@ -85,6 +86,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             setupParentsUI(builder)
             setupSampleCodeUI(builder)
             setupSampleCodeWithOnBoardingTipsUI(builder)
+            addMultiPlatformLink(builder)
         }
 
         override fun setupAdvancedSettingsUI(builder: Panel) {

@@ -27,7 +27,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 24)
+  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 25)
 
   private val LANGUAGES = listOf(
     NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
@@ -114,6 +114,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
     private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", *buildSystemFields, groovySourceTypeField, groovyVersionField)
 
     private val useCompactProjectStructureChangedEvent = GROUP.registerVarargEvent("build.system.use.compact.project.structure.changed", *buildSystemFields, useCompactProjectStructureField)
+    private val kotlinClickKmpWizardLinkEvent = GROUP.registerVarargEvent("kotlin.kmp.wizard.link.clicked", *buildSystemFields)
     // @formatter:on
 
   @JvmStatic
@@ -294,6 +295,9 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
     fun NewProjectWizardStep.logUseCompactProjectStructureChanged(isSelected: Boolean): Unit =
       useCompactProjectStructureChangedEvent.logBuildSystemEvent(this, useCompactProjectStructureField with isSelected)
+
+    fun NewProjectWizardStep.logKmpWizardLinkClicked(): Unit =
+      kotlinClickKmpWizardLinkEvent.logBuildSystemEvent(this)
   }
 
   private class GeneratorEventField(override val name: String) : PrimitiveEventField<ModuleBuilder?>() {
