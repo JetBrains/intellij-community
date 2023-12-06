@@ -1800,6 +1800,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       showStatusText(getStatusText());
 
+      prepareSteppingRequestsAndHints(suspendContext);
+
+      if (myIsIgnoreBreakpoints) {
+        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
+      }
+      super.contextAction(suspendContext);
+    }
+
+    public final void prepareSteppingRequestsAndHints(@NotNull SuspendContextImpl suspendContext) {
       ThreadReferenceProxyImpl stepThread = getContextThread();
 
       RequestHint hint = getHint(suspendContext, stepThread, null);
@@ -1809,11 +1818,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       startWatchingMethodReturn(stepThread);
 
       step(suspendContext, stepThread, hint, createCommandToken());
-
-      if (myIsIgnoreBreakpoints) {
-        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
-      }
-      super.contextAction(suspendContext);
     }
 
     @Override
