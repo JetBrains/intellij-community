@@ -430,6 +430,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"control W",                "CloseContent", "Terminal.DeletePreviousWord"},
       {"control alt DOWN",         "MethodDown", "NextOccurence", "Console.TableResult.NextPage"},
       {"control alt E",            "Console.History.Browse", "ExecuteInPyConsoleAction", "PerforceDirect.Edit", "ToggleFindInSelection"},
+      {"shift alt U",              "ActivateFindToolWindow", "ToggleCamelSnakeCase"},
       {"control alt UP",           "MethodUp", "PreviousOccurence", "Console.TableResult.PreviousPage"},
       {"control alt shift P",      "Print", "ReformatWithPrettierAction"},
       {"ctrl alt PAGE_DOWN",       "Diff.NextChange", "NextEditorTab"},
