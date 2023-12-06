@@ -463,7 +463,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         ourLib.releaseWindowOnMainLoop(windowHandle, onWindowReleased);
       }
 
-      setIdeMenuVisible(frame, true);
+      ApplicationManager.getApplication().invokeLater(() -> setIdeMenuVisible(frame, true));
     }
   }
 
