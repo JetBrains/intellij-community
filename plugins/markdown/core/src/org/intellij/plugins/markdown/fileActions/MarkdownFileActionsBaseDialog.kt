@@ -9,6 +9,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages.showErrorDialog
 import com.intellij.openapi.ui.TextComponentAccessors
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -121,7 +122,7 @@ internal abstract class MarkdownFileActionsBaseDialog(
     }
 
     if (targetDirectory == null) {
-      error(RefactoringBundle.message("cannot.create.directory"))
+      showErrorDialog(project, RefactoringBundle.message("cannot.create.directory"), RefactoringBundle.message("error.title"))
     }
   }
 
