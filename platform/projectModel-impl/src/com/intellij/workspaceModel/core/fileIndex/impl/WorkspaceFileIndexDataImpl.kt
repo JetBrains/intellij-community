@@ -183,8 +183,10 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
 
   private fun <E : WorkspaceEntity> registerFileSets(entity: E, entityClass: Class<out E>, storage: EntityStorage, 
                                                      storageKind: EntityStorageKind, registrar: WorkspaceFileSetRegistrar) {
-    getContributors(entityClass, storageKind).forEach { contributor ->
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
+    val contributors: List<WorkspaceFileIndexContributor<E>> = getContributors(entityClass, storageKind)
+
+    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
+      contributors.forEach { contributor ->
         contributor.registerFileSets(entity, registrar, storage)
       }
     }
@@ -210,14 +212,14 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     }
 
     val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind)
-    for (removed in removedEntities) {
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
+    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
+      for (removed in removedEntities) {
         contributor.registerFileSets(removed, removeRegistrar, event.storageBefore)
       }
     }
     val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind)
-    for (added in addedEntities) {
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
+    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
+      for (added in addedEntities) {
         contributor.registerFileSets(added, storeRegistrar, event.storageAfter)
       }
     }
