@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
+import com.intellij.util.containers.hash.EqualityPolicy
 import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -35,7 +36,7 @@ import kotlin.io.path.*
 @Internal
 class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val exclusiveDir: Path,
                                                                     fileAttribute: FileAttribute,
-                                                                    descriptorForCache: KeyDescriptor<T>?,
+                                                                    descriptorForCache: EqualityPolicy<T>?,
                                                                     expectedVfsCreationTimestamp: Long,
                                                                     createEnumerator: (enumeratorPath: Path) -> DurableDataEnumerator<T>) : Closeable {
 
@@ -45,7 +46,7 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
 
   constructor(exclusiveDir: Path,
               fileAttribute: FileAttribute,
-              descriptorForCache: KeyDescriptor<T>?,
+              descriptorForCache: EqualityPolicy<T>?,
               createEnumerator: (enumeratorPath: Path) -> DurableDataEnumerator<T>) :
     this(exclusiveDir, fileAttribute, descriptorForCache, FSRecords.getCreationTimestamp(), createEnumerator)
 
@@ -68,6 +69,7 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
     closer.register(enumerator)
     closer.register(attribute)
 
+    //TODO RC: CachingEnumerator seems to be quite an overkill on top of DurableEnumerator!
     baseEnumerator = if (descriptorForCache == null) enumerator else CachingEnumerator(enumerator, descriptorForCache)
     baseAttribute = attribute
     vfsChecker.createVfsTimestampMarkerFileIfAbsent(expectedVfsCreationTimestamp)

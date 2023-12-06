@@ -70,7 +70,7 @@ public final class IndexingStamp {
   private static final int INDEXING_STAMP_CACHE_CAPACITY = SystemProperties.getIntProperty("index.timestamp.cache.size", 100);
   //MAYBE RC: do we still need in-memory cache (fileId->Timestamps)? With new fast-attributes + fast enumerator
   //          access may be fast enough even without caching -- or, at least, it may be worth to cache enumerator
-  //          records (which is 100-1000 records at max) only
+  //          records (which is 100-1000 records at max) _only_
   private static final ConcurrentIntObjectMap<Timestamps> ourTimestampsCache =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
