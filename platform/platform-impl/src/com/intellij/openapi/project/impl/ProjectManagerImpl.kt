@@ -1077,10 +1077,8 @@ private fun ensureCouldCloseIfUnableToSave(project: Project): Boolean {
     return true
   }
 
-  val message: @NlsContexts.DialogMessage StringBuilder = StringBuilder()
-  message.append("${ApplicationNamesInfo.getInstance().productName} was unable to save some project files," +
-                 "\nare you sure you want to close this project anyway?")
-  message.append("\n\nRead-only files:\n")
+  val message: @NlsContexts.DialogMessage StringBuilder = StringBuilder(
+    IdeBundle.message("dialog.message.was.unable.to.save.some.project.files", ApplicationNamesInfo.getInstance().productName))
   var count = 0
   val files = notifications.first().files
   for (file in files) {
