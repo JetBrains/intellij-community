@@ -451,8 +451,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public @Nullable VirtualFileEnumeration extractFileEnumeration() {
       VirtualFileEnumeration fileEnumeration1 = VirtualFileEnumeration.extract(myScope1);
       VirtualFileEnumeration fileEnumeration2 = VirtualFileEnumeration.extract(myScope2);
-      if (fileEnumeration1 == null) return fileEnumeration2;
-      if (fileEnumeration2 == null) return fileEnumeration1;
+      if (fileEnumeration1 == null) return null;
+      if (fileEnumeration2 == null) return null;
       return new IntersectionFileEnumeration(Arrays.asList(fileEnumeration1, fileEnumeration2));
     }
   }
