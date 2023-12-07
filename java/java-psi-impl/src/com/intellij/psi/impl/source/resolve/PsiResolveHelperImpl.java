@@ -16,6 +16,7 @@ import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -130,7 +131,26 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (accessible && member instanceof PsiClass && !(member instanceof PsiTypeParameter)) {
       accessible = isAccessible(moduleSystem -> moduleSystem.isAccessible(((PsiClass)member), place));
     }
+    if (fromImplicitClass(member, place)) {
+      return false;
+    }
     return accessible;
+  }
+
+  /**
+   * Determines whether the given member is from an implicit class or not.
+   * If it is from implicit class, that place is in the same class
+   *
+   * @param member the member to check
+   * @param place  the place where the check is performed
+   * @return true if the member is not from an implicit class or if place and member are both in the same implicit class, false otherwise.
+   */
+  private static boolean fromImplicitClass(@NotNull PsiMember member, @NotNull PsiElement place) {
+    PsiImplicitClass implicitClass = PsiTreeUtil.getParentOfType(member, PsiImplicitClass.class);
+    if (implicitClass == null) {
+      return false;
+    }
+    return !PsiTreeUtil.isAncestor(implicitClass, place, false);
   }
 
   @Override

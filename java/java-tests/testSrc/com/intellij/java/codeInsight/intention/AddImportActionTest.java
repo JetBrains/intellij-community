@@ -804,4 +804,24 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
             final List<?> list = new @AssertTrue ArrayList<Object>();
         }""");
   }
+
+  public void testNotImportFromImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, ()->{
+      myFixture.addClass("""
+                                             enum E {A, B}
+                                                   
+                                             static class Rar {
+                                             }
+                                                   
+                                             void main() {
+                                             }
+                                             """);
+      myFixture.configureByText("a.java", """
+      void main() {
+          R<caret>ar x = new Rar();
+      }
+            """);
+      assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
+    });
+  }
 }
