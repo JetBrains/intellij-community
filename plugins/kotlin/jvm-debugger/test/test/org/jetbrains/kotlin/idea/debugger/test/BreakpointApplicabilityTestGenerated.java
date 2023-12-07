@@ -53,6 +53,11 @@ public class BreakpointApplicabilityTestGenerated extends AbstractBreakpointAppl
         runTest("testData/breakpointApplicability/properties.kt");
     }
 
+    @TestMetadata("return.kt")
+    public void testReturn() throws Exception {
+        runTest("testData/breakpointApplicability/return.kt");
+    }
+
     @TestMetadata("script.kts")
     public void testScript() throws Exception {
         runTest("testData/breakpointApplicability/script.kts");

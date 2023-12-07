@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
-import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
@@ -10,10 +9,9 @@ import com.intellij.xdebugger.XDebuggerManager
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
-import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.BreakpointChecker
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.BreakpointChecker.Companion.BREAKPOINT_TYPES
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -113,12 +111,3 @@ abstract class AbstractBreakpointApplicabilityTest : KotlinLightCodeInsightFixtu
         return text.substring(start, end)
     }
 }
-
-private val BREAKPOINT_TYPES = mapOf(
-    KotlinLineBreakpointType::class.java to BreakpointChecker.BreakpointType.Line,
-    KotlinFieldBreakpointType::class.java to BreakpointChecker.BreakpointType.Field,
-    KotlinFunctionBreakpointType::class.java to BreakpointChecker.BreakpointType.Function,
-    JavaLineBreakpointType.LambdaJavaBreakpointVariant::class.java to BreakpointChecker.BreakpointType.Lambda,
-    KotlinLineBreakpointType.LineKotlinBreakpointVariant::class.java to BreakpointChecker.BreakpointType.Line,
-    KotlinLineBreakpointType.KotlinBreakpointVariant::class.java to BreakpointChecker.BreakpointType.All
-)

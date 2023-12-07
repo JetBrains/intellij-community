@@ -53,6 +53,11 @@ public class K2BreakpointApplicabilityTestGenerated extends AbstractK2Breakpoint
         runTest("../testData/breakpointApplicability/properties.kt");
     }
 
+    @TestMetadata("return.kt")
+    public void testReturn() throws Exception {
+        runTest("../testData/breakpointApplicability/return.kt");
+    }
+
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("../testData/breakpointApplicability/simple.kt");
