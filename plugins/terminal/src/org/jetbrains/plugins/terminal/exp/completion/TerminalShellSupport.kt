@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp.completion
 
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.KeyedLazyInstanceEP
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -10,7 +11,15 @@ import org.jetbrains.plugins.terminal.util.ShellType
 interface TerminalShellSupport {
   val promptLanguage: Language
 
+  /**
+   * @return the token list for the parent shell command of the provided [leafElement]
+   */
   fun getCommandTokens(leafElement: PsiElement): List<String>? = null
+
+  /**
+   * @return the token list for the last shell command in [command] text
+   */
+  fun getCommandTokens(project: Project, command: String): List<String>? = null
 
   /**
    * @param aliasesDefinition the string with all aliases of the shell

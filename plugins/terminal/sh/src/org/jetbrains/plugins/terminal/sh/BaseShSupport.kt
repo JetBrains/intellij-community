@@ -5,9 +5,12 @@ import com.intellij.codeInsight.completion.CompletionUtilCore
 import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.sh.ShLanguage
+import com.intellij.sh.psi.ShCommandsList
 import com.intellij.sh.psi.ShSimpleCommand
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
@@ -17,10 +20,17 @@ abstract class BaseShSupport : TerminalShellSupport {
 
   override fun getCommandTokens(leafElement: PsiElement): List<String>? {
     val commandElement: ShSimpleCommand = PsiTreeUtil.getParentOfType(leafElement, ShSimpleCommand::class.java)
-                                          ?: return emptyList()
+                                          ?: return null
     val curElementEndOffset = leafElement.textRange.endOffset
     return commandElement.children.filter { it.textRange.endOffset <= curElementEndOffset }
       .map { it.text.replace(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED, "") }
+  }
+
+  override fun getCommandTokens(project: Project, command: String): List<String>? {
+    val psiFile = PsiFileFactory.getInstance(project).createFileFromText(promptLanguage, command)
+    val commands = PsiTreeUtil.getChildrenOfType(psiFile, ShCommandsList::class.java)?.lastOrNull() ?: return null
+    val lastCommand = commands.commandList.lastOrNull { it is ShSimpleCommand } ?: return null
+    return lastCommand.children.map { it.text }
   }
 
   override fun parseAliases(aliasesDefinition: String): Map<String, String> {
