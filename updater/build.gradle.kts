@@ -29,3 +29,28 @@ java {
 tasks.test {
   useJUnitPlatform()
 }
+
+tasks.register<Jar>("fatJar") {
+  archiveFileName = "updater-full.jar"
+  group = "build"
+  manifest.attributes["Main-Class"] = "com.intellij.updater.Bootstrap"
+  manifest.attributes["Patcher-Version"] = "3.0"
+  from(sourceSets.main.get().output)
+  dependsOn(configurations.runtimeClasspath)
+  from(configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map(::zipTree))
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  exclude(
+    "module-info.class",
+    "META-INF/",
+    "com/sun/jna/aix-*/",
+    "com/sun/jna/freebsd-*/",
+    "com/sun/jna/openbsd-*/",
+    "com/sun/jna/sunos-*/",
+    "com/sun/jna/*-arm*/",
+    "com/sun/jna/*-loong*/",
+    "com/sun/jna/*-mips*/",
+    "com/sun/jna/*-ppc*/",
+    "com/sun/jna/*-s390*/",
+    "com/sun/jna/*-x86/"
+  )
+}
