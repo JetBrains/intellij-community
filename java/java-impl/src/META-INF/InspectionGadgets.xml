@@ -2361,7 +2361,7 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.siyeh.ig.style.UnnecessarySuperQualifierInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryThis" bundle="messages.InspectionGadgetsBundle" key="unnecessary.this.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" cleanupTool="true"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      level="WARNING" implementationClass="com.siyeh.ig.style.UnnecessaryThisInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnqualifiedFieldAccess" bundle="messages.InspectionGadgetsBundle"
                      key="unqualified.field.access.display.name" groupBundle="messages.InspectionsBundle"
