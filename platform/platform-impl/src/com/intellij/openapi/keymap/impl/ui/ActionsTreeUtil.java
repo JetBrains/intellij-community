@@ -136,10 +136,10 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  private static @NotNull Condition<AnAction> wrapFilter(final @Nullable Condition<? super AnAction> filter,
-                                                         final Keymap keymap,
-                                                         final ActionManager actionManager) {
-    final ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
+  private static @NotNull Condition<AnAction> wrapFilter(@Nullable Condition<? super AnAction> filter,
+                                                         @Nullable Keymap keymap) {
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
     return action -> {
       if (action == null) return false;
       final String id = actionManager.getId(action);
@@ -189,7 +189,7 @@ public final class ActionsTreeUtil {
     return createGroup(actionGroup, groupName, actionGroup.getTemplatePresentation().getIconSupplier(), forceAsPopup, filtered, true);
   }
 
-  public static @NlsActions.ActionText String getName(AnAction action) {
+  public static @NlsActions.ActionText String getName(@NotNull AnAction action) {
     String name = action.getTemplatePresentation().getText();
     if (name != null && !name.isEmpty()) {
       return name;
@@ -404,10 +404,10 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createQuickListsGroup(final Condition<? super AnAction> filtered,
-                                             final String filter,
-                                             final boolean forceFiltering,
-                                             final QuickList[] quickLists) {
+  private static Group createQuickListsGroup(@Nullable Condition<? super AnAction> filtered,
+                                             @Nullable String filter,
+                                             boolean forceFiltering,
+                                             QuickList @NotNull[] quickLists) {
     Arrays.sort(quickLists, Comparator.comparing(QuickList::getActionId));
 
     Group group = new Group(KeyMapBundle.message("quick.lists.group.title"));
@@ -555,13 +555,13 @@ public final class ActionsTreeUtil {
     return createMainGroup(project, keymap, quickLists, null, false, null);
   }
 
-  public static Group createMainGroup(final Project project,
-                                      final Keymap keymap,
-                                      final QuickList[] quickLists,
-                                      final String filter,
-                                      final boolean forceFiltering,
-                                      final Condition<? super AnAction> filtered) {
-    final Condition<AnAction> wrappedFilter = wrapFilter(filtered, keymap, ActionManager.getInstance());
+  public static @NotNull Group createMainGroup(@Nullable Project project,
+                                               @Nullable Keymap keymap,
+                                               QuickList @NotNull [] quickLists,
+                                               @Nullable String filter,
+                                               boolean forceFiltering,
+                                               @Nullable Condition<? super AnAction> filtered) {
+    Condition<AnAction> wrappedFilter = wrapFilter(filtered, keymap);
     Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"));
     mainGroup.addGroup(createEditorActionsGroup(wrappedFilter));
     mainGroup.addGroup(createMainMenuGroup(wrappedFilter));
@@ -607,7 +607,6 @@ public final class ActionsTreeUtil {
 
     return action -> {
       if (action == null) return false;
-      action = tryUnstubAction(action);
 
       if (condition.test(action.getTemplatePresentation().getText())) return true;
       if (condition.test(action.getTemplatePresentation().getDescription())) return true;
@@ -628,20 +627,20 @@ public final class ActionsTreeUtil {
     };
   }
 
-  private static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
-                                                      final Keymap keymap,
-                                                      final Shortcut shortcut) {
+  private static @NotNull Condition<AnAction> isActionFiltered(@NotNull ActionManager actionManager,
+                                                               @NotNull Keymap keymap,
+                                                               @NotNull Shortcut shortcut) {
     return isActionFiltered(actionManager, keymap, sc -> sc != null && sc.startsWith(shortcut));
   }
 
-  public static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
-                                                     final Keymap keymap,
-                                                     final Condition<? super Shortcut> predicat) {
+  public static @NotNull Condition<AnAction> isActionFiltered(@NotNull ActionManager actionManager,
+                                                              @NotNull Keymap keymap,
+                                                              @NotNull Condition<? super Shortcut> predicate) {
     return action -> {
       if (action == null) return false;
-      final Shortcut[] actionShortcuts = keymap.getShortcuts(actionManager.getId(action));
+      Shortcut[] actionShortcuts = keymap.getShortcuts(actionManager.getId(action));
       for (Shortcut actionShortcut : actionShortcuts) {
-        if (predicat.value(actionShortcut)) {
+        if (predicate.value(actionShortcut)) {
           return true;
         }
       }
@@ -728,34 +727,29 @@ public final class ActionsTreeUtil {
   }
 
   private static AnAction @NotNull [] getActions(@NotNull ActionGroup group, @NotNull ActionManager actionManager) {
-    // ActionManagerImpl#preloadActions does not preload action groups, e.g., File | New, so unstub it
-    ActionGroup adjusted = group;
-    if (group instanceof ActionGroupStub) {
-      String id = ((ActionGroupStub)group).getId();
-      AnAction action = actionManager.getAction(id);
-      if (action instanceof ActionGroup) {
-        adjusted = (ActionGroup)action;
+    try {
+      if (group instanceof ActionGroupStub) {
+        AnAction[] stubChildren = ((DefaultActionGroup)group).getChildActionsOrStubs();
+        if (stubChildren.length > 0) return stubChildren;
+        String actionId = ((ActionGroupStub)group).getId();
+        AnAction action = actionManager.getAction(actionId);
+        if (action instanceof ActionGroup) {
+          LOG.info("No children in '" + actionId + "' stub. Creating its instance");
+          return group.getChildren(null);
+        }
+        else {
+          PluginException.logPluginError(LOG, "'" + actionId + "' is not an action group. " +
+                                              action.getClass().getName(), null, action.getClass());
+          return AnAction.EMPTY_ARRAY;
+        }
       }
       else {
-        PluginException.logPluginError(LOG, "not an ActionGroup: " + action + " id=" + id, null, action.getClass());
+        return group.getChildren(null);
       }
-    }
-    try {
-      return adjusted instanceof DefaultActionGroup
-             ? ((DefaultActionGroup)adjusted).getChildActionsOrStubs()
-             : adjusted.getChildren(null);
     }
     catch (Throwable e) {
       return AnAction.EMPTY_ARRAY;
     }
-  }
-
-  private static @NotNull AnAction tryUnstubAction(@NotNull AnAction action) {
-    if (action instanceof ActionStub) {
-      AnAction newAction = ActionManager.getInstance().getActionOrStub(((ActionStub)action).getId());
-      if (newAction != null) return newAction;
-    }
-    return action;
   }
 
   public static @Nls String getMainMenuTitle() {
