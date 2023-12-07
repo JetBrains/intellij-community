@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
@@ -32,6 +35,7 @@ import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.Chip
+import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.LazyTree
 import org.jetbrains.jewel.ui.component.RadioButtonChip
@@ -62,41 +66,55 @@ fun ChipsAndTree() {
 
 @Composable
 fun SelectableLazyColumnSample() {
-    val listOfItems = remember {
-        List(5_000_000) { "Item $it" }
+    var listOfItems by remember {
+        mutableStateOf(emptyList<String>())
     }
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.Default) {
+            listOfItems = List(5_000_000) { "Item $it" }
+        }
+    }
+
     val interactionSource = remember { MutableInteractionSource() }
     val state = rememberSelectableLazyListState()
     Box(
         modifier = Modifier.size(200.dp, 200.dp),
     ) {
-        SelectableLazyColumn(
-            selectionMode = SelectionMode.Multiple,
-            modifier = Modifier.focusable(interactionSource = interactionSource),
-            state = state,
-            content = {
-                items(
-                    count = listOfItems.size,
-                    key = { index -> listOfItems[index] },
-                ) { index ->
-                    Text(
-                        text = listOfItems[index],
-                        modifier =
-                        Modifier.then(
-                            when {
-                                isSelected && isActive -> Modifier.background(Color.Blue)
-                                isSelected && !isActive -> Modifier.background(Color.Gray)
-                                else -> Modifier
-                            },
-                        ).clickable {
-                            println("click on $index")
-                        },
-                    )
-                }
-            },
-            interactionSource = remember { MutableInteractionSource() },
-        )
-        VerticalScrollbar(rememberScrollbarAdapter(state.lazyListState), modifier = Modifier.align(Alignment.CenterEnd))
+        if (listOfItems.isEmpty()) {
+            CircularProgressIndicator(Modifier.align(Alignment.Center))
+        } else {
+            SelectableLazyColumn(
+                selectionMode = SelectionMode.Multiple,
+                modifier = Modifier.focusable(interactionSource = interactionSource),
+                state = state,
+                content = {
+                    items(
+                        count = listOfItems.size,
+                        key = { index -> listOfItems[index] },
+                    ) { index ->
+                        Text(
+                            text = listOfItems[index],
+                            modifier = Modifier.fillMaxWidth()
+                                .then(
+                                    when {
+                                        isSelected && isActive -> Modifier.background(Color.Blue)
+                                        isSelected && !isActive -> Modifier.background(Color.Gray)
+                                        else -> Modifier
+                                    },
+                                ).clickable {
+                                    println("click on $index")
+                                },
+                        )
+                    }
+                },
+                interactionSource = remember { MutableInteractionSource() },
+            )
+            VerticalScrollbar(
+                rememberScrollbarAdapter(state.lazyListState),
+                modifier = Modifier.align(Alignment.CenterEnd),
+            )
+        }
     }
 }
 
