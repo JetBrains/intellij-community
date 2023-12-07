@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.time.Duration
 
 @Internal
 interface FileHistoryPerformanceListener {
@@ -14,7 +15,5 @@ interface FileHistoryPerformanceListener {
     val EP_NAME = ExtensionPointName.create<FileHistoryPerformanceListener>("com.intellij.fileHistoryPerformanceListener")
   }
 
-  fun onFileHistoryStarted(project: Project, path: FilePath)
-
-  fun onFileHistoryFinished(project: Project, path: FilePath)
+  fun onFileHistoryFinished(project: Project, path: FilePath, duration: Duration)
 }

@@ -48,6 +48,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.TimeSource.Monotonic.markNow
 
 internal class FileHistoryFilterer(private val logData: VcsLogData, private val logId: String) : VcsLogFilterer, Disposable {
   private val project = logData.project
@@ -187,10 +188,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                               filters: VcsLogFilterCollection,
                               commitCount: CommitCountStage): VisiblePack {
       val isFastStart = commitCount == CommitCountStage.INITIAL
-
-      FileHistoryPerformanceListener.EP_NAME.extensionList.forEach {
-        it.onFileHistoryStarted(project, filePath)
-      }
+      val start = markNow()
 
       val (revisions, isDone) = if (isFastStart) {
         cancelLastTask(false)
@@ -202,8 +200,9 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
         createFileHistoryTask(fileHistoryHandler, root, filePath, hash, commitCount == CommitCountStage.FIRST_STEP).waitForRevisions()
       }
 
+      val finish = start.elapsedNow()
       FileHistoryPerformanceListener.EP_NAME.extensionList.forEach {
-        it.onFileHistoryFinished(project, filePath)
+        it.onFileHistoryFinished(project, filePath, finish)
       }
 
       if (revisions.isEmpty()) return VisiblePack.EMPTY
