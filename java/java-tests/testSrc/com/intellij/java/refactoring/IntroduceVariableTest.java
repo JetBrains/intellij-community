@@ -510,6 +510,10 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest("x", true, false, true, "int");
   }
 
+  public void testIntroduceVariableInsideImplicitClass() {
+    doTest("x", true, false, false, "java.lang.Class<Nested>");
+  }
+
   private void doTestWithVarType(IntroduceVariableBase testMe) {
     Boolean asVarType = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE;
     try {
@@ -540,8 +544,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     testMe.invoke(getProject(), getEditor(), getFile(), null);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-    if (state == null) return;
-    state.gotoEnd(false);
+    if (state != null) {
+      state.gotoEnd(false);
+    }
     checkResultByFile(baseName + ".after.java");
   }
 }

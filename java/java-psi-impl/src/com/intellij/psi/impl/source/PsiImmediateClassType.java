@@ -224,7 +224,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     PsiClass enclosingClass = null;
     if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
       PsiElement parent = aClass.getParent();
-      if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
+      if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass) && !(parent instanceof PsiImplicitClass)) {
         enclosingClass = (PsiClass)parent;
       }
     }
