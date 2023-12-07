@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PathManagerEx")
 package com.intellij.openapi.application
 
@@ -12,7 +12,7 @@ import java.nio.file.Path
  */
 val appSystemDir: Path
   get() {
-    val path = Path.of(PathManager.getSystemPath())
+    val path = PathManager.getSystemDir()
     try {
       return path.toRealPath()
     }
