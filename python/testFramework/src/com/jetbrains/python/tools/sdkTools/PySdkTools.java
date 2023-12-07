@@ -114,17 +114,34 @@ public final class PySdkTools {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {
-      ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
+      commitChangesObeyWriteAction(modificator);
       return;
     }
 
     final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     addTestSdkRoot(modificator, skeletonsPath);
 
-    ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
+    commitChangesObeyWriteAction(modificator);
 
     PySkeletonRefresher
       .refreshSkeletonsOfSdk(project, null, skeletonsPath, sdk);
+  }
+
+  /**
+   * {@link SdkModificator#commitChanges()} is marked with {@link com.intellij.util.concurrency.annotations.RequiresWriteLock} and can't be called without it
+   */
+  private static void commitChangesObeyWriteAction(@NotNull SdkModificator modificator) {
+    var app = ApplicationManager.getApplication();
+    app.invokeAndWait(() -> {
+      if (app.isWriteAccessAllowed()) {
+        modificator.commitChanges();
+      }
+      else {
+        WriteAction.run(() -> {
+          modificator.commitChanges();
+        });
+      }
+    });
   }
 
   public static void addTestSdkRoot(@NotNull SdkModificator sdkModificator, @NotNull String path) {
