@@ -6,10 +6,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.copyOf
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer
-import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
-import org.jetbrains.kotlin.idea.workspaceModel.toCompilerSettingsData
-import org.jetbrains.kotlin.idea.workspaceModel.toCompilerSettings
+import org.jetbrains.kotlin.idea.workspaceModel.*
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -25,7 +22,11 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             myUseProjectSettings = value
         }
 
-    override var version: Int = KotlinFacetSettings.CURRENT_VERSION
+    override var version: Int
+        get() = entity.version
+        set(value) {
+            entity.version = value
+        }
 
     override fun updateMergedArguments() {
         // Do nothing
@@ -101,14 +102,10 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             _externalProjectId = value
         }
 
-    private var _externalSystemRunTasks: List<ExternalSystemRunTask> = emptyList()
     override var externalSystemRunTasks: List<ExternalSystemRunTask>
-        get() = _externalSystemRunTasks
+        get() = entity.externalSystemRunTasks.map { deserializeExternalSystemTestRunTask(it) }
         set(value) {
-            // This class is not stored in workspace model entity because it is needed only for MPP
-            // As far as there is no plans to migrate Gradle import on new workspace model in the nearest future, it will be absent in entity
-            // But serialization definitely needs to be implemented in process of migrating Gradle import
-            _externalSystemRunTasks = value
+            entity.externalSystemRunTasks = value.map { it.serializeExternalSystemTestRunTask() }.toMutableList()
         }
 
     private var _implementedModuleNames: List<String> = entity.implementedModuleNames

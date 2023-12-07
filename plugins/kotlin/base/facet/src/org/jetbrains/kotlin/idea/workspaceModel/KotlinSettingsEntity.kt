@@ -46,6 +46,9 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
     val compilerSettings: CompilerSettingsData
 
     val targetPlatform: String
+    val externalSystemRunTasks: List<String>
+    val version: Int
+    val flushNeeded: Boolean
 
     override val symbolicId: KotlinSettingsId
         get() = KotlinSettingsId(name, moduleId)
@@ -75,6 +78,9 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
         override var compilerArguments: String
         override var compilerSettings: CompilerSettingsData
         override var targetPlatform: String
+        override var externalSystemRunTasks: MutableList<String>
+        override var version: Int
+        override var flushNeeded: Boolean
     }
 
     companion object : EntityType<KotlinSettingsEntity, Builder>(ModuleSettingsBase) {
@@ -101,6 +107,9 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
             compilerArguments: String,
             compilerSettings: CompilerSettingsData,
             targetPlatform: String,
+            externalSystemRunTasks: List<String>,
+            version: Int,
+            flushNeeded: Boolean,
             entitySource: EntitySource,
             init: (Builder.() -> Unit)? = null
         ): KotlinSettingsEntity {
@@ -124,6 +133,9 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
             builder.compilerArguments = compilerArguments
             builder.compilerSettings = compilerSettings
             builder.targetPlatform = targetPlatform
+            builder.externalSystemRunTasks = externalSystemRunTasks.toMutableWorkspaceList()
+            builder.version = version
+            builder.flushNeeded = flushNeeded
             builder.entitySource = entitySource
             init?.invoke(builder)
             return builder

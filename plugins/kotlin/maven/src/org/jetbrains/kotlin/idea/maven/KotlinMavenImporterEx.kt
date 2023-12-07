@@ -68,7 +68,12 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             emptyList(),
             KotlinModuleKind.DEFAULT,
             "",
-            CompilerSettingsData("", "", "", true, "lib", true), "", module.entitySource
+            CompilerSettingsData("", "", "", true, "lib", true),
+            "",
+            emptyList(),
+            KotlinFacetSettings.CURRENT_VERSION,
+            false,
+            module.entitySource
         ) {
             this.module = module
         }

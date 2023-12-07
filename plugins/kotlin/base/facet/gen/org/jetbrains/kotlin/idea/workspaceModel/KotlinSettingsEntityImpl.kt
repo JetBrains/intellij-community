@@ -102,6 +102,12 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
     override val targetPlatform: String
         get() = dataSource.targetPlatform
 
+    override val externalSystemRunTasks: List<String>
+        get() = dataSource.externalSystemRunTasks
+
+    override val version: Int get() = dataSource.version
+    override val flushNeeded: Boolean get() = dataSource.flushNeeded
+
     override val entitySource: EntitySource
         get() = dataSource.entitySource
 
@@ -199,6 +205,9 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
             if (!getEntityData().isTargetPlatformInitialized()) {
                 error("Field KotlinSettingsEntity#targetPlatform should be initialized")
             }
+            if (!getEntityData().isExternalSystemRunTasksInitialized()) {
+                error("Field KotlinSettingsEntity#externalSystemRunTasks should be initialized")
+            }
         }
 
         override fun connectionIdList(): List<ConnectionId> {
@@ -234,6 +243,10 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
             if (collection_pureKotlinSourceFolders is MutableWorkspaceList<*>) {
                 collection_pureKotlinSourceFolders.cleanModificationUpdateAction()
             }
+            val collection_externalSystemRunTasks = getEntityData().externalSystemRunTasks
+            if (collection_externalSystemRunTasks is MutableWorkspaceList<*>) {
+                collection_externalSystemRunTasks.cleanModificationUpdateAction()
+            }
         }
 
         // Relabeling code, move information from dataSource to this builder
@@ -263,6 +276,10 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
             if (this.compilerArguments != dataSource.compilerArguments) this.compilerArguments = dataSource.compilerArguments
             if (this.compilerSettings != dataSource.compilerSettings) this.compilerSettings = dataSource.compilerSettings
             if (this.targetPlatform != dataSource.targetPlatform) this.targetPlatform = dataSource.targetPlatform
+            if (this.externalSystemRunTasks != dataSource.externalSystemRunTasks) this.externalSystemRunTasks =
+                dataSource.externalSystemRunTasks.toMutableList()
+            if (this.version != dataSource.version) this.version = dataSource.version
+            if (this.flushNeeded != dataSource.flushNeeded) this.flushNeeded = dataSource.flushNeeded
             updateChildToParentReferences(parents)
         }
 
@@ -561,6 +578,43 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
                 changedProperty.add("targetPlatform")
             }
 
+        private val externalSystemRunTasksUpdater: (value: List<String>) -> Unit = { value ->
+
+            changedProperty.add("externalSystemRunTasks")
+        }
+        override var externalSystemRunTasks: MutableList<String>
+            get() {
+                val collection_externalSystemRunTasks = getEntityData().externalSystemRunTasks
+                if (collection_externalSystemRunTasks !is MutableWorkspaceList) return collection_externalSystemRunTasks
+                if (diff == null || modifiable.get()) {
+                    collection_externalSystemRunTasks.setModificationUpdateAction(externalSystemRunTasksUpdater)
+                } else {
+                    collection_externalSystemRunTasks.cleanModificationUpdateAction()
+                }
+                return collection_externalSystemRunTasks
+            }
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).externalSystemRunTasks = value
+                externalSystemRunTasksUpdater.invoke(value)
+            }
+
+        override var version: Int
+            get() = getEntityData().version
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).version = value
+                changedProperty.add("version")
+            }
+
+        override var flushNeeded: Boolean
+            get() = getEntityData().flushNeeded
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).flushNeeded = value
+                changedProperty.add("flushNeeded")
+            }
+
         override fun getEntityClass(): Class<KotlinSettingsEntity> = KotlinSettingsEntity::class.java
     }
 }
@@ -585,6 +639,9 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     lateinit var compilerArguments: String
     lateinit var compilerSettings: CompilerSettingsData
     lateinit var targetPlatform: String
+    lateinit var externalSystemRunTasks: MutableList<String>
+    var version: Int = 0
+    var flushNeeded: Boolean = false
 
     internal fun isNameInitialized(): Boolean = ::name.isInitialized
     internal fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
@@ -605,6 +662,8 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     internal fun isCompilerArgumentsInitialized(): Boolean = ::compilerArguments.isInitialized
     internal fun isCompilerSettingsInitialized(): Boolean = ::compilerSettings.isInitialized
     internal fun isTargetPlatformInitialized(): Boolean = ::targetPlatform.isInitialized
+    internal fun isExternalSystemRunTasksInitialized(): Boolean = ::externalSystemRunTasks.isInitialized
+
 
     override fun getLinks(): Set<SymbolicEntityId<*>> {
         val result = HashSet<SymbolicEntityId<*>>()
@@ -622,6 +681,8 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         for (item in sourceSetNames) {
         }
         for (item in pureKotlinSourceFolders) {
+        }
+        for (item in externalSystemRunTasks) {
         }
         return result
     }
@@ -641,6 +702,8 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         for (item in sourceSetNames) {
         }
         for (item in pureKotlinSourceFolders) {
+        }
+        for (item in externalSystemRunTasks) {
         }
     }
 
@@ -664,6 +727,8 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         for (item in sourceSetNames) {
         }
         for (item in pureKotlinSourceFolders) {
+        }
+        for (item in externalSystemRunTasks) {
         }
         for (removed in mutablePreviousSet) {
             index.remove(this, removed)
@@ -717,6 +782,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         clonedEntity.additionalVisibleModuleNames = clonedEntity.additionalVisibleModuleNames.toMutableWorkspaceSet()
         clonedEntity.sourceSetNames = clonedEntity.sourceSetNames.toMutableWorkspaceList()
         clonedEntity.pureKotlinSourceFolders = clonedEntity.pureKotlinSourceFolders.toMutableWorkspaceList()
+        clonedEntity.externalSystemRunTasks = clonedEntity.externalSystemRunTasks.toMutableWorkspaceList()
         return clonedEntity
     }
 
@@ -755,6 +821,9 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
             compilerArguments,
             compilerSettings,
             targetPlatform,
+            externalSystemRunTasks,
+            version,
+            flushNeeded,
             entitySource
         ) {
             parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
@@ -793,6 +862,9 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         if (this.compilerArguments != other.compilerArguments) return false
         if (this.compilerSettings != other.compilerSettings) return false
         if (this.targetPlatform != other.targetPlatform) return false
+        if (this.externalSystemRunTasks != other.externalSystemRunTasks) return false
+        if (this.version != other.version) return false
+        if (this.flushNeeded != other.flushNeeded) return false
         return true
     }
 
@@ -821,6 +893,9 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         if (this.compilerArguments != other.compilerArguments) return false
         if (this.compilerSettings != other.compilerSettings) return false
         if (this.targetPlatform != other.targetPlatform) return false
+        if (this.externalSystemRunTasks != other.externalSystemRunTasks) return false
+        if (this.version != other.version) return false
+        if (this.flushNeeded != other.flushNeeded) return false
         return true
     }
 
@@ -845,6 +920,9 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         result = 31 * result + compilerArguments.hashCode()
         result = 31 * result + compilerSettings.hashCode()
         result = 31 * result + targetPlatform.hashCode()
+        result = 31 * result + externalSystemRunTasks.hashCode()
+        result = 31 * result + version.hashCode()
+        result = 31 * result + flushNeeded.hashCode()
         return result
     }
 
@@ -869,6 +947,9 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         result = 31 * result + compilerArguments.hashCode()
         result = 31 * result + compilerSettings.hashCode()
         result = 31 * result + targetPlatform.hashCode()
+        result = 31 * result + externalSystemRunTasks.hashCode()
+        result = 31 * result + version.hashCode()
+        result = 31 * result + flushNeeded.hashCode()
         return result
     }
 }

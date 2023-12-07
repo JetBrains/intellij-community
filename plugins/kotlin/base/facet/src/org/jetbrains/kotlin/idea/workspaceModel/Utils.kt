@@ -2,9 +2,8 @@
 package org.jetbrains.kotlin.idea.workspaceModel
 
 import org.jetbrains.kotlin.cli.common.arguments.Freezable
-import org.jetbrains.kotlin.config.CompilerSettings
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_OUTPUT_DIRECTORY
-import org.jetbrains.kotlin.config.copyCompilerSettings
 
 class ObservableCompilerSettings(val updateEntity: (CompilerSettings) -> Unit) : CompilerSettings() {
     override var additionalArguments: String = DEFAULT_ADDITIONAL_ARGUMENTS
@@ -60,3 +59,26 @@ fun CompilerSettings?.toCompilerSettingsData(): CompilerSettingsData =
         this?.outputDirectoryForJsLibraryFiles ?: "lib",
         true
     )
+
+fun ExternalSystemRunTask.serializeExternalSystemTestRunTask(): String {
+    return when(this) {
+        is ExternalSystemTestRunTask -> "ExternalSystemTestRunTask" + this.toStringRepresentation()
+        is ExternalSystemNativeMainRunTask -> "ExternalSystemNativeMainRunTask" + this.toStringRepresentation()
+        else -> error("Unsupported task type: ${this::class.java.simpleName}.")
+    }
+}
+
+fun deserializeExternalSystemTestRunTask(deserializedTask: String): ExternalSystemRunTask {
+    return when {
+        deserializedTask.startsWith("ExternalSystemTestRunTask") ->
+            deserializedTask.removePrefix("ExternalSystemTestRunTask").let {
+                ExternalSystemTestRunTask.fromStringRepresentation(it)
+            }
+        deserializedTask.startsWith("ExternalSystemNativeMainRunTask") ->
+            deserializedTask.removePrefix("ExternalSystemNativeMainRunTask").let {
+                ExternalSystemNativeMainRunTask.fromStringRepresentation(it)
+            }
+
+        else -> error("Unsupported task type in provided string.")
+    } ?: error("Task deserialization failed. Check that class type is present in `deserializeExternalSystemTestRunTask`")
+}

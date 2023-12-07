@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.platform.IdePlatformKind
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import java.io.*
 import java.util.*
 
@@ -53,6 +55,9 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             "",
             CompilerSettingsData("", "", "", true, "lib", false),
             "",
+            emptyList(),
+            KotlinFacetSettings.CURRENT_VERSION,
+            false,
             entitySource
         ) {
             module = moduleEntity
@@ -95,10 +100,16 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
                 true
             )
         }
+        kotlinSettingsEntity.externalSystemRunTasks =
+            kotlinFacetSettings.externalSystemRunTasks.map { it.serializeExternalSystemTestRunTask() }.toMutableList()
+        kotlinSettingsEntity.flushNeeded =
+            facetConfiguration.getAttributeValue("allPlatforms") != kotlinFacetSettings.targetPlatform?.serializeComponentPlatforms()
+        kotlinSettingsEntity.version = kotlinFacetSettings.version
     }
 
     override fun serialize(entity: KotlinSettingsEntity, rootElement: Element): Element {
         KotlinFacetSettings().apply {
+            version = entity.version
             useProjectSettings = entity.useProjectSettings
 
             compilerArguments =
@@ -108,10 +119,10 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             val isCompilerSettingsChanged =
                 CompilerSettings().let {
                     it.additionalArguments != compilerSettingsFromEntity.additionalArguments ||
-                    it.scriptTemplates != compilerSettingsFromEntity.scriptTemplates ||
-                    it.scriptTemplatesClasspath != compilerSettingsFromEntity.scriptTemplatesClasspath ||
-                    it.copyJsLibraryFiles != compilerSettingsFromEntity.copyJsLibraryFiles ||
-                    it.outputDirectoryForJsLibraryFiles != compilerSettingsFromEntity.outputDirectoryForJsLibraryFiles
+                            it.scriptTemplates != compilerSettingsFromEntity.scriptTemplates ||
+                            it.scriptTemplatesClasspath != compilerSettingsFromEntity.scriptTemplatesClasspath ||
+                            it.copyJsLibraryFiles != compilerSettingsFromEntity.copyJsLibraryFiles ||
+                            it.outputDirectoryForJsLibraryFiles != compilerSettingsFromEntity.outputDirectoryForJsLibraryFiles
                 }
             compilerSettings = if (isCompilerSettingsChanged) CompilerSettings().apply {
                 additionalArguments = compilerSettingsFromEntity.additionalArguments
@@ -132,6 +143,16 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             externalProjectId = entity.externalProjectId
             isHmppEnabled = entity.isHmppEnabled
             pureKotlinSourceFolders = entity.pureKotlinSourceFolders
+            externalSystemRunTasks = entity.externalSystemRunTasks.map { deserializeExternalSystemTestRunTask(it) }
+
+            val args = compilerArguments
+            val deserializedTargetPlatform =
+                entity.targetPlatform.takeIf { it.isNotEmpty() }.deserializeTargetPlatformByComponentPlatforms()
+            val singleSimplePlatform = deserializedTargetPlatform?.componentPlatforms?.singleOrNull()
+            if (singleSimplePlatform == JvmPlatforms.defaultJvmPlatform.singleOrNull() && args != null) {
+                targetPlatform = IdePlatformKind.platformByCompilerArguments(args)
+            }
+            targetPlatform = deserializedTargetPlatform
         }.serializeFacetSettings(rootElement)
 
         return rootElement

@@ -23,6 +23,7 @@ class KotlinFacetBridge(
         val moduleEntity = mutableStorage.resolve(existingFacetEntity.moduleId)!!
         val kotlinSettingsEntity = config.getEntity(moduleEntity)
         mutableStorage.modifyEntity(existingFacetEntity) {
+            if (kotlinSettingsEntity.flushNeeded) flushNeeded = false
             name = kotlinSettingsEntity.name
             sourceRoots = kotlinSettingsEntity.sourceRoots.toMutableList()
             configFileItems = kotlinSettingsEntity.configFileItems.toMutableList()

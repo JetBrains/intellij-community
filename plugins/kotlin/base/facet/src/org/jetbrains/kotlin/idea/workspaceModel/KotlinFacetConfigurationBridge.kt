@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetConfigurationBridge
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
+import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinModuleKind
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.serialization.KotlinFacetSettingsWorkspaceModel
@@ -48,6 +49,9 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
                                      compilerArguments = "",
                                      compilerSettings = CompilerSettingsData("", "", "", true, "lib", false),
                                      targetPlatform = "",
+                                     externalSystemRunTasks = emptyList(),
+                                     version = KotlinFacetSettings.CURRENT_VERSION,
+                                     flushNeeded = false,
                                      entitySource = object : EntitySource {}) as KotlinSettingsEntity.Builder
             )
 
@@ -72,6 +76,9 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
                 originKotlinSettingsEntity.compilerArguments,
                 originKotlinSettingsEntity.compilerSettings,
                 originKotlinSettingsEntity.targetPlatform,
+                originKotlinSettingsEntity.externalSystemRunTasks,
+                originKotlinSettingsEntity.version,
+                originKotlinSettingsEntity.flushNeeded,
                 originKotlinSettingsEntity.entitySource
             ) {
             } as KotlinSettingsEntity.Builder) {
@@ -116,6 +123,9 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
             kotlinSettingsEntity.compilerArguments,
             kotlinSettingsEntity.compilerSettings,
             kotlinSettingsEntity.targetPlatform,
+            kotlinSettingsEntity.externalSystemRunTasks,
+            kotlinSettingsEntity.version,
+            kotlinSettingsEntity.flushNeeded,
             kotlinSettingsEntity.entitySource,
         ) {
             module = moduleEntity
@@ -142,5 +152,8 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
         kotlinSettingsEntity.compilerArguments = diffEntity.compilerArguments
         kotlinSettingsEntity.compilerSettings = diffEntity.compilerSettings
         kotlinSettingsEntity.targetPlatform = diffEntity.targetPlatform
+        kotlinSettingsEntity.externalSystemRunTasks = diffEntity.externalSystemRunTasks.toMutableList()
+        kotlinSettingsEntity.version = diffEntity.version
+        kotlinSettingsEntity.flushNeeded = diffEntity.flushNeeded
     }
 }
