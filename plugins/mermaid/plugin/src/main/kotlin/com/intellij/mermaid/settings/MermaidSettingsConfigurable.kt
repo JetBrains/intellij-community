@@ -9,6 +9,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.util.application
+import com.intellij.util.messages.Topic
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 
 @Suppress("UnstableApiUsage")
@@ -35,8 +36,21 @@ class MermaidSettingsConfigurable : BoundSearchableConfigurable(
           .onApply {
             application.messageBus.syncPublisher(MarkdownExtensionsSettings.ChangeListener.TOPIC)
               .extensionsSettingsChanged(fromSettingsDialog = false)
+
+            application.messageBus.syncPublisher(ChangeListener.TOPIC)
+              .mermaidSettingsChanged()
           }
       }
+    }
+  }
+
+  fun interface ChangeListener {
+    fun mermaidSettingsChanged()
+
+    companion object {
+      @Topic.AppLevel
+      @JvmField
+      val TOPIC = Topic.create("MermaidSettingsChanged", ChangeListener::class.java)
     }
   }
 }

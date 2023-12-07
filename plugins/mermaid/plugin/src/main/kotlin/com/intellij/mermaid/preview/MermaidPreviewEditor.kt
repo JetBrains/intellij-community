@@ -3,6 +3,7 @@ package com.intellij.mermaid.preview
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.mermaid.MermaidPlugin
+import com.intellij.mermaid.settings.MermaidSettingsConfigurable
 import com.intellij.mermaid.util.childScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -65,6 +66,14 @@ internal class MermaidPreviewEditor(
             component.update(document.text)
           }
         }
+      }
+    })
+
+    connection.subscribe(MermaidSettingsConfigurable.ChangeListener.TOPIC, MermaidSettingsConfigurable.ChangeListener {
+      coroutineScope.launch(context = Dispatchers.Default) {
+        val component = component.diagramComponent()
+        component.load()
+        component.update(document.text)
       }
     })
   }
