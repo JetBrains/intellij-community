@@ -61,41 +61,6 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
   private var rootDetectionIndicator: ProgressIndicator? = null
 
-  private class MapInfo(var mapping: VcsDirectoryMapping, val type: Type) {
-    companion object {
-      val SEPARATOR: MapInfo = MapInfo(VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR) //NON-NLS
-      val COMPARATOR: Comparator<MapInfo> = Comparator { o1: MapInfo, o2: MapInfo ->
-        if (o1.type.isRegistered() && o2.type.isRegistered() ||
-            o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
-          return@Comparator Comparing.compare(o1.mapping.directory, o2.mapping.directory)
-        }
-        o1.type.compareTo(o2.type)
-      }
-
-      fun unregistered(mapping: VcsDirectoryMapping): MapInfo {
-        return MapInfo(mapping, Type.UNREGISTERED)
-      }
-
-      fun registered(mapping: VcsDirectoryMapping, valid: Boolean): MapInfo {
-        return MapInfo(mapping, if (valid) Type.NORMAL else Type.INVALID)
-      }
-    }
-
-    enum class Type {
-      NORMAL,
-      INVALID,
-      SEPARATOR,
-      UNREGISTERED;
-
-      fun isRegistered(): Boolean = this == NORMAL || this == INVALID
-    }
-
-    override fun toString(): String {
-      if (type == Type.SEPARATOR) return ""
-      return mapping.toString()
-    }
-  }
-
   private class MyDirectoryRenderer(private val project: Project) : ColoredTableCellRenderer() {
     override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
       if (value is MapInfo) {
@@ -112,50 +77,6 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
         val presentablePath = getPresentablePath(project, value.mapping)
         SpeedSearchUtil.appendFragmentsForSpeedSearch(table, presentablePath, textAttributes, selected, this)
-      }
-    }
-
-    companion object {
-      fun getPresentablePath(project: Project, mapping: VcsDirectoryMapping): @NlsSafe String {
-        if (mapping.isDefaultMapping) {
-          return VcsDirectoryMapping.PROJECT_CONSTANT.get()
-        }
-
-        val directory = mapping.directory
-
-        val baseDir = project.baseDir
-        if (baseDir == null) {
-          return File(directory).path
-        }
-
-        val directoryFile = File(UriUtil.trimTrailingSlashes(directory).removeSuffix("\\") + "/")
-        val ioBase = File(baseDir.path)
-        if (directoryFile.isAbsolute && !FileUtil.isAncestor(ioBase, directoryFile, false)) {
-          return File(directory).path
-        }
-
-        val relativePath = FileUtil.getRelativePath(ioBase, directoryFile)
-        if ("." == relativePath || relativePath == null) {
-          return ioBase.path
-        }
-        else {
-          return "$relativePath ($ioBase)"
-        }
-      }
-
-      internal fun getAttributes(info: MapInfo): SimpleTextAttributes {
-        if (info == MapInfo.SEPARATOR) {
-          return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_SMALLER, null)
-        }
-        else if (info.type == MapInfo.Type.INVALID) {
-          return SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED)
-        }
-        else if (info.type == MapInfo.Type.UNREGISTERED) {
-          return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY)
-        }
-        else {
-          return SimpleTextAttributes.REGULAR_ATTRIBUTES
-        }
       }
     }
   }
@@ -187,7 +108,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
         val vcs = allSupportedVcss.find { vcsName == it.name }
         text = vcs?.displayName ?: VcsBundle.message("unknown.vcs.presentation", vcsName)
       }
-      append(text, MyDirectoryRenderer.getAttributes(info))
+      append(text, getAttributes(info))
     }
   }
 
@@ -196,7 +117,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     mappingTable.setShowGrid(false)
     mappingTable.intercellSpacing = JBUI.emptySize()
     TableSpeedSearch.installOn(mappingTable) { info: Any? ->
-      if (info is MapInfo) MyDirectoryRenderer.getPresentablePath(project, info.mapping) else ""
+      if (info is MapInfo) getPresentablePath(project, info.mapping) else ""
     }
 
     scopeFilterConfigurable = VcsUpdateInfoScopeFilterConfigurable(project, vcsConfiguration)
@@ -550,5 +471,82 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
       comboBox.renderer = SimpleListCellRenderer.create(VcsBundle.message("none.vcs.presentation")) { obj: AbstractVcs -> obj.displayName }
       return comboBox
     }
+  }
+}
+
+private fun getPresentablePath(project: Project, mapping: VcsDirectoryMapping): @NlsSafe String {
+  if (mapping.isDefaultMapping) {
+    return VcsDirectoryMapping.PROJECT_CONSTANT.get()
+  }
+
+  val directory = mapping.directory
+
+  val baseDir = project.baseDir
+  if (baseDir == null) {
+    return File(directory).path
+  }
+
+  val directoryFile = File(UriUtil.trimTrailingSlashes(directory).removeSuffix("\\") + "/")
+  val ioBase = File(baseDir.path)
+  if (directoryFile.isAbsolute && !FileUtil.isAncestor(ioBase, directoryFile, false)) {
+    return File(directory).path
+  }
+
+  val relativePath = FileUtil.getRelativePath(ioBase, directoryFile)
+  if ("." == relativePath || relativePath == null) {
+    return ioBase.path
+  }
+  else {
+    return "$relativePath ($ioBase)"
+  }
+}
+
+private fun getAttributes(info: MapInfo): SimpleTextAttributes {
+  if (info == MapInfo.SEPARATOR) {
+    return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_SMALLER, null)
+  }
+  else if (info.type == MapInfo.Type.INVALID) {
+    return SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED)
+  }
+  else if (info.type == MapInfo.Type.UNREGISTERED) {
+    return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY)
+  }
+  else {
+    return SimpleTextAttributes.REGULAR_ATTRIBUTES
+  }
+}
+
+private class MapInfo(var mapping: VcsDirectoryMapping, val type: Type) {
+  companion object {
+    val SEPARATOR: MapInfo = MapInfo(VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR) //NON-NLS
+    val COMPARATOR: Comparator<MapInfo> = Comparator { o1: MapInfo, o2: MapInfo ->
+      if (o1.type.isRegistered() && o2.type.isRegistered() ||
+          o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
+        return@Comparator Comparing.compare(o1.mapping.directory, o2.mapping.directory)
+      }
+      o1.type.compareTo(o2.type)
+    }
+
+    fun unregistered(mapping: VcsDirectoryMapping): MapInfo {
+      return MapInfo(mapping, Type.UNREGISTERED)
+    }
+
+    fun registered(mapping: VcsDirectoryMapping, valid: Boolean): MapInfo {
+      return MapInfo(mapping, if (valid) Type.NORMAL else Type.INVALID)
+    }
+  }
+
+  enum class Type {
+    NORMAL,
+    INVALID,
+    SEPARATOR,
+    UNREGISTERED;
+
+    fun isRegistered(): Boolean = this == NORMAL || this == INVALID
+  }
+
+  override fun toString(): String {
+    if (type == Type.SEPARATOR) return ""
+    return mapping.toString()
   }
 }
