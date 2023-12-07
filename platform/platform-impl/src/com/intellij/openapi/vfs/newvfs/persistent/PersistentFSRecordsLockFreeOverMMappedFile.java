@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.serviceContainer.AlreadyDisposedException;
@@ -27,7 +28,9 @@ import static java.nio.ByteOrder.nativeOrder;
  * Implementation uses memory-mapped file (real one, not our emulation of it via {@link com.intellij.util.io.FilePageCache}).
  */
 @ApiStatus.Internal
-public final class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
+public final class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSRecordsStorage,
+                                                                         IPersistentFSRecordsStorage,
+                                                                         Unmappable {
 
   /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
   /**
@@ -610,6 +613,12 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     force();
     storage.close();
     headerPage = null;
+  }
+
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    close();
+    storage.closeAndUnsafelyUnmap();
   }
 
   /** Close the storage and remove all its data files */
