@@ -32,8 +32,8 @@ interface SingularCollectionClassNames {
   String JAVA_UTIL_LIST = CommonClassNames.JAVA_UTIL_LIST;
 
   String JAVA_UTIL_MAP = CommonClassNames.JAVA_UTIL_MAP;
-  String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
-  String JAVA_UTIL_NAVIGABLE_MAP = "java.util.NavigableMap";
+  String JAVA_UTIL_SORTED_MAP = CommonClassNames.JAVA_UTIL_SORTED_MAP;
+  String JAVA_UTIL_NAVIGABLE_MAP = CommonClassNames.JAVA_UTIL_NAVIGABLE_MAP;
   String[] JAVA_MAPS = new String[]{
     JAVA_UTIL_MAP,
     JAVA_UTIL_SORTED_MAP,
@@ -42,7 +42,7 @@ interface SingularCollectionClassNames {
 
   String JAVA_UTIL_SET = CommonClassNames.JAVA_UTIL_SET;
   String JAVA_UTIL_SORTED_SET = CommonClassNames.JAVA_UTIL_SORTED_SET;
-  String JAVA_UTIL_NAVIGABLE_SET = "java.util.NavigableSet";
+  String JAVA_UTIL_NAVIGABLE_SET = CommonClassNames.JAVA_UTIL_NAVIGABLE_SET;
   String[] JAVA_SETS = new String[]{
     JAVA_UTIL_SET,
     JAVA_UTIL_SORTED_SET,
