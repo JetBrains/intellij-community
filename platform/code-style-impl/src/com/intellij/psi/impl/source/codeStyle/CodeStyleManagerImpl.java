@@ -533,19 +533,20 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
               return CodeFormattingData.prepare(file, Collections.singletonList(file.getTextRange()));
             }
           )
-          .expireWhen(() -> myProject.isDisposed());
+          .expireWhen(() -> myProject.isDisposed())
+          .withDocumentsCommitted(myProject);
 
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           ensureDocumentCommitted(file);
           commandRunnable.run();
         }
         else if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          ensureDocumentCommitted(file);
           prepareDataAction.executeSynchronously();
           commandRunnable.run();
         }
         else {
           prepareDataAction
-            .withDocumentsCommitted(myProject)
             .finishOnUiThread(ModalityState.nonModal(), data -> commandRunnable.run())
             .submit(AppExecutorUtil.getAppExecutorService());
         }
