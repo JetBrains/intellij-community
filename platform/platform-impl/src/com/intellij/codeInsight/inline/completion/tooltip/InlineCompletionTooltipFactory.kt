@@ -14,23 +14,35 @@ import javax.swing.JComponent
 
 object InlineCompletionTooltipFactory {
   fun defaultProviderTooltip(
+    @Nls comment: String,
+    icon: Icon?,
+    actions: Array<AnAction>,
+  ): JComponent {
+    return panel {
+      row {
+        if (icon != null) {
+          icon(icon).gap(RightGap.SMALL)
+        }
+        comment(comment).gap(RightGap.SMALL)
+
+        val group = InlineCompletionPopupActionGroup(actions)
+
+        val moreActionsButton = object : ActionButton(group, group.templatePresentation.clone(), ActionPlaces.UNKNOWN, JBUI.emptySize()) {
+          override fun shallPaintDownArrow() = false
+          override fun isFocusable() = false
+          override fun getIcon() = AllIcons.Actions.More
+        }
+        cell(moreActionsButton)
+      }
+    }
+  }
+
+  fun defaultProviderTooltip(
     @Nls name: String,
     @Nls comment: String,
     icon: Icon,
     actions: Array<AnAction>,
-  ): JComponent = panel {
-    row {
-      icon(icon).gap(RightGap.SMALL)
-      comment("$name $comment").gap(RightGap.SMALL)
-
-      val group = InlineCompletionPopupActionGroup(actions)
-
-      val moreActionsButton = object : ActionButton(group, group.templatePresentation.clone(), ActionPlaces.UNKNOWN, JBUI.emptySize()) {
-        override fun shallPaintDownArrow() = false
-        override fun isFocusable() = false
-        override fun getIcon() = AllIcons.Actions.More
-      }
-      cell(moreActionsButton)
-    }
+  ): JComponent {
+    return defaultProviderTooltip("$name $comment", icon, actions)
   }
 }
