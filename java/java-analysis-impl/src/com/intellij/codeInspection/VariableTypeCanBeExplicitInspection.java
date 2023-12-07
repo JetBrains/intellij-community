@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
@@ -15,7 +16,7 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel10OrHigher(holder.getFile())) { //var won't be parsed as inferred type otherwise
+    if (!HighlightingFeature.LVTI.isAvailable(holder.getFile())) { //var won't be parsed as inferred type otherwise
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.intention.valvar.to;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +30,7 @@ public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction ext
 
   @Override
   public boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement context) {
-    if (PsiUtil.isLanguageLevel10OrHigher(context)) {
+    if (HighlightingFeature.LVTI.isAvailable(context)) {
       return false;
     }
     PsiElement[] declaredElements = context.getDeclaredElements();
