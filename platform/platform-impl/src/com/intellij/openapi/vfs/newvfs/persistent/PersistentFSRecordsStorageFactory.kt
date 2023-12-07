@@ -17,6 +17,10 @@ object PersistentFSRecordsStorageFactory {
    * But there are cases where it fails: e.g. with mmapped storages on Win, there file once mapped is hard
    * to remove (and [PersistentFSConnector] relies on ability to just remove legacy storages files).
    * In such cases, this option could help get rid of the legacy file early, before it is mapped
+   * MAYBE RC: we probably outgrow that issues:
+   *           a) it's been 2 releases since we moved to memory-mapped for fs-records, i.e. everybody who could have this
+   *           problem -- already has fixed it
+   *           b) i've done a lot for memory-mapped files to work properly on Windows also
    */
   @JvmStatic
   private val FAIL_EARLY_IF_LEGACY_STORAGE_DETECTED: Boolean = getBooleanProperty("vfs.fail-early-if-legacy-storage-detected", false)
@@ -24,10 +28,12 @@ object PersistentFSRecordsStorageFactory {
   private val PERSISTENT_FS_STORAGE_CONTEXT_RW = StorageLockContext(true, true, true)
 
   enum class RecordsStorageKind {
-    REGULAR,
-    IN_MEMORY,
+    /** Currently the default impl */
+    OVER_MMAPPED_FILE,
+    /** Fallback impl for [OVER_MMAPPED_FILE] if something goes terribly wrong, and we can't fix it quickly */
     OVER_LOCK_FREE_FILE_CACHE,
-    OVER_MMAPPED_FILE
+    /** For testing/benchmarking: serves as a reference point. Not a prod-level implementation! */
+    IN_MEMORY
   }
 
   private var RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(
@@ -48,7 +54,7 @@ object PersistentFSRecordsStorageFactory {
   @JvmStatic
   @JvmName("resetRecordsStorageImplementation")
   fun resetRecordsStorageImplementation() {
-    RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage.impl", RecordsStorageKind.REGULAR.name))
+    RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage.impl", RecordsStorageKind.OVER_MMAPPED_FILE.name))
   }
 
 
@@ -58,8 +64,7 @@ object PersistentFSRecordsStorageFactory {
     FSRecords.LOG.trace("using $RECORDS_STORAGE_KIND storage for VFS records")
 
     return when (RECORDS_STORAGE_KIND) {
-      RecordsStorageKind.REGULAR -> PersistentFSSynchronizedRecordsStorage(openRMappedFile(file, PersistentFSSynchronizedRecordsStorage.RECORD_SIZE))
-      RecordsStorageKind.IN_MEMORY -> PersistentInMemoryFSRecordsStorage(file,  /*max size: */1 shl 24)
+      RecordsStorageKind.IN_MEMORY -> @Suppress("TestOnlyProblems") PersistentInMemoryFSRecordsStorage(file,  /*max size: */1 shl 24)
       RecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file)
       RecordsStorageKind.OVER_MMAPPED_FILE -> {
         //TODO RC: this should be replaced with/encapsulated into StorageFactory<PersistentFSStorage>
@@ -84,7 +89,7 @@ object PersistentFSRecordsStorageFactory {
   @Throws(IOException::class)
   fun openRMappedFile(file: Path,
                       recordLength: Int): ResizeableMappedFile {
-    val pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE
+    val pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE * recordLength / PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES
 
     val aligned = pageSize % recordLength == 0
     if (!aligned) {

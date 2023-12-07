@@ -197,8 +197,8 @@ public class VFSInitializationTest {
     //skip IN_MEMORY impl, since it is not really persistent
     //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_PAGE_CACHE_ENABLED (fails otherwise)
     List<RecordsStorageKind> allStorageKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
-                                               List.of(REGULAR, OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
-                                               List.of(REGULAR, OVER_MMAPPED_FILE);
+                                               List.of(OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
+                                               List.of(OVER_MMAPPED_FILE);
 
     List<String> filesNotLeadingToVFSRebuild = new ArrayList<>();
     for (RecordsStorageKind storageKind : allStorageKinds) {
@@ -271,8 +271,8 @@ public class VFSInitializationTest {
     //skip IN_MEMORY impl, since it is not really persistent
     //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_PAGE_CACHE_ENABLED (will fail)
     final List<RecordsStorageKind> allKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
-                                              List.of(REGULAR, OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
-                                              List.of(REGULAR, OVER_MMAPPED_FILE);
+                                              List.of(OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
+                                              List.of(OVER_MMAPPED_FILE);
 
     //check all combinations (from->to) of implementations:
     for (RecordsStorageKind kindBefore : allKinds) {
@@ -429,12 +429,7 @@ public class VFSInitializationTest {
                                     final int nRecords) throws IOException {
     final PersistentFSRecordsStorage records = connection.getRecords();
     for (int i = 0; i < nRecords; i++) {
-      //Why .cleanRecord(): because PersistentFSSynchronizedRecordsStorage does not persist allocated
-      // record if allocated record fields weren't modified. This is, generally, against
-      // PersistentFSRecordsStorage contract, but (it seems) no use-sites are affected, and I
-      // decided to not fix it, since it could affect performance for legacy implementation -- for nothing.
-      //
-      records.cleanRecord(records.allocateRecord());
+      records.allocateRecord();
     }
     connection.markDirty();
   }
