@@ -58,7 +58,7 @@
                        id="terminal" order="first"/>
     <completion.contributor language="any"
                             id="terminalCommandSpec"
-                            implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCommandSpecCompletionContributor"
+                            implementationClass="org.jetbrains.plugins.terminal.exp.completion.TerminalCommandSpecCompletionContributor"
                             order="first, before shShebang, before liveTemplates"/>
     <weigher key="completion"
              id="terminalCommandSpec"

@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.exp
+package org.jetbrains.plugins.terminal.exp.completion
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
@@ -14,9 +14,7 @@ import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFilePath
 import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFolder
 import com.intellij.terminal.completion.ShellArgumentSuggestion
 import org.jetbrains.plugins.terminal.TerminalIcons
-import org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager
-import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
-import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
+import org.jetbrains.plugins.terminal.exp.TerminalSession
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellArgument
 import org.jetbrains.terminal.completion.ShellCommand
