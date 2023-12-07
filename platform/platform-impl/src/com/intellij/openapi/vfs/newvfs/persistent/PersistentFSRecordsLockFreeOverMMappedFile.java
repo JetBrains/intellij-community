@@ -496,9 +496,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     checkRecordIdIsValid(recordId);
 
     //fill record with zeroes, by 4 bytes at once:
-    assert RecordLayout.RECORD_SIZE_IN_BYTES % Integer.BYTES == 0 : "RECORD_SIZE_IN_BYTES(=" +
-                                                                    RecordLayout.RECORD_SIZE_IN_BYTES +
-                                                                    ") is expected to be 32-aligned";
+    assert RecordLayout.RECORD_SIZE_IN_BYTES % Integer.BYTES == 0
+      : "RECORD_SIZE_IN_BYTES(=" + RecordLayout.RECORD_SIZE_IN_BYTES + ") is expected to be 32-aligned";
+
     final int recordSizeInInts = RecordLayout.RECORD_SIZE_IN_BYTES / Integer.BYTES;
 
     final long recordOffsetInFile = recordOffsetInFile(recordId);
