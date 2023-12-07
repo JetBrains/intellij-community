@@ -288,7 +288,7 @@ public final class UndoManagerImpl extends UndoManager {
 
   private void addDocumentAsAffected(@NotNull DocumentReference documentReference) {
     ClientState state = getClientState();
-    if (state == null || state.myCurrentMerger.hasChangesOf(documentReference, true)) {
+    if (state == null || state.myCurrentMerger == null || state.myCurrentMerger.hasChangesOf(documentReference, true)) {
       return;
     }
 
