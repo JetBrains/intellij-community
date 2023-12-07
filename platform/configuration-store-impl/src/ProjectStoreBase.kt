@@ -5,25 +5,25 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
-import com.intellij.openapi.project.doGetProjectFileName
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectNameProvider
+import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 @NonNls internal const val PROJECT_FILE = "\$PROJECT_FILE$"
 @NonNls internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
@@ -164,13 +164,9 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     }
 
     val presentableUrl = if (dotIdea == null) file else projectBasePath
-    val cacheFileName = doGetProjectFileName(
-      presentableUrl = presentableUrl.systemIndependentPath,
-      name = (presentableUrl.fileName ?: "").toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION),
-      hashSeparator = ".",
-      extensionWithDot = ".xml",
-    )
-    macros.add(Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve(cacheFileName)))
+
+    val cacheFileName = getProjectCacheFileName(presentableUrl = presentableUrl.invariantSeparatorsPathString, projectName = "")
+    macros.add(Macro(StoragePathMacros.CACHE_FILE, projectsDataDir.resolve(cacheFileName).resolve("cache-state.xml")))
 
     storageManager.setMacros(macros)
 

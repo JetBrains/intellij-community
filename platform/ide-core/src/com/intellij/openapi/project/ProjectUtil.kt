@@ -191,12 +191,13 @@ fun getProjectCacheFileName(projectPath: Path): String {
                                  extensionWithDot = "")
 }
 
-private fun getProjectCacheFileName(presentableUrl: String?,
-                                    projectName: String,
-                                    isForceNameUse: Boolean,
-                                    hashSeparator: String,
-                                    extensionWithDot: String): String {
-  val name = when {
+@Internal
+fun getProjectCacheFileName(presentableUrl: String?,
+                            projectName: String,
+                            isForceNameUse: Boolean = false,
+                            hashSeparator: String = ".",
+                            extensionWithDot: String = ""): String {
+  var name = when {
     isForceNameUse || presentableUrl == null -> projectName
     else -> {
       // the lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was,
@@ -204,21 +205,12 @@ private fun getProjectCacheFileName(presentableUrl: String?,
       PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
   }
-  return doGetProjectFileName(presentableUrl = presentableUrl,
-                              name = sanitizeFileName(name, truncateIfNeeded = false),
-                              hashSeparator = hashSeparator,
-                              extensionWithDot = extensionWithDot)
-}
-
-@Internal
-fun doGetProjectFileName(presentableUrl: String?,
-                         name: String,
-                         hashSeparator: String,
-                         extensionWithDot: String): String {
+  name = sanitizeFileName(name, truncateIfNeeded = false)
   // do not use project.locationHash to avoid prefix for IPR projects (not required in our case because name in any case is prepended)
   val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())
   // trim name to avoid "File name too long"
-  return "${name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)}$hashSeparator$locationHash$extensionWithDot"
+  return name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false) +
+         "$hashSeparator$locationHash$extensionWithDot"
 }
 
 /**
