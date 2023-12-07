@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -26,6 +25,7 @@ import com.intellij.ui.table.TableView
 import com.intellij.util.UriUtil
 import com.intellij.util.ui.*
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.GridBagConstraints
@@ -63,20 +63,21 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
   private class MyDirectoryRenderer(private val project: Project) : ColoredTableCellRenderer() {
     override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-      if (value is MapInfo) {
-        val textAttributes = getAttributes(value)
+      value as MapInfo
+      val textAttributes = getAttributes(value)
 
-        if (!selected && (value == MapInfo.SEPARATOR || value.type == MapInfo.Type.UNREGISTERED)) {
-          background = UIUtil.getDecoratedRowColor()
+      if (!selected && value.isUnregistered()) {
+        background = UIUtil.getDecoratedRowColor()
+      }
+
+      when (value) {
+        is MapInfo.MappingInfo -> {
+          val presentablePath = getPresentablePath(project, value.mapping)
+          SpeedSearchUtil.appendFragmentsForSpeedSearch(table, presentablePath, textAttributes, selected, this)
         }
-
-        if (value == MapInfo.SEPARATOR) {
-          append(VcsBundle.message("unregistered.roots.label"), textAttributes)
-          return
+        is MapInfo.Header -> {
+          append(value.label, textAttributes)
         }
-
-        val presentablePath = getPresentablePath(project, value.mapping)
-        SpeedSearchUtil.appendFragmentsForSpeedSearch(table, presentablePath, textAttributes, selected, this)
       }
     }
   }
@@ -88,27 +89,22 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
                                        hasFocus: Boolean,
                                        row: Int,
                                        column: Int) {
-      if (info == MapInfo.SEPARATOR) {
-        if (!selected) {
-          background = UIUtil.getDecoratedRowColor()
-        }
-        return
-      }
+      val textAttributes = getAttributes(info)
 
-      if (info.type == MapInfo.Type.UNREGISTERED && !selected) {
+      if (!selected && info.isUnregistered()) {
         background = UIUtil.getDecoratedRowColor()
       }
 
-      val vcsName = info.mapping.vcs
-      val text: String
-      if (vcsName.isEmpty()) {
-        text = VcsBundle.message("none.vcs.presentation")
+      if (info is MapInfo.MappingInfo) {
+        val vcsName = info.mapping.vcs
+        if (vcsName.isEmpty()) {
+          append(VcsBundle.message("none.vcs.presentation"), textAttributes)
+        }
+        else {
+          val vcs = allSupportedVcss.find { vcsName == it.name }
+          append(vcs?.displayName ?: VcsBundle.message("unknown.vcs.presentation", vcsName), textAttributes)
+        }
       }
-      else {
-        val vcs = allSupportedVcss.find { vcsName == it.name }
-        text = vcs?.displayName ?: VcsBundle.message("unknown.vcs.presentation", vcsName)
-      }
-      append(text, getAttributes(info))
     }
   }
 
@@ -117,7 +113,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     mappingTable.setShowGrid(false)
     mappingTable.intercellSpacing = JBUI.emptySize()
     TableSpeedSearch.installOn(mappingTable) { info: Any? ->
-      if (info is MapInfo) getPresentablePath(project, info.mapping) else ""
+      if (info is MapInfo.MappingInfo) getPresentablePath(project, info.mapping) else ""
     }
 
     scopeFilterConfigurable = VcsUpdateInfoScopeFilterConfigurable(project, vcsConfiguration)
@@ -181,9 +177,9 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
           if (indicator.isCanceled) return@Runnable
           tableLoadingPanel.stopLoading()
           if (!unregisteredRoots.isEmpty()) {
-            mappingTableModel.addRow(MapInfo.SEPARATOR)
+            mappingTableModel.addRow(MapInfo.UnregisteredHeader)
             for (mapping in unregisteredRoots) {
-              mappingTableModel.addRow(MapInfo.unregistered(mapping))
+              mappingTableModel.addRow(MapInfo.UnregisteredMapping(mapping))
             }
           }
         }
@@ -208,12 +204,12 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     val items: MutableList<MapInfo> = mappingTableModel.items.toMutableList()
     items.add(MapInfo.registered(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings),
                                  isMappingValid(mapping)))
-    items.sortWith(MapInfo.COMPARATOR)
+    items.sortWith(MAP_INFO_COMPARATOR)
     mappingTableModel.setItems(items)
   }
 
 
-  private fun addSelectedUnregisteredMappings(infos: List<MapInfo>) {
+  private fun addSelectedUnregisteredMappings(infos: List<MapInfo.UnregisteredMapping>) {
     val items: MutableList<MapInfo> = mappingTableModel.items.toMutableList()
     for (info in infos) {
       items.remove(info)
@@ -224,40 +220,26 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   }
 
   private fun sortAndAddSeparatorIfNeeded(items: MutableList<MapInfo>) {
-    var hasUnregistered = false
-    var hasSeparator = false
-    for (item in items) {
-      if (item.type == MapInfo.Type.UNREGISTERED) {
-        hasUnregistered = true
-      }
-      else if (item.type == MapInfo.Type.SEPARATOR) {
-        hasSeparator = true
-      }
+    items.removeIf { it is MapInfo.Header }
+    if (items.any { it is MapInfo.UnregisteredMapping }) {
+      items.add(MapInfo.UnregisteredHeader)
     }
-    if (!hasUnregistered && hasSeparator) {
-      items.remove(MapInfo.SEPARATOR)
-    }
-    else if (hasUnregistered && !hasSeparator) {
-      items.add(MapInfo.SEPARATOR)
-    }
-    items.sortWith(MapInfo.COMPARATOR)
+    items.sortWith(MAP_INFO_COMPARATOR)
   }
 
   private fun editMapping() {
-    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.remove.title"))
     val row = mappingTable.selectedRow
-    val mapping = mappingTable.getRow(row).mapping
-    dlg.mapping = mapping
-    if (dlg.showAndGet()) {
-      setMapping(row, dlg.mapping)
-    }
-  }
+    val info = mappingTable.getRow(row) as? MapInfo.RegisteredMappingInfo ?: return
 
-  private fun setMapping(row: Int, mapping: VcsDirectoryMapping) {
-    val items: MutableList<MapInfo> = mappingTableModel.items.toMutableList()
-    items[row] = MapInfo.registered(mapping, isMappingValid(mapping))
-    items.sortWith(MapInfo.COMPARATOR)
-    mappingTableModel.setItems(items)
+    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.remove.title"))
+    dlg.mapping = info.mapping
+    if (dlg.showAndGet()) {
+      val newMapping = dlg.mapping
+      val items = mappingTableModel.items.toMutableList()
+      items[row] = MapInfo.registered(newMapping, isMappingValid(newMapping))
+      items.sortWith(MAP_INFO_COMPARATOR)
+      mappingTableModel.setItems(items)
+    }
   }
 
   private fun removeMapping() {
@@ -266,8 +248,8 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     val selection = mappingTable.selection
     mappings.removeAll(selection.toSet())
 
-    val removedValidRoots: Collection<MapInfo> = selection.mapNotNull { info ->
-      if (info.type == MapInfo.Type.NORMAL && vcsRootCheckers[info.mapping.vcs] != null) MapInfo.unregistered(info.mapping) else null
+    val removedValidRoots = selection.mapNotNull { info ->
+      if (info is MapInfo.ValidMapping && vcsRootCheckers[info.mapping.vcs] != null) MapInfo.UnregisteredMapping(info.mapping) else null
     }
     mappings.addAll(removedValidRoots)
     sortAndAddSeparatorIfNeeded(mappings)
@@ -331,8 +313,8 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     return panelForTable
   }
 
-  private fun getSelectedUnregisteredRoots(): List<MapInfo> {
-    return mappingTable.selection.filter { info -> info.type == MapInfo.Type.UNREGISTERED }
+  private fun getSelectedUnregisteredRoots(): List<MapInfo.UnregisteredMapping> {
+    return mappingTable.selection.filterIsInstance<MapInfo.UnregisteredMapping>()
   }
 
   private fun rootsOfOneKindInSelection(): Boolean {
@@ -340,16 +322,16 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     if (selection.isEmpty()) {
       return true
     }
-    if (selection.size == 1 && selection.iterator().next().type == MapInfo.Type.SEPARATOR) {
+    if (selection.size == 1 && selection.iterator().next() is MapInfo.Header) {
       return true
     }
     val selectedRegisteredRoots = getSelectedRegisteredRoots()
     return selectedRegisteredRoots.size == selection.size || selectedRegisteredRoots.isEmpty()
   }
 
-  private fun getSelectedRegisteredRoots(): List<MapInfo> {
+  private fun getSelectedRegisteredRoots(): List<MapInfo.RegisteredMappingInfo> {
     val selection = mappingTable.selection
-    return selection.filter { info -> info.type == MapInfo.Type.NORMAL || info.type == MapInfo.Type.INVALID }
+    return selection.filterIsInstance<MapInfo.RegisteredMappingInfo>()
   }
 
   private fun onlyRegisteredRootsInSelection(): Boolean {
@@ -398,7 +380,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
   private fun getModelMappings(): List<VcsDirectoryMapping> {
     return mappingTableModel.items.mapNotNull { info ->
-      if (info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED) null else info.mapping
+      if (info is MapInfo.RegisteredMappingInfo) info.mapping else null
     }
   }
 
@@ -413,16 +395,19 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   }
 
   private inner class MyVcsColumnInfo : ColumnInfo<MapInfo, String>(VcsBundle.message("column.name.configure.vcses.vcs")) {
-    override fun valueOf(`object`: MapInfo): String {
-      return `object`.mapping.vcs
+    override fun valueOf(info: MapInfo): String {
+      return (info as? MapInfo.MappingInfo)?.mapping?.vcs.orEmpty()
     }
 
     override fun isCellEditable(info: MapInfo): Boolean {
-      return info != MapInfo.SEPARATOR && info.type != MapInfo.Type.UNREGISTERED
+      return info is MapInfo.RegisteredMappingInfo
     }
 
-    override fun setValue(o: MapInfo, aValue: String) {
-      o.mapping = VcsDirectoryMapping(o.mapping.directory, aValue, o.mapping.rootSettings)
+    override fun setValue(info: MapInfo, newVcs: String) {
+      if (info is MapInfo.RegisteredMappingInfo) {
+        val oldMapping = info.mapping
+        info.mapping = VcsDirectoryMapping(oldMapping.directory, newVcs, oldMapping.rootSettings)
+      }
     }
 
     override fun getRenderer(info: MapInfo): TableCellRenderer {
@@ -502,51 +487,53 @@ private fun getPresentablePath(project: Project, mapping: VcsDirectoryMapping): 
 }
 
 private fun getAttributes(info: MapInfo): SimpleTextAttributes {
-  if (info == MapInfo.SEPARATOR) {
-    return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_SMALLER, null)
-  }
-  else if (info.type == MapInfo.Type.INVALID) {
-    return SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED)
-  }
-  else if (info.type == MapInfo.Type.UNREGISTERED) {
-    return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY)
-  }
-  else {
-    return SimpleTextAttributes.REGULAR_ATTRIBUTES
+  when (info) {
+    is MapInfo.InvalidMapping -> {
+      return SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED)
+    }
+    is MapInfo.UnregisteredMapping -> {
+      return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY)
+    }
+    is MapInfo.Header -> {
+      return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_SMALLER, null)
+    }
+    is MapInfo.ValidMapping -> {
+      return SimpleTextAttributes.REGULAR_ATTRIBUTES
+    }
   }
 }
 
-private class MapInfo(var mapping: VcsDirectoryMapping, val type: Type) {
+private val MAP_INFO_COMPARATOR: Comparator<MapInfo> = compareBy<MapInfo> { info ->
+  when (info) {
+    is MapInfo.ValidMapping -> 0
+    is MapInfo.InvalidMapping -> 1
+    is MapInfo.UnregisteredHeader -> 2
+    is MapInfo.UnregisteredMapping -> 3
+  }
+}.thenBy { info -> (info as? MapInfo.MappingInfo)?.mapping?.directory }
+
+private sealed interface MapInfo {
+  sealed class MappingInfo : MapInfo {
+    abstract val mapping: VcsDirectoryMapping
+    override fun toString(): String = mapping.toString()
+  }
+
+  sealed class RegisteredMappingInfo(override var mapping: VcsDirectoryMapping) : MappingInfo()
+
+  sealed class Header(val label: @Nls String) : MapInfo {
+    override fun toString(): String = ""
+  }
+
+  class ValidMapping(mapping: VcsDirectoryMapping) : RegisteredMappingInfo(mapping)
+  class InvalidMapping(mapping: VcsDirectoryMapping) : RegisteredMappingInfo(mapping)
+  class UnregisteredMapping(override val mapping: VcsDirectoryMapping) : MappingInfo()
+  object UnregisteredHeader : Header(VcsBundle.message("unregistered.roots.label"))
+
+  fun isUnregistered() = this is UnregisteredHeader || this is UnregisteredMapping
+
   companion object {
-    val SEPARATOR: MapInfo = MapInfo(VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR) //NON-NLS
-    val COMPARATOR: Comparator<MapInfo> = Comparator { o1: MapInfo, o2: MapInfo ->
-      if (o1.type.isRegistered() && o2.type.isRegistered() ||
-          o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
-        return@Comparator Comparing.compare(o1.mapping.directory, o2.mapping.directory)
-      }
-      o1.type.compareTo(o2.type)
-    }
-
-    fun unregistered(mapping: VcsDirectoryMapping): MapInfo {
-      return MapInfo(mapping, Type.UNREGISTERED)
-    }
-
     fun registered(mapping: VcsDirectoryMapping, valid: Boolean): MapInfo {
-      return MapInfo(mapping, if (valid) Type.NORMAL else Type.INVALID)
+      return if (valid) ValidMapping(mapping) else InvalidMapping(mapping)
     }
-  }
-
-  enum class Type {
-    NORMAL,
-    INVALID,
-    SEPARATOR,
-    UNREGISTERED;
-
-    fun isRegistered(): Boolean = this == NORMAL || this == INVALID
-  }
-
-  override fun toString(): String {
-    if (type == Type.SEPARATOR) return ""
-    return mapping.toString()
   }
 }
