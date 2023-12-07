@@ -434,7 +434,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         return DataPack.EMPTY;
       });
     }
-
   }
 
   private static class RefreshRequest {

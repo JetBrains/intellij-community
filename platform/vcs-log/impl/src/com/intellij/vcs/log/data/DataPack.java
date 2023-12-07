@@ -114,8 +114,8 @@ public class DataPack extends DataPackBase {
 
   public static class SmallDataPack extends DataPack {
     private SmallDataPack(@NotNull RefsModel refsModel,
-                  @NotNull PermanentGraph<Integer> permanentGraph,
-                  @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+                          @NotNull PermanentGraph<Integer> permanentGraph,
+                          @NotNull Map<VirtualFile, VcsLogProvider> providers) {
       super(refsModel, permanentGraph, providers, false);
     }
 

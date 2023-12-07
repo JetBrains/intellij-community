@@ -29,9 +29,9 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
    * @return Total saved log with new commits properly attached to it + number of new commits attached to the log.
    */
   public @NotNull Pair<List<Commit>, Integer> addCommits(@NotNull List<? extends Commit> savedLog,
-                                                @NotNull Collection<? extends CommitId> previousRefs,
-                                                @NotNull List<? extends Commit> firstBlock,
-                                                @NotNull Collection<? extends CommitId> newRefs) {
+                                                         @NotNull Collection<? extends CommitId> previousRefs,
+                                                         @NotNull List<? extends Commit> firstBlock,
+                                                         @NotNull Collection<? extends CommitId> newRefs) {
     Pair<Integer, Set<Commit>> newCommitsAndSavedGreenIndex =
       getNewCommitsAndSavedGreenIndex(savedLog, previousRefs, firstBlock, newRefs);
     Pair<Integer, Set<CommitId>> redCommitsAndSavedRedIndex =

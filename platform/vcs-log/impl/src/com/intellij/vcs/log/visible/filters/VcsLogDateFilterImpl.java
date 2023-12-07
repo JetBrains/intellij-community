@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.Objects;
 
 /**
- * @see VcsLogFilterObject#fromDates 
+ * @see VcsLogFilterObject#fromDates
  */
 class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
   private final @Nullable Date myAfter;

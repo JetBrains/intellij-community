@@ -111,8 +111,8 @@ public final class VcsLogUtil {
   // collect absolutely all roots that might be visible
   // if filters unset returns just all roots
   public static @NotNull Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
-                                                    @Nullable VcsLogRootFilter rootFilter,
-                                                    @Nullable VcsLogStructureFilter structureFilter) {
+                                                             @Nullable VcsLogRootFilter rootFilter,
+                                                             @Nullable VcsLogStructureFilter structureFilter) {
     if (rootFilter == null && structureFilter == null) return new HashSet<>(roots);
 
     Collection<VirtualFile> fromRootFilter;
