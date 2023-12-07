@@ -4,6 +4,7 @@ package com.intellij.ide.util.scopeChooser
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.concurrency.await
 import java.util.concurrent.CopyOnWriteArrayList
@@ -14,7 +15,11 @@ class ScopeService(
   private val scope: CoroutineScope,
 ) {
 
-  fun createModel(options: Set<ScopeOption>): AbstractScopeModel = LegacyScopeModel(project, HashSet(options))
+  fun createModel(options: Set<ScopeOption>): AbstractScopeModel =
+    if (Registry.`is`("coroutine.scope.model", true))
+      CoroutineScopeModel(project, scope, options)
+    else
+      LegacyScopeModel(project, options)
 
 }
 
