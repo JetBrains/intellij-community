@@ -64,27 +64,11 @@ public final class LanguageLevelUtil {
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = new EnumMap<>(LanguageLevel.class);
 
   static {
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_4, "1.5");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_5, "1.6");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_6, "1.7");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_7, "1.8");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_8, "9");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_9, "10");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_10, "11");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_11, "12");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_12, "13");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_13, "14");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_14, "15");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_15, "16");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_16, "17");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_17, "18");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_18, "19");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_19, "20");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_20, "21");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_20_PREVIEW, "21");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_21, "22");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_21_PREVIEW, "22");
+    for (LanguageLevel level : LanguageLevel.values()) {
+      if (level.ordinal() > LanguageLevel.HIGHEST.ordinal()) break;
+      int feature = level.toJavaVersion().feature + 1;
+      ourPresentableShortMessage.put(level, feature >= 9 ? String.valueOf(feature) : "1." + feature);
+    }
   }
 
   @Nullable
