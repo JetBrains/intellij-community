@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorKind;
@@ -55,12 +54,11 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
       if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return;
 
       EventRateThrottleResult result = ourThrottle.tryPass(System.currentTimeMillis());
-      DataContext cachedContext = Utils.getCachedDataContext(dataContext);
-      Project project = CommonDataKeys.PROJECT.getData(cachedContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (result == EventRateThrottleResult.ACCEPT) {
         ArrayList<EventPair<?>> pairs = new ArrayList<>(3);
 
-        Editor editor = CommonDataKeys.EDITOR.getData(cachedContext);
+        Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
         if (editor != null) {
           try {
             pairs.add(EDITOR_KIND.with(editor.getEditorKind()));
@@ -69,12 +67,12 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
           }
         }
 
-        ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(cachedContext);
+        ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(dataContext);
         if (toolWindow != null) {
           pairs.add(TOOL_WINDOW.with(toolWindow.getId()));
         }
 
-        Language fileLanguage = DataContextUtils.getFileLanguage(cachedContext);
+        Language fileLanguage = DataContextUtils.getFileTypeLanguageByEditor(dataContext);
         if (fileLanguage != null) {
           pairs.add(EventFields.Language.with(fileLanguage));
         }

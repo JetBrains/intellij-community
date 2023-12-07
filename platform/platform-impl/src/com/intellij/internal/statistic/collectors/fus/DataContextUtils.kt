@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.vfs.VirtualFile
 
 object DataContextUtils {
   /**
@@ -22,10 +23,27 @@ object DataContextUtils {
    * Returns language by file type from [CommonDataKeys.VIRTUAL_FILE] or [PlatformCoreDataKeys.FILE_EDITOR]
    */
   @JvmStatic
-  private fun getFileTypeLanguage(dataContext: DataContext): Language? {
+  fun getFileTypeLanguage(dataContext: DataContext): Language? {
     val virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext)
                       ?: PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext)?.file ?: return null
-    val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.nameSequence)
+    return getLanguageByFileName(virtualFile)
+  }
+
+  /**
+   * Returns language by file type from [PlatformCoreDataKeys.FILE_EDITOR]
+   */
+  @JvmStatic
+  fun getFileTypeLanguageByEditor(dataContext: DataContext): Language? {
+    val virtualFile = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext)?.file ?: return null
+    return getLanguageByFileName(virtualFile)
+  }
+
+  /**
+   * Returns language of file type from file name
+   */
+  @JvmStatic
+  private fun getLanguageByFileName(file: VirtualFile): Language? {
+    val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(file.nameSequence)
     if (fileType is LanguageFileType) {
       return fileType.language
     }
