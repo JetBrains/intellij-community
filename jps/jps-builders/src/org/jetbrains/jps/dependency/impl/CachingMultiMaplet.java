@@ -3,15 +3,12 @@ package org.jetbrains.jps.dependency.impl;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.MultiMaplet;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 public class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
@@ -78,15 +75,11 @@ public class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void removeValues(K key, @NotNull Iterable<? extends V> values) {
     if (!Iterators.isEmpty(values)) {
-      Set<V> collection = Iterators.collect(myCache.get(key), new LinkedHashSet<>());
-      if (collection.removeAll(values instanceof Set? ((Set<? extends V>)values) : Iterators.collect(values, new SmartHashSet<>()))) {
-        if (collection.isEmpty()) {
-          remove(key);
-        }
-        else {
-          myDelegate.put(key, collection);
-          myCache.put(key, collection);
-        }
+      try {
+        myDelegate.removeValues(key, values);
+      }
+      finally {
+        myCache.invalidate(key);
       }
     }
   }

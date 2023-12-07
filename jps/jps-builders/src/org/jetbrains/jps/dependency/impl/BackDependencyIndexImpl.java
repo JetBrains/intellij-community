@@ -3,7 +3,6 @@ package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.javac.Iterators;
 
@@ -80,17 +79,9 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
             toRemove.remove(refId);
           }
         }
+        myMap.removeValues(id, toRemove);
       }
-      if (!Iterators.isEmpty(toRemove)) {
-        Set<ReferenceID> dataAfter = Iterators.collect(getDependencies(id), new HashSet<>());
-        dataAfter.removeAll(toRemove);
-        Iterators.collect(toAdd, dataAfter);
-
-        myMap.update(id, dataAfter, Difference::diff);
-      }
-      else {
-        myMap.appendValues(id, toAdd);
-      }
+      myMap.appendValues(id, toAdd);
     }
   }
 

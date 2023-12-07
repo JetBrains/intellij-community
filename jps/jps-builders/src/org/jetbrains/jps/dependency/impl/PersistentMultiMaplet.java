@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -17,11 +16,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implements MultiMaplet<K, V> {
   private final PersistentHashMap<K, C> myMap;
-  private final DataExternalizer<V> myValuesExternalizer;
+  private final DataExternalizer<V> myValueExternalizer;
   private final C myEmptyCollection;
   private final Supplier<? extends C> myCollectionFactory;
 
@@ -32,13 +32,14 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
       //noinspection unchecked
       myEmptyCollection = col instanceof List? (C)Collections.emptyList() : col instanceof Set? (C)Collections.emptySet() : col;
       
-      myValuesExternalizer = valueExternalizer;
-
+      myValueExternalizer = valueExternalizer;
+      
       myMap = PersistentMapBuilder.newBuilder(mapFile, keyDescriptor, new DataExternalizer<C>() {
         @Override
-        public void save(@NotNull DataOutput out, C value) throws IOException {
-          for (V v : value) {
-            valueExternalizer.save(out, v);
+        public void save(@NotNull DataOutput out, C data) throws IOException {
+          out.writeInt(data.size());
+          for (V value : data) {
+            valueExternalizer.save(out, value);
           }
         }
 
@@ -47,7 +48,12 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
           C acc = myCollectionFactory.get();
           final DataInputStream stream = (DataInputStream)in;
           while (stream.available() > 0) {
-            acc.add(valueExternalizer.read(stream));
+            int size = stream.readInt();
+            Consumer<? super V> appender = size > 0? acc::add : myEmptyCollection instanceof Set? acc::add : acc::remove;
+            size = Math.abs(size);
+            while (size-- > 0) {
+              appender.accept(valueExternalizer.read(stream));
+            }
           }
           return acc;
         }
@@ -128,8 +134,9 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
         myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
           @Override
           public void append(@NotNull DataOutput out) throws IOException {
+            out.writeInt(sizeOf(values));
             for (V v : values) {
-              myValuesExternalizer.save(out, v);
+              myValueExternalizer.save(out, v);
             }
           }
         });
@@ -149,15 +156,15 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
   public void removeValues(K key, @NotNull Iterable<? extends V> values) {
     if (!Iterators.isEmpty(values)) {
       try {
-        C collection = get(key);
-        if (collection != myEmptyCollection && collection.removeAll(values instanceof Set? ((Set<? extends V>)values) : Iterators.collect(values, new SmartHashSet<>()))) {
-          if (collection.isEmpty()) {
-            myMap.remove(key);
+        myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
+          @Override
+          public void append(@NotNull DataOutput out) throws IOException {
+            out.writeInt(-sizeOf(values));
+            for (V v : values) {
+              myValueExternalizer.save(out, v);
+            }
           }
-          else {
-            myMap.put(key, collection);
-          }
-        }
+        });
       }
       catch (IOException e) {
         throw new BuildDataCorruptedException(e);
@@ -188,5 +195,16 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
   @Override
   public void flush() throws IOException {
     myMap.force();
+  }
+
+  private static int sizeOf(Iterable<?> seq) {
+    if (seq instanceof Collection) {
+      return ((Collection<?>)seq).size();
+    }
+    int size = 0;
+    for (Object v : seq) {
+      size++;
+    }
+    return size;
   }
 }

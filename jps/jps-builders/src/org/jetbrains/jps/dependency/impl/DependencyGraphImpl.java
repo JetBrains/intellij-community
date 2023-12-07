@@ -243,14 +243,14 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       mySourceToNodesMap.remove(deletedSource);
     }
 
-    var updatedNodes = collect(flat(map(delta.getSources(), s -> getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    var updatedNodes = collect(flat(map(delta.getSources(), this::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
     for (BackDependencyIndex index : getIndices()) {
       BackDependencyIndex deltaIndex = delta.getIndex(index.getName());
       assert deltaIndex != null;
       index.integrate(diffResult.getDeletedNodes(), updatedNodes, deltaIndex);
     }
 
-    var deltaNodes = unique(map(flat(map(delta.getSources(), s -> delta.getNodes(s))), node -> node.getReferenceID()));
+    var deltaNodes = unique(map(flat(map(delta.getSources(), delta::getNodes)), node -> node.getReferenceID()));
     for (ReferenceID nodeID : deltaNodes) {
       Set<NodeSource> sourcesAfter = collect(myNodeToSourcesMap.get(nodeID), new HashSet<>());
       sourcesAfter.removeAll(delta.getBaseSources());
