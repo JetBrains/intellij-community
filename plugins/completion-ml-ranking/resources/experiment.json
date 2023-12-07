@@ -138,7 +138,7 @@
     },
     {
       "id": "rust",
-      "experimentBucketsCount": 2,
+      "experimentBucketsCount": 16,
       "includeGroups": [ 8, 12],
       "shouldLogElementFeatures": true
     },
