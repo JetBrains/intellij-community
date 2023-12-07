@@ -879,6 +879,8 @@ suspend fun layoutDistribution(layout: BaseLayout,
                                includedModules: Collection<ModuleItem>,
                                moduleWithSearchableOptions: Set<String>,
                                context: BuildContext): Pair<List<DistributionFileEntry>, Path> {
+  Files.createDirectories(targetDirectory)
+
   if (copyFiles) {
     withContext(Dispatchers.IO) {
       if (!layout.moduleExcludes.isEmpty()) {
