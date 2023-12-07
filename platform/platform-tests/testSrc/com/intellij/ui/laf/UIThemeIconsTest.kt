@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ui.laf
 
 import com.intellij.ide.ui.UITheme
@@ -15,14 +17,16 @@ class UIThemeIconsTest {
 
   @Test
   fun componentIconsLocation() {
-    arrayOf("checkBox.svg", "radio.svg")
-      .forEach {
-        assertThat(loadIconText(false, it)).describedAs(iconsAreMovedMsg(false)).isNotNull
-        assertThat(loadIconText(true, it)).describedAs(iconsAreMovedMsg(true)).isNotNull
-      }
+    arrayOf("checkBox.svg", "radio.svg").forEach {
+      assertThat(loadIconText(false, it)).describedAs(iconsAreMovedMsg(false)).isNotNull
+      assertThat(loadIconText(true, it)).describedAs(iconsAreMovedMsg(true)).isNotNull
+    }
   }
 
-  private fun iconsAreMovedMsg(isDark: Boolean) = "Laf icons are moved from '" + toPath(isDark) + "'. Please fix PaletteScopeManager.getScopeByURL and the test"
+  private fun iconsAreMovedMsg(isDark: Boolean): String {
+    return "Laf icons are moved from '" + toPath(isDark) + "'. Please fix PaletteScopeManager.getScopeByURL and the test"
+  }
+
   private fun toPath(isDark: Boolean) = if (isDark) darculaIcons else intelliJIcons
 
   @Test
@@ -41,10 +45,10 @@ class UIThemeIconsTest {
   }
 
   private fun doCheckColorInFile(colorName: String, filename: String) {
-    val lightColor = UITheme.getColorPalette()[colorName]!!.toLowerCase()
-    val darkColor = UITheme.getColorPalette()["$colorName.Dark"]!!.toLowerCase()
-    val lightSvg = loadIconText(false, filename)!!.toLowerCase()
-    val darkSvg = loadIconText(true, filename)!!.toLowerCase()
+    val lightColor = UITheme.getColorPalette().get(colorName)!!.lowercase()
+    val darkColor = UITheme.getColorPalette().get("$colorName.Dark")!!.lowercase()
+    val lightSvg = loadIconText(isDark = false, filename = filename)!!.lowercase()
+    val darkSvg = loadIconText(isDark = true, filename = filename)!!.lowercase()
     assertThat(lightSvg.contains(lightColor)).describedAs(msgColorsDontMatch(lightColor, filename, colorName, false)).isTrue()
     assertThat(darkSvg.contains(darkColor)).describedAs(msgColorsDontMatch(darkColor, filename, colorName, true)).isTrue()
   }
