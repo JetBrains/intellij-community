@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
+import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 @VisibleForTesting
@@ -189,8 +190,7 @@ private fun doGetInspectionIdsSuppressedInAnnotation(annotation: UAnnotation,
 
 private fun getInspectionIdsSuppressedInAnnotation(expression: UExpression): List<String> {
   return when (expression) {
-    is ULiteralExpression -> listOfNotNull(expression.value as? String)
-    is UReferenceExpression -> listOfNotNull(expression.evaluateString())
+    is UInjectionHost, is UReferenceExpression -> listOfNotNull(expression.evaluateString())
     is UCallExpression -> expression.valueArguments.flatMap { getInspectionIdsSuppressedInAnnotation(it) }
     else -> emptyList()
   }
