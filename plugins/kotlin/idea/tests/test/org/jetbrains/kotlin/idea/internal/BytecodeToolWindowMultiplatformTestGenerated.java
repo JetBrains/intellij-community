@@ -20,9 +20,9 @@ import org.junit.runner.RunWith;
 public abstract class BytecodeToolWindowMultiplatformTestGenerated extends AbstractBytecodeToolWindowMultiplatformTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/internal/toolWindowMultiplatform")
-    public static class WithIRCommon extends AbstractBytecodeToolWindowMultiplatformTest {
+    public static class Common extends AbstractBytecodeToolWindowMultiplatformTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithIrCommon, this, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTestCommon, this, testDataFilePath);
         }
 
         @TestMetadata("abstractClass")
@@ -88,145 +88,9 @@ public abstract class BytecodeToolWindowMultiplatformTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/internal/toolWindowMultiplatform")
-    public static class WithoutIRCommon extends AbstractBytecodeToolWindowMultiplatformTest {
+    public static class Jvm extends AbstractBytecodeToolWindowMultiplatformTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithoutIrCommon, this, testDataFilePath);
-        }
-
-        @TestMetadata("abstractClass")
-        public void testAbstractClass() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/abstractClass/");
-        }
-
-        @TestMetadata("classWithConstructor")
-        public void testClassWithConstructor() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/classWithConstructor/");
-        }
-
-        @TestMetadata("clazz")
-        public void testClazz() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/clazz/");
-        }
-
-        @TestMetadata("funWithParam")
-        public void testFunWithParam() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/funWithParam/");
-        }
-
-        @TestMetadata("function")
-        public void testFunction() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/function/");
-        }
-
-        @TestMetadata("functionFromOtherFile")
-        public void testFunctionFromOtherFile() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/functionFromOtherFile/");
-        }
-
-        @TestMetadata("functionWithOrphanedExpect")
-        public void testFunctionWithOrphanedExpect() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/functionWithOrphanedExpect/");
-        }
-
-        @TestMetadata("generic")
-        public void testGeneric() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/generic/");
-        }
-
-        @TestMetadata("interfaceDeclaration")
-        public void testInterfaceDeclaration() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/interfaceDeclaration/");
-        }
-
-        @TestMetadata("obj")
-        public void testObj() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/obj/");
-        }
-
-        @TestMetadata("propertyVal")
-        public void testPropertyVal() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/propertyVal/");
-        }
-
-        @TestMetadata("propertyVar")
-        public void testPropertyVar() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/propertyVar/");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/internal/toolWindowMultiplatform")
-    public static class WithIRJvm extends AbstractBytecodeToolWindowMultiplatformTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithIrJvm, this, testDataFilePath);
-        }
-
-        @TestMetadata("abstractClass")
-        public void testAbstractClass() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/abstractClass/");
-        }
-
-        @TestMetadata("classWithConstructor")
-        public void testClassWithConstructor() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/classWithConstructor/");
-        }
-
-        @TestMetadata("clazz")
-        public void testClazz() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/clazz/");
-        }
-
-        @TestMetadata("funWithParam")
-        public void testFunWithParam() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/funWithParam/");
-        }
-
-        @TestMetadata("function")
-        public void testFunction() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/function/");
-        }
-
-        @TestMetadata("functionFromOtherFile")
-        public void testFunctionFromOtherFile() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/functionFromOtherFile/");
-        }
-
-        @TestMetadata("functionWithOrphanedExpect")
-        public void testFunctionWithOrphanedExpect() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/functionWithOrphanedExpect/");
-        }
-
-        @TestMetadata("generic")
-        public void testGeneric() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/generic/");
-        }
-
-        @TestMetadata("interfaceDeclaration")
-        public void testInterfaceDeclaration() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/interfaceDeclaration/");
-        }
-
-        @TestMetadata("obj")
-        public void testObj() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/obj/");
-        }
-
-        @TestMetadata("propertyVal")
-        public void testPropertyVal() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/propertyVal/");
-        }
-
-        @TestMetadata("propertyVar")
-        public void testPropertyVar() throws Exception {
-            runTest("testData/internal/toolWindowMultiplatform/propertyVar/");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/internal/toolWindowMultiplatform")
-    public static class WithoutIRJvm extends AbstractBytecodeToolWindowMultiplatformTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithoutIrJvm, this, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTestJvm, this, testDataFilePath);
         }
 
         @TestMetadata("abstractClass")

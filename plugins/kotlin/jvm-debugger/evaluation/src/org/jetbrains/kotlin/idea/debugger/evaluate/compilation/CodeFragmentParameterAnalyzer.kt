@@ -97,9 +97,10 @@ class CodeFragmentParameterAnalyzer(
                     return
                 }
 
+                val descriptor = resolvedCall.resultingDescriptor
+
                 // Capture dispatch receiver for the extension callable
                 run {
-                    val descriptor = resolvedCall.resultingDescriptor
                     val containingClass = descriptor?.containingDeclaration as? ClassDescriptor
                     val extensionParameter = descriptor?.extensionReceiverParameter
                     if (descriptor != null && descriptor !is DebuggerFieldPropertyDescriptor
@@ -113,14 +114,13 @@ class CodeFragmentParameterAnalyzer(
                 }
 
                 if (runReadAction { expression.isDotSelector() }) {
-                    val descriptor = resolvedCall.resultingDescriptor
                     val parameter = processCoroutineContextCall(resolvedCall.resultingDescriptor)
                     if (parameter != null) {
                         checkBounds(descriptor, expression, parameter)
                     }
                 }
 
-                if (isCodeFragmentDeclaration(resolvedCall.resultingDescriptor)) {
+                if (isCodeFragmentDeclaration(descriptor)) {
                     // The reference is from the code fragment we analyze, no need to capture
                     return
                 }
@@ -128,7 +128,7 @@ class CodeFragmentParameterAnalyzer(
                 var processed = false
 
                 fun processImplicitReceiver(receiver: ReceiverValue?) {
-                    if (receiver is ImplicitReceiver) {
+                    if (receiver is ImplicitReceiver && !isPrimaryConstructorParameter(descriptor)) {
                         val parameter = processReceiver(receiver)
                         if (parameter != null) {
                             checkBounds(receiver.declarationDescriptor, expression, parameter)
@@ -143,8 +143,7 @@ class CodeFragmentParameterAnalyzer(
                     contextReceivers.forEach(::processImplicitReceiver)
                 }
 
-                if (!processed && resolvedCall.resultingDescriptor is SyntheticFieldDescriptor) {
-                    val descriptor = resolvedCall.resultingDescriptor as SyntheticFieldDescriptor
+                if (!processed && descriptor is SyntheticFieldDescriptor) {
                     val parameter = processSyntheticFieldVariable(descriptor)
                     checkBounds(descriptor, expression, parameter)
                     processed = true
@@ -152,7 +151,6 @@ class CodeFragmentParameterAnalyzer(
 
                 // If a reference has receivers, we can calculate its value using them, no need to capture
                 if (!processed) {
-                    val descriptor = resolvedCall.resultingDescriptor
                     val parameter = processDescriptor(descriptor, expression)
                     checkBounds(descriptor, expression, parameter)
                 }
@@ -233,7 +231,7 @@ class CodeFragmentParameterAnalyzer(
     }
 
     private fun processDispatchReceiver(descriptor: ClassDescriptor): Smart? {
-        if (descriptor.kind == ClassKind.OBJECT || containingPrimaryConstructor != null) {
+        if (descriptor.kind == ClassKind.OBJECT) {
             return null
         }
 
@@ -250,7 +248,7 @@ class CodeFragmentParameterAnalyzer(
             return processFakeJavaCodeReceiver(descriptor)
         }
 
-        val actualLabel = label ?: getLabel(descriptor) ?: return null
+        val actualLabel = label ?: getLabel(descriptor)
         val receiverParameter = descriptor.extensionReceiverParameter ?: return null
 
         return parameters.getOrPut(descriptor) {
@@ -258,14 +256,18 @@ class CodeFragmentParameterAnalyzer(
         }
     }
 
-    private fun getLabel(callableDescriptor: CallableDescriptor): String? {
+    private fun getLabel(callableDescriptor: CallableDescriptor): String {
         val source = callableDescriptor.source.getPsi()
 
         if (source is KtFunctionLiteral) {
             getCallLabelForLambdaArgument(source, bindingContext)?.let { return it }
         }
 
-        return callableDescriptor.name.takeIf { !it.isSpecial }?.asString()
+        // In case of special name we will end up with "null" result.
+        // This is expected behavior for K1 that is inlined with a way how `StackFrameProxyImpl` stores variables.
+        // For K2 we will have a bit different name stored in `StackFrameProxyImpl`,
+        // but still we will be able to find the correct one due to how `VariableFinder` works.
+        return callableDescriptor.name.takeIf { !it.isSpecial }.toString()
     }
 
     private fun isFakeFunctionForJavaContext(descriptor: CallableDescriptor): Boolean {
@@ -314,13 +316,7 @@ class CodeFragmentParameterAnalyzer(
             )
         }
 
-        val isLocalTarget = (target as? DeclarationDescriptorWithVisibility)?.visibility == DescriptorVisibilities.LOCAL
-
-        val isPrimaryConstructorParameter = !isLocalTarget
-                && target is PropertyDescriptor
-                && isContainingPrimaryConstructorParameter(target)
-
-        if (!isLocalTarget && !isPrimaryConstructorParameter) {
+        if (!isPrimaryConstructorParameter(target)) {
             return null
         }
 
@@ -342,6 +338,16 @@ class CodeFragmentParameterAnalyzer(
             }
             else -> null
         }
+    }
+
+    private fun isPrimaryConstructorParameter(target: DeclarationDescriptor): Boolean {
+        val isLocalTarget = (target as? DeclarationDescriptorWithVisibility)?.visibility == DescriptorVisibilities.LOCAL
+
+        val isPrimaryConstructorParameter = !isLocalTarget
+                && target is PropertyDescriptor
+                && isContainingPrimaryConstructorParameter(target)
+
+        return isLocalTarget || isPrimaryConstructorParameter
     }
 
     private fun isAssignmentLValue(expression: PsiElement): Boolean {

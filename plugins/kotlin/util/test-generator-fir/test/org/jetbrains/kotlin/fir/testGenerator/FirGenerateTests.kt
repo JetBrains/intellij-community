@@ -397,7 +397,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractK2BytecodeToolWindowTest> {
-            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIr")
+            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY)
         }
 
         testClass<AbstractK2ExternalAnnotationTest> {

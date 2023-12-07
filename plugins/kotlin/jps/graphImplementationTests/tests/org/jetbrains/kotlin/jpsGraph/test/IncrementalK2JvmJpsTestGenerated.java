@@ -45,6 +45,7 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         //System.setProperty(INCREMENTAL_COMPILATION_JVM_PROPERTY, "false");
         //System.setProperty(INCREMENTAL_COMPILATION_JS_PROPERTY, "false");
     }
+
     @TestMetadata("pureKotlin")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)

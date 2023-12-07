@@ -75,7 +75,7 @@ private class KotlinCodeFragmentPatcher(val codeFragment: KtCodeFragment) {
 
 internal fun patchCodeFragment(context: ExecutionContext, codeFragment: KtCodeFragment, stats: CodeFragmentCompilationStats) {
     KotlinCodeFragmentPatcher(codeFragment)
-        .addWrapper(KotlinToStringWrapper())
+        .addWrapper(KotlinValueClassToStringWrapper())
         .addWrapper(
             KotlinSuspendFunctionWrapper(
                 context,

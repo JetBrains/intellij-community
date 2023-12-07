@@ -9,7 +9,7 @@ Compile bytecode for block { Foo.Nested(1, 0.toUInt(), -5, "x") }
 Compiling evaluator failed: Method threw 'java.lang.IllegalAccessError' exception.
 Compile bytecode for block { Foo.Nested(1, 0.toUInt(), -5, "x").a }
 Compiling evaluator failed: Method threw 'java.lang.IllegalAccessError' exception.
-Compile bytecode for block { Foo.Nested(1, 0.toUInt(), -5, "x").u }
+Compile bytecode for (block { Foo.Nested(1, 0.toUInt(), -5, "x").u }) as Any?
 Compiling evaluator failed: Method threw 'java.lang.IllegalAccessError' exception.
 Compile bytecode for block { Foo.Nested(1, 0.toUInt(), -5, "x").l }
 Compiling evaluator failed: Method threw 'java.lang.IllegalAccessError' exception.

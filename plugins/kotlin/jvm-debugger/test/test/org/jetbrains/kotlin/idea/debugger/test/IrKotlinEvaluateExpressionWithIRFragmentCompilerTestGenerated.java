@@ -189,6 +189,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextClassReceiversInMethod.kt");
             }
 
+            @TestMetadata("contextReceiverInsideWithLambda.kt")
+            public void testContextReceiverInsideWithLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiverInsideWithLambda.kt");
+            }
+
             @TestMetadata("contextReceiversInFunction.kt")
             public void testContextReceiversInFunction() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiversInFunction.kt");
@@ -896,6 +901,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/lambdas/inlineLambda.kt");
             }
 
+            @TestMetadata("labelOnAnonymousFunction.kt")
+            public void testLabelOnAnonymousFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/labelOnAnonymousFunction.kt");
+            }
+
             @TestMetadata("lambdaOnReturn.kt")
             public void testLambdaOnReturn() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/lambdaOnReturn.kt");
@@ -1030,6 +1040,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/localClass.kt");
             }
 
+            @TestMetadata("localExtensionFunction.kt")
+            public void testLocalExtensionFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/localExtensionFunction.kt");
+            }
+
             @TestMetadata("localFunction.kt")
             public void testLocalFunction() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/localFunction.kt");
@@ -1088,6 +1103,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("variableFinderShouldNotImplementDynamicScoping5.kt")
             public void testVariableFinderShouldNotImplementDynamicScoping5() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/variableFinderShouldNotImplementDynamicScoping5.kt");
+            }
+
+            @TestMetadata("withAnonymousObject.kt")
+            public void testWithAnonymousObject() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/withAnonymousObject.kt");
             }
         }
 
@@ -1324,6 +1344,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("genericWithMultipleUpperBounds.kt")
             public void testGenericWithMultipleUpperBounds() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/genericWithMultipleUpperBounds.kt");
+            }
+
+            @TestMetadata("getPropertyInInitContext.kt")
+            public void testGetPropertyInInitContext() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/getPropertyInInitContext.kt");
             }
 
             @TestMetadata("imports.kt")
@@ -1701,6 +1726,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/unusedTransitiveDependencies.kt");
             }
 
+            @TestMetadata("valueMethodsInSignature.kt")
+            public void testValueMethodsInSignature() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/valueMethodsInSignature.kt");
+            }
+
             @TestMetadata("valueParameterName.kt")
             public void testValueParameterName() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/valueParameterName.kt");
@@ -1719,6 +1749,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("whenEvaluation.kt")
             public void testWhenEvaluation() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/whenEvaluation.kt");
+            }
+
+            @TestMetadata("withSerializationPlugin.kt")
+            public void testWithSerializationPlugin() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin.kt");
             }
 
             @TestMetadata(".kt.kt")

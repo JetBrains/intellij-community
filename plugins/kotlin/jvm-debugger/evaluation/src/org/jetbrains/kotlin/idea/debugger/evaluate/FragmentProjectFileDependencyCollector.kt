@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.collectReachableInlineDelegatedPropertyAccessors
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.getInlineFunctionAnalyzer
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
@@ -53,13 +54,9 @@ private fun analyzeCalls(
             val descriptor = resolvedCall.resultingDescriptor
 
             fun processClassReceiver(receiver: ReceiverValue?) {
-                if (receiver is ContextClassReceiver || receiver is ImplicitClassReceiver && receiver.classDescriptor.visibility == DescriptorVisibilities.LOCAL) {
-                    val declarationDescriptor = (receiver as? ImplicitReceiver)?.declarationDescriptor ?: return
-                    val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
-                        project, declarationDescriptor
-                    ) ?: return
-                    files.add(declaration.containingFile as KtFile)
-                }
+                val declarationDescriptor = (receiver as? ImplicitReceiver)?.declarationDescriptor ?: return
+                val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, declarationDescriptor) ?: return
+                files.add(declaration.containingFile as KtFile)
             }
 
             // If the implicit receiver of a call is a context class receiver,
@@ -84,7 +81,9 @@ private fun analyzeCalls(
             //   8: return
 
             with(resolvedCall) {
-                processClassReceiver(dispatchReceiver)
+                dispatchReceiver.takeIf {
+                    it is ContextClassReceiver || it is ImplicitClassReceiver && it.classDescriptor.visibility == DescriptorVisibilities.LOCAL
+                }?.let { processClassReceiver(it) }
                 contextReceivers.forEach(::processClassReceiver)
             }
 
@@ -105,10 +104,16 @@ private fun analyzeCalls(
                 val thisReceiver = descriptor.dispatchReceiverParameter?.value as? ThisClassReceiver ?: return
                 val declaration = DescriptorToSourceUtils.getSourceFromDescriptor(thisReceiver.classDescriptor) ?: return
                 files.add(declaration.containingFile as? KtFile ?: return)
+            } else if (descriptor.extensionReceiverParameter?.visibility == DescriptorVisibilities.LOCAL) {
+                val thisReceiver = descriptor.extensionReceiverParameter?.value as? ExtensionReceiver ?: return
+                val declarationDescriptor = thisReceiver.type.constructor.declarationDescriptor ?: return
+                if ((declarationDescriptor as? DeclarationDescriptorWithVisibility)?.visibility != DescriptorVisibilities.LOCAL) return
+                val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, declarationDescriptor) ?: return
+                files.add(declaration.containingFile as? KtFile ?: return)
             } else if ((descriptor as? ClassConstructorDescriptor)?.constructedClass?.visibility == DescriptorVisibilities.LOCAL) {
                 val declaration = DescriptorToSourceUtils.getSourceFromDescriptor((descriptor).constructedClass) ?: return
                 files.add(declaration.containingFile as? KtFile ?: return)
-            } // TODO: Extension receivers?
+            }
         }
     })
 }
