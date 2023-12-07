@@ -43,6 +43,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/ambiguousReference/ambiguousReference.test");
     }
 
+    @TestMetadata("automaticRenamerEscapedName/automaticRenamerEscapedName.test")
+    public void testAutomaticRenamerEscapedName_AutomaticRenamerEscapedName() throws Exception {
+        runTest("testData/refactoring/rename/automaticRenamerEscapedName/automaticRenamerEscapedName.test");
+    }
+
     @TestMetadata("automaticRenamerForJavaClass/javaClass.test")
     public void testAutomaticRenamerForJavaClass_JavaClass() throws Exception {
         runTest("testData/refactoring/rename/automaticRenamerForJavaClass/javaClass.test");

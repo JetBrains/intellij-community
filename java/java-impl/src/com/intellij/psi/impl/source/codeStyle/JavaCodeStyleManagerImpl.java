@@ -1259,7 +1259,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   private String changeIfNotIdentifier(@NotNull String name) {
     if (!isIdentifier(name)) {
-      return StringUtil.fixVariableNameDerivedFromPropertyName(name);
+      String propertyName = StringUtil.fixVariableNameDerivedFromPropertyName(name);
+      if (isIdentifier(propertyName)) {
+        return propertyName;
+      }
     }
     return name;
   }

@@ -43,6 +43,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/ambiguousReference/ambiguousReference.test");
     }
 
+    @TestMetadata("automaticRenamerEscapedName/automaticRenamerEscapedName.test")
+    public void testAutomaticRenamerEscapedName_AutomaticRenamerEscapedName() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/automaticRenamerEscapedName/automaticRenamerEscapedName.test");
+    }
+
     @TestMetadata("automaticRenamerForJavaClass/javaClass.test")
     public void testAutomaticRenamerForJavaClass_JavaClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/automaticRenamerForJavaClass/javaClass.test");
