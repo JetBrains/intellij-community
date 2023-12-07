@@ -644,11 +644,9 @@ public class TestCaseLoader {
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createPostDiscoveryFilter`
   @SuppressWarnings("unused")
   public static boolean isClassIncluded(String className) {
-    // no need to calculate bucket matching (especially that may break fair bucketing), if the test does not match the filter
-    if (!isClassNameIncluded(className)) {
-      return false;
-    }
-
+    // JUnit 5 might rediscover `@Nested` tests if they were previously filtered out by `isClassNameIncluded`,
+    // but their host class was not filtered out. Let's not remove them again based on `ourFilter.matches(className)`,
+    // so not checking for `isClassNameIncluded` here.
     return matchesCurrentBucket(className);
   }
 
