@@ -3,7 +3,9 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
+import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -475,13 +477,15 @@ private fun compute(list: List<Pair<String, PersistentList<String>>>,
 
 // result _must be_ consistent, do not use Set.of or HashSet here
 private suspend fun getProductPluginContentModules(context: BuildContext, productPluginSourceModuleName: String): Set<ModuleItem> {
+  val result = LinkedHashSet<ModuleItem>()
+
   val content = withContext(Dispatchers.IO) {
     var file = context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
     if (file == null) {
-      file = context.findFileInModuleSources(productPluginSourceModuleName,
-                                             "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
+      file = context.findFileInModuleSources(moduleName = productPluginSourceModuleName,
+                                             relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
       if (file == null) {
-        context.messages.warning("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
+        Span.current().addEvent("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
         return@withContext null
       }
     }
@@ -489,10 +493,22 @@ private suspend fun getProductPluginContentModules(context: BuildContext, produc
     readXmlAsModel(file).getChild("content")
   } ?: return emptySet()
 
-  val modules = content.children("module")
-  val result = LinkedHashSet<ModuleItem>()
-  for (module in modules) {
-    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue, relativeOutputFile = "modules.jar", reason = "productModule"))
+  collectProductModules(content, result)
+
+  withContext(Dispatchers.IO) {
+    val file = context.findFileInModuleSources("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+    file?.let { readXmlAsModel(it).getChild("content") }
+  }?.let {
+    collectProductModules(it, result)
   }
+
   return result
+}
+
+private fun collectProductModules(content: XmlElement, result: LinkedHashSet<ModuleItem>) {
+  for (module in content.children("module")) {
+    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue,
+                          relativeOutputFile = "modules.jar",
+                          reason = "productModule"))
+  }
 }

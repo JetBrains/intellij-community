@@ -7,6 +7,11 @@
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.externalSystem"/>
 
+  <!-- should be here, otherwise not loaded in tests (in unit test mode, the platform prefix is `PlatformLangXml) -->
+  <content>
+    <module name="intellij.platform.settings.local"/>
+  </content>
+
   <xi:include href="PlatformLangComponents.xml"/>
   <xi:include href="/idea/PlatformLangActionManager.xml"/>
   <xi:include href="/META-INF/coverage-common-plugin.xml">

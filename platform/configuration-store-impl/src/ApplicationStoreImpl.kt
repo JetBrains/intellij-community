@@ -47,7 +47,7 @@ open class ApplicationStoreImpl(private val app: Application)
       // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
       Macro(APP_CONFIG, path.resolve(PathManager.OPTIONS_DIRECTORY)),
       Macro(ROOT_CONFIG, path),
-      Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml"))
+      Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("app-cache.xml"))
     ))
   }
 

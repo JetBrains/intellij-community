@@ -1,0 +1,175 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.settings.local
+
+import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.configurationStore.SettingsSavingComponent
+import com.intellij.ide.caches.CachesInvalidator
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.settings.SettingValueSerializer
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.io.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.io.DataInput
+import java.io.DataOutput
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicBoolean
+
+// todo get rid of Disposable as soon as it will be possible to get service from coroutine scope
+@Suppress("NonDefaultConstructor")
+@ApiStatus.Internal
+@Service(Service.Level.APP, Service.Level.PROJECT)
+internal class CacheStatePropertyService(componentManager: ComponentManager) : Disposable, SettingsSavingComponent {
+  private val map: PersistentMapBase<String, ByteArray> = createOrResetPersistentMap(getStorageDir(componentManager))
+  private val isChanged = AtomicBoolean(false)
+
+  override fun dispose() {
+    map.close()
+  }
+
+  @TestOnly
+  fun clear() {
+    map.processKeys {
+      map.remove(it)
+      true
+    }
+  }
+
+  @TestOnly
+  fun getCacheStorageAsMap(): Map<String, String> {
+    val result = HashMap<String, String>()
+    map.processKeys { key ->
+      map.get(key)?.let {
+        result.put(key, it.decodeToString())
+      }
+      true
+    }
+    return result
+  }
+
+  override suspend fun save() {
+    if (isChanged.compareAndSet(true, false)) {
+      map.force()
+    }
+  }
+
+  fun <T : Any> getValue(key: String, serializer: SettingValueSerializer<T>): T? {
+    try {
+      return map.get(key)?.let { serializer.decode(it) }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      thisLogger().error(e)
+      return null
+    }
+  }
+
+  fun <T : Any> setValue(key: String, value: T?, serializer: SettingValueSerializer<T>) {
+    try {
+      if (value == null) {
+        map.remove(key)
+      }
+      else {
+        map.put(key, serializer.encode(value))
+      }
+      isChanged.set(true)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      thisLogger().error(e)
+    }
+  }
+}
+
+private fun getStorageDir(componentManager: ComponentManager): Path {
+  val oldCacheFile = componentManager.service<IComponentStore>().storageManager.expandMacro(StoragePathMacros.CACHE_FILE)
+  return oldCacheFile.parent.resolve(oldCacheFile.fileName.toString().removeSuffix(FileStorageCoreUtil.DEFAULT_EXT))
+}
+
+private class CacheStateStorageInvalidator : CachesInvalidator() {
+  override fun invalidateCaches() {
+    val dir = getStorageDir(ApplicationManager.getApplication())
+    if (Files.isDirectory(dir)) {
+      Files.write(dir.resolve(".invalidated"), ArrayUtilRt.EMPTY_BYTE_ARRAY, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+    }
+  }
+}
+
+private fun createOrResetPersistentMap(dbDir: Path): PersistentMapBase<String, ByteArray> {
+  val markerFile = dbDir.resolve(".invalidated")
+  if (Files.exists(markerFile)) {
+    NioFiles.deleteRecursively(dbDir)
+  }
+
+  val dbFile = dbDir.resolve("${dbDir.fileName}.db")
+  try {
+    return createPersistentMap(dbFile)
+  }
+  catch (e: CorruptedException) {
+    logger<CacheStatePropertyService>().warn("Cache state storage is corrupted (${e.message})")
+  }
+  catch (e: Throwable) {
+    logger<CacheStatePropertyService>().warn("Cannot open cache state storage, will be recreated", e)
+  }
+
+  NioFiles.deleteRecursively(dbDir)
+  return createPersistentMap(dbFile)
+}
+
+private fun createPersistentMap(dbFile: Path): PersistentMapBase<String, ByteArray> {
+  val builder = PersistentMapBuilder.newBuilder(dbFile, object : KeyDescriptor<String> {
+    override fun getHashCode(value: String) = Hashing.komihash5_0().hashCharsToInt(value)
+
+    override fun save(out: DataOutput, value: String) {
+      IOUtil.writeUTF(out, value)
+    }
+
+    override fun read(input: DataInput): String {
+      return IOUtil.readUTF(input)
+    }
+
+    override fun isEqual(val1: String, val2: String) = val1 == val2
+  }, object : DataExternalizer<ByteArray> {
+    override fun save(out: DataOutput, value: ByteArray) {
+      out.writeInt(value.size)
+      out.write(value)
+    }
+
+    override fun read(input: DataInput): ByteArray {
+      val result = ByteArray(input.readInt())
+      input.readFully(result)
+      return result
+    }
+  })
+    .withStorageLockContext(StorageLockContext(true, true, true))
+    .withVersion(2)
+
+  return PersistentMapImpl(builder, PersistentHashMapValueStorage.CreationTimeOptions(/* readOnly = */ false,
+                                                                                      /* compactChunksWithValueDeserialization = */ false,
+                                                                                      /* hasNoChunks = */ false,
+                                                                                      /* doCompression = */ false))
+}

@@ -154,5 +154,7 @@
     <orderEntry type="module" module-name="intellij.platform.ijent" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="library" name="pty4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.settings" />
+    <orderEntry type="module" module-name="intellij.platform.settings.local" scope="RUNTIME" />
   </component>
 </module>
