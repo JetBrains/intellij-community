@@ -111,19 +111,19 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     myMessagePool.addListener(this)
   }
 
-  private fun loadDevelopersList(): Job? {
-    val configurable = ErrorReportConfigurable.getInstance()
-    val developers = configurable.developerList
-    setDevelopers(developers)
-    if (developers.isUpToDateAt()) {
-      return null
-    }
-
+  private fun loadDevelopersList(): Job {
     return service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
       runCatching {
+        val configurable = serviceAsync<ErrorReportConfigurable>()
+        val developers = configurable.getDeveloperList()
+        setDevelopers(developers)
+        if (developers.isUpToDateAt()) {
+          return@launch
+        }
+
         val updatedDevelopers = DeveloperList(fetchDevelopers(), System.currentTimeMillis())
         withContext(Dispatchers.EDT) {
-          configurable.developerList = updatedDevelopers
+          configurable.setDeveloperList(updatedDevelopers)
           setDevelopers(updatedDevelopers)
         }
       }.onFailure { e ->

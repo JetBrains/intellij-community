@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -6,30 +6,31 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.SERVICE_NAME_PREFIX
 import com.intellij.credentialStore.isFulfilled
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.components.*
-import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.platform.settings.CacheStateTag
+import com.intellij.platform.settings.SettingsController
+import com.intellij.platform.settings.objectSettingValueSerializer
+import com.intellij.platform.settings.settingDescriptorFactoryFactory
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.serialization.Serializable
 
 @Service
-@State(name = "ErrorReportConfigurable", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-internal class ErrorReportConfigurable : PersistentStateComponent<DeveloperList>, SimpleModificationTracker() {
+internal class ErrorReportConfigurable {
   companion object {
-    @JvmStatic
-    private val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
+    private const val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
 
-    @JvmStatic
     fun getInstance(): ErrorReportConfigurable = service<ErrorReportConfigurable>()
 
     @RequiresBackgroundThread
-    @JvmStatic
     fun getCredentials(): Credentials? {
-      ThreadingAssertions.assertBackgroundThread();
+      ThreadingAssertions.assertBackgroundThread()
       return PasswordSafe.instance.get(CredentialAttributes(SERVICE_NAME))
     }
 
-    @JvmStatic
     fun saveCredentials(userName: String?, password: CharArray?) {
       val credentials = Credentials(userName, password)
       PasswordSafe.instance.set(CredentialAttributes(SERVICE_NAME, userName), credentials)
@@ -50,16 +51,23 @@ internal class ErrorReportConfigurable : PersistentStateComponent<DeveloperList>
     private fun getCredentialsState(): CredentialsState = lastCredentialsState ?: credentialsState(getCredentials())
   }
 
-  var developerList: DeveloperList = DeveloperList()
-    set(value) {
-      field = value
-      incModificationCount()
-    }
+  // this will be injected by ComponentManager (a client will request it from a coroutine scope as a service)
+  private val settingDescriptorFactory = settingDescriptorFactoryFactory(PluginManagerCore.CORE_ID)
 
-  override fun getState(): DeveloperList = developerList
+  private val settingDescriptor = settingDescriptorFactory.settingDescriptor(
+    key = "ideErrorReporter.developerList",
+    serializer = objectSettingValueSerializer<DeveloperList>(),
+  ) {
+    tags = listOf(CacheStateTag)
+  }
 
-  override fun loadState(value: DeveloperList) {
-    developerList = value
+  suspend fun getDeveloperList(): DeveloperList {
+    //todo get service from injected coroutine scope
+    return serviceAsync<SettingsController>().getItem(settingDescriptor) ?: DeveloperList()
+  }
+
+  suspend fun setDeveloperList(updatedDevelopers: DeveloperList) {
+    serviceAsync<SettingsController>().setItem(settingDescriptor, updatedDevelopers)
   }
 }
 
@@ -71,13 +79,13 @@ private fun credentialsState(credentials: Credentials?) = CredentialsState(crede
 private const val UPDATE_INTERVAL = 24L * 60 * 60 * 1000
 
 @Serializable
-internal data class DeveloperList(val developers: List<Developer> = emptyList(), val timestamp: Long = 0) {
+internal data class DeveloperList(@JvmField val developers: List<Developer> = emptyList(), @JvmField val timestamp: Long = 0) {
   fun isUpToDateAt(): Boolean = timestamp != 0L && (System.currentTimeMillis() - timestamp) < UPDATE_INTERVAL
 }
 
 @Serializable
-internal data class Developer(val id: Int, val displayText: String) {
+internal data class Developer(@JvmField val id: Int, @JvmField val displayText: String) {
   companion object {
-    val NULL: Developer = Developer(-1, "<none>")
+    val NULL: Developer = Developer(id = -1, displayText = "<none>")
   }
 }
