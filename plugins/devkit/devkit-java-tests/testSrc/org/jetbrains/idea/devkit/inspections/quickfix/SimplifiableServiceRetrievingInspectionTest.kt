@@ -27,4 +27,8 @@ internal class SimplifiableServiceRetrievingInspectionTest : SimplifiableService
   fun testNullableGetInstanceMethod() {
     doTest()
   }
+
+  fun testReturnExpressionOfNullableMethod() {
+    doTest()
+  }
 }
