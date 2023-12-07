@@ -49,7 +49,7 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
           final DataInputStream stream = (DataInputStream)in;
           while (stream.available() > 0) {
             int size = stream.readInt();
-            Consumer<? super V> appender = size > 0? acc::add : myEmptyCollection instanceof Set? acc::add : acc::remove;
+            Consumer<? super V> appender = size >= 0? acc::add : acc::remove;
             size = Math.abs(size);
             while (size-- > 0) {
               appender.accept(valueExternalizer.read(stream));
