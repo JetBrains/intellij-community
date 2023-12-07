@@ -51,8 +51,8 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     VcsRootChecker.EXTENSION_POINT_NAME.extensionList.associateBy { it.supportedVcs.name }
 
   private val tableLoadingPanel: JBLoadingPanel
-  private val mappingTable: TableView<MapInfo>
-  private val mappingTableModel: ListTableModel<MapInfo>
+  private val mappingTable: TableView<RecordInfo>
+  private val mappingTableModel: ListTableModel<RecordInfo>
   private val directoryRenderer: MyDirectoryRenderer
 
   private val vcsComboBox: ComboBox<AbstractVcs?>
@@ -63,7 +63,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
   private class MyDirectoryRenderer(private val project: Project) : ColoredTableCellRenderer() {
     override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-      value as MapInfo
+      value as RecordInfo
       val textAttributes = getAttributes(value)
 
       if (!selected && value.isUnregistered()) {
@@ -71,18 +71,18 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
       }
 
       when (value) {
-        is MapInfo.MappingInfo -> {
+        is RecordInfo.MappingInfo -> {
           val presentablePath = getPresentablePath(project, value.mapping)
           SpeedSearchUtil.appendFragmentsForSpeedSearch(table, presentablePath, textAttributes, selected, this)
         }
-        is MapInfo.Header -> {
+        is RecordInfo.Header -> {
           append(value.label, textAttributes)
         }
       }
     }
   }
 
-  private class MyVcsRenderer(private val info: MapInfo, private val allSupportedVcss: List<AbstractVcs>) : ColoredTableCellRenderer() {
+  private class MyVcsRenderer(private val info: RecordInfo, private val allSupportedVcss: List<AbstractVcs>) : ColoredTableCellRenderer() {
     override fun customizeCellRenderer(table: JTable,
                                        value: Any?,
                                        selected: Boolean,
@@ -95,7 +95,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
         background = UIUtil.getDecoratedRowColor()
       }
 
-      if (info is MapInfo.MappingInfo) {
+      if (info is RecordInfo.MappingInfo) {
         val vcsName = info.mapping.vcs
         if (vcsName.isEmpty()) {
           append(VcsBundle.message("none.vcs.presentation"), textAttributes)
@@ -113,7 +113,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     mappingTable.setShowGrid(false)
     mappingTable.intercellSpacing = JBUI.emptySize()
     TableSpeedSearch.installOn(mappingTable) { info: Any? ->
-      if (info is MapInfo.MappingInfo) getPresentablePath(project, info.mapping) else ""
+      if (info is RecordInfo.MappingInfo) getPresentablePath(project, info.mapping) else ""
     }
 
     scopeFilterConfigurable = VcsUpdateInfoScopeFilterConfigurable(project, vcsConfiguration)
@@ -152,7 +152,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   private fun initializeModel() {
     scopeFilterConfigurable.reset()
 
-    val mappings: MutableList<MapInfo> = mutableListOf()
+    val mappings: MutableList<RecordInfo> = mutableListOf()
     for (mapping in ProjectLevelVcsManager.getInstance(project).directoryMappings) {
       mappings.add(createRegisteredInfo(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings)))
     }
@@ -176,21 +176,21 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
           if (indicator.isCanceled) return@Runnable
           tableLoadingPanel.stopLoading()
           if (!unregisteredRoots.isEmpty()) {
-            mappingTableModel.addRow(MapInfo.UnregisteredHeader)
+            mappingTableModel.addRow(RecordInfo.UnregisteredHeader)
             for (mapping in unregisteredRoots) {
-              mappingTableModel.addRow(MapInfo.UnregisteredMapping(mapping))
+              mappingTableModel.addRow(RecordInfo.UnregisteredMapping(mapping))
             }
           }
         }
       }, { tableLoadingPanel.startLoading() }, POSTPONE_MAPPINGS_LOADING_PANEL.toLong(), false)
   }
 
-  private fun createRegisteredInfo(mapping: VcsDirectoryMapping): MapInfo {
+  private fun createRegisteredInfo(mapping: VcsDirectoryMapping): RecordInfo {
     if (isMappingValid(mapping)) {
-      return MapInfo.ValidMapping(mapping)
+      return RecordInfo.ValidMapping(mapping)
     }
     else {
-      return MapInfo.InvalidMapping(mapping)
+      return RecordInfo.InvalidMapping(mapping)
     }
   }
 
@@ -209,15 +209,15 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   }
 
   private fun addMapping(mapping: VcsDirectoryMapping) {
-    val items: MutableList<MapInfo> = mappingTableModel.items.toMutableList()
+    val items = mappingTableModel.items.toMutableList()
     items.add(createRegisteredInfo(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings)))
-    items.sortWith(MAP_INFO_COMPARATOR)
+    items.sortWith(RECORD_INFO_COMPARATOR)
     mappingTableModel.setItems(items)
   }
 
 
-  private fun addSelectedUnregisteredMappings(infos: List<MapInfo.UnregisteredMapping>) {
-    val items: MutableList<MapInfo> = mappingTableModel.items.toMutableList()
+  private fun addSelectedUnregisteredMappings(infos: List<RecordInfo.UnregisteredMapping>) {
+    val items = mappingTableModel.items.toMutableList()
     for (info in infos) {
       items.remove(info)
       items.add(createRegisteredInfo(info.mapping))
@@ -226,17 +226,17 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     mappingTableModel.items = items
   }
 
-  private fun sortAndAddSeparatorIfNeeded(items: MutableList<MapInfo>) {
-    items.removeIf { it is MapInfo.Header }
-    if (items.any { it is MapInfo.UnregisteredMapping }) {
-      items.add(MapInfo.UnregisteredHeader)
+  private fun sortAndAddSeparatorIfNeeded(items: MutableList<RecordInfo>) {
+    items.removeIf { it is RecordInfo.Header }
+    if (items.any { it is RecordInfo.UnregisteredMapping }) {
+      items.add(RecordInfo.UnregisteredHeader)
     }
-    items.sortWith(MAP_INFO_COMPARATOR)
+    items.sortWith(RECORD_INFO_COMPARATOR)
   }
 
   private fun editMapping() {
     val row = mappingTable.selectedRow
-    val info = mappingTable.getRow(row) as? MapInfo.RegisteredMappingInfo ?: return
+    val info = mappingTable.getRow(row) as? RecordInfo.RegisteredMappingInfo ?: return
 
     val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.remove.title"))
     dlg.mapping = info.mapping
@@ -244,7 +244,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
       val newMapping = dlg.mapping
       val items = mappingTableModel.items.toMutableList()
       items[row] = createRegisteredInfo(newMapping)
-      items.sortWith(MAP_INFO_COMPARATOR)
+      items.sortWith(RECORD_INFO_COMPARATOR)
       mappingTableModel.setItems(items)
     }
   }
@@ -256,7 +256,8 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     mappings.removeAll(selection.toSet())
 
     val removedValidRoots = selection.mapNotNull { info ->
-      if (info is MapInfo.ValidMapping && vcsRootCheckers[info.mapping.vcs] != null) MapInfo.UnregisteredMapping(info.mapping) else null
+      if (info is RecordInfo.ValidMapping && vcsRootCheckers[info.mapping.vcs] != null) RecordInfo.UnregisteredMapping(info.mapping)
+      else null
     }
     mappings.addAll(removedValidRoots)
     sortAndAddSeparatorIfNeeded(mappings)
@@ -320,8 +321,8 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     return panelForTable
   }
 
-  private fun getSelectedUnregisteredRoots(): List<MapInfo.UnregisteredMapping> {
-    return mappingTable.selection.filterIsInstance<MapInfo.UnregisteredMapping>()
+  private fun getSelectedUnregisteredRoots(): List<RecordInfo.UnregisteredMapping> {
+    return mappingTable.selection.filterIsInstance<RecordInfo.UnregisteredMapping>()
   }
 
   private fun rootsOfOneKindInSelection(): Boolean {
@@ -329,16 +330,16 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     if (selection.isEmpty()) {
       return true
     }
-    if (selection.size == 1 && selection.iterator().next() is MapInfo.Header) {
+    if (selection.size == 1 && selection.iterator().next() is RecordInfo.Header) {
       return true
     }
     val selectedRegisteredRoots = getSelectedRegisteredRoots()
     return selectedRegisteredRoots.size == selection.size || selectedRegisteredRoots.isEmpty()
   }
 
-  private fun getSelectedRegisteredRoots(): List<MapInfo.RegisteredMappingInfo> {
+  private fun getSelectedRegisteredRoots(): List<RecordInfo.RegisteredMappingInfo> {
     val selection = mappingTable.selection
-    return selection.filterIsInstance<MapInfo.RegisteredMappingInfo>()
+    return selection.filterIsInstance<RecordInfo.RegisteredMappingInfo>()
   }
 
   private fun onlyRegisteredRootsInSelection(): Boolean {
@@ -387,41 +388,42 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
   private fun getModelMappings(): List<VcsDirectoryMapping> {
     return mappingTableModel.items.mapNotNull { info ->
-      if (info is MapInfo.RegisteredMappingInfo) info.mapping else null
+      if (info is RecordInfo.RegisteredMappingInfo) info.mapping else null
     }
   }
 
-  private inner class MyDirectoryColumnInfo : ColumnInfo<MapInfo, MapInfo>(VcsBundle.message("column.info.configure.vcses.directory")) {
-    override fun valueOf(mapping: MapInfo): MapInfo {
+  private inner class MyDirectoryColumnInfo : ColumnInfo<RecordInfo, RecordInfo>(
+    VcsBundle.message("column.info.configure.vcses.directory")) {
+    override fun valueOf(mapping: RecordInfo): RecordInfo {
       return mapping
     }
 
-    override fun getRenderer(vcsDirectoryMapping: MapInfo): TableCellRenderer {
+    override fun getRenderer(vcsDirectoryMapping: RecordInfo): TableCellRenderer {
       return directoryRenderer
     }
   }
 
-  private inner class MyVcsColumnInfo : ColumnInfo<MapInfo, String>(VcsBundle.message("column.name.configure.vcses.vcs")) {
-    override fun valueOf(info: MapInfo): String {
-      return (info as? MapInfo.MappingInfo)?.mapping?.vcs.orEmpty()
+  private inner class MyVcsColumnInfo : ColumnInfo<RecordInfo, String>(VcsBundle.message("column.name.configure.vcses.vcs")) {
+    override fun valueOf(info: RecordInfo): String {
+      return (info as? RecordInfo.MappingInfo)?.mapping?.vcs.orEmpty()
     }
 
-    override fun isCellEditable(info: MapInfo): Boolean {
-      return info is MapInfo.RegisteredMappingInfo
+    override fun isCellEditable(info: RecordInfo): Boolean {
+      return info is RecordInfo.RegisteredMappingInfo
     }
 
-    override fun setValue(info: MapInfo, newVcs: String) {
-      if (info is MapInfo.RegisteredMappingInfo) {
+    override fun setValue(info: RecordInfo, newVcs: String) {
+      if (info is RecordInfo.RegisteredMappingInfo) {
         val oldMapping = info.mapping
         info.mapping = VcsDirectoryMapping(oldMapping.directory, newVcs, oldMapping.rootSettings)
       }
     }
 
-    override fun getRenderer(info: MapInfo): TableCellRenderer {
+    override fun getRenderer(info: RecordInfo): TableCellRenderer {
       return MyVcsRenderer(info, allSupportedVcss)
     }
 
-    override fun getEditor(o: MapInfo): TableCellEditor {
+    override fun getEditor(o: RecordInfo): TableCellEditor {
       return object : AbstractTableCellEditor() {
         override fun getCellEditorValue(): Any {
           val selectedVcs = vcsComboBox.item
@@ -493,41 +495,41 @@ private fun getPresentablePath(project: Project, mapping: VcsDirectoryMapping): 
   }
 }
 
-private fun getAttributes(info: MapInfo): SimpleTextAttributes {
+private fun getAttributes(info: RecordInfo): SimpleTextAttributes {
   when (info) {
-    is MapInfo.InvalidMapping -> {
+    is RecordInfo.InvalidMapping -> {
       return SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED)
     }
-    is MapInfo.UnregisteredMapping -> {
+    is RecordInfo.UnregisteredMapping -> {
       return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY)
     }
-    is MapInfo.Header -> {
+    is RecordInfo.Header -> {
       return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_SMALLER, null)
     }
-    is MapInfo.ValidMapping -> {
+    is RecordInfo.ValidMapping -> {
       return SimpleTextAttributes.REGULAR_ATTRIBUTES
     }
   }
 }
 
-private val MAP_INFO_COMPARATOR: Comparator<MapInfo> = compareBy<MapInfo> { info ->
+private val RECORD_INFO_COMPARATOR: Comparator<RecordInfo> = compareBy<RecordInfo> { info ->
   when (info) {
-    is MapInfo.ValidMapping -> 0
-    is MapInfo.InvalidMapping -> 1
-    is MapInfo.UnregisteredHeader -> 2
-    is MapInfo.UnregisteredMapping -> 3
+    is RecordInfo.ValidMapping -> 0
+    is RecordInfo.InvalidMapping -> 1
+    is RecordInfo.UnregisteredHeader -> 2
+    is RecordInfo.UnregisteredMapping -> 3
   }
-}.thenBy { info -> (info as? MapInfo.MappingInfo)?.mapping?.directory }
+}.thenBy { info -> (info as? RecordInfo.MappingInfo)?.mapping?.directory }
 
-private sealed interface MapInfo {
-  sealed class MappingInfo : MapInfo {
+private sealed interface RecordInfo {
+  sealed class MappingInfo : RecordInfo {
     abstract val mapping: VcsDirectoryMapping
     override fun toString(): String = mapping.toString()
   }
 
   sealed class RegisteredMappingInfo(override var mapping: VcsDirectoryMapping) : MappingInfo()
 
-  sealed class Header(val label: @Nls String) : MapInfo {
+  sealed class Header(val label: @Nls String) : RecordInfo {
     override fun toString(): String = ""
   }
 
