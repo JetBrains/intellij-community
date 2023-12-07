@@ -260,9 +260,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
                                              dataLoader = dataLoader,
                                              includeBase = includeBase)
 
-    "content" -> readContent(reader = reader,
-                             descriptor = descriptor,
-                             readContext = readContext)
+    "content" -> readContent(reader = reader, descriptor = descriptor, readContext = readContext)
     "dependencies" -> readDependencies(reader = reader, descriptor = descriptor, readContext = readContext)
 
     "depends" -> readOldDepends(reader, descriptor)
@@ -721,9 +719,7 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
   }
 }
 
-private fun readContent(reader: XMLStreamReader2,
-                        descriptor: RawPluginDescriptor,
-                        readContext: ReadModuleContext) {
+private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescriptor, readContext: ReadModuleContext) {
   reader.consumeChildElements { elementName ->
     when (elementName) {
       "module" -> {
