@@ -91,7 +91,7 @@ internal fun KtDeclarationContainer.findUsages(
     searchForText: Boolean,
     newPkgName: FqName
 ): List<UsageInfo> {
-    return allDeclarationsToUpdate.flatMap { it.findUsages(searchInCommentsAndStrings, searchForText, newPkgName) }
+    return topLevelDeclarationsToUpdate.flatMap { it.findUsages(searchInCommentsAndStrings, searchForText, newPkgName) }
 }
 
 /**
