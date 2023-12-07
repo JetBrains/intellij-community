@@ -11,6 +11,8 @@ enum class GitLabGQLQuery(val filePath: String) {
   GET_MERGE_REQUEST("graphql/query/getMergeRequest.graphql"),
   @SinceGitLab("13.1")
   FIND_MERGE_REQUESTS("graphql/query/findProjectMergeRequests.graphql"),
+  @SinceGitLab("14.7")
+  GET_MERGE_REQUEST_COMMITS("graphql/query/getMergeRequestCommits.graphql"),
   @SinceGitLab("12.3")
   GET_MERGE_REQUEST_DISCUSSIONS("graphql/query/getMergeRequestDiscussions.graphql"),
   @SinceGitLab("13.1", note = "No exact version")

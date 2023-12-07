@@ -8,6 +8,7 @@ import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.graphql.loadResponse
 import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
@@ -30,6 +31,24 @@ suspend fun GitLabApi.GraphQL.loadMergeRequestDiscussions(project: GitLabProject
 
 private class DiscussionConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabDiscussionDTO>)
   : GraphQLConnectionDTO<GitLabDiscussionDTO>(pageInfo, nodes)
+
+suspend fun GitLabApi.GraphQL.loadMergeRequestCommits(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  pagination: GraphQLRequestPagination? = null
+): GraphQLConnectionDTO<GitLabCommitDTO>? {
+  val parameters = pagination.orDefault().asParameters() + mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "mriid" to mrIid
+  )
+  val request = gitLabQuery(GitLabGQLQuery.GET_MERGE_REQUEST_COMMITS, parameters)
+  return withErrorStats(GitLabGQLQuery.GET_MERGE_REQUEST_COMMITS) {
+    loadResponse<CommitConnection>(request, "project", "mergeRequest", "commits").body()
+  }
+}
+
+private class CommitConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCommitDTO>)
+  : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
 
 suspend fun GitLabApi.GraphQL.changeMergeRequestDiscussionResolve(
   discussionId: String,

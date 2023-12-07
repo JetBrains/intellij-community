@@ -21,6 +21,7 @@ import git4idea.fetch.GitFetchSupport
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
@@ -31,7 +32,7 @@ interface GitLabMergeRequestChanges {
   /**
    * List of merge request commits
    */
-  val commits: List<GitLabCommit>
+  val commits: Deferred<List<GitLabCommit>>
 
   /**
    * Load and parse changes diffs
@@ -50,6 +51,7 @@ class GitLabMergeRequestChangesImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
+  private val glMetadata: GitLabServerMetadata?,
   private val projectMapping: GitLabProjectMapping,
   private val mergeRequestDetails: GitLabMergeRequestFullDetails
 ) : GitLabMergeRequestChanges {
@@ -58,10 +60,23 @@ class GitLabMergeRequestChangesImpl(
 
   private val glProject = projectMapping.repository
 
-  override val commits: List<GitLabCommit> = mergeRequestDetails.commits.asReversed()
+  override val commits: Deferred<List<GitLabCommit>> = cs.async {
+    if (glMetadata != null && glMetadata.version < GitLabVersion(14, 7)) {
+      val initialURI = api.getMergeRequestCommitsURI(glProject, mergeRequestDetails.iid)
+      return@async ApiPageUtil.createPagesFlowByLinkHeader(initialURI) { uri -> api.rest.loadMergeRequestCommits(uri) }
+        .map { it.body() ?: emptyList() }
+        .foldToList(GitLabCommit.Companion::fromRestDTO)
+        .asReversed()
+    }
+
+    ApiPageUtil.createGQLPagesFlow { pagination -> api.graphQL.loadMergeRequestCommits(glProject, mergeRequestDetails.iid, pagination) }
+      .map { page -> page.nodes }
+      .foldToList(GitLabCommit.Companion::fromGraphQLDTO)
+      .asReversed()
+  }
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
-    loadChanges(commits)
+    loadChanges(commits.await())
   }
 
   override suspend fun getParsedChanges(): GitBranchComparisonResult = parsedChanges.await()
@@ -101,7 +116,7 @@ class GitLabMergeRequestChangesImpl(
   }
 
   override suspend fun ensureAllRevisionsFetched() {
-    val revsToCheck = commits.map { it.sha }.toMutableList()
+    val revsToCheck = commits.await().map { it.sha }.toMutableList()
     mergeRequestDetails.diffRefs?.baseSha?.also {
       revsToCheck.add(it)
     }

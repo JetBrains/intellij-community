@@ -19,12 +19,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
-import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitRestDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestByBranchDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.findMergeRequestsByBranch
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestCommits
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -90,32 +88,14 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
       reloadMergeRequest
         .filter { requestedId -> requestedId == iid }
         .withInitial(iid)
-        .map { mrId ->
-          runCatchingUser {
-            // TODO: create from cached details
-            val mrData: GitLabMergeRequestDTO = loadMergeRequest(mrId)
-            val commits: List<GitLabCommitRestDTO> = if (mrData.commits == null) {
-              api.rest.getMergeRequestCommits(projectMapping.repository, mrId).body() ?: listOf()
-            }
-            else {
-              listOf()
-            }
-            MergeRequestData(mrData, commits)
-          }
-        }
+        .map { mrId -> runCatchingUser { loadMergeRequest(mrId) } } // TODO: create from cached details
         .transformConsecutiveSuccesses {
-          mapScoped { (mrData, commits) ->
-            LoadedGitLabMergeRequest(project, this, api, glMetadata, projectMapping, mrData, commits)
-          }
-        }.shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
+          mapScoped { mrData -> LoadedGitLabMergeRequest(project, this, api, glMetadata, projectMapping, mrData) }
+        }
+        .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
       // this the model will only be alive while it's needed
     }
   }
-
-  private data class MergeRequestData(
-    val data: GitLabMergeRequestDTO,
-    val backupCommits: List<GitLabCommitRestDTO>
-  )
 
   override suspend fun findByBranches(sourceBranchName: String, targetBranchName: String?): List<GitLabMergeRequestByBranchDTO> =
     withContext(Dispatchers.IO) {

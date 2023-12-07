@@ -38,7 +38,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 17)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 18)
 
   /**
    * Server metadata was fetched
@@ -286,6 +286,7 @@ enum class GitLabApiRequestName {
   GQL_GET_CURRENT_USER,
   GQL_GET_MERGE_REQUEST,
   GQL_FIND_MERGE_REQUEST,
+  GQL_GET_MERGE_REQUEST_COMMITS,
   GQL_GET_MERGE_REQUEST_DISCUSSIONS,
   GQL_GET_PROJECT_LABELS,
   GQL_GET_PROJECT_REPOSITORY,
@@ -312,6 +313,7 @@ enum class GitLabApiRequestName {
       GitLabGQLQuery.GET_CURRENT_USER -> GQL_GET_CURRENT_USER
       GitLabGQLQuery.GET_MERGE_REQUEST -> GQL_GET_MERGE_REQUEST
       GitLabGQLQuery.FIND_MERGE_REQUESTS -> GQL_FIND_MERGE_REQUEST
+      GitLabGQLQuery.GET_MERGE_REQUEST_COMMITS -> GQL_GET_MERGE_REQUEST_COMMITS
       GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS -> GQL_GET_MERGE_REQUEST_DISCUSSIONS
       GitLabGQLQuery.GET_PROJECT_LABELS -> GQL_GET_PROJECT_LABELS
       GitLabGQLQuery.GET_PROJECT_REPOSITORY -> GQL_GET_PROJECT_REPOSITORY

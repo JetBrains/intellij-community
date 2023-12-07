@@ -35,11 +35,11 @@ import kotlin.random.Random
  */
 class GitLabApiTest : GitLabApiTestCase() {
   @Test
-  fun `REST getMergeRequestCommits works as expected`() = runTest {
+  fun `REST loadMergeRequestCommits works as expected`() = runTest {
     checkVersion(after(v(9, 0)))
 
     requiresAuthentication { api ->
-      val commits = api.rest.getMergeRequestCommits(glTest1Coordinates, "2").body()
+      val commits = api.rest.loadMergeRequestCommits(api.getMergeRequestCommitsURI(glTest1Coordinates, "2")).body()
 
       assertEquals(glTest1Mr2CommitShortShas, commits.map { it.shortId })
     }

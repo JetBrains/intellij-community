@@ -59,7 +59,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   }
 
   override val reviewCommits: SharedFlow<List<GitLabCommit>> =
-    mergeRequest.changes.map { it.commits }.modelFlow(cs, LOG)
+    mergeRequest.changes.map { it.commits.await() }.modelFlow(cs, LOG)
 
   override val selectedCommitIndex: SharedFlow<Int> = reviewCommits.combine(delegate.selectedCommit) { commits, sha ->
     if (sha == null) -1
