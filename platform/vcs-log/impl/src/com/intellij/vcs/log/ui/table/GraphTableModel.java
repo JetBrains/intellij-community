@@ -143,6 +143,11 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
     return ContainerUtil.filter(getRefsAtRow(row), ref -> ref.getType().isBranch());
   }
 
+  /**
+   * @deprecated get cached commit details by commit id ({@link VcsLogCommitListModel#getId(int)})
+   *             from {@link VcsLogDataProvider#getFullCommitDetailsCache()}.
+   */
+  @Deprecated
   public @NotNull VcsFullCommitDetails getFullDetails(int row) {
     return myLogData.getCommitDetailsGetter().getCachedDataOrPlaceholder(getId(row));
   }
