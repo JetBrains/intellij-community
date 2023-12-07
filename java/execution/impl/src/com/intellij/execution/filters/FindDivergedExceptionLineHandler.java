@@ -298,8 +298,29 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
     MetaInfo metaInfo = new MetaInfo(className, methodName, callType);
 
     if (skipByRefiner(file, refiner, lineStart, lineEnd)) return null;
-
+    if (fromReflection(refiner) || isInReflection(className)) return null;
     return new FindDivergedExceptionLineHandler(file, metaInfo, refiner, targetEditor);
+  }
+
+  private static final Set<String> reflectionPackages = Set.of("java.lang.reflect", "java.lang.invoke", "jdk.internal.reflect");
+  private static boolean fromReflection(@NotNull ExceptionLineRefiner refiner) {
+    if (refiner instanceof ExceptionLineParserImpl.StackFrameMatcher stackFrameMatcher) {
+      String className = stackFrameMatcher.getClassName();
+      if (className == null) {
+        return false;
+      }
+      if (isInReflection(className)) return true;
+    }
+    return false;
+  }
+
+  private static boolean isInReflection(@NotNull String className) {
+    for (String reflectionPackage : reflectionPackages) {
+      if (className.contains(reflectionPackage)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -362,7 +383,7 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
     int classAdditionalInfoIndex = className.indexOf("$");
     if (classAdditionalInfoIndex != -1) {
       String shortName = getShortName(className, '$');
-      if (shortName.length() == 0) {
+      if (shortName.isEmpty()) {
         return true;
       }
       if (Character.isDigit(shortName.charAt(0))) {

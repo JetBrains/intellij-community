@@ -154,10 +154,14 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
     return myInfo;
   }
 
-  private static final class StackFrameMatcher implements ExceptionLineRefiner {
+  static final class StackFrameMatcher implements ExceptionLineRefiner {
     private final @NonNls String myMethodName;
     private final @NonNls String myClassName;
     private final boolean myHasDollarInName;
+
+    String getClassName() {
+      return myClassName;
+    }
 
     private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {
       myMethodName = info.methodNameRange.substring(line);
@@ -271,7 +275,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) return null;
       Set<ExceptionLineRefiner.RefinerMatchResult> matchResults = getExceptionOrigin(psiFile, lineStart, lineEnd);
-      if (matchResults.size() == 0) {
+      if (matchResults.isEmpty()) {
         return FindDivergedExceptionLineHandler.createLinkInfo(psiFile, myClassName, myMethod, myElementMatcher, lineStart, lineEnd,
                                                                targetEditor);
       }
