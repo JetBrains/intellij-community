@@ -1071,6 +1071,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam2.kt");
         }
 
+        @TestMetadata("propertyParam3.kt")
+        public void testPropertyParam3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam3.kt");
+        }
+
         @TestMetadata("safeUsages1.kt")
         public void testSafeUsages1() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsages1.kt");

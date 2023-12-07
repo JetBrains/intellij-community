@@ -19,7 +19,6 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -28,11 +27,14 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinK2RefactoringsBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.canDeleteElement
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.*
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -168,19 +170,47 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         ktElement: KtElement
     ) {
         if (ktElement is KtConstructor<*>) {
-            val lightMethod = ktElement.toLightMethods().filterIsInstance<KtLightMethod>().firstOrNull() ?: return
-            MethodReferencesSearch.search(lightMethod, lightMethod.useScope, true).forEach(Processor {
-                JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
-                    ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
-                return@Processor true
-            })
-        } else {
-            ReferencesSearch.search(ktElement).forEach(Processor {
-                JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
-                    ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
-                return@Processor true
-            })
+            val containingClass = ktElement.containingClass() ?: return
+
+            val directInheritors = DirectKotlinClassInheritorsSearch.search(containingClass).findAll()
+            if (directInheritors.any { it !is KtElement }) {
+                val lightMethod = ktElement.toLightMethods().filterIsInstance<KtLightMethod>().firstOrNull() ?: return
+                MethodReferencesSearch.search(lightMethod, lightMethod.useScope, true).forEach(Processor {
+                    JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
+                        ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
+                    return@Processor true
+                })
+                return
+            }
+
+            fun processDelegatingReferences(ktClass: KtClass) {
+                ktClass.secondaryConstructors.forEach { c ->
+                    if (c != ktElement) {
+                        val delegationCall = c.getDelegationCallOrNull()
+                        val reference = delegationCall?.calleeExpression?.mainReference
+                        if (reference != null && reference.resolve() == ktElement) {
+                            JavaSafeDeleteDelegate.EP.forLanguage(reference.element.language)
+                                ?.createUsageInfoForParameter(reference, result, element, parameterIndexAsJavaCall, element.isVarArg)
+                        }
+                    }
+                }
+            }
+
+            processDelegatingReferences(containingClass)
+            for (inheritor in directInheritors) {
+                (inheritor as? KtClass)?.let { processDelegatingReferences(it) }
+            }
+
+            //to find constructor calls in java, one needs to perform class search
+            findCallArgumentsToDelete(result, element, parameterIndexAsJavaCall, containingClass)
         }
+
+
+        ReferencesSearch.search(ktElement).forEach(Processor {
+            JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
+                ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
+            return@Processor true
+        })
     }
 
     override fun getElementsToSearch(
