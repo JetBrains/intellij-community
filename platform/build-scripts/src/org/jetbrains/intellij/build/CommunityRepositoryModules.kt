@@ -369,7 +369,7 @@ object CommunityRepositoryModules {
     return createAndroidPluginLayout(mainModuleName, additionalModulesToJars, allPlatforms, addition)
   }
 
-  private val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
+  val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
     // todo notarization
     //SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
     //SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
