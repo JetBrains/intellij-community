@@ -147,7 +147,7 @@ class ExternalEntityMappingTest {
 
     val diff = createBuilderFrom(builder.toSnapshot())
 
-    val entities = diff.indexes.externalMappings[INDEX_ID]!!.index.build()
+    val entities = diff.indexes.externalMappings[INDEX_ID]!!.index
     entities.forEach { key, value ->
       val myEntity = diff.entityDataByIdOrDie(key).createEntity(diff)
       diff.getMutableExternalMapping<WorkspaceEntity>(INDEX_ID).removeMapping(myEntity)

@@ -57,7 +57,7 @@ internal open class StorageIndexes(
 
     // Assert external mappings
     for ((_, mappings) in externalMappings) {
-      mappings.index.forEach { id, _ ->
+      for ((id, _) in mappings.index) {
         assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
       }
     }

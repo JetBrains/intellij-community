@@ -8,13 +8,12 @@ import com.intellij.platform.workspace.storage.ExternalEntityMapping
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.impl.containers.PersistentBidirectionalMap
-import com.intellij.platform.workspace.storage.impl.containers.PersistentBidirectionalMapImpl
+import com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import java.util.*
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal open class ExternalEntityMappingImpl<T> internal constructor(internal open val index: PersistentBidirectionalMap<EntityId, T>)
+internal open class ExternalEntityMappingImpl<T> internal constructor(internal open val index: BidirectionalMap<EntityId, T>)
   : ExternalEntityMapping<T> {
   protected lateinit var entityStorage: AbstractEntityStorage
 
@@ -46,23 +45,27 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
   }
 
   override fun forEach(action: (key: WorkspaceEntity, value: T) -> Unit) {
-    index.forEach { key, value -> action(entityStorage.entityDataByIdOrDie(key).createEntity(entityStorage), value) }
+    index.forEach { (key, value) -> action(entityStorage.entityDataByIdOrDie(key).createEntity(entityStorage), value) }
   }
 }
 
 internal class MutableExternalEntityMappingImpl<T> private constructor(
-  override var index: PersistentBidirectionalMap.Builder<EntityId, T>,
+  // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
+  override var index: BidirectionalMap<EntityId, T>,
   internal var indexLogBunches: IndexLog,
+  private var freezed: Boolean
 ) : ExternalEntityMappingImpl<T>(index), MutableExternalEntityMapping<T> {
 
-  constructor() : this(PersistentBidirectionalMapImpl<EntityId, T>().builder(), IndexLog(LinkedHashMap()))
+  constructor() : this(BidirectionalMap<EntityId, T>(), IndexLog(LinkedHashMap()), false)
 
   override fun addMapping(entity: WorkspaceEntity, data: T) {
+    startWrite()
     add((entity as WorkspaceEntityBase).id, data)
     (entityStorage as MutableEntityStorageImpl).incModificationCount()
   }
 
   internal fun add(id: EntityId, data: T) {
+    startWrite()
     val removedValue = index.put(id, data)
     if (removedValue != null) {
       indexLogBunches.add(id, IndexLogRecord.Remove(id))
@@ -79,6 +82,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   override fun addIfAbsent(entity: WorkspaceEntity, data: T): Boolean {
+    startWrite()
     entity as WorkspaceEntityBase
     return if (entity.id !in index) {
       add(entity.id, data)
@@ -88,6 +92,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
   override fun getOrPutDataByEntity(entity: WorkspaceEntity, defaultValue: () -> T): T {
     return getDataByEntity(entity) ?: run {
+      startWrite()
       val defaultVal = defaultValue()
       add((entity as WorkspaceEntityBase).id, defaultVal)
       defaultVal
@@ -95,6 +100,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   override fun removeMapping(entity: WorkspaceEntity): T? {
+    startWrite()
     entity as WorkspaceEntityBase
     val removed = remove(entity.id)
     (entityStorage as MutableEntityStorageImpl).incModificationCount()
@@ -102,6 +108,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   internal fun remove(id: EntityId): T? {
+    startWrite()
     LOG.trace { "Remove $id from external index" }
     val removed = index.remove(id)
     if (removed != null) {
@@ -148,8 +155,16 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     return if (sourceId != null) null else id
   }
 
+  private fun startWrite() {
+    if (!freezed) return
+    this.index = this.index.copy()
+    this.indexLogBunches = IndexLog(LinkedHashMap(this.indexLogBunches.changes))
+    this.freezed = false
+  }
+
   private fun toImmutable(): ExternalEntityMappingImpl<T> {
-    return ExternalEntityMappingImpl(this.index.build())
+    this.freezed = true
+    return ExternalEntityMappingImpl(this.index)
   }
 
   internal sealed class IndexLogRecord {
@@ -213,8 +228,8 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     fun fromMap(other: Map<String, ExternalEntityMappingImpl<*>>): MutableMap<String, MutableExternalEntityMappingImpl<*>> {
       val result = mutableMapOf<String, MutableExternalEntityMappingImpl<*>>()
       other.forEach { (identifier, index) ->
-        if (index is MutableExternalEntityMappingImpl) error("Cannot create mutable index from mutable index")
-        result[identifier] = MutableExternalEntityMappingImpl((index.index as PersistentBidirectionalMap.Immutable).builder(), IndexLog(LinkedHashMap()))
+        if (index is MutableExternalEntityMappingImpl) index.freezed = true
+        result[identifier] = MutableExternalEntityMappingImpl(index.index, IndexLog(LinkedHashMap()), true)
       }
       return result
     }
