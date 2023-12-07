@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.ApplicationInitializedListener
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -12,6 +11,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.settings.CacheStateTag
+import com.intellij.platform.settings.SettingDescriptor
+import com.intellij.platform.settings.SettingsController
+import com.intellij.platform.settings.settingDescriptor
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -20,20 +23,21 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
 
-private const val SAVED_VERSION_KEY = "bundled.plugins.list.saved.version"
-
 private val LOG: Logger
   get() = logger<BundledPluginsState>()
 
 @ApiStatus.Internal
 const val BUNDLED_PLUGINS_FILENAME: String = "bundled_plugins.txt"
 
-private fun getSavedBuildNumber(propertyManager: PropertiesComponent): BuildNumber? {
-  return propertyManager.getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) }
+private suspend fun getSavedBuildNumber(settingsController: SettingsController,
+                                        settingDescriptor: SettingDescriptor<String>): BuildNumber? {
+  return settingsController.getItem(settingDescriptor)?.let { BuildNumber.fromString(it) }
 }
 
-internal fun setSavedBuildNumber(value: BuildNumber?, propertyManager: PropertiesComponent) {
-  propertyManager.setValue(SAVED_VERSION_KEY, value?.asString())
+internal suspend fun setSavedBuildNumber(value: BuildNumber?,
+                                         settingsController: SettingsController,
+                                         settingDescriptor: SettingDescriptor<String>) {
+  settingsController.setItem(settingDescriptor, value?.asString())
 }
 
 @ApiStatus.Internal
@@ -56,8 +60,12 @@ class BundledPluginsState : ApplicationInitializedListener {
 
 @VisibleForTesting
 suspend fun saveBundledPluginsState() {
-  val propertyManager = serviceAsync<PropertiesComponent>()
-  val savedBuildNumber = getSavedBuildNumber(propertyManager)
+  val settingsController = serviceAsync<SettingsController>()
+  val settingsDescriptor = settingDescriptor("bundled.plugins.list.saved.version", PluginManagerCore.CORE_ID) {
+    tags = listOf(CacheStateTag)
+  }
+
+  val savedBuildNumber = getSavedBuildNumber(settingsController, settingsDescriptor)
   val currentBuildNumber = ApplicationInfo.getInstance().build
 
   val shouldSave = savedBuildNumber == null ||
@@ -71,7 +79,7 @@ suspend fun saveBundledPluginsState() {
   withContext(Dispatchers.IO) {
     try {
       writePluginIdsToFile(bundledPluginIds)
-      setSavedBuildNumber(currentBuildNumber, propertyManager)
+      setSavedBuildNumber(currentBuildNumber, settingsController, settingsDescriptor)
     }
     catch (e: IOException) {
       LOG.warn("Unable to save bundled plugins list", e)
