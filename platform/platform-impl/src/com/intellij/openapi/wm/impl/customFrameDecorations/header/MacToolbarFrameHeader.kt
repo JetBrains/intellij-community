@@ -21,7 +21,9 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.UIBundle
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
 import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.*
@@ -36,9 +38,10 @@ import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.JRootPane
-import javax.swing.border.EmptyBorder
+import kotlin.math.roundToInt
 
-private const val GAP_FOR_BUTTONS = 80
+// Fullscreen controls have fixed 52 points width, and scalable 13 points left and right gaps
+private val GAP_FOR_BUTTONS: Int get() = 26 +  JBValue.Float(52f, true).unscaled.roundToInt()
 
 internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
                                      private val frame: JFrame,
@@ -181,14 +184,11 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   override fun getComponent(): JComponent = this
 
   private fun updateBorders() {
-    if (isFullScreen(rootPane)) {
-      // We consider GAP_FOR_BUTTONS as pre-scaled, because custom fullscreen controls don't change occupied space on scaling.
-      val leftInset =  if (MacFullScreenControlsManager.enabled()) GAP_FOR_BUTTONS else JBUI.scale(5)
-      view.updateBorders(leftInset, 0)
+    if (isFullScreen(rootPane) && !MacFullScreenControlsManager.enabled()) {
+      view.updateBorders(5, 0)
     }
     else {
-      // customTitleBar left inset is pre-scaled, and it's considered inside ToolbarHeaderView
-      view.updateBorders(customTitleBar?.leftInset?.toInt()?.takeIf { it > 0 } ?: GAP_FOR_BUTTONS, 0)
+      view.updateBorders(GAP_FOR_BUTTONS, 0)
     }
   }
 
@@ -263,9 +263,7 @@ private class ToolbarHeaderView(private val container: JPanel, parentCoroutineSc
   }
 
   override fun updateBorders(left: Int, right: Int) {
-    @Suppress("UseDPIAwareBorders")
-    // We expect pre-scaled values here
-    container.border = EmptyBorder(0, left, 0, right)
+    container.border = JBEmptyBorder(0, left, 0, right)
   }
 }
 
