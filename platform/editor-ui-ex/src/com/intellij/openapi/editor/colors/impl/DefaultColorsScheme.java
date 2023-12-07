@@ -21,7 +21,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
 
   @Override
   public @Nullable TextAttributes getAttributes(TextAttributesKey key) {
-    return key == null ? null : getAttributes(key, true);
+    return key == null ? null : getAttributes(key, isUseDefaults());
   }
 
   public @Nullable TextAttributes getAttributes(@NotNull TextAttributesKey key, boolean useDefaults) {
@@ -44,7 +44,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
 
   @Override
   public @Nullable Color getColor(@Nullable ColorKey key) {
-    return key == null ? null : getColor(key, true);
+    return key == null ? null : getColor(key, isUseDefaults());
   }
 
   public @Nullable Color getColor(@NotNull ColorKey key, boolean useDefaults) {

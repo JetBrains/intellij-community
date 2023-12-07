@@ -504,7 +504,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
         property.key == "originalScheme" && property.value == themeName
       }
     }.forEach { theme ->
-      val isSchemeCustomized = (theme as? AbstractColorsScheme)?.settingsEqual(intellijLightScheme, null, true) != true
+      val isSchemeCustomized = (theme as? AbstractColorsScheme)?.settingsEqual(intellijLightScheme, null, true, false) != true
       if (isSchemeCustomized) {
         noIntellijLightCustomThemes = false
         return@forEach

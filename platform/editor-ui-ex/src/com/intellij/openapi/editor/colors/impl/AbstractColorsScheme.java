@@ -90,6 +90,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   // version influences an XML format and triggers migration
   private int version = CURR_VERSION;
   private Color deprecatedBackgroundColor = null;
+  private boolean useDefaults = true;
 
   //endregion
 
@@ -930,6 +931,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter, boolean ignoreMetaInfo) {
+    return settingsEqual(other, colorKeyFilter, false, true);
+  }
+
+  public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter, boolean ignoreMetaInfo, boolean useDefaults) {
     if (!(other instanceof AbstractColorsScheme otherScheme)) {
       return false;
     }
@@ -955,10 +960,20 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       }
     }
 
-    return areDelegatingOrEqual(fontPreferences, otherScheme.getFontPreferences()) &&
+    //this made to make possible compare color schemes inside EditorColorManager
+    //to prevent cyclic init (getDefaultAttributes uses EditorColorManager.getInstance)
+    this.setUseDefaults(useDefaults);
+    otherScheme.setUseDefaults(useDefaults);
+
+    boolean result = areDelegatingOrEqual(fontPreferences, otherScheme.getFontPreferences()) &&
            areDelegatingOrEqual(consoleFontPreferences, otherScheme.getConsoleFontPreferences()) &&
            attributesEqual(otherScheme) &&
            colorsEqual(otherScheme, colorKeyFilter);
+
+    this.setUseDefaults(true);
+    otherScheme.setUseDefaults(true);
+
+    return result;
   }
 
   protected boolean attributesEqual(AbstractColorsScheme otherScheme) {
@@ -1005,6 +1020,18 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   void copyMissingAttributes(@NotNull AbstractColorsScheme sourceScheme) {
     sourceScheme.colorMap.forEach((key, color) -> colorMap.putIfAbsent(key, color));
     sourceScheme.attributesMap.forEach((key, attributes) -> attributesMap.putIfAbsent(key, attributes));
+  }
+
+  public boolean isUseDefaults() {
+    return useDefaults;
+  }
+
+  public void setUseDefaults(boolean useDefaults) {
+
+    this.useDefaults = useDefaults;
+    if (parentScheme != null && parentScheme instanceof AbstractColorsScheme abstractColorsScheme) {
+      abstractColorsScheme.setUseDefaults(useDefaults);
+    }
   }
 
   private static @NotNull EditorColorsScheme getDefaultScheme(@NotNull String name) {
