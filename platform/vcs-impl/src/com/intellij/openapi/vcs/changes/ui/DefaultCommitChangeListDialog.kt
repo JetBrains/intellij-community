@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
@@ -20,7 +19,7 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.border.EmptyBorder
 
-class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : CommitChangeListDialog(workflow) {
+class DefaultCommitChangeListDialog(val workflow: SingleChangeListCommitWorkflow) : CommitChangeListDialog(workflow) {
   private val changeListEventDispatcher = EventDispatcher.create(SingleChangeListCommitWorkflowUi.ChangeListListener::class.java)
 
   private val browser = MultipleLocalChangeListsBrowser(project, workflow.vcses, true, true,
@@ -36,7 +35,7 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
     val initialChangeList = workflow.initialChangeList
     if (initialChangeList != null) browser.selectedChangeList = initialChangeList
     browser.viewer.rebuildTree()
-    browser.viewer.setKeepTreeState(true)
+    browser.viewer.isKeepTreeState = true
 
     browser.setBottomDiffComponent {
       DiffCommitMessageEditor(project, commitMessageComponent).also { editor ->
@@ -51,6 +50,12 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
         this@DefaultCommitChangeListDialog.changeListChanged()
       }
     }, this)
+  }
+
+  override fun afterInit() {
+    super.afterInit()
+
+    browser.viewer.resetTreeState()
   }
 
   override fun createCenterPanel(): JComponent =

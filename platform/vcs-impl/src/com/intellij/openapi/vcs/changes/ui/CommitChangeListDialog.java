@@ -389,7 +389,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     updateWarning();
   }
 
-  private void afterInit() {
+  protected void afterInit() {
     updateButtons();
     updateLegend();
     myCommitMessageArea.setChangesSupplier(new ChangeListChangesSupplier(getChangeList()));
