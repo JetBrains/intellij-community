@@ -201,6 +201,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               }
             }.gap(RightGap.SMALL)
 
+          if (IdeScaleTransformer.Settings.allowAnyZoomValuesInSettings) {
+            zoomComboBox.applyToComponent {
+              isEditable = true
+            }
+          }
+
           val zoomInString = KeymapUtil.getShortcutTextOrNull("ZoomInIdeAction")
           val zoomOutString = KeymapUtil.getShortcutTextOrNull("ZoomOutIdeAction")
           val resetScaleString = KeymapUtil.getShortcutTextOrNull("ResetIdeScaleAction")

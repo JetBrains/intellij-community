@@ -8,6 +8,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBScalableIcon
@@ -298,7 +299,8 @@ object JBUIScale {
 
     // downgrading user scale below 1.0 may be uncomfortable (tiny icons),
     // whereas some users prefer font size slightly below normal, which is ok
-    if (scale < 1 && systemScaleFactor.value >= 1) {
+    if (!Registry.`is`("ide.scale.editable.combobox", false)
+        && scale < 1 && systemScaleFactor.value >= 1) {
       scale = 1f
     }
 
