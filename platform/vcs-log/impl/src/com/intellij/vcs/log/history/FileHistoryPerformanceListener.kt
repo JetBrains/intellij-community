@@ -4,15 +4,13 @@ package com.intellij.vcs.log.history
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-@Experimental
 interface FileHistoryPerformanceListener {
 
   companion object {
-    @JvmStatic
+    @JvmField
     val EP_NAME = ExtensionPointName.create<FileHistoryPerformanceListener>("com.intellij.fileHistoryPerformanceListener")
   }
 

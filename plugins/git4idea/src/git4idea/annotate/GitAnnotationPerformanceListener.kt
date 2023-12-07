@@ -5,15 +5,13 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-@Experimental
 interface GitAnnotationPerformanceListener {
 
   companion object {
-    @JvmStatic
+    @JvmField
     val EP_NAME = ExtensionPointName.create<GitAnnotationPerformanceListener>("Git4Idea.gitAnnotationPerformanceListener")
   }
 
