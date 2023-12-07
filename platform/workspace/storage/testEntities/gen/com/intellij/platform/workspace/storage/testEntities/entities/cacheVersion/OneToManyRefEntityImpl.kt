@@ -36,13 +36,19 @@ open class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntityData
   }
 
   override val someData: OneToManyRefDataClass
-    get() = dataSource.someData
+    get() {
+      readField("someData")
+      return dataSource.someData
+    }
 
   override val anotherEntity: List<AnotherOneToManyRefEntity>
     get() = snapshot.extractOneToManyChildren<AnotherOneToManyRefEntity>(ANOTHERENTITY_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

@@ -43,13 +43,22 @@ open class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCustomIml
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
   override val rootManagerTagCustomData: String?
-    get() = dataSource.rootManagerTagCustomData
+    get() {
+      readField("rootManagerTagCustomData")
+      return dataSource.rootManagerTagCustomData
+    }
 
   override val customModuleOptions: Map<String, String>
-    get() = dataSource.customModuleOptions
+    get() {
+      readField("customModuleOptions")
+      return dataSource.customModuleOptions
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

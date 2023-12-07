@@ -67,13 +67,22 @@ open class CustomPackagingElementEntityImpl(private val dataSource: CustomPackag
     get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val typeId: String
-    get() = dataSource.typeId
+    get() {
+      readField("typeId")
+      return dataSource.typeId
+    }
 
   override val propertiesXmlTag: String
-    get() = dataSource.propertiesXmlTag
+    get() {
+      readField("propertiesXmlTag")
+      return dataSource.propertiesXmlTag
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

@@ -40,26 +40,48 @@ open class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWithSymb
 
   }
 
-  override val booleanProperty: Boolean get() = dataSource.booleanProperty
+  override val booleanProperty: Boolean
+    get() {
+      readField("booleanProperty")
+      return dataSource.booleanProperty
+    }
   override val stringProperty: String
-    get() = dataSource.stringProperty
+    get() {
+      readField("stringProperty")
+      return dataSource.stringProperty
+    }
 
   override val stringListProperty: List<String>
-    get() = dataSource.stringListProperty
+    get() {
+      readField("stringListProperty")
+      return dataSource.stringListProperty
+    }
 
   override val stringMapProperty: Map<String, String>
-    get() = dataSource.stringMapProperty
+    get() {
+      readField("stringMapProperty")
+      return dataSource.stringMapProperty
+    }
   override val fileProperty: VirtualFileUrl
-    get() = dataSource.fileProperty
+    get() {
+      readField("fileProperty")
+      return dataSource.fileProperty
+    }
 
   override val children: List<ChildWpidSampleEntity>
     get() = snapshot.extractOneToManyChildren<ChildWpidSampleEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val nullableData: String?
-    get() = dataSource.nullableData
+    get() {
+      readField("nullableData")
+      return dataSource.nullableData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

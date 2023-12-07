@@ -39,7 +39,10 @@ open class OoParentEntityImpl(private val dataSource: OoParentEntityData) : OoPa
   }
 
   override val parentProperty: String
-    get() = dataSource.parentProperty
+    get() {
+      readField("parentProperty")
+      return dataSource.parentProperty
+    }
 
   override val child: OoChildEntity?
     get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)
@@ -48,7 +51,10 @@ open class OoParentEntityImpl(private val dataSource: OoParentEntityData) : OoPa
     get() = snapshot.extractOneToOneChild(ANOTHERCHILD_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

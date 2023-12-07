@@ -31,10 +31,16 @@ open class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData) : 
   }
 
   override val url: VirtualFileUrl
-    get() = dataSource.url
+    get() {
+      readField("url")
+      return dataSource.url
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

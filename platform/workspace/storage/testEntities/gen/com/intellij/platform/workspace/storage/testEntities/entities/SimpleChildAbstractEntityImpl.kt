@@ -41,7 +41,10 @@ open class SimpleChildAbstractEntityImpl(private val dataSource: SimpleChildAbst
     get() = snapshot.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

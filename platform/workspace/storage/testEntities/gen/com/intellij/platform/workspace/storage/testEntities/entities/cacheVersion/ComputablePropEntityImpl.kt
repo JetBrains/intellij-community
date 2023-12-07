@@ -32,12 +32,22 @@ open class ComputablePropEntityImpl(private val dataSource: ComputablePropEntity
   }
 
   override val list: List<Map<List<Int?>, String>>
-    get() = dataSource.list
+    get() {
+      readField("list")
+      return dataSource.list
+    }
 
-  override val value: Int get() = dataSource.value
+  override val value: Int
+    get() {
+      readField("value")
+      return dataSource.value
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

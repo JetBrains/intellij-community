@@ -36,10 +36,17 @@ open class SecondSampleEntityImpl(private val dataSource: SecondSampleEntityData
 
   }
 
-  override val intProperty: Int get() = dataSource.intProperty
+  override val intProperty: Int
+    get() {
+      readField("intProperty")
+      return dataSource.intProperty
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

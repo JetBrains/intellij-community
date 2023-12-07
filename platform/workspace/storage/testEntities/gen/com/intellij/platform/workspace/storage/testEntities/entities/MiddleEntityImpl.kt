@@ -39,10 +39,16 @@ open class MiddleEntityImpl(private val dataSource: MiddleEntityData) : MiddleEn
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
   override val property: String
-    get() = dataSource.property
+    get() {
+      readField("property")
+      return dataSource.property
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

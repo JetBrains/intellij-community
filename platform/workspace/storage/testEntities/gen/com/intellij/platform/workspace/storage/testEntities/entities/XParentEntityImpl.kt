@@ -42,7 +42,10 @@ open class XParentEntityImpl(private val dataSource: XParentEntityData) : XParen
   }
 
   override val parentProperty: String
-    get() = dataSource.parentProperty
+    get() {
+      readField("parentProperty")
+      return dataSource.parentProperty
+    }
 
   override val children: List<XChildEntity>
     get() = snapshot.extractOneToManyChildren<XChildEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
@@ -54,7 +57,10 @@ open class XParentEntityImpl(private val dataSource: XParentEntityData) : XParen
     get() = snapshot.extractOneToManyChildren<XChildChildEntity>(CHILDCHILD_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

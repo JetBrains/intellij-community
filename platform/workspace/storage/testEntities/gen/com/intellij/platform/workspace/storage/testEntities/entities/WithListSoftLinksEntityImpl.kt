@@ -36,13 +36,22 @@ open class WithListSoftLinksEntityImpl(private val dataSource: WithListSoftLinks
   }
 
   override val myName: String
-    get() = dataSource.myName
+    get() {
+      readField("myName")
+      return dataSource.myName
+    }
 
   override val links: List<NameId>
-    get() = dataSource.links
+    get() {
+      readField("links")
+      return dataSource.links
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

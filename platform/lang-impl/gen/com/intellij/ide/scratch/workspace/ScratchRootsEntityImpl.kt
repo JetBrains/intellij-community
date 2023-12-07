@@ -32,10 +32,16 @@ open class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntityData
   }
 
   override val roots: List<VirtualFileUrl>
-    get() = dataSource.roots
+    get() {
+      readField("roots")
+      return dataSource.roots
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

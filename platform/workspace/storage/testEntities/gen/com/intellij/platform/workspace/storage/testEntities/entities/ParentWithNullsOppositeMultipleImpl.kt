@@ -31,10 +31,16 @@ open class ParentWithNullsOppositeMultipleImpl(private val dataSource: ParentWit
   }
 
   override val parentData: String
-    get() = dataSource.parentData
+    get() {
+      readField("parentData")
+      return dataSource.parentData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

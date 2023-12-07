@@ -63,13 +63,22 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
   }
 
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override val type: String?
-    get() = dataSource.type
+    get() {
+      readField("type")
+      return dataSource.type
+    }
 
   override val dependencies: List<ModuleDependencyItem>
-    get() = dataSource.dependencies
+    get() {
+      readField("dependencies")
+      return dataSource.dependencies
+    }
 
   override val contentRoots: List<ContentRootEntity>
     get() = snapshot.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList()
@@ -90,7 +99,10 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
     get() = snapshot.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

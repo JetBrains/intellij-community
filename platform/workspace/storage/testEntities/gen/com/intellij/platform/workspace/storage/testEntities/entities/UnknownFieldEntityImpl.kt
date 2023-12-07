@@ -31,10 +31,16 @@ open class UnknownFieldEntityImpl(private val dataSource: UnknownFieldEntityData
   }
 
   override val data: Date
-    get() = dataSource.data
+    get() {
+      readField("data")
+      return dataSource.data
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

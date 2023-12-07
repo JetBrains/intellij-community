@@ -31,14 +31,27 @@ open class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : Sample
   }
 
   override val data: String
-    get() = dataSource.data
+    get() {
+      readField("data")
+      return dataSource.data
+    }
 
-  override val boolData: Boolean get() = dataSource.boolData
+  override val boolData: Boolean
+    get() {
+      readField("boolData")
+      return dataSource.boolData
+    }
   override val optionalData: String?
-    get() = dataSource.optionalData
+    get() {
+      readField("optionalData")
+      return dataSource.optionalData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

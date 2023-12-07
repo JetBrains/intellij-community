@@ -35,16 +35,25 @@ open class KeyParentImpl(private val dataSource: KeyParentData) : KeyParent, Wor
   }
 
   override val keyField: String
-    get() = dataSource.keyField
+    get() {
+      readField("keyField")
+      return dataSource.keyField
+    }
 
   override val notKeyField: String
-    get() = dataSource.notKeyField
+    get() {
+      readField("notKeyField")
+      return dataSource.notKeyField
+    }
 
   override val children: List<KeyChild>
     get() = snapshot.extractOneToManyChildren<KeyChild>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

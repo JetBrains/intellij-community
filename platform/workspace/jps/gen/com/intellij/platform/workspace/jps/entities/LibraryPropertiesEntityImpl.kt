@@ -45,13 +45,22 @@ open class LibraryPropertiesEntityImpl(private val dataSource: LibraryProperties
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
   override val libraryType: String
-    get() = dataSource.libraryType
+    get() {
+      readField("libraryType")
+      return dataSource.libraryType
+    }
 
   override val propertiesXmlTag: String?
-    get() = dataSource.propertiesXmlTag
+    get() {
+      readField("propertiesXmlTag")
+      return dataSource.propertiesXmlTag
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

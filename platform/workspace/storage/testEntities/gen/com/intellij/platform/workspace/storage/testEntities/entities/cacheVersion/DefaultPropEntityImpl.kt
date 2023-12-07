@@ -32,15 +32,24 @@ open class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityData) 
   }
 
   override val someString: String
-    get() = dataSource.someString
+    get() {
+      readField("someString")
+      return dataSource.someString
+    }
 
   override val someList: List<Int>
-    get() = dataSource.someList
+    get() {
+      readField("someList")
+      return dataSource.someList
+    }
 
   override var constInt: Int = dataSource.constInt
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

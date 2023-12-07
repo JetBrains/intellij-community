@@ -32,13 +32,22 @@ open class LinkedListEntityImpl(private val dataSource: LinkedListEntityData) : 
   }
 
   override val myName: String
-    get() = dataSource.myName
+    get() {
+      readField("myName")
+      return dataSource.myName
+    }
 
   override val next: LinkedListEntityId
-    get() = dataSource.next
+    get() {
+      readField("next")
+      return dataSource.next
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

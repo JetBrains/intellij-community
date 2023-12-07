@@ -46,10 +46,16 @@ open class TestModulePropertiesEntityImpl(private val dataSource: TestModuleProp
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
   override val productionModuleId: ModuleId
-    get() = dataSource.productionModuleId
+    get() {
+      readField("productionModuleId")
+      return dataSource.productionModuleId
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

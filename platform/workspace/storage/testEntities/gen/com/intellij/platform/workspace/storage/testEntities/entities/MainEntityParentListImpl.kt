@@ -37,13 +37,19 @@ open class MainEntityParentListImpl(private val dataSource: MainEntityParentList
   }
 
   override val x: String
-    get() = dataSource.x
+    get() {
+      readField("x")
+      return dataSource.x
+    }
 
   override val children: List<AttachedEntityParentList>
     get() = snapshot.extractOneToManyChildren<AttachedEntityParentList>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

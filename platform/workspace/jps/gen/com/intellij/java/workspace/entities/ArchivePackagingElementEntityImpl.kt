@@ -67,10 +67,16 @@ open class ArchivePackagingElementEntityImpl(private val dataSource: ArchivePack
     get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val fileName: String
-    get() = dataSource.fileName
+    get() {
+      readField("fileName")
+      return dataSource.fileName
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

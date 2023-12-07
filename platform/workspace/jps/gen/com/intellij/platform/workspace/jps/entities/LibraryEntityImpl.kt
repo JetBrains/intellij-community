@@ -51,13 +51,22 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
   }
 
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override val tableId: LibraryTableId
-    get() = dataSource.tableId
+    get() {
+      readField("tableId")
+      return dataSource.tableId
+    }
 
   override val roots: List<LibraryRoot>
-    get() = dataSource.roots
+    get() {
+      readField("roots")
+      return dataSource.roots
+    }
 
   override val excludedRoots: List<ExcludeUrlEntity>
     get() = snapshot.extractOneToManyChildren<ExcludeUrlEntity>(EXCLUDEDROOTS_CONNECTION_ID, this)!!.toList()
@@ -66,7 +75,10 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
     get() = snapshot.extractOneToOneChild(LIBRARYPROPERTIES_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

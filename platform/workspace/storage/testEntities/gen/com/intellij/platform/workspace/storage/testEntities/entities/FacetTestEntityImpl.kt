@@ -36,16 +36,25 @@ open class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) : Fa
   }
 
   override val data: String
-    get() = dataSource.data
+    get() {
+      readField("data")
+      return dataSource.data
+    }
 
   override val moreData: String
-    get() = dataSource.moreData
+    get() {
+      readField("moreData")
+      return dataSource.moreData
+    }
 
   override val module: ModuleTestEntity
     get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

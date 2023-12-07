@@ -57,7 +57,10 @@ open class ContentRootTestEntityImpl(private val dataSource: ContentRootTestEnti
     get() = snapshot.extractOneToManyChildren<SourceRootTestEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

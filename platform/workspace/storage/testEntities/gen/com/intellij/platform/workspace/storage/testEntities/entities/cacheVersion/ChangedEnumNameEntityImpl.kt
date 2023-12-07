@@ -30,10 +30,16 @@ open class ChangedEnumNameEntityImpl(private val dataSource: ChangedEnumNameEnti
   }
 
   override val someEnum: ChangedEnumNameEnum
-    get() = dataSource.someEnum
+    get() {
+      readField("someEnum")
+      return dataSource.someEnum
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

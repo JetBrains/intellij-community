@@ -30,10 +30,16 @@ open class MainEntityImpl(private val dataSource: MainEntityData) : MainEntity, 
   }
 
   override val x: String
-    get() = dataSource.x
+    get() {
+      readField("x")
+      return dataSource.x
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

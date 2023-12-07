@@ -39,13 +39,22 @@ open class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntityData
     }
 
     override val path: String
-        get() = dataSource.path
+        get() {
+            readField("path")
+            return dataSource.path
+        }
 
     override val dependencies: Set<KotlinScriptLibraryId>
-        get() = dataSource.dependencies
+        get() {
+            readField("dependencies")
+            return dataSource.dependencies
+        }
 
     override val entitySource: EntitySource
-        get() = dataSource.entitySource
+        get() {
+            readField("entitySource")
+            return dataSource.entitySource
+        }
 
     override fun connectionIdList(): List<ConnectionId> {
         return connections

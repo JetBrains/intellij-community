@@ -39,13 +39,19 @@ open class ChildWpidSampleEntityImpl(private val dataSource: ChildWpidSampleEnti
   }
 
   override val data: String
-    get() = dataSource.data
+    get() {
+      readField("data")
+      return dataSource.data
+    }
 
   override val parentEntity: SampleWithSymbolicIdEntity?
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

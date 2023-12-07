@@ -58,14 +58,27 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
   }
 
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override val artifactType: String
-    get() = dataSource.artifactType
+    get() {
+      readField("artifactType")
+      return dataSource.artifactType
+    }
 
-  override val includeInProjectBuild: Boolean get() = dataSource.includeInProjectBuild
+  override val includeInProjectBuild: Boolean
+    get() {
+      readField("includeInProjectBuild")
+      return dataSource.includeInProjectBuild
+    }
   override val outputUrl: VirtualFileUrl?
-    get() = dataSource.outputUrl
+    get() {
+      readField("outputUrl")
+      return dataSource.outputUrl
+    }
 
   override val rootElement: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)
@@ -77,7 +90,10 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
     get() = snapshot.extractOneToOneChild(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

@@ -38,16 +38,25 @@ open class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSecond
   }
 
   override val commonData: String
-    get() = dataSource.commonData
+    get() {
+      readField("commonData")
+      return dataSource.commonData
+    }
 
   override val parentEntity: ParentSingleAbEntity
     get() = snapshot.extractOneToAbstractOneParent(PARENTENTITY_CONNECTION_ID, this)!!
 
   override val secondData: String
-    get() = dataSource.secondData
+    get() {
+      readField("secondData")
+      return dataSource.secondData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

@@ -42,21 +42,41 @@ open class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettin
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
-  override val inheritedCompilerOutput: Boolean get() = dataSource.inheritedCompilerOutput
-  override val excludeOutput: Boolean get() = dataSource.excludeOutput
+  override val inheritedCompilerOutput: Boolean
+    get() {
+      readField("inheritedCompilerOutput")
+      return dataSource.inheritedCompilerOutput
+    }
+  override val excludeOutput: Boolean
+    get() {
+      readField("excludeOutput")
+      return dataSource.excludeOutput
+    }
   override val compilerOutput: VirtualFileUrl?
-    get() = dataSource.compilerOutput
+    get() {
+      readField("compilerOutput")
+      return dataSource.compilerOutput
+    }
 
   override val compilerOutputForTests: VirtualFileUrl?
-    get() = dataSource.compilerOutputForTests
+    get() {
+      readField("compilerOutputForTests")
+      return dataSource.compilerOutputForTests
+    }
 
   override val languageLevelId: String?
-    get() = dataSource.languageLevelId
+    get() {
+      readField("languageLevelId")
+      return dataSource.languageLevelId
+    }
 
   override var manifestAttributes: Map<String, String> = dataSource.manifestAttributes
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

@@ -31,13 +31,22 @@ open class SimpleSealedClassEntityImpl(private val dataSource: SimpleSealedClass
   }
 
   override val text: String
-    get() = dataSource.text
+    get() {
+      readField("text")
+      return dataSource.text
+    }
 
   override val someData: SimpleSealedClass
-    get() = dataSource.someData
+    get() {
+      readField("someData")
+      return dataSource.someData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

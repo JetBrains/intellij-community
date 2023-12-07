@@ -46,10 +46,16 @@ open class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrderEnti
     get() = snapshot.extractOneToOneParent(CONTENTROOTENTITY_CONNECTION_ID, this)!!
 
   override val orderOfSourceRoots: List<VirtualFileUrl>
-    get() = dataSource.orderOfSourceRoots
+    get() {
+      readField("orderOfSourceRoots")
+      return dataSource.orderOfSourceRoots
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

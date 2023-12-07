@@ -33,10 +33,16 @@ open class MavenProjectsTreeSettingsEntityImpl(private val dataSource: MavenProj
   }
 
   override val importedFilePaths: List<String>
-    get() = dataSource.importedFilePaths
+    get() {
+      readField("importedFilePaths")
+      return dataSource.importedFilePaths
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

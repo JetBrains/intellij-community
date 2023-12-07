@@ -48,10 +48,16 @@ open class DirectoryCopyPackagingElementEntityImpl(private val dataSource: Direc
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
   override val filePath: VirtualFileUrl
-    get() = dataSource.filePath
+    get() {
+      readField("filePath")
+      return dataSource.filePath
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

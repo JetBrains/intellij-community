@@ -40,13 +40,19 @@ open class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityData) 
   }
 
   override val orderOfFacets: List<String>
-    get() = dataSource.orderOfFacets
+    get() {
+      readField("orderOfFacets")
+      return dataSource.orderOfFacets
+    }
 
   override val moduleEntity: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULEENTITY_CONNECTION_ID, this)!!
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

@@ -32,10 +32,16 @@ open class ChangedComputablePropEntityImpl(private val dataSource: ChangedComput
   }
 
   override val text: String
-    get() = dataSource.text
+    get() {
+      readField("text")
+      return dataSource.text
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

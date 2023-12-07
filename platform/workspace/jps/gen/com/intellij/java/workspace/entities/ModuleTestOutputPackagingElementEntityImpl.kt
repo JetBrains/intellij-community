@@ -51,10 +51,16 @@ open class ModuleTestOutputPackagingElementEntityImpl(private val dataSource: Mo
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
   override val module: ModuleId?
-    get() = dataSource.module
+    get() {
+      readField("module")
+      return dataSource.module
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

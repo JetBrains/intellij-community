@@ -49,16 +49,25 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
     get() = snapshot.extractOneToManyParent(CONTENTROOT_CONNECTION_ID, this)!!
 
   override val url: VirtualFileUrl
-    get() = dataSource.url
+    get() {
+      readField("url")
+      return dataSource.url
+    }
 
   override val rootType: String
-    get() = dataSource.rootType
+    get() {
+      readField("rootType")
+      return dataSource.rootType
+    }
 
   override val customSourceRootProperties: CustomSourceRootPropertiesEntity?
     get() = snapshot.extractOneToOneChild(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

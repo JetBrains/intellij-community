@@ -37,16 +37,25 @@ open class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedEntit
   }
 
   override val myName: String
-    get() = dataSource.myName
+    get() {
+      readField("myName")
+      return dataSource.myName
+    }
 
   override val additionalProperty: String?
-    get() = dataSource.additionalProperty
+    get() {
+      readField("additionalProperty")
+      return dataSource.additionalProperty
+    }
 
   override val children: List<NamedChildEntity>
     get() = snapshot.extractOneToManyChildren<NamedChildEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

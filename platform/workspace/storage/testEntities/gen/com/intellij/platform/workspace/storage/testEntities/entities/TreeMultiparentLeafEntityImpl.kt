@@ -47,7 +47,10 @@ open class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultiparent
   }
 
   override val data: String
-    get() = dataSource.data
+    get() {
+      readField("data")
+      return dataSource.data
+    }
 
   override val mainParent: TreeMultiparentRootEntity?
     get() = snapshot.extractOneToManyParent(MAINPARENT_CONNECTION_ID, this)
@@ -59,7 +62,10 @@ open class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultiparent
     get() = snapshot.extractOneToManyChildren<TreeMultiparentLeafEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

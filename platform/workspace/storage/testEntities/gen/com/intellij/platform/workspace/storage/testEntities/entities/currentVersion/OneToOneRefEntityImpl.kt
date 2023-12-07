@@ -35,15 +35,25 @@ open class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityData) 
 
   }
 
-  override val version: Int get() = dataSource.version
+  override val version: Int
+    get() {
+      readField("version")
+      return dataSource.version
+    }
   override val text: String
-    get() = dataSource.text
+    get() {
+      readField("text")
+      return dataSource.text
+    }
 
   override val anotherEntity: List<AnotherOneToOneRefEntity>
     get() = snapshot.extractOneToManyChildren<AnotherOneToOneRefEntity>(ANOTHERENTITY_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

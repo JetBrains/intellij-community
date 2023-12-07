@@ -39,12 +39,22 @@ open class AnotherOneToManyRefEntityImpl(private val dataSource: AnotherOneToMan
   override val parentEntity: OneToManyRefEntity
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)!!
 
-  override val version: Int get() = dataSource.version
+  override val version: Int
+    get() {
+      readField("version")
+      return dataSource.version
+    }
   override val someData: OneToManyRefDataClass
-    get() = dataSource.someData
+    get() {
+      readField("someData")
+      return dataSource.someData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

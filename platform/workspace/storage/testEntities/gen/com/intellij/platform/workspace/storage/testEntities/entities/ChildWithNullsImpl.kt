@@ -30,10 +30,16 @@ open class ChildWithNullsImpl(private val dataSource: ChildWithNullsData) : Chil
   }
 
   override val childData: String
-    get() = dataSource.childData
+    get() {
+      readField("childData")
+      return dataSource.childData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

@@ -43,25 +43,40 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
   }
 
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override val moduleId: ModuleId
-    get() = dataSource.moduleId
+    get() {
+      readField("moduleId")
+      return dataSource.moduleId
+    }
 
   override val module: ModuleEntity
     get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
   override val facetType: String
-    get() = dataSource.facetType
+    get() {
+      readField("facetType")
+      return dataSource.facetType
+    }
 
   override val configurationXmlTag: String?
-    get() = dataSource.configurationXmlTag
+    get() {
+      readField("configurationXmlTag")
+      return dataSource.configurationXmlTag
+    }
 
   override val underlyingFacet: FacetEntity?
     get() = snapshot.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

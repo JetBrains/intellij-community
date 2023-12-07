@@ -36,25 +36,46 @@ open class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity, Wor
   }
 
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override val type: String
-    get() = dataSource.type
+    get() {
+      readField("type")
+      return dataSource.type
+    }
 
   override val version: String?
-    get() = dataSource.version
+    get() {
+      readField("version")
+      return dataSource.version
+    }
 
   override val homePath: VirtualFileUrl?
-    get() = dataSource.homePath
+    get() {
+      readField("homePath")
+      return dataSource.homePath
+    }
 
   override val roots: List<SdkRoot>
-    get() = dataSource.roots
+    get() {
+      readField("roots")
+      return dataSource.roots
+    }
 
   override val additionalData: String
-    get() = dataSource.additionalData
+    get() {
+      readField("additionalData")
+      return dataSource.additionalData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

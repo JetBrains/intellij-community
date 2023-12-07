@@ -29,10 +29,17 @@ open class AssertConsistencyEntityImpl(private val dataSource: AssertConsistency
 
   }
 
-  override val passCheck: Boolean get() = dataSource.passCheck
+  override val passCheck: Boolean
+    get() {
+      readField("passCheck")
+      return dataSource.passCheck
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

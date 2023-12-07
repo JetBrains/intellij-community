@@ -38,7 +38,10 @@ open class ChainedParentEntityImpl(private val dataSource: ChainedParentEntityDa
     get() = snapshot.extractOneToManyChildren<ChainedEntity>(CHILD_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

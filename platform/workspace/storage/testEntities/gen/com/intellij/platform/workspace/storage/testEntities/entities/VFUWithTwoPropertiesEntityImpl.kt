@@ -34,16 +34,28 @@ open class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwoProp
   }
 
   override val data: String
-    get() = dataSource.data
+    get() {
+      readField("data")
+      return dataSource.data
+    }
 
   override val fileProperty: VirtualFileUrl
-    get() = dataSource.fileProperty
+    get() {
+      readField("fileProperty")
+      return dataSource.fileProperty
+    }
 
   override val secondFileProperty: VirtualFileUrl
-    get() = dataSource.secondFileProperty
+    get() {
+      readField("secondFileProperty")
+      return dataSource.secondFileProperty
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

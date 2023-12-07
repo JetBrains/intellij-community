@@ -40,10 +40,16 @@ open class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEntity
   }
 
   override val orderOfArtifacts: List<String>
-    get() = dataSource.orderOfArtifacts
+    get() {
+      readField("orderOfArtifacts")
+      return dataSource.orderOfArtifacts
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

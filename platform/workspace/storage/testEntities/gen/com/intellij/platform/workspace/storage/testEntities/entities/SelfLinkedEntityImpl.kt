@@ -38,7 +38,10 @@ open class SelfLinkedEntityImpl(private val dataSource: SelfLinkedEntityData) : 
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

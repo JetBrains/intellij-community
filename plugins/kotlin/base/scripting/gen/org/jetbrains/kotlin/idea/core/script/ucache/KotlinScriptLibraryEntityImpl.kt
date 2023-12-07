@@ -43,17 +43,33 @@ open class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLib
     }
 
     override val name: String
-        get() = dataSource.name
+        get() {
+            readField("name")
+            return dataSource.name
+        }
 
     override val roots: List<KotlinScriptLibraryRoot>
-        get() = dataSource.roots
+        get() {
+            readField("roots")
+            return dataSource.roots
+        }
 
-    override val indexSourceRoots: Boolean get() = dataSource.indexSourceRoots
+    override val indexSourceRoots: Boolean
+        get() {
+            readField("indexSourceRoots")
+            return dataSource.indexSourceRoots
+        }
     override val usedInScripts: Set<KotlinScriptId>
-        get() = dataSource.usedInScripts
+        get() {
+            readField("usedInScripts")
+            return dataSource.usedInScripts
+        }
 
     override val entitySource: EntitySource
-        get() = dataSource.entitySource
+        get() {
+            readField("entitySource")
+            return dataSource.entitySource
+        }
 
     override fun connectionIdList(): List<ConnectionId> {
         return connections

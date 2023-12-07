@@ -48,13 +48,22 @@ open class ExtractedDirectoryPackagingElementEntityImpl(private val dataSource: 
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
   override val filePath: VirtualFileUrl
-    get() = dataSource.filePath
+    get() {
+      readField("filePath")
+      return dataSource.filePath
+    }
 
   override val pathInArchive: String
-    get() = dataSource.pathInArchive
+    get() {
+      readField("pathInArchive")
+      return dataSource.pathInArchive
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

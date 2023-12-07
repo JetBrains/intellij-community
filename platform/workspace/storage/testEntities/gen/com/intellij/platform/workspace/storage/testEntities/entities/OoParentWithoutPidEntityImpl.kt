@@ -37,13 +37,19 @@ open class OoParentWithoutPidEntityImpl(private val dataSource: OoParentWithoutP
   }
 
   override val parentProperty: String
-    get() = dataSource.parentProperty
+    get() {
+      readField("parentProperty")
+      return dataSource.parentProperty
+    }
 
   override val childOne: OoChildWithPidEntity?
     get() = snapshot.extractOneToOneChild(CHILDONE_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

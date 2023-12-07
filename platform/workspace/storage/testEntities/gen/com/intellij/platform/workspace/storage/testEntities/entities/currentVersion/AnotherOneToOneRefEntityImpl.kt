@@ -37,14 +37,24 @@ open class AnotherOneToOneRefEntityImpl(private val dataSource: AnotherOneToOneR
   }
 
   override val someString: String
-    get() = dataSource.someString
+    get() {
+      readField("someString")
+      return dataSource.someString
+    }
 
-  override val boolean: Boolean get() = dataSource.boolean
+  override val boolean: Boolean
+    get() {
+      readField("boolean")
+      return dataSource.boolean
+    }
   override val parentEntity: OneToOneRefEntity
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)!!
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

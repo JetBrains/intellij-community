@@ -32,14 +32,27 @@ open class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTypeEn
   }
 
   override val type: String
-    get() = dataSource.type
+    get() {
+      readField("type")
+      return dataSource.type
+    }
 
-  override val someKey: Int get() = dataSource.someKey
+  override val someKey: Int
+    get() {
+      readField("someKey")
+      return dataSource.someKey
+    }
   override val text: List<String>
-    get() = dataSource.text
+    get() {
+      readField("text")
+      return dataSource.text
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

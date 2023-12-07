@@ -35,13 +35,19 @@ open class OoChildEntityImpl(private val dataSource: OoChildEntityData) : OoChil
   }
 
   override val childProperty: String
-    get() = dataSource.childProperty
+    get() {
+      readField("childProperty")
+      return dataSource.childProperty
+    }
 
   override val parentEntity: OoParentEntity
     get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

@@ -30,10 +30,16 @@ open class SimpleObjectsEntityImpl(private val dataSource: SimpleObjectsEntityDa
   }
 
   override val someData: SimpleObjectsSealedClass
-    get() = dataSource.someData
+    get() {
+      readField("someData")
+      return dataSource.someData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

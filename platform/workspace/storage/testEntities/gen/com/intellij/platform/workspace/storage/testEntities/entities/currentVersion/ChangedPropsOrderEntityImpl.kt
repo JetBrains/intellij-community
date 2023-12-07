@@ -31,18 +31,34 @@ open class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsOrder
 
   }
 
-  override val version: Int get() = dataSource.version
+  override val version: Int
+    get() {
+      readField("version")
+      return dataSource.version
+    }
   override val string: String
-    get() = dataSource.string
+    get() {
+      readField("string")
+      return dataSource.string
+    }
 
   override val data: ChangedPropsOrderDataClass
-    get() = dataSource.data
+    get() {
+      readField("data")
+      return dataSource.data
+    }
 
   override val list: List<Set<Int>>
-    get() = dataSource.list
+    get() {
+      readField("list")
+      return dataSource.list
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

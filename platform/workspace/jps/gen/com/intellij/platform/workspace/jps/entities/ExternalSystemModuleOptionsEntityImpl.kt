@@ -44,28 +44,52 @@ open class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Externa
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
   override val externalSystem: String?
-    get() = dataSource.externalSystem
+    get() {
+      readField("externalSystem")
+      return dataSource.externalSystem
+    }
 
   override val externalSystemModuleVersion: String?
-    get() = dataSource.externalSystemModuleVersion
+    get() {
+      readField("externalSystemModuleVersion")
+      return dataSource.externalSystemModuleVersion
+    }
 
   override val linkedProjectPath: String?
-    get() = dataSource.linkedProjectPath
+    get() {
+      readField("linkedProjectPath")
+      return dataSource.linkedProjectPath
+    }
 
   override val linkedProjectId: String?
-    get() = dataSource.linkedProjectId
+    get() {
+      readField("linkedProjectId")
+      return dataSource.linkedProjectId
+    }
 
   override val rootProjectPath: String?
-    get() = dataSource.rootProjectPath
+    get() {
+      readField("rootProjectPath")
+      return dataSource.rootProjectPath
+    }
 
   override val externalSystemModuleGroup: String?
-    get() = dataSource.externalSystemModuleGroup
+    get() {
+      readField("externalSystemModuleGroup")
+      return dataSource.externalSystemModuleGroup
+    }
 
   override val externalSystemModuleType: String?
-    get() = dataSource.externalSystemModuleType
+    get() {
+      readField("externalSystemModuleType")
+      return dataSource.externalSystemModuleType
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

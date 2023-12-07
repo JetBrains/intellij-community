@@ -37,13 +37,19 @@ open class ParentMultipleEntityImpl(private val dataSource: ParentMultipleEntity
   }
 
   override val parentData: String
-    get() = dataSource.parentData
+    get() {
+      readField("parentData")
+      return dataSource.parentData
+    }
 
   override val children: List<ChildMultipleEntity>
     get() = snapshot.extractOneToManyChildren<ChildMultipleEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

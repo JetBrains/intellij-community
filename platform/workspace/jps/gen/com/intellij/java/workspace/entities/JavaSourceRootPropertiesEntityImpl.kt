@@ -42,12 +42,22 @@ open class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSource
   override val sourceRoot: SourceRootEntity
     get() = snapshot.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this)!!
 
-  override val generated: Boolean get() = dataSource.generated
+  override val generated: Boolean
+    get() {
+      readField("generated")
+      return dataSource.generated
+    }
   override val packagePrefix: String
-    get() = dataSource.packagePrefix
+    get() {
+      readField("packagePrefix")
+      return dataSource.packagePrefix
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

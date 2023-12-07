@@ -29,10 +29,17 @@ open class BooleanEntityImpl(private val dataSource: BooleanEntityData) : Boolea
 
   }
 
-  override val data: Boolean get() = dataSource.data
+  override val data: Boolean
+    get() {
+      readField("data")
+      return dataSource.data
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

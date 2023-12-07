@@ -41,10 +41,16 @@ open class ChildSubSubEntityImpl(private val dataSource: ChildSubSubEntityData) 
     get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
 
   override val childData: String
-    get() = dataSource.childData
+    get() {
+      readField("childData")
+      return dataSource.childData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

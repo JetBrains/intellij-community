@@ -29,10 +29,16 @@ open class EnumPropsEntityImpl(private val dataSource: EnumPropsEntityData) : En
   }
 
   override val someEnum: EnumPropsEnum
-    get() = dataSource.someEnum
+    get() {
+      readField("someEnum")
+      return dataSource.someEnum
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

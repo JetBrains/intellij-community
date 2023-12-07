@@ -34,10 +34,16 @@ open class ComposedLinkEntityImpl(private val dataSource: ComposedLinkEntityData
   }
 
   override val link: ComposedId
-    get() = dataSource.link
+    get() {
+      readField("link")
+      return dataSource.link
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

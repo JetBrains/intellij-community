@@ -34,13 +34,22 @@ open class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEnti
   }
 
   override val versions: Set<Int>
-    get() = dataSource.versions
+    get() {
+      readField("versions")
+      return dataSource.versions
+    }
 
   override val names: List<String>
-    get() = dataSource.names
+    get() {
+      readField("names")
+      return dataSource.names
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

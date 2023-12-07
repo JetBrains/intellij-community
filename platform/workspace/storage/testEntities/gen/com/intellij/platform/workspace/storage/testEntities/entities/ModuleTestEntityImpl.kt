@@ -40,7 +40,10 @@ open class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData) : 
   }
 
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override val contentRoots: List<ContentRootTestEntity>
     get() = snapshot.extractOneToManyChildren<ContentRootTestEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList()
@@ -49,7 +52,10 @@ open class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData) : 
     get() = snapshot.extractOneToManyChildren<FacetTestEntity>(FACETS_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

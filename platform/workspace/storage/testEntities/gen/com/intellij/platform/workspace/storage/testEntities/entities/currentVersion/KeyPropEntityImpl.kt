@@ -29,15 +29,28 @@ open class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : KeyPro
 
   }
 
-  override val someInt: Int get() = dataSource.someInt
+  override val someInt: Int
+    get() {
+      readField("someInt")
+      return dataSource.someInt
+    }
   override val text: String
-    get() = dataSource.text
+    get() {
+      readField("text")
+      return dataSource.text
+    }
 
   override val url: VirtualFileUrl
-    get() = dataSource.url
+    get() {
+      readField("url")
+      return dataSource.url
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

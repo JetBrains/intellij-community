@@ -32,14 +32,28 @@ open class ChangedComputablePropsOrderEntityImpl(private val dataSource: Changed
 
   }
 
-  override val someKey: Int get() = dataSource.someKey
+  override val someKey: Int
+    get() {
+      readField("someKey")
+      return dataSource.someKey
+    }
   override val names: List<String>
-    get() = dataSource.names
+    get() {
+      readField("names")
+      return dataSource.names
+    }
 
-  override val value: Int get() = dataSource.value
+  override val value: Int
+    get() {
+      readField("value")
+      return dataSource.value
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

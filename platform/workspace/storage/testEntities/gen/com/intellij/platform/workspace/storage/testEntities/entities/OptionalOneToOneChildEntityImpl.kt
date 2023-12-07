@@ -37,13 +37,19 @@ open class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalOneTo
   }
 
   override val data: String
-    get() = dataSource.data
+    get() {
+      readField("data")
+      return dataSource.data
+    }
 
   override val parent: OptionalOneToOneParentEntity?
     get() = snapshot.extractOneToOneParent(PARENT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

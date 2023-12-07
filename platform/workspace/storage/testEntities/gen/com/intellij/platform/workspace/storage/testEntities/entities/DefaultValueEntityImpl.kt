@@ -30,14 +30,20 @@ open class DefaultValueEntityImpl(private val dataSource: DefaultValueEntityData
   }
 
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override var isGenerated: Boolean = dataSource.isGenerated
 
   override var anotherName: String = dataSource.anotherName
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

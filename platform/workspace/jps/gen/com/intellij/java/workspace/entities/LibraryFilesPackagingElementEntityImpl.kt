@@ -51,10 +51,16 @@ open class LibraryFilesPackagingElementEntityImpl(private val dataSource: Librar
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
   override val library: LibraryId?
-    get() = dataSource.library
+    get() {
+      readField("library")
+      return dataSource.library
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

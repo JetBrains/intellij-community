@@ -48,13 +48,22 @@ open class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactProperti
     get() = snapshot.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this)!!
 
   override val providerType: String
-    get() = dataSource.providerType
+    get() {
+      readField("providerType")
+      return dataSource.providerType
+    }
 
   override val propertiesXmlTag: String?
-    get() = dataSource.propertiesXmlTag
+    get() {
+      readField("propertiesXmlTag")
+      return dataSource.propertiesXmlTag
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

@@ -51,10 +51,16 @@ open class ArtifactOutputPackagingElementEntityImpl(private val dataSource: Arti
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
   override val artifact: ArtifactId?
-    get() = dataSource.artifact
+    get() {
+      readField("artifact")
+      return dataSource.artifact
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

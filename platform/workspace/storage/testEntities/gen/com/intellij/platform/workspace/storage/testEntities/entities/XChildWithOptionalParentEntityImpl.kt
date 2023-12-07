@@ -37,13 +37,19 @@ open class XChildWithOptionalParentEntityImpl(private val dataSource: XChildWith
   }
 
   override val childProperty: String
-    get() = dataSource.childProperty
+    get() {
+      readField("childProperty")
+      return dataSource.childProperty
+    }
 
   override val optionalParent: XParentEntity?
     get() = snapshot.extractOneToManyParent(OPTIONALPARENT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

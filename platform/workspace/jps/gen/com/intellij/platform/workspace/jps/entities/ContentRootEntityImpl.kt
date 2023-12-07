@@ -62,13 +62,19 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
     get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
   override val url: VirtualFileUrl
-    get() = dataSource.url
+    get() {
+      readField("url")
+      return dataSource.url
+    }
 
   override val excludedUrls: List<ExcludeUrlEntity>
     get() = snapshot.extractOneToManyChildren<ExcludeUrlEntity>(EXCLUDEDURLS_CONNECTION_ID, this)!!.toList()
 
   override val excludedPatterns: List<String>
-    get() = dataSource.excludedPatterns
+    get() {
+      readField("excludedPatterns")
+      return dataSource.excludedPatterns
+    }
 
   override val sourceRoots: List<SourceRootEntity>
     get() = snapshot.extractOneToManyChildren<SourceRootEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList()
@@ -80,7 +86,10 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
     get() = snapshot.extractOneToOneChild(EXCLUDEURLORDER_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

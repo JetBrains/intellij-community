@@ -49,10 +49,16 @@ open class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEn
   }
 
   override val info: String
-    get() = dataSource.info
+    get() {
+      readField("info")
+      return dataSource.info
+    }
 
   override val descriptor: Descriptor
-    get() = dataSource.descriptor
+    get() {
+      readField("descriptor")
+      return dataSource.descriptor
+    }
 
   override val parentEntity: ProjectModelTestEntity?
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)
@@ -64,7 +70,10 @@ open class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEn
     get() = snapshot.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

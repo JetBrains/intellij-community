@@ -44,10 +44,16 @@ open class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPathEnti
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
   override val path: List<String>
-    get() = dataSource.path
+    get() {
+      readField("path")
+      return dataSource.path
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

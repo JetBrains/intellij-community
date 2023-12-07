@@ -45,10 +45,16 @@ open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSo
     get() = snapshot.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this)!!
 
   override val propertiesXmlTag: String
-    get() = dataSource.propertiesXmlTag
+    get() {
+      readField("propertiesXmlTag")
+      return dataSource.propertiesXmlTag
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

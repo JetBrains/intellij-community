@@ -48,13 +48,22 @@ open class FileCopyPackagingElementEntityImpl(private val dataSource: FileCopyPa
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
   override val filePath: VirtualFileUrl
-    get() = dataSource.filePath
+    get() {
+      readField("filePath")
+      return dataSource.filePath
+    }
 
   override val renamedOutputFileName: String?
-    get() = dataSource.renamedOutputFileName
+    get() {
+      readField("renamedOutputFileName")
+      return dataSource.renamedOutputFileName
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

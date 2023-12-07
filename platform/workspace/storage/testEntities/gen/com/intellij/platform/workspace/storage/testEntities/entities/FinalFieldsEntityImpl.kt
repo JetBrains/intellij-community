@@ -30,14 +30,20 @@ open class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) 
   }
 
   override val descriptor: AnotherDataClass
-    get() = dataSource.descriptor
+    get() {
+      readField("descriptor")
+      return dataSource.descriptor
+    }
 
   override var description: String = dataSource.description
 
   override var anotherVersion: Int = dataSource.anotherVersion
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

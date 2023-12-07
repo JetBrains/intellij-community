@@ -30,15 +30,28 @@ open class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEntityDa
 
   }
 
-  override val nullInt: Int? get() = dataSource.nullInt
+  override val nullInt: Int?
+    get() {
+      readField("nullInt")
+      return dataSource.nullInt
+    }
   override val notNullString: String?
-    get() = dataSource.notNullString
+    get() {
+      readField("notNullString")
+      return dataSource.notNullString
+    }
 
   override val notNullList: List<Int>
-    get() = dataSource.notNullList
+    get() {
+      readField("notNullList")
+      return dataSource.notNullList
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

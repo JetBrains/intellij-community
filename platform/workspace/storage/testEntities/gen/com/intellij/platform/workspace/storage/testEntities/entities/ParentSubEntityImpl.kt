@@ -38,13 +38,19 @@ open class ParentSubEntityImpl(private val dataSource: ParentSubEntityData) : Pa
   }
 
   override val parentData: String
-    get() = dataSource.parentData
+    get() {
+      readField("parentData")
+      return dataSource.parentData
+    }
 
   override val child: ChildSubEntity?
     get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

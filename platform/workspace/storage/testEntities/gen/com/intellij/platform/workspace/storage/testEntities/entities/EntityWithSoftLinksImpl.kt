@@ -42,49 +42,91 @@ open class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLinksDa
   }
 
   override val link: OneSymbolicId
-    get() = dataSource.link
+    get() {
+      readField("link")
+      return dataSource.link
+    }
 
   override val manyLinks: List<OneSymbolicId>
-    get() = dataSource.manyLinks
+    get() {
+      readField("manyLinks")
+      return dataSource.manyLinks
+    }
 
   override val optionalLink: OneSymbolicId?
-    get() = dataSource.optionalLink
+    get() {
+      readField("optionalLink")
+      return dataSource.optionalLink
+    }
 
   override val inContainer: Container
-    get() = dataSource.inContainer
+    get() {
+      readField("inContainer")
+      return dataSource.inContainer
+    }
 
   override val inOptionalContainer: Container?
-    get() = dataSource.inOptionalContainer
+    get() {
+      readField("inOptionalContainer")
+      return dataSource.inOptionalContainer
+    }
 
   override val inContainerList: List<Container>
-    get() = dataSource.inContainerList
+    get() {
+      readField("inContainerList")
+      return dataSource.inContainerList
+    }
 
   override val deepContainer: List<TooDeepContainer>
-    get() = dataSource.deepContainer
+    get() {
+      readField("deepContainer")
+      return dataSource.deepContainer
+    }
 
   override val sealedContainer: SealedContainer
-    get() = dataSource.sealedContainer
+    get() {
+      readField("sealedContainer")
+      return dataSource.sealedContainer
+    }
 
   override val listSealedContainer: List<SealedContainer>
-    get() = dataSource.listSealedContainer
+    get() {
+      readField("listSealedContainer")
+      return dataSource.listSealedContainer
+    }
 
   override val justProperty: String
-    get() = dataSource.justProperty
+    get() {
+      readField("justProperty")
+      return dataSource.justProperty
+    }
 
   override val justNullableProperty: String?
-    get() = dataSource.justNullableProperty
+    get() {
+      readField("justNullableProperty")
+      return dataSource.justNullableProperty
+    }
 
   override val justListProperty: List<String>
-    get() = dataSource.justListProperty
+    get() {
+      readField("justListProperty")
+      return dataSource.justListProperty
+    }
 
   override val deepSealedClass: DeepSealedOne
-    get() = dataSource.deepSealedClass
+    get() {
+      readField("deepSealedClass")
+      return dataSource.deepSealedClass
+    }
 
   override val children: List<SoftLinkReferencedChild>
     get() = snapshot.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

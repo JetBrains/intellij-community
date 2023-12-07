@@ -48,68 +48,141 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
 
     }
 
-    override val name: String
-        get() = dataSource.name
+  override val moduleId: ModuleId
+    get() {
+      readField("moduleId")
+      return dataSource.moduleId
+    }
 
-    override val moduleId: ModuleId
-        get() = dataSource.moduleId
+  override val name: String
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
-    override val sourceRoots: List<String>
-        get() = dataSource.sourceRoots
+  override val sourceRoots: List<String>
+    get() {
+      readField("sourceRoots")
+      return dataSource.sourceRoots
+    }
 
-    override val configFileItems: List<ConfigFileItem>
-        get() = dataSource.configFileItems
+  override val configFileItems: List<ConfigFileItem>
+    get() {
+      readField("configFileItems")
+      return dataSource.configFileItems
+    }
 
-    override val module: ModuleEntity
-        get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
+  override val module: ModuleEntity
+    get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
-    override val useProjectSettings: Boolean get() = dataSource.useProjectSettings
-    override val implementedModuleNames: List<String>
-        get() = dataSource.implementedModuleNames
+  override val useProjectSettings: Boolean
+    get() {
+      readField("useProjectSettings")
+      return dataSource.useProjectSettings
+    }
+  override val implementedModuleNames: List<String>
+    get() {
+      readField("implementedModuleNames")
+      return dataSource.implementedModuleNames
+    }
 
-    override val dependsOnModuleNames: List<String>
-        get() = dataSource.dependsOnModuleNames
+  override val dependsOnModuleNames: List<String>
+    get() {
+      readField("dependsOnModuleNames")
+      return dataSource.dependsOnModuleNames
+    }
 
-    override val additionalVisibleModuleNames: Set<String>
-        get() = dataSource.additionalVisibleModuleNames
+  override val additionalVisibleModuleNames: Set<String>
+    get() {
+      readField("additionalVisibleModuleNames")
+      return dataSource.additionalVisibleModuleNames
+    }
 
-    override val productionOutputPath: String
-        get() = dataSource.productionOutputPath
+  override val productionOutputPath: String
+    get() {
+      readField("productionOutputPath")
+      return dataSource.productionOutputPath
+    }
 
-    override val testOutputPath: String
-        get() = dataSource.testOutputPath
+  override val testOutputPath: String
+    get() {
+      readField("testOutputPath")
+      return dataSource.testOutputPath
+    }
 
-    override val sourceSetNames: List<String>
-        get() = dataSource.sourceSetNames
+  override val sourceSetNames: List<String>
+    get() {
+      readField("sourceSetNames")
+      return dataSource.sourceSetNames
+    }
 
-    override val isTestModule: Boolean get() = dataSource.isTestModule
-    override val externalProjectId: String
-        get() = dataSource.externalProjectId
+  override val isTestModule: Boolean
+    get() {
+      readField("isTestModule")
+      return dataSource.isTestModule
+    }
+  override val externalProjectId: String
+    get() {
+      readField("externalProjectId")
+      return dataSource.externalProjectId
+    }
 
-    override val isHmppEnabled: Boolean get() = dataSource.isHmppEnabled
-    override val pureKotlinSourceFolders: List<String>
-        get() = dataSource.pureKotlinSourceFolders
+  override val isHmppEnabled: Boolean
+    get() {
+      readField("isHmppEnabled")
+      return dataSource.isHmppEnabled
+    }
+  override val pureKotlinSourceFolders: List<String>
+    get() {
+      readField("pureKotlinSourceFolders")
+      return dataSource.pureKotlinSourceFolders
+    }
 
-    override val kind: KotlinModuleKind
-        get() = dataSource.kind
+  override val kind: KotlinModuleKind
+    get() {
+      readField("kind")
+      return dataSource.kind
+    }
 
-    override val compilerArguments: String
-        get() = dataSource.compilerArguments
+  override val compilerArguments: String
+    get() {
+      readField("compilerArguments")
+      return dataSource.compilerArguments
+    }
 
-    override val compilerSettings: CompilerSettingsData
-        get() = dataSource.compilerSettings
+  override val compilerSettings: CompilerSettingsData
+    get() {
+      readField("compilerSettings")
+      return dataSource.compilerSettings
+    }
 
-    override val targetPlatform: String
-        get() = dataSource.targetPlatform
+  override val targetPlatform: String
+    get() {
+      readField("targetPlatform")
+      return dataSource.targetPlatform
+    }
 
-    override val externalSystemRunTasks: List<String>
-        get() = dataSource.externalSystemRunTasks
+  override val externalSystemRunTasks: List<String>
+        get() {
+            readField("externalSystemRunTasks")
+            return dataSource.externalSystemRunTasks
+        }
 
-    override val version: Int get() = dataSource.version
-    override val flushNeeded: Boolean get() = dataSource.flushNeeded
+  override val version: Int get() {
+      readField("version")
+      return dataSource.version
+  }
 
-    override val entitySource: EntitySource
-        get() = dataSource.entitySource
+  override val flushNeeded: Boolean get() {
+      readField("flushNeeded")
+      return dataSource.flushNeeded
+  }
+
+  override val entitySource: EntitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
     override fun connectionIdList(): List<ConnectionId> {
         return connections

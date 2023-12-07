@@ -32,19 +32,34 @@ open class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntity2, 
   }
 
   override val data: String
-    get() = dataSource.data
+    get() {
+      readField("data")
+      return dataSource.data
+    }
 
   override val filePath: VirtualFileUrl?
-    get() = dataSource.filePath
+    get() {
+      readField("filePath")
+      return dataSource.filePath
+    }
 
   override val directoryPath: VirtualFileUrl
-    get() = dataSource.directoryPath
+    get() {
+      readField("directoryPath")
+      return dataSource.directoryPath
+    }
 
   override val notNullRoots: List<VirtualFileUrl>
-    get() = dataSource.notNullRoots
+    get() {
+      readField("notNullRoots")
+      return dataSource.notNullRoots
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections

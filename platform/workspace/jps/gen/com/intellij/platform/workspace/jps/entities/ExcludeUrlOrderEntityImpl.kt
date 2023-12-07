@@ -42,13 +42,19 @@ open class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrderEnti
   }
 
   override val order: List<VirtualFileUrl>
-    get() = dataSource.order
+    get() {
+      readField("order")
+      return dataSource.order
+    }
 
   override val contentRoot: ContentRootEntity
     get() = snapshot.extractOneToOneParent(CONTENTROOT_CONNECTION_ID, this)!!
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
