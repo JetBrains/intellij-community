@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.run.gradle
 import com.intellij.openapi.application.runReadAction
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.run.getConfiguration
-import org.jetbrains.kotlin.idea.test.checkPluginIsCorrect
+import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.params.ParameterizedTest

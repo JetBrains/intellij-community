@@ -10,10 +10,10 @@ import org.jetbrains.kotlin.codeMetaInfo.model.DiagnosticCodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.start
+import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.end
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
-import org.jetbrains.kotlin.idea.editor.fixers.end
-import org.jetbrains.kotlin.idea.editor.fixers.start
 
 class LineMarkerCodeMetaInfo(
     override val renderConfiguration: LineMarkerConfiguration,

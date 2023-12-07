@@ -64,7 +64,6 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.JVM_TARGET_DIRECTIV
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.KOTLIN_COMPILER_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.LANGUAGE_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.PROJECT_LANGUAGE_VERSION_DIRECTIVE
-import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addIfNotNull

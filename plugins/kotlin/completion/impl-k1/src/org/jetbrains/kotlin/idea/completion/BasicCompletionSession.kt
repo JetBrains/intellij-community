@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
+import org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups

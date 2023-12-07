@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
+import org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService
 
 class LookupCancelWatcher : EditorFactoryListener {
     override fun editorReleased(event: EditorFactoryEvent) {

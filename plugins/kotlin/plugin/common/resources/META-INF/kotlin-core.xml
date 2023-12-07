@@ -69,6 +69,9 @@
             qualifiedName="org.jetbrains.kotlin.projectStructureInsightsProvider"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider"
             dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.smartEnterProcessorFixer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.SmartEnterProcessorWithFixers$Fixer"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -386,7 +389,7 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.editor.KotlinEnterBetweenBracesAndBracketsNoCommitDelegate"/>
 
-    <lang.smartEnterProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.editor.KotlinSmartEnterHandler"/>
+    <lang.smartEnterProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.KotlinSmartEnterHandler"/>
 
     <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinBackspaceHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinStringTemplateBackspaceHandler"/>

@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.analysis.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.core.tests" scope="RUNTIME" />
@@ -56,6 +57,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion.tests" scope="RUNTIME" />

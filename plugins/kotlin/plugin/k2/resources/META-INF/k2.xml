@@ -94,11 +94,19 @@
                  defaultValue="true"
                  restartRequired="false"/>
 
+    <!-- shared completion -->
+    <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService"/>
+    <!-- k2 completion -->
     <completion.contributor language="kotlin"
                             id="KotlinCompletionContributor"
                             order="first"
                             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinFirCompletionContributor"/>
-    <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter"/>
+
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.completion.FirCompletionDummyIdentifierProviderService"
+                        serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"/>
+
+    <!-- -->
     <codeInsight.typeInfo language="kotlin"
                           implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinHighLevelExpressionTypeProvider"/>
 
@@ -133,9 +141,6 @@
 
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.completion.FirCompletionDummyIdentifierProviderService"
-                        serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"/>
-
     <projectService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
             serviceImplementation="org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService"/>
@@ -155,7 +160,6 @@
     <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.tools.projectWizard.GradleKotlinBuildSystemType"/>
     <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.tools.projectWizard.MavenKotlinBuildSystemType"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.LookupCancelService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>

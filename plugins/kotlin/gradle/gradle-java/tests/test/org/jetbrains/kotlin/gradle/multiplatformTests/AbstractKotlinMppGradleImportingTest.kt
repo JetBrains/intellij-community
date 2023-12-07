@@ -26,10 +26,10 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCas
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
 import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
-import org.jetbrains.kotlin.idea.test.IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.checkPluginIsCorrect
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.util.IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY
+import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion

@@ -6,10 +6,12 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.SmartFMap
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 fun String.trimTrailingWhitespaces(): String =
@@ -62,3 +64,32 @@ val File.slashedPath: String
  * We cannot just add return in the beginning of the test because we'll get warnings "unreachable code"
  */
 fun ignored(@Suppress("UNUSED_PARAMETER") reason: String) = true
+
+
+fun interface SetUpFunction {
+    /**
+     * [Throws] supports interoperability with Java.
+     */
+    @Throws(Exception::class)
+    fun invoke()
+}
+
+const val IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY = "idea.kotlin.plugin.use.k2"
+/**
+ * Executes a [setUp] function after enabling the K1 or K2 Kotlin plugin in system properties. The correct Kotlin plugin should be set up
+ * after [setUp] finishes.
+ */
+@Throws(Exception::class)
+fun setUpWithKotlinPlugin(isFirPlugin: Boolean, setUp: SetUpFunction) {
+    System.setProperty(IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY, isFirPlugin.toString())
+    setUp.invoke()
+    checkPluginIsCorrect(isFirPlugin)
+}
+
+fun checkPluginIsCorrect(isFirPlugin: Boolean){
+    if (isFirPlugin) {
+        checkKotlinPluginKind(KotlinPluginKind.FIR_PLUGIN)
+    } else {
+        checkKotlinPluginKind(KotlinPluginKind.FE10_PLUGIN)
+    }
+}

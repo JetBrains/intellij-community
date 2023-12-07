@@ -22,8 +22,6 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
@@ -33,7 +31,6 @@ import java.io.File
 
 @JvmField
 val IDEA_TEST_DATA_DIR = File(KotlinRoot.DIR, "idea/tests/testData")
-const val IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY = "idea.kotlin.plugin.use.k2"
 
 fun KtFile.dumpTextWithErrors(ignoreErrors: Set<DiagnosticFactory<*>> = emptySet()): String {
     val text = text
@@ -116,33 +113,6 @@ fun Document.extractMultipleMarkerOffsets(project: Project, caretMarker: String 
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(this)
 
     return offsets
-}
-
-fun interface SetUpFunction {
-    /**
-     * [Throws] supports interoperability with Java.
-     */
-    @Throws(Exception::class)
-    fun invoke()
-}
-
-/**
- * Executes a [setUp] function after enabling the K1 or K2 Kotlin plugin in system properties. The correct Kotlin plugin should be set up
- * after [setUp] finishes.
- */
-@Throws(Exception::class)
-fun setUpWithKotlinPlugin(isFirPlugin: Boolean, setUp: SetUpFunction) {
-    System.setProperty(IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY, isFirPlugin.toString())
-    setUp.invoke()
-    checkPluginIsCorrect(isFirPlugin)
-}
-
-fun checkPluginIsCorrect(isFirPlugin: Boolean){
-    if (isFirPlugin) {
-        checkKotlinPluginKind(KotlinPluginKind.FIR_PLUGIN)
-    } else {
-        checkKotlinPluginKind(KotlinPluginKind.FE10_PLUGIN)
-    }
 }
 
 fun Module.setupKotlinFacet(configure: KotlinFacetConfiguration.() -> Unit) = apply {
