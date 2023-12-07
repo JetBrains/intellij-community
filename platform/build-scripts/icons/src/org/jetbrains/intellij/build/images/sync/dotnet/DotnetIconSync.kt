@@ -10,6 +10,8 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.exists
 import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.writeText
 
 object DotnetIconSync {
 
@@ -19,6 +21,7 @@ object DotnetIconSync {
   private class SyncPath(val iconsPath: String, val devPath: String)
 
   private const val RIDER_ICONS_RELATIVE_PATH = "Rider/Frontend/rider/icons"
+  private const val RIDER_ICONS_REVISION_FILE = ".icons.last.revision"
 
   private val syncPaths = listOf(
     SyncPath("rider", "$RIDER_ICONS_RELATIVE_PATH/resources/rider"),
@@ -97,6 +100,7 @@ object DotnetIconSync {
         println("Nothing to commit")
       }
       else if (isUnderTeamCity()) {
+        writeRevisionFile()
         createBranchForMerge()
         commitChanges()
         pushBranchForMerge()
@@ -139,7 +143,7 @@ object DotnetIconSync {
 
   private fun callCustomTool() {
     customToolPath?.let {
-      step("Call custom tool: $it")
+      step("Call custom tool: $it with args $customToolArgs")
       val output = execute(
         context.devRepoDir, it,
         *customToolArgs?.splitWithSpace()?.toTypedArray() ?: error("Custom tool args should be specified")
@@ -198,5 +202,12 @@ object DotnetIconSync {
     step("Triggering merge with $mergeRobotBuildConfiguration..")
     val response = triggerBuild(mergeRobotBuildConfiguration, branchForMerge)
     println("Response is $response")
+  }
+
+  private fun writeRevisionFile() {
+    val revisionFile = context.devRepoRoot.resolve(RIDER_ICONS_RELATIVE_PATH).resolve(RIDER_ICONS_REVISION_FILE)
+    val revision = execute(context.iconRepoDir, GIT, "rev-parse", "HEAD")
+    revisionFile.writeText(revision)
+    stageFiles(listOf(revisionFile.pathString), context.devRepoRoot)
   }
 }
