@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
 
   /**
-   * (25k records) * (~20Kb avg record size) ~= 500Mb -> must fit a typical heap without OoM,
+   * (25k records) * (~10Kb avg record size) ~= 250Mb -> must fit a typical heap without OoM,
    * (But also big enough to trigger page-cross issues, etc.)
    */
   private static final int MANY_RECORDS = 25_000;
@@ -374,8 +374,8 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
     IntSupplier sizeGenerator = () -> {
       int mediumContentSize = 1 << 10;
       int hugeContentSize = 1 << 20;
-      //generate 98% of records in [0..mediumSize], but 2% up to the hugeSize
-      //average record size = (1M*0.02+1K*0.98) ~ 20K
+      //generate 98% of records in [0..mediumSize], but 2% in [0..hugeSize]
+      //average record size = (1M*0.02+1K*0.98)/2 ~ 10K
       if (rnd.nextInt(50) == 0) {
         return rnd.nextInt(hugeContentSize);
       }

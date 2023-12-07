@@ -495,7 +495,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private int writeRecordFields(int fileId,
                                 int parentId,
                                 @NotNull CharSequence name,
-                                boolean caseSensitive,
                                 @NotNull FileAttributes attributes) {
     assert fileId > 0 : fileId;
     assert parentId > 0 : parentId; // 0 means it's root => should use .writeRootFields() instead
@@ -515,7 +514,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     //    the write here by comparing names?
     if (!name.isEmpty()) {
       if (Comparing.equal(name, vfsPeer.getName(rootId), caseSensitive)) {
-        return -1; // TODO: Handle root attributes change.
+        // TODO RC: what if name doesn't change -- but root _attributes_ do? Handle this case also
+        return -1;
       }
     }
     else {
@@ -2143,7 +2143,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     FileAttributes attributes = childData.first;
 
     int childId = vfsPeer.createRecord();
-    int nameId = writeRecordFields(childId, parentId, name, parentFile.isCaseSensitive(), attributes);
+    int nameId = writeRecordFields(childId, parentId, name, attributes);
 
     if (attributes.isDirectory()) {
       FSRecords.loadDirectoryData(childId, parentFile, name, fs);
