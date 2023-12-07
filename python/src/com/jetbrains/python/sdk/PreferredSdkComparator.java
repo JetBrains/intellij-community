@@ -45,6 +45,13 @@ public class PreferredSdkComparator implements Comparator<Sdk> {
       return flavor2weight - flavor1weight;
     }
 
+    if (flavor1 != null && flavor2 != null) {
+      int languageLevelDifference = flavor1.getLanguageLevel(o1).compareTo(flavor2.getLanguageLevel(o2));
+      if (languageLevelDifference != 0) {
+        return -languageLevelDifference;
+      }
+    }
+
     return -Comparing.compare(o1.getVersionString(), o2.getVersionString());
   }
 }
