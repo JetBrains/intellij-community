@@ -82,8 +82,11 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
     override fun setUp() {
         super.setUp()
-        if(KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled) {
-            Assume.assumeFalse("Disable MPP import tests because Workspace model does not support it yet", this.javaClass.isAnnotationPresent(MppGoal::class.java))
+        if (KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled) {
+            Assume.assumeFalse(
+                "Disable MPP import tests because Workspace model does not support it yet",
+                this.javaClass.isAnnotationPresent(MppGoal::class.java)
+            )
         }
         if (createStdProjectFolders) createStdProjectFolders()
         myProject.messageBus.connect(testRootDisposable)
@@ -120,7 +123,12 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
-    protected suspend fun checkStableModuleName(projectName: String, expectedName: String, platform: TargetPlatform, isProduction: Boolean) = readAction {
+    protected suspend fun checkStableModuleName(
+        projectName: String,
+        expectedName: String,
+        platform: TargetPlatform,
+        isProduction: Boolean
+    ) = readAction {
         val module = getModule(projectName)
         val moduleInfo = if (isProduction) module.productionSourceInfo else module.testSourceInfo
 
@@ -725,6 +733,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertDefaultResources("project")
             assertDefaultTestResources("project")
         }
+
         @Test
         fun testDefaultJvmTargetFacetConfiguration() = runBlocking {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -2405,7 +2414,10 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
         }
 
-        private suspend fun doUnsupportedVersionTest(version: String, expectedFallbackVersion: String = KotlinJpsPluginSettings.rawBundledVersion) {
+        private suspend fun doUnsupportedVersionTest(
+            version: String,
+            expectedFallbackVersion: String = KotlinJpsPluginSettings.rawBundledVersion
+        ) {
             createProjectSubDirs("src/main/kotlin")
 
             importProjectAsync(
@@ -3689,6 +3701,62 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 ).map { it.toJpsVersionAgnosticKotlinBundledPath() },
                 facetSettings.compilerArguments?.pluginClasspaths?.sorted()
             )
+        }
+    }
+
+    class InvalidJvmTarget : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testInvalidJvmTarget() = runBlocking {
+            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
+
+            val kotlinMavenPluginVersion = "1.6.20"
+            importProjectAsync(
+                """
+            <groupId>test</groupId>
+            <artifactId>project</artifactId>
+            <version>1.0.0</version>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-stdlib</artifactId>
+                    <version>$kotlinVersion</version>
+                </dependency>
+            </dependencies>
+
+            <build>
+                <sourceDirectory>src/main/kotlin</sourceDirectory>
+
+                <plugins>
+                    <plugin>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-plugin</artifactId>
+                        <version>$kotlinMavenPluginVersion</version>
+
+                        <executions>
+                            <execution>
+                                <id>compile</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <jvmTarget>ILLEGAL_ITEM</jvmTarget>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            """
+            )
+
+            assertModules("project")
+            assertImporterStatePresent()
+
+            with(facetSettings) {
+                Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+            }
         }
     }
 

@@ -21,21 +21,19 @@ abstract class AbstractBytecodeToolWindowMultiplatformTest : AbstractMultiModule
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("internal/toolWindowMultiplatform")
 
-    fun doTestWithIrCommon(testPath: String) = doTest(testPath, true, "Common")
-    fun doTestWithoutIrCommon(testPath: String) = doTest(testPath, false, "Common")
-    fun doTestWithIrJvm(testPath: String) = doTest(testPath, true, "Jvm")
-    fun doTestWithoutIrJvm(testPath: String) = doTest(testPath, false, "Jvm")
+    fun doTestCommon(testPath: String) = doTest(testPath, "Common")
+    fun doTestJvm(testPath: String) = doTest(testPath, "Jvm")
 
-    fun doTest(testPath: String, withIr: Boolean, platform: String) {
+    fun doTest(testPath: String, platform: String) {
         setupMppProjectFromDirStructure(File(testPath))
         val file = project.allKotlinFiles().single { it.name.contains(platform) }
-        configureCompilerAndCheckBytecode(withIr, file)
+        configureCompilerAndCheckBytecode(file)
     }
 }
 
-private fun configureCompilerAndCheckBytecode(withIr: Boolean, file: KtFile) {
+private fun configureCompilerAndCheckBytecode(file: KtFile) {
     val configuration = CompilerConfiguration().apply {
-        if (withIr) put(JVMConfigurationKeys.IR, true)
+        put(JVMConfigurationKeys.IR, true)
         languageVersionSettings = file.languageVersionSettings
     }
 
