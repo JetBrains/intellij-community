@@ -33,7 +33,7 @@ object TerminalSessionTestUtil {
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_REGISTRY).setValue(true, parentDisposable)
     val runner = LocalBlockTerminalRunner(project)
-    val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).initialTermSize(initialTermSize).build()
+    val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath)).initialTermSize(initialTermSize).build()
     val configuredOptions = runner.configureStartupOptions(baseOptions)
     assumeBlockShellIntegration(configuredOptions)
     val process = runner.createProcess(configuredOptions)
