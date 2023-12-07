@@ -156,7 +156,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     val uiSettings = UISettings.shadowInstance
     val isNewToolbar = ExperimentalUI.isNewUI()
     return ((isNewToolbar && !isToolbarInHeader() && !isCompactHeader(mainToolbarActionSupplier)) ||
-            (!isNewToolbar && uiSettings.showMainToolbar && !DistractionFreeModeController.shouldMinimizeCustomHeader()))
+            (!isNewToolbar && uiSettings.showMainToolbar))
   }
 
   fun isToolbarInHeader() = isToolbarInHeader(fullScreen)
