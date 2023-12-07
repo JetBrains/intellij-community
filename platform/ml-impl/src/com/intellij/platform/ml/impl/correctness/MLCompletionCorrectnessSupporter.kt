@@ -13,7 +13,9 @@ interface MLCompletionCorrectnessSupporter {
 
   companion object {
     fun getInstance(language: Language): MLCompletionCorrectnessSupporter? {
-      return MLCompletionCorrectnessSupporterEP.EP_NAME.lazySequence().firstOrNull { it.language == language.id }?.instance
+      return MLCompletionCorrectnessSupporterEP.EP_NAME.lazySequence().map { it.instance }.firstOrNull { it.isLanguageSupported(language) }
     }
   }
+
+  fun isLanguageSupported(language: Language): Boolean
 }

@@ -264,8 +264,7 @@
                                    implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyContextFeatureProvider"/>
     <completion.ml.elementFeatures language="Python"
                                    implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyElementFeatureProvider"/>
-    <mlCompletionCorrectnessSupporter language="Python"
-                                      implementationClass="com.jetbrains.python.codeInsight.mlcompletion.correctness.PythonMLCompletionCorrectnessSupporter"/>
+    <mlCompletionCorrectnessSupporter implementationClass="com.jetbrains.python.codeInsight.mlcompletion.correctness.PythonMLCompletionCorrectnessSupporter"/>
     <completion.confidence language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyCompletionConfidence"/>
     <completion.ml.model implementation="com.jetbrains.python.codeInsight.mlcompletion.PythonMLRankingProvider"/>
     <typedHandler implementation="com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler" id="pydevBlockAutoPopup"

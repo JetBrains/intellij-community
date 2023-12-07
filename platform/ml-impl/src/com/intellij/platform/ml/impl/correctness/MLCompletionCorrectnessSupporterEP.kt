@@ -13,10 +13,6 @@ import org.jetbrains.annotations.TestOnly
 class MLCompletionCorrectnessSupporterEP : CustomLoadingExtensionPointBean<MLCompletionCorrectnessSupporter>,
                                            KeyedLazyInstance<MLCompletionCorrectnessSupporter> {
   @RequiredElement
-  @Attribute("language")
-  var language: String? = null
-
-  @RequiredElement
   @Attribute("implementationClass")
   var implementationClass: String? = null
 
@@ -26,16 +22,14 @@ class MLCompletionCorrectnessSupporterEP : CustomLoadingExtensionPointBean<MLCom
   @Suppress("unused")
   @TestOnly
   constructor(
-    language: String?,
     implementationClass: String?,
     instance: MLCompletionCorrectnessSupporter,
   ) : super(instance) {
-    this.language = language
     this.implementationClass = implementationClass
   }
 
   override fun getImplementationClassName(): String? = this.implementationClass
-  override fun getKey(): String = language!!
+  override fun getKey(): String = this.implementationClass!!
 
   companion object {
     val EP_NAME: ExtensionPointName<MLCompletionCorrectnessSupporterEP> = ExtensionPointName.create(
