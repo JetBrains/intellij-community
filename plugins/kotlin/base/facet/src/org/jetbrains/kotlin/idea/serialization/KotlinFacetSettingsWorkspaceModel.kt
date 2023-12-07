@@ -185,19 +185,19 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             entity.sourceSetNames = value.toMutableList()
         }
 
-    private var _targetPlatform : TargetPlatform? = JvmPlatforms.defaultJvmPlatform.singleOrNull()?.toTargetPlatform()
     override var targetPlatform: TargetPlatform?
         get() {
             val args = compilerArguments
-            val singleSimplePlatform = _targetPlatform?.componentPlatforms?.singleOrNull()
+            val deserializedTargetPlatform =
+                entity.targetPlatform.takeIf { it.isNotEmpty() }.deserializeTargetPlatformByComponentPlatforms()
+            val singleSimplePlatform = deserializedTargetPlatform?.componentPlatforms?.singleOrNull()
             if (singleSimplePlatform == JvmPlatforms.defaultJvmPlatform.singleOrNull() && args != null) {
                 return IdePlatformKind.platformByCompilerArguments(args)
             }
-            return _targetPlatform
+            return deserializedTargetPlatform
         }
         set(value) {
             entity.targetPlatform = value?.serializeComponentPlatforms() ?: ""
-            _targetPlatform = value
         }
 
     private var _testOutputPath: String? = entity.testOutputPath

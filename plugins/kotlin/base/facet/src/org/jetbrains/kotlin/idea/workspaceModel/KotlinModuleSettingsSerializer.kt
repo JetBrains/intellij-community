@@ -74,6 +74,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         kotlinSettingsEntity.testOutputPath = kotlinFacetSettings.testOutputPath ?: ""
         kotlinSettingsEntity.sourceSetNames = kotlinFacetSettings.sourceSetNames.toMutableList()
         kotlinSettingsEntity.isTestModule = kotlinFacetSettings.isTestModule
+        kotlinSettingsEntity.targetPlatform = kotlinFacetSettings.targetPlatform?.serializeComponentPlatforms() ?: ""
         kotlinSettingsEntity.externalProjectId = kotlinFacetSettings.externalProjectId
         kotlinSettingsEntity.isHmppEnabled = kotlinFacetSettings.isHmppEnabled
         kotlinSettingsEntity.pureKotlinSourceFolders = kotlinFacetSettings.pureKotlinSourceFolders.toMutableList()
