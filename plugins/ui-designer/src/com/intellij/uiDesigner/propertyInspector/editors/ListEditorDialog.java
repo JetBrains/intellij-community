@@ -35,7 +35,7 @@ public class ListEditorDialog extends DialogWrapper {
 
   public String[] getValue() {
     final String text = myLinesTextArea.getText();
-    if (text.length() == 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    if (text.isEmpty()) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     return text.split("\n");
   }
 

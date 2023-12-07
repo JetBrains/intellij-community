@@ -99,7 +99,7 @@ public final class StringEditorDialog extends DialogWrapper{
   @Override protected void doOKAction() {
     if (myForm.myRbResourceBundle.isSelected()) {
       final StringDescriptor descriptor = getDescriptor();
-      if (descriptor != null && descriptor.getKey().length() > 0) {
+      if (descriptor != null && !descriptor.getKey().isEmpty()) {
         final String value = myForm.myTfRbValue.getText();
         final PropertiesFile propFile = getPropertiesFile(descriptor);
         try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-687662")) {
@@ -208,7 +208,7 @@ public final class StringEditorDialog extends DialogWrapper{
     InputValidator validator = new InputValidator() {
       @Override
       public boolean checkInput(String inputString) {
-        return inputString.length() > 0 && propFile.findPropertyByKey(inputString) == null;
+        return !inputString.isEmpty() && propFile.findPropertyByKey(inputString) == null;
       }
 
       @Override
@@ -252,7 +252,7 @@ public final class StringEditorDialog extends DialogWrapper{
   StringDescriptor getDescriptor(){
     if(myForm.myRbString.isSelected()){ // plain value
       final String value = myForm.myTfValue.getText();
-      if(myValue == null && value.length() == 0){
+      if(myValue == null && value.isEmpty()){
         return null;
       }
       else{
@@ -322,7 +322,7 @@ public final class StringEditorDialog extends DialogWrapper{
             if (!myDefaultBundleInitialized) {
               myDefaultBundleInitialized = true;
               Set<String> bundleNames = FormEditingUtil.collectUsedBundleNames(myEditor.getRootContainer());
-              if (bundleNames.size() > 0) {
+              if (!bundleNames.isEmpty()) {
                 myTfBundleName.setText(ArrayUtilRt.toStringArray(bundleNames)[0]);
               }
             }
@@ -398,7 +398,7 @@ public final class StringEditorDialog extends DialogWrapper{
           public void actionPerformed(final ActionEvent e) {
             // 1. Check that bundle exist. Otherwise we cannot show key chooser
             final String bundleName = myTfBundleName.getText();
-            if (bundleName.length() == 0) {
+            if (bundleName.isEmpty()) {
               Messages.showErrorDialog(
                 UIDesignerBundle.message("error.specify.bundle.name"),
                 CommonBundle.getErrorTitle()

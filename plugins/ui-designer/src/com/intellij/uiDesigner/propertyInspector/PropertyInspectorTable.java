@@ -233,7 +233,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
   }
 
   public @Nullable String getSelectedRadComponentClassName() {
-    if (mySelection.size() == 0) return null;
+    if (mySelection.isEmpty()) return null;
     String className = mySelection.get(0).getComponentClassName();
     for (int i = 1; i < mySelection.size(); i++) {
       if (!Objects.equals(mySelection.get(i).getComponentClassName(), className)) {
@@ -456,7 +456,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
 
   private void collectPropertiesForSelection() {
     myProperties.clear();
-    if (mySelection.size() > 0) {
+    if (!mySelection.isEmpty()) {
       collectProperties(mySelection.get(0), myProperties);
 
       for(int propIndex=myProperties.size()-1; propIndex >= 0; propIndex--) {
@@ -705,7 +705,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     else{
       message = exc.getMessage();
     }
-    if (message == null || message.length() == 0) {
+    if (message == null || message.isEmpty()) {
       message = UIDesignerBundle.message("error.no.message");
     }
     Messages.showMessageDialog(UIDesignerBundle.message("error.setting.value", message),
@@ -813,7 +813,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
   }
 
   private Object getSelectionValue(final Property property) {
-    if (mySelection.size() == 0) {
+    if (mySelection.isEmpty()) {
       return null;
     }
     //noinspection unchecked

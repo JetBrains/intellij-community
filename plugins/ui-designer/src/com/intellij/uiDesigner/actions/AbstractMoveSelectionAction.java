@@ -35,7 +35,7 @@ abstract class AbstractMoveSelectionAction extends AnAction implements DumbAware
   public final void actionPerformed(final @NotNull AnActionEvent e) {
     final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
     final JComponent rootContainerDelegee = myEditor.getRootContainer().getDelegee();
-    if(selectedComponents.size() == 0){
+    if(selectedComponents.isEmpty()){
       moveToFirstComponent(rootContainerDelegee);
       return;
     }
@@ -81,7 +81,7 @@ abstract class AbstractMoveSelectionAction extends AnAction implements DumbAware
         }
       }
     );
-    if(components.size() == 0){
+    if(components.isEmpty()){
       return;
     }
 

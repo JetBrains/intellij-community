@@ -133,7 +133,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   public static @NotNull String suggestBinding(final RadRootContainer rootContainer, final @NotNull String componentClassName) {
     String shortClassName = getShortClassName(componentClassName);
 
-    LOG.assertTrue(shortClassName.length() > 0);
+    LOG.assertTrue(!shortClassName.isEmpty());
 
     return getUniqueBinding(rootContainer, shortClassName);
   }
@@ -326,7 +326,7 @@ public final class InsertComponentProcessor extends EventProcessor {
       if (componentClass != null && JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), moduleScope) == null) {
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myEditor.getProject()).getFileIndex();
         List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(componentClass.getContainingFile().getVirtualFile());
-        if (entries.size() > 0) {
+        if (!entries.isEmpty()) {
           if (entries.get(0) instanceof ModuleSourceOrderEntry) {
             if (!checkAddModuleDependency(item, (ModuleSourceOrderEntry)entries.get(0))) return false;
           }

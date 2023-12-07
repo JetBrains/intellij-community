@@ -315,7 +315,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
     String bundleName = propertiesFile.getResourceBundle().getBaseName();
 
-    if (packageName.length() > 0) {
+    if (!packageName.isEmpty()) {
       bundleName = packageName + '.' + bundleName;
     }
     bundleName = bundleName.replace('.', '/');

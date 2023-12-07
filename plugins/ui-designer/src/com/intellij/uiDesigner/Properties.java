@@ -151,7 +151,7 @@ public final class Properties {
       }
       map.put(name, pairs);
     }
-    if (map.size() > 0) {
+    if (!map.isEmpty()) {
       myClass2EnumProperties.put(className, map);
     }
   }

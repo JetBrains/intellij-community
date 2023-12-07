@@ -73,7 +73,7 @@ public final class FormEditingUtil {
   }
 
   public static void deleteComponents(final Collection<? extends RadComponent> selection, boolean deleteEmptyCells) {
-    if (selection.size() == 0) {
+    if (selection.isEmpty()) {
       return;
     }
     final RadRootContainer rootContainer = (RadRootContainer)getRoot(selection.iterator().next());
@@ -523,7 +523,7 @@ public final class FormEditingUtil {
           }
         }
 
-        if (componentsInColumn.size() > 0) {
+        if (!componentsInColumn.isEmpty()) {
           String message = isRow
                            ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size(), cells.length)
                            : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size(), cells.length);
@@ -596,7 +596,7 @@ public final class FormEditingUtil {
     if (directory != null) {
       PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
       String packageName = pkg != null ? pkg.getQualifiedName() : "";
-      if (packageName.length() == 0) {
+      if (packageName.isEmpty()) {
         return file.getName();
       }
       return packageName.replace('.', '/') + '/' + file.getName();
@@ -687,7 +687,7 @@ public final class FormEditingUtil {
   }
 
   public static void selectComponents(final GuiEditor editor, List<? extends RadComponent> components) {
-    if (components.size() > 0) {
+    if (!components.isEmpty()) {
       RadComponent component = components.get(0);
       ComponentTreeBuilder builder = DesignerToolWindowManager.getInstance(editor).getComponentTreeBuilder();
       if (builder == null) {

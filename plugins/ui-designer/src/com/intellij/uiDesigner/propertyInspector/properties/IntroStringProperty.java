@@ -230,7 +230,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     if (value.getValue() == null) {
       RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
       Locale locale = root.getStringDescriptorLocale();
-      if (locale != null && locale.getDisplayName().length() > 0) {
+      if (locale != null && !locale.getDisplayName().isEmpty()) {
         return;
       }
     }

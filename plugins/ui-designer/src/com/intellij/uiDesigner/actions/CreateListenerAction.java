@@ -93,7 +93,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   }
 
   private static boolean canCreateListener(final ArrayList<? extends RadComponent> selection) {
-    if (selection.size() == 0) return false;
+    if (selection.isEmpty()) return false;
     final RadRootContainer root = (RadRootContainer)FormEditingUtil.getRoot(selection.get(0));
     if (root.getClassToBind() == null) return false;
     String componentClass = selection.get(0).getComponentClassName();

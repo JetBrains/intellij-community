@@ -293,7 +293,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
         selection.add(i);
       }
     }
-    if (selection.size() == 0 && dragOrigin != null) {
+    if (selection.isEmpty() && dragOrigin != null) {
       int cell = getCellAt(dragOrigin);
       if (cell >= 0) {
         return new int[] { cell };

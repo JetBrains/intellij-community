@@ -230,7 +230,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     if (LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.is(dataId)) {
       Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
-      return elements.size() == 0 ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY);
+      return elements.isEmpty() ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY);
     }
 
     if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {

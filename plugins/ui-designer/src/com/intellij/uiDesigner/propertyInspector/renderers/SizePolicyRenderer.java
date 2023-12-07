@@ -22,13 +22,13 @@ public final class SizePolicyRenderer extends LabelPropertyRenderer<Integer> {
       myBuffer.append(UIDesignerBundle.message("property.can.shrink"));
     }
     if((policy & GridConstraints.SIZEPOLICY_CAN_GROW) != 0){
-      if(myBuffer.length()>0){
+      if(!myBuffer.isEmpty()){
         myBuffer.append(", ");
       }
       myBuffer.append(UIDesignerBundle.message("property.can.grow"));
     }
     if((policy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0){
-      if(myBuffer.length()>0){
+      if(!myBuffer.isEmpty()){
         myBuffer.append(", ");
       }
       myBuffer.append(UIDesignerBundle.message("property.want.grow"));

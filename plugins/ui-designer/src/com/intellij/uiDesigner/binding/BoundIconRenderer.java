@@ -71,7 +71,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         List<PsiFile> formFiles = getBoundFormFiles();
-        if (formFiles.size() > 0) {
+        if (!formFiles.isEmpty()) {
           final VirtualFile virtualFile = formFiles.get(0).getVirtualFile();
           if (virtualFile == null) {
             return;
@@ -94,7 +94,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
   public @Nullable String getTooltipText() {
     List<PsiFile> formFiles = getBoundFormFiles();
 
-    if (formFiles.size() > 0) {
+    if (!formFiles.isEmpty()) {
       return composeText(formFiles);
     }
     return super.getTooltipText();

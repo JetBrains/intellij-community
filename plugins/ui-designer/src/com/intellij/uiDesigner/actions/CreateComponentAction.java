@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -36,7 +36,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
                                                          UIDesignerBundle.message("create.component.title"));
     final ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(step);
 
-    if (selection.size() > 0) {
+    if (!selection.isEmpty()) {
       FormEditingUtil.showPopupUnderComponent(listPopup, selection.get(0));
     }
     else {
@@ -46,7 +46,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
 
   private static ComponentDropLocation getCreateLocation(final GuiEditor editor, final List<? extends RadComponent> selection) {
     ComponentDropLocation dropLocation = null;
-    if (selection.size() > 0) {
+    if (!selection.isEmpty()) {
       RadComponent component = selection.get(0);
       final RadContainer container = component.getParent();
       if (container.getLayoutManager().isGrid()) {

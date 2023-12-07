@@ -56,7 +56,7 @@ public final class MainProcessor extends EventProcessor{
     else if (e.getID() == KeyEvent.KEY_TYPED && Character.isLetterOrDigit(e.getKeyChar()) &&
       (e.getModifiers() & (InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) == 0) {
       final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
-      if (selection.size() > 0) {
+      if (!selection.isEmpty()) {
         final RadComponent component = selection.get(0);
         final InplaceEditingLayer inplaceLayer = myEditor.getInplaceEditingLayer();
         inplaceLayer.startInplaceEditing(component, component.getDefaultInplaceProperty(),

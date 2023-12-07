@@ -66,7 +66,7 @@ public final class DraggedComponentList implements Transferable, ComponentDragOb
     });
 
     RadComponent componentUnderMouse = null;
-    int componentUnderMouseIndex = mySelection.size() == 0 ? -1 : 0;
+    int componentUnderMouseIndex = mySelection.isEmpty() ? -1 : 0;
     if (pnt != null) {
       for(int i=0; i<mySelection.size(); i++) {
         RadComponent c = mySelection.get(i);

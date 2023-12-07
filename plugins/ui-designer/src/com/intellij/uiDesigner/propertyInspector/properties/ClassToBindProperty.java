@@ -63,7 +63,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
   protected void setValueImpl(final RadRootContainer component, final String value) {
     String className = value;
 
-    if (className != null && className.length() == 0) {
+    if (className != null && className.isEmpty()) {
       className = null;
     }
 
@@ -104,7 +104,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     @Override
     public String getValue() {
       final String value = myDocument.getText();
-      if (value.length() == 0 && myInitialValue == null) {
+      if (value.isEmpty() && myInitialValue == null) {
         return null;
       }
       return value.replace('$', '.'); // PSI works only with dots

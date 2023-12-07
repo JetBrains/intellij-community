@@ -52,7 +52,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
   @Override
   public boolean isCopyEnabled(final @NotNull DataContext dataContext) {
-    return FormEditingUtil.getSelectedComponents(myEditor).size() > 0 && !myEditor.getInplaceEditingLayer().isEditing();
+    return !FormEditingUtil.getSelectedComponents(myEditor).isEmpty() && !myEditor.getInplaceEditingLayer().isEditing();
   }
 
   @Override

@@ -112,7 +112,7 @@ public final class ComponentTreeBuilder implements Disposable {
         }
       }
     );
-    if(selection.size() == 0){
+    if(selection.isEmpty()){
       // If there is no selected component in the hierarchy, then
       // we have to select RadRootContainer
       selection.add(rootContainer);

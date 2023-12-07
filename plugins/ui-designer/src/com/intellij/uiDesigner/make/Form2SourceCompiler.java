@@ -191,7 +191,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           generator.generate(formFile);
           final ArrayList<FormErrorInfo> errors = generator.getErrors();
-          if (errors.size() == 0) {
+          if (errors.isEmpty()) {
             compiledItems.add(item);
           }
           else {

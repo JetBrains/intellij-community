@@ -27,7 +27,7 @@ final class LightBulbComponentImpl extends JComponent{
     setPreferredSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
     final String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-    if (acceleratorsText.length() > 0) {
+    if (!acceleratorsText.isEmpty()) {
       setToolTipText(UIDesignerBundle.message("tooltip.press.accelerator", acceleratorsText));
     }
 

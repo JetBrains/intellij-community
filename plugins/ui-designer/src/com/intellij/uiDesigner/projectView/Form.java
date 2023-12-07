@@ -82,7 +82,7 @@ public class Form implements Navigatable, Iterable<PsiElement> {
   }
 
   public boolean isValid() {
-    if (myFormFiles.size() == 0) return false;
+    if (myFormFiles.isEmpty()) return false;
     for (PsiFile psiFile : myFormFiles) {
       if (!psiFile.isValid()) {
         return false;

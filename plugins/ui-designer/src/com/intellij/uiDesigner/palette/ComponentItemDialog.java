@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.CommonBundle;
@@ -333,7 +333,7 @@ public final class ComponentItemDialog extends DialogWrapper {
       }
     }
     else {
-      if (myTfNestedForm.getText().length() == 0) {
+      if (myTfNestedForm.getText().isEmpty()) {
         return false;
       }
     }
@@ -396,7 +396,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       PsiFile formFile = null;
-      if (myTextField.getText().length() > 0) {
+      if (!myTextField.getText().isEmpty()) {
         VirtualFile formVFile = ResourceFileUtil.findResourceFileInScope(myTextField.getText(), myProject, ProjectScope.getAllScope(myProject));
         if (formVFile != null) {
           formFile = PsiManager.getInstance(myProject).findFile(formVFile);

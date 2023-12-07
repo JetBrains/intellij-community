@@ -119,7 +119,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
             newContainer = panel;
           }
           else {
-            if (selection.size() > 0) {
+            if (!selection.isEmpty()) {
               selection.get(0).setCustomLayoutConstraints(LwSplitPane.POSITION_LEFT);
             }
             if (selection.size() > 1) {

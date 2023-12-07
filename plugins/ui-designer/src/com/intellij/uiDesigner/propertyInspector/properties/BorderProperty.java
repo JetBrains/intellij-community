@@ -177,7 +177,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     @Override
     protected void setValueImpl(final RadContainer component, final StringDescriptor value) throws Exception {
       StringDescriptor title = value;
-      if (title != null && StringDescriptorManager.getInstance(component.getModule()).resolve(component, title).length() == 0) {
+      if (title != null && StringDescriptorManager.getInstance(component.getModule()).resolve(component, title).isEmpty()) {
         title = null;
       }
       component.setBorderTitle(title);

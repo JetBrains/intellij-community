@@ -140,7 +140,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
   @Override
   public @Nullable Point getBestPopupPosition() {
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
-    if (selection.size() > 0) {
+    if (!selection.isEmpty()) {
       final RadComponent component = selection.get(0);
       final Rectangle bounds = component.getBounds();
       int bottom = bounds.height > 4 ? bounds.y + bounds.height - 4 : bounds.y;

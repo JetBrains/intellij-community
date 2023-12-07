@@ -137,7 +137,7 @@ public final class PropertyInspector extends JPanel{
         }
         else {
           List<RadButtonGroup> buttonGroups = myComponentTree.getSelectedElements(RadButtonGroup.class);
-          if (buttonGroups.size() > 0) {
+          if (!buttonGroups.isEmpty()) {
             showButtonGroupProperties(buttonGroups.get(0));
           }
           else {

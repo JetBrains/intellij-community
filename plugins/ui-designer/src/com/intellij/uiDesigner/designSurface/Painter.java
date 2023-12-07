@@ -409,7 +409,7 @@ public final class Painter {
       if (prop.getName().equals(SwingProperties.TEXT)) {
         final Object desc = prop.getPropertyValue(component);
         if (!(desc instanceof StringDescriptor) || ((StringDescriptor)desc).getValue() == null ||
-            ((StringDescriptor)desc).getValue().length() > 0) {
+            !((StringDescriptor)desc).getValue().isEmpty()) {
           return;
         }
       }

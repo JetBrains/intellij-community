@@ -100,7 +100,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
       }
     }
     String result = builder.toString().trim();
-    if (result.length() > 0) {
+    if (!result.isEmpty()) {
       return result;
     }
     return UIDesignerBundle.message("font.default");

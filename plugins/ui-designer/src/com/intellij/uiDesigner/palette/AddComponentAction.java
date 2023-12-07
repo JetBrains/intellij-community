@@ -92,7 +92,7 @@ public class AddComponentAction extends AnAction {
 
   private static void assignDefaultIcon(final Project project, final ComponentItem itemToBeAdded) {
     Palette palette = Palette.getInstance(project);
-    if (itemToBeAdded.getIconPath() == null || itemToBeAdded.getIconPath().length() == 0) {
+    if (itemToBeAdded.getIconPath() == null || itemToBeAdded.getIconPath().isEmpty()) {
       PsiClass aClass =
         JavaPsiFacade.getInstance(project).findClass(itemToBeAdded.getClassName().replace('$', '.'), ProjectScope.getAllScope(project));
       while (aClass != null) {
@@ -100,7 +100,7 @@ public class AddComponentAction extends AnAction {
         ComponentItem item = name == null ? null : palette.getItem(name);
         if (item != null) {
           String iconPath = item.getIconPath();
-          if (iconPath != null && iconPath.length() > 0) {
+          if (iconPath != null && !iconPath.isEmpty()) {
             itemToBeAdded.setIconPath(iconPath);
             return;
           }

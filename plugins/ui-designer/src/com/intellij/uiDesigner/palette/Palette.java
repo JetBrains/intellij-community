@@ -458,7 +458,7 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
   ) {
     LOG.assertTrue(ELEMENT_ITEM.equals(itemElement.getName()));
 
-    if (name2value.size() == 0) { // do not append 'initial-values' subtag
+    if (name2value.isEmpty()) { // do not append 'initial-values' subtag
       return;
     }
 

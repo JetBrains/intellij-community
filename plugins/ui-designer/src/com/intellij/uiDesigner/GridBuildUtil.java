@@ -104,7 +104,7 @@ public final class GridBuildUtil {
     final RadComponent[] componentsToConvert;
     {
       final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
-      if (selection.size() == 0) {
+      if (selection.isEmpty()) {
         // root container selected
         final RadRootContainer rootContainer = editor.getRootContainer();
         if (rootContainer.getComponentCount() < 2) {

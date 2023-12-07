@@ -40,7 +40,7 @@ public class NewKeyDialog extends DialogWrapper {
   }
 
   private void updateButton() {
-    setOKActionEnabled(myKeyNameEdit.getText().length() > 0);
+    setOKActionEnabled(!myKeyNameEdit.getText().isEmpty());
   }
 
   @Override public JComponent getPreferredFocusedComponent() {

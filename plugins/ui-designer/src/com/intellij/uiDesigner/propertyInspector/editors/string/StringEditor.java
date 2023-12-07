@@ -136,7 +136,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     if(myValue == null || (myValue.getValue() != null && myTextFieldModified)) {
       // editor is for "trivial" StringDescriptor
       final String value = myTfWithButton.getText();
-      if (myValue == null && value.length() == 0) {
+      if (myValue == null && value.isEmpty()) {
         return null;
       }
       else{

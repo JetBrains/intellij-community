@@ -162,7 +162,7 @@ public final class FormSourceCodeGenerator {
       }
     );
 
-    if (myErrors.size() != 0) {
+    if (!myErrors.isEmpty()) {
       return;
     }
 
@@ -1046,7 +1046,7 @@ public final class FormSourceCodeGenerator {
     for (final LwIntrospectedProperty property : introspectedProperties) {
       if (property instanceof LwIntroComponentProperty) {
         String componentId = (String) component.getPropertyValue(property);
-        if (componentId != null && componentId.length() > 0) {
+        if (componentId != null && !componentId.isEmpty()) {
           LwComponent target = id2component.get(componentId);
           if (target != null) {
             String targetVariable = getVariable(target, component2variable, class2variableIndex, aClass);
@@ -1110,7 +1110,7 @@ public final class FormSourceCodeGenerator {
     LwContainer parent = container;
     while(parent != null) {
       final String layoutManager = parent.getLayoutManager();
-      if (layoutManager != null && layoutManager.length() > 0) {
+      if (layoutManager != null && !layoutManager.isEmpty()) {
         generator = ourContainerLayoutCodeGenerators.get(layoutManager);
         if (generator != null) {
           return generator;

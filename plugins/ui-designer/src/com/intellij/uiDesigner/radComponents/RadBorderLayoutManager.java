@@ -117,7 +117,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
       }
     }
 
-    if ((container.getComponentCount() > 0 && componentsInBorder.size() == 0) || componentsInBorder.size() > 3) {
+    if ((container.getComponentCount() > 0 && componentsInBorder.isEmpty()) || componentsInBorder.size() > 3) {
       throw new IncorrectOperationException("Component layout is too complex to convert to BorderLayout");
     }
 

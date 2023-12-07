@@ -87,7 +87,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
         writer.addAttribute("stored-main-component-binding", mainComponentBinding);
       }
       writeChildrenImpl(writer);
-      if (myButtonGroups.size() > 0) {
+      if (!myButtonGroups.isEmpty()) {
         writer.startElement(UIFormXmlConstants.ELEMENT_BUTTON_GROUPS);
         for(RadButtonGroup group: myButtonGroups) {
           group.write(writer);
@@ -102,7 +102,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   }
 
   private void writeInspectionSuppressions(final XmlWriter writer) {
-    if (myInspectionSuppressions.size() > 0) {
+    if (!myInspectionSuppressions.isEmpty()) {
       writer.startElement(UIFormXmlConstants.ELEMENT_INSPECTION_SUPPRESSIONS);
       for(LwInspectionSuppression suppression: myInspectionSuppressions) {
         writer.startElement(UIFormXmlConstants.ELEMENT_SUPPRESS);

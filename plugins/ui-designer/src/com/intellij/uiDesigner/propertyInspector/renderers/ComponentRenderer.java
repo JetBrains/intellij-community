@@ -25,7 +25,7 @@ public class ComponentRenderer extends ColoredListCellRenderer implements Proper
   public JComponent getComponent(final RadRootContainer rootContainer, String value, boolean selected, boolean hasFocus) {
     clear();
     setBackground(selected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground());
-    if (value != null && value.length() > 0) {
+    if (value != null && !value.isEmpty()) {
       RadComponent target = (RadComponent)FormEditingUtil.findComponent(rootContainer, value);
       if (target != null) {
         renderComponent(target, selected);

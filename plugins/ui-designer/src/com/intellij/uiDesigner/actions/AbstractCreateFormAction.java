@@ -91,7 +91,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase i
 
     @Override
     public boolean checkInput(String inputString) {
-      return inputString.length() > 0 && PsiNameHelper.getInstance(myProject).isQualifiedName(inputString);
+      return !inputString.isEmpty() && PsiNameHelper.getInstance(myProject).isQualifiedName(inputString);
     }
   }
 }

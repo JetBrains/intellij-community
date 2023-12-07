@@ -55,7 +55,7 @@ public final class CreateClassToBindFix extends QuickFix{
           final int indexOfLastDot = myClassName.lastIndexOf('.');
           final String packageName = myClassName.substring(0, indexOfLastDot != -1 ? indexOfLastDot : 0);
           final PsiDirectory psiDirectory;
-          if(packageName.length() > 0){
+          if(!packageName.isEmpty()){
             final PackageWrapper packageWrapper = new PackageWrapper(PsiManager.getInstance(project), packageName);
             try {
               psiDirectory = CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, sourceRoot);

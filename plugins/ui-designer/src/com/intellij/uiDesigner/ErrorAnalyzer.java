@@ -347,7 +347,7 @@ public final class ErrorAnalyzer {
     // General error
     {
       final ArrayList<ErrorInfo> errorInfo = getErrorInfos(component);
-      if(errorInfo != null && errorInfo.size() > 0){
+      if(errorInfo != null && !errorInfo.isEmpty()){
         return errorInfo.get(0);
       }
     }

@@ -87,7 +87,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return;
     }
 
-    if (value.length() > 0 && !PsiNameHelper.getInstance(component.getProject()).isIdentifier(value)) {
+    if (!value.isEmpty() && !PsiNameHelper.getInstance(component.getProject()).isIdentifier(value)) {
       throw new Exception("Value '" + value + "' is not a valid identifier");
     }
 
@@ -96,7 +96,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
     // Check that binding remains unique
 
-    if (value.length() > 0) {
+    if (!value.isEmpty()) {
       if (!FormEditingUtil.isBindingUnique(component, value, root)) {
         throw new Exception(UIDesignerBundle.message("error.binding.not.unique"));
       }
@@ -124,7 +124,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     if (classToBind == null) return;
 
     final Project project = root.getProject();
-    if (newName.length() == 0) {
+    if (newName.isEmpty()) {
       checkRemoveUnusedField(root, oldName, FormEditingUtil.getNextSaveUndoGroupId(project));
       return;
     }
@@ -308,7 +308,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
       text = Pattern.compile("<.+?>").matcher(text).replaceAll("");
     }
     ArrayList<String> words = new ArrayList<>(StringUtil.getWordsIn(text));
-    if (words.size() > 0) {
+    if (!words.isEmpty()) {
       StringBuilder nameBuilder = new StringBuilder(StringUtil.decapitalize(words.get(0)));
       for(int i=1; i<words.size() && i < 4; i++) {
         nameBuilder.append(StringUtil.capitalize(words.get(i)));

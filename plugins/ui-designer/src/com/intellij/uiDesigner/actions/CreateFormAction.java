@@ -54,7 +54,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
       final String packageName = aPackage.getQualifiedName();
       String fqClassName = null;
       if (myLastClassName != null) {
-        fqClassName = packageName.length() == 0 ? myLastClassName : packageName + "." + myLastClassName;
+        fqClassName = packageName.isEmpty() ? myLastClassName : packageName + "." + myLastClassName;
       }
 
       final String formBody = createFormBody(fqClassName, "/com/intellij/uiDesigner/NewForm.xml",
@@ -121,7 +121,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
       myFormNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
-          setOKActionEnabled(myFormNameTextField.getText().length() > 0);
+          setOKActionEnabled(!myFormNameTextField.getText().isEmpty());
           if (myNeedAdjust) {
             myAdjusting = true;
             myClassNameTextField.setText(myFormNameTextField.getText());

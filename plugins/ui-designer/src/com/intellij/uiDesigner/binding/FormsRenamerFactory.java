@@ -18,7 +18,7 @@ public class FormsRenamerFactory implements AutomaticRenamerFactory {
   public boolean isApplicable(final @NotNull PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
     List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(element.getProject(), (PsiClass)element);
-    return forms.size() > 0;
+    return !forms.isEmpty();
   }
 
   @Override

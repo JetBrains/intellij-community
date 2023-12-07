@@ -165,7 +165,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     }
 
     // Create new icon
-    if (myIconPath != null && myIconPath.length() > 0) {
+    if (myIconPath != null && !myIconPath.isEmpty()) {
       final VirtualFile iconFile = ResourceFileUtil.findResourceFileInScope(myIconPath, myProject, GlobalSearchScope.allScope(myProject));
       if (iconFile != null) {
         try {
@@ -370,11 +370,11 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   public @Nullable PsiFile getBoundForm() {
-    if (myClassName.length() == 0 || myClassName.startsWith("javax.swing")) {
+    if (myClassName.isEmpty() || myClassName.startsWith("javax.swing")) {
       return null;
     }
     List<PsiFile> boundForms = FormClassIndex.findFormsBoundToClass(myProject, myClassName.replace('$', '.'));
-    if (boundForms.size() > 0) {
+    if (!boundForms.isEmpty()) {
       return boundForms.get(0);
     }
     return null;

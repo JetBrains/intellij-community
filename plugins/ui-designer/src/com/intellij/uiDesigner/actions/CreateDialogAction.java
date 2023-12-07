@@ -172,7 +172,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     final String packageName = aPackage.getQualifiedName();
-    final String fqClassName = packageName.length() == 0 ? newName : packageName + "." + newName;
+    final String fqClassName = packageName.isEmpty() ? newName : packageName + "." + newName;
 
     final String formBody = createFormBody(fqClassName, "/com/intellij/uiDesigner/NewDialog.xml",
                                            GuiDesignerConfiguration.getInstance(directory.getProject()).DEFAULT_LAYOUT_MANAGER);

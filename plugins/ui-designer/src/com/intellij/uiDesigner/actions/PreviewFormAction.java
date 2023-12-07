@@ -193,11 +193,11 @@ public final class PreviewFormAction extends AnAction {
         CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME + "$MySetLafAction", true);
 
         Locale locale = Locale.getDefault();
-        if (locale.getCountry().length() > 0 && locale.getLanguage().length() > 0) {
+        if (!locale.getCountry().isEmpty() && !locale.getLanguage().isEmpty()) {
           CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() +
                                                      "_" + locale.getCountry() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
         }
-        if (locale.getLanguage().length() > 0) {
+        if (!locale.getLanguage().isEmpty()) {
           CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
         }
         CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
@@ -244,7 +244,7 @@ public final class PreviewFormAction extends AnAction {
           }
         });
 
-      if (bundleSet.size() > 0) {
+      if (!bundleSet.isEmpty()) {
         HashSet<VirtualFile> virtualFiles = new HashSet<>();
         HashSet<Module> modules = new HashSet<>();
         PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
@@ -318,7 +318,7 @@ public final class PreviewFormAction extends AnAction {
     }
     parameters.setMainClass(CLASS_TO_BIND_NAME);
     parameters.setWorkingDirectory(tempPath);
-    if (stringDescriptorLocale != null && stringDescriptorLocale.getDisplayName().length() > 0) {
+    if (stringDescriptorLocale != null && !stringDescriptorLocale.getDisplayName().isEmpty()) {
       parameters.getVMParametersList().add("-Duser.language=" + stringDescriptorLocale.getLanguage());
     }
 
