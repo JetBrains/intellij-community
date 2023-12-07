@@ -10,6 +10,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.addBorder
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflow
@@ -55,7 +56,10 @@ class DefaultCommitChangeListDialog(val workflow: SingleChangeListCommitWorkflow
   override fun afterInit() {
     super.afterInit()
 
-    browser.viewer.resetTreeState()
+    // delay until window layout is stabilized, so that tree can be correctly scrolled
+    UIUtil.runWhenWindowOpened(window) {
+      browser.viewer.resetTreeState()
+    }
   }
 
   override fun createCenterPanel(): JComponent =
