@@ -72,16 +72,10 @@ class BaseContinuationImpl(context: DefaultExecutionContext, private val debugMe
         getNextContinuation(getCompletion.value(value, context))
 
     private fun getCoroutineOwner(completion: ObjectReference?) =
-        if (completion != null && DebugProbesImplCoroutineOwner.instanceOf(completion))
-            completion
-        else
-            null
+        if (completion != null && DebugProbesImplCoroutineOwner.instanceOf(completion)) completion else null
 
     private fun getNextContinuation(completion: ObjectReference?) =
-        if (completion != null && getCompletion.isCompatible(completion))
-            completion
-        else
-            null
+        if (completion != null && getCompletion.isCompatible(completion)) completion else null
 
     fun getSpilledVariableFieldMapping(value: ObjectReference, context: DefaultExecutionContext): List<FieldVariable> {
         val getSpilledVariableFieldMappingReference =

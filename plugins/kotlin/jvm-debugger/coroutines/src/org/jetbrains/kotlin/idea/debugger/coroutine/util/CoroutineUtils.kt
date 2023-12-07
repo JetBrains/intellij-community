@@ -87,15 +87,6 @@ fun StackFrameProxyImpl.thisVariableValue(): ObjectReference? =
 private fun Method.isGetCoroutineSuspended() =
     signature() == "()Ljava/lang/Object;" && name() == "getCOROUTINE_SUSPENDED" && declaringType().name() == "kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsKt"
 
-fun DefaultExecutionContext.findCoroutineMetadataType() =
-    debugProcess.invokeInManagerThread { findClassSafe("kotlin.coroutines.jvm.internal.DebugMetadataKt") }
-
-fun DefaultExecutionContext.findDispatchedContinuationReferenceType(): List<ReferenceType>? =
-    vm.classesByName("kotlinx.coroutines.DispatchedContinuation")
-
-fun DefaultExecutionContext.findCancellableContinuationImplReferenceType(): List<ReferenceType>? =
-    vm.classesByName("kotlinx.coroutines.CancellableContinuationImpl")
-
 fun hasGetCoroutineSuspended(frames: List<StackFrameProxyImpl>) =
     frames.indexOfFirst { it.safeLocation()?.safeMethod()?.isGetCoroutineSuspended() == true }
 

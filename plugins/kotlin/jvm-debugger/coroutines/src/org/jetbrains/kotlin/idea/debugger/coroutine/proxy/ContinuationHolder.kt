@@ -39,47 +39,23 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
     private fun findCoroutineInformation(
             coroutineOwner: ObjectReference?,
             stackFrameItems: List<CoroutineStackFrameItem>
-    ): CompleteCoroutineInfoData? {
+    ): CompleteCoroutineInfoData {
         val creationStackTrace = mutableListOf<CreationCoroutineStackFrameItem>()
-        val realState = if (coroutineOwner?.type()?.isAbstractCoroutine() == true) {
-            state(coroutineOwner) ?: return null
+        val coroutineInfo = debugProbesImpl?.getCoroutineInfo(coroutineOwner, context)
+        val coroutineDescriptor = if (coroutineInfo != null) {
+            coroutineInfo.creationStackTraceProvider.getStackTrace()?.let { creationStacktrace ->
+                for (index in creationStacktrace.indices) {
+                    val frame = creationStacktrace[index]
+                    val ste = frame.stackTraceElement()
+                    val location = locationCache.createLocation(ste)
+                    creationStackTrace.add(CreationCoroutineStackFrameItem(ste, location, index == 0))
+                }   
+            }
+            CoroutineDescriptor.instance(coroutineInfo)
         } else {
-            val ci = debugProbesImpl?.getCoroutineInfo(coroutineOwner, context)
-            if (ci != null) {
-                val providedCreationStackTrace = ci.creationStackTraceProvider.getStackTrace()
-                if (providedCreationStackTrace != null)
-                    for (index in providedCreationStackTrace.indices) {
-                        val frame = providedCreationStackTrace[index]
-                        val ste = frame.stackTraceElement()
-                        val location = locationCache.createLocation(ste)
-                        creationStackTrace.add(CreationCoroutineStackFrameItem(ste, location, index == 0))
-                    }
-                CoroutineDescriptor.instance(ci)
-            } else {
-                CoroutineDescriptor(CoroutineInfoData.DEFAULT_COROUTINE_NAME, "-1", State.UNKNOWN, null, null)
-            }
+            CoroutineDescriptor(CoroutineInfoData.DEFAULT_COROUTINE_NAME, "-1", State.UNKNOWN, null, null)
         }
-        return CompleteCoroutineInfoData(realState, stackFrameItems, creationStackTrace, jobHierarchy = emptyList())
-    }
-
-    fun state(value: ObjectReference?): CoroutineDescriptor? {
-        value ?: return null
-        val standaloneCoroutine = StandaloneCoroutine.instance(context) ?: return null
-        val standAloneCoroutineMirror = standaloneCoroutine.mirror(value, context)
-        if (standAloneCoroutineMirror?.context is MirrorOfCoroutineContext) {
-            val id = standAloneCoroutineMirror.context.id
-            val name = standAloneCoroutineMirror.context.name ?: CoroutineInfoData.DEFAULT_COROUTINE_NAME
-            val toString = javaLangObjectToString.mirror(value, context) ?: return null
-            // trying to get coroutine information by calling JobSupport.toString(), ${nameString()}{${stateString(state)}}@$hexAddress
-            val r = """\w+\{(\w+)}@([\w\d]+)""".toRegex()
-            val matcher = r.toPattern().matcher(toString)
-            if (matcher.matches()) {
-                val state = stateOf(matcher.group(1))
-                val hexAddress = matcher.group(2)
-                return CoroutineDescriptor(name, id?.toString() ?: hexAddress, state, standAloneCoroutineMirror.context.dispatcher, null)
-            }
-        }
-        return null
+        return CompleteCoroutineInfoData(coroutineDescriptor, stackFrameItems, creationStackTrace, jobHierarchy = emptyList())
     }
 
     private fun createStackFrameItem(

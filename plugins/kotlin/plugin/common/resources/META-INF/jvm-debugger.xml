@@ -76,11 +76,6 @@
             order="first"/>
 
     <registryKey
-            key="kotlin.debugger.coroutines.standalone"
-            description="Enable debugging for coroutines in Kotlin/JVM with no library support"
-            defaultValue="false"
-            restartRequired="false"/>
-    <registryKey
             key="kotlin.debugger.coroutines.trace"
             description="Trace coroutines debugger output"
             defaultValue="false"
