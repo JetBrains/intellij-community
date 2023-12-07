@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
@@ -44,7 +46,6 @@ import com.intellij.util.TimedReference
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -147,7 +148,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
                                       "expected (Project), (Project, CoroutineScope), (CoroutineScope), or ()")) as T
   }
 
-  final override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+  final override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
     projectMethodType,
     projectAndScopeMethodType,
     coroutineScopeMethodType,

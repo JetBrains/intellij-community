@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "LeakingThis")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "LeakingThis",
+               "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.serviceContainer
 
@@ -194,7 +195,7 @@ abstract class ComponentManagerImpl(
     containerName = debugString(true),
   )
 
-  open val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+  open val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
     emptyConstructorMethodType,
     coroutineScopeMethodType,
     applicationMethodType,

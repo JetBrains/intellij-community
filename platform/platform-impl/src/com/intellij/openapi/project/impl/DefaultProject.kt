@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.StoreUtil.saveSettings
@@ -27,7 +29,6 @@ import com.intellij.serviceContainer.coroutineScopeMethodType
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.messages.MessageBus
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
@@ -198,7 +199,7 @@ private class DefaultProjectImpl(
             ?: throw RuntimeException("Cannot find suitable constructor, expected (Project) or ()")) as T
   }
 
-  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
     projectMethodType,
     emptyConstructorMethodType,
     projectAndScopeMethodType,
