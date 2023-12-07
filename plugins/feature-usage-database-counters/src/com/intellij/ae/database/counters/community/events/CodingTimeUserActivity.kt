@@ -93,7 +93,7 @@ data class LanguageWrapper(
   val id: String
 )
 
-private class CodingTimeUserActivityEditorFactoryListener : EditorFactoryListener {
+internal class CodingTimeUserActivityEditorFactoryListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor as EditorEx
     val project = editor.project ?: return

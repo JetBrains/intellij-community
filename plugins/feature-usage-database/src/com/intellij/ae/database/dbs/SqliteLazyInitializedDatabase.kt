@@ -4,6 +4,7 @@
 package com.intellij.ae.database.dbs
 
 import com.intellij.ae.database.IdService
+import com.intellij.ae.database.utils.InstantUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
@@ -20,9 +21,12 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.sqlite.SqliteConnection
 import java.nio.file.Path
+import java.time.Duration
+import java.time.Instant
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isWritable
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = logger<SqliteLazyInitializedDatabase>()
@@ -40,6 +44,8 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
   }
   private val connectionMutex = Mutex()
   private var connectionAttempts = 0
+  private var lastConnectionAt: Instant = InstantUtils.Now
+  private var lastSaveAt: Instant = InstantUtils.Now
   private var connection: SqliteConnection? = null
   private var metadata: SqliteDatabaseMetadata? = null
 
@@ -59,15 +65,36 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
           }
         }
         logger.runAndLogException {
-          val myConnection = connectionMutex.withLock { connection }
-          if (myConnection != null) {
-            myConnection.close()
-          }
-          else {
-            logger.info("Connection was null, so didn't close it")
+          connectionMutex.withLock {
+            closeConnection()
           }
         }
         logger.info("Database disposal finished")
+      }
+    }
+
+    cs.launch {
+      if (ApplicationManager.getApplication().isUnitTestMode) return@launch
+
+      logger.runAndLogException {
+        while (isActive) {
+          // Close database connection after five minutes of inactivity or 10 minutes of last save
+          delay(3.minutes)
+          connectionMutex.withLock {
+            if (connection != null) {
+              val lastConnectionNn = lastConnectionAt
+              val lastSaveNn = lastSaveAt
+
+              val timeDiffLastInit = Duration.between(lastConnectionNn, InstantUtils.Now)
+              val timeDiffLastSave = Duration.between(lastSaveNn, InstantUtils.Now)
+              if (timeDiffLastInit >= Duration.ofMinutes(5) || timeDiffLastSave >= Duration.ofMinutes(10)) {
+                logger.info("Closing connection due to inactivity")
+                closeConnection()
+                lastSaveAt = InstantUtils.Now
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -76,16 +103,35 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     actionsBeforeDatabaseDisposal.add(action)
   }
 
+  @TestOnly
+  suspend fun closeDatabaseInTest() {
+    doExecuteBeforeConnectionClosed()
+    connectionMutex.withLock {
+      closeConnection()
+    }
+  }
+
   private suspend fun doExecuteBeforeConnectionClosed() {
     for (action in actionsBeforeDatabaseDisposal) {
       action()
     }
   }
 
-  @TestOnly
-  suspend fun closeDatabase() {
-    doExecuteBeforeConnectionClosed()
-    connectionMutex.withLock { connection }?.close()
+  /**
+   * Must run under [connectionMutex]
+   */
+  private fun closeConnection(shouldLog: Boolean = true) {
+    assert(connectionMutex.isLocked)
+
+    val conn = connection
+    if (conn != null) {
+      conn.close()
+      connectionAttempts = 0
+      connection = null
+    }
+    else if (shouldLog) {
+      logger.info("Connection was null, so didn't close it")
+    }
   }
 
   /**
@@ -132,6 +178,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
       logger.error("Metadata is null while connection is not")
     }
     return if (currentConnection != null && currentMetadata != null) {
+      lastConnectionAt = InstantUtils.Now
       currentConnection to currentMetadata
     }
     else {
@@ -145,6 +192,8 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
 
       connection = newConnection
       metadata = newMetadata
+      lastConnectionAt = InstantUtils.Now
+      lastSaveAt = InstantUtils.Now
 
       return newConnection to newMetadata
     }

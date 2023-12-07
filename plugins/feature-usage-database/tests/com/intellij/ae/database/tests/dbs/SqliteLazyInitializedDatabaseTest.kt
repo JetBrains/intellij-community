@@ -42,7 +42,7 @@ class SqliteLazyInitializedDatabaseTest : BasePlatformTestCase() {
         }
         Assert.assertEquals(1, hits)
       }
-      db1.closeDatabase()
+      db1.closeDatabaseInTest()
     }
   }
 
@@ -61,7 +61,7 @@ class SqliteLazyInitializedDatabaseTest : BasePlatformTestCase() {
         }
         writeStatement.executeUpdate()
       }
-      db1.closeDatabase()
+      db1.closeDatabaseInTest()
 
       val db2 = SqliteLazyInitializedDatabase(this)
       db2.execute { initDb ->
@@ -80,7 +80,7 @@ class SqliteLazyInitializedDatabaseTest : BasePlatformTestCase() {
         }
         Assert.assertEquals(1, hits)
       }
-      db2.closeDatabase()
+      db2.closeDatabaseInTest()
     }
   }
 
@@ -104,7 +104,7 @@ class SqliteLazyInitializedDatabaseTest : BasePlatformTestCase() {
         }
         Assert.assertEquals(1, hits)
       }
-      db1.closeDatabase()
+      db1.closeDatabaseInTest()
     }
   }
 }
