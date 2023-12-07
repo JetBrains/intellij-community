@@ -36,11 +36,11 @@ dependencies {
 
 compileMyMainKotlin {
     kotlinOptions.jvmTarget = "1.7"
-    kotlinOptions.freeCompilerArgs = ["-Xdump-declarations-to", "tmp"]
+    kotlinOptions.freeCompilerArgs = ["-Xjava-source-roots", "tmp"]
 }
 
 compileMyTestKotlin {
     kotlinOptions.jvmTarget = "1.6"
     kotlinOptions.apiVersion = "1.0"
-    kotlinOptions.freeCompilerArgs = ["-Xdump-declarations-to", "tmpTest"]
+    kotlinOptions.freeCompilerArgs = ["-Xjava-source-roots", "tmpTest"]
 } 
