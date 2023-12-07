@@ -152,11 +152,9 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   private fun initializeModel() {
     scopeFilterConfigurable.reset()
 
-    val mappings: MutableList<RecordInfo> = mutableListOf()
-    for (mapping in ProjectLevelVcsManager.getInstance(project).directoryMappings) {
-      mappings.add(createRegisteredInfo(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings)))
-    }
-    mappingTableModel.items = mappings
+    val mappings = ProjectLevelVcsManager.getInstance(project).directoryMappings
+      .map { createRegisteredInfo(it) }
+    setDisplayedMappings(mappings)
 
     scheduleUnregisteredRootsLoading()
   }
@@ -176,10 +174,10 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
           if (indicator.isCanceled) return@Runnable
           tableLoadingPanel.stopLoading()
           if (!unregisteredRoots.isEmpty()) {
-            mappingTableModel.addRow(RecordInfo.UnregisteredHeader)
-            for (mapping in unregisteredRoots) {
-              mappingTableModel.addRow(RecordInfo.UnregisteredMapping(mapping))
-            }
+            val items = mappingTableModel.items.toMutableList()
+            items.removeIf { it.isUnregistered() }
+            items.addAll(unregisteredRoots.map { RecordInfo.UnregisteredMapping(it) })
+            setDisplayedMappings(items)
           }
         }
       }, { tableLoadingPanel.startLoading() }, POSTPONE_MAPPINGS_LOADING_PANEL.toLong(), false)
@@ -204,17 +202,11 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   private fun addMapping() {
     val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.add.title"))
     if (dlg.showAndGet()) {
-      addMapping(dlg.mapping)
+      val items = mappingTableModel.items.toMutableList()
+      items.add(createRegisteredInfo(dlg.mapping))
+      setDisplayedMappings(items)
     }
   }
-
-  private fun addMapping(mapping: VcsDirectoryMapping) {
-    val items = mappingTableModel.items.toMutableList()
-    items.add(createRegisteredInfo(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings)))
-    items.sortWith(RECORD_INFO_COMPARATOR)
-    mappingTableModel.setItems(items)
-  }
-
 
   private fun addSelectedUnregisteredMappings(infos: List<RecordInfo.UnregisteredMapping>) {
     val items = mappingTableModel.items.toMutableList()
@@ -222,16 +214,20 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
       items.remove(info)
       items.add(createRegisteredInfo(info.mapping))
     }
-    sortAndAddSeparatorIfNeeded(items)
-    mappingTableModel.items = items
+    setDisplayedMappings(items)
   }
 
-  private fun sortAndAddSeparatorIfNeeded(items: MutableList<RecordInfo>) {
+  private fun setDisplayedMappings(mappings: List<RecordInfo>) {
+    val items = mappings.toMutableList()
+
+    // update group headers
     items.removeIf { it is RecordInfo.Header }
     if (items.any { it is RecordInfo.UnregisteredMapping }) {
       items.add(RecordInfo.UnregisteredHeader)
     }
     items.sortWith(RECORD_INFO_COMPARATOR)
+
+    mappingTableModel.items = items
   }
 
   private fun editMapping() {
@@ -241,34 +237,32 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.remove.title"))
     dlg.mapping = info.mapping
     if (dlg.showAndGet()) {
-      val newMapping = dlg.mapping
       val items = mappingTableModel.items.toMutableList()
-      items[row] = createRegisteredInfo(newMapping)
-      items.sortWith(RECORD_INFO_COMPARATOR)
-      mappingTableModel.setItems(items)
+      items[row] = createRegisteredInfo(dlg.mapping)
+      setDisplayedMappings(items)
     }
   }
 
   private fun removeMapping() {
-    val mappings = mappingTableModel.items.toMutableList()
-    var index = mappingTable.selectionModel.minSelectionIndex
-    val selection = mappingTable.selection
-    mappings.removeAll(selection.toSet())
+    val index = mappingTable.selectionModel.minSelectionIndex
+    val selection = mappingTable.selection.filterIsInstance<RecordInfo.RegisteredMappingInfo>()
 
-    val removedValidRoots = selection.mapNotNull { info ->
-      if (info is RecordInfo.ValidMapping && vcsRootCheckers[info.mapping.vcs] != null) RecordInfo.UnregisteredMapping(info.mapping)
-      else null
-    }
-    mappings.addAll(removedValidRoots)
-    sortAndAddSeparatorIfNeeded(mappings)
+    val items = mappingTableModel.items.toMutableList()
+    items.removeAll(selection.toSet())
+    val removedValidRoots = selection
+      .filter { info -> info is RecordInfo.ValidMapping && vcsRootCheckers[info.mapping.vcs] != null }
+    items.addAll(removedValidRoots.map { RecordInfo.UnregisteredMapping(it.mapping) })
+    setDisplayedMappings(items)
 
-    mappingTableModel.items = mappings
-    if (mappings.size > 0) {
-      if (index >= mappings.size) {
-        index = mappings.size - 1
-      }
-      mappingTable.selectionModel.setSelectionInterval(index, index)
-    }
+    selectIndex(index)
+  }
+
+  private fun selectIndex(index: Int) {
+    val newItems = mappingTableModel.items
+    if (newItems.isEmpty()) return
+
+    val toSelect = if (index >= newItems.size) newItems.size - 1 else index
+    mappingTable.selectionModel.setSelectionInterval(toSelect, toSelect)
   }
 
   private fun createMainComponent(): JComponent {
