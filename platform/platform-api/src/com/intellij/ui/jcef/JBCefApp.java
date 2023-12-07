@@ -39,7 +39,7 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
  * Use {@link #getInstance()} to get the app (triggers CEF startup on first call).
  * Use {@link #createClient()} to create a client.
  *
- * @author tav
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/jcef.html">Embedded Browser (JCEF) (IntelliJ Platform Docs)</a>
  */
 public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
@@ -102,10 +102,11 @@ public final class JBCefApp {
   }
 
   /**
-   * Returns {@code JBCefApp} instance. If the app has not yet been initialized,
-   * then starts up CEF and initializes the app.
+   * Returns {@code JBCefApp} instance.
+   * <p>
+   * If the app has not yet been initialized, then it starts up CEF and initializes the app.
    *
-   * @throws IllegalStateException when JCEF initialization is not possible in current env
+   * @throws IllegalStateException when JCEF initialization is not possible in the current environment
    */
   public static @NotNull JBCefApp getInstance() {
     if (Holder.INSTANCE == null) {
@@ -273,6 +274,14 @@ public final class JBCefApp {
     return SettingsHelper.isOffScreenRenderingModeEnabled();
   }
 
+  /**
+   * Throws IllegalStateException if the off-screen rendering mode is not enabled.
+   * <p>
+   * The off-screen mode allows for browser creation in either windowed or off-screen rendering mode.
+   *
+   * @see JBCefOsrHandlerBrowser
+   * @see JBCefBrowserBuilder#setOffScreenRendering(boolean)
+   */
   static void checkOffScreenRenderingModeEnabled() {
     if (!isOffScreenRenderingModeEnabled()) {
       throw new IllegalStateException("off-screen rendering mode is disabled: 'ide.browser.jcef.osr.enabled=false'");
@@ -289,7 +298,7 @@ public final class JBCefApp {
    * The method must be called prior to {@code JBCefApp} initialization
    * (performed by {@link #getInstance()}). For instance, via the IDE application service.
    * <p>
-   * The method should not be called for built-in schemes ("html", "file", etc).
+   * The method should not be called for built-in schemes ("html", "file", etc.).
    *
    * @throws IllegalStateException if the method is called after {@code JBCefApp} initialization
    */
