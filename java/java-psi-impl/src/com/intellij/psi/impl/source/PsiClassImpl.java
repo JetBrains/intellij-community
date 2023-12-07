@@ -156,6 +156,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       return StringUtil.getQualifiedName(((PsiJavaFile)parent).getPackageName(), StringUtil.notNullize(getName()));
     }
     if (parent instanceof PsiClass) {
+      //it cannot be referenced outside ImplicitClass
+      if (parent instanceof PsiImplicitClass) return StringUtil.notNullize(getName());
       String parentQName = ((PsiClass)parent).getQualifiedName();
       if (parentQName == null) return null;
       return StringUtil.getQualifiedName(parentQName, StringUtil.notNullize(getName()));
