@@ -24,6 +24,10 @@ function Global:Prompt() {
   $Success = $?
   $OriginalPrompt = $Global:__JetBrainsIntellijOriginalPrompt.Invoke()
   $Result = ""
+  $CommandEndMarker = $Env:JETBRAINS_INTELLIJ_COMMAND_END_MARKER
+  if ($CommandEndMarker -eq $null) {
+    $CommandEndMarker = ""
+  }
   if ($__JetBrainsIntellijTerminalInitialized) {
     $ExitCode = "0"
     if ($LASTEXITCODE -ne $null) {
@@ -36,16 +40,22 @@ function Global:Prompt() {
     if ($Env:JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL) {
       [Console]::WriteLine("command_finished exit_code=$ExitCode, current_directory=$CurrentDirectory")
     }
-    $Result = Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode;current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory)"
+    $CommandFinishedEvent = Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode;current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory)"
+    $Result = $CommandEndMarker + $CommandFinishedEvent
   }
   else {
     $Global:__JetBrainsIntellijTerminalInitialized = $true
     if ($Env:JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL) {
       [Console]::WriteLine("initialized")
     }
-    $Result = Global:__JetBrainsIntellijOSC "initialized"
+    $InitializedEvent = Global:__JetBrainsIntellijOSC "initialized"
+    $Result = $CommandEndMarker + $InitializedEvent
   }
-  return $Result + $OriginalPrompt
+  return $Result
+}
+
+function Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft() {
+  [Console]::Clear()
 }
 
 if (Get-Module -Name PSReadLine) {
@@ -60,7 +70,7 @@ if (Get-Module -Name PSReadLine) {
     }
     $CommandStartedOSC = Global:__JetBrainsIntellijOSC "command_started;command=$(__JetBrainsIntellijEncode $OriginalReadLine);current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory)"
     [Console]::Write($CommandStartedOSC)
-    [Console]::Clear()
+    Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft
     return $OriginalReadLine
   }
 }

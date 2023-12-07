@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.terminal.block.testApps
 
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
+import org.jetbrains.plugins.terminal.util.ShellIntegration
+import org.jetbrains.plugins.terminal.util.ShellType
 
 object SimpleTextRepeater {
 
@@ -28,8 +30,6 @@ object SimpleTextRepeater {
     }
 
     companion object {
-      val NEW_LINE = Item("", false, true, 1)
-
       fun fromCommandline(arg: List<String>): Item {
         return Item(arg[0], arg[1].toBooleanStrict(), arg[2].toBooleanStrict(), arg[3].toInt())
       }
@@ -37,9 +37,17 @@ object SimpleTextRepeater {
   }
 
   object Helper {
-    fun generateCommandLine(items: List<Item>): String {
-      val args: Array<String> = items.flatMap { it.toCommandline() }.toTypedArray()
-      return TerminalSessionTestUtil.getJavaShellCommand(SimpleTextRepeater::class.java, *args)
+    fun newLine(shellIntegration: ShellIntegration): Item {
+      return when (shellIntegration.shellType) {
+        // An empty parameter cannot be escaped uniformly across different PowerShell versions
+        ShellType.POWERSHELL -> Item("-", false, true, 1)
+        else -> Item("", false, true, 1)
+      }
+    }
+
+    fun generateCommand(items: List<Item>): List<String> {
+      val args: List<String> = items.flatMap { it.toCommandline() }
+      return TerminalSessionTestUtil.getJavaCommand(SimpleTextRepeater::class.java, args)
     }
 
     fun getExpectedOutput(items: List<Item>): String {

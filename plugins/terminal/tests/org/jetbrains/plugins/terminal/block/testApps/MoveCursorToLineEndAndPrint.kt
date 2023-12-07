@@ -21,8 +21,8 @@ object MoveCursorToLineEndAndPrint {
   }
 
   object Helper {
-    fun generateCommandLine(textsToPrint: List<String>): String {
-      return TerminalSessionTestUtil.getJavaShellCommand(MoveCursorToLineEndAndPrint::class.java, *textsToPrint.toTypedArray())
+    fun generateCommand(textsToPrint: List<String>): List<String> {
+      return TerminalSessionTestUtil.getJavaCommand(MoveCursorToLineEndAndPrint::class.java, textsToPrint)
     }
 
     fun getExpectedOutput(termSize: TermSize, textsToPrint: List<String>): String {

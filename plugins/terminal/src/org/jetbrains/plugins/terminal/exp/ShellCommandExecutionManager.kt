@@ -8,6 +8,7 @@ import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.exp.ShellCommandManager.Companion.LOG
+import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CopyOnWriteArrayList
@@ -151,12 +152,14 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
   private fun doSendCommandToExecute(shellCommand: String) {
     commandSentListeners.forEach { it(shellCommand) }
-    // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt (IDEA-337692)
-    val fullCommand = "\u0015" + shellCommand
-    session.terminalStarterFuture.thenAccept {
-      if (it != null) {
-        TerminalUtil.sendCommandToExecute(fullCommand, it)
+    session.terminalStarterFuture.thenAccept { starter ->
+      starter ?: return@thenAccept
+      val clearPrompt: String = when (session.shellIntegration.shellType) {
+        ShellType.POWERSHELL -> ""
+        // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt (IDEA-337692)
+        else -> "\u0015"
       }
+      TerminalUtil.sendCommandToExecute(clearPrompt + shellCommand, starter)
     }
   }
 

@@ -36,6 +36,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
+import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration;
 import org.jetbrains.plugins.terminal.util.ShellIntegration;
 import org.jetbrains.plugins.terminal.util.ShellType;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
@@ -60,6 +61,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
   private static final String ZDOTDIR = "ZDOTDIR";
   private static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
+  private static final String IJ_COMMAND_END_MARKER = "JETBRAINS_INTELLIJ_COMMAND_END_MARKER";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final String LOGIN_CLI_OPTION = "--login";
@@ -426,8 +428,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     List<String> arguments = new ArrayList<>(shellCommand.subList(1, shellCommand.size()));
     Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
-    ShellType shellType = null;
-    boolean withCommandBlocks = false;
+    ShellIntegration integration = null;
 
     List<String> resultCommand = new ArrayList<>();
     resultCommand.add(shellExe);
@@ -441,8 +442,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
         setCommandHistoryFile(options, envs);
-        shellType = ShellType.BASH;
-        withCommandBlocks = true;
+        integration = new ShellIntegration(ShellType.BASH, new CommandBlockIntegration());
       }
       else if (shellName.equals(ZSH_NAME)) {
         String zdotdir = envs.get(ZDOTDIR);
@@ -452,37 +452,44 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         String zshDir = PathUtil.getParentPath(rcFilePath);
         envs.put(ZDOTDIR, zshDir);
         envs.put(IJ_ZSH_DIR, zshDir);
-        shellType = ShellType.ZSH;
-        withCommandBlocks = true;
+        integration = new ShellIntegration(ShellType.ZSH, new CommandBlockIntegration());
       }
       else if (shellName.equals(FISH_NAME)) {
         // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
         // Multiple `--init-command=COMMANDS` are supported.
         resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
-        shellType = ShellType.FISH;
-        withCommandBlocks = Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
+        integration = new ShellIntegration(ShellType.FISH,
+                                           Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false) ? new CommandBlockIntegration() : null);
       }
       else if (isPowerShell(shellName)) {
         resultCommand.addAll(arguments);
         arguments.clear();
         resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", rcFilePath));
-        shellType = ShellType.POWERSHELL;
-        withCommandBlocks = Registry.is(BLOCK_TERMINAL_POWERSHELL_REGISTRY, false);
+        integration = new ShellIntegration(ShellType.POWERSHELL,
+                                           Registry.is(BLOCK_TERMINAL_POWERSHELL_REGISTRY, false)
+                                           ? new CommandBlockIntegration(true)
+                                           : null);
       }
     }
 
-    if (isBlockTerminalEnabled() && withCommandBlocks) {
+    if (isBlockTerminalEnabled() && integration != null && integration.getCommandBlockIntegration() != null) {
       envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
       // Pretend to be Fig.io terminal to avoid it breaking IntelliJ shell integration:
       // at startup it runs a sub-shell without IntelliJ shell integration
       envs.put("FIG_TERM", "1");
     }
 
+    CommandBlockIntegration commandIntegration = integration != null ? integration.getCommandBlockIntegration() : null;
+    String commandEndMarker = commandIntegration != null ? commandIntegration.getCommandEndMarker() : null;
+    if (commandEndMarker != null) {
+      envs.put(IJ_COMMAND_END_MARKER, commandEndMarker);
+    }
+
     resultCommand.addAll(arguments);
     return options.builder()
       .shellCommand(resultCommand)
       .envVariables(envs)
-      .shellIntegration(shellType != null ? new ShellIntegration(shellType, withCommandBlocks) : null)
+      .shellIntegration(integration)
       .build();
   }
 

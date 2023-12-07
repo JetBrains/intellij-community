@@ -15,6 +15,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
 import com.jediterm.terminal.model.*
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
@@ -32,6 +33,7 @@ class BlockTerminalSession(settings: JBTerminalSystemSettingsProviderBase,
   internal val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
   private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
+  val commandBlockIntegration: CommandBlockIntegration = shellIntegration.commandBlockIntegration!!
 
   init {
     val styleState = StyleState()

@@ -54,7 +54,7 @@ class TerminalWidgetImpl(private val project: Project,
   @RequiresEdt(generateAssertion = false)
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
-    view = if (options.shellIntegration?.withCommandBlocks == true) {
+    view = if (options.shellIntegration?.commandBlockIntegration != null) {
       val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().getGlobalScheme())
       val session = BlockTerminalSession(settings, colorPalette, options.shellIntegration)
       Disposer.register(this, session)

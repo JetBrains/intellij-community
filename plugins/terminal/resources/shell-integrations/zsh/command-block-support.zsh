@@ -100,6 +100,7 @@ __jetbrains_intellij_command_precmd() {
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' \
     "$LAST_EXIT_CODE" "$(__jetbrains_intellij_encode "${current_directory}")"
+  builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
   __jetbrains_intellij_configure_prompt
 }
 
@@ -121,3 +122,4 @@ builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_inte
 
 # This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
 builtin printf '\e]1341;initialized;current_directory=%s\a' "$(__jetbrains_intellij_encode "$PWD")"
+builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
