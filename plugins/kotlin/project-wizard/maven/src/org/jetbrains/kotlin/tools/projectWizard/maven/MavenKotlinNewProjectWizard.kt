@@ -86,7 +86,9 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             setupParentsUI(builder)
             setupSampleCodeUI(builder)
             setupSampleCodeWithOnBoardingTipsUI(builder)
-            addMultiPlatformLink(builder)
+            if (context.isCreatingNewProject) {
+                addMultiPlatformLink(builder)
+            }
         }
 
         override fun setupAdvancedSettingsUI(builder: Panel) {

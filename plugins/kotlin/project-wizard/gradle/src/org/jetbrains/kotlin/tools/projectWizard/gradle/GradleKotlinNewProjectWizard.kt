@@ -104,7 +104,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             setupParentsUI(builder)
             setupSampleCodeUI(builder)
             setupSampleCodeWithOnBoardingTipsUI(builder)
-            addMultiPlatformLink(builder)
+            if (context.isCreatingNewProject) {
+                addMultiPlatformLink(builder)
+            }
         }
 
         override fun validateLanguageCompatibility(gradleVersion: GradleVersion): Boolean {
