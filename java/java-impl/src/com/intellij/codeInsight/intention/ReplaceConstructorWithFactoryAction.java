@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
@@ -243,7 +244,12 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
   }
 
   private static boolean isSuitableClass(PsiClass containingClass) {
-    return containingClass != null && !containingClass.isInterface() && !containingClass.isEnum() && !containingClass.isRecord() &&
-            !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && containingClass.getQualifiedName() != null;
+    return containingClass != null &&
+           PsiTreeUtil.getParentOfType(containingClass, PsiImplicitClass.class, false) == null &&
+           !containingClass.isInterface() &&
+           !containingClass.isEnum() &&
+           !containingClass.isRecord() &&
+           !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+           containingClass.getQualifiedName() != null;
   }
 }

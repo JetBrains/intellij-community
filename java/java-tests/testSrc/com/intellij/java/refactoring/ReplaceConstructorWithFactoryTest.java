@@ -75,6 +75,23 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     assertNull(presentation);
  }
 
+  public void testImplicitClass(){
+    configureFromFileText("A.java", """
+      enum E {A, B}
+            
+      record Rar() {
+      }
+            
+      void main() {
+          Rar rar = new R<caret>ar();
+      }
+      """);
+    ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
+    ActionContext context = ActionContext.from(getEditor(), getFile());
+    Presentation presentation = action.getPresentation(context);
+    assertNull(presentation);
+  }
+
   private void runTest(final String testIndex, @NonNls String targetClassName) {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + testIndex + ".java");
     perform(targetClassName);
