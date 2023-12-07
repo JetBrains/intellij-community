@@ -46,8 +46,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   private final @NotNull List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private volatile @NotNull State myState;
-
-  private @NotNull DataPack myDataPack;
+  private volatile @NotNull DataPack myDataPack;
 
   public VisiblePackRefresherImpl(@NotNull Project project,
                                   @NotNull VcsLogData logData,
