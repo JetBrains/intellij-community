@@ -12,16 +12,20 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.TableView
+import com.intellij.util.FontUtil
 import com.intellij.util.UriUtil
 import com.intellij.util.ui.*
 import com.intellij.vcsUtil.VcsUtil
@@ -65,6 +69,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
       value as RecordInfo
       val textAttributes = getAttributes(value)
+      toolTipText = null
 
       if (!selected && value.isUnregistered()) {
         background = UIUtil.getDecoratedRowColor()
@@ -77,6 +82,15 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
         }
         is RecordInfo.Header -> {
           append(value.label, textAttributes)
+        }
+      }
+
+      if (value is RecordInfo.RegisteredMappingInfo && value.mapping.isDefaultMapping) {
+        val roots = collectDefaultMappedRoots(project, value.mapping.vcs)
+        if (roots.isNotEmpty()) {
+          append(FontUtil.spaceAndThinSpace(), textAttributes)
+          append(VcsBundle.message("project.detected.n.roots.presentation", roots.size), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+          toolTipText = roots.joinToString(UIUtil.BR) { StringUtil.escapeXmlEntities(FileUtil.toSystemDependentName(it.path)) }
         }
       }
     }
@@ -152,9 +166,9 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   private fun initializeModel() {
     scopeFilterConfigurable.reset()
 
-    val mappings = ProjectLevelVcsManager.getInstance(project).directoryMappings
-      .map { createRegisteredInfo(it) }
-    setDisplayedMappings(mappings)
+    val items = mutableListOf<RecordInfo>()
+    items.addAll(vcsManager.directoryMappings.map { createRegisteredInfo(it) })
+    setDisplayedMappings(items)
 
     scheduleUnregisteredRootsLoading()
   }
@@ -462,13 +476,20 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   }
 }
 
+private fun collectDefaultMappedRoots(project: Project, vcsName: String): List<VirtualFile> {
+  return ProjectLevelVcsManagerImpl.getInstanceImpl(project).vcsRootObjectsForDefaultMapping
+    .filter { it.vcs?.name == vcsName }
+    .map { it.path }
+}
+
 private fun getPresentablePath(project: Project, mapping: VcsDirectoryMapping): @NlsSafe String {
   if (mapping.isDefaultMapping) {
     return VcsDirectoryMapping.PROJECT_CONSTANT.get()
   }
+  return getPresentablePath(project, mapping.directory)
+}
 
-  val directory = mapping.directory
-
+private fun getPresentablePath(project: Project, directory: String): @NlsSafe String {
   val baseDir = project.baseDir
   if (baseDir == null) {
     return File(directory).path
@@ -492,10 +513,10 @@ private fun getPresentablePath(project: Project, mapping: VcsDirectoryMapping): 
 private fun getAttributes(info: RecordInfo): SimpleTextAttributes {
   when (info) {
     is RecordInfo.InvalidMapping -> {
-      return SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED)
+      return SimpleTextAttributes.ERROR_ATTRIBUTES
     }
     is RecordInfo.UnregisteredMapping -> {
-      return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY)
+      return SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES
     }
     is RecordInfo.Header -> {
       return SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_SMALLER, null)

@@ -26,7 +26,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
@@ -46,6 +45,7 @@ import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
@@ -227,6 +227,16 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
     NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
     return root != null ? new VcsRoot(root.vcs, root.root) : null;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<VcsRoot> getVcsRootObjectsForDefaultMapping() {
+    List<NewMappings.MappedRoot> detectedRoots = ContainerUtil.filter(myMappings.getAllMappedRoots(), root -> {
+      AbstractVcs vcs = root.vcs;
+      return root.mapping.isDefaultMapping() &&
+             vcs != null && vcs.getCustomConvertor() == null;
+    });
+    return ContainerUtil.map(detectedRoots, root -> new VcsRoot(root.vcs, root.root));
   }
 
   @TestOnly

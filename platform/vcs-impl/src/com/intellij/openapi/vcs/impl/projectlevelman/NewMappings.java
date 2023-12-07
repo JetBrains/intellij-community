@@ -555,6 +555,10 @@ public final class NewMappings implements Disposable {
     return myMappedRootsMapping.getRootFor(file);
   }
 
+  public @NotNull List<MappedRoot> getAllMappedRoots() {
+    return myMappedRoots;
+  }
+
   public @Nullable @NlsSafe String getShortNameFor(@Nullable VirtualFile file) {
     return myMappedRootShortNames.get(file);
   }
