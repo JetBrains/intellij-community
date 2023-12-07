@@ -23,6 +23,11 @@ abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
+    override fun setUp() {
+        super.setUp()
+        myFixture.addClass("interface JavaInterface { void foo(); } ")
+    }
+
     open fun doTest(unused: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             dataFilePath(),

@@ -647,4 +647,9 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
     public void testTwoExtensions() throws Exception {
         runTest("testData/refactoring/rename/inplace/TwoExtensions.kt");
     }
+
+    @TestMetadata("WithJavaSuper.kt")
+    public void testWithJavaSuper() throws Exception {
+        runTest("testData/refactoring/rename/inplace/WithJavaSuper.kt");
+    }
 }
