@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -27,7 +27,7 @@ public class GridInsertLocation extends GridDropLocation {
 
   private boolean mySpanInsertMode;
 
-  public GridInsertLocation(@NotNull final RadContainer container,
+  public GridInsertLocation(final @NotNull RadContainer container,
                             final int row,
                             final int column,
                             final GridInsertMode mode) {
@@ -405,12 +405,13 @@ public class GridInsertLocation extends GridDropLocation {
   }
 
 
-  @NonNls @Override public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "GridInsertLocation(" + myMode.toString() + ", row=" + getRow() + ", col=" + getColumn() + ")";
   }
 
-  @Override @Nullable
-  public ComponentDropLocation getAdjacentLocation(Direction direction) {
+  @Override
+  public @Nullable ComponentDropLocation getAdjacentLocation(Direction direction) {
     if (isRowInsert()) {
       if (direction == Direction.RIGHT) {
         if (getColumn() < myContainer.getGridColumnCount()-1) {

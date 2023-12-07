@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.properties.IProperty;
@@ -39,7 +39,7 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
   }
 
   @Override
-  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(final @NotNull PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof IProperty)) {
       throw new IncorrectOperationException();
     }
@@ -48,7 +48,7 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(final @NotNull PsiElement element) {
     if (!(element instanceof IProperty property)) {
       return false;
     }

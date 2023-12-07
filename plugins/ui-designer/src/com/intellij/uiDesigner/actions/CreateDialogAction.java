@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.project.Project;
@@ -78,7 +78,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     final boolean generateCancel,
     final boolean generateMain
   ) {
-    @NonNls final StringBuilder result = new StringBuilder(1024);
+    final @NonNls StringBuilder result = new StringBuilder(1024);
 
     result.append("public class ").append(className).append(" extends javax.swing.JDialog {\n");
     result.append("private javax.swing.JPanel contentPane;\n");
@@ -162,7 +162,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
 
   @Override
-  protected PsiElement @NotNull [] create(@NotNull final String newName, final @NotNull PsiDirectory directory) throws IncorrectOperationException {
+  protected PsiElement @NotNull [] create(final @NotNull String newName, final @NotNull PsiDirectory directory) throws IncorrectOperationException {
     PsiFile sourceFile = PsiFileFactory.getInstance(directory.getProject())
       .createFileFromText(newName + ".java", createClassBody(newName, myRecentGenerateOK, myRecentGenerateCancel, myRecentGenerateMain));
     sourceFile = (PsiFile)directory.add(sourceFile);

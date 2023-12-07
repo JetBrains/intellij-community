@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -210,7 +210,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
     return LightColors.GREEN;
   }
 
-  @Nullable private RadContainer getSelectedGridContainer() {
+  private @Nullable RadContainer getSelectedGridContainer() {
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
     if (selection.size() == 1 && selection.get(0) instanceof RadContainer) {
       RadContainer container = (RadContainer) selection.get(0);
@@ -247,7 +247,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
   }
 
   @Override
-  @Nullable public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
     }
@@ -281,7 +281,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
     return myIsRow ? mySelectedContainer.getGridRowAt(pnt.y) : mySelectedContainer.getGridColumnAt(pnt.x);
   }
 
-  public int[] getSelectedCells(@Nullable final Point dragOrigin) {
+  public int[] getSelectedCells(final @Nullable Point dragOrigin) {
     ArrayList<Integer> selection = new ArrayList<>();
     RadContainer container = getSelectedGridContainer();
     if (container == null) {

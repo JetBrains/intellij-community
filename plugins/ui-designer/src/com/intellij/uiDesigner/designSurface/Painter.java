@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.ui.UISettings;
@@ -42,12 +42,12 @@ public final class Painter {
    */
   static final Color NON_SELECTED_GRID_COLOR = new Color(130, 140, 155);
 
-  public final static int WEST_MASK = 1;
-  public final static int EAST_MASK = 2;
-  public final static int NORTH_MASK = 4;
-  public final static int SOUTH_MASK = 8;
-  private final static int R = 2;
-  private final static int GAP = R;
+  public static final int WEST_MASK = 1;
+  public static final int EAST_MASK = 2;
+  public static final int NORTH_MASK = 4;
+  public static final int SOUTH_MASK = 8;
+  private static final int R = 2;
+  private static final int GAP = R;
   private static final int NW = 0;
   private static final int N = 1;
   private static final int NE = 2;
@@ -117,7 +117,7 @@ public final class Painter {
    * Method does nothing if the {@code component} is not an instance
    * of {@code RadContainer}.
    */
-  private static void paintComponentBoundsImpl(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g) {
+  private static void paintComponentBoundsImpl(final GuiEditor editor, final @NotNull RadComponent component, final Graphics g) {
     if (!(component instanceof RadContainer) && !(component instanceof RadNestedForm) && !component.isDragBorder()) {
       return;
     }
@@ -176,7 +176,7 @@ public final class Painter {
   /**
    * This method paints grid bounds for "grid" containers
    */
-  public static void paintGridOutline(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g) {
+  public static void paintGridOutline(final GuiEditor editor, final @NotNull RadComponent component, final Graphics g) {
     if (!editor.isShowGrid()) {
       return;
     }
@@ -254,7 +254,7 @@ public final class Painter {
    * @param x in component's coord system
    * @param y in component's coord system
    */
-  public static int getResizeMask(@NotNull final RadComponent component, final int x, final int y) {
+  public static int getResizeMask(final @NotNull RadComponent component, final int x, final int y) {
     if (component.getParent() == null || !component.isSelected()) {
       return 0;
     }

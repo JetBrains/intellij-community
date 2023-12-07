@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.ide.CopyProvider;
@@ -36,10 +36,10 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
 
   private final GuiEditor myEditor;
-  @NonNls private static final String ELEMENT_SERIALIZED = "serialized";
-  @NonNls private static final String ATTRIBUTE_X = "x";
-  @NonNls private static final String ATTRIBUTE_Y = "y";
-  @NonNls private static final String ATTRIBUTE_PARENT_LAYOUT = "parent-layout";
+  private static final @NonNls String ELEMENT_SERIALIZED = "serialized";
+  private static final @NonNls String ATTRIBUTE_X = "x";
+  private static final @NonNls String ATTRIBUTE_Y = "y";
+  private static final @NonNls String ATTRIBUTE_PARENT_LAYOUT = "parent-layout";
 
   public CutCopyPasteSupport(final GuiEditor uiEditor) {
     myEditor = uiEditor;
@@ -51,7 +51,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   @Override
-  public boolean isCopyEnabled(@NotNull final DataContext dataContext) {
+  public boolean isCopyEnabled(final @NotNull DataContext dataContext) {
     return FormEditingUtil.getSelectedComponents(myEditor).size() > 0 && !myEditor.getInplaceEditingLayer().isEditing();
   }
 
@@ -61,7 +61,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   @Override
-  public void performCopy(@NotNull final DataContext dataContext) {
+  public void performCopy(final @NotNull DataContext dataContext) {
     doCopy();
   }
 
@@ -80,7 +80,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   @Override
-  public boolean isCutEnabled(@NotNull final DataContext dataContext) {
+  public boolean isCutEnabled(final @NotNull DataContext dataContext) {
     return isCopyEnabled(dataContext) && FormEditingUtil.canDeleteSelection(myEditor);
   }
 
@@ -90,24 +90,24 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   @Override
-  public void performCut(@NotNull final DataContext dataContext) {
+  public void performCut(final @NotNull DataContext dataContext) {
     if (doCopy() && myEditor.ensureEditable()) {
       CommandProcessor.getInstance().executeCommand(myEditor.getProject(), () -> FormEditingUtil.deleteSelection(myEditor), UIDesignerBundle.message("command.cut"), null);
     }
   }
 
   @Override
-  public boolean isPastePossible(@NotNull final DataContext dataContext) {
+  public boolean isPastePossible(final @NotNull DataContext dataContext) {
     return isPasteEnabled(dataContext);
   }
 
   @Override
-  public boolean isPasteEnabled(@NotNull final DataContext dataContext) {
+  public boolean isPasteEnabled(final @NotNull DataContext dataContext) {
     return getSerializedComponents() != null && !myEditor.getInplaceEditingLayer().isEditing();
   }
 
   @Override
-  public void performPaste(@NotNull final DataContext dataContext) {
+  public void performPaste(final @NotNull DataContext dataContext) {
     final String serializedComponents = getSerializedComponents();
     if (serializedComponents == null) {
       return;
@@ -121,8 +121,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     myEditor.getMainProcessor().startPasteProcessor(componentsToPaste, xs, ys);
   }
 
-  @Nullable
-  private static ArrayList<RadComponent> deserializeComponents(final GuiEditor editor, final String serializedComponents) {
+  private static @Nullable ArrayList<RadComponent> deserializeComponents(final GuiEditor editor, final String serializedComponents) {
     ArrayList<RadComponent> components = new ArrayList<>();
     IntList xs=new IntArrayList();
     IntList ys=new IntArrayList();
@@ -195,8 +194,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     return true;
   }
 
-  @Nullable
-  private static String getSerializedComponents() {
+  private static @Nullable String getSerializedComponents() {
     try {
       final Object transferData = CopyPasteManager.getInstance().getContents(ourDataFlavor);
       if (!(transferData instanceof SerializedComponentData dataProxy)) {
@@ -212,8 +210,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
   private static final DataFlavor ourDataFlavor = FileCopyPasteUtil.createJvmDataFlavor(SerializedComponentData.class);
 
-  @Nullable
-  public static List<RadComponent> copyComponents(GuiEditor editor, List<RadComponent> components) {
+  public static @Nullable List<RadComponent> copyComponents(GuiEditor editor, List<RadComponent> components) {
     return deserializeComponents(editor, serializeForCopy(editor, components));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.projectView;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -20,8 +20,7 @@ public class Form implements Navigatable, Iterable<PsiElement> {
   public static final DataKey<Form[]> DATA_KEY = DataKey.create("form.array");
 
   private final Collection<PsiFile> myFormFiles;
-  @NotNull
-  private final PsiClass myClassToBind;
+  private final @NotNull PsiClass myClassToBind;
 
   public Form(@NotNull PsiClass classToBind) {
     myClassToBind = classToBind;
@@ -49,8 +48,7 @@ public class Form implements Navigatable, Iterable<PsiElement> {
     return myClassToBind.getName();
   }
 
-  @NotNull
-  public PsiClass getClassToBind() {
+  public @NotNull PsiClass getClassToBind() {
     return myClassToBind;
   }
 
@@ -111,9 +109,8 @@ public class Form implements Navigatable, Iterable<PsiElement> {
     return false;
   }
 
-  @NotNull
   @Override
-  public Iterator<PsiElement> iterator() {
+  public @NotNull Iterator<PsiElement> iterator() {
     ArrayList<PsiElement> list = new ArrayList<>(myFormFiles);
     list.add(0, myClassToBind);
     return list.iterator();

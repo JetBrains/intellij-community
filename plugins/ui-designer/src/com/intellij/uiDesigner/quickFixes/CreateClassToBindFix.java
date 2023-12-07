@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.CommonBundle;
@@ -28,7 +28,7 @@ public final class CreateClassToBindFix extends QuickFix{
 
   private final String myClassName;
 
-  public CreateClassToBindFix(final GuiEditor editor, @NotNull final String className) {
+  public CreateClassToBindFix(final GuiEditor editor, final @NotNull String className) {
     super(editor, UIDesignerBundle.message("action.create.class", className), null);
     myClassName = className;
   }

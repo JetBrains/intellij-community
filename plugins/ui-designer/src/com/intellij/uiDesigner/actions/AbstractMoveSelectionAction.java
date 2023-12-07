@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -25,14 +25,14 @@ abstract class AbstractMoveSelectionAction extends AnAction implements DumbAware
   private final boolean myExtend;
   private final boolean myMoveToLast;
 
-  AbstractMoveSelectionAction(@NotNull final GuiEditor editor, boolean extend, final boolean moveToLast) {
+  AbstractMoveSelectionAction(final @NotNull GuiEditor editor, boolean extend, final boolean moveToLast) {
     myEditor = editor;
     myExtend = extend;
     myMoveToLast = moveToLast;
   }
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent e) {
+  public final void actionPerformed(final @NotNull AnActionEvent e) {
     final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
     final JComponent rootContainerDelegee = myEditor.getRootContainer().getDelegee();
     if(selectedComponents.size() == 0){

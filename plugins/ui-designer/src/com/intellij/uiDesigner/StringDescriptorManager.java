@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.lang.properties.IProperty;
@@ -45,13 +45,13 @@ public final class StringDescriptorManager {
     return service;
   }
 
-  @Nullable public String resolve(@NotNull RadComponent component, @Nullable StringDescriptor descriptor) {
+  public @Nullable String resolve(@NotNull RadComponent component, @Nullable StringDescriptor descriptor) {
     RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
     Locale locale = (root != null) ? root.getStringDescriptorLocale() : null;
     return resolve(descriptor, locale);
   }
 
-  @Nullable public String resolve(@Nullable StringDescriptor descriptor, @Nullable Locale locale) {
+  public @Nullable String resolve(@Nullable StringDescriptor descriptor, @Nullable Locale locale) {
     if (descriptor == null) {
       return null;
     }

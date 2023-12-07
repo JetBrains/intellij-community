@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -51,7 +51,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
 
     new AnAction(){
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         if (!myCbx.isPopupVisible()) {
           fireEditingCancelled();
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance()

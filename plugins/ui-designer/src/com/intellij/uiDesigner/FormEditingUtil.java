@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.lang.properties.PropertiesReferenceManager;
@@ -249,8 +249,7 @@ public final class FormEditingUtil {
    * @return component which has dragger. There is only one component with the dargger
    *         at a time.
    */
-  @Nullable
-  public static RadComponent getDraggerHost(@NotNull final GuiEditor editor) {
+  public static @Nullable RadComponent getDraggerHost(final @NotNull GuiEditor editor) {
     final Ref<RadComponent> result = new Ref<>();
     iterate(
       editor.getRootContainer(),
@@ -303,8 +302,7 @@ public final class FormEditingUtil {
    *         selected container contains some selected children then only this container
    *         will be added to the returned array.
    */
-  @NotNull
-  public static ArrayList<RadComponent> getSelectedComponents(@NotNull final GuiEditor editor) {
+  public static @NotNull ArrayList<RadComponent> getSelectedComponents(final @NotNull GuiEditor editor) {
     final ArrayList<RadComponent> result = new ArrayList<>();
     calcSelectedComponentsImpl(result, editor.getRootContainer());
     return result;
@@ -334,8 +332,7 @@ public final class FormEditingUtil {
   /**
    * @return all selected component inside the {@code editor}
    */
-  @NotNull
-  public static ArrayList<RadComponent> getAllSelectedComponents(@NotNull final GuiEditor editor) {
+  public static @NotNull ArrayList<RadComponent> getAllSelectedComponents(final @NotNull GuiEditor editor) {
     final ArrayList<RadComponent> result = new ArrayList<>();
     iterate(
       editor.getRootContainer(),
@@ -384,7 +381,7 @@ public final class FormEditingUtil {
 
   public static IComponent findComponentWithBinding(IComponent component,
                                                     final String binding,
-                                                    @Nullable final IComponent exceptComponent) {
+                                                    final @Nullable IComponent exceptComponent) {
     // Check that binding is unique
     final Ref<IComponent> boundComponent = new Ref<>();
     iterate(
@@ -404,9 +401,8 @@ public final class FormEditingUtil {
     return boundComponent.get();
   }
 
-  @Nullable
-  public static RadContainer getRadContainerAt(final RadRootContainer rootContainer, final int x, final int y,
-                                               int epsilon) {
+  public static @Nullable RadContainer getRadContainerAt(final RadRootContainer rootContainer, final int x, final int y,
+                                                         int epsilon) {
     RadComponent component = getRadComponentAt(rootContainer, x, y);
     if (isNullOrRoot(component) && epsilon > 0) {
       // try to find component near specified location
@@ -568,8 +564,7 @@ public final class FormEditingUtil {
   /**
    * @return {@link GuiEditor} from the context. Can be {@code null}.
    */
-  @Nullable
-  public static GuiEditor getEditorFromContext(@NotNull final DataContext context) {
+  public static @Nullable GuiEditor getEditorFromContext(final @NotNull DataContext context) {
     final FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof UIFormEditor) {
       return ((UIFormEditor)editor).getEditor();
@@ -596,8 +591,7 @@ public final class FormEditingUtil {
     return findComponentWithBinding(component, binding, componentToAssignBinding) == null;
   }
 
-  @Nullable
-  public static String buildResourceName(final PsiFile file) {
+  public static @Nullable String buildResourceName(final PsiFile file) {
     PsiDirectory directory = file.getContainingDirectory();
     if (directory != null) {
       PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
@@ -610,8 +604,7 @@ public final class FormEditingUtil {
     return null;
   }
 
-  @Nullable
-  public static RadContainer getSelectionParent(final List<? extends RadComponent> selection) {
+  public static @Nullable RadContainer getSelectionParent(final List<? extends RadComponent> selection) {
     RadContainer parent = null;
     for (RadComponent c : selection) {
       if (parent == null) {
@@ -656,7 +649,7 @@ public final class FormEditingUtil {
    *
    * @param component the component to select. @return true if the component is enclosed in at least one tabbed pane, false otherwise.
    */
-  public static boolean selectComponent(final GuiEditor editor, @NotNull final RadComponent component) {
+  public static boolean selectComponent(final GuiEditor editor, final @NotNull RadComponent component) {
     boolean hasTab = false;
     RadComponent parent = component;
     while (parent.getParent() != null) {
@@ -779,8 +772,7 @@ public final class FormEditingUtil {
     return adjustForGap(container, col + 1, false, 1);
   }
 
-  @Nullable
-  public static IButtonGroup findGroupForComponent(final IRootContainer radRootContainer, @NotNull final IComponent component) {
+  public static @Nullable IButtonGroup findGroupForComponent(final IRootContainer radRootContainer, final @NotNull IComponent component) {
     for (IButtonGroup group : radRootContainer.getButtonGroups()) {
       if (ArrayUtil.contains(component.getId(), group.getComponentIds())) {
           return group;
@@ -849,7 +841,7 @@ public final class FormEditingUtil {
     });
   }
 
-  public static void clearSelection(@NotNull final RadContainer container) {
+  public static void clearSelection(final @NotNull RadContainer container) {
     container.setSelected(false);
 
     for (int i = 0; i < container.getComponentCount(); i++) {
@@ -871,8 +863,7 @@ public final class FormEditingUtil {
    *
    * @return the found component.
    */
-  @Nullable
-  public static IComponent findComponent(@NotNull final IComponent component, @NotNull final String id) {
+  public static @Nullable IComponent findComponent(final @NotNull IComponent component, final @NotNull String id) {
     if (id.equals(component.getId())) {
       return component;
     }
@@ -889,8 +880,7 @@ public final class FormEditingUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiClass findClassToBind(@NotNull final Module module, @NotNull final String classToBindName) {
+  public static @Nullable PsiClass findClassToBind(final @NotNull Module module, final @NotNull String classToBindName) {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-266779")) {
       return JavaPsiFacade.getInstance(module.getProject())
         .findClass(classToBindName.replace('$', '.'), module.getModuleWithDependenciesScope());

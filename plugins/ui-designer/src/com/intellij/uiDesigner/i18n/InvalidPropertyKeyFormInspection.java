@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.i18n;
 
 import com.intellij.lang.properties.PropertiesReferenceManager;
@@ -33,14 +33,13 @@ public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection
     }
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return "UnresolvedPropertyKey";
   }
 
-  @Nullable
-  private static @Nls String checkDescriptor(final StringDescriptor descriptor, final Module module) {
+  private static @Nullable
+  @Nls String checkDescriptor(final StringDescriptor descriptor, final Module module) {
     final String bundleName = descriptor.getDottedBundleName();
     final String key = descriptor.getKey();
     if (bundleName == null && key == null) return null;

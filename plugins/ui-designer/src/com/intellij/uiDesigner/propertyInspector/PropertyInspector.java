@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.application.AccessToken;
@@ -35,15 +35,15 @@ public final class PropertyInspector extends JPanel{
   private final QuickFixManager myQuickFixManager;
   private GuiEditor myEditor;
   private final PropertyInspector.MyComponentSelectionListener myComponentSelectionListener;
-  @NonNls private static final String INSPECTOR_CARD = "inspector";
-  @NonNls private static final String EMPTY_CARD = "empty";
-  @NonNls private static final String CUSTOM_CARD = "column";
+  private static final @NonNls String INSPECTOR_CARD = "inspector";
+  private static final @NonNls String EMPTY_CARD = "empty";
+  private static final @NonNls String CUSTOM_CARD = "column";
   private final JScrollPane myCustomPropertiesScrollPane = ScrollPaneFactory.createScrollPane();
   private CustomPropertiesPanel myCustomPropertiesPanel;
   private final ChangeListener myCustomPropertiesChangeListener;
   private RadContainer myPropertiesPanelContainer;
 
-  public PropertyInspector(Project project, @NotNull final ComponentTree componentTree) {
+  public PropertyInspector(Project project, final @NotNull ComponentTree componentTree) {
     super(new CardLayout());
 
     myInspectorTable = new PropertyInspectorTable(project, componentTree);
@@ -203,7 +203,7 @@ public final class PropertyInspector extends JPanel{
    */
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
     @Override
-    public void selectedComponentChanged(@NotNull final GuiEditor source){
+    public void selectedComponentChanged(final @NotNull GuiEditor source){
       synchWithTree(false);
     }
   }

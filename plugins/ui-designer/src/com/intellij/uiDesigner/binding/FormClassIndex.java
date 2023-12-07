@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.application.AccessToken;
@@ -24,30 +24,26 @@ import java.util.*;
 
 
 public class FormClassIndex extends ScalarIndexExtension<String> {
-  @NonNls public static final ID<String, Void> NAME = ID.create("com.intellij.uiDesigner.FormClassIndex");
+  public static final @NonNls ID<String, Void> NAME = ID.create("com.intellij.uiDesigner.FormClassIndex");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   @Override
-  @NotNull
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
   @Override
-  @NotNull
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(GuiFormFileType.INSTANCE);
   }
 
@@ -63,8 +59,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
     @Override
-    @NotNull
-    public Map<String, Void> map(@NotNull final FileContent inputData) {
+    public @NotNull Map<String, Void> map(final @NotNull FileContent inputData) {
       String className = null;
       try {
         className = Utils.getBoundClassName(inputData.getContentAsText().toString());

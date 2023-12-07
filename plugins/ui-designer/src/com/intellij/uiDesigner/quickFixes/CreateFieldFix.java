@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.CommonBundle;
@@ -29,9 +29,9 @@ public final class CreateFieldFix extends QuickFix{
 
   public CreateFieldFix(
     final GuiEditor editor,
-    @NotNull final PsiClass aClass,
-    @NotNull final String fieldClass,
-    @NotNull final String fieldName
+    final @NotNull PsiClass aClass,
+    final @NotNull String fieldClass,
+    final @NotNull String fieldName
   ) {
     super(editor, UIDesignerBundle.message("action.create.field", fieldName), null);
     myClass = aClass;
@@ -43,13 +43,13 @@ public final class CreateFieldFix extends QuickFix{
    * @param showErrors if {@code true} the error messages will be shown to the
    * @param undoGroupId the group used to undo the action together with some other action.
    */
-  public static void runImpl(@NotNull final Project project,
-                             @NotNull final RadContainer rootContainer,
-                             @NotNull final PsiClass boundClass,
-                             @NotNull final String fieldClassName,
-                             @NotNull final String fieldName,
+  public static void runImpl(final @NotNull Project project,
+                             final @NotNull RadContainer rootContainer,
+                             final @NotNull PsiClass boundClass,
+                             final @NotNull String fieldClassName,
+                             final @NotNull String fieldName,
                              final boolean showErrors,
-                             @Nullable final Object undoGroupId) {
+                             final @Nullable Object undoGroupId) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.designer.LightToolWindowContent;
@@ -44,7 +44,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   private final MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
   private PaletteGroupHeader myLastFocusedGroup;
 
-  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.palette";
+  private static final @NonNls String ourHelpID = "guiDesigner.uiTour.palette";
 
   private final DragSourceListener myDragSourceListener = new DragSourceAdapter() {
     @Override
@@ -201,8 +201,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     notifySelectionChanged(event);
   }
 
-  @Nullable
-  public PaletteItem getActiveItem() {
+  public @Nullable PaletteItem getActiveItem() {
     for (PaletteGroupHeader groupHeader : myGroupHeaders) {
       if (groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) {
         return (PaletteItem)groupHeader.getComponentList().getSelectedValue();
@@ -211,8 +210,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     return null;
   }
 
-  @Nullable
-  public <T extends PaletteItem> T getActiveItem(Class<T> cls) {
+  public @Nullable <T extends PaletteItem> T getActiveItem(Class<T> cls) {
     PaletteItem item = getActiveItem();
     if (item != null && item.getClass().isInstance(item)) {
       //noinspection unchecked
@@ -246,8 +244,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }

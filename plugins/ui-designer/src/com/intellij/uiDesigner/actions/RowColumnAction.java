@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -22,8 +22,8 @@ public abstract class RowColumnAction extends AnAction {
   private final @Nls String myRowText;
   private final Icon myRowIcon;
 
-  public RowColumnAction(final @Nls String columnText, @Nullable final Icon columnIcon,
-                         final @Nls String rowText, @Nullable final Icon rowIcon) {
+  public RowColumnAction(final @Nls String columnText, final @Nullable Icon columnIcon,
+                         final @Nls String rowText, final @Nullable Icon rowIcon) {
     myColumnText = columnText;
     myColumnIcon = columnIcon;
     myRowText = rowText;
@@ -31,7 +31,7 @@ public abstract class RowColumnAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if (editor == null || selection == null || !editor.ensureEditable()) {
@@ -50,7 +50,7 @@ public abstract class RowColumnAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if (selection == null) {

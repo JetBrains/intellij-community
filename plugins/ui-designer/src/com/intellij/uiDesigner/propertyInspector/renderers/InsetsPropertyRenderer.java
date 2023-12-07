@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -14,7 +14,7 @@ public final class InsetsPropertyRenderer extends LabelPropertyRenderer<Insets> 
   }
 
   @Override
-  protected void customize(@NotNull final Insets value){
+  protected void customize(final @NotNull Insets value){
     setText(formatText(value));
   }
 

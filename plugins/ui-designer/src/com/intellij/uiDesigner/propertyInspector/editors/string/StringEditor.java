@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -30,7 +30,7 @@ import java.awt.event.ActionListener;
 public final class StringEditor extends PropertyEditor<StringDescriptor> {
   private static final Logger LOG = Logger.getInstance(StringEditor.class);
 
-  @Nullable private final IntroStringProperty myProperty;
+  private final @Nullable IntroStringProperty myProperty;
   private final TextFieldWithBrowseButton myTfWithButton;
   /* Initial value of string property that was passed into getComponent() method */
   private StringDescriptor myValue;
@@ -60,7 +60,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     textField.getDocument().addDocumentListener(
       new DocumentAdapter() {
         @Override
-        protected void textChanged(@NotNull final DocumentEvent e) {
+        protected void textChanged(final @NotNull DocumentEvent e) {
           // Order of document listeners invocation is not defined in Swing. In practice, custom listeners like this one are invoked
           // before internal JTextField listeners, so at this point the internal state of JTextField can be inconsistent.
           // That's the reason for using 'invokeLater' here.
@@ -114,7 +114,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent(@NotNull final JComponent component) {
+  public JComponent getPreferredFocusedComponent(final @NotNull JComponent component) {
     return ((TextFieldWithBrowseButton)component).getTextField();
   }
 
@@ -154,7 +154,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
 
   private final class MyCancelEditingAction extends AnAction{
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       fireEditingCancelled();
     }
   }

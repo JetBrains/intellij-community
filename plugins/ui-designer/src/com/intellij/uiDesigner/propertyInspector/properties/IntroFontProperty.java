@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -22,7 +22,7 @@ import java.lang.reflect.Method;
 public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   private final FontRenderer myFontRenderer = new FontRenderer();
   private FontEditor myFontEditor;
-  @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroFontProperty_";
+  private static final @NonNls String CLIENT_PROPERTY_KEY_PREFIX = "IntroFontProperty_";
 
   public IntroFontProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
@@ -34,12 +34,12 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   }
 
   @Override
-  @NotNull public PropertyRenderer<FontDescriptor> getRenderer() {
+  public @NotNull PropertyRenderer<FontDescriptor> getRenderer() {
     return myFontRenderer;
   }
 
   @Override
-  @Nullable public PropertyEditor<FontDescriptor> getEditor() {
+  public @Nullable PropertyEditor<FontDescriptor> getEditor() {
     if (myFontEditor == null) {
       myFontEditor = new FontEditor(getName());
     }

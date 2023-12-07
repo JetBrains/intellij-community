@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.make;
 
 import com.intellij.DynamicBundle;
@@ -48,7 +48,7 @@ import java.util.*;
 public final class FormSourceCodeGenerator {
   private static final Logger LOG = Logger.getInstance(FormSourceCodeGenerator.class);
 
-  @NonNls private StringBuffer myBuffer;
+  private @NonNls StringBuffer myBuffer;
   private BooleanStack myIsFirstParameterStack;
   private final Project myProject;
   private final ArrayList<FormErrorInfo> myErrors;
@@ -57,9 +57,9 @@ public final class FormSourceCodeGenerator {
 
   private static final Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<>();
   private static final Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<>();
-  @NonNls private static final Int2ObjectMap<String> ourFontStyleMap = new Int2ObjectOpenHashMap<>();
-  @NonNls private static final Int2ObjectMap<String> ourTitleJustificationMap = new Int2ObjectOpenHashMap<>();
-  @NonNls private static final Int2ObjectMap<String> ourTitlePositionMap = new Int2ObjectOpenHashMap<>();
+  private static final @NonNls Int2ObjectMap<String> ourFontStyleMap = new Int2ObjectOpenHashMap<>();
+  private static final @NonNls Int2ObjectMap<String> ourTitleJustificationMap = new Int2ObjectOpenHashMap<>();
+  private static final @NonNls Int2ObjectMap<String> ourTitlePositionMap = new Int2ObjectOpenHashMap<>();
 
   private boolean myNeedGetMessageFromBundle;
 
@@ -93,7 +93,7 @@ public final class FormSourceCodeGenerator {
     ourTitleJustificationMap.put(5, "javax.swing.border.TitledBorder.TRAILING");
   }
 
-  public FormSourceCodeGenerator(@NotNull final Project project){
+  public FormSourceCodeGenerator(final @NotNull Project project){
     myProject = project;
     myErrors = new ArrayList<>();
   }
@@ -311,7 +311,7 @@ public final class FormSourceCodeGenerator {
       }
     }
 
-    @NonNls final String grcMethodText = "/** @noinspection ALL */ public javax.swing.JComponent " +
+    final @NonNls String grcMethodText = "/** @noinspection ALL */ public javax.swing.JComponent " +
                                          AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME +
                                          "() { return " + topComponent.getBinding() + "; }";
     generateMethodIfRequired(newClass, method, AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, grcMethodText, topComponent.getBinding() != null);
@@ -388,7 +388,7 @@ public final class FormSourceCodeGenerator {
   private static boolean hasCustomComponentAffectingReferences(final PsiElement element,
                                                                final PsiClass classToBind,
                                                                final LwRootContainer rootContainer,
-                                                               @Nullable final Ref<? super Boolean> callsThisConstructor) {
+                                                               final @Nullable Ref<? super Boolean> callsThisConstructor) {
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
@@ -462,8 +462,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  @NonNls
-  private String getLoadMethodText(final String methodName, final Class componentClass, Module module) {
+  private @NonNls String getLoadMethodText(final String methodName, final Class componentClass, Module module) {
     final boolean needIndex = haveSetDisplayedMnemonic(componentClass, module);
     return
       "/** @noinspection ALL */ " +
@@ -835,7 +834,7 @@ public final class FormSourceCodeGenerator {
   }
 
   private void generateSetMnemonic(final String variable, final SupportCode.TextWithMnemonic textWithMnemonic, final Module module,
-                                   @NonNls final String setMethodName, final Class controlClass) {
+                                   final @NonNls String setMethodName, final Class controlClass) {
     startMethodCall(variable, setMethodName);
     pushVar("'" + textWithMnemonic.getMnemonicChar() + "'");
     endMethod();
@@ -912,8 +911,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  @NotNull
-  private String borderFactoryClassName(LwContainer container, StringDescriptor borderTitle, GlobalSearchScope scope) {
+  private @NotNull String borderFactoryClassName(LwContainer container, StringDescriptor borderTitle, GlobalSearchScope scope) {
     StringDescriptor titledBorderFactoryDescriptor =
       (StringDescriptor)container.getDelegeeClientProperties().get(AsmCodeGenerator.ourBorderFactoryClientProperty);
 
@@ -1171,7 +1169,7 @@ public final class FormSourceCodeGenerator {
             .append(variable).append("Font);\n");
   }
 
-  private void pushFont(final String variable, final FontDescriptor fontDescriptor, @NonNls final String getterName) {
+  private void pushFont(final String variable, final FontDescriptor fontDescriptor, final @NonNls String getterName) {
     if (fontDescriptor.getSwingFont() != null) {
       startStaticMethodCall(UIManager.class, "getFont");
       push(fontDescriptor.getSwingFont());
@@ -1223,7 +1221,7 @@ public final class FormSourceCodeGenerator {
       return component.getBinding();
     }
 
-    @NonNls final String className = component instanceof LwNestedForm ? "nestedForm" : component.getComponentClassName();
+    final @NonNls String className = component instanceof LwNestedForm ? "nestedForm" : component.getComponentClassName();
 
     String result = generateUniqueVariableName(className, class2variableIndex, aClass);
     component2variable.put(component, result);
@@ -1231,7 +1229,7 @@ public final class FormSourceCodeGenerator {
     return result;
   }
 
-  private static String generateUniqueVariableName(@NonNls final String className,
+  private static String generateUniqueVariableName(final @NonNls String className,
                                                    final Object2IntMap<String> class2variableIndex,
                                                    final PsiClass aClass) {
     final String shortName;
@@ -1297,7 +1295,7 @@ public final class FormSourceCodeGenerator {
   }
 
 
-  void startMethodCall(@NonNls final String variable, @NonNls final String methodName) {
+  void startMethodCall(final @NonNls String variable, final @NonNls String methodName) {
     checkParameter();
 
     append(variable);
@@ -1308,7 +1306,7 @@ public final class FormSourceCodeGenerator {
     myIsFirstParameterStack.push(true);
   }
 
-  private void startStaticMethodCall(final String fullClassName, @NonNls final String methodName) {
+  private void startStaticMethodCall(final String fullClassName, final @NonNls String methodName) {
     checkParameter();
 
     myBuffer.append(fullClassName);
@@ -1319,7 +1317,7 @@ public final class FormSourceCodeGenerator {
     myIsFirstParameterStack.push(true);
   }
 
-  private void startStaticMethodCall(final Class aClass, @NonNls final String methodName) {
+  private void startStaticMethodCall(final Class aClass, final @NonNls String methodName) {
     startStaticMethodCall(aClass.getCanonicalName(), methodName);
   }
 
@@ -1440,12 +1438,12 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  void pushVar(@NonNls final String variable) {
+  void pushVar(final @NonNls String variable) {
     checkParameter();
     append(variable);
   }
 
-  void append(@NonNls final String text) {
+  void append(final @NonNls String text) {
     myBuffer.append(text);
   }
 

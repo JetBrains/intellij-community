@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,9 +21,9 @@ import java.util.Arrays;
 public final class GridBuildUtil {
   private static final Logger LOG = Logger.getInstance(GridBuildUtil.class);
 
-  private final static int HORIZONTAL_GRID = 1;
-  private final static int VERTICAL_GRID = 2;
-  private final static int GRID = 3;
+  private static final int HORIZONTAL_GRID = 1;
+  private static final int VERTICAL_GRID = 2;
+  private static final int GRID = 3;
   /**
    * TODO[anton,vova]: most likely should be equal to "xy grid step" when available
    */

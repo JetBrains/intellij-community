@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -20,7 +20,7 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer, 
   protected final BooleanRenderer myRenderer = new BooleanRenderer();
   protected final BooleanEditor myEditor = new BooleanEditor();
 
-  public AbstractGridLayoutProperty(final Property parent, @NotNull @NonNls final String name) {
+  public AbstractGridLayoutProperty(final Property parent, final @NotNull @NonNls String name) {
     super(parent, name);
   }
 
@@ -45,8 +45,7 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer, 
   protected abstract void setGridLayoutPropertyValue(GridLayoutManager gridLayoutManager, boolean booleanValue);
 
   @Override
-  @NotNull
-  public PropertyRenderer<Boolean> getRenderer(){
+  public @NotNull PropertyRenderer<Boolean> getRenderer(){
     return myRenderer;
   }
 

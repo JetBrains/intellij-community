@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -34,31 +34,29 @@ public final class ErrorAnalyzer {
   /**
    * Value {@link ErrorInfo}
    */
-  @NonNls
-  public static final String CLIENT_PROP_CLASS_TO_BIND_ERROR = "classToBindError";
+  public static final @NonNls String CLIENT_PROP_CLASS_TO_BIND_ERROR = "classToBindError";
   /**
    * Value {@link ErrorInfo}
    */
-  @NonNls
-  public static final String CLIENT_PROP_BINDING_ERROR = "bindingError";
+  public static final @NonNls String CLIENT_PROP_BINDING_ERROR = "bindingError";
 
-  @NonNls public static final String CLIENT_PROP_ERROR_ARRAY = "errorArray";
+  public static final @NonNls String CLIENT_PROP_ERROR_ARRAY = "errorArray";
 
   private ErrorAnalyzer() {
   }
 
-  static void analyzeErrors(@NotNull GuiEditor editor, final IRootContainer rootContainer, @Nullable final ProgressIndicator progress) {
+  static void analyzeErrors(@NotNull GuiEditor editor, final IRootContainer rootContainer, final @Nullable ProgressIndicator progress) {
     analyzeErrors(editor.getModule(), editor.getFile(), editor, rootContainer, progress);
   }
 
   /**
    * @param editor if null, no quick fixes are created. This is used in form to source compiler.
    */
-  public static void analyzeErrors(@NotNull final Module module,
-                                   @NotNull final VirtualFile formFile,
-                                   @Nullable final GuiEditor editor,
-                                   @NotNull final IRootContainer rootContainer,
-                                   @Nullable final ProgressIndicator progress) {
+  public static void analyzeErrors(final @NotNull Module module,
+                                   final @NotNull VirtualFile formFile,
+                                   final @Nullable GuiEditor editor,
+                                   final @NotNull IRootContainer rootContainer,
+                                   final @Nullable ProgressIndicator progress) {
     if (module.isDisposed()) {
       return;
     }
@@ -329,8 +327,7 @@ public final class ErrorAnalyzer {
    * @return first ErrorInfo for the specified component. If component doesn't contain
    * any error then the method returns {@code null}.
    */
-  @Nullable
-  public static ErrorInfo getErrorForComponent(@NotNull final IComponent component){
+  public static @Nullable ErrorInfo getErrorForComponent(final @NotNull IComponent component){
     // Check bind to class errors
     {
       final ErrorInfo errorInfo = (ErrorInfo)component.getClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR);
@@ -380,8 +377,7 @@ public final class ErrorAnalyzer {
     return (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
   }
 
-  @Nullable
-  public static HighlightDisplayLevel getHighlightDisplayLevel(final Project project, @NotNull final RadComponent component) {
+  public static @Nullable HighlightDisplayLevel getHighlightDisplayLevel(final Project project, final @NotNull RadComponent component) {
     HighlightDisplayLevel displayLevel = null;
     for(ErrorInfo errInfo: getAllErrorsForComponent(component)) {
       if (displayLevel == null || SeverityRegistrar.getSeverityRegistrar(project).compare(errInfo.getHighlightDisplayLevel().getSeverity(), displayLevel.getSeverity()) > 0) {

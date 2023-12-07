@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -47,7 +47,7 @@ public final class ComponentTreeBuilder implements Disposable {
   private final MyHierarchyChangeListener myHierarchyChangeListener;
   private MyTreeSelectionListener myTreeSelectionListener;
 
-  public ComponentTreeBuilder(final ComponentTree tree, @NotNull final GuiEditor editor) {
+  public ComponentTreeBuilder(final ComponentTree tree, final @NotNull GuiEditor editor) {
     myTree = tree;
     myTreeStructure = new ComponentTreeStructure(editor);
     myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, MyComparator.ourComparator, this);

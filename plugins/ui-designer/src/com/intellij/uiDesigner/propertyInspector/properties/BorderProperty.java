@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ import java.awt.*;
 import java.util.function.Supplier;
 
 public final class BorderProperty extends Property<RadContainer, BorderType> {
-  @NonNls public static final String NAME = "border";
+  public static final @NonNls String NAME = "border";
 
   private final Project myProject;
   private final Property[] myChildren;
@@ -42,7 +42,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
       public PropertyRenderer<BorderType> get() {
         return new LabelPropertyRenderer<>() {
           @Override
-          protected void customize(@NotNull final BorderType value) {
+          protected void customize(final @NotNull BorderType value) {
             @NlsSafe String name = value.getName();
             setText(name);
           }
@@ -84,8 +84,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<BorderType> getRenderer() {
+  public @NotNull PropertyRenderer<BorderType> getRenderer() {
     return myRenderer.getValue();
   }
 
@@ -126,8 +125,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<BorderType> getRenderer() {
+    public @NotNull PropertyRenderer<BorderType> getRenderer() {
       return myRenderer.getValue();
     }
 
@@ -186,8 +184,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<StringDescriptor> getRenderer() {
+    public @NotNull PropertyRenderer<StringDescriptor> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new StringRenderer();
       }
@@ -235,7 +232,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     private IntEnumEditor myEditor;
     private final boolean myJustification;
 
-    MyTitleIntEnumProperty(final Property parent, @NonNls final String name, final boolean isJustification) {
+    MyTitleIntEnumProperty(final Property parent, final @NonNls String name, final boolean isJustification) {
       super(parent, name);
       myJustification = isJustification;
     }
@@ -256,8 +253,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<Integer> getRenderer() {
+    public @NotNull PropertyRenderer<Integer> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new IntEnumRenderer(myJustification ? ourJustificationPairs : ourPositionPairs);
       }
@@ -302,8 +298,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<FontDescriptor> getRenderer() {
+    public @NotNull PropertyRenderer<FontDescriptor> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new FontRenderer();
       }
@@ -355,8 +350,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<ColorDescriptor> getRenderer() {
+    public @NotNull PropertyRenderer<ColorDescriptor> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new ColorRenderer();
       }

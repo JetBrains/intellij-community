@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
@@ -86,7 +86,7 @@ public final class IntEnumEditor extends PropertyEditor<Integer> {
      */
     public final String myText;
 
-    public Pair(final int value, @NotNull final String text) {
+    public Pair(final int value, final @NotNull String text) {
       myValue = value;
       myText = text;
     }

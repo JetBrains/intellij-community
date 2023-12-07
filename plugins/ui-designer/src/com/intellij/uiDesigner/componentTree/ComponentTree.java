@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -79,10 +79,10 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final StartInplaceEditingAction myStartInplaceEditingAction;
   private final MyDeleteProvider myDeleteProvider = new MyDeleteProvider();
 
-  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.compsTree";
+  private static final @NonNls String ourHelpID = "guiDesigner.uiTour.compsTree";
   private final Project myProject;
 
-  public ComponentTree(@NotNull final Project project) {
+  public ComponentTree(final @NotNull Project project) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myProject = project;
 
@@ -126,8 +126,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -147,8 +146,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   @Override
-  @Nullable
-  public String getToolTipText(final MouseEvent e) {
+  public @Nullable String getToolTipText(final MouseEvent e) {
     final TreePath path = getPathForLocation(e.getX(), e.getY());
     final RadComponent component = getComponentFromPath(path);
     if (component != null) {
@@ -160,8 +158,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     return null;
   }
 
-  @Nullable
-  private static RadComponent getComponentFromPath(TreePath path) {
+  private static @Nullable RadComponent getComponentFromPath(TreePath path) {
     if (path != null) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       LOG.assertTrue(node != null);
@@ -184,8 +181,7 @@ public final class ComponentTree extends Tree implements DataProvider {
    * @return first selected component. The method returns {@code null}
    *         if there is no selection in the tree.
    */
-  @Nullable
-  public RadComponent getSelectedComponent() {
+  public @Nullable RadComponent getSelectedComponent() {
     return ArrayUtil.getFirstElement(getSelectedComponents());
   }
 
@@ -217,7 +213,7 @@ public final class ComponentTree extends Tree implements DataProvider {
    * binding of currently selected component (if any)
    */
   @Override
-  public Object getData(@NotNull final String dataId) {
+  public Object getData(final @NotNull String dataId) {
     if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
     }
@@ -255,16 +251,14 @@ public final class ComponentTree extends Tree implements DataProvider {
     return null;
   }
 
-  @Nullable
-  private Object getSlowData(@NotNull RadComponent selectedComponent, @NonNls String dataId) {
+  private @Nullable Object getSlowData(@NotNull RadComponent selectedComponent, @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return getPsiFile(selectedComponent);
     }
     return null;
   }
 
-  @Nullable
-  private Navigatable getPsiFile(@NotNull RadComponent selectedComponent) {
+  private @Nullable Navigatable getPsiFile(@NotNull RadComponent selectedComponent) {
     final String classToBind = myEditor.getRootContainer().getClassToBind();
     if (classToBind == null) {
       return null;
@@ -312,7 +306,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     return result;
   }
 
-  private SimpleTextAttributes getAttribute(@NotNull final SimpleTextAttributes attrs,
+  private SimpleTextAttributes getAttribute(final @NotNull SimpleTextAttributes attrs,
                                             @Nullable HighlightDisplayLevel level) {
     if (level == null) {
       return attrs;
@@ -384,7 +378,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
-    @NonNls private static final String SWING_PACKAGE = "javax.swing";
+    private static final @NonNls String SWING_PACKAGE = "javax.swing";
 
     @Override
     public void customizeCellRenderer(

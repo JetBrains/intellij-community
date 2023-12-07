@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
@@ -75,11 +75,10 @@ public final class PreviewFormAction extends AnAction {
    */
   private static final String CLASS_TO_BIND_NAME = "com.intellij.uiDesigner.FormPreviewFrame";
   private static final String CLASS_TO_BIND_RESOURCE_NAME = "com/intellij/uiDesigner/FormPreviewFrame";
-  @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "messages.RuntimeBundle";
-  @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
+  private static final @NonNls String RUNTIME_BUNDLE_PREFIX = "messages.RuntimeBundle";
+  public static final @NonNls String PREVIEW_BINDING_FIELD = "myComponent";
 
-  @NotNull
-  public static InstrumentationClassFinder createClassFinder(URL @Nullable [] platformUrls, @NotNull final String classPath) {
+  public static @NotNull InstrumentationClassFinder createClassFinder(URL @Nullable [] platformUrls, final @NotNull String classPath) {
     final ArrayList<URL> urls = new ArrayList<>();
     for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
       final String s = tokenizer.nextToken();
@@ -95,7 +94,7 @@ public final class PreviewFormAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
     if (editor != null) {
       showPreviewFrame(editor.getModule(), editor.getFile(), editor.getStringDescriptorLocale());
@@ -103,7 +102,7 @@ public final class PreviewFormAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
 
     if (editor == null) {
@@ -123,8 +122,8 @@ public final class PreviewFormAction extends AnAction {
     return ActionUpdateThread.BGT ;
   }
 
-  private static void showPreviewFrame(@NotNull final Module module, @NotNull final VirtualFile formFile,
-                                       @Nullable final Locale stringDescriptorLocale) {
+  private static void showPreviewFrame(final @NotNull Module module, final @NotNull VirtualFile formFile,
+                                       final @Nullable Locale stringDescriptorLocale) {
     final String tempPath;
     try {
       final File tempDirectory = FileUtil.createTempDirectory("FormPreview", "");
@@ -262,7 +261,7 @@ public final class PreviewFormAction extends AnAction {
 
         CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
           @Override
-          public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
+          public void finished(boolean aborted, int errors, int warnings, final @NotNull CompileContext compileContext) {
             if (!aborted && errors == 0) {
               runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
             }
@@ -297,7 +296,7 @@ public final class PreviewFormAction extends AnAction {
   }
 
   private static void runPreviewProcess(final String tempPath, final PathsList sources, final Module module, final VirtualFile formFile,
-                                        @Nullable final Locale stringDescriptorLocale) {
+                                        final @Nullable Locale stringDescriptorLocale) {
     // 3. Now we are ready to launch Java process
     final JavaParameters parameters = new JavaParameters();
     parameters.getClassPath().add(tempPath);
@@ -356,7 +355,7 @@ public final class PreviewFormAction extends AnAction {
     }
 
     @Override
-    public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) throws ExecutionException {
       return new JavaCommandLineState(env) {
         @Override
         protected JavaParameters createJavaParameters() {
@@ -364,8 +363,7 @@ public final class PreviewFormAction extends AnAction {
         }
 
         @Override
-        @NotNull
-        public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner<?> runner) throws ExecutionException {
+        public @NotNull ExecutionResult execute(final @NotNull Executor executor, final @NotNull ProgramRunner<?> runner) throws ExecutionException {
           try {
             ExecutionResult executionResult = super.execute(executor, runner);
             executionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
@@ -384,9 +382,8 @@ public final class PreviewFormAction extends AnAction {
       };
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return UIDesignerBundle.message("title.form.preview");
     }
 

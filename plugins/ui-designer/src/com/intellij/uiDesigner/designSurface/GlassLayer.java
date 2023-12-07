@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.*;
@@ -70,7 +70,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
     );
   }
 
-  private void registerKeyboardAction(final AnAction action, @NonNls final String actionId) {
+  private void registerKeyboardAction(final AnAction action, final @NonNls String actionId) {
     action.registerCustomShortcutSet(
       ActionManager.getInstance().getAction(actionId).getShortcutSet(),
       this
@@ -115,8 +115,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
     }
   }
 
-  @NotNull
-  public Point getLastMousePosition() {
+  public @NotNull Point getLastMousePosition() {
     if (myLastMousePosition == null) {
       return new Point(10, 10);
     }
@@ -128,7 +127,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
    * binding of currently selected component (if any)
    */
   @Override
-  public Object getData(@NotNull final String dataId) {
+  public Object getData(final @NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
       if (componentTree != null) {
@@ -139,8 +138,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
   }
 
   @Override
-  @Nullable
-  public Point getBestPopupPosition() {
+  public @Nullable Point getBestPopupPosition() {
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
     if (selection.size() > 0) {
       final RadComponent component = selection.get(0);

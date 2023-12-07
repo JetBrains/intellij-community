@@ -57,7 +57,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element, final @NotNull ProcessingContext context) {
     if (element instanceof PsiPlainTextFile plainTextFile) {
       if (plainTextFile.getFileType().equals(GuiFormFileType.INSTANCE)) {
         return getCachedData(plainTextFile).myReferences;
@@ -66,8 +66,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public static PsiFile getFormFile(PsiField field) {
+  public static @Nullable PsiFile getFormFile(PsiField field) {
     PsiReference ref = getFormReference(field);
     if (ref != null) {
       return ref.getElement().getContainingFile();
@@ -75,8 +74,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     return null;
   }
 
-  @Nullable
-  public static PsiReference getFormReference(PsiField field) {
+  public static @Nullable PsiReference getFormReference(PsiField field) {
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && containingClass.getQualifiedName() != null) {
       final List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(containingClass.getProject(), containingClass);
@@ -124,7 +122,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
       return;
     }
 
-    @NonNls final String name = rootTag.getName();
+    final @NonNls String name = rootTag.getName();
     if (!"form".equals(name)){
       return;
     }
@@ -301,8 +299,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  @Nullable
-  public static String getBundleName(final PropertiesFile propertiesFile) {
+  public static @Nullable String getBundleName(final PropertiesFile propertiesFile) {
     final PsiDirectory directory = propertiesFile.getParent();
     if (directory == null) {
       return null;
@@ -364,8 +361,8 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   public void projectClosed() {
   }
 
-  @NotNull @NonNls
-  public String getComponentName() {
+  public @NotNull
+  @NonNls String getComponentName() {
     return "FormReferenceProvider";
   }
 

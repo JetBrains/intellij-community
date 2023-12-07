@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -25,11 +25,11 @@ import java.util.List;
 
 
 public class BoundIconRenderer extends GutterIconRenderer {
-  @NotNull private final PsiElement myElement;
+  private final @NotNull PsiElement myElement;
   private Icon myIcon;
   private final String myQName;
 
-  public BoundIconRenderer(@NotNull final PsiElement element) {
+  public BoundIconRenderer(final @NotNull PsiElement element) {
     myElement = element;
     if (myElement instanceof PsiField field) {
       final PsiType type = field.getType();
@@ -53,8 +53,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
   }
 
   @Override
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     if (myIcon != null) {
       return myIcon;
     }
@@ -67,8 +66,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
   }
 
   @Override
-  @Nullable
-  public AnAction getClickAction() {
+  public @Nullable AnAction getClickAction() {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -93,8 +91,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
   }
 
   @Override
-  @Nullable
-  public String getTooltipText() {
+  public @Nullable String getTooltipText() {
     List<PsiFile> formFiles = getBoundFormFiles();
 
     if (formFiles.size() > 0) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -160,7 +160,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull final GuiEditor editor, final ArrayList<? extends RadComponent> input, final AnActionEvent e) {
+  protected void update(final @NotNull GuiEditor editor, final ArrayList<? extends RadComponent> input, final AnActionEvent e) {
     List<RadComponent> selection = FormEditingUtil.remapToActionTargets(input);
     RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     Palette palette = Palette.getInstance(editor.getProject());

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
@@ -26,12 +26,12 @@ public final class MainProcessor extends EventProcessor{
   private static final int DRAGGER_SIZE = 10;
 
   private EventProcessor myCurrentProcessor;
-  @NotNull private final InsertComponentProcessor myInsertComponentProcessor;
-  @NotNull private final GuiEditor myEditor;
+  private final @NotNull InsertComponentProcessor myInsertComponentProcessor;
+  private final @NotNull GuiEditor myEditor;
   private boolean myInsertFeedbackEnabled = true;
   private Point myLastMousePosition = new Point(0, 0);
 
-  public MainProcessor(@NotNull final GuiEditor editor){
+  public MainProcessor(final @NotNull GuiEditor editor){
     myEditor = editor;
     myInsertComponentProcessor = new InsertComponentProcessor(myEditor);
   }
@@ -352,7 +352,7 @@ public final class MainProcessor extends EventProcessor{
                                                         1, false));
   }
 
-  public void startInsertProcessor(@NotNull final ComponentItem componentToInsert, final ComponentDropLocation location) {
+  public void startInsertProcessor(final @NotNull ComponentItem componentToInsert, final ComponentDropLocation location) {
     removeDragger();
     myEditor.hideIntentionHint();
     myInsertComponentProcessor.setComponentToInsert(componentToInsert);

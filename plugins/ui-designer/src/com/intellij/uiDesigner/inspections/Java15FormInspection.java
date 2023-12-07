@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -31,7 +31,7 @@ public class Java15FormInspection extends BaseFormInspection {
   }
 
   @Override
-  protected void checkComponentProperties(Module module, @NotNull final IComponent component, final FormErrorCollector collector) {
+  protected void checkComponentProperties(Module module, final @NotNull IComponent component, final FormErrorCollector collector) {
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(component.getComponentClassName(), scope);
@@ -52,7 +52,7 @@ public class Java15FormInspection extends BaseFormInspection {
   private void registerError(final IComponent component,
                              final FormErrorCollector collector,
                              final IProperty prop,
-                             @NonNls final String api) {
+                             final @NonNls String api) {
     collector.addError(getID(), component, prop, UIDesignerBundle.message("inspection.java15form.problem.descriptor", api),
                        (editor, component1) -> new RemoveUIPropertyFix(editor, component1, (Property)prop));
   }

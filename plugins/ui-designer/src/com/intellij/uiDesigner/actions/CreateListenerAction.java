@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -111,8 +111,8 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   private static class MyCreateListenerAction extends AnAction {
     private final List<? extends RadComponent> mySelection;
     private final EventSetDescriptor myDescriptor;
-    @NonNls private static final String LISTENER_SUFFIX = "Listener";
-    @NonNls private static final String ADAPTER_SUFFIX = "Adapter";
+    private static final @NonNls String LISTENER_SUFFIX = "Listener";
+    private static final @NonNls String ADAPTER_SUFFIX = "Adapter";
 
     MyCreateListenerAction(final List<? extends RadComponent> selection, EventSetDescriptor descriptor) {
       super(getEventDescriptorName(descriptor));

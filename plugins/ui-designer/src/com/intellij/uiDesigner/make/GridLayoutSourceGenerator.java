@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.make;
 
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -130,7 +130,7 @@ public final class GridLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.pushVar(presentation);
   }
 
-  private static Int2ObjectMap<String> fillMap(final Class<GridConstraints> aClass, @NonNls final String prefix) {
+  private static Int2ObjectMap<String> fillMap(final Class<GridConstraints> aClass, final @NonNls String prefix) {
     final Int2ObjectMap<String> map = new Int2ObjectOpenHashMap<>();
 
     final Field[] fields = aClass.getFields();

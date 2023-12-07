@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,8 +34,7 @@ public final class SimpleTransferable<T> implements Transferable {
   }
 
   @Override
-  @NotNull
-  public Object getTransferData(final DataFlavor flavor) throws UnsupportedFlavorException {
+  public @NotNull Object getTransferData(final DataFlavor flavor) throws UnsupportedFlavorException {
     try {
       if (myDataFlavor.equals(flavor)) {
         return myDataProxy;
@@ -83,7 +82,7 @@ public final class SimpleTransferable<T> implements Transferable {
     }
   }
 
-  @Nullable public static <T> T getData(Transferable transferable, Class<T> dataClass) {
+  public static @Nullable <T> T getData(Transferable transferable, Class<T> dataClass) {
     try {
       final DataFlavor dataFlavor = getDataFlavor(dataClass);
       if (!transferable.isDataFlavorSupported(dataFlavor)) {

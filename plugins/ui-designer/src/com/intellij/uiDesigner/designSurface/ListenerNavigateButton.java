@@ -74,8 +74,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
       }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @Nullable
-  public static DefaultActionGroup prepareActionGroup(final RadComponent component) {
+  public static @Nullable DefaultActionGroup prepareActionGroup(final RadComponent component) {
     final IRootContainer root = FormEditingUtil.getRoot(component);
     final String classToBind = root == null ? null : root.getClassToBind();
     if (classToBind != null) {

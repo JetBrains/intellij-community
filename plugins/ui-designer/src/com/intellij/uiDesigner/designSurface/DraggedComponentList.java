@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -136,8 +136,7 @@ public final class DraggedComponentList implements Transferable, ComponentDragOb
     return new DraggedComponentList(list);
   }
 
-  @Nullable
-  public static DraggedComponentList fromTransferable(final Transferable transferable) {
+  public static @Nullable DraggedComponentList fromTransferable(final Transferable transferable) {
     if (transferable.isDataFlavorSupported(ourDataFlavor)) {
       Object data;
       try {
@@ -250,8 +249,7 @@ public final class DraggedComponentList implements Transferable, ComponentDragOb
   }
 
   @Override
-  @NotNull
-  public Dimension getInitialSize(final RadContainer targetContainer) {
+  public @NotNull Dimension getInitialSize(final RadContainer targetContainer) {
     if (myOriginalBounds.length == 1) {
       return myOriginalBounds [0].getSize();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +21,7 @@ public class GridDropLocation implements ComponentDropLocation {
   protected int myRow;
   protected int myColumn;
 
-  public GridDropLocation(@NotNull final RadContainer container, final int row, final int column) {
+  public GridDropLocation(final @NotNull RadContainer container, final int row, final int column) {
     myContainer = container;
     myRow = row;
     myColumn = column;
@@ -100,11 +100,10 @@ public class GridDropLocation implements ComponentDropLocation {
     }
   }
 
-  @Nullable
-  protected Rectangle getGridFeedbackCellRect(ComponentDragObject dragObject,
-                                              boolean ignoreWidth,
-                                              boolean ignoreHeight,
-                                              boolean overlapping) {
+  protected @Nullable Rectangle getGridFeedbackCellRect(ComponentDragObject dragObject,
+                                                        boolean ignoreWidth,
+                                                        boolean ignoreHeight,
+                                                        boolean overlapping) {
     if (dragObject.getComponentCount() == 0) {
       return null;
     }
@@ -122,11 +121,10 @@ public class GridDropLocation implements ComponentDropLocation {
     return rc;
   }
 
-  @Nullable
-  private Rectangle calculateGridFeedbackCellRect(ComponentDragObject dragObject,
-                                             boolean ignoreWidth,
-                                             boolean ignoreHeight,
-                                             boolean spans) {
+  private @Nullable Rectangle calculateGridFeedbackCellRect(ComponentDragObject dragObject,
+                                                            boolean ignoreWidth,
+                                                            boolean ignoreHeight,
+                                                            boolean spans) {
     Rectangle rc = getDragObjectDimensions(dragObject, spans);
     int w = ignoreWidth ? 1 : rc.width;
     int h = ignoreHeight ? 1 : rc.height;
@@ -154,8 +152,7 @@ public class GridDropLocation implements ComponentDropLocation {
     return new Rectangle(firstCol, firstRow, lastCol - firstCol + 1, lastRow - firstRow + 1);
   }
 
-  @Nullable
-  protected Rectangle getGridFeedbackRect(ComponentDragObject dragObject, boolean ignoreWidth, boolean ignoreHeight, boolean overlapping) {
+  protected @Nullable Rectangle getGridFeedbackRect(ComponentDragObject dragObject, boolean ignoreWidth, boolean ignoreHeight, boolean overlapping) {
     Rectangle cellRect = getGridFeedbackCellRect(dragObject, ignoreWidth, ignoreHeight, overlapping);
     if (cellRect == null) return null;
     int h = ignoreHeight ? 0 : cellRect.height;
@@ -173,8 +170,7 @@ public class GridDropLocation implements ComponentDropLocation {
   }
 
   @Override
-  @Nullable
-  public ComponentDropLocation getAdjacentLocation(Direction direction) {
+  public @Nullable ComponentDropLocation getAdjacentLocation(Direction direction) {
     var insertMode = switch (direction) {
       case LEFT -> GridInsertMode.ColumnBefore;
       case UP -> GridInsertMode.RowBefore;
@@ -184,7 +180,8 @@ public class GridDropLocation implements ComponentDropLocation {
     return new GridInsertLocation(myContainer, myRow, myColumn, insertMode);
   }
 
-  @NonNls @Override public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "GridDropLocation(row=" + myRow + ",col=" + myColumn + ")";
   }
 

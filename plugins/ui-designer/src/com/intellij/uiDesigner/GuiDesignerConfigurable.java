@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -45,8 +45,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
   }
 
   @Override
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "project.propGUI";
   }
 
@@ -206,8 +205,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -218,9 +218,8 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     return result;
   }
 
-  @NotNull
   @Override
-  public ComponentDropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
+  public @NotNull ComponentDropLocation getDropLocation(@NotNull RadContainer container, final @Nullable Point location) {
     if (getGridRowCount(container) == 0 && getGridColumnCount(container) == 0) {
       return new FirstComponentInsertLocation(container, new Rectangle(0, 0, container.getWidth(), container.getHeight()), 0, 0);
     }
@@ -502,8 +501,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<Double> getRenderer() {
+    public @NotNull PropertyRenderer<Double> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new LabelPropertyRenderer<>();
       }

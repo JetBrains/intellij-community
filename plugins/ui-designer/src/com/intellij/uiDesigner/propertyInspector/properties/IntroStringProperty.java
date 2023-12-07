@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,8 +30,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
   /**
    * value: HashMap<String, StringDescriptor>
    */
-  @NonNls
-  private static final String CLIENT_PROP_NAME_2_DESCRIPTOR = "name2descriptor";
+  private static final @NonNls String CLIENT_PROP_NAME_2_DESCRIPTOR = "name2descriptor";
 
   private final StringRenderer myRenderer;
   private StringEditor myEditor;
@@ -48,8 +47,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<StringDescriptor> getRenderer() {
+  public @NotNull PropertyRenderer<StringDescriptor> getRenderer() {
     return myRenderer;
   }
 
@@ -64,8 +62,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
   /**
    * @return per RadComponent map between string property name and its StringDescriptor value.
    */
-  @NotNull
-  private static HashMap<String, StringDescriptor> getName2Descriptor(final RadComponent component){
+  private static @NotNull HashMap<String, StringDescriptor> getName2Descriptor(final RadComponent component){
     //noinspection unchecked
     HashMap<String, StringDescriptor> name2Descriptor = (HashMap<String, StringDescriptor>)component.getClientProperty(CLIENT_PROP_NAME_2_DESCRIPTOR);
     if(name2Descriptor == null){
@@ -264,7 +261,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
   }
 
   @Override
-  public void write(@NotNull final StringDescriptor value, final XmlWriter writer) {
+  public void write(final @NotNull StringDescriptor value, final XmlWriter writer) {
     writer.writeStringDescriptor(value,
                                  UIFormXmlConstants.ATTRIBUTE_VALUE,
                                  UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE,

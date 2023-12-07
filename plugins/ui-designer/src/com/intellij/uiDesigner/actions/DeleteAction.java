@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -19,7 +19,7 @@ public final class DeleteAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if (editor == null || selection == null || selection.getFocusedIndex() < 0) return;
@@ -33,7 +33,7 @@ public final class DeleteAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if(selection == null || selection.getContainer() == null){
