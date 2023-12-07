@@ -22,7 +22,7 @@ abstract class SplitTextEditorProvider(
   private val firstProvider: FileEditorProvider,
   private val secondProvider: FileEditorProvider
 ): AsyncFileEditorProvider, DumbAware {
-  private val editorTypeId = "split-provider[${firstProvider.getEditorTypeId()};${secondProvider.getEditorTypeId()}]"
+  private val editorTypeId = createSplitEditorProviderTypeId(firstProvider.editorTypeId, secondProvider.editorTypeId)
 
   override fun accept(project: Project, file: VirtualFile): Boolean {
     return firstProvider.accept(project, file) && secondProvider.accept(project, file)
@@ -140,4 +140,9 @@ private suspend fun createEditorBuilderAsync(
       return provider.createEditor(project, file)
     }
   }
+}
+
+@ApiStatus.Internal
+fun createSplitEditorProviderTypeId(first: String, second: String): String {
+  return "split-provider[$first;$second]"
 }
