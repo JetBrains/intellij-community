@@ -56,6 +56,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -114,6 +115,7 @@ import static com.intellij.find.actions.ShowUsagesUtilsKt.getEditorFor;
 import static com.intellij.find.actions.ShowUsagesUtilsKt.navigateAndHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
 import static com.intellij.util.FindUsagesScopeKt.FindUsagesScope;
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
@@ -734,12 +736,21 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                         ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(originUsageInfo);
       }
 
+      VirtualFile file = editor.getVirtualFile();
       int offset = editor.getCaretModel().getOffset();
+      if (file == null || offset <= 0) {
+        return __ -> false;
+      }
+
+      int line = editor.getDocument().getLineNumber(offset);
       return usage -> {
         if (usage instanceof Psi2UsageInfo2UsageAdapter adapter) {
+          if (line != adapter.getLine() || !file.equals(adapter.getFile())) {
+            return false;
+          }
+
           for (UsageInfo info : adapter.getMergedInfos()) {
-            SmartPsiFileRange obj = info.getPsiFileRange();
-            Segment range = obj == null ? null : obj.getRange();
+            Segment range = doIfNotNull(info.getPsiFileRange(), it -> ReadAction.compute(it::getRange));
             if (range != null && range.getStartOffset() <= offset && offset <= range.getEndOffset()) {
               return true;
             }
