@@ -275,7 +275,7 @@ public final class JBCefApp {
   }
 
   /**
-   * Throws IllegalStateException if the off-screen rendering mode is not enabled.
+   * Throws {@code IllegalStateException} if the off-screen rendering mode is not enabled.
    * <p>
    * The off-screen mode allows for browser creation in either windowed or off-screen rendering mode.
    *
