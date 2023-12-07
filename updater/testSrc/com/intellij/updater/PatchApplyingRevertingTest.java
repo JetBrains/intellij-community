@@ -105,7 +105,7 @@ abstract class PatchApplyingRevertingTest {
     doLockedFileTest(dirs);
   }
 
-  private void doLockedFileTest(UpdaterTestCase.Directories dirs) throws Exception {
+  private void doLockedFileTest(Directories dirs) throws Exception {
     var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
     try (var raf = new RandomAccessFile(dirs.oldDir.resolve("bin/idea.bat").toFile(), "rw")) {
@@ -353,7 +353,7 @@ abstract class PatchApplyingRevertingTest {
     var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> target.put("lib/boot.jar", UpdaterTestCase.BOOTSTRAP_JAR));
+    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> target.put("lib/boot.jar", BOOTSTRAP_JAR));
   }
 
   @Test void applyWhenCommonFileChangesStrict() throws Exception {
@@ -391,7 +391,7 @@ abstract class PatchApplyingRevertingTest {
     var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> target.put("new_file.txt", UpdaterTestCase.README_TXT));
+    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> target.put("new_file.txt", README_TXT));
   }
 
   @Test void applyWhenNewFileExistsStrict() throws Exception {
@@ -553,7 +553,7 @@ abstract class PatchApplyingRevertingTest {
     var dirs = prepareDirectories(tempDir, dataDir, true);
     var file = dirs.oldDir.resolve("bin/read_only_to_delete");
     Files.writeString(file, "bye");
-    UpdaterTestCase.setReadOnly(file);
+    setReadOnly(file);
     var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
     var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
@@ -654,7 +654,7 @@ abstract class PatchApplyingRevertingTest {
   }
 
   private static void modifyFile(Path file) throws IOException {
-    try (RandomAccessFile raf = new RandomAccessFile(file.toFile(), "rw")) {
+    try (var raf = new RandomAccessFile(file.toFile(), "rw")) {
       raf.seek(20);
       raf.write(42);
     }
@@ -672,12 +672,12 @@ abstract class PatchApplyingRevertingTest {
     return patch.getActions().stream().filter(a -> a.getPath().equals(path)).findFirst().orElse(null);
   }
 
-  private void assertNotApplied(UpdaterTestCase.Directories dirs, PatchFileCreator.PreparationResult preparationResult) throws Exception {
+  private void assertNotApplied(Directories dirs, PatchFileCreator.PreparationResult preparationResult) throws Exception {
     assertNotApplied(dirs, preparationResult, Map.of());
   }
 
   private void assertNotApplied(
-    UpdaterTestCase.Directories dirs,
+    Directories dirs,
     PatchFileCreator.PreparationResult preparationResult,
     Map<String, ValidationResult.Option> options
   ) throws Exception {
@@ -694,22 +694,22 @@ abstract class PatchApplyingRevertingTest {
     }
   }
 
-  private void assertAppliedAndReverted(UpdaterTestCase.Directories dirs) throws Exception {
+  private void assertAppliedAndReverted(Directories dirs) throws Exception {
     var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
     assertAppliedAndReverted(dirs, patchFile);
   }
 
-  private void assertAppliedAndReverted(UpdaterTestCase.Directories dirs, Path patchFile) throws IOException, OperationCancelledException {
+  private void assertAppliedAndReverted(Directories dirs, Path patchFile) throws IOException, OperationCancelledException {
     var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
     assertAppliedAndReverted(dirs, preparationResult);
   }
 
-  private void assertAppliedAndReverted(UpdaterTestCase.Directories dirs, PatchFileCreator.PreparationResult preparationResult) throws IOException {
+  private void assertAppliedAndReverted(Directories dirs, PatchFileCreator.PreparationResult preparationResult) throws IOException {
     assertAppliedAndReverted(dirs, preparationResult, (original, target) -> {});
   }
 
   private void assertAppliedAndReverted(
-    UpdaterTestCase.Directories dirs,
+    Directories dirs,
     PatchFileCreator.PreparationResult preparationResult,
     BiConsumer<Map<String, Long>, Map<String, Long>> adjuster
   ) throws IOException {

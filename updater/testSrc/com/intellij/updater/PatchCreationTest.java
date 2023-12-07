@@ -33,12 +33,12 @@ class PatchCreationTest {
     var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "bin/idea.bat", UpdaterTestCase.IDEA_BAT),
+      new DeleteAction(patch, "bin/idea.bat", IDEA_BAT),
       new CreateAction(patch, "newDir/"),
       new CreateAction(patch, "newDir/newFile.txt"),
-      new UpdateAction(patch, "Readme.txt", UpdaterTestCase.README_TXT),
-      new UpdateAction(patch, "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
-      new UpdateAction(patch, "lib/bootstrap.jar", UpdaterTestCase.BOOTSTRAP_JAR));
+      new UpdateAction(patch, "Readme.txt", README_TXT),
+      new UpdateAction(patch, "lib/annotations.jar", ANNOTATIONS_JAR),
+      new UpdateAction(patch, "lib/bootstrap.jar", BOOTSTRAP_JAR));
   }
 
   @Test void creatingWithIgnoredFiles() throws Exception {
@@ -48,8 +48,8 @@ class PatchCreationTest {
     assertThat(sortActions(patch.getActions())).containsExactly(
       new CreateAction(patch, "newDir/"),
       new CreateAction(patch, "newDir/newFile.txt"),
-      new UpdateAction(patch, "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
-      new UpdateAction(patch, "lib/bootstrap.jar", UpdaterTestCase.BOOTSTRAP_JAR));
+      new UpdateAction(patch, "lib/annotations.jar", ANNOTATIONS_JAR),
+      new UpdateAction(patch, "lib/bootstrap.jar", BOOTSTRAP_JAR));
   }
 
   @Test void validation() throws Exception {
@@ -172,9 +172,9 @@ class PatchCreationTest {
     var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib/annotations.jar", ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR, true));
+      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", ANNOTATIONS_JAR, true));
   }
 
   @Test void zipFileMoveWithUpdate() throws Exception {
@@ -184,9 +184,9 @@ class PatchCreationTest {
     var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib/annotations.jar", ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR, false));
+      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", ANNOTATIONS_JAR, false));
   }
 
   @Test void zipFileMoveWithAlternatives() throws Exception {
@@ -197,12 +197,12 @@ class PatchCreationTest {
     var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
-      new DeleteAction(patch, "lib64/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib/annotations.jar", ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib64/annotations.jar", ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
       new CreateAction(patch, "lib64/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR, true),
-      new UpdateAction(patch, "lib64/redist/annotations.jar", "lib64/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR, true));
+      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.jar", "lib64/annotations.jar", ANNOTATIONS_JAR, true));
   }
 
   @Test void noOptionalFileMove1() throws Exception {
@@ -214,12 +214,12 @@ class PatchCreationTest {
 
     var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir).setOptionalFiles(List.of("lib/annotations.bin", "lib/redist/annotations.bin")));
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.bin", UpdaterTestCase.ANNOTATIONS_JAR),
-      new DeleteAction(patch, "lib64/annotations.bin", UpdaterTestCase.ANNOTATIONS_CHANGED_JAR),
+      new DeleteAction(patch, "lib/annotations.bin", ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib64/annotations.bin", ANNOTATIONS_CHANGED_JAR),
       new CreateAction(patch, "lib/redist/"),
       new CreateAction(patch, "lib64/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.bin", "lib/annotations.bin", UpdaterTestCase.ANNOTATIONS_JAR, true),
-      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", UpdaterTestCase.ANNOTATIONS_CHANGED_JAR, false));
+      new UpdateAction(patch, "lib/redist/annotations.bin", "lib/annotations.bin", ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", ANNOTATIONS_CHANGED_JAR, false));
   }
 
   @Test void noOptionalFileMove2() throws Exception {
@@ -231,12 +231,12 @@ class PatchCreationTest {
 
     var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir).setOptionalFiles(List.of("lib/annotations.bin", "lib/redist/annotations.bin")));
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.bin", UpdaterTestCase.ANNOTATIONS_CHANGED_JAR),
-      new DeleteAction(patch, "lib64/annotations.bin", UpdaterTestCase.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib/annotations.bin", ANNOTATIONS_CHANGED_JAR),
+      new DeleteAction(patch, "lib64/annotations.bin", ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
       new CreateAction(patch, "lib64/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.bin", "lib64/annotations.bin", UpdaterTestCase.ANNOTATIONS_JAR, true),
-      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", UpdaterTestCase.ANNOTATIONS_JAR, true));
+      new UpdateAction(patch, "lib/redist/annotations.bin", "lib64/annotations.bin", ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", ANNOTATIONS_JAR, true));
   }
 
   @Test void testSaveLoad() throws Exception {
@@ -338,7 +338,7 @@ class PatchCreationTest {
     var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "Readme.link", UpdaterTestCase.LINK_TO_README_TXT));
+      new DeleteAction(patch, "Readme.link", LINK_TO_README_TXT));
   }
 
   @Test void rename() throws Exception {
@@ -349,7 +349,7 @@ class PatchCreationTest {
     var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "Readme.lnk", UpdaterTestCase.LINK_TO_README_TXT),
+      new DeleteAction(patch, "Readme.lnk", LINK_TO_README_TXT),
       new CreateAction(patch, "Readme.link"));
   }
 
@@ -360,7 +360,7 @@ class PatchCreationTest {
     var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "Readme.link", UpdaterTestCase.LINK_TO_README_TXT),
+      new DeleteAction(patch, "Readme.link", LINK_TO_README_TXT),
       new CreateAction(patch, "Readme.link"));
   }
 
@@ -372,7 +372,7 @@ class PatchCreationTest {
 
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "Readme.lnk",
-        File.separatorChar == '\\' ? UpdaterTestCase.LINK_TO_DOT_README_TXT_DOS : UpdaterTestCase.LINK_TO_DOT_README_TXT_UNIX),
+        File.separatorChar == '\\' ? LINK_TO_DOT_README_TXT_DOS : LINK_TO_DOT_README_TXT_UNIX),
       new CreateAction(patch, "Readme.link"));
   }
 
@@ -383,7 +383,7 @@ class PatchCreationTest {
     var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "Readme.txt", UpdaterTestCase.README_TXT),
+      new DeleteAction(patch, "Readme.txt", README_TXT),
       new CreateAction(patch, "Readme.md"),
       new CreateAction(patch, "Readme.txt"));
   }
