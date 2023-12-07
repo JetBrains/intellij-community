@@ -1,17 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.file.JavaUpdateAddedFileProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class MoveClassTest extends LightMultiFileTestCase {
@@ -23,6 +24,7 @@ public class MoveClassTest extends LightMultiFileTestCase {
   public void testContextChange1() {
     doTest(new String[]{"pack1.Class1"}, "pack2");
   }
+
   public void testContextChange2() {
     doTest(new String[]{"pack1.Class1"}, "pack2");
   }
@@ -68,7 +70,8 @@ public class MoveClassTest extends LightMultiFileTestCase {
       fail("Conflicts expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Package-local class <b><code>Class2</code></b> will no longer be accessible from field <b><code>User.class2</code></b>", e.getMessage());
+      assertEquals("Package-local class <b><code>Class2</code></b> will no longer be accessible from field <b><code>User.class2</code></b>",
+                   e.getMessage());
     }
   }
 
@@ -83,28 +86,63 @@ public class MoveClassTest extends LightMultiFileTestCase {
   }
 
   public void testIdeadev27996() {
-    doTest(new String[] { "pack1.X" }, "pack2");
+    doTest(new String[]{"pack1.X"}, "pack2");
   }
 
   public void testUnusedImport() {
     doTest(new String[]{"p2.F2"}, "p1");
   }
-  
+
   public void testQualifiedRef() {
     doTest(new String[]{"p1.Test"}, "p2");
   }
 
   public void testConflictingNames() {
-    doTest(new String[] {"p1.First", "p1.Second"}, "p3");
+    doTest(new String[]{"p1.First", "p1.Second"}, "p3");
+  }
+
+  public void testImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      doTest(() ->
+               WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+                 myFixture.moveFile("pack1/Class1.java", "pack2");
+               }));
+    });
+  }
+
+  public void testAddUsualFile() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      doTest(() -> {
+        WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+          JavaUpdateAddedFileProcessor processor = new JavaUpdateAddedFileProcessor();
+          String path = "pack1/Class1.java";
+          PsiFile[] files = myFixture.configureByFiles(path);
+          processor.update(files[0], null);
+        });
+      });
+    });
+  }
+
+  public void testAddImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      doTest(() -> {
+        WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+          JavaUpdateAddedFileProcessor processor = new JavaUpdateAddedFileProcessor();
+          String path = "pack1/Class1.java";
+          PsiFile[] files = myFixture.configureByFiles(path);
+          processor.update(files[0], null);
+        });
+      });
+    });
   }
 
   private void doTest(@NonNls String[] classNames, @NonNls String newPackageName) {
     doTest(() -> performAction(classNames, newPackageName));
   }
 
-  private void performAction(String[] classNames, String newPackageName) {
+  private void performAction(@NonNls String[] classNames, @NonNls String newPackageName) {
     final PsiClass[] classes = new PsiClass[classNames.length];
-    for(int i = 0; i < classes.length; i++){
+    for (int i = 0; i < classes.length; i++) {
       String className = classNames[i];
       classes[i] = myFixture.findClass(className);
     }
@@ -116,7 +154,8 @@ public class MoveClassTest extends LightMultiFileTestCase {
 
     new MoveClassesOrPackagesProcessor(getProject(), classes,
                                        new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService
-                                         .getInstance().getPackage(dirs[0])), dirs[0]),
+                                                                                                   .getInstance().getPackage(dirs[0])),
+                                                                           dirs[0]),
                                        true, true, null).run();
   }
 }
