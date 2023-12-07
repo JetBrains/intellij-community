@@ -6,12 +6,14 @@ import jetbrains.buildServer.configs.kotlin.buildSteps.script
 import jetbrains.buildServer.configs.kotlin.triggers.vcs
 import org.intellij.lang.annotations.Language
 
-private val defaultImage = "registry.jetbrains.team/p/grazi/grazie-automation/mermaid-ci:1.0.0"
+private const val DefaultImage = "registry.jetbrains.team/p/grazi/grazie-automation/mermaid-ci:1.0.0"
 
 object Tests: MermaidBuild(
   name = "Tests",
+  root = Mermaid,
   script = "./gradlew test --info",
   configuration = {
+    id("Tests${BranchConfiguration.IdSuffix}")
     withBaseVcsTrigger()
     withCommitStatusPublisher("Compilation and Tests")
   }
@@ -19,23 +21,26 @@ object Tests: MermaidBuild(
 
 object PluginVerifier: MermaidBuild(
   name = "Plugin Verifier",
+  root = Mermaid,
   script = "./gradlew runPluginVerifier --info",
   configuration = {
+    id("PluginVerifier${BranchConfiguration.IdSuffix}")
     withBaseVcsTrigger()
     withCommitStatusPublisher("Plugin Verifier")
   }
 )
 
-open class MermaidBuild(
+abstract class MermaidBuild(
   name: String,
-  dockerImage: String = defaultImage,
+  root: VcsRoot,
+  dockerImage: String = DefaultImage,
   @Language("Shell Script") script: String,
   configuration: BuildType.() -> Unit = {}
 ): BuildType({
   this.name = name
 
   vcs {
-    root(Mermaid)
+    root(root)
   }
   steps {
     script {
