@@ -25,8 +25,9 @@ class PresentationAssistantQuickSettingsGroup: DefaultActionGroup(), DumbAware {
 internal class PresentationAssistantQuickSettingsSizeGroup: DefaultActionGroup(IdeBundle.message("presentation.assistant.quick.settings.size.group"), PresentationAssistantPopupSize.entries.map {
   PresentationAssistantQuickSettingsSize(it)
 }), DumbAware {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  override fun isPopup(): Boolean = true
+  init {
+    templatePresentation.isPopupGroup = true
+  }
 }
 
 internal class PresentationAssistantQuickSettingsSize(val size: PresentationAssistantPopupSize): DumbAwareToggleAction(size.displayName) {
@@ -49,8 +50,9 @@ internal class PresentationAssistantQuickSettingsPositionGroup: DefaultActionGro
   Supplier { IdeBundle.message("presentation.assistant.quick.settings.position.group") },
   PresentationAssistantPopupAlignment.entries.map { PresentationAssistantQuickSettingsPosition(it) }
 ), DumbAware {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  override fun isPopup(): Boolean = true
+  init {
+    templatePresentation.isPopupGroup = true
+  }
 }
 
 internal class PresentationAssistantQuickSettingsPosition(val position: PresentationAssistantPopupAlignment): DumbAwareToggleAction(position.displayName) {
@@ -61,7 +63,7 @@ internal class PresentationAssistantQuickSettingsPosition(val position: Presenta
   override fun isSelected(e: AnActionEvent): Boolean =
     configuration.alignmentIfNoDelta?.let {
       it.y == position.y && it.x == position.x
-    } ?: false
+    } == true
 
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
@@ -76,9 +78,10 @@ internal class PresentationAssistantQuickSettingsPosition(val position: Presenta
 
 internal class PresentationAssistantQuickSettingsThemeGroup: DefaultActionGroup(IdeBundle.message("presentation.assistant.quick.settings.theme.group"), PresentationAssistantTheme.entries.map {
   PresentationAssistantQuickSettingsTheme(it)
-}), DumbAware {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  override fun isPopup(): Boolean = true
+}) {
+  init {
+    templatePresentation.isPopupGroup = true
+  }
 }
 
 internal class PresentationAssistantQuickSettingsTheme(val theme: PresentationAssistantTheme): DumbAwareToggleAction(theme.displayName) {

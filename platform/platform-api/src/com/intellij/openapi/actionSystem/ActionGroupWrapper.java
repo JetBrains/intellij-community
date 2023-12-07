@@ -38,11 +38,6 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   }
 
   @Override
-  public final boolean isPopup() {
-    return myDelegate.isPopup();
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     UpdateSession session = e.getUpdateSession();
     if (session == UpdateSession.EMPTY) myDelegate.update(e);
@@ -52,11 +47,6 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   @Override
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     myDelegate.beforeActionPerformedUpdate(e);
-  }
-
-  @Override
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return myDelegate.canBePerformed(context);
   }
 
   @Override
@@ -72,16 +62,6 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   @Override
   public boolean isInInjectedContext() {
     return myDelegate.isInInjectedContext();
-  }
-
-  @Override
-  public boolean hideIfNoVisibleChildren() {
-    return myDelegate.hideIfNoVisibleChildren();
-  }
-
-  @Override
-  public boolean disableIfNoVisibleChildren() {
-    return myDelegate.disableIfNoVisibleChildren();
   }
 
   @Override

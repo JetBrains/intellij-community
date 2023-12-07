@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
@@ -150,12 +149,6 @@ public final class ActionUtil {
       }
       Runnable runnable = () -> {
         // init group flags from deprecated methods
-        boolean isGroup = action instanceof ActionGroup;
-        boolean wasPopup = isGroup && ((ActionGroup)action).isPopup();
-        boolean wasHideIfEmpty = isGroup && ((ActionGroup)action).hideIfNoVisibleChildren();
-        boolean wasDisableIfEmpty = isGroup && ((ActionGroup)action).disableIfNoVisibleChildren();
-        presentation.setPopupGroup(isGroup && (presentation.isPopupGroup() || wasPopup));
-
         e.setInjectedContext(action.isInInjectedContext());
         if (beforeActionPerformed) {
           action.beforeActionPerformedUpdate(e);
@@ -171,13 +164,6 @@ public final class ActionUtil {
           else {
             action.update(e);
           }
-        }
-        //to be removed when ActionGroup#canBePerformed is dropped
-        e.getPresentation().setPerformGroup(
-          isGroup && e.getPresentation().isPopupGroup() &&
-          (e.getPresentation().isPerformGroup() || ((ActionGroup)action).canBePerformed(e.getDataContext())));
-        if (isGroup) {
-          assertDeprecatedActionGroupFlagsNotChanged((ActionGroup)action, e, wasPopup, wasHideIfEmpty, wasDisableIfEmpty);
         }
       };
       boolean isLikeUpdate = !beforeActionPerformed;
@@ -213,34 +199,6 @@ public final class ActionUtil {
     if (action instanceof AnActionWrapper wrapper) return isActionLightEditCompatible(wrapper.getDelegate());
     return (action instanceof ActionGroup) && action.isDumbAware() || action instanceof LightEditCompatible;
   }
-
-  private static void assertDeprecatedActionGroupFlagsNotChanged(@NotNull ActionGroup group, @NotNull AnActionEvent event,
-                                                                 boolean wasPopup, boolean wasHideIfEmpty, boolean wasDisableIfEmpty) {
-    boolean warnPopup = wasPopup != group.isPopup();
-    boolean warnHide = wasHideIfEmpty != group.hideIfNoVisibleChildren();
-    boolean warnDisable = wasDisableIfEmpty != group.disableIfNoVisibleChildren();
-    if (!(warnPopup || warnHide || warnDisable)) return;
-    String operationName = group.getClass().getSimpleName() + "#update (" + group.getClass().getName() + ")";
-    if (warnPopup) {
-      event.getPresentation().setPopupGroup(!wasPopup); // keep the old logic for a while
-      String message = "Calling `setPopup()` in " + operationName + ". " +
-                       "Please use `event.getPresentation().setPopupGroup()` instead.";
-      LOG.error(PluginException.createByClass(message, null, group.getClass()));
-    }
-    if (warnHide) {
-      event.getPresentation().setHideGroupIfEmpty(!wasHideIfEmpty); // keep the old logic for a while
-      String message = "Changing `hideIfNoVisibleChildren()` result in " + operationName + ". " +
-                       "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.";
-      LOG.error(PluginException.createByClass(message, null, group.getClass()));
-    }
-    if (warnHide) {
-      event.getPresentation().setDisableGroupIfEmpty(!wasDisableIfEmpty); // keep the old logic for a while
-      String message = "Changing `disableIfNoVisibleChildren()` result in " + operationName + ". " +
-                       "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.";
-      LOG.error(PluginException.createByClass(message, null, group.getClass()));
-    }
-  }
-
 
   /**
    * Show a cancellable modal progress running the given computation under read action with the same {@link DumbService#isAlternativeResolveEnabled()}

@@ -73,21 +73,6 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   }
 
   @Override
-  public boolean isPopup() {
-    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).isPopup();
-  }
-
-  @Override
-  public boolean hideIfNoVisibleChildren() {
-    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).hideIfNoVisibleChildren();
-  }
-
-  @Override
-  public boolean disableIfNoVisibleChildren() {
-    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     AnActionEvent wrapped = wrapEvent(e);
     myOrigin.update(wrapped);

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * Note, that various flags cannot be overridden. Ex:
  * {@link AnAction#isEnabledInModalContext()}
  * {@link AnAction#isDumbAware()}
- * {@link AnAction#isTransparentUpdate()}
  *
  * @see ExtendableAction
  */

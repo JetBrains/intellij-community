@@ -275,7 +275,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     setShortcutSet(sourceAction.getShortcutSet());
   }
 
-
   public final boolean isEnabledInModalContext() {
     return myEnabledInModalContext;
   }
@@ -286,6 +285,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   /**
    * Return {@code true} if the action has to display its text along with the icon when placed in the toolbar.
+   * <p>
+   * TODO Move to template presentation client properties and drop the method.
    */
   public boolean displayTextInToolbar() {
     return false;
@@ -293,6 +294,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   /**
    * Return {@code true} if the action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar.
+   * <p>
+   * TODO Move to template presentation client properties and drop the method.
    */
   public boolean useSmallerFontForTextInToolbar() {
     return false;
@@ -349,12 +352,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
       presentation = createTemplatePresentation();
       LOG.assertTrue(presentation.isTemplate(), "Not a template presentation");
       templatePresentation = presentation;
-      if (this instanceof ActionGroup group) {
-        // init group flags from deprecated methods
-        //myTemplatePresentation.setPopupGroup(((ActionGroup)this).isPopup());
-        templatePresentation.setHideGroupIfEmpty(group.hideIfNoVisibleChildren());
-        templatePresentation.setDisableGroupIfEmpty(group.disableIfNoVisibleChildren());
-      }
     }
     return presentation;
   }
@@ -362,6 +359,13 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   @NotNull
   Presentation createTemplatePresentation() {
     return Presentation.newTemplatePresentation();
+  }
+
+  /**
+   * A shortcut for {@code getTemplatePresentation().getText()}.
+   */
+  public final String getTemplateText() {
+    return getTemplatePresentation().getText();
   }
 
   /**
@@ -392,6 +396,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * Sets the flag indicating whether the action has an internal or a user-customized icon.
    *
    * @param isDefaultIconSet {@code true} if the icon is internal, {@code false} if the user customizes the icon
+   * <p>
+   * TODO Move to template presentation client properties and drop the method.
    */
   public void setDefaultIcon(boolean isDefaultIconSet) {
     myIsDefaultIcon = isDefaultIconSet;
@@ -399,6 +405,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   /**
    * @return {@code true} if the icon is internal, {@code false} if the user customizes the icon.
+   * <p>
+   * TODO Move to template presentation client properties and drop the method.
    */
   public boolean isDefaultIcon() {
     return myIsDefaultIcon;
@@ -415,18 +423,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   public boolean isInInjectedContext() {
     return myWorksInInjected;
-  }
-
-  /** @deprecated not used anymore */
-  @Deprecated(forRemoval = true)
-  public boolean isTransparentUpdate() {
-    return this instanceof TransparentUpdate;
-  }
-
-  /** @deprecated unused */
-  @Deprecated(forRemoval = true)
-  public boolean startInTransaction() {
-    return false;
   }
 
   public void addTextOverride(@NotNull String place, @NotNull String text) {
@@ -480,30 +476,12 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     return mySynonyms;
   }
 
-  /** @deprecated not used anymore */
-  @Deprecated(forRemoval = true)
-  public interface TransparentUpdate {
-  }
-
-  public static @Nullable Project getEventProject(AnActionEvent e) {
+  public static @Nullable Project getEventProject(@Nullable AnActionEvent e) {
     return e == null ? null : e.getData(CommonDataKeys.PROJECT);
   }
 
   @Override
   public @Nls String toString() {
     return getTemplatePresentation().toString();
-  }
-
-  /**
-   * A synonym for {@code getTemplatePresentation().getText()}.
-   * <p>
-   * <b>Migration note</b>: The method will become `final` soon.
-   * The overriders must move their texts to the template presentation, or to a resource bundle <b>(preferred!)</b>.
-   * If the template presentation is already populated its values must be fed
-   * to a regular event presentation in the {@link #update} method.
-   */
-  @ApiStatus.NonExtendable // TODO make final
-  public @Nullable @ActionText String getTemplateText() {
-    return getTemplatePresentation().getText();
   }
 }

@@ -399,9 +399,6 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   private suspend fun expandGroupChild(child: AnAction, hideDisabledBase: Boolean): List<AnAction> {
-    if (application.isDisposed()) {
-      return emptyList()
-    }
     val presentation = updateAction(child)
     if (presentation == null) {
       return emptyList()
@@ -418,10 +415,8 @@ internal class ActionUpdater @JvmOverloads constructor(
     val alwaysVisible = child is AlwaysVisibleActionGroup || presentation.getClientProperty(ALWAYS_VISIBLE) == true
     val skipChecks = performOnly || alwaysVisible
     val hideDisabled = isPopup && !skipChecks && hideDisabledBase
-    @Suppress("removal", "DEPRECATION")
-    val hideEmpty = isPopup && !skipChecks && (presentation.isHideGroupIfEmpty || child.hideIfNoVisibleChildren())
-    @Suppress("removal", "DEPRECATION")
-    val disableEmpty = isPopup && !skipChecks && presentation.isDisableGroupIfEmpty && child.disableIfNoVisibleChildren()
+    val hideEmpty = isPopup && !skipChecks && presentation.isHideGroupIfEmpty
+    val disableEmpty = isPopup && !skipChecks && presentation.isDisableGroupIfEmpty
     val checkChildren = isPopup && !skipChecks && (canBePerformed || hideDisabled || hideEmpty || disableEmpty)
     var hasEnabled = false
     var hasVisible = false

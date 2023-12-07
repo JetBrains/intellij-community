@@ -206,7 +206,6 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
 }
 
 class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
-  override fun isPopup() = false
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
