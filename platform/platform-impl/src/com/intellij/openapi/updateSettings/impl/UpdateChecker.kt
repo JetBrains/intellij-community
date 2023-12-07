@@ -36,6 +36,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.*
@@ -286,9 +287,9 @@ object UpdateChecker {
             // collect latest plugins from custom repos
             val storedDescriptor = customRepoPlugins[id]
             if (storedDescriptor == null
-                || StringUtil.compareVersionNumbers(descriptor.version, storedDescriptor.version) > 0 &&
+                || VersionComparatorUtil.compare(descriptor.version, storedDescriptor.version) > 0 &&
                 allowedUpgrade(storedDescriptor, descriptor)
-                || (StringUtil.compareVersionNumbers(descriptor.version, storedDescriptor.version) < 0 &&
+                || (VersionComparatorUtil.compare(descriptor.version, storedDescriptor.version) < 0 &&
                     allowedDowngrade(storedDescriptor, descriptor))) {
               customRepoPlugins[id] = descriptor
             }
@@ -468,9 +469,9 @@ object UpdateChecker {
         originalDownloader
       }
       else if (oldDownloader == null
-               || (StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0
+               || (VersionComparatorUtil.compare(pluginVersion, oldDownloader.pluginVersion) > 0
                    && allowedUpgrade(installedPlugin, oldDownloader.descriptor))
-               || (StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) < 0 &&
+               || (VersionComparatorUtil.compare(pluginVersion, oldDownloader.pluginVersion) < 0 &&
                    allowedDowngrade(installedPlugin, oldDownloader.descriptor))) {
         val descriptor = originalDownloader.descriptor
         if (descriptor is PluginNode && descriptor.isIncomplete) {
