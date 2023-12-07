@@ -22,20 +22,6 @@ class ImageDescriptor(
     const val HAS_DARK: Int = 2
     const val HAS_DARK_2x: Int = 4
     const val HAS_STROKE: Int = 8
-
-    @JvmField
-    internal val STROKE_RETINA: ImageDescriptor = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
-                                                                  scale = 2f,
-                                                                  isSvg = false,
-                                                                  isDark = false,
-                                                                  isStroke = true)
-
-    @JvmField
-    internal val STROKE_NON_RETINA: ImageDescriptor = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
-                                                                      scale = 1f,
-                                                                      isSvg = false,
-                                                                      isDark = false,
-                                                                      isStroke = true)
   }
 
   internal fun toSvgMapper(): SvgCacheClassifier = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = isStroke)
@@ -44,7 +30,7 @@ class ImageDescriptor(
 }
 
 @Internal
-fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: Float): List<ImageDescriptor> {
+fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: Float, isStroke: Boolean = false): List<ImageDescriptor> {
   // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
   if (!path.startsWith(FILE_SCHEME_PREFIX) && path.contains("://")) {
     val qI = path.lastIndexOf('?')
@@ -56,8 +42,12 @@ fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: Float): L
   val isRetina = pixScale != 1f
 
   val list = ArrayList<ImageDescriptor>(5)
+
+  if (isStroke) {
+    addFileNameVariant(isRetina = isRetina, isDark = false, isSvg = isSvg, isStroke = true, scale = pixScale, list = list)
+  }
+
   if (!isSvg) {
-    list.add(if (isRetina) ImageDescriptor.STROKE_RETINA else ImageDescriptor.STROKE_NON_RETINA)
     addFileNameVariant(isRetina = isRetina, isDark = isDark, isSvg = false, scale = pixScale, list = list)
   }
 
@@ -77,11 +67,17 @@ fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: Float): L
 private fun addFileNameVariant(isRetina: Boolean,
                                isDark: Boolean,
                                isSvg: Boolean,
+                               isStroke: Boolean = false,
                                scale: Float,
                                list: MutableList<ImageDescriptor>) {
   val retinaScale = if (isSvg) scale else 2f
   val nonRetinaScale = if (isSvg) scale else 1f
-  if (isDark) {
+  if (isStroke) {
+    val strokeScale = if (isRetina) retinaScale else nonRetinaScale
+    val d = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" }, scale = strokeScale, isSvg = isSvg, isDark = isDark, isStroke = true)
+    list.add(d)
+  }
+  else if (isDark) {
     val d1 = ImageDescriptor(pathTransform = { p, e -> "${p}@2x_dark.$e" }, scale = retinaScale, isSvg = isSvg, isDark = true)
     val d2 = ImageDescriptor(pathTransform = { p, e -> "${p}_dark@2x.$e" }, scale = retinaScale, isSvg = isSvg, isDark = true)
     val d3 = ImageDescriptor(pathTransform = { p, e -> "${p}_dark.$e" }, scale = nonRetinaScale, isSvg = isSvg, isDark = true)
