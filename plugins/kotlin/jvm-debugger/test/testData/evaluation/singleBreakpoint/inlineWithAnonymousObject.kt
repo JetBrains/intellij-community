@@ -28,3 +28,5 @@ fun notInline() = object : Function<String> {}
 val valObj = object : Function<String> {}
 inline fun notAnonObject() = Obj
 object Obj : Function<String>
+
+// IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR
