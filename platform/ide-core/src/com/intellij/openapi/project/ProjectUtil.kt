@@ -27,9 +27,9 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.trimMiddle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -37,6 +37,7 @@ import java.nio.file.Path
 import java.util.*
 import javax.swing.JComponent
 import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 
 val NOTIFICATIONS_SILENT_MODE: Key<Boolean> = Key.create("NOTIFICATIONS_SILENT_MODE")
 
@@ -183,7 +184,11 @@ fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparat
  * @param projectPath value of [Project.getPresentableUrl]
  */
 fun getProjectCacheFileName(projectPath: Path): String {
-  return getProjectCacheFileName(projectPath.systemIndependentPath, (projectPath.fileName ?: projectPath).toString(), false, ".", "")
+  return getProjectCacheFileName(presentableUrl = projectPath.invariantSeparatorsPathString,
+                                 projectName = (projectPath.fileName ?: projectPath).toString(),
+                                 isForceNameUse = false,
+                                 hashSeparator = ".",
+                                 extensionWithDot = "")
 }
 
 private fun getProjectCacheFileName(presentableUrl: String?,
@@ -205,7 +210,7 @@ private fun getProjectCacheFileName(presentableUrl: String?,
                               extensionWithDot = extensionWithDot)
 }
 
-@ApiStatus.Internal
+@Internal
 fun doGetProjectFileName(presentableUrl: String?,
                          name: String,
                          hashSeparator: String,
@@ -272,13 +277,13 @@ fun clearCachesForAllProjectsStartingWith(@NonNls prefix: String) {
 /**
  * Returns the root directory for all caches related to [project].
  */
-@ApiStatus.Internal
+@Internal
 fun getProjectDataPathRoot(project: Project): Path = projectsDataDir.resolve(project.getProjectCacheFileName())
 
 /**
  * Returns the root directory for all caches related to the project at [projectPath].
  */
-@ApiStatus.Internal
+@Internal
 fun getProjectDataPathRoot(projectPath: Path): Path = projectsDataDir.resolve(getProjectCacheFileName(projectPath))
 
 fun Project.getExternalConfigurationDir(): Path {
@@ -286,7 +291,7 @@ fun Project.getExternalConfigurationDir(): Path {
 }
 
 /**
- * Use parameters only for migration purposes; once all usages will be migrated, parameters will be removed.
+ * Use parameters only for migration purposes; once all usages are migrated, parameters will be removed.
  */
 @JvmOverloads
 fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, hashSeparator: String = "."): Path {

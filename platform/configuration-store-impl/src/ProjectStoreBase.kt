@@ -108,15 +108,15 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       path = projectFilePath
       prefix = projectName
     }
-    return "$prefix${Integer.toHexString(path.systemIndependentPath.hashCode())}"
+    return "$prefix${Integer.toHexString(path.invariantSeparatorsPathString.hashCode())}"
   }
 
   override fun getPresentableUrl(): String {
     if (isDirectoryBased) {
-      return (dirOrFile ?: throw IllegalStateException("setPath was not yet called")).systemIndependentPath
+      return (dirOrFile ?: throw IllegalStateException("setPath was not yet called")).invariantSeparatorsPathString
     }
     else {
-      return projectFilePath.systemIndependentPath
+      return projectFilePath.invariantSeparatorsPathString
     }
   }
 
@@ -275,9 +275,9 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
     val filePath = file.path
     if (!isDirectoryBased) {
-      return filePath == projectFilePath.systemIndependentPath || filePath == workspacePath.systemIndependentPath
+      return filePath == projectFilePath.invariantSeparatorsPathString || filePath == workspacePath.invariantSeparatorsPathString
     }
-    return VfsUtilCore.isAncestorOrSelf(projectFilePath.parent.systemIndependentPath, file)
+    return VfsUtilCore.isAncestorOrSelf(projectFilePath.parent.invariantSeparatorsPathString, file)
   }
 
   final override fun getDirectoryStorePath() = dotIdea
