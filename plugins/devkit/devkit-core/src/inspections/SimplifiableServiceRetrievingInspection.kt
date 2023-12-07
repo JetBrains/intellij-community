@@ -23,6 +23,7 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
       override fun visitCallExpression(node: UCallExpression): Boolean {
         val (howServiceRetrieved, serviceClass) = getServiceRetrievingInfo(node) ?: return true
         val retrievingExpression = getRetrievingExpression(node) ?: return true
+        if (retrievingExpression.isInitializerOfVariableAnnotatedAsNullable) return true
         val getInstanceMethod = findGetInstanceMethod(retrievingExpression, howServiceRetrieved, serviceClass)
         if (getInstanceMethod != null) {
           registerProblem(getInstanceMethod, howServiceRetrieved, holder, retrievingExpression)
@@ -143,3 +144,10 @@ private fun getRetrievingExpression(call: UCallExpression): UExpression? {
     return qualifiedCall.takeIf { qualifiedCall.accessType == UastQualifiedExpressionAccessType.SIMPLE }
   } else call
 }
+
+private val UExpression.isInitializerOfVariableAnnotatedAsNullable: Boolean
+  get() {
+    val variable = getContainingUVariable() ?: return false
+    return variable.uastInitializer?.sourcePsi == sourcePsi &&
+           variable.uAnnotations.find { it.qualifiedName == Nullable::class.java.canonicalName } != null
+  }
