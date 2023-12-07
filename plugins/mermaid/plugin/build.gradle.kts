@@ -301,6 +301,9 @@ tasks {
       channels.add(PublishChannel.STABLE)
     }
     this.channels.set(channels.map { it.actualName })
+    doLast {
+      println("##teamcity[buildNumber '${project.version}']")
+    }
   }
 }
 
