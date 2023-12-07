@@ -48,4 +48,56 @@ class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
         type("file:")
         assertContains(lookup?.items?.map { it.lookupString }.orEmpty(), "OptIn")
     }
+
+    fun testPropertyKey() {
+        myFixture.createFile("PropertyKey.properties", "foo.bar = 1")
+        myFixture.createFile("PropertyKey.kt", """
+            package org.jetbrains.annotations
+
+            @Retention(AnnotationRetention.BINARY)
+            @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.LOCAL_VARIABLE, AnnotationTarget.FIELD)
+            public annotation class PropertyKey(public val resourceBundle: String)
+
+            fun message(@PropertyKey(resourceBundle = "PropertyKey") key: String) = key
+        """.trimIndent())
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            import org.jetbrains.annotations.message
+
+            fun test() {
+                message("fo<caret>")
+            }
+        """.trimIndent())
+
+        type("o")
+        assertContains(lookup?.items?.map { it.lookupString }.orEmpty(), "foo.bar")
+        type(".")
+        assertContains(lookup?.items?.map { it.lookupString }.orEmpty(), "foo.bar")
+    }
+
+    fun testNotPropertyKey() {
+        myFixture.createFile("PropertyKey.properties", "foo.bar = 1")
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            fun test() {
+                println("fo<caret>")
+            }
+        """.trimIndent())
+
+        type("o")
+        assertNull(lookup)
+    }
+
+    fun testStringTemplateEntry() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            class A {
+                val foo = 1
+            }
+
+            fun test(a: A) {
+                println("${"$"}a<caret>")
+            }
+        """.trimIndent())
+
+        type(".")
+        assertContains(lookup?.items?.map { it.lookupString }.orEmpty(), "foo")
+    }
 }

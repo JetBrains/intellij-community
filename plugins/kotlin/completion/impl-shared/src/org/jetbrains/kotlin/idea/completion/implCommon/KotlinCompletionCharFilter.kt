@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 class KotlinCompletionCharFilter : CharFilter() {
     companion object {
@@ -54,7 +55,7 @@ class KotlinCompletionCharFilter : CharFilter() {
                         return Result.HIDE_LOOKUP
                     }
                 }
-                Result.SELECT_ITEM_AND_FINISH_LOOKUP
+                if (isWithinStringLiteral(lookup)) Result.ADD_TO_PREFIX else Result.SELECT_ITEM_AND_FINISH_LOOKUP
             }
 
             '{' -> {
@@ -69,4 +70,6 @@ class KotlinCompletionCharFilter : CharFilter() {
             else -> Result.HIDE_LOOKUP
         }
     }
+
+    private fun isWithinStringLiteral(lookup: Lookup): Boolean = lookup.psiElement?.parent is KtStringTemplateExpression
 }
