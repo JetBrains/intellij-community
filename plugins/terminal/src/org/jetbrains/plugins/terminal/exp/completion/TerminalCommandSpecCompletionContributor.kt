@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.CommandSpecCompletion
 import org.jetbrains.plugins.terminal.exp.TerminalSession
@@ -20,13 +21,14 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       return
     }
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
+    val context = TerminalCompletionContext(session, shellSupport, parameters)
 
     val prefix = result.prefixMatcher.prefix.substringAfterLast('/') // take last part if it is a file path
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
     val tokens = shellSupport.getCommandTokens(parameters.position) ?: return
     val suggestions = runBlockingCancellable {
-      computeSuggestions(tokens, session, shellSupport, parameters)
+      computeSuggestions(tokens, context)
     }
 
     val elements = suggestions.flatMap { it.toLookupElements() }
@@ -34,28 +36,22 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     resultSet.stopHere()
   }
 
-  private suspend fun computeSuggestions(tokens: List<String>,
-                                         session: TerminalSession,
-                                         shellSupport: TerminalShellSupport,
-                                         parameters: CompletionParameters): List<BaseSuggestion> {
-    val runtimeDataProvider = IJShellRuntimeDataProvider(session)
+  private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext): List<BaseSuggestion> {
+    val runtimeDataProvider = IJShellRuntimeDataProvider(context.session)
     val aliases = runtimeDataProvider.getShellEnvironment()?.aliases ?: return emptyList()
-    val expandedTokens = expandAliases(tokens, aliases, shellSupport, parameters)
+    val expandedTokens = expandAliases(tokens, aliases, context)
 
     val completion = CommandSpecCompletion(IJCommandSpecManager.getInstance(), runtimeDataProvider)
     val items = completion.computeCompletionItems(expandedTokens)?.takeIf { it.isNotEmpty() }
     return when {
       items != null -> items
       // suggest file names if there is nothing to suggest and completion is invoked manually
-      !parameters.isAutoPopup -> completion.computeFileItems(expandedTokens) ?: emptyList()
+      !context.parameters.isAutoPopup -> completion.computeFileItems(expandedTokens) ?: emptyList()
       else -> emptyList()
     }
   }
 
-  private fun expandAliases(tokens: List<String>,
-                            aliases: Map<String, String>,
-                            shellSupport: TerminalShellSupport,
-                            parameters: CompletionParameters): List<String> {
+  private fun expandAliases(tokens: List<String>, aliases: Map<String, String>, context: TerminalCompletionContext): List<String> {
     // If there is only one token, we should not to expand it, because it is incomplete
     if (aliases.isEmpty() || tokens.size < 2) {
       return tokens
@@ -75,7 +71,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     if (!anyAliasFound) {
       return tokens  // command is not changed, so return initial tokens
     }
-    val expandedTokens = shellSupport.getCommandTokens(parameters.editor.project!!, command.toString())
+    val expandedTokens = context.shellSupport.getCommandTokens(context.project, command.toString())
     return (expandedTokens ?: completeTokens) + tokens.last() // add incomplete token to the end
   }
 
@@ -97,5 +93,14 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
         }
       PrioritizedLookupElement.withPriority(element, priority / 100.0)
     }
+  }
+
+  private class TerminalCompletionContext(
+    val session: TerminalSession,
+    val shellSupport: TerminalShellSupport,
+    val parameters: CompletionParameters
+  ) {
+    val project: Project
+      get() = parameters.editor.project!!
   }
 }
