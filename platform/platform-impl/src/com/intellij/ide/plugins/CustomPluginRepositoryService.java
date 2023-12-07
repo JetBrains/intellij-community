@@ -6,10 +6,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -51,15 +51,17 @@ public final class CustomPluginRepositoryService implements PluginRepositoryAuth
           for (PluginNode descriptor : descriptors) {
             PluginId pluginId = descriptor.getPluginId();
             IdeaPluginDescriptor savedDescriptor = latestCustomPluginsAsMap.get(pluginId);
-            if (savedDescriptor == null ||
-                StringUtil.compareVersionNumbers(descriptor.getVersion(), savedDescriptor.getVersion()) > 0) {
+            if (savedDescriptor == null || VersionComparatorUtil.compare(descriptor.getVersion(), savedDescriptor.getVersion()) > 0) {
               latestCustomPluginsAsMap.put(pluginId, descriptor);
             }
           }
           customRepositoryPluginsMap.put(host, descriptors);
         }
-        catch (IOException e) {
-          LOG.info(host, e);
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.info("Failed to load plugins from " + host, e);
         }
       }
     }
