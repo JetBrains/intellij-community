@@ -28,7 +28,7 @@ import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls

@@ -13,7 +13,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.SdkEntity
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import org.junit.*
 import org.junit.rules.TemporaryFolder
 

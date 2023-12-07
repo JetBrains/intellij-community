@@ -2,7 +2,9 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkBridge
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.PersistentOrderRootType
@@ -13,10 +15,12 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspace.jps.serialization.impl.JpsSdkEntitySerializer
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
@@ -24,10 +28,12 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Function
 
 
 // SdkBridgeImpl.clone called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
 // So I need to have such implementation and can't use implementation with SymbolicId and searching in storage
+@ApiStatus.Internal
 class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataHolderBase(), SdkBridge, RootProvider, Sdk {
 
   private var additionalData: SdkAdditionalData? = null
@@ -51,7 +57,12 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   }
 
   override fun getSdkModificator(): SdkModificator {
-    return SdkModificatorBridgeImpl(sdkEntityBuilder, this)
+    // It doesn't expect to be called directly, all calls are proxied from [ProjectJdkIml], so no direct calls.
+    throw UnsupportedOperationException()
+  }
+
+  fun getSdkModificator(originSdk: ProjectJdkImpl): SdkModificator {
+    return SdkModificatorBridgeImpl(sdkEntityBuilder, originSdk, this)
   }
 
   override fun getRootProvider(): RootProvider = this
@@ -81,7 +92,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
     dispatcher.addListener(listener, parentDisposable)
   }
 
-  internal fun fireRootSetChanged() {
+  fun fireRootSetChanged() {
     if (dispatcher.hasListeners()) {
       dispatcher.multicaster.rootSetChanged(this)
     }
@@ -90,7 +101,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   override fun getSdkAdditionalData(): SdkAdditionalData? = additionalData
 
   override fun clone(): SdkBridgeImpl {
-    val sdkEntityClone = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
+    val sdkEntityClone = createEmptySdkEntity("", "", "")
     sdkEntityClone.applyChangesFrom(sdkEntityBuilder)
     return SdkBridgeImpl(sdkEntityClone)
   }
@@ -114,6 +125,10 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
     reloadAdditionalData()
   }
 
+  override fun readExternal(element: Element, sdkTypeByNameFunction: Function<String, SdkTypeId>) {
+    throw UnsupportedOperationException()
+  }
+
   override fun writeExternal(element: Element) {
     createSerializer().saveSdkEntity(element, sdkEntityBuilder)
   }
@@ -123,12 +138,12 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
     return JpsGlobalEntitiesSerializers.createSdkSerializer(VirtualFileUrlManager.getGlobalInstance(), sortedRootTypes)
   }
 
-  internal fun getRawSdkAdditionalData(): String = sdkEntityBuilder.additionalData
+  fun getRawSdkAdditionalData(): String = sdkEntityBuilder.additionalData
 
-  internal fun applyChangesFrom(sdkBridge: SdkBridgeImpl) {
+  fun applyChangesFrom(sdkBridge: SdkBridgeImpl) {
     val modifiableEntity = sdkEntityBuilder as ModifiableWorkspaceEntityBase<*, *>
     if (modifiableEntity.diff != null && !modifiableEntity.modifiable.get()) {
-      sdkEntityBuilder = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
+      sdkEntityBuilder = createEmptySdkEntity("", "", "")
     }
     sdkEntityBuilder.applyChangesFrom(sdkBridge.sdkEntityBuilder)
     reloadAdditionalData()
@@ -146,10 +161,33 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
     sdkEntity.applyChangesFrom(sdkEntityBuilder)
   }
 
-  internal fun getEntity(): SdkEntity = sdkEntityBuilder
+  fun getEntity(): SdkEntity = sdkEntityBuilder
 
   override fun toString(): String {
     return "$name $versionString ($homePath )"
+  }
+
+  companion object {
+    private const val SDK_BRIDGE_MAPPING_ID = "intellij.sdk.bridge"
+
+    val EntityStorage.sdkMap: ExternalEntityMapping<ProjectJdkImpl>
+      get() = getExternalMapping(SDK_BRIDGE_MAPPING_ID)
+    val MutableEntityStorage.mutableSdkMap: MutableExternalEntityMapping<ProjectJdkImpl>
+      get() = getMutableExternalMapping(SDK_BRIDGE_MAPPING_ID)
+
+    fun createEmptySdkEntity(name: String, type: String, homePath: String = "", version: String? = null): SdkEntity.Builder {
+      val sdkEntitySource = createEntitySourceForSdk()
+      val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+      val homePathVfu = virtualFileUrlManager.fromUrl(homePath)
+      return SdkEntity(name, type, homePathVfu, emptyList(), "", sdkEntitySource) as SdkEntity.Builder
+    }
+
+    fun createEntitySourceForSdk(): EntitySource {
+      val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+      val globalLibrariesFile = virtualFileUrlManager.fromUrl(
+        PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.SDK_FILE_NAME).absolutePath)
+      return JpsGlobalFileEntitySource(globalLibrariesFile)
+    }
   }
 }
 
@@ -159,7 +197,7 @@ internal fun SdkEntity.Builder.getSdkType(): SdkTypeId {
 
 // At serialization, we have access only to `sdkRootName` so our roots contains only this names
 // that's why we need to associate such names with the actual root type
-internal val OrderRootType.customName: String
+val OrderRootType.customName: String
   get() {
     if (this is PersistentOrderRootType) {
       // Only `NativeLibraryOrderRootType` don't have rootName all other elements with it
@@ -171,7 +209,8 @@ internal val OrderRootType.customName: String
     }
   }
 
-internal fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity) {
+@ApiStatus.Internal
+fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity) {
   name = fromSdk.name
   type = fromSdk.type
   version = fromSdk.version

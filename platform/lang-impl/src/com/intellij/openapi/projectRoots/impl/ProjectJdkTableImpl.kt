@@ -10,7 +10,7 @@ import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -133,7 +133,7 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
   private fun saveSdkAdditionalData(sdk: Sdk): Element? {
     val additionalData = sdk.sdkAdditionalData
     if (additionalData == null) return null
-    val additionalDataElement = Element(ProjectJdkImpl.ELEMENT_ADDITIONAL)
+    val additionalDataElement = Element(LegacyProjectJdkDelegate.ELEMENT_ADDITIONAL)
     sdk.sdkType.saveAdditionalData(additionalData, additionalDataElement)
     return additionalDataElement
   }

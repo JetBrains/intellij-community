@@ -16,7 +16,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import org.junit.*
 import org.junit.rules.TemporaryFolder
 

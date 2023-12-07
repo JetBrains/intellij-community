@@ -2,17 +2,15 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -161,11 +159,7 @@ public class LegacyProjectJdkTableDelegate implements SdkTableImplementationDele
   @NotNull
   @Override
   public Sdk createSdk(@NotNull String name, @NotNull SdkTypeId type, @Nullable String homePath) {
-    ProjectJdkImpl projectJdkImpl = new ProjectJdkImpl(name, type);
-    if (homePath != null) {
-      projectJdkImpl.setHomePath(homePath);
-    }
-    return projectJdkImpl;
+    return new ProjectJdkImpl(name, type, homePath != null ? homePath : "", null);
   }
 
   @Override

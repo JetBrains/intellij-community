@@ -19,7 +19,7 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonPluginDisposable

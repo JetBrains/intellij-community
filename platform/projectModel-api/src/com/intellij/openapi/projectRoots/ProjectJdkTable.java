@@ -7,7 +7,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.messages.Topic;
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

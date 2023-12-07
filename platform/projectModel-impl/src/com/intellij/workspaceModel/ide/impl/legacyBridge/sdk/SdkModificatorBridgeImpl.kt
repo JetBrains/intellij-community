@@ -3,34 +3,39 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.SdkModificator
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
+import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl.Companion.sdkMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import org.jdom.Element
 
+private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
-                               private val originalSdkBridge: SdkBridgeImpl) : SdkModificator {
+                               private val originalSdk: ProjectJdkImpl,
+                               private val originalSdkDelegate: SdkBridgeImpl) : SdkModificator {
 
   private var isCommitted = false
   private var additionalData: SdkAdditionalData? = null
-  private val modifiedSdkEntity: SdkEntity.Builder = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
+  private val modifiedSdkEntity: SdkEntity.Builder = SdkBridgeImpl.createEmptySdkEntity("", "", "")
 
   init {
     modifiedSdkEntity.applyChangesFrom(originalEntity)
     if (modifiedSdkEntity.additionalData.isNotEmpty()) {
       val additionalDataElement = JDOMUtil.load(modifiedSdkEntity.additionalData)
-      additionalData = originalSdkBridge.getSdkType().loadAdditionalData(originalSdkBridge, additionalDataElement)
+      additionalData = originalSdkDelegate.getSdkType().loadAdditionalData(originalSdkDelegate, additionalDataElement)
     }
   }
 
@@ -111,7 +116,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
     } else ""
 
     // Update only entity existing in the storage
-    val existingEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(originalSdkBridge) as? SdkEntity
+    val existingEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(originalSdk) as? SdkEntity
     existingEntity?.let { entity ->
       globalWorkspaceModel.updateModel("Modifying SDK ${originalEntity.symbolicId}") {
         it.modifyEntity(entity) {
@@ -121,8 +126,8 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
     }
 
     originalEntity.applyChangesFrom(modifiedSdkEntity)
-    originalSdkBridge.reloadAdditionalData()
-    if (existingEntity != null) originalSdkBridge.fireRootSetChanged()
+    originalSdkDelegate.reloadAdditionalData()
+    if (existingEntity != null) originalSdkDelegate.fireRootSetChanged()
     isCommitted = true
   }
 
@@ -136,9 +141,13 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
     } else ""
 
     originalEntity.applyChangesFrom(modifiedSdkEntity)
-    originalSdkBridge.reloadAdditionalData()
+    originalSdkDelegate.reloadAdditionalData()
     isCommitted = true
   }
 
   override fun isWritable(): Boolean = !isCommitted
+
+  override fun toString(): String {
+    return "$name $versionString ($homePath )"
+  }
 }

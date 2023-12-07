@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.impl.LegacyProjectJdkDelegate;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.*;
@@ -797,12 +797,12 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private class LibraryRootPointerListener implements VirtualFilePointerListener {
     @Override
     public void beforeValidityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
-      ProjectJdkImpl.getGlobalVirtualFilePointerListener().beforeValidityChanged(pointers);
+      LegacyProjectJdkDelegate.getGlobalVirtualFilePointerListener().beforeValidityChanged(pointers);
     }
 
     @Override
     public void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
-      ProjectJdkImpl.getGlobalVirtualFilePointerListener().validityChanged(pointers);
+      LegacyProjectJdkDelegate.getGlobalVirtualFilePointerListener().validityChanged(pointers);
       fireRootSetChanged();
     }
   }

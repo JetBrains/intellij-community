@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.target.TargetBasedSdkAdditionalData
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.openapi.application.ApplicationManager
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -25,11 +26,25 @@ class PyDetectedSdkAdditionalData(override val targetEnvironmentConfiguration: T
  */
 internal fun createDetectedSdk(name: String, isLocal: Boolean): PyDetectedSdk {
   val sdk = PyDetectedSdk(name)
-  if (!isLocal) sdk.sdkAdditionalData = PyDetectedSdkAdditionalData(targetEnvironmentConfiguration = null, flavor = null)
+  if (!isLocal) {
+    val sdkModificator = sdk.sdkModificator
+    sdkModificator.sdkAdditionalData = PyDetectedSdkAdditionalData(targetEnvironmentConfiguration = null, flavor = null)
+    sdkModificator.commitChanges()
+  }
   return sdk
 }
 
 internal fun createDetectedSdk(name: String,
                                targetEnvironmentConfiguration: TargetEnvironmentConfiguration?,
-                               flavor: PythonSdkFlavor<*>? = null): PyDetectedSdk =
-  PyDetectedSdk(name).apply { sdkAdditionalData = PyDetectedSdkAdditionalData(targetEnvironmentConfiguration, flavor) }
+                               flavor: PythonSdkFlavor<*>? = null): PyDetectedSdk {
+  val detectedSdk = PyDetectedSdk(name)
+  val sdkModificator = detectedSdk.sdkModificator
+  sdkModificator.sdkAdditionalData = PyDetectedSdkAdditionalData(targetEnvironmentConfiguration, flavor)
+  val application = ApplicationManager.getApplication()
+  application.invokeAndWait {
+    application.runWriteAction {
+      sdkModificator.commitChanges()
+    }
+  }
+  return detectedSdk
+}

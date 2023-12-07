@@ -7,12 +7,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.*
-import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl.Companion.mutableSdkMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl.Companion.sdkMap
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 
 class GlobalSdkBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = GlobalSdkTableBridge.isEnabled()
@@ -25,9 +26,9 @@ class GlobalSdkBridgeInitializer : BridgeInitializer {
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
       builder.mutableSdkMap.getOrPutDataByEntity(addChange.entity) {
-        val sdkEntityCopy = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
+        val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", "")
         sdkEntityCopy.applyChangesFrom(addChange.entity)
-        SdkBridgeImpl(sdkEntityCopy)
+        ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy))
       }
     }
   }
@@ -40,7 +41,7 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
     val sdks = mutableStorage
       .entities(SdkEntity::class.java)
       .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
-      .map { sdkEntity -> sdkEntity to SdkBridgeImpl(sdkEntity as SdkEntity.Builder) }
+      .map { sdkEntity -> sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntity as SdkEntity.Builder)) }
       .toList()
     thisLogger().debug("Initial load of SDKs")
 
@@ -58,9 +59,9 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
       builder.mutableSdkMap.getOrPutDataByEntity(addChange.entity) {
-        val sdkEntityCopy = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
+        val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", "")
         sdkEntityCopy.applyChangesFrom(addChange.entity)
-        SdkBridgeImpl(sdkEntityCopy)
+        ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy))
       }
     }
   }

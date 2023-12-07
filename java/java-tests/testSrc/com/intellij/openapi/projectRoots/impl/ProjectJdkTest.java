@@ -13,10 +13,8 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -31,7 +29,6 @@ public class ProjectJdkTest extends HeavyPlatformTestCase {
 
   @Test
   public void testDoesntCrashOnJdkRootDisappearance() throws Exception {
-    Assume.assumeFalse("Test has to be run only for old SDK implementation", GlobalSdkTableBridge.Companion.isEnabled());
     VirtualFile nDir = getTempDir().createVirtualDir();
     String nUrl = nDir.getUrl();
     Sdk jdk = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Sdk, Exception>)()->{

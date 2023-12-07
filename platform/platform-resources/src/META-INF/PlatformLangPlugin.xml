@@ -65,7 +65,7 @@
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
 
-    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge"
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgesLoader"/>
     <workspace.bridgeInitializer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgeInitializer"/>
 
