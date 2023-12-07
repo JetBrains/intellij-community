@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRenderer;
 import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.render.RenderingUtil;
@@ -721,6 +722,16 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     @Override
+    protected JScrollPane createScroller() {
+      final var sp = new JBScrollPane(list,
+                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      sp.setHorizontalScrollBar(null);
+      sp.setOverlappingScrollBar(true);
+      return sp;
+    }
+
+    @Override
     protected void configurePopup() {
       super.configurePopup();
       Border border = UIManager.getBorder("ComboPopup.border");
@@ -786,8 +797,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
       if (ExperimentalUI.isNewUI() && ComboBoxPopup.isRendererWithInsets(comboBox.getRenderer())) {
         scroller.setViewportBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
-        scroller.setBackground(UIManager.getColor("ComboBox.background"));
-        scroller.getVerticalScrollBar().setBackground(UIManager.getColor("ComboBox.background"));
         sideBorders = 10;
       }
 
