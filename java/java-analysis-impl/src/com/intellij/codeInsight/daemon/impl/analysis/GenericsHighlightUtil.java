@@ -1532,8 +1532,9 @@ public final class GenericsHighlightUtil {
         return null;
       }
 
+      PsiImplicitClass parentImplicitClass = PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class);
       String qualifiedName = aClass.getQualifiedName();
-      if (qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
+      if (parentImplicitClass == null && qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
         return JavaErrorBundle.message("text.class.cannot.access", HighlightUtil.formatClass(aClass));
       }
 
