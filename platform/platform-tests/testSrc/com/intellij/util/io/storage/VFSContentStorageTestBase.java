@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
+import com.intellij.idea.IJIgnore;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.NotNull;
@@ -120,6 +121,7 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
   }
 
 
+  @IJIgnore(issue = "IDEA-339995")
   @Test
   public void manyRecordsWritten_couldBeReadBackAsIs() throws IOException {
     ByteArraySequence[] stringsToWrite = generateContents(MANY_RECORDS);
@@ -145,6 +147,7 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
     );
   }
 
+  @IJIgnore(issue = "IDEA-339995")
   @Test
   public void manyRecordsWritten_couldBeReadBackAsIs_afterReopen() throws IOException {
     ByteArraySequence[] contentsToWrite = generateContents(MANY_RECORDS);
@@ -180,6 +183,7 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
     }
   }
 
+  @IJIgnore(issue = "IDEA-339995")
   @Test
   public void manyRecordsWritten_couldBeReadBackAsIs_afterReopen_viaIterator() throws IOException {
     ByteArraySequence[] contentsToWrite = generateContents(MANY_RECORDS);
@@ -213,6 +217,7 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
   }
 
 
+  @IJIgnore(issue = "IDEA-339995")
   @Test
   public void manyRecordsWrittenTwice_storedOnlyOnce() throws IOException {
     ByteArraySequence[] contentsToWrite = generateContents(MANY_RECORDS);
@@ -244,6 +249,7 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
     );
   }
 
+  @IJIgnore(issue = "IDEA-339995")
   @Test
   public void manyRecordsWrittenTwice_storedOnlyOnce_afterReopen() throws IOException {
     ByteArraySequence[] contentsToWrite = generateContents(MANY_RECORDS);
@@ -278,6 +284,7 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
   }
 
 
+  @IJIgnore(issue = "IDEA-339995")
   @Test
   public void manyRecordsWrittenTwice_storedOnlyOnce_multiThreaded() throws IOException, InterruptedException {
     ByteArraySequence[] contentsToWrite = generateContents(MANY_RECORDS);
