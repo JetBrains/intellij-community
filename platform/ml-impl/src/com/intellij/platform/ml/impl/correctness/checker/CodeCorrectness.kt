@@ -5,8 +5,8 @@ import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
-data class CodeCorrectness(val syntaxState: ErrorsState, val semanticState: ErrorsState) {
-  fun allErrors(): List<CorrectnessError> = syntaxState.errors() + semanticState.errors()
+data class CodeCorrectness(val semanticState: ErrorsState) {
+  fun allErrors(): List<CorrectnessError> = semanticState.errors()
 
   companion object {
     fun empty(): CodeCorrectness = CodeCorrectnessBuilder().build()

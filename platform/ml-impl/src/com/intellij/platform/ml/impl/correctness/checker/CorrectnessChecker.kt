@@ -8,14 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface CorrectnessChecker {
   @RequiresBlockingContext
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Do not use it")
-  fun checkSyntax(file: PsiFile,
-                  suggestion: String,
-                  offset: Int,
-                  prefix: String, ignoreSyntaxErrorsBeforeSuggestionLen: Int): List<CorrectnessError>
-
-  @RequiresBlockingContext
   fun checkSemantic(file: PsiFile,
                     suggestion: String,
                     offset: Int,

@@ -6,13 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class CodeCorrectnessBuilder {
-  private var syntaxState: ErrorsState = ErrorsState.Unknown(UnknownReason.NOT_STARTED)
   private var semanticState: ErrorsState = ErrorsState.Unknown(UnknownReason.NOT_STARTED)
-  fun syntaxCorrectness(block: () -> List<CorrectnessError>) {
-    syntaxState = ErrorsState.Unknown(UnknownReason.IN_PROGRESS)
-    val errors = block()
-    syntaxState = selectState(errors)
-  }
 
   fun semanticCorrectness(block: () -> List<CorrectnessError>) {
     semanticState = ErrorsState.Unknown(UnknownReason.IN_PROGRESS)
@@ -26,15 +20,12 @@ class CodeCorrectnessBuilder {
   }
 
   fun timeLimitExceeded() {
-    if ((syntaxState as? ErrorsState.Unknown)?.reason == UnknownReason.IN_PROGRESS) {
-      syntaxState = ErrorsState.Unknown(UnknownReason.TIME_LIMIT_EXCEEDED)
-    }
     if ((semanticState as? ErrorsState.Unknown)?.reason == UnknownReason.IN_PROGRESS) {
       semanticState = ErrorsState.Unknown(UnknownReason.TIME_LIMIT_EXCEEDED)
     }
   }
 
   fun build(): CodeCorrectness {
-    return CodeCorrectness(syntaxState, semanticState)
+    return CodeCorrectness(semanticState)
   }
 }

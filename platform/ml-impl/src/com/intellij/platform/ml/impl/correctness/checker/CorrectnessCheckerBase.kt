@@ -8,32 +8,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.PairProcessor
-import com.intellij.platform.ml.impl.correctness.finalizer.SuggestionFinalizer
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 open class CorrectnessCheckerBase(open val semanticCheckers: List<SemanticChecker> = emptyList()) : CorrectnessChecker {
   @Suppress("PropertyName")
   protected val LOG = thisLogger()
-
-  protected open val suggestionFinalizer: SuggestionFinalizer? = null
-
-  final override fun checkSyntax(file: PsiFile,
-                                 suggestion: String,
-                                 offset: Int,
-                                 prefix: String,
-                                 ignoreSyntaxErrorsBeforeSuggestionLen: Int): List<CorrectnessError> {
-    // todo: consider using length in leaves instead of plain offset
-    val isSyntaxCorrect = suggestionFinalizer
-                            ?.getFinalization(file, suggestion, offset, prefix)
-                            ?.hasNoErrorsStartingFrom(offset - ignoreSyntaxErrorsBeforeSuggestionLen) ?: true
-    return if (isSyntaxCorrect) {
-      emptyList()
-    }
-    else {
-      listOf(CorrectnessError(TextRange.EMPTY_RANGE, Severity.CRITICAL)) // todo specify error location
-    }
-  }
 
   protected open fun buildPsiForSemanticChecks(file: PsiFile, suggestion: String, offset: Int, prefix: String): PsiFile {
     return file
