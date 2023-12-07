@@ -109,8 +109,9 @@ private fun addFileNameVariant(isRetina: Boolean,
 }
 
 @Internal
-fun getImageDescriptors(path: String, isDark: Boolean, scaleContext: ScaleContext): List<ImageDescriptor> {
+fun getImageDescriptors(path: String, isDark: Boolean, isStroke: Boolean, scaleContext: ScaleContext): List<ImageDescriptor> {
   return createImageDescriptorList(path = path,
                                    isDark = isDark,
-                                   pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat())
+                                   pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat(),
+                                   isStroke = isStroke)
 }

@@ -90,7 +90,8 @@ open class CachedImageIcon private constructor(
     pathTransformModCount = pathTransformGlobalModCount.get()
   }
 
-  internal constructor(resolver: ImageDataLoader) : this(resolver = resolver, originalResolver = resolver)
+  @Internal
+  constructor(resolver: ImageDataLoader) : this(resolver = resolver, originalResolver = resolver)
 
   internal constructor(resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
     this(resolver = resolver, originalResolver = resolver, toolTip = toolTip)

@@ -19,6 +19,7 @@ import com.intellij.ui.svg.renderSvg
 import com.intellij.util.ImageLoader
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
+import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
@@ -142,11 +143,12 @@ fun getMenuBarIcon(icon: Icon, dark: Boolean): Icon {
   }
 }
 
-internal fun convertImage(image: Image,
-                          filters: List<ImageFilter>,
-                          scaleContext: ScaleContext,
-                          isUpScaleNeeded: Boolean,
-                          imageScale: Float): Image {
+@Internal
+fun convertImage(image: Image,
+                 filters: List<ImageFilter>,
+                 scaleContext: ScaleContext,
+                 isUpScaleNeeded: Boolean,
+                 imageScale: Float): Image {
   var result = image
   if (isUpScaleNeeded) {
     var scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
@@ -328,11 +330,17 @@ fun loadImageFromStream(stream: InputStream,
                         path: String?,
                         scale: Float,
                         isDark: Boolean,
-                        useSvg: Boolean): Image {
+                        useSvg: Boolean,
+                        isStroke: Boolean,
+                        colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): Image {
   stream.use {
     if (useSvg) {
-      val compoundCacheKey = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = false)
-      return loadSvg(path = path, stream = stream, scale = scale, compoundCacheKey = compoundCacheKey, colorPatcherProvider = null)
+      val compoundCacheKey = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = isStroke)
+      return loadSvg(path = path,
+                     stream = stream,
+                     scale = scale,
+                     compoundCacheKey = compoundCacheKey,
+                     colorPatcherProvider = colorPatcherProvider)
     }
     else {
       return loadRasterImage(stream = stream)
