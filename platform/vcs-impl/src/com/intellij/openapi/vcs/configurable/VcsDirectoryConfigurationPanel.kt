@@ -154,8 +154,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
     val mappings: MutableList<MapInfo> = mutableListOf()
     for (mapping in ProjectLevelVcsManager.getInstance(project).directoryMappings) {
-      mappings.add(MapInfo.registered(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings),
-                                      isMappingValid(mapping)))
+      mappings.add(createRegisteredInfo(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings)))
     }
     mappingTableModel.items = mappings
 
@@ -186,6 +185,15 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
       }, { tableLoadingPanel.startLoading() }, POSTPONE_MAPPINGS_LOADING_PANEL.toLong(), false)
   }
 
+  private fun createRegisteredInfo(mapping: VcsDirectoryMapping): MapInfo {
+    if (isMappingValid(mapping)) {
+      return MapInfo.ValidMapping(mapping)
+    }
+    else {
+      return MapInfo.InvalidMapping(mapping)
+    }
+  }
+
   private fun isMappingValid(mapping: VcsDirectoryMapping): Boolean {
     if (mapping.isDefaultMapping) return true
     val checker = vcsRootCheckers[mapping.vcs] ?: return true
@@ -202,8 +210,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
   private fun addMapping(mapping: VcsDirectoryMapping) {
     val items: MutableList<MapInfo> = mappingTableModel.items.toMutableList()
-    items.add(MapInfo.registered(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings),
-                                 isMappingValid(mapping)))
+    items.add(createRegisteredInfo(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings)))
     items.sortWith(MAP_INFO_COMPARATOR)
     mappingTableModel.setItems(items)
   }
@@ -213,7 +220,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     val items: MutableList<MapInfo> = mappingTableModel.items.toMutableList()
     for (info in infos) {
       items.remove(info)
-      items.add(MapInfo.registered(info.mapping, isMappingValid(info.mapping)))
+      items.add(createRegisteredInfo(info.mapping))
     }
     sortAndAddSeparatorIfNeeded(items)
     mappingTableModel.items = items
@@ -236,7 +243,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     if (dlg.showAndGet()) {
       val newMapping = dlg.mapping
       val items = mappingTableModel.items.toMutableList()
-      items[row] = MapInfo.registered(newMapping, isMappingValid(newMapping))
+      items[row] = createRegisteredInfo(newMapping)
       items.sortWith(MAP_INFO_COMPARATOR)
       mappingTableModel.setItems(items)
     }
@@ -530,10 +537,4 @@ private sealed interface MapInfo {
   object UnregisteredHeader : Header(VcsBundle.message("unregistered.roots.label"))
 
   fun isUnregistered() = this is UnregisteredHeader || this is UnregisteredMapping
-
-  companion object {
-    fun registered(mapping: VcsDirectoryMapping, valid: Boolean): MapInfo {
-      return if (valid) ValidMapping(mapping) else InvalidMapping(mapping)
-    }
-  }
 }
