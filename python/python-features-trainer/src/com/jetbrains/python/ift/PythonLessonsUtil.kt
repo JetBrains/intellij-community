@@ -20,6 +20,7 @@ import kotlinx.serialization.json.put
 import training.dsl.LessonContext
 import training.lang.LangSupport
 import training.ui.LearningUiManager
+import training.ui.shouldCollectFeedbackResults
 import training.util.LessonEndInfo
 import training.util.OnboardingFeedbackData
 import java.util.concurrent.CompletableFuture
@@ -49,6 +50,10 @@ object PythonLessonsUtil {
                                              primaryLanguage: LangSupport,
                                              lessonEndInfo: LessonEndInfo,
                                              usedInterpreterAtStart: String) {
+    if (!shouldCollectFeedbackResults()) {
+      return
+    }
+
     if (PropertiesComponent.getInstance().getBoolean(configPropertyName, false)) {
       return
     }

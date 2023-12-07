@@ -72,6 +72,7 @@ import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.ui.getFeedbackProposedPropertyName
+import training.ui.shouldCollectFeedbackResults
 import training.util.*
 import java.awt.Point
 import java.awt.event.KeyEvent
@@ -213,6 +214,10 @@ abstract class OnboardingTourLessonBase(id: String) : KLesson(id, JavaLessonsBun
   }
 
   private fun prepareFeedbackData(project: Project, lessonEndInfo: LessonEndInfo) {
+    if (!shouldCollectFeedbackResults()) {
+      return
+    }
+
     val primaryLanguage = module.primaryLanguage
     if (primaryLanguage == null) {
       thisLogger().error("Onboarding lesson has no language support for some magical reason")

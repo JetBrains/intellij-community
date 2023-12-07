@@ -8,6 +8,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -28,6 +29,10 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.periodUntil
+import kotlinx.datetime.toKotlinInstant
 import kotlinx.serialization.json.*
 import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil
@@ -54,12 +59,20 @@ private const val SUB_OFFSET = 20
 /** Increase the additional number when onboarding feedback format is changed */
 private const val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 1
 
+private const val TIME_SCOPE_FOR_RESULT_COLLECTION_IN_DAYS = 120
+
 // Key for PropertiesComponent to check whether to show onboarding feedback notification or not
 fun getFeedbackProposedPropertyName(langSupport: LangSupport): String {
   val ideName = langSupport.defaultProductName?.let {
     if (it == "GoLand") "go" else it.lowercase()
   } ?: error("Lang support should implement 'defaultProductName': $langSupport")
   return "ift.$ideName.onboarding.feedback.proposed"
+}
+
+fun shouldCollectFeedbackResults(): Boolean {
+  val buildDate = ApplicationInfo.getInstance().buildDate
+  val buildToCurrentPeriod = buildDate.toInstant().toKotlinInstant().periodUntil(Clock.System.now(), TimeZone.currentSystemDefault())
+  return buildToCurrentPeriod.days <= TIME_SCOPE_FOR_RESULT_COLLECTION_IN_DAYS
 }
 
 fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData) {
