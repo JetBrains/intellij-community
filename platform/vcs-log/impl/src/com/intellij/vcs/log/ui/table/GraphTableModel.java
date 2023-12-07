@@ -33,7 +33,7 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
   private final @NotNull Consumer<Runnable> myRequestMore;
   private final @NotNull VcsLogUiProperties myProperties;
 
-  private @NotNull VisiblePack myVisibleDataPack = VisiblePack.EMPTY;
+  private @NotNull VisiblePack myVisiblePack = VisiblePack.EMPTY;
 
   private boolean myMoreRequested;
 
@@ -47,7 +47,7 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
 
   @Override
   public int getRowCount() {
-    return myVisibleDataPack.getVisibleGraph().getVisibleCommitCount();
+    return myVisiblePack.getVisibleGraph().getVisibleCommitCount();
   }
 
   @Override
@@ -100,17 +100,17 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
    * Returns true if not all data has been loaded, i.e. there is sense to {@link #requestToLoadMore(Runnable) request more data}.
    */
   public boolean canRequestMore() {
-    return !myMoreRequested && myVisibleDataPack.canRequestMore();
+    return !myMoreRequested && myVisiblePack.canRequestMore();
   }
 
   void setVisiblePack(@NotNull VisiblePack visiblePack) {
-    myVisibleDataPack = visiblePack;
+    myVisiblePack = visiblePack;
     myMoreRequested = false;
     fireTableDataChanged();
   }
 
   public @NotNull VisiblePack getVisiblePack() {
-    return myVisibleDataPack;
+    return myVisiblePack;
   }
 
   public @NotNull VcsLogData getLogData() {
@@ -128,15 +128,15 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
 
   @Override
   public int getId(int row) {
-    return myVisibleDataPack.getVisibleGraph().getRowInfo(row).getCommit();
+    return myVisiblePack.getVisibleGraph().getRowInfo(row).getCommit();
   }
 
   public @Nullable VirtualFile getRootAtRow(int row) {
-    return myVisibleDataPack.getRoot(row);
+    return myVisiblePack.getRoot(row);
   }
 
   public @NotNull List<VcsRef> getRefsAtRow(int row) {
-    return ((RefsModel)myVisibleDataPack.getRefs()).refsToCommit(getId(row));
+    return ((RefsModel)myVisiblePack.getRefs()).refsToCommit(getId(row));
   }
 
   public @NotNull List<VcsRef> getBranchesAtRow(int row) {
@@ -163,7 +163,7 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
   }
 
   public @NotNull VcsLogCommitSelection createSelection(int[] rows) {
-    return new CommitSelectionImpl(myLogData, myVisibleDataPack.getVisibleGraph(), rows);
+    return new CommitSelectionImpl(myLogData, myVisiblePack.getVisibleGraph(), rows);
   }
 
   private @NotNull Iterable<Integer> getCommitsToLoad(int row) {

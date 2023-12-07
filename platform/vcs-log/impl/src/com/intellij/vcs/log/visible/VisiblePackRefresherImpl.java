@@ -47,7 +47,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
   private volatile @NotNull State myState;
 
-  private @NotNull DataPack myArrivedDataPack;
+  private @NotNull DataPack myDataPack;
 
   public VisiblePackRefresherImpl(@NotNull Project project,
                                   @NotNull VcsLogData logData,
@@ -56,7 +56,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                   @NotNull VcsLogFilterer filterer,
                                   @NotNull String logId) {
     myLogData = logData;
-    myArrivedDataPack = logData.getDataPack();
+    myDataPack = logData.getDataPack();
     myVcsLogFilterer = filterer;
     myLogId = logId;
     myState = new State(filters, sortType);
@@ -116,7 +116,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
   @Override
   public void setDataPack(boolean validate, @NotNull DataPack dataPack) {
-    myArrivedDataPack = dataPack;
+    myDataPack = dataPack;
     setValid(validate, true);
   }
 
@@ -255,7 +255,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     private @NotNull State refresh(@NotNull State state,
                                    boolean resetCommitCount,
                                    @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
-      DataPack dataPack = myArrivedDataPack;
+      DataPack dataPack = myDataPack;
 
       VcsLogFilterCollection filters = state.getFilters();
 
