@@ -512,21 +512,4 @@ public class DefaultActionGroup extends ActionGroup {
   public synchronized @Nullable Constraints getConstraints(@NotNull AnAction action) {
     return myConstraints.get(action);
   }
-
-  /**
-   * Creates an action group with the specified template text.
-   * <p>
-   * It is necessary to redefine the template text if the group contains
-   * user-specific data such as Project name, file name, etc.
-   *
-   * @param templateText the template text that is used in statistics
-   */
-  public static DefaultActionGroup createUserDataAwareGroup(@ActionText String templateText) {
-    return new DefaultActionGroup() {
-      @Override
-      public @Nullable String getTemplateText() {
-        return templateText;
-      }
-    };
-  }
 }

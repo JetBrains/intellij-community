@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -37,6 +36,7 @@ public final class ProjectWindowAction extends ToggleAction implements DumbAware
   private final @NotNull String myProjectLocation;
 
   public ProjectWindowAction(@NlsSafe @NotNull String projectName, @NotNull String projectLocation, ProjectWindowAction previous) {
+    super(IdeBundle.message("action.switch.project.text"));
     myProjectName = projectName;
     myProjectLocation = projectLocation;
     if (previous != null) {
@@ -44,7 +44,8 @@ public final class ProjectWindowAction extends ToggleAction implements DumbAware
       myNext = previous.myNext;
       myNext.myPrevious = this;
       myPrevious.myNext = this;
-    } else {
+    }
+    else {
       myPrevious = this;
       myNext = this;
     }
@@ -143,10 +144,5 @@ public final class ProjectWindowAction extends ToggleAction implements DumbAware
     return getTemplatePresentation().getText()
            + " previous: " + myPrevious.getTemplatePresentation().getText()
            + " next: " + myNext.getTemplatePresentation().getText();
-  }
-
-  @Override
-  public @NlsActions.ActionText @Nullable String getTemplateText() {
-    return IdeBundle.message("action.switch.project.text");
   }
 }

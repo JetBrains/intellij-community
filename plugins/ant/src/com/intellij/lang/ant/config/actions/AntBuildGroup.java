@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.actions;
 
-import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -38,7 +37,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(project);
     for (final AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       final String name = buildFile.getPresentableName();
-      DefaultActionGroup subgroup = DefaultActionGroup.createUserDataAwareGroup(getTemplateText());
+      DefaultActionGroup subgroup = new DefaultActionGroup();
       subgroup.getTemplatePresentation().setText(name, false);
       subgroup.setPopup(true);
       fillGroup(buildFile, subgroup, antConfiguration);
@@ -98,10 +97,5 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
       action = new TargetAction(buildFile, displayName, targets, targetDescription);
     }
     return action;
-  }
-
-  @Override
-  public String getTemplateText() {
-    return AntBundle.message("action.ant.build.group.text");
   }
 }
