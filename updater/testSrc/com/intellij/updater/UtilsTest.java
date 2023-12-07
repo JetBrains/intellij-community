@@ -7,6 +7,8 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,9 +41,9 @@ class UtilsTest {
     var file = Files.createFile(tempDir.resolve("temp_file"));
     var timing = new AtomicLong(0L);
     assertThatThrownBy(() -> {
-      try (var os = Files.newOutputStream(file)) {
+      try (var raf = new RandomAccessFile(file.toFile(), "rw")) {
         // This locks the file on Windows, preventing it from being deleted. Utils.delete() will retry for about 100 ms.
-        os.write("test".getBytes(StandardCharsets.UTF_8));
+        raf.write("test".getBytes(StandardCharsets.UTF_8));
         var t = System.nanoTime();
         try {
           Utils.delete(file);
@@ -50,14 +52,14 @@ class UtilsTest {
           timing.set(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t));
         }
       }
-    }).hasMessage("Cannot delete: " + file.toAbsolutePath());
+    }).isInstanceOf(IOException.class).hasMessage("Cannot delete: " + file.toAbsolutePath());
     assertThat(timing.get()).as("Utils.delete took " + timing + " ms, which is less than expected").isGreaterThanOrEqualTo(95);
   }
 
   @Test @DisabledOnOs(OS.WINDOWS) void deleteLockedFileOnUnix() throws Exception {
     var file = Files.createFile(tempDir.resolve("temp_file"));
-    try (var os = Files.newOutputStream(file)) {
-      os.write("test".getBytes(StandardCharsets.UTF_8));
+    try (var raf = new RandomAccessFile(file.toFile(), "rw")) {
+      raf.write("test".getBytes(StandardCharsets.UTF_8));
       Utils.delete(file);
     }
   }
