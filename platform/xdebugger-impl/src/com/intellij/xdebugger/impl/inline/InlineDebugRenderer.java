@@ -1,25 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.LineExtensionInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -33,7 +28,6 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -60,9 +54,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR;
-
-public final class InlineDebugRenderer implements EditorCustomElementRenderer {
+public final class InlineDebugRenderer extends InlineDebugRendererBase {
   public static final String NAME_VALUE_SEPARATION = XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ";
   public static final String INDENT = "  ";
   boolean myPopupIsShown = false;
@@ -70,9 +62,6 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private final XDebugSession mySession;
   private final XValueNodeImpl myValueNode;
   private final XDebuggerTreeCreator myTreeCreator;
-  private boolean isHovered = false;
-  private int myRemoveXCoordinate = Integer.MAX_VALUE;
-  private int myTextStartXCoordinate;
   private final XSourcePosition myPosition;
   private SimpleColoredText myPresentation;
 
@@ -97,11 +86,12 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
                                               mySession.getProject());
   }
 
-  private boolean isInExecutionPointHighlight() {
+  @Override
+  public boolean isInExecutionPointHighlight() {
     return LinePainter.isFullLineHighlighter(mySession, myPosition.getFile(), myPosition.getLine(), false);
   }
 
-  private static Font getFont(@NotNull Editor editor) {
+  static Font getFont(@NotNull Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     TextAttributes attributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
     int fontStyle = attributes == null ? Font.PLAIN : attributes.getFontType();
@@ -160,124 +150,29 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     return Pair.create(container, name);
   }
 
-
-  public void onMouseExit(@NotNull Inlay inlay) {
-    setHovered(false, inlay);
-  }
-
-  public void onMouseMove(@NotNull Inlay inlay, @NotNull EditorMouseEvent event) {
-    setHovered(event.getMouseEvent().getX() >= myTextStartXCoordinate, inlay);
-  }
-
-  private void setHovered(boolean active, @NotNull Inlay inlay) {
-    boolean oldState = isHovered;
-    isHovered = active;
-    Cursor cursor = active ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null;
-    ((EditorEx)inlay.getEditor()).setCustomCursor(InlineDebugRenderer.class, cursor);
-    if (oldState != active) {
-      inlay.update();
-    }
-  }
-
-  @Override
-  public int calcWidthInPixels(@NotNull Inlay inlay) {
-    int width = getInlayTextWidth(inlay);
-    width += myCustomNode ? AllIcons.Actions.Close.getIconWidth() : AllIcons.General.LinkDropTriangle.getIconWidth();
-    if (myCustomNode) {
-      width += AllIcons.Debugger.Watch.getIconWidth();
-    }
-    return width;
-  }
-
-  private int getInlayTextWidth(@NotNull Inlay inlay) {
-    Font font = getFont(inlay.getEditor());
-    String text;
-    if (isErrorMessage()) {
-      text = myPresentation.getTexts().get(0);
-    }
-    else {
-      text = myPresentation.toString() + NAME_VALUE_SEPARATION;
-    }
-    return getFontMetrics(font, inlay.getEditor()).stringWidth(text + INDENT);
-  }
-
   @NotNull
-  private static FontMetrics getFontMetrics(Font font, @NotNull Editor editor) {
+  static FontMetrics getFontMetrics(Font font, @NotNull Editor editor) {
     return FontInfo.getFontMetrics(font, FontInfo.getFontRenderContext(editor.getContentComponent()));
   }
 
-  private static final float BACKGROUND_ALPHA = 0.55f;
+  static final float BACKGROUND_ALPHA = 0.55f;
 
 
-  private static int getIconY(Icon icon, Rectangle r) {
+  static int getIconY(Icon icon, Rectangle r) {
     return r.y + r.height / 2 - icon.getIconHeight() / 2;
   }
 
   @Override
-  public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
-    EditorImpl editor = (EditorImpl)inlay.getEditor();
-    TextAttributes inlineAttributes = getAttributes(editor);
-    if (inlineAttributes == null || inlineAttributes.getForegroundColor() == null) return;
-
-    Font font = getFont(editor);
-    g.setFont(font);
-    FontMetrics metrics = getFontMetrics(font, editor);
-
-    int gap = 1;//(r.height < fontMetrics.lineHeight + 2) ? 1 : 2;
-    int margin = metrics.charWidth(' ') / 4;
-    Color backgroundColor = inlineAttributes.getBackgroundColor();
-    int curX = r.x + metrics.charWidth(' ');
-
-    if (backgroundColor != null) {
-      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA);
-      g.setColor(backgroundColor);
-      g.fillRoundRect(curX + margin, r.y + gap, r.width - (2 * margin) - metrics.charWidth(' '), r.height - gap * 2, 6, 6);
-      config.restore();
-    }
-
-    curX += (2 * margin);
-    if (myCustomNode) {
-      Icon watchIcon = AllIcons.Debugger.Watch;
-      watchIcon.paintIcon(inlay.getEditor().getComponent(), g, curX, getIconY(watchIcon, r));
-      curX += watchIcon.getIconWidth() + margin * 2;
-    }
-    myTextStartXCoordinate = curX;
-    for (int i = 0; i < myPresentation.getTexts().size(); i++) {
-      String curText = myPresentation.getTexts().get(i);
-      if (i == 0 && !isErrorMessage()) {
-        curText += NAME_VALUE_SEPARATION;
-      }
-      SimpleTextAttributes attr = myPresentation.getAttributes().get(i);
-
-      Color fgColor = isHovered ? inlineAttributes.getForegroundColor() : attr.getFgColor();
-      g.setColor(fgColor);
-      g.drawString(curText, curX, r.y + inlay.getEditor().getAscent());
-      curX += metrics.stringWidth(curText);
-      if (isErrorMessage()) {
-        break;
-      }
-    }
-    if (isHovered) {
-      Icon icon;
-      if (myCustomNode) {
-        icon = AllIcons.Actions.Close;
-        myRemoveXCoordinate = curX;
-      }
-      else {
-        icon = AllIcons.General.LinkDropTriangle;
-      }
-      icon.paintIcon(inlay.getEditor().getComponent(), g, curX, getIconY(icon, r));
-    }
-
-    paintEffects(g, r, editor, inlineAttributes, font, metrics);
+  public SimpleColoredText getPresentation() {
+    return myPresentation;
   }
 
-  private boolean isErrorMessage() {
+  @Override
+  public boolean isErrorMessage() {
     return XDebuggerUIConstants.ERROR_MESSAGE_ICON.equals(myValueNode.getIcon());
   }
 
-  private static void paintEffects(@NotNull Graphics g,
+  static void paintEffects(@NotNull Graphics g,
                                    @NotNull Rectangle r,
                                    EditorImpl editor,
                                    TextAttributes inlineAttributes,
@@ -309,30 +204,8 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     }
   }
 
-  private TextAttributes getAttributes(Editor editor) {
-    TextAttributesKey key = isInExecutionPointHighlight() ? DebuggerColors.INLINED_VALUES_EXECUTION_LINE : DebuggerColors.INLINED_VALUES;
-    EditorColorsScheme scheme = editor.getColorsScheme();
-    TextAttributes inlinedAttributes = scheme.getAttributes(key);
-
-    if (isHovered) {
-      TextAttributes hoveredInlineAttr = new TextAttributes();
-      hoveredInlineAttr.copyFrom(inlinedAttributes);
-
-      Color hoveredAndSelectedColor = scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES).getForegroundColor();
-      Color foregroundColor = isInExecutionPointHighlight()
-                              ? hoveredAndSelectedColor
-                              : scheme.getAttributes(REFERENCE_HYPERLINK_COLOR).getForegroundColor();
-
-      if (foregroundColor == null) foregroundColor = scheme.getDefaultForeground();
-
-      hoveredInlineAttr.setForegroundColor(foregroundColor);
-
-      return hoveredInlineAttr;
-    }
-    return inlinedAttributes;
-  }
-
-  boolean isCustomNode() {
+  @Override
+  public boolean isCustomNode() {
     return myCustomNode;
   }
 
