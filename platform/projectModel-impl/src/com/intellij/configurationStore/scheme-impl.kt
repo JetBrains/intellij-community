@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -127,6 +128,7 @@ fun wrapState(element: Element, project: Project): Element {
 
 class BundledSchemeEP {
   @Attribute("path")
+  @RequiredElement
   var path: String? = null
 }
 
