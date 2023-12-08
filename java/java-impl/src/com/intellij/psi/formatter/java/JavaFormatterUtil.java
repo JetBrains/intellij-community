@@ -294,7 +294,7 @@ public final class JavaFormatterUtil {
             return Wrap.createWrap(WrapType.NONE, false);
           }
           else {
-            return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent, child, settings)), true);
+            return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent, child, settings, javaSettings)), true);
           }
         }
       }
@@ -309,7 +309,7 @@ public final class JavaFormatterUtil {
           return null;
         }
 
-        return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings)), true);
+        return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings, javaSettings)), true);
       }
       else if (childType == JavaTokenType.END_OF_LINE_COMMENT) {
         return Wrap.createWrap(WrapType.NORMAL, true);
@@ -320,7 +320,7 @@ public final class JavaFormatterUtil {
         if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(parent, JavaElementType.FIELD)) {
           return Wrap.createWrap(WrapType.NONE, false);
         }
-        Wrap wrap = Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings)), true);
+        Wrap wrap = Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings, javaSettings)), true);
         putPreferredWrapInParentBlock(reservedWrapsProvider, wrap);
         return wrap;
       }
@@ -450,7 +450,7 @@ public final class JavaFormatterUtil {
     return false;
   }
 
-  private static int getAnnotationWrapType(ASTNode parent, ASTNode child, CommonCodeStyleSettings settings) {
+  private static int getAnnotationWrapType(ASTNode parent, ASTNode child, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     IElementType nodeType = parent.getElementType();
 
     if (nodeType == JavaElementType.METHOD) {
@@ -495,6 +495,10 @@ public final class JavaFormatterUtil {
 
     if (nodeType == JavaElementType.MODULE) {
       return settings.CLASS_ANNOTATION_WRAP;
+    }
+
+    if (nodeType == JavaElementType.ENUM_CONSTANT) {
+      return javaSettings.ENUM_FIELD_ANNOTATION_WRAP;
     }
 
     return CommonCodeStyleSettings.DO_NOT_WRAP;

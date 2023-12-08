@@ -109,6 +109,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   @WrapConstant
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+
+  @WrapConstant
+  public int ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+
   public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS;
   public boolean NEW_LINE_AFTER_LPAREN_IN_ANNOTATION = false;
   public boolean RPAREN_ON_NEW_LINE_IN_ANNOTATION = false;

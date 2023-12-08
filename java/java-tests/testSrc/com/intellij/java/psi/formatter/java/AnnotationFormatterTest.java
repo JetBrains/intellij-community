@@ -497,4 +497,74 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
         }"""
     );
   }
+
+  public void testAnnotationEnumFieldsDoNotWrap() {
+    getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    doTextTest("""
+                 public enum MyEnum {
+                     @Anno1 FIRST
+                 }
+                 """,
+               """
+                 public enum MyEnum {
+                     @Anno1 FIRST
+                 }
+                 """);
+  }
+  public void testAnnotationEnumFieldsWrapAlways() {
+    getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTextTest("""
+                 public enum MyEnum {
+                     @Anno1 FIRST
+                 }
+                 """,
+               """
+                 public enum MyEnum {
+                     @Anno1
+                     FIRST
+                 }
+                 """);
+  }
+
+  public void testAnnotationsEnumFieldsWrapAsNeeded() {
+    getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().RIGHT_MARGIN = 20;
+    doTextTest("""
+                 public enum MyEnum {
+                     @Anno1 @Anno2 @Anno3 @Anno4 FIRST
+                 }
+                 """,
+               """
+                 public enum MyEnum {
+                     @Anno1 @Anno2
+                     @Anno3 @Anno4
+                     FIRST
+                 }
+                 """);
+  }
+
+  public void testAnnotationsEnumFieldsWrapAlwaysWithDoNotWrapOnFields() {
+    getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    doTextTest("""
+                 public enum MyEnum {
+                     @Anno1 @Anno2
+                     @Anno3 @Anno4
+                     FIRST, SECOND, @Anno1 @Anno2 THIRD
+                 }
+                 """,
+               """
+                 public enum MyEnum {
+                     @Anno1
+                     @Anno2
+                     @Anno3
+                     @Anno4
+                     FIRST, SECOND,
+                     @Anno1
+                     @Anno2
+                     THIRD
+                 }
+                 """);
+  }
+
 }

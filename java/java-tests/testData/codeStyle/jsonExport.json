@@ -90,6 +90,7 @@
       "doc_use_throws_not_exception_tag": true,
       "else_on_new_line": false,
       "enum_constants_wrap": "off",
+      "enum_field_annotation_wrap": "off",
       "extends_keyword_wrap": "off",
       "extends_list_wrap": "off",
       "field_annotation_wrap": "split_into_lines",

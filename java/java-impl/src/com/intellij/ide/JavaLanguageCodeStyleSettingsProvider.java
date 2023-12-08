@@ -202,6 +202,9 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 JavaBundle.message("wrapping.semicolon.after.call.chain"),
                                 getInstance().WRAPPING_CALL_CHAIN);
 
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "ENUM_FIELD_ANNOTATION_WRAP", JavaBundle.message("wrapping.annotation.enums"),
+                                null, getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ANNOTATION_PARAMETER_WRAP",
                                 JavaBundle.message("wrapping.annotation.parameters"),
