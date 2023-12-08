@@ -8,7 +8,8 @@ data class Lookup(
   val latency: Long,
   var features: Features? = null,
   val selectedPosition: Int,
-  val isNew: Boolean
+  val isNew: Boolean,
+  val additionalInfo: Map<String, Any> = emptyMap()
 ) {
 
   constructor(
@@ -17,7 +18,8 @@ data class Lookup(
     suggestions: List<Suggestion>,
     latency: Long,
     features: Features? = null,
-    isNew: Boolean
+    isNew: Boolean,
+    additionalInfo: Map<String, Any> = emptyMap()
   ) : this(
       prefix = prefix,
       offset = offset,
@@ -25,7 +27,8 @@ data class Lookup(
       latency = latency,
       features = features,
       selectedPosition = calculateSelectedPosition(suggestions),
-      isNew = isNew
+      isNew = isNew,
+      additionalInfo = additionalInfo
       )
 
   fun clearFeatures() {
@@ -45,7 +48,8 @@ data class Lookup(
       suggestions = suggestions_,
       latency = this.latency,
       features = this.features,
-      isNew = this.isNew
+      isNew = this.isNew,
+      additionalInfo = additionalInfo
     )
   }
   companion object {
@@ -57,7 +61,8 @@ data class Lookup(
       features: Features? = null,
       isNew: Boolean = false,
       caretPosition: Int = 0,
-      comparator: (String, String) -> Boolean
+      comparator: (String, String) -> Boolean,
+      additionalInfo: Map<String, Any> = emptyMap()
     ): Lookup {
       suggestions.forEach { it.isRelevant = comparator(it.text, expectedText.substring(caretPosition - prefix.length)) }
 
@@ -67,7 +72,8 @@ data class Lookup(
         suggestions = suggestions,
         latency = latency,
         features = features,
-        isNew = isNew
+        isNew = isNew,
+        additionalInfo = additionalInfo
       )
     }
 

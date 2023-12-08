@@ -96,7 +96,7 @@ function updatePopup(sessionDiv) {
   const needAddFeatures = sessionDiv.classList.contains("suggestions")
   closeAllLists()
   if (needAddFeatures) {
-    addCommonFeatures(sessionDiv, popup)
+    addCommonFeatures(sessionDiv, popup, lookup)
   }
   else {
     addSuggestions(sessionDiv, popup, lookup)
@@ -104,26 +104,30 @@ function updatePopup(sessionDiv) {
   sessionDiv.appendChild(popup)
 }
 
-function addCommonFeatures(sessionDiv, popup) {
+function addCommonFeatures(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("features")
   const parts = sessionDiv.id.split(" ")
   const sessionId = parts[0]
   const lookupOrder = parts[1]
-  if (!(sessionId in features)) return
-  const featuresJson = JSON.parse(pako.ungzip(atob(features[sessionId]), {to: 'string'}))
-  const commonFeatures = featuresJson[lookupOrder]["common"]
-  for (let groupName in favoriteFeatures) {
-    if (!(groupName in commonFeatures)) continue
-    for (let name of favoriteFeatures[groupName].filter(it => it in commonFeatures[groupName])) {
-      popup.appendChild(createFeatureDiv(groupName, name, commonFeatures[groupName][name], true))
+  if (sessionId in features) {
+    const featuresJson = JSON.parse(pako.ungzip(atob(features[sessionId]), {to: 'string'}))
+    const commonFeatures = featuresJson[lookupOrder]["common"]
+    for (let groupName in favoriteFeatures) {
+      if (!(groupName in commonFeatures)) continue
+      for (let name of favoriteFeatures[groupName].filter(it => it in commonFeatures[groupName])) {
+        popup.appendChild(createFeatureDiv(groupName, name, commonFeatures[groupName][name], true))
+      }
+    }
+    for (let groupName in commonFeatures) {
+      for (let name in commonFeatures[groupName]) {
+        if (groupName in favoriteFeatures && favoriteFeatures[groupName].includes(name)) continue
+        popup.appendChild(createFeatureDiv(groupName, name, commonFeatures[groupName][name], false))
+      }
     }
   }
-  for (let groupName in commonFeatures) {
-    for (let name in commonFeatures[groupName]) {
-      if (groupName in favoriteFeatures && favoriteFeatures[groupName].includes(name)) continue
-      popup.appendChild(createFeatureDiv(groupName, name, commonFeatures[groupName][name], false))
-    }
-  }
+  addDiagnosticsBlock("RAW SUGGESTIONS:", "raw_proposals", popup, lookup)
+  addDiagnosticsBlock("RAW FILTERED:", "raw_filtered", popup, lookup)
+  addDiagnosticsBlock("ANALYZED FILTERED:", "analyzed_filtered", popup, lookup)
 }
 
 function addSuggestions(sessionDiv, popup, lookup) {
@@ -143,6 +147,24 @@ function addSuggestions(sessionDiv, popup, lookup) {
     p.innerHTML = suggestions[i].presentationText
     suggestionDiv.appendChild(p)
     popup.appendChild(suggestionDiv)
+  }
+}
+
+function addDiagnosticsBlock(description, field, popup, lookup) {
+  if (!(field in lookup["additionalInfo"])) return
+  let diagnosticsDiv = document.createElement("DIV")
+  diagnosticsDiv.innerHTML = description
+  popup.appendChild(diagnosticsDiv)
+  const diagnostics = lookup["additionalInfo"][field];
+  for (let i = 0; i < diagnostics.length; i++) {
+    if (diagnostics[i]["second"] == null) continue
+    let textDiv = document.createElement("DIV")
+    textDiv.setAttribute("class", "suggestion")
+    let p = document.createElement("code")
+    p.setAttribute("class", "suggestion-p")
+    p.innerHTML = diagnostics[i]["first"] + " (" + diagnostics[i]["second"] + ")"
+    textDiv.appendChild(p)
+    popup.appendChild(textDiv)
   }
 }
 
