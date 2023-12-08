@@ -163,13 +163,17 @@ internal class PhmVcsLogStorageBackend(
       }
 
       private fun force() {
-        parents.force()
-        committers.force()
-        timestamps.force()
-        trigrams.flush()
-        users.flush()
-        paths.flush()
-        messages.force()
+        try {
+          parents.force()
+          committers.force()
+          timestamps.force()
+          trigrams.flush()
+          users.flush()
+          paths.flush()
+          messages.force()
+        } catch (s: StorageException) {
+          errorHandler.handleError(VcsLogErrorHandler.Source.Index, s)
+        }
       }
 
       override fun flush() = force()
