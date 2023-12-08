@@ -410,5 +410,11 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
      * By default, JS symbol is treated as [WebSymbolJsKind.Variable].
      **/
     const val PROP_KIND = "kind"
+
+    /**
+     * Name of [WebSymbolJsKind] property used by other symbols to specify kind of the JS symbol.
+     * By default, JS symbol is treated as [WebSymbolJsKind.Variable].
+     **/
+    const val PROP_JS_SYMBOL_KIND = "js-symbol-kind"
   }
 }
