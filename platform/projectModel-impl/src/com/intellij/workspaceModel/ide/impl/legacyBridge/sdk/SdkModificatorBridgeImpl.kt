@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
@@ -130,7 +131,19 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
 
     originalEntity.applyChangesFrom(modifiedSdkEntity)
     originalSdkDelegate.reloadAdditionalData()
-    if (existingEntity != null) originalSdkDelegate.fireRootSetChanged()
+
+    if (existingEntity != null) {
+      originalSdkDelegate.fireRootSetChanged()
+    } else {
+      // A workaround for the cases where or `ProjectJdkTableImpl` doesn't use, so the entities are in the air,
+      // but any way we need to keep old contract and fire roots change event.
+      // Example of such case: `ServerProjectJdkTable` with enabled new implementation, so we have Sdk(with entity in it),
+      // but table stores SDKs in the list(not in the WSM).
+      // Failed test: `com.jetbrains.python.PythonAnalysisToolSanityTest`
+      if (ProjectJdkTable.getInstance().allJdks.toList().contains(originalSdk)) {
+        originalSdkDelegate.fireRootSetChanged()
+      }
+    }
     isCommitted = true
   }
 
