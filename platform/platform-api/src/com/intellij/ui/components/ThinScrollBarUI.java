@@ -15,8 +15,8 @@ public class ThinScrollBarUI extends DefaultScrollBarUI {
     super(DEFAULT_THICKNESS, DEFAULT_THICKNESS, DEFAULT_THICKNESS);
   }
 
-  public ThinScrollBarUI(int thickness, int thicknessMax) {
-    super(thickness, thicknessMax, thickness);
+  public ThinScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
+    super(thickness, thicknessMax, thicknessMin);
   }
 
   @Override

@@ -212,8 +212,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
 
   @ApiStatus.Internal
   public static class Thumb extends ScrollBarPainter {
-    protected MixedColorProducer fillProducer;
-    protected MixedColorProducer drawProducer;
+    private final MixedColorProducer fillProducer;
+    private final MixedColorProducer drawProducer;
 
     Thumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
       super(supplier);
@@ -232,6 +232,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     @Override
     public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, @Nullable Float value) {
       double mixer = value == null ? 0 : value.doubleValue();
+      MixedColorProducer fillProducer = getFillProducer();
       Color fill = fillProducer.produce(mixer);
       Color draw = drawProducer.produce(mixer);
       if (ignoreBorder() || fill.getRGB() == draw.getRGB()) draw = null; // without border
@@ -246,6 +247,10 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
         arc = Math.min(width, height);
       }
       RectanglePainter.paint(g, x, y, width, height, arc, fill, draw);
+    }
+
+    protected MixedColorProducer getFillProducer() {
+      return fillProducer;
     }
 
     protected int macMargin(boolean withBorder) {
