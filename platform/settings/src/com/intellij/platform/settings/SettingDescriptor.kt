@@ -4,7 +4,6 @@
 package com.intellij.platform.settings
 
 import com.intellij.openapi.extensions.PluginId
-import org.jetbrains.annotations.ApiStatus.Internal
 
 // Implementation note: API to use when you do not have a service
 inline fun settingDescriptor(key: String, pluginId: PluginId, block: SettingDescriptor.Builder.() -> Unit): SettingDescriptor<String> {
@@ -18,29 +17,27 @@ inline fun <T : Any> settingDescriptor(key: String,
   return SettingDescriptor.Builder().apply(block).build(key = key, pluginId = pluginId, serializer = serializer)
 }
 
+sealed interface Setting<T : Any> {
+  suspend fun get(): T?
+
+  suspend fun set(value: T?)
+}
+
 // Implementation note: API to use when you have a service. We create this service for each request to a service coroutine scope.
-interface SettingDescriptorFactory {
+sealed interface SettingDescriptorFactory {
   fun settingDescriptor(key: String, block: SettingDescriptor.Builder.() -> Unit): SettingDescriptor<String>
 
   fun <T : Any> settingDescriptor(key: String,
                                   serializer: SettingValueSerializer<T>,
                                   block: SettingDescriptor.Builder.() -> Unit): SettingDescriptor<T>
+
+  fun group(key: String, block: SettingDescriptor.Builder.() -> Unit): SettingDescriptorTemplateFactory
 }
 
-//todo this will be injected by ComponentManager (a client will request it from a coroutine scope as a service)
-@Internal
-fun settingDescriptorFactoryFactory(pluginId: PluginId): SettingDescriptorFactory {
-  return object : SettingDescriptorFactory {
-    override fun settingDescriptor(key: String, block: SettingDescriptor.Builder.() -> Unit): SettingDescriptor<String> {
-      return settingDescriptor(key = key, pluginId = pluginId, block = block)
-    }
+sealed interface SettingDescriptorTemplateFactory {
+  fun <T : Any> setting(subKey: String, serializer: SettingValueSerializer<T>): Setting<T>
 
-    override fun <T : Any> settingDescriptor(key: String,
-                                             serializer: SettingValueSerializer<T>,
-                                             block: SettingDescriptor.Builder.() -> Unit): SettingDescriptor<T> {
-      return settingDescriptor(key = key, pluginId = pluginId, serializer = serializer, block = block)
-    }
-  }
+  fun setting(subKey: String): Setting<String> = setting(subKey, StringSettingValueSerializer)
 }
 
 class SettingDescriptor<T : Any> private constructor(
