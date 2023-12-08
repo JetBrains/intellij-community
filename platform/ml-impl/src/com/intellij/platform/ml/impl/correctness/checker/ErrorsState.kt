@@ -5,9 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 sealed class ErrorsState {
-  object Correct : ErrorsState() {
-    override fun toString(): String = "Correct"
-
+  data object Correct : ErrorsState() {
     override fun errors() = emptyList<CorrectnessError>()
   }
 
