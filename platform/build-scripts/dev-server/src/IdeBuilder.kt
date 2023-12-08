@@ -300,9 +300,6 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
           if (options.enableEmbeddedJetBrainsClient) {
             options.enableEmbeddedJetBrainsClient = false
           }
-
-          // it downloads binaries from TC - it is bad
-          options.buildStepsToSkip.add(BuildOptions.IJENT_EXECUTABLE_DOWNLOADING)
         }
 
         options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository
