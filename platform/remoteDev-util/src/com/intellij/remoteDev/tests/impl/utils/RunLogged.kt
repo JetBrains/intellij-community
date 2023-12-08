@@ -12,7 +12,6 @@ import kotlin.time.DurationUnit
 // it is easier to sort out logs from just testFramework
 private val LOG = Logger.getInstance(RdctTestFrameworkLoggerCategory.category)
 
-@OptIn(ExperimentalTime::class)
 @TestOnly
 @ApiStatus.Internal
 suspend fun <T> runLogged(actionTitle: String, timeout: Duration? = null, action: suspend () -> T): T {
@@ -33,7 +32,6 @@ suspend fun <T> runLogged(actionTitle: String, timeout: Duration? = null, action
   return result
 }
 
-@OptIn(ExperimentalTime::class)
 fun <T> runLoggedBlocking(actionTitle: String, action: () -> T): T {
   LOG.info("'$actionTitle': starting on ${Thread.currentThread()}")
   val (result, passedTime) = measureTimedValue {
