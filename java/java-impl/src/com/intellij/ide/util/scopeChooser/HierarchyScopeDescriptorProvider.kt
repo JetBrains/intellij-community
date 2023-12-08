@@ -2,6 +2,8 @@
 package com.intellij.ide.util.scopeChooser
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.wm.ToolWindowId
@@ -9,7 +11,7 @@ import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 
 class HierarchyScopeDescriptorProvider : ScopeDescriptorProvider {
   override fun getScopeDescriptors(project: Project, dataContext: DataContext): Array<ScopeDescriptor> =
-    if (Comparing.strEqual(getInstance(project).activeToolWindowId, ToolWindowId.TODO_VIEW)) {
+    if (dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.id == ToolWindowId.TODO_VIEW) {
       ScopeDescriptorProvider.EMPTY
     }
     else arrayOf(ClassHierarchyScopeDescriptor(project, dataContext))
