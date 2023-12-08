@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.ide.util;
 
 import com.intellij.codeInsight.generation.*;
@@ -21,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBInsets;
@@ -676,10 +676,26 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     public void valueChanged(TreeSelectionEvent e) {
       TreePath[] paths = e.getPaths();
       if (paths == null) return;
+
+      boolean reversed = false;
+      if (paths.length > 1 &&
+          myTree.getRowForPath(paths[0]) < myTree.getRowForPath(e.getOldLeadSelectionPath()) &&
+          myTree.getRowForPath(paths[paths.length - 1]) < myTree.getRowForPath(e.getOldLeadSelectionPath())) {
+        // `paths` is always sorted from top to bottom (as shown on screen), even when selected in a different order.
+        // When the user selects from the bottom to the top, we want to have the paths in that order too.
+        // For example members a, b and c.
+        // Case 1: c is selected. The user shift-clicks a. Event contains a and b, in that order. We want to reverse,
+        // so the order of selection will be c, b, a (not c, a, b).
+        // Case 2: b is selected. The user presses cmd/ctrl+a (select all). Event contains root, a, c. No need to
+        // reverse. The order of selection will be a, b, c.
+        // Case 3: a is selected. The user shift-clicks c. Event contains b and c, in that order. No need to
+        // reverse. The order of selection will be a, b, c.
+        paths = ArrayUtil.reverseArray(paths);
+        reversed = true;
+      }
       for (int i = 0; i < paths.length; i++) {
-        Object node = paths[i].getLastPathComponent();
-        if (node instanceof MemberNode memberNode) {
-          if (e.isAddedPath(i)) {
+        if (paths[i].getLastPathComponent() instanceof MemberNode memberNode) {
+          if (e.isAddedPath(reversed ? paths.length - (i + 1) : i)) {
             if (!mySelectedNodes.contains(memberNode)) {
               mySelectedNodes.add(memberNode);
             }
@@ -689,7 +705,6 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
           }
         }
       }
-      mySelectedNodes.sort(new OrderComparator());
       mySelectedElements = new LinkedHashSet<>();
       for (MemberNode selectedNode : mySelectedNodes) {
         mySelectedElements.add((T)selectedNode.getDelegate());

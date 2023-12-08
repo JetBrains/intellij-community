@@ -158,7 +158,9 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
     if (selectedElements == null) {
       return null;
     }
-    return ContainerUtil.filter(dialogMembers, selectedElements::contains);
+    return GenerateToStringContext.getConfig().getSortElements() == 0
+           ? selectedElements
+           : ContainerUtil.filter(dialogMembers, selectedElements::contains);
   }
 
   private static PsiElementClassMember[] getPreselection(@NotNull PsiClass clazz, PsiElementClassMember[] dialogMembers) {
