@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.CommandSpecCompletion
+import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.TerminalSession
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.getNextSuggestionsString
@@ -17,11 +18,12 @@ import org.jetbrains.terminal.completion.BaseSuggestion
 internal class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(TerminalSession.KEY)
-    if (session == null || parameters.completionType != CompletionType.BASIC) {
+    val runtimeDataProvider = parameters.editor.getUserData(IJShellRuntimeDataProvider.KEY)
+    if (session == null || runtimeDataProvider == null || parameters.completionType != CompletionType.BASIC) {
       return
     }
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
-    val context = TerminalCompletionContext(session, shellSupport, parameters)
+    val context = TerminalCompletionContext(session, runtimeDataProvider, shellSupport, parameters)
 
     val prefix = result.prefixMatcher.prefix.substringAfterLast('/') // take last part if it is a file path
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
@@ -37,11 +39,10 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   }
 
   private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext): List<BaseSuggestion> {
-    val runtimeDataProvider = IJShellRuntimeDataProvider(context.session)
-    val aliases = runtimeDataProvider.getShellEnvironment()?.aliases ?: return emptyList()
+    val aliases = context.runtimeDataProvider.getShellEnvironment()?.aliases ?: return emptyList()
     val expandedTokens = expandAliases(tokens, aliases, context)
 
-    val completion = CommandSpecCompletion(IJCommandSpecManager.getInstance(), runtimeDataProvider)
+    val completion = CommandSpecCompletion(IJCommandSpecManager.getInstance(), context.runtimeDataProvider)
     val items = completion.computeCompletionItems(expandedTokens)?.takeIf { it.isNotEmpty() }
     return when {
       items != null -> items
@@ -97,6 +98,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
 
   private class TerminalCompletionContext(
     val session: TerminalSession,
+    val runtimeDataProvider: ShellRuntimeDataProvider,
     val shellSupport: TerminalShellSupport,
     val parameters: CompletionParameters
   ) {
