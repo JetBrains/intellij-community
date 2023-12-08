@@ -5,17 +5,13 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.featureStatistics.fusCollectors.InspectionWidgetUsageCollector;
 import com.intellij.ide.EssentialHighlightingMode;
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId2;
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.editor.markup.InspectionsLevel;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -134,7 +130,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
 
     incModificationCount();
     messageBus.syncPublisher(FileHighlightingSettingListener.SETTING_CHANGE).settingChanged(root, setting);
-    InspectionWidgetUsageCollector.HIGHLIGHT_LEVEL_CHANGED.log(root.getProject(), root.getLanguage(), FileHighlightingSetting.toInspectionsLevel(setting));
+    InspectionWidgetUsageCollector.logHighlightLevelChanged(root.getProject(), root.getLanguage(), FileHighlightingSetting.toInspectionsLevel(setting));
   }
 
   @Override
@@ -216,17 +212,6 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
       .flatMap(array -> Stream.of(array))
       .mapToInt(s -> s == setting ? 1 : 0)
       .sum();
-  }
-
-  private static final class InspectionWidgetUsageCollector extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("inspection.widget",3);
-    private static final EventId2<Language, InspectionsLevel> HIGHLIGHT_LEVEL_CHANGED =
-      GROUP.registerEvent("highlight.level.changed", EventFields.Language, EventFields.Enum("level", InspectionsLevel.class));
-
-    @Override
-    public EventLogGroup getGroup() {
-      return GROUP;
-    }
   }
 
   @Override
