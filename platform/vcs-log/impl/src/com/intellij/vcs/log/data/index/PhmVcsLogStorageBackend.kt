@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
@@ -343,14 +344,17 @@ internal class PhmVcsLogStorageBackend(
     private const val INDEX = "index"
     private const val VERSION = 2
 
+    internal val durableEnumeratorRegistryProperty get() = Registry.get("vcs.log.index.durable.enumerator")
+
     @Throws(IOException::class)
     @JvmStatic
     fun create(project: Project, storage: VcsLogStorage, indexStorageId: StorageId.Directory, roots: Set<VirtualFile>,
                errorHandler: VcsLogErrorHandler, parent: Disposable): PhmVcsLogStorageBackend {
       val userRegistry = project.getService(VcsUserRegistry::class.java)
+      val useDurableEnumerator = durableEnumeratorRegistryProperty.asBoolean()
       return IOUtil.openCleanOrResetBroken({
                                              PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, errorHandler,
-                                                                     false, parent)
+                                                                     useDurableEnumerator, parent)
                                            }) {
         if (!indexStorageId.cleanupAllStorageFiles()) {
           LOG.error("Could not clean up storage files in " + indexStorageId.storagePath)

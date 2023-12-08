@@ -40,6 +40,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.index.PhmVcsLogStorageBackend
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -93,6 +94,11 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     }, listenersDisposable)
     project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
       launchWithAnyModality { disposeLog(recreate = true) }
+    }, listenersDisposable)
+    PhmVcsLogStorageBackend.durableEnumeratorRegistryProperty.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        launchWithAnyModality { logManager?.let { invalidateCaches(it) } }
+      }
     }, listenersDisposable)
 
     @Suppress("SSBasedInspection", "ObjectLiteralToLambda") val shutdownTask = object : Runnable {
