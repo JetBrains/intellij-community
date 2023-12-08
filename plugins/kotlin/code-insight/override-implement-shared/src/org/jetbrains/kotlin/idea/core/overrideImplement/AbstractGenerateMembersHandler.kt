@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
@@ -50,7 +50,7 @@ abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeIns
     private fun showOverrideImplementChooser(project: Project, members: Collection<T>): MemberChooser<T>? {
         @Suppress("UNCHECKED_CAST")
         val memberArray = members.toTypedArray<ClassMember>() as Array<T>
-        val chooser = MemberChooser(memberArray, true, true, project)
+        val chooser = MemberChooser(memberArray, false, true, project)
         chooser.title = getChooserTitle()
         if (toImplement) {
             chooser.selectElements(memberArray)
