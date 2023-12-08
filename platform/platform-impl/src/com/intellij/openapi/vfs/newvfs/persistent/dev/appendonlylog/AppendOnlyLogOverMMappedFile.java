@@ -55,7 +55,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   //       We could use (committed < allocated) as a marker of 'not everything was committed'
   //    2) Make record header 'recognizable': i.e. reserve first byte for type+committed only -- so we can recognize
   //       'false id' with high probability. This leaves us with 3bytes record length, which is still enough for
-  //       the most applications
+  //       the most applications. Maybe make it configurable: if user wants to spent additional 1-2-4 bytes per record
+  //       to (almost) ensure 'false id' recognition -- it could be turned on?
 
   public static final class HeaderLayout {
     public static final int MAGIC_WORD_OFFSET = 0;

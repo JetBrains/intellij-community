@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -193,6 +195,19 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
 
   @Override
   public void close() throws IOException {
+    try {
+      //Must stop the scanning _before_ we close valuesLog -- because we expect (e.g. in closeAndUnsafelyUnmap()/closeAndClean() )
+      //  that closed enumerator does not use the file/mapped buffers anymore
+      valueHashToIdFuture.cancel(false);
+      valueHashToIdFuture.join();
+    }
+    catch (CancellationException e) {
+      //just ignore
+    }
+    catch (Throwable e) {
+      Logger.getInstance(DurableStringEnumerator.class).info(".valueHashToId computation failed", e);
+    }
+
     valuesLog.close();
   }
 
