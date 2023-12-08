@@ -299,7 +299,7 @@ object JBUIScale {
 
     // downgrading user scale below 1.0 may be uncomfortable (tiny icons),
     // whereas some users prefer font size slightly below normal, which is ok
-    if (!Registry.`is`("ide.scale.editable.combobox", false)
+    if (Registry.`is`("ide.scale.below.100.only.fonts", false)
         && scale < 1 && systemScaleFactor.value >= 1) {
       scale = 1f
     }

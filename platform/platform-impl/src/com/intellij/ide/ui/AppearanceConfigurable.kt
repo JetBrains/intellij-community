@@ -190,6 +190,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           val zoomComboBox = comboBox(model, textListCellRenderer { it })
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
+              if (IdeScaleTransformer.Settings.validatePercentScaleInput(it.item, false) != null) return@onChanged
+
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
                 logIdeZoomChanged(scale, false)
                 resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
@@ -199,13 +201,14 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                   settings.fireUISettingsChanged()
                 }
               }
-            }.gap(RightGap.SMALL)
-
-          if (IdeScaleTransformer.Settings.allowAnyZoomValuesInSettings) {
-            zoomComboBox.applyToComponent {
+            }
+            .applyToComponent {
               isEditable = true
             }
-          }
+            .validationOnInput {
+              IdeScaleTransformer.Settings.validatePercentScaleInput(this, it, false)
+            }
+            .gap(RightGap.SMALL)
 
           val zoomInString = KeymapUtil.getShortcutTextOrNull("ZoomInIdeAction")
           val zoomOutString = KeymapUtil.getShortcutTextOrNull("ZoomOutIdeAction")
@@ -506,9 +509,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .applyToComponent {
               isEditable = true
             }
-            .validationOnInput(IdeScaleTransformer.Settings::validatePresentationModePercentScaleInput)
+            .validationOnInput {
+              IdeScaleTransformer.Settings.validatePercentScaleInput(this, it, true)
+            }
             .onChanged {
-              if (IdeScaleTransformer.Settings.validatePresentationModePercentScaleInput(it.item) != null) return@onChanged
+              if (IdeScaleTransformer.Settings.validatePercentScaleInput(it.item, true) != null) return@onChanged
 
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, true)?.let { scale ->
                 logIdeZoomChanged(scale, true)
