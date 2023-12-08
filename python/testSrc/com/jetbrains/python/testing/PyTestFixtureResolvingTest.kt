@@ -58,6 +58,20 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val TEST_IMPORTED_FIXTURE_IN_CONFTEST = "/test_imported_fixtures_in_conftest.py"
     const val IMPORTED_FIXTURE_IN_CONFTEST_FOO_FIXTURES_DIR_NAME = "fixtures"
     const val IMPORTED_FIXTURE_IN_CONFTEST_FOO_FIXTURES = "foo_fixtures.py"
+
+    const val PYTEST_PLUGINS_FIXTURES_DIR_NAME = "testPytestPluginsFixtures"
+    const val PYTEST_PLUGINS_FIXTURES_DIR = "/$PYTEST_PLUGINS_FIXTURES_DIR_NAME"
+    const val PYTEST_PLUGINS_FIXTURES_AS_LIST_DIR = "/pytest_plugins_as_list"
+    const val PYTEST_PLUGINS_FIXTURES_AS_STR_DIR = "/pytest_plugins_as_str"
+    const val PYTEST_PLUGINS_FIXTURES_AS_TUPLE_DIR = "/pytest_plugins_as_tuple"
+    const val PYTEST_PLUGINS_FIXTURES = "fixtures"
+    const val PYTEST_PLUGINS_FIXTURES_FIRST = "first.py"
+    const val PYTEST_PLUGINS_FIXTURES_SECOND = "second.py"
+    const val PYTEST_PLUGINS_FIXTURES_AS_LIST_FIRST_TEST = "/test_pytest_plugins_as_list_first.py"
+    const val PYTEST_PLUGINS_FIXTURES_AS_LIST_SECOND_TEST = "/test_pytest_plugins_as_list_second.py"
+    const val PYTEST_PLUGINS_FIXTURES_AS_TUPLE_FIRST_TEST = "/test_pytest_plugins_as_tuple_first.py"
+    const val PYTEST_PLUGINS_FIXTURES_AS_TUPLE_SECOND_TEST = "/test_pytest_plugins_as_tuple_second.py"
+    const val PYTEST_PLUGINS_FIXTURES_AS_STR_TEST = "/test_pytest_plugins_as_str.py"
   }
 
   override fun getTestDataPath() = super.getTestDataPath() + TESTS_SUBDIR
@@ -222,5 +236,22 @@ class PyTestFixtureResolvingTest : PyTestCase() {
 
   fun testImportedFixtureInConftest() {
     assertCorrectFile(IMPORTED_FIXTURE_IN_CONFTEST_DIR, TEST_IMPORTED_FIXTURE_IN_CONFTEST, IMPORTED_FIXTURE_IN_CONFTEST_FOO_FIXTURES, IMPORTED_FIXTURE_IN_CONFTEST_FOO_FIXTURES_DIR_NAME)
+  }
+
+  fun testPytestPluginsFixtureAsList() {
+    val testDir = PYTEST_PLUGINS_FIXTURES_DIR + PYTEST_PLUGINS_FIXTURES_AS_LIST_DIR
+    assertCorrectFile(testDir, PYTEST_PLUGINS_FIXTURES_AS_LIST_FIRST_TEST, PYTEST_PLUGINS_FIXTURES_FIRST, PYTEST_PLUGINS_FIXTURES)
+    assertCorrectFile(testDir, PYTEST_PLUGINS_FIXTURES_AS_LIST_SECOND_TEST, PYTEST_PLUGINS_FIXTURES_SECOND, PYTEST_PLUGINS_FIXTURES)
+  }
+
+  fun testPytestPluginsFixtureAsTuple() {
+    val testDir = PYTEST_PLUGINS_FIXTURES_DIR + PYTEST_PLUGINS_FIXTURES_AS_TUPLE_DIR
+    assertCorrectFile(testDir, PYTEST_PLUGINS_FIXTURES_AS_TUPLE_FIRST_TEST, PYTEST_PLUGINS_FIXTURES_FIRST, PYTEST_PLUGINS_FIXTURES)
+    assertCorrectFile(testDir, PYTEST_PLUGINS_FIXTURES_AS_TUPLE_SECOND_TEST, PYTEST_PLUGINS_FIXTURES_SECOND, PYTEST_PLUGINS_FIXTURES)
+  }
+
+  fun testPytestPluginsFixtureAsStr() {
+    val testDir = PYTEST_PLUGINS_FIXTURES_DIR + PYTEST_PLUGINS_FIXTURES_AS_STR_DIR
+    assertCorrectFile(testDir, PYTEST_PLUGINS_FIXTURES_AS_STR_TEST, PYTEST_PLUGINS_FIXTURES_FIRST, PYTEST_PLUGINS_FIXTURES)
   }
 }
