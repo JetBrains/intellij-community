@@ -50,7 +50,7 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
 
   // Extracted to simplify testing
   override fun getAccountInfoService(): JBAccountInfoService? {
-    if (ApplicationManagerEx.isInIntegrationTest()) {
+    if (ApplicationManagerEx.isInIntegrationTest() || System.getProperty("settings.sync.test.auth") == "true") {
       return DummyJBAccountInfoService
     }
     return JBAccountInfoService.getInstance()
