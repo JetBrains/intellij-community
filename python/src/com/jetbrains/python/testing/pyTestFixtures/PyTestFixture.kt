@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.PathUtil
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
 import com.jetbrains.extensions.getSdk
@@ -164,9 +165,10 @@ private fun findRightFixture(fixtureCandidates: List<PyTestFixture>,
  */
 private fun searchInConftest(fixtureCandidates: List<PyTestFixture>, currentDirectory: PsiDirectory, elementName: String, func: PyFunction?): NamedFixtureLink? {
   fixtureCandidates.find { it.isInConftestInDir(currentDirectory) }?.let { return NamedFixtureLink(it, null) }
-  // search in imports in "conftest.py" file
+  // search in imports and 'pytest_plugins' in "conftest.py" file
   (currentDirectory.findFile(CONFTEST_PY) as? PyFile)?.let { pyFile ->
     getFixtureFromImports(pyFile, elementName, func, fixtureCandidates)?.let { return it }
+    getFixtureFromPytestPlugins(pyFile, fixtureCandidates)?.let { return it }
   }
   return null
 }
@@ -190,6 +192,40 @@ private fun getFixtureFromImports(targetFile: PyFile, elementName: String, func:
     }
   }
   return null
+}
+
+/**
+ * Return fixture from pytest_plugins
+ */
+private fun getFixtureFromPytestPlugins(targetFile: PyFile, fixtureCandidates: List<PyTestFixture>): NamedFixtureLink? {
+
+  val pyTestPluginsStatement = targetFile.statements.findLast { it is PyAssignmentStatement && it.isAssignmentTo("pytest_plugins") }
+                                 as? PyAssignmentStatement ?: return null
+  val assignedValue = pyTestPluginsStatement.assignedValue ?: return null // str or Sequence[str]
+
+  val fixtures: List<PyExpression> = when (assignedValue) {
+    is PyListLiteralExpression -> assignedValue.elements.toList()
+    is PyStringLiteralExpression -> listOf(assignedValue)
+    is PyParenthesizedExpression -> assignedValue.children.find { it is PyTupleExpression }?.let { tuple ->
+      (tuple as PyTupleExpression).elements.filterIsInstance<PyStringLiteralExpression>()
+    } ?: emptyList()
+    else -> emptyList()
+  }
+
+  if (fixtures.isEmpty()) return null
+
+  val fixturesPaths = fixtures.map {
+    val text = it.text
+    text.subSequence(1, text.length - 1).toString().replace('.', '/')
+  }
+
+  val candidate = fixtureCandidates.find { fixtureCandidate ->
+    var fixtureFilePath = fixtureCandidate.function?.containingFile?.virtualFile?.path ?: return@find false
+    fixtureFilePath = PathUtil.toSystemIndependentName(fixtureFilePath).let { it.subSequence(0, it.length - 3).toString() }
+    fixturesPaths.any { fixtureFilePath.endsWith(it) }
+  } ?: return null
+
+  return NamedFixtureLink(candidate, null)
 }
 
 /**
@@ -219,7 +255,6 @@ fun findDecoratorsByName(module: Module, vararg names: String): Iterable<PyDecor
                             arrayOf(module.moduleContentScope, GlobalSearchScope.moduleRuntimeScope(module, true))),
                           PyDecorator::class.java)
   }
-
 
 
 private fun createFixture(decorator: PyDecorator): PyTestFixture? {
