@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSize
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -146,7 +147,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
     contentPanel.bindChildIn(cs, combine(vm.collapsed, diffPanelFlow, ::Pair), index = 0) { (collapsed, diffPanel) ->
       if (diffPanel != null) {
-        VerticalListPanel(4).apply {
+        VerticalListPanel(CodeReviewTimelineUIUtil.Thread.DIFF_TEXT_GAP).apply {
           if (collapsed) {
             add(textContentPanel)
             add(diffPanel)
