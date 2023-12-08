@@ -25,15 +25,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import com.intellij.util.PathUtilRt
-import com.intellij.util.ResourceUtil
-import com.intellij.util.SlowOperations
-import com.intellij.util.SmartList
+import com.intellij.util.*
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Document
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -138,7 +134,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
           LOG.assertTrue(oldInfo == null)
           val oldScheme = readOnlyExternalizableSchemes.put(schemeKey, scheme)
           if (oldScheme != null) {
-            LOG.warn("Duplicated scheme $schemeKey - old: $oldScheme, new $scheme")
+            LOG.debug("Duplicated scheme $schemeKey - old: $oldScheme, new $scheme")
           }
           schemes.add(scheme)
         }
