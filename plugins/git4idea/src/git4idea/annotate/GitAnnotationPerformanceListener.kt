@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration
 
@@ -16,5 +17,10 @@ interface GitAnnotationPerformanceListener {
     val EP_NAME = ExtensionPointName.create<GitAnnotationPerformanceListener>("Git4Idea.gitAnnotationPerformanceListener")
   }
 
-  fun onAnnotationFinished(project: Project, path: FilePath, revision: VcsRevisionNumber?, duration: Duration, provider: String)
+  fun onAnnotationFinished(project: Project,
+                           root: VirtualFile,
+                           path: FilePath,
+                           revision: VcsRevisionNumber?,
+                           duration: Duration,
+                           provider: String)
 }

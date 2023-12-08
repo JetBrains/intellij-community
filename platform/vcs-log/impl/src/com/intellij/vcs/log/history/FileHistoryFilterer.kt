@@ -202,7 +202,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
 
       val finish = start.elapsedNow()
       FileHistoryPerformanceListener.EP_NAME.extensionList.forEach {
-        it.onFileHistoryFinished(project, filePath, finish)
+        it.onFileHistoryFinished(project, root, filePath, finish)
       }
 
       if (revisions.isEmpty()) return VisiblePack.EMPTY

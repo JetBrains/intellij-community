@@ -202,7 +202,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     if (another != null) {
       GitFileAnnotation res = another.annotate(myProject, root, filePath, revision, file);
       if (res != null) {
-        GitAnnotationProviderKt.reportAnnotationFinished(myProject, filePath, revision, start, another.getClass().getSimpleName());
+        GitAnnotationProviderKt.reportAnnotationFinished(myProject, root, filePath, revision, start, another.getClass().getSimpleName());
         return res;
       }
     }
@@ -241,7 +241,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
     GitFileAnnotation annotation = parseAnnotations(revision, file, root, output);
 
-    GitAnnotationProviderKt.reportAnnotationFinished(myProject, filePath, revision, start, "default");
+    GitAnnotationProviderKt.reportAnnotationFinished(myProject, root, filePath, revision, start, "default");
 
     return annotation;
   }
