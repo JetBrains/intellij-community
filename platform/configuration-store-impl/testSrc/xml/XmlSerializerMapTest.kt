@@ -5,7 +5,10 @@ package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
 import com.intellij.ide.plugins.PluginFeatureService
-import com.intellij.ide.plugins.advertiser.*
+import com.intellij.ide.plugins.advertiser.FeaturePluginData
+import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.advertiser.PluginDataSet
+import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -329,22 +332,6 @@ internal class XmlSerializerMapTest {
 }]]></state>
       """.trimIndent(),
       extensions,
-    )
-  }
-
-  @Test
-  fun `PluginFeatureCacheService serialization`() {
-    val component = PluginFeatureCacheService()
-    component.extensions = PluginFeatureMap()
-
-    testSerializer(
-      """
-<state><![CDATA[{
-  "extensions": {
-  }
-}]]></state>
-      """.trimIndent(),
-      component.state,
     )
   }
 

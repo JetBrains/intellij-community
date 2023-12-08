@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
@@ -27,10 +28,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.coroutineContext
@@ -145,24 +143,29 @@ open class PluginAdvertiserServiceImpl(
         .filter { isPluginCompatible(it) }
         .toList()
 
-      val suggestToInstall = if (plugins.isEmpty())
+      val suggestToInstall = if (plugins.isEmpty()) {
         emptyList()
-      else
+      }
+      else {
         fetchPluginSuggestions(
           pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
           customPlugins = customPlugins
         )
+      }
 
-      launch(Dispatchers.EDT) {
-        notifyUser(
-          bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
-          suggestionPlugins = suggestToInstall,
-          disabledDescriptors = disabledDescriptors,
-          featuresMap = featuresMap,
-          allUnknownFeatures = unknownFeatures,
-          dependencies = PluginFeatureCacheService.getInstance().dependencies,
-          includeIgnored = includeIgnored,
-        )
+      launch {
+        val dependencies = serviceAsync<PluginFeatureCacheService>().dependencies.get()
+        withContext(Dispatchers.EDT) {
+          notifyUser(
+            bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
+            suggestionPlugins = suggestToInstall,
+            disabledDescriptors = disabledDescriptors,
+            featuresMap = featuresMap,
+            allUnknownFeatures = unknownFeatures,
+            dependencies = dependencies,
+            includeIgnored = includeIgnored,
+          )
+        }
       }
     }
   }
@@ -203,7 +206,7 @@ open class PluginAdvertiserServiceImpl(
     val featuresMap = MultiMap.createSet<PluginId, UnknownFeature>()
     val plugins = mutableSetOf<PluginData>()
 
-    val dependencies = PluginFeatureCacheService.getInstance().dependencies
+    val dependencies = serviceAsync<PluginFeatureCacheService>().dependencies.get()
     val ignoredPluginSuggestionState = GlobalIgnoredPluginSuggestionState.getInstance()
     for (feature in features) {
       coroutineContext.ensureActive()

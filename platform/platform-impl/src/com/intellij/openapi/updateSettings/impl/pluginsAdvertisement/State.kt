@@ -120,7 +120,7 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
       return false
     }
 
-    val knownExtensions = PluginFeatureCacheService.getInstance().extensions
+    val knownExtensions = PluginFeatureCacheService.getInstance().extensions.get()
     if (knownExtensions == null) {
       LOG.debug("No known extensions loaded")
       return false
@@ -167,7 +167,7 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
      * The return value of null indicates that the locally available data is not enough to produce a suggestion,
      * and we need to fetch up-to-date data from the marketplace.
      */
-    internal fun requestExtensionData(fileName: String, fileType: FileType): PluginAdvertiserExtensionsData? {
+    internal suspend fun requestExtensionData(fileName: String, fileType: FileType): PluginAdvertiserExtensionsData? {
       fun noSuggestions() = PluginAdvertiserExtensionsData(fileName, emptySet())
 
       val fullExtension = getFullExtension(fileName)
@@ -189,7 +189,7 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
         return it
       }
 
-      val knownExtensions = PluginFeatureCacheService.getInstance().extensions
+      val knownExtensions = PluginFeatureCacheService.getInstance().extensions.get()
       if (knownExtensions == null) {
         LOG.debug("No known extensions loaded")
         return null

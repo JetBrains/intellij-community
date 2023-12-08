@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
@@ -19,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService.ExtensionDataProvider
@@ -45,7 +47,12 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       return null
     }
 
-    val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
+    val suggestionData = runBlockingCancellable {
+      getSuggestionData(project = project,
+                        activeProductCode = serviceAsync<ApplicationInfo>().build.productCode,
+                        fileName = file.name,
+                        fileType = file.fileType)
+    }
 
     if (suggestionData == null) {
       project.service<AdvertiserInfoUpdateService>().scheduleAdvertiserUpdate(file)
@@ -208,35 +215,34 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
   }
 }
 
-private val SUGGESTION_EP_NAME: ExtensionPointName<PluginSuggestionProvider> = ExtensionPointName.create(
-  "com.intellij.pluginSuggestionProvider")
+private val SUGGESTION_EP_NAME: ExtensionPointName<PluginSuggestionProvider> = ExtensionPointName("com.intellij.pluginSuggestionProvider")
 
 @VisibleForTesting
-fun getSuggestionData(
+suspend fun getSuggestionData(
   project: Project,
   activeProductCode: String,
   fileName: String,
   fileType: FileType,
 ): PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion? {
-  return PluginAdvertiserExtensionsStateService.getInstance()
+  return serviceAsync<PluginAdvertiserExtensionsStateService>()
     .createExtensionDataProvider(project)
     .requestExtensionData(fileName, fileType)?.let {
       getSuggestionData(project = project, extensionsData = it, activeProductCode = activeProductCode, fileType = fileType)
     }
 }
 
-private fun getSuggestionData(
+private suspend fun getSuggestionData(
   project: Project,
   extensionsData: PluginAdvertiserExtensionsData,
   activeProductCode: String,
   fileType: FileType,
 ): PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion? {
   val marketplaceRequests = MarketplaceRequests.getInstance()
-  val jbPluginsIds: Set<PluginId> = if (!ApplicationManager.getApplication().isUnitTestMode) {
-    marketplaceRequests.loadCachedJBPlugins() ?: return null
+  val jbPluginsIds: Set<PluginId> = if (ApplicationManager.getApplication().isUnitTestMode) {
+    emptySet()
   }
   else {
-    emptySet()
+    marketplaceRequests.loadCachedJBPlugins() ?: return null
   }
 
   val ideExtensions = marketplaceRequests.extensionsForIdes ?: return null
@@ -246,12 +252,15 @@ private fun getSuggestionData(
 
   val hasBundledPlugin = getBundledPluginToInstall(dataSet).isNotEmpty()
   val suggestedIdes = if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
-    getSuggestedIdes(activeProductCode, extensionOrFileName, ideExtensions).ifEmpty {
+    getSuggestedIdes(activeProductCode = activeProductCode,
+                     extensionOrFileName = extensionOrFileName,
+                     ideExtensions = ideExtensions).ifEmpty {
       if (hasBundledPlugin && !isIgnoreIdeSuggestion) listOf(PluginAdvertiserService.ideaUltimate) else emptyList()
     }
   }
-  else
+  else {
     emptyList()
+  }
 
   return PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion(project, extensionOrFileName, dataSet, jbPluginsIds, suggestedIdes)
 }

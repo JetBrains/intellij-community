@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -33,7 +33,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   private static final AtomicInteger myUniqueName = new AtomicInteger(1);
   private boolean myDoNotStore;
 
-  public UnknownRunConfiguration(@NotNull final ConfigurationFactory factory, @NotNull final Project project) {
+  public UnknownRunConfiguration(final @NotNull ConfigurationFactory factory, final @NotNull Project project) {
     myFactory = factory;
     myProject = project;
   }
@@ -43,8 +43,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   }
 
   @Override
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
@@ -58,13 +57,12 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   }
 
   @Override
-  public void setName(@NotNull final String name) {
+  public void setName(final @NotNull String name) {
     myName = name;
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new UnknownSettingsEditor();
   }
 
@@ -84,22 +82,20 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) throws ExecutionException {
     @NlsSafe String factoryName = getConfigurationTypeId();
     throw new ExecutionException(ExecutionBundle.message("dialog.message.unknown.run.configuration.type", factoryName, StringUtil.isEmpty(factoryName) ? 0 : 1));
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     if (myName == null) {
       myName = String.format("Unknown%s", myUniqueName.getAndAdd(1));
     }
     return myName;
   }
 
-  @Nullable
-  private String getConfigurationTypeId() {
+  private @Nullable String getConfigurationTypeId() {
     if (myStoredElement != null) {
       return myStoredElement.getAttributeValue("type");
     }
@@ -114,10 +110,9 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
                                                                                         typeId);
       if (plugin != null) {
         RuntimeConfigurationError err = new RuntimeConfigurationError(
-          ExecutionBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.getDisplayName()));
+          ExecutionBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.displayName));
         err.setQuickFix(() -> {
-          PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null,
-                                                                                         plugin.getPluginData().getPluginIdString());
+          PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null, plugin.pluginData.pluginIdString);
         });
         throw err;
       }
@@ -126,12 +121,12 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   }
 
   @Override
-  public void readExternal(@NotNull final Element element) throws InvalidDataException {
+  public void readExternal(final @NotNull Element element) throws InvalidDataException {
     myStoredElement = JDOMUtil.internElement(element);
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     if (myStoredElement != null) {
       for (Attribute a : myStoredElement.getAttributes()) {
         element.setAttribute(a.getName(), a.getValue());
@@ -154,16 +149,15 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
     }
 
     @Override
-    protected void resetEditorFrom(@NotNull final UnknownRunConfiguration s) {
+    protected void resetEditorFrom(final @NotNull UnknownRunConfiguration s) {
     }
 
     @Override
-    protected void applyEditorTo(@NotNull final UnknownRunConfiguration s) {
+    protected void applyEditorTo(final @NotNull UnknownRunConfiguration s) {
     }
 
     @Override
-    @NotNull
-    protected JComponent createEditor() {
+    protected @NotNull JComponent createEditor() {
       return myPanel;
     }
   }
