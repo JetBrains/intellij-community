@@ -553,16 +553,6 @@
     <action id="CopyKotlinProjectInformation" class="org.jetbrains.kotlin.idea.actions.internal.CopyKotlinProjectOverviewAction">
     </action>
 
-    <group id="ConvertJavaToKotlinGroup">
-      <separator/>
-      <action id="ConvertJavaToKotlin" class="org.jetbrains.kotlin.idea.actions.JavaToKotlinAction">
-        <keyboard-shortcut keymap="$default" first-keystroke="control alt shift K"/>
-      </action>
-      <add-to-group group-id="CodeMenu" anchor="last"/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
-    </group>
-
     <action id="KotlinCodeMigration" class="org.jetbrains.kotlin.idea.migration.CodeMigrationAction">
       <!-- TODO: Not assigned to any group because there should be a panel for filling migration options -->
     </action>
