@@ -417,7 +417,23 @@
 
     "OnePixelDivider.background": "Grey3",
 
-    "Plugins.SectionHeader.background": "Grey3",
+    "Plugins": {
+      "SectionHeader.background": "Grey3",
+      "Button": {
+        "installFillForeground": "Grey14",
+        "installFillBackground": "Green5",
+        "installBorderColor": "Green5",
+        "installForeground": "Green7",
+        "updateBackground": "Blue5",
+        "updateBorderColor": "Blue5",
+        "updateForeground": "Grey14"
+      },
+      "tagForeground": "Grey9",
+      "tagBackground": "Grey4",
+      "paidTagBackground": "Blue2",
+      "trialTagBackground": "Green3",
+      "eapTagBackground": "Red3"
+    },
 
     "Popup": {
       "borderWidth": 1,

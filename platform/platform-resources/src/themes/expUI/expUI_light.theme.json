@@ -442,7 +442,21 @@
 
     "Plugins": {
       "background": "Grey14",
-      "SearchField.background": "Grey14"
+      "SearchField.background": "Grey14",
+      "Button": {
+        "installFillForeground": "Grey14",
+        "installFillBackground": "Green6",
+        "installBorderColor": "Green6",
+        "installForeground": "Green4",
+        "updateBackground": "Blue4",
+        "updateBorderColor": "Blue4",
+        "updateForeground": "Grey14"
+      },
+      "tagForeground": "Grey6",
+      "tagBackground": "Grey12",
+      "paidTagBackground": "Teal7",
+      "trialTagBackground": "Green9",
+      "eapTagBackground": "Red9"
     },
 
     "Popup": {
