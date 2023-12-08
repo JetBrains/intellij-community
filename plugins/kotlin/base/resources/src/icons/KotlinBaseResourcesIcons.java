@@ -26,6 +26,7 @@ public final class KotlinBaseResourcesIcons {
   /** 16x16 */ public static final @NotNull Icon Field_value = load("org/jetbrains/kotlin/idea/icons/field_value.svg", 2009637888, 0);
   /** 16x16 */ public static final @NotNull Icon Field_variable = load("org/jetbrains/kotlin/idea/icons/field_variable.svg", 2129703570, 0);
   /** 16x16 */ public static final @NotNull Icon Fir = load("org/jetbrains/kotlin/idea/icons/fir.svg", 352888378, 0);
+  /** 16x16 */ public static final @NotNull Icon Fir_xmas = load("org/jetbrains/kotlin/idea/icons/fir_xmas.svg", 833016773, 0);
   /** 16x16 */ public static final @NotNull Icon InterfaceKotlin = load("org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg", -1253463148, 1);
   /** 16x16 */ public static final @NotNull Icon Kotlin = load("org/jetbrains/kotlin/idea/icons/kotlin.svg", 684582806, 0);
   /** 13x13 */ public static final @NotNull Icon Kotlin13 = load("org/jetbrains/kotlin/idea/icons/kotlin13.svg", -767022652, 0);

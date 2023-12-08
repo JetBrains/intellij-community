@@ -1,0 +1,22 @@
+<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+    <g>
+        <title>Layer 1</title>
+        <g transform="scale(0.74 0.74) translate(2.85 5.6)">
+            <path id="svg_2" d="m1.85687,6.43906l6.5,-6.8125l6.5,6.8125l-13,0z" fill="#007f00"/>
+            <rect id="svg_9" height="3.6875" width="3.125" y="13" x="6.375" fill="#7f3f00"/>
+            <rect id="svg_10" height="0" width="0.0625" y="15.1875" x="27.8125" fill="#7f3f00"/>
+            <path id="svg_12" d="m1.60687,10.50156l6.5,-6.8125l6.5,6.8125l-13,0z" fill="#007f00"/>
+            <path id="svg_13" d="m1.60687,14.50156l6.5,-6.8125l6.5,6.8125l-13,0z" fill="#007f00"/>
+            <circle cx="6.0" cy="4.0" r="1.0" fill="#f300f3"/>
+            <circle cx="10.2" cy="7.5" r="1.0" fill="#f30000"/>
+            <circle cx="4.5" cy="10.5" r="1.0" fill="#7ff300"/>
+            <circle cx="13.5" cy="12.5" r="1.0" fill="#0000f3"/>
+            <circle cx="2.5" cy="14.5" r="1.0" fill="#f37f00"/>
+        </g>
+        <g transform="scale(0.1 0.1) translate(56 -3)">
+            <polygon style="fill:#EFCE4A" points="26.934,1.318 35.256,18.182 53.867,20.887 40.4,34.013 43.579,52.549 26.934,43.798
+	10.288,52.549 13.467,34.013 0,20.887 18.611,18.182 "/>
+        </g>
+    </g>
+</svg>
