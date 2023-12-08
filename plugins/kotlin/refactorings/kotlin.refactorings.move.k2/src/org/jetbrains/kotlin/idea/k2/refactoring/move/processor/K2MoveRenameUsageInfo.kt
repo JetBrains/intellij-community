@@ -365,9 +365,7 @@ sealed class K2MoveRenameUsageInfo(
                 newDecl?.fqName?.proximityTo(fileFqn)
             }
             sortedElements.forEach { qualifiedElem ->
-                analyze(file) {
-                    shortenReferences(qualifiedElem as KtElement)
-                }
+                shortenReferences(qualifiedElem as KtElement)
             }
         }
     }
