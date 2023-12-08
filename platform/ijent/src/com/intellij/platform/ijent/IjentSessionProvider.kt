@@ -230,7 +230,7 @@ private suspend fun bootstrapOverShellSession(
     // There are two arguments in `uname` that can show the process architecture: `-m` and `-p`. According to `man uname`, `-p` is more
     // verbose, and that information may be sufficient for choosing the right binary.
     // https://man.freebsd.org/cgi/man.cgi?query=uname&sektion=1
-    outputStream.write("set -ex; echo $boundary; uname -p\n".toByteArray())
+    outputStream.write("set -ex; echo $boundary; uname -pm\n".toByteArray())
     outputStream.flush()
 
     do {
@@ -240,11 +240,11 @@ private suspend fun bootstrapOverShellSession(
     while (line != boundary);
 
     readLineWithoutBuffering(inputStream, tracingLabel = "stdout")
-  }
+  }.split(" ")
 
-  val targetPlatform = when (arch) {
-    "x86_64" -> IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
-    "aarch64" -> IjentExecFileProvider.SupportedPlatform.AARCH64__LINUX
+  val targetPlatform = when  {
+    "x86_64" in arch -> IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
+    "aarch64" in arch -> IjentExecFileProvider.SupportedPlatform.AARCH64__LINUX
     else -> error("No binary for architecture $arch")  // TODO Some good exception class with an error message in UI.
   }
 
