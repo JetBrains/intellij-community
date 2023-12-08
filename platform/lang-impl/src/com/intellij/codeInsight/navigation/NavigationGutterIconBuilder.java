@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.lang.annotation.Annotation;
@@ -26,8 +27,6 @@ import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ElementPresentationManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -58,16 +58,8 @@ public class NavigationGutterIconBuilder<T> {
   private @PopupTitle String myTooltipTitle;
   protected GutterIconRenderer.Alignment myAlignment = GutterIconRenderer.Alignment.CENTER;
   private Computable<PsiElementListCellRenderer<?>> myCellRenderer;
-  private @NotNull NullableFunction<? super T, String> myNamer = ElementPresentationManager.namer();
+  private @NotNull Function<? super T, String> myNamer = obj -> TypePresentationService.getService().getObjectName(obj);
   private final NotNullFunction<? super T, ? extends Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
-  public static final NotNullFunction<DomElement, Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR =
-    o -> ContainerUtil.createMaybeSingletonList(o.getXmlElement());
-  public static final NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>> DOM_GOTO_RELATED_ITEM_PROVIDER = dom -> {
-    if (dom.getXmlElement() != null) {
-      return List.of(new DomGotoRelatedItem(dom));
-    }
-    return Collections.emptyList();
-  };
   protected static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER =
     dom -> List.of(new GotoRelatedItem(dom, InspectionsBundle.message("xml.goto.group")));
   private @NotNull Supplier<? extends PsiTargetPresentationRenderer<PsiElement>> myTargetRenderer;
@@ -264,7 +256,7 @@ public class NavigationGutterIconBuilder<T> {
     if (myTooltipText == null && !myLazy) {
       final SortedSet<String> names = new TreeSet<>();
       for (T t : myTargets.getValue()) {
-        final String text = myNamer.fun(t);
+        final String text = myNamer.apply(t);
         if (text != null) {
           names.add(newUI ? text : MessageFormat.format(PATTERN, text));
         }
