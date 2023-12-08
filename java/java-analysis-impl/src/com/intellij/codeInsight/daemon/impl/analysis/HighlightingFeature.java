@@ -121,6 +121,7 @@ public enum HighlightingFeature {
   }
 
   boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+    useSiteLevel = useSiteLevel.getSupportedLevel();
     return useSiteLevel.isAtLeast(level) &&
            (!level.isPreview() || useSiteLevel.isPreview());
   }
@@ -128,6 +129,7 @@ public enum HighlightingFeature {
   boolean isLimited() {
     return false;
   }
+
   /**
    * Override if feature was preview and then accepted as standard
    */

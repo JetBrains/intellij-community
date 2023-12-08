@@ -37,7 +37,7 @@ public class JavaElementFactoryTest extends LightJavaCodeInsightFixtureTestCase 
 
   public void testArrayClassLanguageLevel() {
     for (LanguageLevel level : LanguageLevel.values()) {
-      assertEquals(level, PsiUtil.getLanguageLevel(myFactory.getArrayClass(level)));
+      assertEquals(level, PsiUtil.getDeclaredLanguageLevel(myFactory.getArrayClass(level)));
     }
   }
 }

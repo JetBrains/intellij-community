@@ -16,6 +16,7 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,7 +56,7 @@ public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
       if (anonymousClass instanceof PsiEnumConstantInitializer) {
         return;
       }
-      if (PsiUtil.isLanguageLevel18OrHigher(anonymousClass) &&
+      if (PsiUtil.getDeclaredLanguageLevel(anonymousClass).isAtLeast(LanguageLevel.JDK_18) &&
           !InheritanceUtil.isInheritor(anonymousClass, CommonClassNames.JAVA_IO_SERIALIZABLE)) {
         // Since Java 18, non-serializable anonymous classes don't capture 'this' reference
         return;

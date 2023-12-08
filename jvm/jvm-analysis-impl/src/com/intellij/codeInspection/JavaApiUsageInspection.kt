@@ -167,7 +167,10 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val sourcePsi = sourceNode.sourcePsi ?: return
       if (target !is PsiMember) return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
-      val languageLevel = getEffectiveLanguageLevel(module)
+      var languageLevel = getEffectiveLanguageLevel(module)
+      if (languageLevel.isUnsupported) {
+        languageLevel = languageLevel.nonPreviewLevel
+      }
       val lastIncompatibleLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(target, languageLevel)
       if (lastIncompatibleLevel != null) {
         if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return

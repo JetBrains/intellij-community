@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -94,7 +95,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
         }
         if (runnableExpr instanceof PsiNewExpression newExpression) {
           if (newExpression.getAnonymousClass() != null) {
-            if (PsiUtil.isLanguageLevel18OrHigher(trackedClass)) {
+            if (PsiUtil.getDeclaredLanguageLevel(trackedClass).isAtLeast(LanguageLevel.JDK_18)) {
               PsiElement elementCapturingThis = getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass);
               if (elementCapturingThis != null) {
                 return elementCapturingThis;
@@ -109,7 +110,8 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           if (aClass == null) return null;
           if (aClass.getContainingClass() != trackedClass) return null;
           if (aClass.hasModifierProperty(PsiModifier.STATIC)) return null;
-          if (PsiUtil.isLanguageLevel18OrHigher(trackedClass) && getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass) == null) return null;
+          if (PsiUtil.getDeclaredLanguageLevel(trackedClass).isAtLeast(LanguageLevel.JDK_18) && 
+              getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass) == null) return null;
           return classReference;
         }
         return null;

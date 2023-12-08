@@ -28,7 +28,13 @@ public enum LanguageLevel {
   JDK_20(20), JDK_20_PREVIEW(20),
   JDK_21(21), JDK_21_PREVIEW(21),
   JDK_22(22), JDK_22_PREVIEW(22),
-  JDK_X(23);
+  JDK_X(23),
+  
+  // Unsupported in IDE
+  JDK_17_PREVIEW(17),
+  JDK_18_PREVIEW(18),
+  JDK_19_PREVIEW(19),
+  ;
 
   public static final LanguageLevel HIGHEST = JDK_21;
 

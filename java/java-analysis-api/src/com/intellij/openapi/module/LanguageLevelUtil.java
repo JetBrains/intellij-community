@@ -25,13 +25,20 @@ import static com.intellij.reference.SoftReference.dereference;
 
 public final class LanguageLevelUtil {
   /**
-   * Returns explicitly specified custom language level for {@code module}, or {@code null} if the module uses 'Project default' language level
+   * Returns explicitly specified custom language level for {@code module}, or {@code null} if the module uses 'Project default' language level.
+   * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
+   * @param module to get the language level for.
    */
   public static @Nullable LanguageLevel getCustomLanguageLevel(@NotNull Module module) {
     LanguageLevelModuleExtension moduleExtension = ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
     return moduleExtension != null ? moduleExtension.getLanguageLevel() : null;
   }
 
+  /**
+   * Returns effective language level for the module (either custom module level, or project level if module level is not specified).
+   * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
+   * @param module to get the language level for.
+   */
   @NotNull
   public static LanguageLevel getEffectiveLanguageLevel(@NotNull final Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -73,7 +80,7 @@ public final class LanguageLevelUtil {
 
   @Nullable
   public static String getShortMessage(@NotNull LanguageLevel languageLevel) {
-    return ourPresentableShortMessage.get(languageLevel);
+    return ourPresentableShortMessage.get(languageLevel.getSupportedLevel());
   }
 
   /**
@@ -136,7 +143,9 @@ public final class LanguageLevelUtil {
     if (forbiddenApi == null) return null;
     if (forbiddenApi.contains(signature)) return languageLevel;
     if (languageLevel.compareTo(LanguageLevel.HIGHEST) == 0) return null;
-    LanguageLevel nextLanguageLevel = LanguageLevel.values()[languageLevel.ordinal() + 1];
+    LanguageLevel[] values = LanguageLevel.values();
+    if (languageLevel.ordinal() == values.length - 1) return null;
+    LanguageLevel nextLanguageLevel = values[languageLevel.ordinal() + 1];
     return getLastIncompatibleLanguageLevelForSignature(signature, nextLanguageLevel);
   }
 

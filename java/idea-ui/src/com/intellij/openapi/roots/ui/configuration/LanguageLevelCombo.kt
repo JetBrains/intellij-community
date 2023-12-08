@@ -11,12 +11,16 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.ui.ColoredText
 import com.intellij.ui.GroupedComboBoxRenderer
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.DefaultComboBoxModel
 
+@OptIn(ExperimentalStdlibApi::class)
 abstract class LanguageLevelCombo @JvmOverloads constructor(
   defaultItem: @Nls String?,
   // It could be an open method but since we use it in constructor we have a leaking this problem
@@ -37,13 +41,22 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
     val otherItems = items.filterAndAdd(buildList {
       LanguageLevel.entries
         .sortedBy { it.toJavaVersion().feature }
-        .filter { level: LanguageLevel -> level <= highestWithPreview && (level.isPreview || !ArrayUtil.contains(level, *LTS)) }
+        .filter { level: LanguageLevel -> level <= highestWithPreview && !level.isUnsupported && 
+                                          (level.isPreview || !ArrayUtil.contains(level, *LTS)) }
         .forEach { level: LanguageLevel -> add(level) }
     })
 
     val experimentalItems = items.filterAndAdd(buildList {
       for (level in LanguageLevel.entries) {
-        if (level > highestWithPreview) {
+        if (level > highestWithPreview && !level.isUnsupported) {
+          add(level)
+        }
+      }
+    })
+    
+    val unsupportedItems = items.filterAndAdd(buildList {
+      for (level in LanguageLevel.entries) {
+        if (level.isUnsupported) {
           add(level)
         }
       }
@@ -52,7 +65,8 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
     val separatorsMap: Map<Any?, ListSeparator> = listOf(
       ltsItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.lts.versions")),
       otherItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.other.versions")),
-      experimentalItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.experimental.versions"))
+      experimentalItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.experimental.versions")),
+      unsupportedItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.unsupported.versions")),
     ).filter { it.first != null }.toMap()
 
     isSwingPopup = false
@@ -62,6 +76,14 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
         is String -> item
         is LanguageLevel -> item.presentableText
         else -> ""
+      }
+
+      override fun customize(item: SimpleColoredComponent, value: Any, index: Int, isSelected: Boolean, cellHasFocus: Boolean) {
+        if (value is LanguageLevel && value.isUnsupported) {
+          item.append(ColoredText.singleFragment(value.presentableText, SimpleTextAttributes.ERROR_ATTRIBUTES))
+        } else {
+          super.customize(item, value, index, isSelected, cellHasFocus)
+        }
       }
 
       override fun separatorFor(value: Any): ListSeparator? = separatorsMap[value]

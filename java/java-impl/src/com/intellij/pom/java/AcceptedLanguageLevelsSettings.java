@@ -63,25 +63,38 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
         showNotificationToAccept(project, unacceptedLevels, level);
       }
     }
-    if (!previewLevels.isEmpty() && !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
+    if (!previewLevels.isEmpty()) {
       LanguageLevel languageLevel = previewLevels.first();
       if (languageLevel == LanguageLevel.JDK_X) {
         return;
       }
 
       int previewFeature = languageLevel.toJavaVersion().feature;
-      PREVIEW_NOTIFICATION_GROUP.createNotification(
-          JavaBundle.message("java.preview.features.notification.title"),
-          JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
-          NotificationType.WARNING)
-        .addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-            PropertiesComponent.getInstance(project).setValue(IGNORE_USED_PREVIEW_FEATURES, true);
-            notification.expire();
-          }
-        })
-        .notify(project);
+      if (languageLevel.isUnsupported()) {
+        LanguageLevel supportedLevel = languageLevel.getSupportedLevel();
+        String supportedLevelPresentation = supportedLevel.isPreview()
+                                            ? JavaBundle.message("java.preview.level", supportedLevel.toJavaVersion().feature)
+                                            : String.valueOf(supportedLevel.toJavaVersion().feature);
+        PREVIEW_NOTIFICATION_GROUP.createNotification(
+            JavaBundle.message("java.preview.features.unsupported.title"),
+            JavaBundle.message("java.preview.features.unsupported", previewFeature, supportedLevelPresentation),
+            NotificationType.ERROR)
+          .notify(project);
+      }
+      else if (!PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
+        PREVIEW_NOTIFICATION_GROUP.createNotification(
+            JavaBundle.message("java.preview.features.notification.title"),
+            JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
+            NotificationType.WARNING)
+          .addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+              PropertiesComponent.getInstance(project).setValue(IGNORE_USED_PREVIEW_FEATURES, true);
+              notification.expire();
+            }
+          })
+          .notify(project);
+      }
     }
   }
 
