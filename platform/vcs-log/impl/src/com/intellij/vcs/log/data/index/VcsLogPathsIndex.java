@@ -297,12 +297,16 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
     @Override
     public int getHashCode(@NotNull LightFilePath path) {
-      return path.hashCode();
+      return 31 * myRootsReversed.getInt(path.getRoot()) + path.getRelativePath().hashCode();
     }
 
     @Override
     public boolean isEqual(@Nullable LightFilePath path1, @Nullable LightFilePath path2) {
-      return Objects.equals(path1, path2);
+      if (path1 == null || path2 == null) {
+        return path1 == path2;
+      }
+      return myRootsReversed.getInt(path1.getRoot()) == myRootsReversed.getInt(path2.getRoot()) &&
+             path1.getRelativePath().equals(path2.getRelativePath());
     }
 
     @Override

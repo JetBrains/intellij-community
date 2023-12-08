@@ -336,7 +336,7 @@ internal class PhmVcsLogStorageBackend(
 
     @NonNls
     private const val INDEX = "index"
-    private const val VERSION = 1
+    private const val VERSION = 2
 
     @Throws(IOException::class)
     @JvmStatic
