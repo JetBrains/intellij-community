@@ -7,13 +7,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
 
 import java.util.ArrayList;
@@ -24,6 +24,10 @@ import java.util.List;
  * @author gregsh
  */
 public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
+
+  private record LogItem(@NotNull String text, @Nullable Integer row, @Nullable Integer column) {
+  }
+
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8;
@@ -171,19 +175,19 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             r.run();
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.RuntimeException: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 0\n", null, null),
-      Trinity.create("\tat SomeClass$Inner.run(SomeClass.java:12)\n", 12, 15),
-      Trinity.create("\tat SomeClass$1X$1.run(SomeClass.java:27)\n", 27, 19),
-      Trinity.create("\tat SomeClass$1X.run(SomeClass.java:29)\n", 29, 11),
-      Trinity.create("\tat SomeClass.lambda$main$0(SomeClass.java:32)\n", 32, 32),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:33)\n", 33, 7),
-      Trinity.create("Caused by: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 0\n", null, null),
-      Trinity.create("\tat SomeClass.<init>(SomeClass.java:4)\n", 4, 37),
-      Trinity.create("\tat SomeClass$1.<init>(SomeClass.java:18)\n", 18, 9),
-      Trinity.create("\tat SomeClass.test(SomeClass.java:18)\n", 18, 9),
-      Trinity.create("\tat SomeClass.access$000(SomeClass.java:2)\n", 2, 1),
-      Trinity.create("\tat SomeClass$Inner.run(SomeClass.java:10)\n", 10, 54));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.RuntimeException: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 0\n", null, null),
+      new LogItem("\tat SomeClass$Inner.run(SomeClass.java:12)\n", 12, 15),
+      new LogItem("\tat SomeClass$1X$1.run(SomeClass.java:27)\n", 27, 19),
+      new LogItem("\tat SomeClass$1X.run(SomeClass.java:29)\n", 29, 11),
+      new LogItem("\tat SomeClass.lambda$main$0(SomeClass.java:32)\n", 32, 32),
+      new LogItem("\tat SomeClass.main(SomeClass.java:33)\n", 33, 7),
+      new LogItem("Caused by: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 0\n", null, null),
+      new LogItem("\tat SomeClass.<init>(SomeClass.java:4)\n", 4, 37),
+      new LogItem("\tat SomeClass$1.<init>(SomeClass.java:18)\n", 18, 9),
+      new LogItem("\tat SomeClass.test(SomeClass.java:18)\n", 18, 9),
+      new LogItem("\tat SomeClass.access$000(SomeClass.java:2)\n", 2, 1),
+      new LogItem("\tat SomeClass$Inner.run(SomeClass.java:10)\n", 10, 54));
     checkColumnFinder(classText, traceAndPositions);
   }
   
@@ -196,9 +200,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             assert false;
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.AssertionError\n", null, null),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:4)\n", 4, 5));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.AssertionError\n", null, null),
+      new LogItem("\tat SomeClass.main(SomeClass.java:4)\n", 4, 5));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -213,24 +217,24 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             1;
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ArrayStoreException: java.lang.Integer\n", null, null),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:6)\n", 6, 5));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ArrayStoreException: java.lang.Integer\n", null, null),
+      new LogItem("\tat SomeClass.main(SomeClass.java:6)\n", 6, 5));
     checkColumnFinder(classText, traceAndPositions);
   }
 
   public void testArrayIndexFilter() {
     @Language("JAVA") String classText =
       """
-        class Test {
+        final class Test {
           public static void main(String[] args) {
             System.out.println(args[0] + args[1]);
           }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ArrayIndexOutOfBoundsException: 0\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:3)\n", 3, 29));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ArrayIndexOutOfBoundsException: 0\n", null, null),
+      new LogItem("\tat Test.main(Test.java:3)\n", 3, 29));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -249,9 +253,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
           }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.lang.Integer\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:9)\n", 9, 56));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.lang.Integer\n", null, null),
+      new LogItem("\tat Test.main(Test.java:9)\n", 9, 56));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -276,9 +280,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
              }
          }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.lang.Integer\n", null, null),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:14)\n", 14, 34));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.lang.Integer\n", null, null),
+      new LogItem("\tat SomeClass.main(SomeClass.java:14)\n", 14, 34));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -302,11 +306,11 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
           }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.lang.Number" +
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.lang.Number" +
                      " (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\n", null, null),
-      Trinity.create("\tat Test.test(Test.java:7)\n", 7, 40),
-      Trinity.create("\tat Test.main(Test.java:14)\n", 14, 5));
+      new LogItem("\tat Test.test(Test.java:7)\n", 7, 40),
+      new LogItem("\tat Test.main(Test.java:14)\n", 14, 5));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -336,11 +340,11 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.lang.Number" +
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.lang.Number" +
                      " (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\n", null, null),
-      Trinity.create("\tat SomeClass.test(SomeClass.java:12)\n", 12, 25),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:20)\n", 20, 9));
+      new LogItem("\tat SomeClass.test(SomeClass.java:12)\n", 12, 25),
+      new LogItem("\tat SomeClass.main(SomeClass.java:20)\n", 20, 9));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -357,9 +361,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
           }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.util.RandomAccess\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:7)\n", 7, 59));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.util.RandomAccess\n", null, null),
+      new LogItem("\tat Test.main(Test.java:7)\n", 7, 59));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -378,9 +382,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.util.RandomAccess\n", null, null),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:7)\n", 7, 28));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ClassCastException: class java.lang.String cannot be cast to class java.util.RandomAccess\n", null, null),
+      new LogItem("\tat SomeClass.main(SomeClass.java:7)\n", 7, 28));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -403,10 +407,10 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
           }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ClassCastException: java.lang.Integer cannot be cast to java.lang.CharSequence\n", null, null),
-      Trinity.create("\tat Test.foo(Test.java:13)\n", 13, 29),
-      Trinity.create("\tat Test.main(Test.java:9)\n", 9, 5));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ClassCastException: java.lang.Integer cannot be cast to java.lang.CharSequence\n", null, null),
+      new LogItem("\tat Test.foo(Test.java:13)\n", 13, 29),
+      new LogItem("\tat Test.main(Test.java:9)\n", 9, 5));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -421,9 +425,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
           }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ClassCastException: java.lang.Integer cannot be cast to java.lang.Long\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 41));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ClassCastException: java.lang.Integer cannot be cast to java.lang.Long\n", null, null),
+      new LogItem("\tat Test.main(Test.java:5)\n", 5, 41));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -438,9 +442,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
           }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ClassCastException: class [I cannot be cast to class [C\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 43));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ClassCastException: class [I cannot be cast to class [C\n", null, null),
+      new LogItem("\tat Test.main(Test.java:5)\n", 5, 43));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -455,9 +459,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
           }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ClassCastException: class [[I cannot be cast to class [[C\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 66));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ClassCastException: class [[I cannot be cast to class [[C\n", null, null),
+      new LogItem("\tat Test.main(Test.java:5)\n", 5, 66));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -471,9 +475,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             Object[] arr = new String[1][a], arr2 = new String[] {"foo"}, arr3 = new String[(2)][1];
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NegativeArraySizeException\n", null, null),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:5)\n", 5, 34));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NegativeArraySizeException\n", null, null),
+      new LogItem("\tat SomeClass.main(SomeClass.java:5)\n", 5, 34));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -490,9 +494,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                                 [a];
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NegativeArraySizeException\n", null, null),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:5)\n", 5, 23));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NegativeArraySizeException\n", null, null),
+      new LogItem("\tat SomeClass.main(SomeClass.java:5)\n", 5, 23));
     checkColumnFinder(classText, traceAndPositions);
   }
   
@@ -507,9 +511,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             double res = 1 / a / -2 + a / 2 + b / 0;
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ArithmeticException: / by zero\n", null, null),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:6)\n", 6, 22));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ArithmeticException: / by zero\n", null, null),
+      new LogItem("\tat SomeClass.main(SomeClass.java:6)\n", 6, 22));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -527,9 +531,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                         a / 2 + b / 0;
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ArithmeticException: / by zero\n", null, null),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:6)\n", 6, 29));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ArithmeticException: / by zero\n", null, null),
+      new LogItem("\tat SomeClass.main(SomeClass.java:6)\n", 6, 29));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -547,10 +551,10 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                                 srcPos, booleans, 1, 1);
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.ArrayIndexOutOfBoundsException: arraycopy: source index -1 out of bounds for object array[1]\n", null, null),
-      Trinity.create("\tat java.base/java.lang.System.arraycopy(Native Method)\n", null, null),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:7)\n", 7, 18));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.ArrayIndexOutOfBoundsException: arraycopy: source index -1 out of bounds for object array[1]\n", null, null),
+      new LogItem("\tat java.base/java.lang.System.arraycopy(Native Method)\n", null, null),
+      new LogItem("\tat SomeClass.main(SomeClass.java:7)\n", 7, 18));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -564,9 +568,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             System.out.println((x.toString().trim() + "xyz").toString());
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot invoke \"Object.toString()\" because \"x\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 25));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot invoke \"Object.toString()\" because \"x\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:5)\n", 5, 25));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -586,9 +590,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                         toString());
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot invoke \"Object.toString()\" because \"x\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:9)\n", 9, 25));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot invoke \"Object.toString()\" because \"x\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:9)\n", 9, 25));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -603,11 +607,11 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
 
           void callee(String x, String y, String z) {}
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.IllegalArgumentException: Argument for @NotNull parameter 'y' of foo/bar/Test.callee must not be null\n", null, null),
-      Trinity.create("\tat foo.bar.Test.$$$reportNull$$$0(Test.java)\n", null, null),
-      Trinity.create("\tat foo.bar.Test.callee(Test.java)\n", null, null),
-      Trinity.create("\tat foo.bar.Test.caller(Test.java:4)\n", 4, 15));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.IllegalArgumentException: Argument for @NotNull parameter 'y' of foo/bar/Test.callee must not be null\n", null, null),
+      new LogItem("\tat foo.bar.Test.$$$reportNull$$$0(Test.java)\n", null, null),
+      new LogItem("\tat foo.bar.Test.callee(Test.java)\n", null, null),
+      new LogItem("\tat foo.bar.Test.caller(Test.java:4)\n", 4, 15));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -621,9 +625,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             synchronized (x) { System.out.println(x.hashCode()); }
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot enter synchronized block because \"x\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 19));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot enter synchronized block because \"x\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:5)\n", 5, 19));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -641,9 +645,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                 { System.out.println(x.hashCode()); }
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot enter synchronized block because \"x\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 21));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot enter synchronized block because \"x\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:5)\n", 5, 21));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -657,9 +661,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             throw args.length == 0 ? x : new Error();
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot throw exception\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 11));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot throw exception\n", null, null),
+      new LogItem("\tat Test.main(Test.java:5)\n", 5, 11));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -675,9 +679,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                                 x;
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot throw exception\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 14));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot throw exception\n", null, null),
+      new LogItem("\tat Test.main(Test.java:5)\n", 5, 14));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -692,9 +696,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             arr2[0] = arr[0];
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot load from int array because \"arr\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:6)\n", 6, 15));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot load from int array because \"arr\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:6)\n", 6, 15));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -710,9 +714,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                                 [0];
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot load from int array because \"arr\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:6)\n", 6, 20));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot load from int array because \"arr\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:6)\n", 6, 20));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -727,9 +731,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             arr2[0] = arr[0];
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot store to int array because \"arr2\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:6)\n", 6, 5));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot store to int array because \"arr2\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:6)\n", 6, 5));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -748,9 +752,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                                 [0];
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot store to int array because \"arr2\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:6)\n", 6, 9));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot store to int array because \"arr2\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:6)\n", 6, 9));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -767,9 +771,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             test.length = test.length + arr.length;
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot read the array length because \"arr\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:8)\n", 8, 33));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot read the array length because \"arr\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:8)\n", 8, 33));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -788,9 +792,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                                 length;
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot read the array length because \"arr\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:8)\n", 8, 24));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot read the array length because \"arr\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:8)\n", 8, 24));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -807,9 +811,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             test.length = test.length + arr.length;
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot read field \"length\" because \"test\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:8)\n", 8, 19));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot read field \"length\" because \"test\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:8)\n", 8, 19));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -828,9 +832,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                         length + arr.length;
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot read field \"length\" because \"test\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:8)\n", 8, 23));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot read field \"length\" because \"test\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:8)\n", 8, 23));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -847,9 +851,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             test.length = test2.length + arr.length;
           }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot assign field \"length\" because \"test\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:8)\n", 8, 5));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot assign field \"length\" because \"test\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:8)\n", 8, 5));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -870,9 +874,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                          test2.length + arr.length;
              }
          }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot assign field \"length\" because \"test\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:8)\n", 8, 10));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException: Cannot assign field \"length\" because \"test\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:8)\n", 8, 10));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -888,9 +892,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             static Integer getIntegerData() { return Math.random() > 0.5 ? 1 : null; }
             static Long getLongData() { return Math.random() > 0.5 ? 1L : null; }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException: Cannot invoke \"java.lang.Integer.intValue()\" because the return value of \"MainTest.getIntegerData()\" is null\n", null, null),
-      Trinity.create("\tat MainTest.main(MainTest.java:4)\n", 4, 28));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException: Cannot invoke \"java.lang.Integer.intValue()\" because the return value of \"MainTest.getIntegerData()\" is null\n", null, null),
+      new LogItem("\tat MainTest.main(MainTest.java:4)\n", 4, 28));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -909,9 +913,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             static Integer getIntegerData() { return Math.random() > 0.5 ? 1 : null; }
             static Long getLongData() { return Math.random() > 0.5 ? 1L : null; }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException: Cannot invoke \"java.lang.Integer.intValue()\" because the return value of \"MainTest.getIntegerData()\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 17));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException: Cannot invoke \"java.lang.Integer.intValue()\" because the return value of \"MainTest.getIntegerData()\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:5)\n", 5, 17));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -927,9 +931,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             static Integer getIntegerData() { return Math.random() > 0.5 ? 1 : null; }
             static Long getLongData() { return Math.random() > 0.5 ? 1L : null; }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException: Cannot invoke \"java.lang.Long.longValue()\" because the return value of \"MainTest.getLongData()\" is null\n", null, null),
-      Trinity.create("\tat MainTest.main(MainTest.java:4)\n", 4, 47));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException: Cannot invoke \"java.lang.Long.longValue()\" because the return value of \"MainTest.getLongData()\" is null\n", null, null),
+      new LogItem("\tat MainTest.main(MainTest.java:4)\n", 4, 47));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -945,9 +949,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
             static Character[] arr = {null};
             static Double[] arr2 = {null};
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException: Cannot invoke \"java.lang.Character.charValue()\" because \"MainTest.arr[0]\" is null\n", null, null),
-      Trinity.create("\tat MainTest.main(MainTest.java:4)\n", 4, 28));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException: Cannot invoke \"java.lang.Character.charValue()\" because \"MainTest.arr[0]\" is null\n", null, null),
+      new LogItem("\tat MainTest.main(MainTest.java:4)\n", 4, 28));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -961,9 +965,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                 Runnable r = s::trim;
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException: Cannot invoke \"Object.getClass()\" because \"s\" is null\n", null, null),
-      Trinity.create("\tat MainTest.main(MainTest.java:5)\n", 5, 22));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException: Cannot invoke \"Object.getClass()\" because \"s\" is null\n", null, null),
+      new LogItem("\tat MainTest.main(MainTest.java:5)\n", 5, 22));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -979,9 +983,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                         trim;
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException: Cannot invoke \"Object.getClass()\" because \"s\" is null\n", null, null),
-      Trinity.create("\tat MainTest.main(MainTest.java:5)\n", 5, 22));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException: Cannot invoke \"Object.getClass()\" because \"s\" is null\n", null, null),
+      new LogItem("\tat MainTest.main(MainTest.java:5)\n", 5, 22));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -997,9 +1001,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
 
             class X{}
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException: Cannot invoke \"Object.getClass()\" because \"s\" is null\n", null, null),
-      Trinity.create("\tat MainTest.main(MainTest.java:5)\n", 5, 9));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException: Cannot invoke \"Object.getClass()\" because \"s\" is null\n", null, null),
+      new LogItem("\tat MainTest.main(MainTest.java:5)\n", 5, 9));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -1018,9 +1022,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
         
             class X{}
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException: Cannot invoke \"Object.getClass()\" because \"s\" is null\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 9));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException: Cannot invoke \"Object.getClass()\" because \"s\" is null\n", null, null),
+      new LogItem("\tat Test.main(Test.java:5)\n", 5, 9));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -1034,10 +1038,10 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                 switch(test) {}
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException\n", null, null),
-      Trinity.create("\tat java.base/java.util.Objects.requireNonNull(Objects.java:222)\n", null, null),
-      Trinity.create("\tat MainTest.main(MainTest.java:5)\n", 5, 16));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException\n", null, null),
+      new LogItem("\tat java.base/java.util.Objects.requireNonNull(Objects.java:222)\n", null, null),
+      new LogItem("\tat MainTest.main(MainTest.java:5)\n", 5, 16));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -1056,10 +1060,10 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                 {}
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException\n", null, null),
-      Trinity.create("\tat java.base/java.util.Objects.requireNonNull(Objects.java:222)\n", null, null),
-      Trinity.create("\tat MainTest.main(MainTest.java:6)\n", 6, 10));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("Exception in thread \"main\" java.lang.NullPointerException\n", null, null),
+      new LogItem("\tat java.base/java.util.Objects.requireNonNull(Objects.java:222)\n", null, null),
+      new LogItem("\tat MainTest.main(MainTest.java:6)\n", 6, 10));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -1076,9 +1080,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                 return Math.random() > 0.5 ? "foo" : null;
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException\n", null, null),
-      Trinity.create("\tat MainTest.main(MainTest.java:4)\n", 4, 20));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException\n", null, null),
+      new LogItem("\tat MainTest.main(MainTest.java:4)\n", 4, 20));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -1100,9 +1104,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                 return null;
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException\n", null, null),
-      Trinity.create("\tat MainTest.main(MainTest.java:9)\n", 9, 17));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException\n", null, null),
+      new LogItem("\tat MainTest.main(MainTest.java:9)\n", 9, 17));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -1123,9 +1127,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
         
             }
         }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:9)\n", 9, 20));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException\n", null, null),
+      new LogItem("\tat Test.main(Test.java:9)\n", 9, 20));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -1142,9 +1146,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                          [0];
              }
          }""";
-    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
-      Trinity.create("java.lang.NullPointerException\n", null, null),
-      Trinity.create("\tat Test.main(Test.java:7)\n", 7, 23));
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem("java.lang.NullPointerException\n", null, null),
+      new LogItem("\tat Test.main(Test.java:7)\n", 7, 23));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -1153,7 +1157,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
       """
         import java.util.stream.Collectors;
 
-        public class InternalFrames {
+        public final class InternalFrames {
           public static void main(String[] args) {
             Runnable r = () -> {
               String frames = StackWalker.getInstance(StackWalker.Option.SHOW_HIDDEN_FRAMES)
@@ -1164,10 +1168,10 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
           }
         }
         """;
-    List<Trinity<String, Integer, Integer>> traceAndPositions = List.of(
-      Trinity.create("\tat InternalFrames.lambda$main$2(InternalFrames.java:7)\n", 7, 1),
-      Trinity.create("\tat InternalFrames$$Lambda$14/0x0000000800c01200.run(Unknown Source)\n", null, null),
-      Trinity.create("\tat InternalFrames.main(InternalFrames.java:10)\n", 10, 7));
+    List<LogItem> traceAndPositions = List.of(
+      new LogItem("\tat InternalFrames.lambda$main$2(InternalFrames.java:7)\n", 7, 1),
+      new LogItem("\tat InternalFrames$$Lambda$14/0x0000000800c01200.run(Unknown Source)\n", null, null),
+      new LogItem("\tat InternalFrames.main(InternalFrames.java:10)\n", 10, 7));
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -1185,9 +1189,61 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
              }
          }""";
 
-    List<Trinity<String, Integer, Integer>> traceAndPositions = List.of(
-      Trinity.create("|   enqueue(2) at Test.main(Test.kt:6)    |    |", 6, 1),
-      Trinity.create("|     <init>(2) at Test.main(Test.kt:7)    |    |", 7, 1));
+    List<LogItem> traceAndPositions = List.of(
+      new LogItem("|   enqueue(2) at Test.main(Test.kt:6)    |    |", 6, 1),
+      new LogItem("|     <init>(2) at Test.main(Test.kt:7)    |    |", 7, 1));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  public void testVarHandle() {
+    myFixture.addClass("""
+                         package java.lang.invoke;
+                                                  
+                         interface VarHandle{
+                          void set(Object... objects);
+                         }
+                         """);
+    @Language("JAVA") String classText =
+      """
+        import java.lang.foreign.Arena;
+        import java.lang.foreign.MemoryLayout;
+        import java.lang.foreign.MemorySegment;
+        import java.lang.invoke.VarHandle;
+               
+        import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+               
+        final class SomeClass {
+            public static void main(String[] args) {
+                var layout = MemoryLayout.structLayout(
+                        MemoryLayout.sequenceLayout(
+                                64,
+                                JAVA_BYTE
+                        ).withName("c"),
+                        JAVA_BYTE.withName("b"),
+                        JAVA_BYTE.withName("a")
+                ).withName("b");
+               
+                VarHandle flags = layout.varHandle(
+                        MemoryLayout.PathElement.groupElement("a")
+                );
+               
+                try (Arena arena = Arena.ofConfined()) {
+                    MemorySegment memorySegment = arena.allocate(layout);
+                    flags.set(memorySegment, 0x1);
+                    System.out.println(flags.get(memorySegment));
+                }
+            }
+        }
+        """;
+
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem(
+        "Exception in thread \"main\" java.lang.invoke.WrongMethodTypeException: cannot convert MethodHandle(VarHandle,MemorySegment,byte)void to (VarHandle,MemorySegment,int)void\n",
+        null, null),
+      new LogItem("\tat java.base/java.lang.invoke.MethodHandle.asTypeUncached(MethodHandle.java:20)\n", null, null),
+      new LogItem("\tat java.base/java.lang.invoke.MethodHandle.asType(MethodHandle.java:20)\n", null, null),
+      new LogItem("\tat SomeClass.main(Reflect.java:25)\n", 25, 19));
+
     checkColumnFinder(classText, traceAndPositions);
   }
 
@@ -1198,16 +1254,16 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals("java.lang.AssertionError", info.getExceptionClassName());
   }
 
-  private void checkColumnFinder(String classText, List<Trinity<String, Integer, Integer>> traceAndPositions) {
+  private void checkColumnFinder(String classText, List<LogItem> traceAndPositions) {
     myFixture.configureByText("SomeClass.java", classText);
     Editor editor = myFixture.getEditor();
     assertEquals(classText, editor.getDocument().getText());
     ExceptionFilter filter = new ExceptionFilter(myFixture.getFile().getResolveScope());
-    for (Trinity<String, Integer, Integer> line : traceAndPositions) {
-      String stackLine = line.getFirst();
+    for (LogItem line : traceAndPositions) {
+      String stackLine = line.text();
       Filter.Result result = filter.applyFilter(stackLine, stackLine.length());
-      Integer row = line.getSecond();
-      Integer column = line.getThird();
+      Integer row = line.row();
+      Integer column = line.column();
       if (row != null) {
         assertNotNull(result);
         HyperlinkInfo info = result.getFirstHyperlinkInfo();
