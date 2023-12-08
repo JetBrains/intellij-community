@@ -112,7 +112,7 @@
       <option name="ScrollBar.Mac.Transparent.thumbBorderColor" value="00000000"/>
       <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="8080801A"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="00000080"/>
-      <option name="ScrollBar.Mac.Transparent.TransparentThumbColor" value="00000080"/>
+      <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="00000080"/>
       <option name="Scrollbar.Tabs.TransparentThumbColor" value="ABABAB00"/>
       <option name="Scrollbar.Tabs.ThumbColor" value="ABABABFF"/>
       <option name="ActionButton.hoverBackground" value="dfdfdf"/>
