@@ -28,7 +28,6 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.render.RenderingUtil
@@ -70,12 +69,13 @@ internal class RecentProjectFilteringTree(
     DataManager.registerDataProvider(treeComponent) { dataId ->
       when {
         RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY.`is`(dataId) -> getSelectedItem(tree)
+        RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEMS_KEY.`is`(dataId) -> getSelectedItems(tree)
         RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_TREE_KEY.`is`(dataId) -> tree
         else -> null
       }
     }
 
-    treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(treeComponent) }
+    treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItems(treeComponent) }
 
     val group = ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup") as ActionGroup
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group)
@@ -91,7 +91,6 @@ internal class RecentProjectFilteringTree(
     )
 
     SmartExpander.installOn(treeComponent)
-    TreeHoverToSelectionListener(popupMenu).addTo(treeComponent)
 
     treeComponent.isRootVisible = false
     treeComponent.cellRenderer = ProjectActionRenderer(filePathChecker::isValid, projectActionButtonViewModel)
@@ -135,7 +134,7 @@ internal class RecentProjectFilteringTree(
         accessibleContext.accessibleName = IdeBundle.message("welcome.screen.search.projects.empty.text")
         FragmentedSettingsUtil.setupPlaceholderVisibility(this)
 
-        addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(tree) }
+        addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItems(tree) }
         addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.ALT_DOWN_MASK)) { removeItem(tree) }
       }
     }
@@ -197,14 +196,6 @@ internal class RecentProjectFilteringTree(
     }
   }
 
-  private class TreeHoverToSelectionListener(private val popupMenu: ActionPopupMenu) : TreeHoverListener() {
-    override fun onHover(tree: JTree, row: Int) {
-      if (!popupMenu.component.isVisible) {
-        tree.setSelectionRow(row)
-      }
-    }
-  }
-
   private class ProjectActionMouseListener(
     private val tree: Tree,
     private val projectActionButtonViewModel: ProjectActionButtonViewModel,
@@ -213,20 +204,35 @@ internal class RecentProjectFilteringTree(
   ) : PopupHandler() {
 
     override fun mouseMoved(mouseEvent: MouseEvent) {
+      if (popupMenu.component.isVisible || mouseEvent.isMultipleSelectionInProgress) return
+
       val point = mouseEvent.point
       val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
       if (row != -1) {
-        // Repaint whole row to avoid flickering of row buttons
-        tree.repaint(tree.getRowBounds(row))
+        if (!tree.isRowSelected(row)) {
+          tree.setSelectionRow(row)
+          // Repaint whole row to avoid flickering of row buttons
+          tree.repaint(tree.getRowBounds(row))
+        }
+      }
+      else {
+        tree.clearSelection()
       }
 
       projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
     }
 
+    override fun mouseExited(e: MouseEvent?) {
+      val mouseEvent = e ?: return
+      if (popupMenu.component.isVisible || mouseEvent.isMultipleSelectionInProgress) return
+
+      tree.clearSelection()
+    }
+
     override fun mouseReleased(mouseEvent: MouseEvent) {
       super.mouseReleased(mouseEvent)
 
-      if (mouseEvent.isConsumed) {
+      if (mouseEvent.isConsumed || mouseEvent.isMultipleSelectionInProgress) {
         return
       }
 
@@ -270,14 +276,18 @@ internal class RecentProjectFilteringTree(
     }
 
     override fun invokePopup(component: Component, x: Int, y: Int) {
-      val item = getSelectedItem(tree) ?: return
-      invokePopup(component, x, y, item)
+      val sourceItem = getItem(TreeUtil.getPathForLocation(tree, x, y)) ?: return
+      val items = getSelectedItems(tree)
+      invokePopup(component, x, y, sourceItem, items)
     }
 
-    private fun invokePopup(component: Component, x: Int, y: Int, item: RecentProjectTreeItem) {
+    private fun invokePopup(component: Component, x: Int, y: Int,
+                            sourceItem: RecentProjectTreeItem,
+                            selectedItems: List<RecentProjectTreeItem> = emptyList()) {
       popupMenu.setDataContext {
         SimpleDataContext.builder()
-          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY, item)
+          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEMS_KEY, selectedItems)
+          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY, sourceItem)
           .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_TREE_KEY, tree)
           .build()
       }
@@ -671,10 +681,13 @@ internal class RecentProjectFilteringTree(
       else AnActionEvent.createFromInputEvent(inputEvent, actionPlace, null, dataContext)
     }
 
-    private fun activateItem(tree: Tree) {
-      val node = tree.lastSelectedPathComponent.asSafely<DefaultMutableTreeNode>() ?: return
-      val item = node.userObject.asSafely<RecentProjectTreeItem>() ?: return
-      activateItem(tree, item)
+    private fun activateItems(tree: Tree) {
+      tree.selectionModel.selectionPaths.mapNotNull {
+        it.lastPathComponent.asSafely<DefaultMutableTreeNode>()
+      }.forEach { node ->
+        val item = node.userObject.asSafely<RecentProjectTreeItem>() ?: return
+        activateItem(tree, item)
+      }
     }
 
     private fun activateItem(tree: Tree, item: RecentProjectTreeItem, inputEvent: InputEvent? = null) {
@@ -701,7 +714,17 @@ internal class RecentProjectFilteringTree(
     }
 
     private fun getSelectedItem(tree: Tree): RecentProjectTreeItem? {
-      return TreeUtil.getLastUserObject(RecentProjectTreeItem::class.java, tree.selectionPath)
+      return getItem(tree.selectionPath)
+    }
+
+    private fun getItem(path: TreePath?): RecentProjectTreeItem? {
+      return TreeUtil.getLastUserObject(RecentProjectTreeItem::class.java, path)
+    }
+
+    private fun getSelectedItems(tree: Tree): List<RecentProjectTreeItem> {
+      return tree.selectionPaths?.mapNotNull {
+        getItem(it)
+      } ?: emptyList()
     }
   }
 }
@@ -732,3 +755,6 @@ private class ActionsButton : SelectablePanel() {
     selectionColor = if (hovered) JBUI.CurrentTheme.List.buttonHoverBackground() else null
   }
 }
+
+private val MouseEvent.isMultipleSelectionInProgress: Boolean get() =
+  UIUtil.isControlKeyDown(this) || isShiftDown
