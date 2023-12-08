@@ -82,17 +82,31 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       val realInsertValue = insertValue?.replace("{cursor}", "")
       val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
       val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
-      val element = LookupElementBuilder.create(this, escapedInsertValue)
+      // Remove path separator from insert value, so there will be an exact match
+      // if the prefix is the same string, but without path separator.
+      // It is needed, for example, to place the './' item in the first place when '.' is typed.
+      // It is a hack, because generally this logic should be solved by overriding LookupArranger#isPrefixItem.
+      // But there is no API to substitute our own implementation of LookupArranger.
+      val (lookupString, appendPathSeparator) = if (escapedInsertValue.endsWith('/')) {
+        escapedInsertValue.removeSuffix("/") to true
+      }
+      else escapedInsertValue to false
+      val element = LookupElementBuilder.create(this, lookupString)
         .withPresentableText(displayName ?: name)
         .withTailText(nextSuggestions, true)
         .withIcon(icon)
-        .withInsertHandler(MyInsertHandler(this))
+        .withInsertHandler(MyInsertHandler(this, appendPathSeparator))
       PrioritizedLookupElement.withPriority(element, priority / 100.0)
     }
   }
 
-  private class MyInsertHandler(private val suggestion: BaseSuggestion) : InsertHandler<LookupElement> {
+  private class MyInsertHandler(private val suggestion: BaseSuggestion,
+                                private val appendPathSeparator: Boolean) : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
+      if (appendPathSeparator) {
+        context.document.insertString(context.tailOffset, "/")
+        context.editor.caretModel.moveToOffset(context.tailOffset + 1)
+      }
       val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
       if (cursorOffset != null && cursorOffset != -1) {
         context.editor.caretModel.moveToOffset(context.startOffset + cursorOffset)
