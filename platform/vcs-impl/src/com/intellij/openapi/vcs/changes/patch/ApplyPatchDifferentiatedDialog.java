@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -59,6 +60,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -87,7 +90,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   public static final String DIMENSION_SERVICE_KEY = "vcs.ApplyPatchDifferentiatedDialog";
 
   private static final Logger LOG = Logger.getInstance(ApplyPatchDifferentiatedDialog.class);
-  private final ZipperUpdater myLoadQueue;
+  private final MergingUpdateQueue myLoadQueue;
   private final TextFieldWithBrowseButton myPatchFile;
 
   private final List<AbstractFilePatchInProgress<?>> myPatches;
@@ -102,7 +105,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   protected final Project myProject;
 
   private final AtomicReference<FilePresentationModel> myRecentPathFileChange;
-  private final ApplyPatchDifferentiatedDialog.MyUpdater myUpdater;
   private final Runnable myReset;
   @Nullable private final ChangeListChooserPanel myChangeListChooser;
   private final ChangesLegendCalculator myInfoCalculator;
@@ -189,10 +191,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
       new MyShowDiff().showDiff();
     });
-    myChangesTreeLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable());
+    myChangesTreeLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable(),
+                                                   ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesTreeLoadingPanel.add(myChangesTreeList, BorderLayout.CENTER);
     myShouldUpdateChangeListName = defaultList == null && externalCommitMessage == null;
-    myUpdater = new MyUpdater();
     myPatchFile = new TextFieldWithBrowseButton();
     myPatchFile.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
     myPatchFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -203,7 +205,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
     });
 
-    myLoadQueue = new ZipperUpdater(500, Alarm.ThreadToUse.POOLED_THREAD, getDisposable());
+    myLoadQueue = new MergingUpdateQueue("ApplyPatchDifferentiatedDialog", 500, true, myChangesTreeLoadingPanel, getDisposable(), null,
+                                         Alarm.ThreadToUse.POOLED_THREAD);
     myCanChangePatchFile = applyPatchMode.isCanChangePatchFile();
     myReset = myCanChangePatchFile ? this::reset : EmptyRunnable.getInstance();
 
@@ -286,7 +289,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private void queueRequest() {
     paintBusy(true);
-    myLoadQueue.queue(myUpdater);
+    myLoadQueue.queue(Update.create("update", () -> reloadPatchFromFile()));
   }
 
   private void init(@NotNull List<? extends FilePatch> patches) {
@@ -386,51 +389,49 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private void init(@NotNull final VirtualFile patchFile) {
     myPatchFile.setText(patchFile.getPresentableUrl());
     myRecentPathFileChange.set(new FilePresentationModel(patchFile));
+    myLoadQueue.sendFlush();
   }
 
   public void setHelpId(String s) {
     myHelpId = s;
   }
 
-  private class MyUpdater implements Runnable {
-    @Override
-    public void run() {
-      cleanNotifications();
-      final FilePresentationModel filePresentationModel = myRecentPathFileChange.get();
-      final VirtualFile file = filePresentationModel != null ? filePresentationModel.getVf() : null;
-      if (file == null) {
-        ApplicationManager.getApplication().invokeLater(myReset, ModalityState.stateForComponent(myCenterPanel));
-        return;
-      }
-      myReader = loadPatches(file);
-      final PatchFileHeaderInfo patchFileInfo = myReader != null ? myReader.getPatchFileInfo() : null;
-      final String messageFromPatch = patchFileInfo != null ? patchFileInfo.getMessage() : null;
-      VcsUser author = patchFileInfo != null ? patchFileInfo.getAuthor() : null;
-      if (author != null && myChangeListChooser != null) {
-        myChangeListChooser.setData(new ChangeListData(author));
-      }
-      List<FilePatch> filePatches = new ArrayList<>();
-      if (myReader != null) {
-        filePatches.addAll(myReader.getAllPatches());
-      }
-      if (!ContainerUtil.isEmpty(myBinaryShelvedPatches)) {
-        filePatches.addAll(myBinaryShelvedPatches);
-      }
-      List<AbstractFilePatchInProgress<?>> matchedPatches =
-        new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
-
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (myShouldUpdateChangeListName && myChangeListChooser != null) {
-          String subject = chooseNotNull(getSubjectFromMessage(messageFromPatch), file.getNameWithoutExtension().replace('_', ' ').trim());
-          myChangeListChooser.setSuggestedName(subject, messageFromPatch, false);
-        }
-        myPatches.clear();
-        myPatches.addAll(matchedPatches);
-        updateTree(true);
-        paintBusy(false);
-        updateOkActions();
-      }, ModalityState.stateForComponent(myCenterPanel));
+  private void reloadPatchFromFile() {
+    cleanNotifications();
+    final FilePresentationModel filePresentationModel = myRecentPathFileChange.get();
+    final VirtualFile file = filePresentationModel != null ? filePresentationModel.getVf() : null;
+    if (file == null) {
+      ApplicationManager.getApplication().invokeLater(myReset, ModalityState.stateForComponent(myCenterPanel));
+      return;
     }
+    myReader = loadPatches(file);
+    final PatchFileHeaderInfo patchFileInfo = myReader != null ? myReader.getPatchFileInfo() : null;
+    final String messageFromPatch = patchFileInfo != null ? patchFileInfo.getMessage() : null;
+    VcsUser author = patchFileInfo != null ? patchFileInfo.getAuthor() : null;
+    if (author != null && myChangeListChooser != null) {
+      myChangeListChooser.setData(new ChangeListData(author));
+    }
+    List<FilePatch> filePatches = new ArrayList<>();
+    if (myReader != null) {
+      filePatches.addAll(myReader.getAllPatches());
+    }
+    if (!ContainerUtil.isEmpty(myBinaryShelvedPatches)) {
+      filePatches.addAll(myBinaryShelvedPatches);
+    }
+    List<AbstractFilePatchInProgress<?>> matchedPatches =
+      new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myShouldUpdateChangeListName && myChangeListChooser != null) {
+        String subject = chooseNotNull(getSubjectFromMessage(messageFromPatch), file.getNameWithoutExtension().replace('_', ' ').trim());
+        myChangeListChooser.setSuggestedName(subject, messageFromPatch, false);
+      }
+      myPatches.clear();
+      myPatches.addAll(matchedPatches);
+      updateTree(true);
+      paintBusy(false);
+      updateOkActions();
+    }, ModalityState.stateForComponent(myCenterPanel));
   }
 
   @Nullable

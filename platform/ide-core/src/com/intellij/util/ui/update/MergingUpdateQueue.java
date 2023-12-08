@@ -258,6 +258,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   /**
    * Executes all scheduled requests in the current thread.
    * Please note that requests that started execution before this method call are not waited for completion.
+   *
+   * @see #sendFlush that will use correct thread
    */
   public void flush() {
     if (isEmpty()) {
