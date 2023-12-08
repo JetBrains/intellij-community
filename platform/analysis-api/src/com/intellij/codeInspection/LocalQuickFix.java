@@ -100,7 +100,7 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * Please call {@link com.intellij.profile.codeInspection.ProjectInspectionProfileManager#fireProfileChanged()}
    * if inspection profile is changed as result of fix.
    *
-   * @param project    {@link Project}
+   * @param project    the project associated with the problem
    * @param descriptor problem reported by the tool which provided this quick fix action
    */
   @Override
