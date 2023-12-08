@@ -123,7 +123,7 @@ internal class GitCompareBranchesUi(internal val project: Project,
   ) : VcsLogClassicFilterUi(data, filterConsumer, properties, colorManager, filters, parentDisposable) {
 
     val rangeFilter: VcsLogRangeFilter
-      get() = myBranchFilterModel.rangeFilter!!
+      get() = branchFilterModel.rangeFilter!!
 
     override fun createBranchComponent() = null
 
@@ -140,13 +140,13 @@ internal class GitCompareBranchesUi(internal val project: Project,
 
     override fun setFilters(collection: VcsLogFilterCollection) {
       if (collection.isEmpty) {
-        if (myStructureFilterModel.structureFilter != null) myStructureFilterModel.setFilter(null)
-        myDateFilterModel.setFilter(null)
-        myTextFilterModel.setFilter(null)
-        myUserFilterModel.setFilter(null)
+        if (structureFilterModel.structureFilter != null) structureFilterModel.setFilter(null)
+        dateFilterModel.setFilter(null)
+        textFilterModel.setFilter(null)
+        userFilterModel.setFilter(null)
       }
       else {
-        collection.get(VcsLogFilterCollection.RANGE_FILTER)?.let(myBranchFilterModel::setRangeFilter)
+        collection.get(VcsLogFilterCollection.RANGE_FILTER)?.let { branchFilterModel.rangeFilter = it }
       }
     }
   }

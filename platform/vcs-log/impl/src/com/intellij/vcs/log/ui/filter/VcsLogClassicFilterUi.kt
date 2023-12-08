@@ -1,869 +1,684 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.ui.filter;
+package com.intellij.vcs.log.ui.filter
 
-import com.intellij.ide.HelpTooltip;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SearchTextField;
-import com.intellij.ui.components.SearchFieldWithExtension;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.MainVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionIds;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcs.log.visible.VisiblePack;
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
-import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.HelpTooltip
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.components.SearchFieldWithExtension
+import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
+import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
+import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
+import com.intellij.vcs.log.ui.VcsLogActionIds
+import com.intellij.vcs.log.ui.VcsLogColorManager
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.ui.filter.FilterModel.PairFilterModel
+import com.intellij.vcs.log.ui.filter.FilterModel.SingleFilterModel
+import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx.VcsLogFilterListener
+import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.visible.VisiblePack
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcsUtil.VcsUtil
+import com.intellij.xml.util.XmlStringUtil
+import org.jetbrains.annotations.NonNls
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.event.ActionEvent
+import java.util.function.Consumer
+import java.util.function.Supplier
+import java.util.regex.Pattern
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.event.DocumentEvent
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import java.awt.*;
-import java.util.List;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+open class VcsLogClassicFilterUi(private val logData: VcsLogData,
+                                 filterConsumer: Consumer<VcsLogFilterCollection>,
+                                 private val uiProperties: MainVcsLogUiProperties,
+                                 private val colorManager: VcsLogColorManager,
+                                 filters: VcsLogFilterCollection?,
+                                 parentDisposable: Disposable) : VcsLogFilterUiEx {
+  private var dataPack: VcsLogDataPack
 
-import static com.intellij.vcs.log.VcsLogFilterCollection.*;
-import static java.util.Collections.emptyList;
+  protected val branchFilterModel: BranchFilterModel
+  protected val userFilterModel: SingleFilterModel<VcsLogUserFilter>
+  protected val dateFilterModel: DateFilterModel
+  protected val structureFilterModel: FileFilterModel
+  protected val textFilterModel: TextFilterModel
 
-/**
- *
- */
-public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
-  private static final String VCS_LOG_TEXT_FILTER_HISTORY = "Vcs.Log.Text.Filter.History";
-  private static final Logger LOG = Logger.getInstance(VcsLogClassicFilterUi.class);
+  private val textFilterField: VcsLogTextFilterField
 
-  private final @NotNull VcsLogData myLogData;
-  private final @NotNull MainVcsLogUiProperties myUiProperties;
-  private final @NotNull VcsLogColorManager myColorManager;
+  private val filterListenerDispatcher = EventDispatcher.create(VcsLogFilterListener::class.java)
 
-  private @NotNull VcsLogDataPack myDataPack;
+  init {
+    dataPack = VisiblePack.EMPTY
 
-  protected final @NotNull BranchFilterModel myBranchFilterModel;
-  protected final @NotNull FilterModel.SingleFilterModel<VcsLogUserFilter> myUserFilterModel;
-  protected final @NotNull FilterModel<VcsLogDateFilter> myDateFilterModel;
-  protected final @NotNull FileFilterModel myStructureFilterModel;
-  protected final @NotNull TextFilterModel myTextFilterModel;
+    val dataPackGetter = Supplier { dataPack }
+    branchFilterModel = BranchFilterModel(dataPackGetter, logData.storage, logData.roots, uiProperties, filters)
+    userFilterModel = UserFilterModel(uiProperties, filters)
+    dateFilterModel = DateFilterModel(uiProperties, filters)
+    structureFilterModel = FileFilterModel(logData.logProviders.keys, uiProperties, filters)
+    textFilterModel = TextFilterModel(uiProperties, filters, parentDisposable)
 
-  private final @NotNull VcsLogTextFilterField myTextFilterField;
+    val field = TextFilterField(textFilterModel, parentDisposable)
+    val toolbar = createTextActionsToolbar(field.textEditor)
+    textFilterField = MyVcsLogTextFilterField(SearchFieldWithExtension(toolbar.component, field))
 
-  private final @NotNull EventDispatcher<VcsLogFilterListener> myFilterListenerDispatcher = EventDispatcher.create(VcsLogFilterListener.class);
-
-  public VcsLogClassicFilterUi(@NotNull VcsLogData logData,
-                               @NotNull Consumer<VcsLogFilterCollection> filterConsumer,
-                               @NotNull MainVcsLogUiProperties uiProperties,
-                               @NotNull VcsLogColorManager colorManager,
-                               @Nullable VcsLogFilterCollection filters,
-                               @NotNull Disposable parentDisposable) {
-    myLogData = logData;
-    myUiProperties = uiProperties;
-    myDataPack = VisiblePack.EMPTY;
-    myColorManager = colorManager;
-
-    Supplier<VcsLogDataPack> dataPackGetter = () -> myDataPack;
-    myBranchFilterModel = new BranchFilterModel(dataPackGetter, myLogData.getStorage(), myLogData.getRoots(), myUiProperties, filters);
-    myUserFilterModel = new UserFilterModel(myUiProperties, filters);
-    myDateFilterModel = new DateFilterModel(myUiProperties, filters);
-    myStructureFilterModel = new FileFilterModel(myLogData.getLogProviders().keySet(), myUiProperties, filters);
-    myTextFilterModel = new TextFilterModel(myUiProperties, filters, parentDisposable);
-
-    TextFilterField textFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
-    ActionToolbar toolbar = createTextActionsToolbar(textFilterField.getTextEditor());
-    myTextFilterField = new MyVcsLogTextFilterField(new SearchFieldWithExtension(toolbar.getComponent(), textFilterField));
-
-    FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
-    for (FilterModel<?> model : models) {
-      model.addSetFilterListener(() -> {
-        filterConsumer.accept(getFilters());
-        myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
-        myBranchFilterModel.onStructureFilterChanged(myStructureFilterModel.getRootFilter(), myStructureFilterModel.getStructureFilter());
-      });
-    }
-  }
-
-  private static @NotNull ActionToolbar createTextActionsToolbar(@Nullable JComponent editor) {
-    ActionManager actionManager = ActionManager.getInstance();
-    @NotNull ActionGroup textActionGroup = (ActionGroup)actionManager.getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP);
-    ActionToolbarImpl toolbar = new ActionToolbarImpl(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, textActionGroup, true) {
-      @Override
-      protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
-                                                          ActionButtonLook look,
-                                                          @NotNull String place,
-                                                          @NotNull Presentation presentation,
-                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
-        MyActionButton button = new MyActionButton(action, presentation);
-        button.setFocusable(true);
-        applyToolbarLook(look, presentation, button);
-        return button;
-      }
-    };
-
-    toolbar.setCustomButtonLook(new FieldInplaceActionButtonLook());
-    toolbar.setReservePlaceAutoPopupIcon(false);
-    toolbar.setTargetComponent(editor);
-    toolbar.updateActionsImmediately();
-    return toolbar;
-  }
-
-  private static final class MyActionButton extends ActionButton {
-    MyActionButton(@NotNull AnAction action, @NotNull Presentation presentation) {
-      super(action, presentation, "Vcs.Log.SearchTextField", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-      updateIcon();
-    }
-
-    @Override
-    public int getPopState() {
-      return isSelected() ? SELECTED : super.getPopState();
-    }
-
-    @Override
-    public Icon getIcon() {
-      if (isEnabled() && isSelected()) {
-        Icon selectedIcon = myPresentation.getSelectedIcon();
-        if (selectedIcon != null) return selectedIcon;
-      }
-      return super.getIcon();
-    }
-  }
-
-
-  @Override
-  public void updateDataPack(@NotNull VcsLogDataPack newDataPack) {
-    myDataPack = newDataPack;
-  }
-
-  @Override
-  public @NotNull VcsLogTextFilterField getTextFilterComponent() {
-    return myTextFilterField;
-  }
-
-  private static final class MyVcsLogTextFilterField implements VcsLogTextFilterField {
-    private final @NotNull SearchFieldWithExtension mySearchField;
-
-    private MyVcsLogTextFilterField(@NotNull SearchFieldWithExtension field) { mySearchField = field; }
-
-    @NotNull
-    @Override
-    public JComponent getComponent() {
-      return mySearchField;
-    }
-
-    @NotNull
-    @Override
-    public JComponent getFocusedComponent() {
-      return mySearchField.getTextField();
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return mySearchField.getTextField().getText();
-    }
-
-    @Override
-    public void setText(@NotNull String s) {
-      mySearchField.getTextField().setText(s);
-    }
-  }
-
-  @Override
-  public @NotNull ActionGroup createActionGroup() {
-    List<AnAction> actions = ContainerUtil.packNullables(createBranchComponent(), createUserComponent(), createDateComponent(),
-                                                         createStructureFilterComponent());
-    return new DefaultActionGroup(actions);
-  }
-
-  @Override
-  public @NotNull VcsLogFilterCollection getFilters() {
-    ThreadingAssertions.assertEventDispatchThread();
-    return VcsLogFilterObject.collection(myBranchFilterModel.getBranchFilter(), myBranchFilterModel.getRevisionFilter(),
-                                         myBranchFilterModel.getRangeFilter(),
-                                         myTextFilterModel.getFilter1(), myTextFilterModel.getFilter2(),
-                                         myStructureFilterModel.getFilter1(), myStructureFilterModel.getFilter2(),
-                                         myDateFilterModel.getFilter(), myUserFilterModel.getFilter());
-  }
-
-  @Override
-  public void setFilters(@NotNull VcsLogFilterCollection collection) {
-    ThreadingAssertions.assertEventDispatchThread();
-    myBranchFilterModel.setFilter(new BranchFilters(collection.get(BRANCH_FILTER),
-                                                    collection.get(REVISION_FILTER),
-                                                    collection.get(RANGE_FILTER)));
-    myStructureFilterModel.setFilter(new FilterPair<>(collection.get(STRUCTURE_FILTER), collection.get(ROOT_FILTER)));
-    myDateFilterModel.setFilter(collection.get(DATE_FILTER));
-    myTextFilterModel.setFilter(new FilterPair<>(collection.get(TEXT_FILTER),
-                                                 collection.get(HASH_FILTER)));
-    myUserFilterModel.setFilter(collection.get(USER_FILTER));
-  }
-
-  protected @Nullable AnAction createBranchComponent() {
-    return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.branch.filter.action.text"),
-                                     () -> new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi());
-  }
-
-  protected @Nullable AnAction createUserComponent() {
-    return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.user.filter.action.text"),
-                                     () -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi());
-  }
-
-  protected @Nullable AnAction createDateComponent() {
-    return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.date.filter.action.text"),
-                                     () -> new DateFilterPopupComponent(myDateFilterModel).initUi());
-  }
-
-  protected @Nullable AnAction createStructureFilterComponent() {
-    return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.path.filter.action.text"),
-                                     () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel,
-                                                                             myColorManager).initUi());
-  }
-
-  @Override
-  public void addFilterListener(@NotNull VcsLogFilterListener listener) {
-    myFilterListenerDispatcher.addListener(listener);
-  }
-
-  protected static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
-
-    private final @NotNull Supplier<? extends JComponent> myComponentCreator;
-
-    public FilterActionComponent(@NotNull Supplier<@Nls @NlsActions.ActionText String> dynamicText,
-                                 @NotNull Supplier<? extends JComponent> componentCreator) {
-      super(dynamicText);
-      myComponentCreator = componentCreator;
-    }
-
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return myComponentCreator.get();
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      MainVcsLogUi vcsLogUi = e.getData(VcsLogInternalDataKeys.MAIN_UI);
-      if (vcsLogUi == null) return;
-
-      Component actionComponent = UIUtil.uiTraverser(vcsLogUi.getToolbar()).traverse().find(component -> {
-        return ClientProperty.get(component, ACTION_KEY) == this;
-      });
-      if (actionComponent instanceof VcsLogPopupComponent) {
-        ((VcsLogPopupComponent)actionComponent).showPopupMenu();
+    val models = arrayOf(branchFilterModel, userFilterModel, dateFilterModel, structureFilterModel, textFilterModel)
+    for (model in models) {
+      model.addSetFilterListener {
+        filterConsumer.accept(getFilters())
+        filterListenerDispatcher.multicaster.onFiltersChanged()
+        branchFilterModel.onStructureFilterChanged(structureFilterModel.rootFilter, structureFilterModel.structureFilter)
       }
     }
   }
 
-  public static class BranchFilterModel extends FilterModel<BranchFilters> {
-    private final @NotNull VcsLogStorage myStorage;
-    private final @NotNull Collection<VirtualFile> myRoots;
-    private @Nullable Collection<VirtualFile> myVisibleRoots;
-    private final @NotNull Supplier<? extends VcsLogDataPack> myDataPackProvider;
+  override fun updateDataPack(newDataPack: VcsLogDataPack) {
+    dataPack = newDataPack
+  }
 
-    BranchFilterModel(@NotNull Supplier<? extends VcsLogDataPack> dataPackProvider,
-                      @NotNull VcsLogStorage storage,
-                      @NotNull Collection<VirtualFile> roots,
-                      @NotNull MainVcsLogUiProperties properties,
-                      @Nullable VcsLogFilterCollection filters) {
-      super(properties);
-      myStorage = storage;
-      myRoots = roots;
-      myDataPackProvider = dataPackProvider;
+  override fun getTextFilterComponent(): VcsLogTextFilterField = textFilterField
 
+  private class MyActionButton(action: AnAction, presentation: Presentation) :
+    ActionButton(action, presentation, "Vcs.Log.SearchTextField", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+
+    init {
+      updateIcon()
+    }
+
+    override fun getPopState(): Int {
+      return if (isSelected) SELECTED else super.getPopState()
+    }
+
+    override fun getIcon(): Icon {
+      if (isEnabled && isSelected) {
+        val selectedIcon = myPresentation.selectedIcon
+        if (selectedIcon != null) return selectedIcon
+      }
+      return super.getIcon()
+    }
+  }
+
+  private class MyVcsLogTextFilterField(private val searchField: SearchFieldWithExtension) : VcsLogTextFilterField {
+    override val component: JComponent
+      get() = searchField
+
+    override val focusedComponent: JComponent
+      get() = searchField.textField
+
+    override var text: String
+      get() = searchField.textField.text
+      set(s) {
+        searchField.textField.text = s
+      }
+  }
+
+  override fun createActionGroup(): ActionGroup {
+    val actions = listOfNotNull(createBranchComponent(), createUserComponent(), createDateComponent(), createStructureFilterComponent())
+    return DefaultActionGroup(actions)
+  }
+
+  @RequiresEdt
+  override fun getFilters(): VcsLogFilterCollection {
+    return VcsLogFilterObject.collection(branchFilterModel.branchFilter, branchFilterModel.revisionFilter,
+                                         branchFilterModel.rangeFilter,
+                                         textFilterModel.filter1, textFilterModel.filter2,
+                                         structureFilterModel.filter1, structureFilterModel.filter2,
+                                         dateFilterModel.getFilter(), userFilterModel.getFilter())
+  }
+
+  override fun setFilters(collection: VcsLogFilterCollection) {
+    ThreadingAssertions.assertEventDispatchThread()
+    branchFilterModel.setFilter(BranchFilters(collection.get(VcsLogFilterCollection.BRANCH_FILTER),
+                                              collection.get(VcsLogFilterCollection.REVISION_FILTER),
+                                              collection.get(VcsLogFilterCollection.RANGE_FILTER)))
+    structureFilterModel.setFilter(FilterPair(collection.get(VcsLogFilterCollection.STRUCTURE_FILTER),
+                                              collection.get(VcsLogFilterCollection.ROOT_FILTER)))
+    dateFilterModel.setFilter(collection.get(VcsLogFilterCollection.DATE_FILTER))
+    textFilterModel.setFilter(FilterPair(collection.get(VcsLogFilterCollection.TEXT_FILTER),
+                                         collection.get(VcsLogFilterCollection.HASH_FILTER)))
+    userFilterModel.setFilter(collection.get(VcsLogFilterCollection.USER_FILTER))
+  }
+
+  protected open fun createBranchComponent(): AnAction? {
+    return FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.branch.filter.action.text")) {
+      BranchFilterPopupComponent(uiProperties, branchFilterModel).initUi()
+    }
+  }
+
+  protected fun createUserComponent(): AnAction? {
+    return FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.user.filter.action.text")) {
+      UserFilterPopupComponent(uiProperties, logData, userFilterModel).initUi()
+    }
+  }
+
+  protected fun createDateComponent(): AnAction? {
+    return FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.date.filter.action.text")) {
+      DateFilterPopupComponent(dateFilterModel).initUi()
+    }
+  }
+
+  protected fun createStructureFilterComponent(): AnAction? {
+    return FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.path.filter.action.text")) {
+      StructureFilterPopupComponent(uiProperties, structureFilterModel, colorManager).initUi()
+    }
+  }
+
+  override fun addFilterListener(listener: VcsLogFilterListener) {
+    filterListenerDispatcher.addListener(listener)
+  }
+
+  protected class FilterActionComponent(dynamicText: Supplier<String?>, private val componentCreator: Supplier<out JComponent>) :
+    DumbAwareAction(dynamicText), CustomComponentAction {
+
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent = componentCreator.get()
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val vcsLogUi = e.getData(VcsLogInternalDataKeys.MAIN_UI)
+      if (vcsLogUi == null) return
+
+      val actionComponent = UIUtil.uiTraverser(vcsLogUi.toolbar).traverse().find { component: Component? ->
+        ClientProperty.get(component, CustomComponentAction.ACTION_KEY) === this
+      }
+      if (actionComponent is VcsLogPopupComponent) {
+        actionComponent.showPopupMenu()
+      }
+    }
+  }
+
+  class BranchFilterModel internal constructor(private val dataPackProvider: Supplier<out VcsLogDataPack>,
+                                               private val storage: VcsLogStorage,
+                                               private val roots: Collection<VirtualFile>,
+                                               properties: MainVcsLogUiProperties,
+                                               filters: VcsLogFilterCollection?) : FilterModel<BranchFilters>(properties) {
+    var visibleRoots: Collection<VirtualFile>? = null
+      private set
+
+    init {
       if (filters != null) {
-        saveFilterToProperties(new BranchFilters(filters.get(BRANCH_FILTER), filters.get(REVISION_FILTER), filters.get(RANGE_FILTER)));
+        saveFilterToProperties(BranchFilters(filters.get(VcsLogFilterCollection.BRANCH_FILTER),
+                                             filters.get(VcsLogFilterCollection.REVISION_FILTER),
+                                             filters.get(VcsLogFilterCollection.RANGE_FILTER)))
       }
     }
 
-    @Override
-    public void setFilter(@Nullable BranchFilters filters) {
-      if (filters != null && filters.isEmpty()) filters = null;
+    override fun setFilter(filter: BranchFilters?) {
+      var newFilters = filter
+      if (newFilters != null && newFilters.isEmpty()) newFilters = null
 
-      boolean anyFilterDiffers = false;
+      var anyFilterDiffers = false
 
-      if (filterDiffers(filters, BranchFilters::getBranchFilter, _filter)) {
-        triggerFilterSet(filters, BranchFilters::getBranchFilter, BRANCH_FILTER.getName());
-        anyFilterDiffers = true;
+      if (newFilters?.branchFilter != _filter?.branchFilter) {
+        if (newFilters?.branchFilter != null) VcsLogUsageTriggerCollector.triggerFilterSet(VcsLogFilterCollection.BRANCH_FILTER.name)
+        anyFilterDiffers = true
       }
-      if (filterDiffers(filters, BranchFilters::getRevisionFilter, _filter)) {
-        triggerFilterSet(filters, BranchFilters::getRevisionFilter, REVISION_FILTER.getName());
-        anyFilterDiffers = true;
+      if (newFilters?.revisionFilter != _filter?.revisionFilter) {
+        if (newFilters?.revisionFilter != null) VcsLogUsageTriggerCollector.triggerFilterSet(VcsLogFilterCollection.REVISION_FILTER.name)
+        anyFilterDiffers = true
       }
-      if (filterDiffers(filters, BranchFilters::getRangeFilter, _filter)) {
-        triggerFilterSet(filters, BranchFilters::getRangeFilter, RANGE_FILTER.getName());
-        anyFilterDiffers = true;
+      if (newFilters?.rangeFilter != _filter?.rangeFilter) {
+        if (newFilters?.rangeFilter != null) VcsLogUsageTriggerCollector.triggerFilterSet(VcsLogFilterCollection.RANGE_FILTER.name)
+        anyFilterDiffers = true
       }
-
       if (anyFilterDiffers) {
-        super.setFilter(filters);
+        super.setFilter(newFilters)
       }
     }
 
-    protected static void triggerFilterSet(@NotNull String name) {
-      VcsLogUsageTriggerCollector.triggerFilterSet(name);
+    override fun saveFilterToProperties(filter: BranchFilters?) {
+      uiProperties.saveFilterValues(VcsLogFilterCollection.BRANCH_FILTER.name, filter?.branchFilter?.let { getBranchFilterValues(it) })
+      uiProperties.saveFilterValues(VcsLogFilterCollection.REVISION_FILTER.name,
+                                    filter?.revisionFilter?.let { getRevisionFilterValues(it) })
+      uiProperties.saveFilterValues(VcsLogFilterCollection.RANGE_FILTER.name, filter?.rangeFilter?.let { getRangeFilterValues(it) })
     }
 
-    protected static <FilterObject, F> void triggerFilterSet(@Nullable FilterObject filter,
-                                                             @NotNull Function<FilterObject, F> getter,
-                                                             @NotNull String name) {
-      F newFilter = filter == null ? null : getter.apply(filter);
-      if (newFilter != null) {
-        triggerFilterSet(name);
-      }
+    override fun getFilterFromProperties(): BranchFilters? {
+      val branchFilterValues = uiProperties.getFilterValues(VcsLogFilterCollection.BRANCH_FILTER.name)
+      val branchFilter = branchFilterValues?.let { createBranchFilter(it) }
+
+      val revisionFilterValues = uiProperties.getFilterValues(VcsLogFilterCollection.REVISION_FILTER.name)
+      val revisionFilter = revisionFilterValues?.let { createRevisionFilter(it) }
+
+      val rangeFilterValues = uiProperties.getFilterValues(VcsLogFilterCollection.RANGE_FILTER.name)
+      val rangeFilter = rangeFilterValues?.let { createRangeFilter(it) }
+
+      if (branchFilter == null && revisionFilter == null && rangeFilter == null) return null
+      return BranchFilters(branchFilter, revisionFilter, rangeFilter)
     }
 
-    protected static <FilterObject, F> boolean filterDiffers(@Nullable FilterObject filter,
-                                                             @NotNull Function<FilterObject, F> getter,
-                                                             @Nullable FilterObject currentFilter) {
-      F oldFilter = currentFilter == null ? null : getter.apply(currentFilter);
-      F newFilter = filter == null ? null : getter.apply(filter);
-      return !Objects.equals(oldFilter, newFilter);
-    }
-
-    @Override
-    protected void saveFilterToProperties(@Nullable BranchFilters filters) {
-      if (filters == null || filters.getBranchFilter() == null) {
-        uiProperties.saveFilterValues(BRANCH_FILTER.getName(), null);
-      }
-      else {
-        uiProperties.saveFilterValues(BRANCH_FILTER.getName(), getBranchFilterValues(filters.getBranchFilter()));
-      }
-
-      if (filters == null || filters.getRevisionFilter() == null) {
-        uiProperties.saveFilterValues(REVISION_FILTER.getName(), null);
-      }
-      else {
-        uiProperties.saveFilterValues(REVISION_FILTER.getName(), getRevisionFilterValues(filters.getRevisionFilter()));
-      }
-
-      if (filters == null || filters.getRangeFilter() == null) {
-        uiProperties.saveFilterValues(RANGE_FILTER.getName(), null);
-      }
-      else {
-        uiProperties.saveFilterValues(RANGE_FILTER.getName(), getRangeFilterValues(filters.getRangeFilter()));
-      }
-    }
-
-    @Override
-    protected @Nullable BranchFilters getFilterFromProperties() {
-      List<String> branchFilterValues = uiProperties.getFilterValues(BRANCH_FILTER.getName());
-      VcsLogBranchFilter branchFilter = null;
-      if (branchFilterValues != null) {
-        branchFilter = createBranchFilter(branchFilterValues);
-      }
-
-      List<String> revisionFilterValues = uiProperties.getFilterValues(REVISION_FILTER.getName());
-      VcsLogRevisionFilter revisionFilter = null;
-      if (revisionFilterValues != null) {
-        revisionFilter = createRevisionFilter(revisionFilterValues);
-      }
-
-      List<String> rangeFilterValues = uiProperties.getFilterValues(RANGE_FILTER.getName());
-      VcsLogRangeFilter rangeFilter = null;
-      if (rangeFilterValues != null) {
-        rangeFilter = createRangeFilter(rangeFilterValues);
-      }
-
-      if (branchFilter == null && revisionFilter == null && rangeFilter == null) {
-        return null;
-      }
-      return new BranchFilters(branchFilter, revisionFilter, rangeFilter);
-    }
-
-    public void onStructureFilterChanged(@Nullable VcsLogRootFilter rootFilter,
-                                         @Nullable VcsLogStructureFilter structureFilter) {
+    fun onStructureFilterChanged(rootFilter: VcsLogRootFilter?, structureFilter: VcsLogStructureFilter?) {
       if (rootFilter == null && structureFilter == null) {
-        myVisibleRoots = null;
+        visibleRoots = null
       }
       else {
-        myVisibleRoots = VcsLogUtil.getAllVisibleRoots(myRoots, rootFilter, structureFilter);
+        visibleRoots = VcsLogUtil.getAllVisibleRoots(roots, rootFilter, structureFilter)
       }
     }
 
-    public @Nullable Collection<VirtualFile> getVisibleRoots() {
-      return myVisibleRoots;
+    val dataPack: VcsLogDataPack
+      get() = dataPackProvider.get()
+
+    private fun createBranchFilter(values: List<String>): VcsLogBranchFilter {
+      return VcsLogFilterObject.fromBranchPatterns(values, ContainerUtil.map2Set(dataPack.refs.branches) { it.name })
     }
 
-    @NotNull
-    VcsLogDataPack getDataPack() {
-      return myDataPackProvider.get();
-    }
-
-    protected @Nullable VcsLogBranchFilter createBranchFilter(@NotNull List<String> values) {
-      return VcsLogFilterObject.fromBranchPatterns(values,
-                                                   ContainerUtil.map2Set(getDataPack().getRefs().getBranches(), VcsRef::getName));
-    }
-
-    protected @Nullable VcsLogRevisionFilter createRevisionFilter(@NotNull List<String> values) {
-      Pattern pattern = Pattern.compile("\\[(.*)\\](" + VcsLogUtil.HASH_REGEX.pattern() + ")");
-      return VcsLogFilterObject.fromCommits(ContainerUtil.mapNotNull(values, s -> {
-        Matcher matcher = pattern.matcher(s);
+    private fun createRevisionFilter(values: List<String>): VcsLogRevisionFilter {
+      val pattern = Pattern.compile("\\[(.*)\\](" + VcsLogUtil.HASH_REGEX.pattern() + ")")
+      return VcsLogFilterObject.fromCommits(values.mapNotNull { s: String ->
+        val matcher = pattern.matcher(s)
         if (!matcher.matches()) {
           if (VcsLogUtil.isFullHash(s)) {
-            CommitId commitId = findCommitId(HashImpl.build(s));
-            if (commitId != null) return commitId;
+            val commitId = findCommitId(HashImpl.build(s))
+            if (commitId != null) return@mapNotNull commitId
           }
-          LOG.warn("Could not parse '" + s + "' while creating revision filter");
-          return null;
+          LOG.warn("Could not parse '$s' while creating revision filter")
+          return@mapNotNull null
         }
-        MatchResult result = matcher.toMatchResult();
-        VirtualFile root = LocalFileSystem.getInstance().findFileByPath(result.group(1));
+        val result = matcher.toMatchResult()
+        val root = LocalFileSystem.getInstance().findFileByPath(result.group(1))
         if (root == null) {
-          LOG.warn("Root '" + result.group(1) + "' does not exist");
-          return null;
+          LOG.warn("Root '" + result.group(1) + "' does not exist")
+          return@mapNotNull null
         }
-        else if (!myRoots.contains(root)) {
-          LOG.warn("Root '" + result.group(1) + "' is not registered");
-          return null;
+        else if (!roots.contains(root)) {
+          LOG.warn("Root '" + result.group(1) + "' is not registered")
+          return@mapNotNull null
         }
-        return new CommitId(HashImpl.build(result.group(2)), root);
-      }));
+        CommitId(HashImpl.build(result.group(2)), root)
+      })
     }
 
-    private static @Nullable VcsLogRangeFilter createRangeFilter(@NotNull List<String> values) {
-      List<VcsLogRangeFilter.RefRange> ranges = ContainerUtil.mapNotNull(values, value -> {
-        String TWO_DOTS = "..";
-        int twoDots = value.indexOf(TWO_DOTS);
-        if (twoDots <= 0) {
-          LOG.error("Incorrect range filter value: " + values);
-          return null;
-        }
-        return new VcsLogRangeFilter.RefRange(value.substring(0, twoDots), value.substring(twoDots + TWO_DOTS.length()));
-      });
-      if (ranges.isEmpty()) return null;
-      return VcsLogFilterObject.fromRange(ranges);
-    }
-
-    private @Nullable CommitId findCommitId(@NotNull Hash hash) {
-      for (VirtualFile root : myRoots) {
-        CommitId commitId = new CommitId(hash, root);
-        if (myStorage.containsCommit(commitId)) {
-          return commitId;
+    private fun findCommitId(hash: Hash): CommitId? {
+      for (root in roots) {
+        val commitId = CommitId(hash, root)
+        if (storage.containsCommit(commitId)) {
+          return commitId
         }
       }
-      return null;
+      return null
     }
 
-    private static @NotNull List<String> getBranchFilterValues(@NotNull VcsLogBranchFilter filter) {
-      return new ArrayList<>(ContainerUtil.sorted(filter.getTextPresentation()));
-    }
-
-    private static @NotNull List<String> getRevisionFilterValues(@NotNull VcsLogRevisionFilter filter) {
-      return ContainerUtil.map(filter.getHeads(), id -> "[" + id.getRoot().getPath() + "]" + id.getHash().asString());
-    }
-
-    private static @NotNull List<String> getRangeFilterValues(@NotNull VcsLogRangeFilter rangeFilter) {
-      return new ArrayList<>(rangeFilter.getTextPresentation());
-    }
-
-    private static @NotNull List<String> getRevisionFilter2Presentation(@NotNull VcsLogRevisionFilter filter) {
-      return ContainerUtil.map(filter.getHeads(), id -> id.getHash().asString());
-    }
-
-    void setBranchFilter(@NotNull VcsLogBranchFilter branchFilter) {
-      setFilter(new BranchFilters(branchFilter, null, null));
-    }
-
-    public void setRangeFilter(@NotNull VcsLogRangeFilter rangeFilter) {
-      setFilter(new BranchFilters(null, null, rangeFilter));
-    }
-
-    static @NotNull List<String> getFilterPresentation(@NotNull BranchFilters filters) {
-      List<String> branchFilterValues = filters.getBranchFilter() == null ? emptyList() : getBranchFilterValues(filters.getBranchFilter());
-      List<String> revisionFilterValues = filters.getRevisionFilter() == null ? emptyList() :
-                                          getRevisionFilter2Presentation(filters.getRevisionFilter());
-      List<String> rangeFilterValues = filters.getRangeFilter() == null ? emptyList() : getRangeFilterValues(filters.getRangeFilter());
-      return ContainerUtil.concat(branchFilterValues, revisionFilterValues, rangeFilterValues);
-    }
-
-    @Nullable
-    BranchFilters createFilterFromPresentation(@NotNull List<String> values) {
-      List<String> hashes = new ArrayList<>();
-      List<String> branches = new ArrayList<>();
-      List<String> ranges = new ArrayList<>();
-      for (String s : values) {
-        int twoDots = s.indexOf("..");
+    fun createFilterFromPresentation(values: List<String>): BranchFilters? {
+      val hashes = mutableListOf<String>()
+      val branches = mutableListOf<String>()
+      val ranges = mutableListOf<String>()
+      for (s in values) {
+        val twoDots = s.indexOf("..")
         if (twoDots > 0 && twoDots == s.lastIndexOf("..")) {
-          ranges.add(s);
+          ranges.add(s)
         }
         else if (VcsLogUtil.isFullHash(s)) {
-          hashes.add(s);
+          hashes.add(s)
         }
         else {
-          branches.add(s);
+          branches.add(s)
         }
       }
-      VcsLogBranchFilter branchFilter = branches.isEmpty() ? null : createBranchFilter(branches);
-      VcsLogRevisionFilter hashFilter = hashes.isEmpty() ? null : createRevisionFilter(hashes);
-      VcsLogRangeFilter refDiffFilter = ranges.isEmpty() ? null : createRangeFilter(ranges);
-      return new BranchFilters(branchFilter, hashFilter, refDiffFilter);
+      val branchFilter = if (branches.isEmpty()) null else createBranchFilter(branches)
+      val hashFilter = if (hashes.isEmpty()) null else createRevisionFilter(hashes)
+      val refDiffFilter = if (ranges.isEmpty()) null else createRangeFilter(ranges)
+      return BranchFilters(branchFilter, hashFilter, refDiffFilter)
     }
 
-    public @Nullable VcsLogBranchFilter getBranchFilter() {
-      BranchFilters filter = getFilter();
-      if (filter == null) return null;
-      return filter.getBranchFilter();
-    }
+    var branchFilter: VcsLogBranchFilter?
+      get() = getFilter()?.branchFilter
+      set(branchFilter) {
+        setFilter(BranchFilters(branchFilter, null, null))
+      }
 
-    public @Nullable VcsLogRevisionFilter getRevisionFilter() {
-      BranchFilters filter = getFilter();
-      if (filter == null) return null;
-      return filter.getRevisionFilter();
-    }
+    val revisionFilter: VcsLogRevisionFilter?
+      get() = getFilter()?.revisionFilter
 
-    public @Nullable VcsLogRangeFilter getRangeFilter() {
-      BranchFilters filter = getFilter();
-      if (filter == null) return null;
-      return filter.getRangeFilter();
+    var rangeFilter: VcsLogRangeFilter?
+      get() = getFilter()?.rangeFilter
+      set(rangeFilter) {
+        setFilter(BranchFilters(null, null, rangeFilter))
+      }
+
+    companion object {
+      private const val TWO_DOTS = ".."
+
+      private fun createRangeFilter(values: List<String>): VcsLogRangeFilter? {
+        val ranges = values.mapNotNull { value: String ->
+          val twoDots = value.indexOf(TWO_DOTS)
+          if (twoDots <= 0) {
+            LOG.error("Incorrect range filter value: $values")
+            return@mapNotNull null
+          }
+          RefRange(value.substring(0, twoDots), value.substring(twoDots + TWO_DOTS.length))
+        }
+        if (ranges.isEmpty()) return null
+        return VcsLogFilterObject.fromRange(ranges)
+      }
+
+      private fun getBranchFilterValues(filter: VcsLogBranchFilter): List<String?> {
+        return ArrayList(ContainerUtil.sorted<@NlsSafe String?>(filter.textPresentation))
+      }
+
+      private fun getRevisionFilterValues(filter: VcsLogRevisionFilter): List<String> {
+        return filter.heads.map { id -> "[" + id.root.path + "]" + id.hash.asString() }
+      }
+
+      private fun getRangeFilterValues(rangeFilter: VcsLogRangeFilter): List<String> {
+        return ArrayList(rangeFilter.getTextPresentation())
+      }
+
+      private fun getRevisionFilter2Presentation(filter: VcsLogRevisionFilter): List<String> {
+        return filter.heads.map { id -> id.hash.asString() }
+      }
+
+      @JvmStatic
+      fun getFilterPresentation(filters: BranchFilters): List<String> {
+        val branchFilterValues = filters.branchFilter?.let { getBranchFilterValues(it) } ?: emptyList()
+        val revisionFilterValues = filters.revisionFilter?.let { getRevisionFilter2Presentation(it) } ?: emptyList()
+        val rangeFilterValues = filters.rangeFilter?.let { getRangeFilterValues(filters.rangeFilter) } ?: emptyList()
+        return ContainerUtil.concat(branchFilterValues, revisionFilterValues, rangeFilterValues)
+      }
     }
   }
 
-  protected static class TextFilterModel extends FilterModel.PairFilterModel<VcsLogTextFilter, VcsLogHashFilter> {
-    TextFilterModel(@NotNull MainVcsLogUiProperties properties,
-                    @Nullable VcsLogFilterCollection filters,
-                    @NotNull Disposable parentDisposable) {
-      super(TEXT_FILTER, HASH_FILTER, properties, filters);
+  protected class TextFilterModel internal constructor(properties: MainVcsLogUiProperties,
+                                                       filters: VcsLogFilterCollection?,
+                                                       parentDisposable: Disposable) :
+    PairFilterModel<VcsLogTextFilter, VcsLogHashFilter>(VcsLogFilterCollection.TEXT_FILTER, VcsLogFilterCollection.HASH_FILTER, properties,
+                                                        filters) {
+    init {
       if (filters != null) {
-        VcsLogTextFilter textFilter = filters.get(TEXT_FILTER);
+        val textFilter = filters.get(VcsLogFilterCollection.TEXT_FILTER)
         if (textFilter != null) {
-          uiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE, textFilter.matchesCase());
-          uiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_REGEX, textFilter.isRegex());
+          uiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE, textFilter.matchesCase())
+          uiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_REGEX, textFilter.isRegex)
         }
       }
-      VcsLogUiProperties.PropertiesChangeListener listener = new VcsLogUiProperties.PropertiesChangeListener() {
-        @Override
-        public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-          if (MainVcsLogUiProperties.TEXT_FILTER_REGEX.equals(property) ||
-              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE.equals(property)) {
-            if (getFilter1() != null) {
-              _filter = getFilterFromProperties();
-              notifyFiltersChanged();
+      val listener: PropertiesChangeListener = object : PropertiesChangeListener {
+        override fun <T> onPropertyChanged(property: VcsLogUiProperty<T>) {
+          if (MainVcsLogUiProperties.TEXT_FILTER_REGEX == property || MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE == property) {
+            if (filter1 != null) {
+              _filter = getFilterFromProperties()
+              notifyFiltersChanged()
             }
           }
         }
-      };
-      properties.addChangeListener(listener, parentDisposable);
+      }
+      properties.addChangeListener(listener, parentDisposable)
     }
 
-    @Override
-    protected @Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> getFilterFromProperties() {
-      FilterPair<VcsLogTextFilter, VcsLogHashFilter> filterPair = super.getFilterFromProperties();
-      if (filterPair == null) return null;
+    override fun getFilterFromProperties(): FilterPair<VcsLogTextFilter, VcsLogHashFilter>? {
+      val filterPair: FilterPair<VcsLogTextFilter, VcsLogHashFilter>? = super.getFilterFromProperties()
+      if (filterPair == null) return null
 
-      VcsLogTextFilter textFilter = filterPair.getFilter1();
-      VcsLogHashFilter hashFilter = filterPair.getFilter2();
+      var textFilter = filterPair.filter1
+      var hashFilter = filterPair.filter2
 
       // check filters correctness
-      if (textFilter != null && StringUtil.isEmptyOrSpaces(textFilter.getText())) {
-        LOG.warn("Saved text filter is empty. Removing.");
-        textFilter = null;
+      if (textFilter != null && textFilter.text.isBlank()) {
+        LOG.warn("Saved text filter is empty. Removing.")
+        textFilter = null
       }
 
       if (textFilter != null) {
-        VcsLogHashFilter hashFilterFromText = VcsLogFilterObject.fromHash(textFilter.getText());
-        if (!Objects.equals(hashFilter, hashFilterFromText)) {
+        val hashFilterFromText = VcsLogFilterObject.fromHash(textFilter.text)
+        if (hashFilter != hashFilterFromText) {
           LOG.warn("Saved hash filter " + hashFilter + " is inconsistent with text filter." +
-                   " Replacing with " + hashFilterFromText);
-          hashFilter = hashFilterFromText;
+                   " Replacing with " + hashFilterFromText)
+          hashFilter = hashFilterFromText
         }
       }
-      else if (hashFilter != null && !hashFilter.getHashes().isEmpty()) {
-        textFilter = createTextFilter(StringUtil.join(hashFilter.getHashes(), " "));
+      else if (hashFilter != null && !hashFilter.hashes.isEmpty()) {
+        textFilter = createTextFilter(StringUtil.join(hashFilter.hashes, " "))
         LOG.warn("Saved hash filter " + hashFilter +
-                 " is inconsistent with empty text filter. Using text filter " + textFilter);
+                 " is inconsistent with empty text filter. Using text filter " + textFilter)
       }
 
-      return new FilterPair<>(textFilter, hashFilter);
+      return FilterPair(textFilter, hashFilter)
     }
 
-    @NotNull
-    String getText() {
-      if (getFilter1() != null) {
-        return getFilter1().getText();
-      }
-      return "";
-    }
+    val text: String get() = filter1?.text ?: ""
 
-    @Override
-    protected @NotNull List<String> getFilter1Values(@NotNull VcsLogTextFilter filter) {
-      return Collections.singletonList(filter.getText());
-    }
+    override fun getFilter1Values(filter1: VcsLogTextFilter): List<String> = listOf(filter1.text)
+    override fun getFilter2Values(filter2: VcsLogHashFilter): List<String> = ArrayList(filter2.hashes)
 
-    @Override
-    protected @NotNull List<String> getFilter2Values(@NotNull VcsLogHashFilter filter) {
-      return new ArrayList<>(filter.getHashes());
-    }
+    override fun createFilter1(values: List<String>): VcsLogTextFilter = createTextFilter(values.first())
+    override fun createFilter2(values: List<String>): VcsLogHashFilter = VcsLogFilterObject.fromHashes(values)
 
-    @Override
-    protected @Nullable VcsLogTextFilter createFilter1(@NotNull List<String> values) {
-      return createTextFilter(Objects.requireNonNull(ContainerUtil.getFirstItem(values)));
-    }
-
-    @Override
-    protected @Nullable VcsLogHashFilter createFilter2(@NotNull List<String> values) {
-      return VcsLogFilterObject.fromHashes(values);
-    }
-
-    private @NotNull VcsLogTextFilter createTextFilter(@NotNull String text) {
+    private fun createTextFilter(text: String): VcsLogTextFilter {
       return VcsLogFilterObject.fromPattern(text,
                                             uiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
-                                            uiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE));
+                                            uiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE))
     }
 
-    public void setFilterText(@NotNull String text) {
-      if (StringUtil.isEmptyOrSpaces(text)) {
-        setFilter(null);
+    fun setFilterText(text: String) {
+      if (text.isBlank()) {
+        setFilter(null)
       }
       else {
-        VcsLogTextFilter textFilter = createTextFilter(text);
-        VcsLogHashFilter hashFilter = VcsLogFilterObject.fromHash(text);
-        setFilter(new FilterPair<>(textFilter, hashFilter));
+        val textFilter = createTextFilter(text)
+        val hashFilter = VcsLogFilterObject.fromHash(text)
+        setFilter(FilterPair(textFilter, hashFilter))
       }
     }
   }
 
-  public static class FileFilterModel extends FilterModel.PairFilterModel<VcsLogStructureFilter, VcsLogRootFilter> {
-    private static final @NotNull @NonNls String DIR = "dir:";
-    private static final @NotNull @NonNls String FILE = "file:";
-    private final @NotNull Set<VirtualFile> myRoots;
+  class FileFilterModel(val roots: Set<VirtualFile>, uiProperties: MainVcsLogUiProperties, filters: VcsLogFilterCollection?) :
+    PairFilterModel<VcsLogStructureFilter, VcsLogRootFilter>(VcsLogFilterCollection.STRUCTURE_FILTER, VcsLogFilterCollection.ROOT_FILTER,
+                                                             uiProperties, filters) {
 
-    public FileFilterModel(@NotNull Set<VirtualFile> roots,
-                           @NotNull MainVcsLogUiProperties uiProperties,
-                           @Nullable VcsLogFilterCollection filters) {
-      super(STRUCTURE_FILTER, ROOT_FILTER, uiProperties, filters);
-      myRoots = roots;
-    }
+    override fun getFilter1Values(filter1: VcsLogStructureFilter): List<String> = getFilterValues(filter1)
+    override fun getFilter2Values(filter2: VcsLogRootFilter): List<String> = getRootFilterValues(filter2)
 
-    @Override
-    protected @NotNull List<String> getFilter1Values(@NotNull VcsLogStructureFilter filter) {
-      return getFilterValues(filter);
-    }
-
-    @Override
-    protected @NotNull List<String> getFilter2Values(@NotNull VcsLogRootFilter filter) {
-      return getRootFilterValues(filter);
-    }
-
-    public static @NotNull List<String> getRootFilterValues(@NotNull VcsLogRootFilter filter) {
-      return ContainerUtil.map(filter.getRoots(), VirtualFile::getPath);
-    }
-
-    public static @NotNull List<String> getFilterValues(@NotNull VcsLogStructureFilter filter) {
-      return ContainerUtil.map(filter.getFiles(), path -> (path.isDirectory() ? DIR : FILE) + path.getPath());
-    }
-
-    @Override
-    protected @NotNull VcsLogStructureFilter createFilter1(@NotNull List<String> values) {
-      return createStructureFilter(values);
-    }
-
-    @Override
-    protected @Nullable VcsLogRootFilter createFilter2(@NotNull List<String> values) {
-      List<VirtualFile> selectedRoots = new ArrayList<>();
-      for (String path : values) {
-        VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
+    override fun createFilter1(values: List<String>): VcsLogStructureFilter = createStructureFilter(values)
+    override fun createFilter2(values: List<String>): VcsLogRootFilter? {
+      val selectedRoots: MutableList<VirtualFile> = ArrayList()
+      for (path in values) {
+        val root = LocalFileSystem.getInstance().findFileByPath(path)
         if (root != null) {
-          if (myRoots.contains(root)) {
-            selectedRoots.add(root);
+          if (roots.contains(root)) {
+            selectedRoots.add(root)
           }
           else {
-            LOG.warn("Can not find VCS root for filtering " + root);
+            LOG.warn("Can not find VCS root for filtering $root")
           }
         }
         else {
-          LOG.warn("Can not filter by root that does not exist " + path);
+          LOG.warn("Can not filter by root that does not exist $path")
         }
       }
-      if (selectedRoots.isEmpty()) return null;
-      return VcsLogFilterObject.fromRoots(selectedRoots);
+      if (selectedRoots.isEmpty()) return null
+      return VcsLogFilterObject.fromRoots(selectedRoots)
     }
 
-    protected @Nullable VcsLogRootFilter getRootFilter() {
-      return getFilter2();
-    }
+    val rootFilter: VcsLogRootFilter?
+      get() = filter2
 
-    public @Nullable VcsLogStructureFilter getStructureFilter() {
-      return getFilter1();
-    }
-
-    @NotNull
-    Set<VirtualFile> getRoots() {
-      return myRoots;
-    }
-
-    protected void setStructureFilter(@NotNull VcsLogStructureFilter filter) {
-      setFilter(new FilterPair<>(filter, null));
-    }
-
-    static @NotNull VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
-      return VcsLogFilterObject.fromPaths(ContainerUtil.map(values, FileFilterModel::extractPath));
-    }
-
-    @NotNull
-    public static FilePath extractPath(String path) {
-      if (path.startsWith(DIR)) {
-        return VcsUtil.getFilePath(path.substring(DIR.length()), true);
+    var structureFilter: VcsLogStructureFilter?
+      get() = filter1
+      private set(filter) {
+        setFilter(FilterPair(filter, null))
       }
-      else if (path.startsWith(FILE)) {
-        return VcsUtil.getFilePath(path.substring(FILE.length()), false);
+
+    companion object {
+      private const val DIR: @NonNls String = "dir:"
+      private const val FILE: @NonNls String = "file:"
+
+      fun getRootFilterValues(filter: VcsLogRootFilter): List<String> {
+        return filter.roots.map { it.path }
       }
-      return VcsUtil.getFilePath(path);
+
+      @JvmStatic
+      fun getFilterValues(filter: VcsLogStructureFilter): List<String> {
+        return filter.files.map { path -> (if (path.isDirectory) DIR else FILE) + path.path }
+      }
+
+      @JvmStatic
+      fun createStructureFilter(values: List<String>): VcsLogStructureFilter {
+        return VcsLogFilterObject.fromPaths(values.map { path -> extractPath(path) })
+      }
+
+      fun extractPath(path: String): FilePath {
+        if (path.startsWith(DIR)) {
+          return VcsUtil.getFilePath(path.substring(DIR.length), true)
+        }
+        else if (path.startsWith(FILE)) {
+          return VcsUtil.getFilePath(path.substring(FILE.length), false)
+        }
+        return VcsUtil.getFilePath(path)
+      }
     }
   }
 
-  public static class DateFilterModel extends FilterModel.SingleFilterModel<VcsLogDateFilter> {
-    public DateFilterModel(@NotNull MainVcsLogUiProperties uiProperties, @Nullable VcsLogFilterCollection filters) {
-      super(DATE_FILTER, uiProperties, filters);
-    }
+  class DateFilterModel(uiProperties: MainVcsLogUiProperties, filters: VcsLogFilterCollection?) :
+    SingleFilterModel<VcsLogDateFilter>(VcsLogFilterCollection.DATE_FILTER, uiProperties, filters) {
 
-    @Override
-    protected @Nullable VcsLogDateFilter createFilter(@NotNull List<String> values) {
-      if (values.size() != 2) {
-        LOG.warn("Can not create date filter from " + values + " before and after dates are required.");
-        return null;
+    override fun createFilter(values: List<String>): VcsLogDateFilter? {
+      if (values.size != 2) {
+        LOG.warn("Can not create date filter from $values before and after dates are required.")
+        return null
       }
-      String after = values.get(0);
-      String before = values.get(1);
+      val after = values[0]
+      val before = values[1]
       try {
-        return VcsLogFilterObject.fromDates(after.isEmpty() ? 0 : Long.parseLong(after),
-                                            before.isEmpty() ? 0 : Long.parseLong(before));
+        return VcsLogFilterObject.fromDates(if (after.isEmpty()) 0 else after.toLong(),
+                                            if (before.isEmpty()) 0 else before.toLong())
       }
-      catch (NumberFormatException e) {
-        LOG.warn("Can not create date filter from " + values);
+      catch (e: NumberFormatException) {
+        LOG.warn("Can not create date filter from $values")
       }
-      return null;
+      return null
     }
 
-    @Override
-    protected @NotNull List<String> getFilterValues(@NotNull VcsLogDateFilter filter) {
-      return getDateValues(filter);
+    override fun getFilterValues(filter: VcsLogDateFilter): List<String> = getDateValues(filter)
+
+    fun updateFilterFromProperties() {
+      setFilter(getFilterFromProperties())
     }
 
-    @NotNull
-    public static List<String> getDateValues(@NotNull VcsLogDateFilter filter) {
-      Date after = filter.getAfter();
-      Date before = filter.getBefore();
-      return Arrays.asList(after == null ? "" : Long.toString(after.getTime()),
-                           before == null ? "" : Long.toString(before.getTime()));
-    }
-
-    public void updateFilterFromProperties() {
-      setFilter(getFilterFromProperties());
+    companion object {
+      fun getDateValues(filter: VcsLogDateFilter): List<String> {
+        val after = filter.after
+        val before = filter.before
+        return listOf(after?.time?.toString() ?: "", before?.time?.toString() ?: "")
+      }
     }
   }
 
-  private class UserFilterModel extends FilterModel.SingleFilterModel<VcsLogUserFilter> {
-    UserFilterModel(@NotNull MainVcsLogUiProperties uiProperties, @Nullable VcsLogFilterCollection filters) {
-      super(USER_FILTER, uiProperties, filters);
-    }
+  private inner class UserFilterModel(uiProperties: MainVcsLogUiProperties, filters: VcsLogFilterCollection?) :
+    SingleFilterModel<VcsLogUserFilter>(VcsLogFilterCollection.USER_FILTER, uiProperties, filters) {
 
-    @Override
-    protected @NotNull VcsLogUserFilter createFilter(@NotNull List<String> values) {
-      return VcsLogFilterObject.fromUserNames(values, myLogData);
-    }
-
-    @Override
-    protected @NotNull List<String> getFilterValues(@NotNull VcsLogUserFilter filter) {
-      return new ArrayList<>(filter.getValuesAsText());
-    }
+    override fun createFilter(values: List<String>): VcsLogUserFilter = VcsLogFilterObject.fromUserNames(values, logData)
+    override fun getFilterValues(filter: VcsLogUserFilter): List<String> = ArrayList(filter.valuesAsText)
   }
 
-  private class TextFilterField extends SearchTextField implements DataProvider {
-    private final @NotNull TextFilterModel myTextFilterModel;
+  private inner class TextFilterField(private val textFilterModel: TextFilterModel, parentDisposable: Disposable) :
+    SearchTextField(VCS_LOG_TEXT_FILTER_HISTORY), DataProvider {
 
-    TextFilterField(@NotNull TextFilterModel model, @NotNull Disposable parentDisposable) {
-      super(VCS_LOG_TEXT_FILTER_HISTORY);
-      myTextFilterModel = model;
-      setText(myTextFilterModel.getText());
-      getTextEditor().getEmptyText().setText(VcsLogBundle.message("vcs.log.filter.text.hash.empty.text"));
-      getTextEditor().addActionListener(e -> applyFilter(true));
-      addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          if (isFilterOnTheFlyEnabled()) applyFilter(false);
+    init {
+      text = textFilterModel.text
+      textEditor.emptyText.setText(VcsLogBundle.message("vcs.log.filter.text.hash.empty.text"))
+      textEditor.addActionListener { e: ActionEvent? -> applyFilter(true) }
+      addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          if (isFilterOnTheFlyEnabled) applyFilter(false)
         }
-      });
-      myTextFilterModel.addSetFilterListener(() -> {
-        String modelText = myTextFilterModel.getText();
-        if (!isSameFilterAs(modelText)) setText(modelText);
-      });
-
-      getTextEditor().setToolTipText(createTooltipText());
-      Disposer.register(parentDisposable, this::hidePopup);
-    }
-
-    private static @NotNull @NlsContexts.Tooltip String createTooltipText() {
-      String text = VcsLogBundle.message("vcs.log.filter.text.hash.tooltip");
-      String shortcut = HelpTooltip.getShortcutAsHtml(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER));
-      return XmlStringUtil.wrapInHtml(text + shortcut);
-    }
-
-    private void applyFilter(boolean addToHistory) {
-      myTextFilterModel.setFilterText(getText());
-      if (addToHistory) addCurrentTextToHistory();
-    }
-
-    @Override
-    protected void onFieldCleared() {
-      myTextFilterModel.setFilter(null);
-    }
-
-    @Override
-    protected void onFocusLost() {
-      if (!isSameFilterAs(myTextFilterModel.getText())) applyFilter(isFilterOnTheFlyEnabled());
-    }
-
-    private boolean isSameFilterAs(@NotNull String otherText) {
-      String thisText = getText();
-      if (StringUtil.isEmptyOrSpaces(thisText)) return StringUtil.isEmptyOrSpaces(otherText);
-      return Objects.equals(thisText, otherText);
-    }
-
-    @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
-        return myUiProperties;
+      })
+      textFilterModel.addSetFilterListener {
+        val modelText = textFilterModel.text
+        if (!isSameFilterAs(modelText)) text = modelText
       }
-      return null;
+
+      textEditor.toolTipText = createTooltipText()
+      Disposer.register(parentDisposable) { hidePopup() }
     }
 
-    private static boolean isFilterOnTheFlyEnabled() {
-      return Registry.is("vcs.log.filter.text.on.the.fly");
+    private fun applyFilter(addToHistory: Boolean) {
+      textFilterModel.setFilterText(text)
+      if (addToHistory) addCurrentTextToHistory()
+    }
+
+    override fun onFieldCleared() {
+      textFilterModel.setFilter(null)
+    }
+
+    override fun onFocusLost() {
+      if (!isSameFilterAs(textFilterModel.text)) applyFilter(isFilterOnTheFlyEnabled)
+    }
+
+    private fun isSameFilterAs(otherText: String): Boolean {
+      val thisText = text
+      if (thisText.isNullOrBlank()) return otherText.isBlank()
+      return thisText == otherText
+    }
+
+    override fun getData(dataId: String): Any? {
+      if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId)) {
+        return uiProperties
+      }
+      return null
+    }
+  }
+
+  companion object {
+    private const val VCS_LOG_TEXT_FILTER_HISTORY = "Vcs.Log.Text.Filter.History"
+    private val LOG = Logger.getInstance(VcsLogClassicFilterUi::class.java)
+
+    private fun createTooltipText(): @NlsContexts.Tooltip String {
+      val text = VcsLogBundle.message("vcs.log.filter.text.hash.tooltip")
+      val shortcut = HelpTooltip.getShortcutAsHtml(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER))
+      return XmlStringUtil.wrapInHtml(text + shortcut)
+    }
+
+    private val isFilterOnTheFlyEnabled: Boolean
+      get() = Registry.`is`("vcs.log.filter.text.on.the.fly")
+
+    private fun createTextActionsToolbar(editor: JComponent?): ActionToolbar {
+      val actionManager = ActionManager.getInstance()
+      val textActionGroup = actionManager.getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP) as ActionGroup
+      val toolbar: ActionToolbarImpl = object : ActionToolbarImpl(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, textActionGroup, true) {
+        override fun createToolbarButton(action: AnAction,
+                                         look: ActionButtonLook?,
+                                         place: String,
+                                         presentation: Presentation,
+                                         minimumSize: Supplier<out Dimension?>): ActionButton {
+          val button = MyActionButton(action, presentation)
+          button.isFocusable = true
+          applyToolbarLook(look, presentation, button)
+          return button
+        }
+      }
+
+      toolbar.setCustomButtonLook(FieldInplaceActionButtonLook())
+      toolbar.setReservePlaceAutoPopupIcon(false)
+      toolbar.targetComponent = editor
+      toolbar.updateActionsImmediately()
+      return toolbar
     }
   }
 }
