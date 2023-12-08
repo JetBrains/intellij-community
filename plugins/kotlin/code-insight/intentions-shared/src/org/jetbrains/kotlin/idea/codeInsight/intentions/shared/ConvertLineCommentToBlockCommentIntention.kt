@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.intentions
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
@@ -27,8 +26,6 @@ class ConvertLineCommentToBlockCommentIntention : SelfTargetingIntention<PsiComm
             firstComment = firstComment.prevComment() ?: break
         }
 
-        val indent = (firstComment.prevSibling as? PsiWhiteSpace)?.text?.reversed()?.takeWhile { it == ' ' || it == '\t' } ?: ""
-
         val comments = mutableListOf(firstComment)
         var nextComment = firstComment
         while (true) {
@@ -36,20 +33,23 @@ class ConvertLineCommentToBlockCommentIntention : SelfTargetingIntention<PsiComm
             comments.add(nextComment)
         }
 
-        val blockComment = if (comments.size == 1)
+        val blockComment = if (comments.size == 1) {
             "/* ${comments.first().commentText()} */"
-        else
+        } else {
+            val indent = (firstComment.prevSibling as? PsiWhiteSpace)?.text?.reversed()?.takeWhile { it == ' ' || it == '\t' } ?: ""
+
             comments.joinToString(separator = "\n", prefix = "/*\n", postfix = "\n$indent*/") {
                 "$indent${it.commentText()}"
             }
+        }
 
         comments.drop(1).forEach {
             (it.prevSibling as? PsiWhiteSpace)?.delete()
             it.delete()
         }
+
         firstComment.replace(KtPsiFactory(project).createComment(blockComment))
     }
-
 }
 
 private fun PsiElement.isEndOfLineComment() = node.elementType == KtTokens.EOL_COMMENT
@@ -59,4 +59,3 @@ private fun PsiComment.commentText() = text.substring(2).replace("/*", "/ *").re
 private fun PsiComment.nextComment(): PsiComment? = (getNextSiblingIgnoringWhitespace() as? PsiComment)?.takeIf { it.isEndOfLineComment() }
 
 private fun PsiComment.prevComment(): PsiComment? = (getPrevSiblingIgnoringWhitespace() as? PsiComment)?.takeIf { it.isEndOfLineComment() }
-

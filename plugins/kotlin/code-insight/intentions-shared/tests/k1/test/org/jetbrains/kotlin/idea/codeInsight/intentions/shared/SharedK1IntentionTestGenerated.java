@@ -358,6 +358,54 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/convertLineCommentToBlockComment")
+    public static class ConvertLineCommentToBlockComment extends AbstractSharedK1IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("afterStatement.kt")
+        public void testAfterStatement() throws Exception {
+            runTest("../testData/intentions/convertLineCommentToBlockComment/afterStatement.kt");
+        }
+
+        @TestMetadata("blankLine.kt")
+        public void testBlankLine() throws Exception {
+            runTest("../testData/intentions/convertLineCommentToBlockComment/blankLine.kt");
+        }
+
+        @TestMetadata("blockComment.kt")
+        public void testBlockComment() throws Exception {
+            runTest("../testData/intentions/convertLineCommentToBlockComment/blockComment.kt");
+        }
+
+        @TestMetadata("includeBlockComment.kt")
+        public void testIncludeBlockComment() throws Exception {
+            runTest("../testData/intentions/convertLineCommentToBlockComment/includeBlockComment.kt");
+        }
+
+        @TestMetadata("includeBlockComment2.kt")
+        public void testIncludeBlockComment2() throws Exception {
+            runTest("../testData/intentions/convertLineCommentToBlockComment/includeBlockComment2.kt");
+        }
+
+        @TestMetadata("newLinesBetweenCommentAndDeclaration.kt")
+        public void testNewLinesBetweenCommentAndDeclaration() throws Exception {
+            runTest("../testData/intentions/convertLineCommentToBlockComment/newLinesBetweenCommentAndDeclaration.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/intentions/convertLineCommentToBlockComment/simple.kt");
+        }
+
+        @TestMetadata("simple2.kt")
+        public void testSimple2() throws Exception {
+            runTest("../testData/intentions/convertLineCommentToBlockComment/simple2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/convertToForEachFunctionCall")
     public abstract static class ConvertToForEachFunctionCall extends AbstractSharedK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
