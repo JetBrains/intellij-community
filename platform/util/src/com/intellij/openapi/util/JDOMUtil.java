@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
+import com.fasterxml.aalto.UncheckedStreamException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.URLUtil;
@@ -215,7 +216,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException e) {
       throw new JDOMException(e.getMessage(), e);
     }
     finally {
@@ -233,7 +234,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException e) {
       throw new JDOMException(e.getMessage(), e);
     }
   }
@@ -303,7 +304,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException e) {
       throw new JDOMException(e.getMessage(), e);
     }
   }
@@ -323,7 +324,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException e) {
       throw new JDOMException(e.getMessage(), e);
     }
   }
