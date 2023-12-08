@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -145,6 +146,7 @@ public class VcsStructureChooser extends DialogWrapper {
     descriptor.withRoots(new ArrayList<>(myRoots)).withShowHiddenFiles(true).withHideIgnored(true);
     MyCheckboxTreeCellRenderer cellRenderer = new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
     FileSystemTreeImpl fileSystemTree = new MyFileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, myModulesSet);
+    Disposer.register(myDisposable, fileSystemTree);
 
     new ClickListener() {
       @Override
