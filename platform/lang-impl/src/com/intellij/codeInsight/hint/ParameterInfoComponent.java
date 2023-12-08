@@ -462,6 +462,13 @@ public final class ParameterInfoComponent extends JPanel {
               nextLine.myLabel.setIcon(EmptyIcon.ICON_16);
             }
           }
+          if (myPanels.length == 1) {
+            for (int j = 0; j < count; j++) {
+              OneLineComponent nextLine = (OneLineComponent)panel.getComponent(j);
+              labels.add(nextLine.myLabel);
+            }
+            break;
+          }
           return;
         }
         labels.add(line.myLabel);
