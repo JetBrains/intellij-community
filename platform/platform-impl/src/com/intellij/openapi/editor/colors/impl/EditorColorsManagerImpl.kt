@@ -493,7 +493,6 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     activity.end()
   }
 
-  //IDEA-331405 Hide IntelliJ Light from new UI
   private fun hideIntellijLightSchemeIfNeeded(state: State) {
     if (!ExperimentalUI.isNewUI()) return
     val themeName = "IntelliJ Light"

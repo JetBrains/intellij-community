@@ -960,8 +960,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       }
     }
 
-    //this made to make possible compare color schemes inside EditorColorManager
-    //to prevent cyclic init (getDefaultAttributes uses EditorColorManager.getInstance)
+    // this made to make possible compare color schemes inside EditorColorManager
+    // to prevent cyclic init (getDefaultAttributes uses EditorColorManager.getInstance)
     this.setUseDefaults(useDefaults);
     otherScheme.setUseDefaults(useDefaults);
 
@@ -1022,12 +1022,11 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     sourceScheme.attributesMap.forEach((key, attributes) -> attributesMap.putIfAbsent(key, attributes));
   }
 
-  public boolean isUseDefaults() {
+  boolean isUseDefaults() {
     return useDefaults;
   }
 
-  public void setUseDefaults(boolean useDefaults) {
-
+  private void setUseDefaults(boolean useDefaults) {
     this.useDefaults = useDefaults;
     if (parentScheme != null && parentScheme instanceof AbstractColorsScheme abstractColorsScheme) {
       abstractColorsScheme.setUseDefaults(useDefaults);
