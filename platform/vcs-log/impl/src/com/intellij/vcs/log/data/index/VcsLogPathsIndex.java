@@ -282,11 +282,11 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     }
   }
 
-  private static final class LightFilePathKeyDescriptor implements KeyDescriptor<LightFilePath> {
-    private final @NotNull List<VirtualFile> myRoots;
-    private final @NotNull Object2IntMap<VirtualFile> myRootsReversed;
+  private static class LightFilePathEqualityPolicy implements EqualityPolicy<LightFilePath> {
+    protected final @NotNull List<VirtualFile> myRoots;
+    protected final @NotNull Object2IntMap<VirtualFile> myRootsReversed;
 
-    private LightFilePathKeyDescriptor(@NotNull Collection<VirtualFile> roots) {
+    private LightFilePathEqualityPolicy(@NotNull Collection<VirtualFile> roots) {
       myRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));
 
       myRootsReversed = new Object2IntOpenHashMap<>();
@@ -307,6 +307,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       }
       return myRootsReversed.getInt(path1.getRoot()) == myRootsReversed.getInt(path2.getRoot()) &&
              path1.getRelativePath().equals(path2.getRelativePath());
+    }
+  }
+
+  private static final class LightFilePathKeyDescriptor extends LightFilePathEqualityPolicy implements KeyDescriptor<LightFilePath> {
+    private LightFilePathKeyDescriptor(@NotNull Collection<VirtualFile> roots) {
+      super(roots);
     }
 
     @Override
