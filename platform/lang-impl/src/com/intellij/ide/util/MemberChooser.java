@@ -759,6 +759,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     @Override
     public void actionPerformed(ActionEvent e) {
       myTree.clearSelection();
+      doOKAction();
     }
   }
 
