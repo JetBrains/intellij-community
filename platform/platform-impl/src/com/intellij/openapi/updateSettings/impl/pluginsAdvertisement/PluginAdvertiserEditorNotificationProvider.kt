@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
@@ -47,8 +48,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
     val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
 
     if (suggestionData == null) {
-      project.service<AdvertiserInfoUpdateService>()
-        .scheduleAdvertiserUpdate(file)
+      project.service<AdvertiserInfoUpdateService>().scheduleAdvertiserUpdate(file)
       return null
     }
 
@@ -105,7 +105,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
         }
       }
 
-      val pluginAdvertiserExtensionsState = PluginAdvertiserExtensionsStateService.instance.createExtensionDataProvider(project)
+      val pluginAdvertiserExtensionsState = PluginAdvertiserExtensionsStateService.getInstance().createExtensionDataProvider(project)
       panel.text = IdeBundle.message("plugins.advertiser.plugins.found", extensionOrFileName)
 
       fun createInstallActionLabel(plugins: Set<PluginData>) {
@@ -218,10 +218,10 @@ fun getSuggestionData(
   fileName: String,
   fileType: FileType,
 ): PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion? {
-  return PluginAdvertiserExtensionsStateService.instance
+  return PluginAdvertiserExtensionsStateService.getInstance()
     .createExtensionDataProvider(project)
     .requestExtensionData(fileName, fileType)?.let {
-      getSuggestionData(project, it, activeProductCode, fileType)
+      getSuggestionData(project = project, extensionsData = it, activeProductCode = activeProductCode, fileType = fileType)
     }
 }
 
@@ -302,7 +302,7 @@ internal class AdvertiserInfoUpdateService(
 
       MarketplaceRequests.getInstance().updatePluginIdsAndExtensionData()
 
-      val extensionsStateService = PluginAdvertiserExtensionsStateService.instance
+      val extensionsStateService = PluginAdvertiserExtensionsStateService.getInstance()
       var shouldUpdateNotifications = extensionsStateService.updateCache(fileName)
       val fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(fileName)
       if (fullExtension != null) {
@@ -315,7 +315,7 @@ internal class AdvertiserInfoUpdateService(
         }
       }
 
-      LOG.debug("Tried to update extensions cache for file '${fileName}'. shouldUpdateNotifications=$shouldUpdateNotifications")
+      LOG.debug { "Tried to update extensions cache for file '${fileName}'. shouldUpdateNotifications=$shouldUpdateNotifications" }
     }
   }
 }

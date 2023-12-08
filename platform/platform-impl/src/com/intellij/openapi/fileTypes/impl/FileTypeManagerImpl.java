@@ -139,7 +139,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           fireBeforeFileTypesChanged();
         }
         IdeaPluginDescriptor pluginDescriptor = coreIdeaPluginDescriptor();
-        AbstractFileType type = (AbstractFileType)loadFileType("filetypes.xml", element, pluginDescriptor, false);
+        AbstractFileType type = (AbstractFileType)loadFileType("filetypes.xml",
+                                                               element,
+                                                               pluginDescriptor,
+                                                               PluginAdvertiserExtensionsStateService.Companion.getInstance(),
+                                                               false);
         if (!duringLoad) {
           fireFileTypesChanged(type, null);
         }
@@ -308,9 +312,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return Unit.INSTANCE;
     });
 
+    PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService =
+      PluginAdvertiserExtensionsStateService.Companion.getInstance();
     for (StandardFileType pair : myStandardFileTypes.values()) {
       if (mySchemeManager.findSchemeByName(pair.fileType.getName()) == null) {
-        registerFileTypeWithoutNotification(pair.fileType, pair.pluginDescriptor, pair.matchers, true);
+        registerFileTypeWithoutNotification(pair.fileType,
+                                            pair.pluginDescriptor,
+                                            pair.matchers,
+                                            pluginAdvertiserExtensionsStateService,
+                                            true);
       }
     }
 
@@ -324,7 +334,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
             for (Element element : e.getChildren(ELEMENT_FILETYPE)) {
               String fileTypeName = element.getAttributeValue(ATTRIBUTE_NAME);
               if (myPendingFileTypes.get(fileTypeName) == null) {
-                loadFileType("defaultFileTypes.xml", element, coreIdeaPluginDescriptor, true);
+                loadFileType("defaultFileTypes.xml", element, coreIdeaPluginDescriptor, pluginAdvertiserExtensionsStateService, true);
               }
             }
           }
@@ -555,7 +565,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       StandardFileType standardFileType = new StandardFileType(fileType, bean.getPluginDescriptor(), bean.getMatchers());
       myStandardFileTypes.put(bean.name, standardFileType);
-      registerFileTypeWithoutNotification(fileType, bean.getPluginDescriptor(), standardFileType.matchers, true);
+      PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService =
+        PluginAdvertiserExtensionsStateService.Companion.getInstance();
+      registerFileTypeWithoutNotification(fileType,
+                                          bean.getPluginDescriptor(),
+                                          standardFileType.matchers,
+                                          pluginAdvertiserExtensionsStateService,
+                                          true);
 
       if (bean.hashBangs != null) {
         for (String hashBang : StringUtil.split(bean.hashBangs, ";")) {
@@ -935,9 +951,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void doRegisterFileType(FileType type, List<? extends FileNameMatcher> defaultAssociations) {
+    PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService =
+      PluginAdvertiserExtensionsStateService.Companion.getInstance();
+
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
-      registerFileTypeWithoutNotification(type, detectPluginDescriptor(type).pluginDescriptor, defaultAssociations, true);
+      registerFileTypeWithoutNotification(type,
+                                          detectPluginDescriptor(type).pluginDescriptor,
+                                          defaultAssociations,
+                                          pluginAdvertiserExtensionsStateService,
+                                          true);
       fireFileTypesChanged(type, null);
     });
   }
@@ -1432,6 +1455,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private void registerFileTypeWithoutNotification(@NotNull FileType newFileType,
                                                    @NotNull PluginDescriptor newPluginDescriptor,
                                                    @NotNull List<? extends FileNameMatcher> newMatchers,
+                                                   @NotNull PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService,
                                                    boolean addScheme) {
     FileTypeWithDescriptor newFtd = new FileTypeWithDescriptor(newFileType, newPluginDescriptor);
     if (addScheme) {
@@ -1488,10 +1512,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       mySpecialFileTypes = ArrayUtil.append(mySpecialFileTypes, (FileTypeIdentifiableByVirtualFile)newFileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
     }
 
-    PluginAdvertiserExtensionsStateService pluginAdvertiser = PluginAdvertiserExtensionsStateService.getInstance();
-    for (FileNameMatcher matcher : newMatchers) {
-      pluginAdvertiser.registerLocalPlugin(matcher, newPluginDescriptor);
-    }
+    pluginAdvertiserExtensionsStateService.registerLocalPlugin(newMatchers, newPluginDescriptor);
   }
 
   private void checkFileTypeNamesUniqueness(@NotNull FileTypeWithDescriptor newFtd) {
@@ -1571,6 +1592,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private @NotNull FileType loadFileType(@NotNull Object context,
                                          @NotNull Element typeElement,
                                          @NotNull PluginDescriptor pluginDescriptor,
+                                         @NotNull PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService,
                                          boolean isDefault) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
 
@@ -1602,7 +1624,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     String iconPath = typeElement.getAttributeValue("icon");
     setFileTypeAttributes(type, fileTypeName, fileTypeDescr, iconPath);
-    registerFileTypeWithoutNotification(type, pluginDescriptor, parseExtensions(context, extensionsStr), isDefault);
+    registerFileTypeWithoutNotification(type,
+                                        pluginDescriptor,
+                                        parseExtensions(context, extensionsStr),
+                                        pluginAdvertiserExtensionsStateService,
+                                        isDefault);
 
     if (isDefault) {
       myDefaultTypes.add(new FileTypeWithDescriptor(type, pluginDescriptor));
@@ -1634,7 +1660,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (builder == null) {
           builder = new StringBuilder();
         }
-        else if (builder.length() > 0) {
+        else if (!builder.isEmpty()) {
           builder.append(FileTypeConsumer.EXTENSION_DELIMITER);
         }
         builder.append(extension);
@@ -1817,8 +1843,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       StandardFileType type = myStandardFileTypes.get(typeName);
       if (type == null) {
+        PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService =
+          PluginAdvertiserExtensionsStateService.Companion.getInstance();
         myStandardFileTypes.put(typeName, new StandardFileType(fileType, pluginDescriptor, fileNameMatchers));
-        registerFileTypeWithoutNotification(fileType, pluginDescriptor, fileNameMatchers, true);
+        registerFileTypeWithoutNotification(fileType, pluginDescriptor, fileNameMatchers, pluginAdvertiserExtensionsStateService, true);
       }
       else {
         type.matchers.addAll(fileNameMatchers);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.advertiser
 
 import com.intellij.configurationStore.deserialize
@@ -121,8 +121,10 @@ class PluginsAdvertiserTest {
 
     PluginFeatureCacheService.getInstance().extensions = PluginFeatureMap(featureMap)
 
+    val pluginAdvertiserExtensionsStateService = PluginAdvertiserExtensionsStateService.getInstance()
     for ((extensionOrFileName, pluginDataSet) in featureMap) {
-      PluginAdvertiserExtensionsStateService.instance.updateCache(extensionOrFileName, pluginDataSet.dataSet)
+      pluginAdvertiserExtensionsStateService.updateCache(extensionOrFileName = extensionOrFileName,
+                                                         compatiblePlugins = pluginDataSet.dataSet)
     }
   }
 
