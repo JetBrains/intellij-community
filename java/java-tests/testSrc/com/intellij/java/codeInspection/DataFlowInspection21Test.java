@@ -2,6 +2,8 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +57,11 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testUnnamedPatterns() {
     doTest();
   }
-  
+
+  public void testUnnamedPatternsJava22() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, this::doTest);
+  }
+
   public void testPatternInStreamNotComplex() {
     doTest();
   }

@@ -16,13 +16,17 @@ public class LightUnnamedVariablesHighlightingTest extends LightJavaCodeInsightF
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+    return JAVA_22;
   }
 
   public void testUnnamedVariables() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> doTest());
+  }
+
+  public void testUnnamedVariablesJava22() {
     doTest();
-  } 
-  
+  }
+
   public void testUnnamedVariablesInGuard() {
     doTest();
   } 
