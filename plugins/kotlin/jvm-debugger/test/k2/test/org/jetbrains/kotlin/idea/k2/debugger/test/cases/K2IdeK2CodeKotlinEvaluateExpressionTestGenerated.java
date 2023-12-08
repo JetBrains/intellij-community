@@ -1691,6 +1691,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/superCallsSimple.kt");
             }
 
+            @TestMetadata("superWithArguments.kt")
+            public void testSuperWithArguments() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/superWithArguments.kt");
+            }
+
             @TestMetadata("synchronizedBlock.kt")
             public void testSynchronizedBlock() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/synchronizedBlock.kt");
