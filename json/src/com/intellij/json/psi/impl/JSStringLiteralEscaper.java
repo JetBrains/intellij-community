@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi.impl;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
@@ -57,8 +58,10 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
     int index = 0;
     final int outOffset = outChars.length();
     boolean result = true;
+    int iteration = 0;
     loop:
     while (index < chars.length()) {
+      if (iteration++ % 1000 == 0) ProgressManager.checkCanceled();
       char c = chars.charAt(index++);
 
       sourceOffsets[outChars.length() - outOffset] = index - 1;
