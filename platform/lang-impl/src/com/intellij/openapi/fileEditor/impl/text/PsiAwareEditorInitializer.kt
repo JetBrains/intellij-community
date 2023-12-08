@@ -4,7 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorEx
@@ -27,8 +27,8 @@ private class DocRenderTextEditorInitializer : TextEditorInitializer {
     }
 
     val psiManager = project.serviceAsync<PsiManager>()
-    val items = readActionBlocking {
-      val psiFile = psiManager.findFile(file) ?: return@readActionBlocking null
+    val items = readAction {
+      val psiFile = psiManager.findFile(file) ?: return@readAction null
       DocRenderPassFactory.calculateItemsToRender(editor, psiFile)
     } ?: return
 
@@ -49,7 +49,7 @@ private class FocusZoneTextEditorInitializer : TextEditorInitializer {
     }
 
     val psiManager = project.serviceAsync<PsiManager>()
-    val focusZones = readActionBlocking {
+    val focusZones = readAction {
       val psiFile = psiManager.findFile(file)
       FocusModePassFactory.calcFocusZones(psiFile)
     } ?: return
