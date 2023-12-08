@@ -342,7 +342,7 @@ internal class PhmVcsLogStorageBackend(
 
     @NonNls
     private const val INDEX = "index"
-    private const val VERSION = 2
+    private const val VERSION = 3
 
     internal val durableEnumeratorRegistryProperty get() = Registry.get("vcs.log.index.durable.enumerator")
 
