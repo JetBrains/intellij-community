@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestTimelineErrorStatusPresenter
-import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -186,7 +185,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         CodeReviewChatItemUIUtil.build(ComponentType.FULL,
                                        { avatarIconsProvider.getIcon(immutableItem.actor, it) },
                                        content) {
-          withHeader(createTitleTextPane(immutableItem.actor, immutableItem.date))
+          withHeader(CodeReviewTimelineUIUtil.createTitleTextPane(immutableItem.actor.name, immutableItem.actor.webUrl, immutableItem.date))
         }
       }
       is GitLabMergeRequestTimelineDiscussionViewModel -> {

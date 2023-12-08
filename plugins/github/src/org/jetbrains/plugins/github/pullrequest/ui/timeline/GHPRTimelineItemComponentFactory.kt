@@ -57,7 +57,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.buildTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTitlePane
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.awt.Component
 import java.awt.Container
@@ -354,7 +353,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val actor = firstComment.author ?: ghostUser
-    val titlePanel = createTitlePane(actor, firstComment.dateCreated, tagsPanel)
+    val titleTextPane = CodeReviewTimelineUIUtil.createTitleTextPane(actor.getPresentableName(), actor.url, firstComment.dateCreated)
+    val titlePanel = HorizontalListPanel(Title.HORIZONTAL_GAP).apply {
+      add(titleTextPane)
+      add(tagsPanel)
+    }
     val mainItem = buildTimelineItem(avatarIconsProvider, actor, content) {
       withHeader(titlePanel, actionsPanel)
       maxContentWidth = null

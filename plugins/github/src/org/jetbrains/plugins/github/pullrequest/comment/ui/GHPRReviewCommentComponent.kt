@@ -5,6 +5,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.openapi.diff.impl.patch.PatchHunk
@@ -19,7 +20,6 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 
@@ -38,7 +38,7 @@ object GHPRReviewCommentComponent {
              maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH): JComponent {
 
     val author = comment.author ?: ghostUser
-    val titlePane = GHPRTimelineItemUIUtil.createTitleTextPane(author, comment.dateCreated).apply {
+    val titlePane = CodeReviewTimelineUIUtil.createTitleTextPane(author.getPresentableName(), author.url, comment.dateCreated).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 

@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindChildIn
@@ -19,7 +20,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.net.URL
 import javax.swing.JComponent
@@ -56,7 +56,7 @@ internal object GitLabNoteComponentFactory {
   fun createTitle(cs: CoroutineScope, vm: GitLabNoteViewModel,
                   project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
     return HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
-      add(GitLabMergeRequestTimelineUIUtil.createTitleTextPane(vm.author, vm.createdAt))
+      add(CodeReviewTimelineUIUtil.createTitleTextPane(vm.author.name, vm.author.webUrl, vm.createdAt))
 
       val resolvedFlow = vm.discussionState.flatMapLatest { it.resolved }
       bindChildIn(cs, resolvedFlow) { resolved ->
