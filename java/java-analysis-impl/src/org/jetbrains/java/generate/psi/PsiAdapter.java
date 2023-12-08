@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -207,21 +208,14 @@ public final class PsiAdapter {
     }
 
     /**
-     * Is the given field a {@link Boolean} type or a primitive boolean type?
+     * Is the given type a {@link Boolean} or a primitive boolean?
      *
-     * @param factory element factory.
+     * @param factory unused.
      * @param type    type.
      * @return true if it's a Boolean or boolean type.
      */
     public static boolean isBooleanType(PsiElementFactory factory, PsiType type) {
-        if (isPrimitiveType(type)) {
-            // test for simple type of boolean
-            String s = type.getCanonicalText();
-            return "boolean".equals(s);
-        } else {
-            // test for Object type of Boolean
-            return isTypeOf(factory, type, JAVA_LANG_BOOLEAN);
-        }
+      return PsiTypes.booleanType().equals(PsiPrimitiveType.getOptionallyUnboxedType(type));
     }
 
     /**
@@ -457,15 +451,7 @@ public final class PsiAdapter {
      * @return true if a getter method, false if not.
      */
     public static boolean isGetterMethod(PsiMethod method) {
-        // must not be a void method
-        if (isTypeOfVoid(method.getReturnType())) {
-            return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        if (!parameterList.isEmpty()) {
-            return false;
-        }
-        return true;
+        return PropertyUtil.isSimpleGetter(method);
     }
 
     /**
@@ -481,7 +467,7 @@ public final class PsiAdapter {
      *
      *
      * @param method  the method
-     * @return the fieldname if this is a getter method.
+     * @return the field name if this is a getter method.
      * @see #isGetterMethod(PsiMethod) for the getter check
      */
     @Nullable
