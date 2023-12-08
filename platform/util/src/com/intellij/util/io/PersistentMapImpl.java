@@ -172,12 +172,16 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
 
-    Path walFile = myStorageFile.resolveSibling(myStorageFile.getFileName().toString() + ".wal");
-    myWal = myBuilder.isEnableWal() ? new PersistentMapWal<>(keyDescriptor, valueExternalizer, options.useCompression(), walFile,
-                                                             myBuilder.getWalExecutor(), true) : null;
+    if (myBuilder.isEnableWal()) {
+      Path walFile = myStorageFile.resolveSibling(myStorageFile.getFileName().toString() + ".wal");
+      myWal = new PersistentMapWal<>(keyDescriptor, valueExternalizer, options.useCompression(), walFile,
+                                     myBuilder.getWalExecutor(), true);
+    }
+    else {
+      myWal = null;
+    }
 
-    final @NotNull PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler =
-      myEnumerator.getRecordHandler();
+    PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
 
     boolean inlineValues = myBuilder.getInlineValues(false);
