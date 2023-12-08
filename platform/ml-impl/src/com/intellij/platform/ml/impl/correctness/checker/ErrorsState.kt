@@ -2,8 +2,11 @@
 package com.intellij.platform.ml.impl.correctness.checker
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
 @ApiStatus.Internal
+@Deprecated("Use CorrectnessChecker.checkSemantic directly")
+@ScheduledForRemoval
 sealed class ErrorsState {
   data object Correct : ErrorsState() {
     override fun errors() = emptyList<CorrectnessError>()

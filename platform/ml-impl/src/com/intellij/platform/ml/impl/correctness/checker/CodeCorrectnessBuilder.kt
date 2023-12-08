@@ -3,8 +3,11 @@ package com.intellij.platform.ml.impl.correctness.checker
 
 import com.intellij.platform.ml.impl.correctness.checker.ErrorsState.Unknown.UnknownReason
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
 @ApiStatus.Internal
+@Deprecated("Use CorrectnessChecker.checkSemantic directly")
+@ScheduledForRemoval
 class CodeCorrectnessBuilder {
   private var semanticState: ErrorsState = ErrorsState.Unknown(UnknownReason.NOT_STARTED)
 
