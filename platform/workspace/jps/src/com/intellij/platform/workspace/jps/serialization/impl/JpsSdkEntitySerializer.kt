@@ -87,7 +87,8 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
 
     val additionalDataElement = sdkElement.getChild(ELEMENT_ADDITIONAL)
     val additionalData = if (additionalDataElement != null) JDOMUtil.write(additionalDataElement) else ""
-    return SdkEntity(sdkName, sdkType, homePathVfu, roots, additionalData, entitySource) {
+    return SdkEntity(sdkName, sdkType, roots, additionalData, entitySource) {
+      this.homePath = homePathVfu
       this.version = sdkVersion
     }
   }
@@ -155,7 +156,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     }
 
     val home = Element(ELEMENT_HOMEPATH)
-    home.setAttribute(ATTRIBUTE_VALUE, sdkEntity.homePath.url)
+    home.setAttribute(ATTRIBUTE_VALUE, sdkEntity.homePath?.url)
     sdkRootElement.addContent(home)
 
     val sortedRoots = sdkEntity.roots.groupBy { it.type.name }.toSortedMap()

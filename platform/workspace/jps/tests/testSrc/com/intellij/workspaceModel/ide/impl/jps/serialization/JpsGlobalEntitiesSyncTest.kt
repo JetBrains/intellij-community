@@ -94,9 +94,10 @@ class JpsGlobalEntitiesSyncTest {
         runWriteAction {
           val virtualFileManager = VirtualFileUrlManager.getInstance(project)
           WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
-            val projectSdkEntity = SdkEntity("oracle-1.8", "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home"),
+            val projectSdkEntity = SdkEntity("oracle-1.8", "JavaSDK",
                                              listOf(SdkRoot(virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
                                              "", entitySource) {
+              homePath = virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home")
               version = "1.8"
             }
             builder.addEntity(projectSdkEntity)

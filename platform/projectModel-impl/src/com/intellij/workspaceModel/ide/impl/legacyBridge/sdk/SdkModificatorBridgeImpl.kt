@@ -49,12 +49,15 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
     modifiedSdkEntity.name = name
   }
 
-  override fun getHomePath(): String = modifiedSdkEntity.homePath.url
+  override fun getHomePath(): String? = modifiedSdkEntity.homePath?.url
 
   override fun setHomePath(path: String?) {
-    val globalInstance = VirtualFileUrlManager.getGlobalInstance()
-    val homePath = globalInstance.fromUrl(path ?: "")
-    modifiedSdkEntity.homePath = homePath
+    modifiedSdkEntity.homePath = if (path != null) {
+      val globalInstance = VirtualFileUrlManager.getGlobalInstance()
+      globalInstance.fromUrl(path)
+    } else {
+      null
+    }
   }
 
   override fun getVersionString(): String? {
@@ -148,6 +151,6 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
   override fun isWritable(): Boolean = !isCommitted
 
   override fun toString(): String {
-    return "$name $versionString ($homePath )"
+    return "$name Version:$versionString Path:($homePath)"
   }
 }

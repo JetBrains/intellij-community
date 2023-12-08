@@ -92,13 +92,15 @@ class JpsGlobalEntitiesSavingTest {
           workspaceModel.updateModel("Test update") { builder ->
             var sdkRoots = listOf(SdkRoot(virtualFileManager.fromUrl("/Contents/Home!/java.compiler"), SdkRootTypeId(OrderRootType.CLASSES.customName)),
                                   SdkRoot(virtualFileManager.fromUrl("/lib/src.zip!/java.se"), SdkRootTypeId(OrderRootType.SOURCES.customName)))
-            val jbrSdkEntity = SdkEntity(sdkNames[0], "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/jbr-2048/Contents/Home"),
-                                         sdkRoots, "", entitySource)
+            val jbrSdkEntity = SdkEntity(sdkNames[0], "JavaSDK", sdkRoots, "", entitySource) {
+              this.homePath = virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/jbr-2048/Contents/Home")
+            }
             builder.addEntity(jbrSdkEntity)
 
             sdkRoots = listOf(SdkRoot(virtualFileManager.fromUrl("/Contents/plugins/java/lib/resources/jdkAnnotations.jar"), SdkRootTypeId(AnnotationOrderRootType.getInstance().customName)))
-            val amazonSdkEntity = SdkEntity(sdkNames[1], "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/amazon.crevetto/Contents/Home"),
-                                            sdkRoots, "", entitySource)
+            val amazonSdkEntity = SdkEntity(sdkNames[1], "JavaSDK", sdkRoots, "", entitySource) {
+              this.homePath = virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/amazon.crevetto/Contents/Home")
+            }
             builder.addEntity(amazonSdkEntity)
           }
         }

@@ -49,10 +49,11 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
 
   override fun getVersionString(): String? = sdkEntityBuilder.version
 
-  override fun getHomePath(): String = sdkEntityBuilder.homePath.url
+  override fun getHomePath(): String? = sdkEntityBuilder.homePath?.url
 
   override fun getHomeDirectory(): VirtualFile? {
     val homePath = getHomePath()
+    if (homePath == null) return null
     return StandardFileSystems.local().findFileByPath(homePath)
   }
 
@@ -164,7 +165,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   fun getEntity(): SdkEntity = sdkEntityBuilder
 
   override fun toString(): String {
-    return "$name $versionString ($homePath )"
+    return "$name Version:$versionString Path:($homePath)"
   }
 
   companion object {
@@ -179,7 +180,9 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
       val sdkEntitySource = createEntitySourceForSdk()
       val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
       val homePathVfu = virtualFileUrlManager.fromUrl(homePath)
-      return SdkEntity(name, type, homePathVfu, emptyList(), "", sdkEntitySource) as SdkEntity.Builder
+      return SdkEntity(name, type, emptyList(), "", sdkEntitySource) {
+        this.homePath = homePathVfu
+      } as SdkEntity.Builder
     }
 
     fun createEntitySourceForSdk(): EntitySource {

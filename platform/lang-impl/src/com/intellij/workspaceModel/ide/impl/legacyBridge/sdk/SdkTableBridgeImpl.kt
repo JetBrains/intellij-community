@@ -62,7 +62,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
     val sdkEntitySource = SdkBridgeImpl.createEntitySourceForSdk()
     val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
-    val homePathVfu = delegateSdk.homePath.let { virtualFileUrlManager.fromUrl(it) }
+    val homePathVfu = delegateSdk.homePath?.let { virtualFileUrlManager.fromUrl(it) }
 
     val roots = mutableListOf<SdkRoot>()
     for (type in OrderRootType.getAllPersistentTypes()) {
@@ -72,7 +72,8 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     }
 
     val additionalDataAsString = delegateSdk.getRawSdkAdditionalData()
-    val sdkEntity = SdkEntity(sdk.name, sdk.sdkType.name, homePathVfu, roots, additionalDataAsString, sdkEntitySource) {
+    val sdkEntity = SdkEntity(sdk.name, sdk.sdkType.name, roots, additionalDataAsString, sdkEntitySource) {
+      this.homePath = homePathVfu
       this.version = sdk.versionString
     }
     globalWorkspaceModel.updateModel("Adding SDK: ${sdk.name} ${sdk.sdkType}") {

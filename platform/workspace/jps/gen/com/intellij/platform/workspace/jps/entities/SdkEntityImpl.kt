@@ -44,7 +44,7 @@ open class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity, Wor
   override val version: String?
     get() = dataSource.version
 
-  override val homePath: VirtualFileUrl
+  override val homePath: VirtualFileUrl?
     get() = dataSource.homePath
 
   override val roots: List<SdkRoot>
@@ -101,9 +101,6 @@ open class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity, Wor
       if (!getEntityData().isTypeInitialized()) {
         error("Field SdkEntity#type should be initialized")
       }
-      if (!getEntityData().isHomePathInitialized()) {
-        error("Field SdkEntity#homePath should be initialized")
-      }
       if (!getEntityData().isRootsInitialized()) {
         error("Field SdkEntity#roots should be initialized")
       }
@@ -130,7 +127,7 @@ open class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity, Wor
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.type != dataSource.type) this.type = dataSource.type
       if (this.version != dataSource?.version) this.version = dataSource.version
-      if (this.homePath != dataSource.homePath) this.homePath = dataSource.homePath
+      if (this.homePath != dataSource?.homePath) this.homePath = dataSource.homePath
       if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
       if (this.additionalData != dataSource.additionalData) this.additionalData = dataSource.additionalData
       updateChildToParentReferences(parents)
@@ -175,7 +172,7 @@ open class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity, Wor
         changedProperty.add("version")
       }
 
-    override var homePath: VirtualFileUrl
+    override var homePath: VirtualFileUrl?
       get() = getEntityData().homePath
       set(value) {
         checkModificationAllowed()
@@ -228,13 +225,12 @@ class SdkEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SdkEntity>() 
   lateinit var name: String
   lateinit var type: String
   var version: String? = null
-  lateinit var homePath: VirtualFileUrl
+  var homePath: VirtualFileUrl? = null
   lateinit var roots: MutableList<SdkRoot>
   lateinit var additionalData: String
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isTypeInitialized(): Boolean = ::type.isInitialized
-  internal fun isHomePathInitialized(): Boolean = ::homePath.isInitialized
   internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
   internal fun isAdditionalDataInitialized(): Boolean = ::additionalData.isInitialized
 
@@ -283,8 +279,9 @@ class SdkEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SdkEntity>() 
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return SdkEntity(name, type, homePath, roots, additionalData, entitySource) {
+    return SdkEntity(name, type, roots, additionalData, entitySource) {
       this.version = this@SdkEntityData.version
+      this.homePath = this@SdkEntityData.homePath
     }
   }
 

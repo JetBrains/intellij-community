@@ -16,7 +16,7 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
   val name: String
   val type: String
   val version: String?
-  val homePath: VirtualFileUrl
+  val homePath: VirtualFileUrl?
   val roots: List<SdkRoot>
   val additionalData: String
 
@@ -30,7 +30,7 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
     override var name: String
     override var type: String
     override var version: String?
-    override var homePath: VirtualFileUrl
+    override var homePath: VirtualFileUrl?
     override var roots: MutableList<SdkRoot>
     override var additionalData: String
   }
@@ -41,7 +41,6 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
     @JvmName("create")
     operator fun invoke(name: String,
                         type: String,
-                        homePath: VirtualFileUrl,
                         roots: List<SdkRoot>,
                         additionalData: String,
                         entitySource: EntitySource,
@@ -49,7 +48,6 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
       val builder = builder()
       builder.name = name
       builder.type = type
-      builder.homePath = homePath
       builder.roots = roots.toMutableWorkspaceList()
       builder.additionalData = additionalData
       builder.entitySource = entitySource
