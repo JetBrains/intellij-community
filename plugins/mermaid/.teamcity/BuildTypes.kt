@@ -1,7 +1,7 @@
 object Tests: MermaidBuild(
   name = "Tests",
   root = Mermaid,
-  script = "./gradlew test --info",
+  tasks = listOf("test"),
   configuration = {
     id("Tests${BranchConfiguration.IdSuffix}")
     withBaseVcsTrigger()
@@ -12,7 +12,7 @@ object Tests: MermaidBuild(
 object PluginVerifier: MermaidBuild(
   name = "Plugin Verifier",
   root = Mermaid,
-  script = "./gradlew runPluginVerifier --info",
+  tasks = listOf("runPluginVerifier"),
   configuration = {
     id("PluginVerifier${BranchConfiguration.IdSuffix}")
     withBaseVcsTrigger()
@@ -23,7 +23,7 @@ object PluginVerifier: MermaidBuild(
 object ReleaseStable: MermaidBuild(
   name = "Release Stable",
   root = Mermaid,
-  script = "./gradlew test publishPlugin --info",
+  tasks = listOf("test", "publishPlugin"),
   configuration = {
     id("ReleaseStable${BranchConfiguration.IdSuffix}")
     withCommitStatusPublisher("Release Stable")
@@ -33,7 +33,7 @@ object ReleaseStable: MermaidBuild(
 object ReleaseNightly: MermaidBuild(
   name = "Release Nightly",
   root = Mermaid,
-  script = "./gradlew test publishPlugin --info",
+  tasks = listOf("test", "publishPlugin"),
   configuration = {
     id("ReleaseNightly${BranchConfiguration.IdSuffix}")
     withCommitStatusPublisher("Release Nightly")

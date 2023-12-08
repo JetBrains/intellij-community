@@ -2,10 +2,9 @@ import jetbrains.buildServer.configs.kotlin.BuildType
 import jetbrains.buildServer.configs.kotlin.VcsRoot
 import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.buildFeatures.dockerSupport
-import jetbrains.buildServer.configs.kotlin.buildSteps.ScriptBuildStep
-import jetbrains.buildServer.configs.kotlin.buildSteps.script
+import jetbrains.buildServer.configs.kotlin.buildSteps.GradleBuildStep
+import jetbrains.buildServer.configs.kotlin.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.triggers.vcs
-import org.intellij.lang.annotations.Language
 
 internal const val DefaultImage = "registry.jetbrains.team/p/grazi/grazie-automation/mermaid-ci:1.0.0"
 
@@ -13,7 +12,7 @@ abstract class MermaidBuild(
   name: String,
   root: VcsRoot,
   dockerImage: String = DefaultImage,
-  @Language("Shell Script") script: String,
+  tasks: List<String>,
   configuration: BuildType.() -> Unit = {}
 ): BuildType({
   this.name = name
@@ -22,10 +21,11 @@ abstract class MermaidBuild(
     root(root)
   }
   steps {
-    script {
-      scriptContent = script.trimIndent()
+    gradle {
+      this.tasks = tasks.joinToString(separator = " ")
+      gradleParams = "--info"
       this.dockerImage = dockerImage
-      dockerImagePlatform = ScriptBuildStep.ImagePlatform.Linux
+      dockerImagePlatform = GradleBuildStep.ImagePlatform.Linux
     }
   }
   configuration()
