@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionEngine
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.PairProcessor
@@ -39,6 +40,16 @@ abstract class CorrectnessCheckerBase(private val semanticCheckers: List<Semanti
       .onRange(range)
       .toList()
 
+    return findInspectionErrors(fullPsi, elements, file, offset, prefix, suggestion) +
+           findCustomErrors(elements, file, offset, prefix, suggestion)
+  }
+
+  private fun findInspectionErrors(fullPsi: PsiFile,
+                                   elements: List<PsiElement>,
+                                   file: PsiFile,
+                                   offset: Int,
+                                   prefix: String,
+                                   suggestion: String): List<CorrectnessError> {
     return InspectionEngine.inspectElements(
       toolWrappers,
       fullPsi,
@@ -51,7 +62,15 @@ abstract class CorrectnessCheckerBase(private val semanticCheckers: List<Semanti
     ).flatMap {
       val semanticChecker = checkNotNull(toolNameToSemanticChecker[it.key.id])
       semanticChecker.convertInspectionsResults(file, it.value, offset, prefix, suggestion)
-    } + customSemanticCheckers.flatMap { analyzer ->
+    }
+  }
+
+  private fun findCustomErrors(elements: List<PsiElement>,
+                               file: PsiFile,
+                               offset: Int,
+                               prefix: String,
+                               suggestion: String): List<CorrectnessError> {
+    return customSemanticCheckers.flatMap { analyzer ->
       elements.flatMap { element -> analyzer.findErrors(file, element, offset, prefix, suggestion) }
     }
   }
