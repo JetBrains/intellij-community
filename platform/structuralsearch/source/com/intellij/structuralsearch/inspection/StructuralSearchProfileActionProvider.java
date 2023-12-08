@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -48,13 +50,22 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   }
 
   @Override
-  public @Nullable AddInspectionActionGroup getAddActions(@NotNull SingleInspectionProfilePanel panel) {
+  public @Nullable ActionGroup getAddActions(@NotNull SingleInspectionProfilePanel panel) {
     enableSSIfDisabled(panel.getProfile(), panel.getProject());
-    final var group = new DefaultActionGroup(
+    return getActionGroup(panel);
+  }
+
+  @Override
+  public List<ActionToRegister> getActionsToRegister(SingleInspectionProfilePanel panel) {
+    return List.of(new ActionToRegister(getActionGroup(panel), "ssr.profile.action.provider.add.group"));
+  }
+
+  @NotNull
+  private static DefaultActionGroup getActionGroup(@NotNull SingleInspectionProfilePanel panel) {
+    return new DefaultActionGroup(
       new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.search.template.button"), false),
       new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.replace.template.button"), true)
     );
-    return new AddInspectionActionGroup(group, "ssr.profile.action.provider.add.group");
   }
 
   @Override
