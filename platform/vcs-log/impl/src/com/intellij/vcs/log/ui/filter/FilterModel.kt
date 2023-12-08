@@ -1,219 +1,142 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.ui.filter;
+package com.intellij.vcs.log.ui.filter
 
-import com.intellij.vcs.log.VcsLogFilter;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.vcs.log.VcsLogFilter
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
+abstract class FilterModel<Filter> internal constructor(@JvmField protected val uiProperties: MainVcsLogUiProperties) {
+  private val listeners = mutableListOf<Runnable>()
 
-public abstract class FilterModel<Filter> {
-  protected final @NotNull MainVcsLogUiProperties myUiProperties;
-  private final @NotNull Collection<Runnable> mySetFilterListeners = new ArrayList<>();
+  @JvmField
+  protected var _filter: Filter? = null
 
-  protected @Nullable Filter myFilter;
-
-  FilterModel(@NotNull MainVcsLogUiProperties uiProperties) {
-    myUiProperties = uiProperties;
+  open fun setFilter(filter: Filter?) {
+    _filter = filter
+    saveFilterToProperties(filter)
+    notifyFiltersChanged()
   }
 
-  public void setFilter(@Nullable Filter filter) {
-    myFilter = filter;
-    saveFilterToProperties(filter);
-    notifyFiltersChanged();
-  }
-
-  protected void notifyFiltersChanged() {
-    for (Runnable listener : mySetFilterListeners) {
-      listener.run();
+  protected fun notifyFiltersChanged() {
+    for (listener in listeners) {
+      listener.run()
     }
   }
 
-  @Nullable
-  Filter getFilter() {
-    if (myFilter == null) {
-      myFilter = getFilterFromProperties();
+  open fun getFilter(): Filter? {
+    if (_filter == null) {
+      _filter = getFilterFromProperties()
     }
-    return myFilter;
+    return _filter
   }
 
-  protected abstract void saveFilterToProperties(@Nullable Filter filter);
+  protected abstract fun saveFilterToProperties(filter: Filter?)
+  protected abstract fun getFilterFromProperties(): Filter?
 
-  protected abstract @Nullable Filter getFilterFromProperties();
-
-  void addSetFilterListener(@NotNull Runnable runnable) {
-    mySetFilterListeners.add(runnable);
+  fun addSetFilterListener(runnable: Runnable) {
+    listeners.add(runnable)
   }
 
-  protected static void triggerFilterSet(@NotNull String name) {
-    VcsLogUsageTriggerCollector.triggerFilterSet(name);
-  }
+  abstract class SingleFilterModel<Filter : VcsLogFilter?> internal constructor(private val filterKey: VcsLogFilterCollection.FilterKey<out Filter>,
+                                                                                uiProperties: MainVcsLogUiProperties,
+                                                                                filters: VcsLogFilterCollection?) :
+    FilterModel<Filter?>(uiProperties) {
 
-  protected static <FilterObject, F> void triggerFilterSet(@Nullable FilterObject filter,
-                                                           @NotNull Function<FilterObject, F> getter,
-                                                           @NotNull String name) {
-    F newFilter = filter == null ? null : getter.apply(filter);
-    if (newFilter != null) {
-      triggerFilterSet(name);
-    }
-  }
-
-  protected static <FilterObject, F> boolean filterDiffers(@Nullable FilterObject filter,
-                                                           @NotNull Function<FilterObject, F> getter,
-                                                           @Nullable FilterObject currentFilter) {
-    F oldFilter = currentFilter == null ? null : getter.apply(currentFilter);
-    F newFilter = filter == null ? null : getter.apply(filter);
-    return !Objects.equals(oldFilter, newFilter);
-  }
-
-  public abstract static class SingleFilterModel<Filter extends VcsLogFilter> extends FilterModel<Filter> {
-    private final @NotNull VcsLogFilterCollection.FilterKey<? extends Filter> myFilterKey;
-
-    SingleFilterModel(@NotNull VcsLogFilterCollection.FilterKey<? extends Filter> filterKey,
-                      @NotNull MainVcsLogUiProperties uiProperties,
-                      @Nullable VcsLogFilterCollection filters) {
-      super(uiProperties);
-      myFilterKey = filterKey;
-
+    init {
       if (filters != null) {
-        saveFilterToProperties(filters.get(myFilterKey));
+        saveFilterToProperties(filters[filterKey])
       }
     }
 
-    @Override
-    public void setFilter(@Nullable Filter filter) {
-      if (Objects.equals(myFilter, filter)) return;
+    override fun setFilter(filter: Filter?) {
+      if (_filter == filter) return
 
       if (filter != null) {
-        triggerFilterSet(myFilterKey.getName());
+        VcsLogUsageTriggerCollector.triggerFilterSet(filterKey.name)
       }
 
       super.setFilter(filter);
     }
 
-    protected abstract @Nullable Filter createFilter(@NotNull List<String> values);
+    protected abstract fun createFilter(values: List<String>): Filter?
+    protected abstract fun getFilterValues(filter: Filter): List<String>
 
-    protected abstract @NotNull List<String> getFilterValues(@NotNull Filter filter);
-
-    @Override
-    protected void saveFilterToProperties(@Nullable Filter filter) {
-      myUiProperties.saveFilterValues(myFilterKey.getName(), filter == null ? null : getFilterValues(filter));
+    override fun saveFilterToProperties(filter: Filter?) {
+      uiProperties.saveFilterValues(filterKey.name, if (filter == null) null else getFilterValues(filter))
     }
 
-    @Override
-    protected @Nullable Filter getFilterFromProperties() {
-      List<String> values = myUiProperties.getFilterValues(myFilterKey.getName());
-      if (values != null) {
-        return createFilter(values);
-      }
-      return null;
+    override fun getFilterFromProperties(): Filter? {
+      val values = uiProperties.getFilterValues(filterKey.name) ?: return null
+      return createFilter(values)
     }
   }
 
-  public abstract static class PairFilterModel<Filter1 extends VcsLogFilter, Filter2 extends VcsLogFilter>
-    extends FilterModel<FilterPair<Filter1, Filter2>> {
-    private final @NotNull VcsLogFilterCollection.FilterKey<? extends Filter1> myFilterKey1;
-    private final @NotNull VcsLogFilterCollection.FilterKey<? extends Filter2> myFilterKey2;
-
-    PairFilterModel(@NotNull VcsLogFilterCollection.FilterKey<? extends Filter1> filterKey1,
-                    @NotNull VcsLogFilterCollection.FilterKey<? extends Filter2> filterKey2,
-                    @NotNull MainVcsLogUiProperties uiProperties,
-                    @Nullable VcsLogFilterCollection filters) {
-      super(uiProperties);
-      myFilterKey1 = filterKey1;
-      myFilterKey2 = filterKey2;
-
+  abstract class PairFilterModel<Filter1 : VcsLogFilter, Filter2 : VcsLogFilter>
+  internal constructor(private val filterKey1: VcsLogFilterCollection.FilterKey<out Filter1>,
+                       private val filterKey2: VcsLogFilterCollection.FilterKey<out Filter2>,
+                       uiProperties: MainVcsLogUiProperties,
+                       filters: VcsLogFilterCollection?) : FilterModel<FilterPair<Filter1, Filter2>>(uiProperties) {
+    init {
       if (filters != null) {
-        Filter1 filter1 = filters.get(myFilterKey1);
-        Filter2 filter2 = filters.get(myFilterKey2);
-        FilterPair<Filter1, Filter2> filter = (filter1 == null && filter2 == null) ? null : new FilterPair<>(filter1, filter2);
-        saveFilterToProperties(filter);
+        val filter1 = filters[filterKey1]
+        val filter2 = filters[filterKey2]
+        val filter = if ((filter1 == null && filter2 == null)) null else FilterPair(filter1, filter2)
+
+        saveFilterToProperties(filter)
       }
     }
 
-    @Override
-    public void setFilter(@Nullable FilterPair<Filter1, Filter2> filter) {
-      if (filter != null && filter.isEmpty()) filter = null;
+    override fun setFilter(filter: FilterPair<Filter1, Filter2>?) {
+      var newFilter = filter
+      if (newFilter != null && newFilter.isEmpty()) newFilter = null
 
-      boolean anyFiltersDiffers = false;
-      if (filterDiffers(filter, FilterPair::getFilter1, myFilter)) {
-        triggerFilterSet(filter, FilterPair::getFilter1, myFilterKey1.getName());
-        anyFiltersDiffers = true;
+      var anyFiltersDiffers = false
+      if (newFilter?.filter1 != _filter?.filter1) {
+        if (newFilter?.filter1 != null) {
+          VcsLogUsageTriggerCollector.triggerFilterSet(filterKey1.name)
+        }
+        anyFiltersDiffers = true
       }
-      if (filterDiffers(filter, FilterPair::getFilter2, myFilter)) {
-        triggerFilterSet(filter, FilterPair::getFilter2, myFilterKey2.getName());
-        anyFiltersDiffers = true;
+      if (newFilter?.filter2 != _filter?.filter2) {
+        if (newFilter?.filter2 != null) {
+          VcsLogUsageTriggerCollector.triggerFilterSet(filterKey2.name)
+        }
+        anyFiltersDiffers = true
       }
 
       if (anyFiltersDiffers) {
-        super.setFilter(filter);
+        super.setFilter(newFilter);
       }
     }
 
-    public void updateFilterFromProperties() {
-      setFilter(getFilterFromProperties());
+    fun updateFilterFromProperties() {
+      setFilter(getFilterFromProperties())
     }
 
-    @Override
-    protected void saveFilterToProperties(@Nullable FilterPair<Filter1, Filter2> filter) {
-      if (filter == null || filter.getFilter1() == null) {
-        myUiProperties.saveFilterValues(myFilterKey1.getName(), null);
-      }
-      else {
-        myUiProperties.saveFilterValues(myFilterKey1.getName(), getFilter1Values(filter.getFilter1()));
-      }
-
-      if (filter == null || filter.getFilter2() == null) {
-        myUiProperties.saveFilterValues(myFilterKey2.getName(), null);
-      }
-      else {
-        myUiProperties.saveFilterValues(myFilterKey2.getName(), getFilter2Values(filter.getFilter2()));
-      }
+    override fun saveFilterToProperties(filter: FilterPair<Filter1, Filter2>?) {
+      uiProperties.saveFilterValues(filterKey1.name, filter?.filter1?.let { getFilter1Values(it) })
+      uiProperties.saveFilterValues(filterKey2.name, filter?.filter2?.let { getFilter2Values(it) })
     }
 
-    @Override
-    protected @Nullable FilterPair<Filter1, Filter2> getFilterFromProperties() {
-      List<String> values1 = myUiProperties.getFilterValues(myFilterKey1.getName());
-      Filter1 filter1 = null;
-      if (values1 != null) {
-        filter1 = createFilter1(values1);
-      }
+    override fun getFilterFromProperties(): FilterPair<Filter1, Filter2>? {
+      val values1 = uiProperties.getFilterValues(filterKey1.name)
+      val filter1 = values1?.let { createFilter1(it) }
 
-      List<String> values2 = myUiProperties.getFilterValues(myFilterKey2.getName());
-      Filter2 filter2 = null;
-      if (values2 != null) {
-        filter2 = createFilter2(values2);
-      }
+      val values2 = uiProperties.getFilterValues(filterKey2.name)
+      val filter2 = values2?.let { createFilter2(it) }
 
-      if (filter1 == null && filter2 == null) return null;
-      return new FilterPair<>(filter1, filter2);
+      if (filter1 == null && filter2 == null) return null
+      return FilterPair(filter1, filter2)
     }
 
-    public @Nullable Filter1 getFilter1() {
-      FilterPair<Filter1, Filter2> filterPair = getFilter();
-      if (filterPair == null) return null;
-      return filterPair.getFilter1();
-    }
+    val filter1: Filter1? get() = getFilter()?.filter1
+    val filter2: Filter2? get() = getFilter()?.filter2
 
-    public @Nullable Filter2 getFilter2() {
-      FilterPair<Filter1, Filter2> filterPair = getFilter();
-      if (filterPair == null) return null;
-      return filterPair.getFilter2();
-    }
+    protected abstract fun getFilter1Values(filter1: Filter1): List<String>
+    protected abstract fun getFilter2Values(filter2: Filter2): List<String>
 
-    protected abstract @NotNull List<String> getFilter1Values(@NotNull Filter1 filter1);
-
-    protected abstract @NotNull List<String> getFilter2Values(@NotNull Filter2 filter2);
-
-    protected abstract @Nullable Filter1 createFilter1(@NotNull List<String> values);
-
-    protected abstract @Nullable Filter2 createFilter2(@NotNull List<String> values);
+    protected abstract fun createFilter1(values: List<String>): Filter1?
+    protected abstract fun createFilter2(values: List<String>): Filter2?
   }
 }

@@ -34,6 +34,7 @@ import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -54,6 +55,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -314,15 +316,15 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
       boolean anyFilterDiffers = false;
 
-      if (filterDiffers(filters, BranchFilters::getBranchFilter, myFilter)) {
+      if (filterDiffers(filters, BranchFilters::getBranchFilter, _filter)) {
         triggerFilterSet(filters, BranchFilters::getBranchFilter, BRANCH_FILTER.getName());
         anyFilterDiffers = true;
       }
-      if (filterDiffers(filters, BranchFilters::getRevisionFilter, myFilter)) {
+      if (filterDiffers(filters, BranchFilters::getRevisionFilter, _filter)) {
         triggerFilterSet(filters, BranchFilters::getRevisionFilter, REVISION_FILTER.getName());
         anyFilterDiffers = true;
       }
-      if (filterDiffers(filters, BranchFilters::getRangeFilter, myFilter)) {
+      if (filterDiffers(filters, BranchFilters::getRangeFilter, _filter)) {
         triggerFilterSet(filters, BranchFilters::getRangeFilter, RANGE_FILTER.getName());
         anyFilterDiffers = true;
       }
@@ -332,45 +334,66 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       }
     }
 
+    protected static void triggerFilterSet(@NotNull String name) {
+      VcsLogUsageTriggerCollector.triggerFilterSet(name);
+    }
+
+    protected static <FilterObject, F> void triggerFilterSet(@Nullable FilterObject filter,
+                                                             @NotNull Function<FilterObject, F> getter,
+                                                             @NotNull String name) {
+      F newFilter = filter == null ? null : getter.apply(filter);
+      if (newFilter != null) {
+        triggerFilterSet(name);
+      }
+    }
+
+    protected static <FilterObject, F> boolean filterDiffers(@Nullable FilterObject filter,
+                                                             @NotNull Function<FilterObject, F> getter,
+                                                             @Nullable FilterObject currentFilter) {
+      F oldFilter = currentFilter == null ? null : getter.apply(currentFilter);
+      F newFilter = filter == null ? null : getter.apply(filter);
+      return !Objects.equals(oldFilter, newFilter);
+    }
+
     @Override
     protected void saveFilterToProperties(@Nullable BranchFilters filters) {
       if (filters == null || filters.getBranchFilter() == null) {
-        myUiProperties.saveFilterValues(BRANCH_FILTER.getName(), null);
+        uiProperties.saveFilterValues(BRANCH_FILTER.getName(), null);
       }
       else {
-        myUiProperties.saveFilterValues(BRANCH_FILTER.getName(), getBranchFilterValues(filters.getBranchFilter()));
+        uiProperties.saveFilterValues(BRANCH_FILTER.getName(), getBranchFilterValues(filters.getBranchFilter()));
       }
 
       if (filters == null || filters.getRevisionFilter() == null) {
-        myUiProperties.saveFilterValues(REVISION_FILTER.getName(), null);
+        uiProperties.saveFilterValues(REVISION_FILTER.getName(), null);
       }
       else {
-        myUiProperties.saveFilterValues(REVISION_FILTER.getName(), getRevisionFilterValues(filters.getRevisionFilter()));
+        uiProperties.saveFilterValues(REVISION_FILTER.getName(), getRevisionFilterValues(filters.getRevisionFilter()));
       }
 
       if (filters == null || filters.getRangeFilter() == null) {
-        myUiProperties.saveFilterValues(RANGE_FILTER.getName(), null);
+        uiProperties.saveFilterValues(RANGE_FILTER.getName(), null);
       }
       else {
-        myUiProperties.saveFilterValues(RANGE_FILTER.getName(), getRangeFilterValues(filters.getRangeFilter()));
+        uiProperties.saveFilterValues(RANGE_FILTER.getName(), getRangeFilterValues(filters.getRangeFilter()));
       }
     }
 
     @Override
     protected @Nullable BranchFilters getFilterFromProperties() {
-      List<String> branchFilterValues = myUiProperties.getFilterValues(BRANCH_FILTER.getName());
+      List<String> branchFilterValues = uiProperties.getFilterValues(BRANCH_FILTER.getName());
       VcsLogBranchFilter branchFilter = null;
       if (branchFilterValues != null) {
         branchFilter = createBranchFilter(branchFilterValues);
       }
 
-      List<String> revisionFilterValues = myUiProperties.getFilterValues(REVISION_FILTER.getName());
+      List<String> revisionFilterValues = uiProperties.getFilterValues(REVISION_FILTER.getName());
       VcsLogRevisionFilter revisionFilter = null;
       if (revisionFilterValues != null) {
         revisionFilter = createRevisionFilter(revisionFilterValues);
       }
 
-      List<String> rangeFilterValues = myUiProperties.getFilterValues(RANGE_FILTER.getName());
+      List<String> rangeFilterValues = uiProperties.getFilterValues(RANGE_FILTER.getName());
       VcsLogRangeFilter rangeFilter = null;
       if (rangeFilterValues != null) {
         rangeFilter = createRangeFilter(rangeFilterValues);
@@ -538,8 +561,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       if (filters != null) {
         VcsLogTextFilter textFilter = filters.get(TEXT_FILTER);
         if (textFilter != null) {
-          myUiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE, textFilter.matchesCase());
-          myUiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_REGEX, textFilter.isRegex());
+          uiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE, textFilter.matchesCase());
+          uiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_REGEX, textFilter.isRegex());
         }
       }
       VcsLogUiProperties.PropertiesChangeListener listener = new VcsLogUiProperties.PropertiesChangeListener() {
@@ -548,7 +571,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
           if (MainVcsLogUiProperties.TEXT_FILTER_REGEX.equals(property) ||
               MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE.equals(property)) {
             if (getFilter1() != null) {
-              myFilter = getFilterFromProperties();
+              _filter = getFilterFromProperties();
               notifyFiltersChanged();
             }
           }
@@ -618,8 +641,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     private @NotNull VcsLogTextFilter createTextFilter(@NotNull String text) {
       return VcsLogFilterObject.fromPattern(text,
-                                            myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
-                                            myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE));
+                                            uiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
+                                            uiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE));
     }
 
     public void setFilterText(@NotNull String text) {
