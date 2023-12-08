@@ -11,7 +11,7 @@ import com.intellij.util.PairProcessor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-open class CorrectnessCheckerBase(open val semanticCheckers: List<SemanticChecker> = emptyList()) : CorrectnessChecker {
+abstract class CorrectnessCheckerBase(private val semanticCheckers: List<SemanticChecker>) : CorrectnessChecker {
   @Suppress("PropertyName")
   protected val LOG = thisLogger()
 
