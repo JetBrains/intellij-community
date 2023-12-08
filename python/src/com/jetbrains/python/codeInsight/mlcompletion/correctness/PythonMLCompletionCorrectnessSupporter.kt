@@ -2,12 +2,12 @@
 package com.jetbrains.python.codeInsight.mlcompletion.correctness
 
 import com.intellij.lang.Language
-import com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporterBase
+import com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporter
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.mlcompletion.correctness.autoimport.PythonImportFixer
 import com.jetbrains.python.codeInsight.mlcompletion.correctness.checker.PythonCorrectnessChecker
 
-class PythonMLCompletionCorrectnessSupporter : MLCompletionCorrectnessSupporterBase() {
+class PythonMLCompletionCorrectnessSupporter : MLCompletionCorrectnessSupporter {
   override val correctnessChecker: PythonCorrectnessChecker = PythonCorrectnessChecker()
 
   override val importFixer: PythonImportFixer = PythonImportFixer()
