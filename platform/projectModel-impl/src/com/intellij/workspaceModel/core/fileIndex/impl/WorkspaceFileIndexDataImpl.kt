@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeNanosec
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeNanosec
 import com.intellij.platform.workspace.storage.*
@@ -47,7 +47,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
 
   init {
     WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
-    val start = System.currentTimeMillis()
+    val start = System.nanoTime()
 
     packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
     registerAllEntities(EntityStorageKind.MAIN)
@@ -56,7 +56,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
       librariesAndSdkContributors.registerFileSets()
     }
 
-    WorkspaceFileIndexDataMetrics.initTimeMs.addElapsedTimeMillis(start)
+    WorkspaceFileIndexDataMetrics.initTimeNanosec.addElapsedTimeNanosec(start)
   }
 
   private fun registerAllEntities(storageKind: EntityStorageKind) {
@@ -80,10 +80,10 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                            includeContentSets: Boolean,
                            includeExternalSets: Boolean,
                            includeExternalSourceSets: Boolean,
-                           includeCustomKindSets: Boolean): WorkspaceFileInternalInfo = WorkspaceFileIndexDataMetrics.getFileInfoTimeMs.addMeasuredTimeMillis {
-    if (!file.isValid) return WorkspaceFileInternalInfo.NonWorkspace.INVALID
+                           includeCustomKindSets: Boolean): WorkspaceFileInternalInfo = WorkspaceFileIndexDataMetrics.getFileInfoTimeNanosec.addMeasuredTimeNanosec {
+    if (!file.isValid) return@addMeasuredTimeNanosec WorkspaceFileInternalInfo.NonWorkspace.INVALID
     if (file.fileSystem is NonPhysicalFileSystem && file.parent == null) {
-      return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
+      return@addMeasuredTimeNanosec WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
     }
     ensureIsUpToDate()
 
@@ -105,12 +105,12 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
           acceptedKindsMask = (masks shr ACCEPTED_KINDS_MASK_SHIFT) and WorkspaceFileKindMask.ALL 
           
           if (acceptedKindsMask == 0) {
-            return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
+            return@addMeasuredTimeNanosec WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
           }
           
           if (storedKindMask and StoredFileSetKindMask.ACCEPTED_FILE_SET != 0) {
             if (storedKindMask == StoredFileSetKindMask.ACCEPTED_FILE_SET) {
-              return storedFileSets as WorkspaceFileInternalInfo
+              return@addMeasuredTimeNanosec storedFileSets as WorkspaceFileInternalInfo
             }
             val acceptedFileSets = ArrayList<WorkspaceFileSetImpl>()
             //copy a mutable variable used from lambda to a 'val' to ensure that kotlinc won't wrap it into IntRef
@@ -121,11 +121,11 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                 acceptedFileSets.add(fileSet)
               }
             }
-            return if (acceptedFileSets.size > 1) MultipleWorkspaceFileSetsImpl(acceptedFileSets) else acceptedFileSets.first()
+            return@addMeasuredTimeNanosec if (acceptedFileSets.size > 1) MultipleWorkspaceFileSetsImpl(acceptedFileSets) else acceptedFileSets.first()
           }
         }
         if (fileTypeRegistry.isFileIgnored(current)) {
-          return WorkspaceFileInternalInfo.NonWorkspace.IGNORED
+          return@addMeasuredTimeNanosec WorkspaceFileInternalInfo.NonWorkspace.IGNORED
         }
         if (fileId >= 0 && storedFileSets == null) {
           fileIdWithoutFileSets.set(fileId)
@@ -134,9 +134,9 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
       current = current.parent
     }
     if (originalAcceptedKindMask != acceptedKindsMask) {
-      return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
+      return@addMeasuredTimeNanosec WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
     }
-    return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
+    return@addMeasuredTimeNanosec WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
   }
 
   private fun ensureIsUpToDate() {
@@ -149,7 +149,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   }
 
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
-    val start = System.currentTimeMillis()
+    val start = System.nanoTime()
 
     ensureIsUpToDate()
     val action = { storedFileSet: StoredFileSet ->
@@ -164,10 +164,10 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
       value.forEach(action)
     }
 
-    WorkspaceFileIndexDataMetrics.visitFileSetsTimeMs.addElapsedTimeMillis(start)
+    WorkspaceFileIndexDataMetrics.visitFileSetsTimeNanosec.addElapsedTimeNanosec(start)
   }
 
-  fun processFileSets(virtualFile: VirtualFile, action: (StoredFileSet) -> Unit) = WorkspaceFileIndexDataMetrics.processFileSetsTimeMs.addMeasuredTimeMillis {
+  fun processFileSets(virtualFile: VirtualFile, action: (StoredFileSet) -> Unit) = WorkspaceFileIndexDataMetrics.processFileSetsTimeNanosec.addMeasuredTimeNanosec {
     fileSets[virtualFile]?.forEach(action)
   }
   
@@ -255,14 +255,16 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     resetFileCache()
   }
 
-  override fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) = WorkspaceFileIndexDataMetrics.markDirtyTimeMs.addMeasuredTimeMillis {
+  override fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>,
+                         filesToInvalidate: Collection<VirtualFile>) = WorkspaceFileIndexDataMetrics.markDirtyTimeNanosec.addMeasuredTimeNanosec {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     dirtyEntities.addAll(entityReferences)
     dirtyFiles.addAll(filesToInvalidate)
     hasDirtyEntities = dirtyEntities.isNotEmpty()
   }
 
-  override fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeMs.addMeasuredTimeMillis {
+  override fun onEntitiesChanged(event: VersionedStorageChange,
+                                 storageKind: EntityStorageKind) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeNanosec.addMeasuredTimeNanosec {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     contributorList.filter { it.storageKind == storageKind }.forEach { 
       processChangesByContributor(it, storageKind, event)
@@ -271,7 +273,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   }
 
   override fun updateDirtyEntities() {
-    val start = System.currentTimeMillis()
+    val start = System.nanoTime()
 
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     for (file in dirtyFiles) {
@@ -295,7 +297,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     resetFileCache()
     hasDirtyEntities = false
 
-    WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeMs.addElapsedTimeMillis(start)
+    WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeNanosec.addElapsedTimeNanosec(start)
   }
 
   override fun resetFileCache() {
@@ -339,10 +341,11 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     }
   }
 
-  override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> = WorkspaceFileIndexDataMetrics.getDirectoriesByPackageNameTimeMs.addMeasuredTimeMillis {
+  override fun getDirectoriesByPackageName(packageName: String,
+                                           includeLibrarySources: Boolean): Query<VirtualFile> = WorkspaceFileIndexDataMetrics.getDirectoriesByPackageNameTimeNanosec.addMeasuredTimeNanosec {
     val query = CollectionQuery(packageDirectoryCache.getDirectoriesByPackageName(packageName))
-    if (includeLibrarySources) return query
-    return query.filtering {
+    return@addMeasuredTimeNanosec if (includeLibrarySources) query
+    else query.filtering {
       getFileInfo(it, true, true, true, false, true) !is WorkspaceFileInternalInfo.NonWorkspace
     }
   }

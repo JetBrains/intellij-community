@@ -9,15 +9,15 @@ import java.util.concurrent.atomic.AtomicLong
 
 object WorkspaceFileIndexDataMetrics {
   internal val instancesCounter: AtomicLong = AtomicLong()
-  internal val initTimeMs: AtomicLong = AtomicLong()
-  internal val getFileInfoTimeMs: AtomicLong = AtomicLong()
-  internal val visitFileSetsTimeMs: AtomicLong = AtomicLong()
-  internal val processFileSetsTimeMs: AtomicLong = AtomicLong()
-  internal val markDirtyTimeMs: AtomicLong = AtomicLong()
-  internal val updateDirtyEntitiesTimeMs: AtomicLong = AtomicLong()
-  internal val onEntitiesChangedTimeMs: AtomicLong = AtomicLong()
+  internal val initTimeNanosec: AtomicLong = AtomicLong()
+  internal val getFileInfoTimeNanosec: AtomicLong = AtomicLong()
+  internal val visitFileSetsTimeNanosec: AtomicLong = AtomicLong()
+  internal val processFileSetsTimeNanosec: AtomicLong = AtomicLong()
+  internal val markDirtyTimeNanosec: AtomicLong = AtomicLong()
+  internal val updateDirtyEntitiesTimeNanosec: AtomicLong = AtomicLong()
+  internal val onEntitiesChangedTimeNanosec: AtomicLong = AtomicLong()
   internal val getPackageNameTimeNanosec: AtomicLong = AtomicLong()
-  internal val getDirectoriesByPackageNameTimeMs: AtomicLong = AtomicLong()
+  internal val getDirectoriesByPackageNameTimeNanosec: AtomicLong = AtomicLong()
 
   internal val registerFileSetsTimeNanosec: AtomicLong = AtomicLong()
 
@@ -39,15 +39,15 @@ object WorkspaceFileIndexDataMetrics {
     meter.batchCallback(
       {
         instancesCountCounter.record(instancesCounter.get())
-        initTimeCounter.record(initTimeMs.get())
-        getFileInfoTimeCounter.record(getFileInfoTimeMs.get())
-        visitFileSetsCounter.record(visitFileSetsTimeMs.get())
-        processFileSetsCounter.record(processFileSetsTimeMs.get())
-        markDirtyCounter.record(markDirtyTimeMs.get())
-        updateDirtyEntitiesCounter.record(updateDirtyEntitiesTimeMs.get())
-        onEntitiesChangedCounter.record(onEntitiesChangedTimeMs.get())
+        initTimeCounter.record(initTimeNanosec.fromNanosecToMillis())
+        getFileInfoTimeCounter.record(getFileInfoTimeNanosec.fromNanosecToMillis())
+        visitFileSetsCounter.record(visitFileSetsTimeNanosec.fromNanosecToMillis())
+        processFileSetsCounter.record(processFileSetsTimeNanosec.fromNanosecToMillis())
+        markDirtyCounter.record(markDirtyTimeNanosec.fromNanosecToMillis())
+        updateDirtyEntitiesCounter.record(updateDirtyEntitiesTimeNanosec.fromNanosecToMillis())
+        onEntitiesChangedCounter.record(onEntitiesChangedTimeNanosec.fromNanosecToMillis())
         getPackageNameCounter.record(getPackageNameTimeNanosec.fromNanosecToMillis())
-        getDirectoriesByPackageNameCounter.record(getDirectoriesByPackageNameTimeMs.get())
+        getDirectoriesByPackageNameCounter.record(getDirectoriesByPackageNameTimeNanosec.fromNanosecToMillis())
 
         registerFileSetsMsCounter.record(registerFileSetsTimeNanosec.fromNanosecToMillis())
       },
