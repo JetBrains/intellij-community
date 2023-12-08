@@ -214,4 +214,8 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testResolvePropertiesInCompanionObjectFromBinaryDependency() {
         checkResolvePropertiesInCompanionObjectFromBinaryDependency(myFixture)
     }
+
+    fun testResolvePropertiesInInnerClassFromBinaryDependency() {
+        checkResolvePropertiesInInnerClassFromBinaryDependency(myFixture)
+    }
 }

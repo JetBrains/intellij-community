@@ -1902,31 +1902,135 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             """.trimIndent()
         )
 
-        myFixture.file.toUElement()!!.accept(
-            object : AbstractUastVisitor() {
-                override fun visitCallExpression(node: UCallExpression): Boolean {
-                    val arg = node.valueArguments.singleOrNull()
-                        ?: return super.visitCallExpression(node)
-                    if (arg.sourcePsi?.text == "p") {
-                        // Test call-sites of `consumeFlag`, not `consumeFlag` itself.
-                        return super.visitCallExpression(node)
-                    }
-
-                    val selector = when (arg) {
-                        is UQualifiedReferenceExpression -> arg.selector
-                        is UParenthesizedExpression -> arg.expression
-                        else -> arg
-                    } as USimpleNameReferenceExpression
-                    val resolved = selector.resolve()
-                    TestCase.assertNotNull(node.asRenderString(), resolved)
-                    TestCase.assertTrue(resolved is PsiField)
-
-                    return super.visitCallExpression(node)
-                }
+        val containingClassQueue = buildList {
+            repeat(4) { add("Dependency") }
+            repeat(4) { add("OtherDependency") }
+            repeat(2) { add("DependencyObject") }
+            add("DependencyKt")
+        }
+        val fieldQueue = buildList {
+            repeat(2) {
+                add("JVM_FIELD_FLAG")
+                add("JVM_STATIC_FLAG")
+                add("VAL_FLAG")
+                add("varFlag")
             }
+            add("VAL_FLAG")
+            add("varFlag")
+            add("DEPENDENCY_TOP_LEVEL_VAL_FLAG")
+        }
+
+        myFixture.file.toUElement()!!.accept(
+            PropertyFromBinaryDependencyVisitor(containingClassQueue, fieldQueue)
         )
 
         mockLibraryFacility.tearDown(myFixture.module)
+    }
+
+    fun checkResolvePropertiesInInnerClassFromBinaryDependency(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "dependency.kt", """
+                package some
+
+                interface Flag<T>
+
+                class Outer {
+                  val VAL_FLAG: Flag<*> = TODO()
+                  var varFlag: Flag<*> = TODO()
+
+                  inner class Inner {
+                    val VAL_FLAG: Flag<*> = TODO()
+                    var varFlag: Flag<*> = TODO()
+                  }
+                  
+                  object O {
+                    val VAL_FLAG: Flag<*> = TODO()
+                    var varFlag: Flag<*> = TODO()
+                  }
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                package some
+
+                private fun consumeFlag(p: Flag<*>) {
+                  println(p)
+                }
+
+                fun test() {
+                  val o = Outer()
+                  consumeFlag(o.VAL_FLAG)
+                  consumeFlag(o.varFlag)
+                  val i = o.Inner()
+                  consumeFlag(i.VAL_FLAG)
+                  consumeFlag(i.varFlag)
+                  consumeFlag(Outer.O.VAL_FLAG)
+                  consumeFlag(Outer.O.varFlag)
+                }
+            """.trimIndent()
+        )
+
+        val containingClassQueue = buildList {
+            repeat(2) { add("Outer") }
+            repeat(2) { add("Inner") }
+            repeat(2) { add("O") }
+        }
+        val fieldQueue = buildList {
+            repeat(3) {
+                add("VAL_FLAG")
+                add("varFlag")
+            }
+        }
+
+        myFixture.file.toUElement()!!.accept(
+            PropertyFromBinaryDependencyVisitor(containingClassQueue, fieldQueue)
+        )
+
+        mockLibraryFacility.tearDown(myFixture.module)
+    }
+
+    private class PropertyFromBinaryDependencyVisitor(
+        val containingClassQueue: List<String>,
+        val fieldQueue: List<String>
+    ) : AbstractUastVisitor() {
+        init {
+            assert(containingClassQueue.size == fieldQueue.size)
+        }
+
+        var count = 0
+
+        override fun visitCallExpression(node: UCallExpression): Boolean {
+            val arg = node.valueArguments.singleOrNull()
+                ?: return super.visitCallExpression(node)
+            if (arg.sourcePsi?.text == "p") {
+                // Test call-sites of `consumeFlag`, not `consumeFlag` itself.
+                return super.visitCallExpression(node)
+            }
+
+            val selector = when (arg) {
+                is UQualifiedReferenceExpression -> arg.selector
+                is UParenthesizedExpression -> arg.expression
+                else -> arg
+            } as USimpleNameReferenceExpression
+            val resolved = selector.resolve()
+            TestCase.assertNotNull(node.asRenderString(), resolved)
+            TestCase.assertTrue(resolved is PsiField)
+
+            val fieldName = fieldQueue[count]
+            TestCase.assertEquals(fieldName, (resolved as PsiField).name)
+            val className = containingClassQueue[count]
+            TestCase.assertEquals(className, resolved.containingClass?.name)
+            count++
+
+            return super.visitCallExpression(node)
+        }
+
+        override fun afterVisitFile(node: UFile) {
+            TestCase.assertEquals(containingClassQueue.size, count)
+
+            super.afterVisitFile(node)
+        }
     }
 
     private fun JavaCodeInsightTestFixture.configureLibraryByText(
