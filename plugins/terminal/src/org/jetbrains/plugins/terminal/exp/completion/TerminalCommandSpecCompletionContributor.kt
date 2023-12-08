@@ -79,7 +79,6 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   private fun BaseSuggestion.toLookupElements(): List<LookupElement> {
     val icon = findIconForSuggestion(this)
     return names.map { name ->
-      val cursorOffset = insertValue?.indexOf("{cursor}")
       val realInsertValue = insertValue?.replace("{cursor}", "")
       val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
       val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
@@ -87,12 +86,17 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
         .withPresentableText(displayName ?: name)
         .withTailText(nextSuggestions, true)
         .withIcon(icon)
-        .withInsertHandler { context, _ ->
-          if (cursorOffset != null && cursorOffset != -1) {
-            context.editor.caretModel.moveToOffset(context.startOffset + cursorOffset)
-          }
-        }
+        .withInsertHandler(MyInsertHandler(this))
       PrioritizedLookupElement.withPriority(element, priority / 100.0)
+    }
+  }
+
+  private class MyInsertHandler(private val suggestion: BaseSuggestion) : InsertHandler<LookupElement> {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+      val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
+      if (cursorOffset != null && cursorOffset != -1) {
+        context.editor.caretModel.moveToOffset(context.startOffset + cursorOffset)
+      }
     }
   }
 
