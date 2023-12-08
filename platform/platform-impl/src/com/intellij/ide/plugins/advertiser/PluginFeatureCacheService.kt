@@ -24,7 +24,6 @@ class PluginFeatureCacheService {
   }
 
   private val serializer = objectSettingValueSerializer<PluginFeatureMap>()
-
   private val settingGroup = settingDescriptorFactoryFactory(PluginManagerCore.CORE_ID).group(key = "pluginFeatureCache") {
     tags = listOf(CacheStateTag)
   }

@@ -4,7 +4,6 @@
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
-import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.ide.plugins.advertiser.FeaturePluginData
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginDataSet
@@ -353,25 +352,6 @@ internal class XmlSerializerMapTest {
 }]]></state>
       """.trimIndent(),
       pluginData,
-    )
-  }
-
-  @Test
-  fun `pluginFeatureService serialization`() {
-    val state = PluginFeatureService.State(
-      mapOf("foo" to PluginFeatureService.FeaturePluginList())
-    )
-
-    testSerializer(
-      """
-<state><![CDATA[{
-  "features": {
-    "foo": {
-    }
-  }
-}]]></state>
-      """.trimIndent(),
-      state,
     )
   }
 

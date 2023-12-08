@@ -105,17 +105,17 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     String typeId = getConfigurationTypeId();
-    if (typeId != null) {
-      FeaturePluginData plugin = PluginFeatureService.getInstance().getPluginForFeature(RunManager.CONFIGURATION_TYPE_FEATURE_ID,
-                                                                                        typeId);
-      if (plugin != null) {
-        RuntimeConfigurationError err = new RuntimeConfigurationError(
-          ExecutionBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.displayName));
-        err.setQuickFix(() -> {
-          PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null, plugin.pluginData.pluginIdString);
-        });
-        throw err;
-      }
+    if (typeId == null) {
+      return;
+    }
+    FeaturePluginData plugin = PluginFeatureService.Companion.__getPluginForFeature(RunManager.CONFIGURATION_TYPE_FEATURE_ID, typeId);
+    if (plugin != null) {
+      RuntimeConfigurationError err = new RuntimeConfigurationError(
+        ExecutionBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.displayName));
+      err.setQuickFix(() -> {
+        PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null, plugin.pluginData.pluginIdString);
+      });
+      throw err;
     }
     throw new RuntimeConfigurationException(ExecutionBundle.message("dialog.message.broken.configuration"));
   }

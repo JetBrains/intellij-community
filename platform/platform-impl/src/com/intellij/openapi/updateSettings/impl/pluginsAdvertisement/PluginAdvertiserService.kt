@@ -207,12 +207,13 @@ open class PluginAdvertiserServiceImpl(
     val plugins = mutableSetOf<PluginData>()
 
     val dependencies = serviceAsync<PluginFeatureCacheService>().dependencies.get()
-    val ignoredPluginSuggestionState = GlobalIgnoredPluginSuggestionState.getInstance()
+    val ignoredPluginSuggestionState = serviceAsync<GlobalIgnoredPluginSuggestionState>()
+    val pluginFeatureService = serviceAsync<PluginFeatureService>()
     for (feature in features) {
       coroutineContext.ensureActive()
       val featureType = feature.featureType
       val implementationName = feature.implementationName
-      val featurePluginData = PluginFeatureService.instance.getPluginForFeature(featureType, implementationName)
+      val featurePluginData = pluginFeatureService.getPluginForFeature(featureType, implementationName)
 
       val installedPluginData = featurePluginData?.pluginData
 
@@ -223,7 +224,7 @@ open class PluginAdvertiserServiceImpl(
           return
         }
 
-        plugins += data
+        plugins.add(data)
         featuresMap.putValue(pluginId, featurePluginData?.displayName?.let { feature.withImplementationDisplayName(it) } ?: feature)
       }
 
