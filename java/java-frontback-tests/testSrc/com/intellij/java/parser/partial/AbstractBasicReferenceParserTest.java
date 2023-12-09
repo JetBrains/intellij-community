@@ -36,9 +36,6 @@ public abstract class AbstractBasicReferenceParserTest extends AbstractBasicJava
   public void testTypeParams7() { doTypeParamsParserTest("<T extends X, Y>"); }
   public void testTypeParams8() { doTypeParamsParserTest("<?>"); }
 
-  public void testAnyTypeParams() { doTypeParamsParserTest("<any T>"); }
-  public void testAnyTypeArgs() { doTypeParserTest("T<E_SRC, any, E_DST, ?>"); }
-
   protected abstract void doRefParserTest(String text, boolean incomplete);
 
   protected abstract void doTypeParserTest(String text);

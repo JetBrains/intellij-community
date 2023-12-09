@@ -1830,7 +1830,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitTypeElement(@NotNull PsiTypeElement type) {
     if (!hasErrorResults()) add(HighlightUtil.checkIllegalType(type, myFile));
     if (!hasErrorResults()) add(HighlightUtil.checkVarTypeApplicability(type));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkReferenceTypeUsedAsTypeArgument(type, myLanguageLevel));
+    if (!hasErrorResults()) add(GenericsHighlightUtil.checkReferenceTypeUsedAsTypeArgument(type));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkWildcardUsage(type));
     if (!hasErrorResults()) add(HighlightUtil.checkArrayType(type));
     if (!hasErrorResults()) {

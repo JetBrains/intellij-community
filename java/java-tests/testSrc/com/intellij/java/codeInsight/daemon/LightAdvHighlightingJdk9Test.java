@@ -49,8 +49,6 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
     setLanguageLevel(LanguageLevel.JDK_1_8);
     doTest(false, false);}
 
-  public void testValueTypes() { setLanguageLevel(LanguageLevel.JDK_X); doTest(false, false); }
-
   public void testModuleInfoSuppression() {
     doTest(BASE_PATH + "/module-info.java", true, false);
   }
