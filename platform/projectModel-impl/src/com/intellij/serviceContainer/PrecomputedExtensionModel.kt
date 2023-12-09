@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
-import kotlinx.collections.immutable.PersistentList
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -25,13 +24,12 @@ fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
   val mutableNameToExtensions = HashMap<String, MutableList<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>()
 
   // step 1 - collect container level extension points
-  val extensionPointDescriptors = ArrayList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionPointDescriptor>>>()
+  val extensionPointDescriptors = ArrayList<Pair<IdeaPluginDescriptor, List<ExtensionPointDescriptor>>>()
   executeRegisterTask(modules) { pluginDescriptor ->
     val list = pluginDescriptor.moduleContainerDescriptor.extensionPoints
-    if (!list.isEmpty()) {
+    if (!list.isNullOrEmpty()) {
       extensionPointDescriptors.add(pluginDescriptor to list)
       extensionPointTotalCount += list.size
-
       for (descriptor in list) {
         mutableNameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), ArrayList())
       }

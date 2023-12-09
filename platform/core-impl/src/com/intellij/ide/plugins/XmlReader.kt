@@ -217,7 +217,10 @@ private fun readRootElementChild(reader: XMLStreamReader2,
     "product-descriptor" -> readProduct(reader, descriptor)
     "module" -> {
       findAttributeValue(reader, "value")?.let { moduleName ->
-        descriptor.modules = descriptor.modules.add(PluginId.getId(moduleName))
+        if (descriptor.modules == null) {
+          descriptor.modules = ArrayList()
+        }
+        descriptor.modules!!.add(PluginId.getId(moduleName))
       }
       reader.skipElement()
     }
@@ -241,7 +244,10 @@ private fun readRootElementChild(reader: XMLStreamReader2,
     }
     "incompatible-with" -> {
       getNullifiedContent(reader)?.let {
-        descriptor.incompatibilities = descriptor.incompatibilities.add(PluginId.getId(it))
+        if (descriptor.incompatibilities == null) {
+          descriptor.incompatibilities = ArrayList()
+        }
+        descriptor.incompatibilities!!.add(PluginId.getId(it))
       }
     }
 
@@ -460,9 +466,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
           descriptor.epNameToExtensions = epNameToExtensions
         }
 
-        val list = epNameToExtensions.get(qualifiedExtensionPointName)
-        @Suppress("IfThenToElvis")
-        epNameToExtensions.put(qualifiedExtensionPointName, if (list == null) persistentListOf(extensionDescriptor) else list.add(extensionDescriptor))
+        epNameToExtensions.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extensionDescriptor)
 
         assert(reader.isEndElement)
         return@consumeChildElements
@@ -563,7 +567,10 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
       }
     }
 
-    containerDescriptor.extensionPoints = containerDescriptor.extensionPoints.add(ExtensionPointDescriptor(
+    if (containerDescriptor.extensionPoints == null) {
+      containerDescriptor.extensionPoints = ArrayList()
+    }
+    containerDescriptor.extensionPoints!!.add(ExtensionPointDescriptor(
       name = qualifiedName ?: name ?: throw RuntimeException("`name` attribute not specified for extension point at ${reader.location}"),
       isNameQualified = qualifiedName != null,
       className = `interface` ?: beanClass!!,
@@ -577,9 +584,14 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
 private inline fun applyPartialContainer(from: RawPluginDescriptor,
                                          to: RawPluginDescriptor,
                                          crossinline extractor: (RawPluginDescriptor) -> ContainerDescriptor) {
-  extractor(from).extensionPoints.takeIf { it.isNotEmpty() }?.let {
+  extractor(from).extensionPoints.takeIf { !it.isNullOrEmpty() }?.let {
     val toContainer = extractor(to)
-    toContainer.extensionPoints = toContainer.extensionPoints.addAll(it)
+    if (toContainer.extensionPoints == null) {
+      toContainer.extensionPoints = it
+    }
+    else {
+      toContainer.extensionPoints!!.addAll(it)
+    }
   }
 }
 
@@ -709,13 +721,16 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
     }
     assert(reader.isEndElement)
 
-    containerDescriptor.components = containerDescriptor.components.add(ComponentConfig(interfaceClass,
-                                                                                        implementationClass,
-                                                                                        headlessImplementationClass,
-                                                                                        isApplicableForDefaultProject,
-                                                                                        os,
-                                                                                        overrides,
-                                                                                        options))
+    if (containerDescriptor.components == null) {
+      containerDescriptor.components = ArrayList()
+    }
+    containerDescriptor.components!!.add(ComponentConfig(interfaceClass,
+                                                         implementationClass,
+                                                         headlessImplementationClass,
+                                                         isApplicableForDefaultProject,
+                                                         os,
+                                                         overrides,
+                                                         options))
   }
 }
 
@@ -740,7 +755,10 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
           configFile = "${name.substring(0, index)}.${name.substring(index + 1)}.xml"
         }
 
-        descriptor.contentModules = descriptor.contentModules.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile))
+        if (descriptor.contentModules == null) {
+          descriptor.contentModules = ArrayList()
+        }
+        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile))
       }
       else -> throw RuntimeException("Unknown content item type: $elementName")
     }

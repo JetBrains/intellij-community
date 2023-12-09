@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.util.Java11Shim
-import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.ApiStatus
@@ -72,7 +71,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   private var category: String? = raw.category
   @JvmField internal val url: String? = raw.url
   @JvmField val pluginDependencies: List<PluginDependency>
-  @JvmField val incompatibilities: PersistentList<PluginId> = raw.incompatibilities
+  @JvmField val incompatibilities: List<PluginId> = raw.incompatibilities ?: Java11Shim.INSTANCE.listOf()
 
   init {
     // https://youtrack.jetbrains.com/issue/IDEA-206274
@@ -104,7 +103,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @JvmField val actions: List<RawPluginDescriptor.ActionDescriptor> = raw.actions ?: Java11Shim.INSTANCE.listOf()
 
   // extension point name -> list of extension descriptors
-  @JvmField val epNameToExtensions: Map<String, PersistentList<ExtensionDescriptor>> = raw.epNameToExtensions.let { rawMap ->
+  @JvmField val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.epNameToExtensions.let { rawMap ->
     if (rawMap == null) {
       Java11Shim.INSTANCE.mapOf()
     }
@@ -119,7 +118,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
        * or transformed into a HashMap somewhere, but it seems it's not the case right now.
        * TODO: one way to make a better fix is to introduce loadingOrder on extension points (as it is made for extensions).
        */
-      val result = LinkedHashMap<String, PersistentList<ExtensionDescriptor>>(rawMap.size)
+      val result = LinkedHashMap<String, List<ExtensionDescriptor>>(rawMap.size)
       val keys = rawMap.keys.toTypedArray()
       keys.sortWith(extensionPointNameComparator)
       for (key in keys) {
@@ -133,11 +132,11 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @JvmField val projectContainerDescriptor: ContainerDescriptor = raw.projectContainerDescriptor
   @JvmField val moduleContainerDescriptor: ContainerDescriptor = raw.moduleContainerDescriptor
 
-  @JvmField val content: PluginContentDescriptor = raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(it) }
+  @JvmField val content: PluginContentDescriptor = raw.contentModules.takeIf { !it.isNullOrEmpty() }?.let { PluginContentDescriptor(it) }
                                                    ?: PluginContentDescriptor.EMPTY
 
   @JvmField val dependencies: ModuleDependenciesDescriptor = raw.dependencies
-  @JvmField var modules: PersistentList<PluginId> = raw.modules
+  @JvmField var modules: List<PluginId> = raw.modules ?: Java11Shim.INSTANCE.listOf()
 
   private val descriptionChildText = raw.description
 
@@ -227,7 +226,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
     if (!isSub) {
       if (id == PluginManagerCore.CORE_ID) {
-        modules = modules.addAll(IdeaPluginPlatform.getHostPlatformModuleIds())
+        modules = modules + IdeaPluginPlatform.getHostPlatformModuleIds()
       }
 
       if (context.isPluginDisabled(id)) {
@@ -426,7 +425,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
   }
 
-  private fun doRegisterExtensions(map: Map<String, PersistentList<ExtensionDescriptor>>,
+  private fun doRegisterExtensions(map: Map<String, List<ExtensionDescriptor>>,
                                    nameToPoint: Map<String, ExtensionPointImpl<*>>,
                                    listenerCallbacks: MutableList<in Runnable>?): Int {
     var registeredCount = 0

@@ -415,7 +415,7 @@ abstract class ComponentManagerImpl(
         }
 
         if (extensionPoints != null) {
-          createExtensionPoints(points = containerDescriptor.extensionPoints,
+          createExtensionPoints(points = containerDescriptor.extensionPoints ?: java.util.List.of(),
                                 componentManager = this,
                                 result = extensionPoints,
                                 pluginDescriptor = module)
@@ -487,7 +487,7 @@ abstract class ComponentManagerImpl(
       return
     }
 
-    for (descriptor in (containerDescriptor.components)) {
+    for (descriptor in (containerDescriptor.components ?: java.util.List.of())) {
       var implementationClassName = descriptor.implementationClass
       if (headless && descriptor.headlessImplementationClass != null) {
         if (descriptor.headlessImplementationClass.isEmpty()) {
@@ -549,7 +549,7 @@ abstract class ComponentManagerImpl(
                                        containerDescriptor: ContainerDescriptor,
                                        headless: Boolean) {
     val components = containerDescriptor.components
-    if (components.isEmpty()) {
+    if (components.isNullOrEmpty()) {
       return
     }
 
@@ -1455,7 +1455,7 @@ abstract class ComponentManagerImpl(
                                  error: Throwable?,
                                  pluginId: PluginId,
                                  attachments: MutableMap<String, String>?): RuntimeException {
-    return PluginException(message, error, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: emptyList())
+    return PluginException(message, error, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: java.util.List.of())
   }
 
   open fun unloadServices(module: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
@@ -2139,7 +2139,7 @@ private class PluginServicesStore {
   }
 
   fun removeDynamicServices(descriptor: IdeaPluginDescriptor): List<InstanceHolder> {
-    return dynamicServices.remove(descriptor) ?: emptyList()
+    return dynamicServices.remove(descriptor) ?: java.util.List.of()
   }
 }
 

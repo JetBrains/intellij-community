@@ -7,23 +7,21 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.util.Java11Shim
 import com.intellij.util.messages.ListenerDescriptor
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ContainerDescriptor {
   private var _services: MutableList<ServiceDescriptor>? = null
   val services: List<ServiceDescriptor>
-    get() = _services ?: persistentListOf()
+    get() = _services ?: Java11Shim.INSTANCE.listOf()
 
-  @JvmField var components: PersistentList<ComponentConfig> = persistentListOf()
+  @JvmField var components: MutableList<ComponentConfig>? = null
   @JvmField var listeners: MutableList<ListenerDescriptor>? = null
 
-  @JvmField var extensionPoints: PersistentList<ExtensionPointDescriptor> = persistentListOf()
+  @JvmField var extensionPoints: MutableList<ExtensionPointDescriptor>? = null
 
   @Transient var distinctExtensionPointCount: Int = -1
-  @Transient @JvmField var extensions: Map<String, PersistentList<ExtensionDescriptor>> = Java11Shim.INSTANCE.mapOf()
+  @Transient @JvmField var extensions: Map<String, List<ExtensionDescriptor>> = Java11Shim.INSTANCE.mapOf()
 
   fun addService(serviceDescriptor: ServiceDescriptor) {
     if (_services == null) {
@@ -33,7 +31,7 @@ class ContainerDescriptor {
   }
 
   override fun toString(): String {
-    if (_services == null && components.isEmpty() && extensionPoints.isEmpty() && extensions.isEmpty() && listeners == null) {
+    if (_services == null && components.isNullOrEmpty() && extensionPoints.isNullOrEmpty() && extensions.isEmpty() && listeners == null) {
       return "ContainerDescriptor(empty)"
     }
     else {
