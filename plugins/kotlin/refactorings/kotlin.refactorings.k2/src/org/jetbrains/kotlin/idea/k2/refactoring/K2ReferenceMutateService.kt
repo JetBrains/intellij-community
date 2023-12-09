@@ -117,7 +117,12 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 ?: error("Could not create type from $fqName")
             replaced(newReference)
         } else {
-            if (!fqName.isRoot) qualifier?.replaceWith(fqName.parent()) // do recursive short name replacement to preserve type arguments
+            val parentFqn = fqName.parent()
+            if (parentFqn.isRoot) {
+                deleteQualifier()
+            }  else {
+                qualifier?.replaceWith(parentFqn) // do recursive short name replacement to preserve type arguments
+            }
             referenceExpression?.replaceShortName(fqName)?.parent as KtUserType
         }
     }
