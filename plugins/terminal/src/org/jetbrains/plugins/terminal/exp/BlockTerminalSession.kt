@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Key
@@ -61,16 +62,9 @@ class BlockTerminalSession(settings: JBTerminalSystemSettingsProviderBase,
         thisLogger().error(t)
       }
       finally {
-        try {
-          ttyConnector.close()
-        }
-        catch (t: Throwable) {
-          thisLogger().error(t)
-        }
-        finally {
-          for (terminationListener in terminationListeners) {
-            terminationListener.run()
-          }
+        ttyConnector.closeSafely()
+        for (terminationListener in terminationListeners) {
+          terminationListener.run()
         }
       }
     }
@@ -97,12 +91,26 @@ class BlockTerminalSession(settings: JBTerminalSystemSettingsProviderBase,
     commandManager.addListener(listener, parentDisposable)
   }
 
+  private fun TtyConnector.closeSafely() {
+    try {
+      this.close()
+    }
+    catch (t: Throwable) {
+      thisLogger().error("Error closing TtyConnector", t)
+    }
+  }
+
   override fun dispose() {
     // Complete to avoid memory leaks with hanging callbacks. If already completed, nothing will change.
     terminalStarterFuture.complete(null)
     terminalStarterFuture.getNow(null)?.let {
       it.requestEmulatorStop()
-      it.close()
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        it.ttyConnector.closeSafely() // close synchronously
+      }
+      else {
+        it.close() // close in background thread
+      }
     }
     executorServiceManager.shutdownWhenAllExecuted()
   }
