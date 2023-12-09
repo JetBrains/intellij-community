@@ -214,6 +214,9 @@ public class TestAll implements Test {
   public int countTestCases() {
     // counting test cases involves parallel directory scan now
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+    if (!hasRealTests()) {
+      return 0;
+    }
     int count = 0;
     for (Class<?> aClass : myTestCaseLoader.getClasses()) {
       Test test = getTest(aClass);
@@ -236,6 +239,9 @@ public class TestAll implements Test {
 
   @Override
   public void run(TestResult testResult) {
+    if (!hasRealTests()) {
+      return;
+    }
     final TestListener testListener = loadDiscoveryListener();
     if (testListener != null) {
       testResult.addListener(testListener);
@@ -281,6 +287,10 @@ public class TestAll implements Test {
     }
 
     TestCaseLoader.sendTestRunResultsToNastradamus();
+  }
+
+  private boolean hasRealTests() {
+    return ContainerUtil.exists(myTestCaseLoader.getClasses(false), aClass -> getTest(aClass) != null);
   }
 
   private static TestListener loadDiscoveryListener() {

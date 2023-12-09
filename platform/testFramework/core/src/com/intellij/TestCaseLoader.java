@@ -311,7 +311,7 @@ public class TestCaseLoader {
       groupsTestCaseLoader.loadTestCases(classesRoot.getFileName().toString(), foundTestClasses);
     }
 
-    var testCaseClasses = groupsTestCaseLoader.getClasses();
+    var testCaseClasses = groupsTestCaseLoader.getClasses(false);
 
     System.out.printf("Finishing warmup initialization. Found %s classes%n", testCaseClasses.size());
 
@@ -538,15 +538,19 @@ public class TestCaseLoader {
    * @return Sorted list of loaded classes
    */
   public List<Class<?>> getClasses() {
-    List<Class<?>> result = new ArrayList<>(myClassSet.size() + 2);
+    return getClasses(true);
+  }
 
-    if (myFirstTestClass != null) {
+  List<Class<?>> getClasses(boolean includeFirstAndLast) {
+    List<Class<?>> result = new ArrayList<>(myClassSet.size() + (includeFirstAndLast ? 2 : 0));
+
+    if (includeFirstAndLast && myFirstTestClass != null) {
       result.add(myFirstTestClass);
     }
 
     result.addAll(loadTestSorter().sorted(myClassSet.stream().toList(), TestCaseLoader::getRank));
 
-    if (myLastTestClass != null) {
+    if (includeFirstAndLast && myLastTestClass != null) {
       result.add(myLastTestClass);
     }
 
