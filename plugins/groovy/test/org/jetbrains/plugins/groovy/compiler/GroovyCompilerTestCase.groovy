@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -87,7 +87,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
       ApplicationManager.application.runWriteAction {
         def sdkModificator = jdk.sdkModificator
-        sdkModificator.setVersionString(JavaSdkVersion.JDK_11.description)
+        sdkModificator.setVersionString(getJdkVersion().description)
         sdkModificator.commitChanges()
 
         ProjectJdkTable jdkTable = ProjectJdkTable.getInstance()
@@ -98,6 +98,10 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
         }
       }
     }
+  }
+
+  protected JavaSdkVersion getJdkVersion() {
+    return JavaSdkVersion.JDK_11;
   }
 
   @Override
