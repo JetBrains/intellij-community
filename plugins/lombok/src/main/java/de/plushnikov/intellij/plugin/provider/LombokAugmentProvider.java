@@ -5,13 +5,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
+import de.plushnikov.intellij.plugin.processor.lombok.LombokAnnotationProcessor;
 import de.plushnikov.intellij.plugin.processor.method.ExtensionMethodsHelper;
 import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
+import de.plushnikov.intellij.plugin.psi.LombokLightAnnotationMethodBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
@@ -118,22 +123,26 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
                                                         @NotNull final Class<Psi> type,
                                                         @Nullable String nameHint) {
     final List<Psi> emptyResult = Collections.emptyList();
-    if ((type != PsiClass.class && type != PsiField.class && type != PsiMethod.class) || !(element instanceof PsiExtensibleClass)
-        || (element instanceof PsiCompiledElement) // skip compiled classes
-    ) {
+    if (type != PsiClass.class && type != PsiField.class && type != PsiMethod.class || !(element instanceof PsiExtensibleClass psiClass)) {
       return emptyResult;
     }
 
-    final PsiClass psiClass = (PsiClass)element;
     if (!psiClass.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return emptyResult;
     }
-    // Skip processing of Annotations and Interfaces
+
+    // skip processing if disabled, or no lombok library is present
+    if (!hasLombokLibrary(element.getProject())) {
+      return emptyResult;
+    }
+    if (psiClass.isAnnotationType() && type == PsiMethod.class) {
+      return (List<Psi>)LombokAnnotationProcessor.process(psiClass, nameHint);
+    }
+    // Skip processing of other Annotations and Interfaces
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       return emptyResult;
     }
-    // skip processing if disabled, or no lombok library is present
-    if (!hasLombokLibrary(element.getProject())) {
+    if (element instanceof PsiCompiledElement) { // skip compiled classes)
       return emptyResult;
     }
 

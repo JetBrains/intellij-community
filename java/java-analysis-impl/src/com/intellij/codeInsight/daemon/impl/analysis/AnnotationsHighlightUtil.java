@@ -126,6 +126,7 @@ public final class AnnotationsHighlightUtil {
     }
     PsiAnnotationMethod annotationMethod = ObjectUtils.tryCast(method, PsiAnnotationMethod.class);
     if (annotationMethod == null) return null;
+    if (!annotationMethod.isPhysical()) return null;
     boolean fromDefaultValue = PsiTreeUtil.isAncestor(annotationMethod.getDefaultValue(), value, false);
     if (value instanceof PsiAnnotation) {
       PsiJavaCodeReferenceElement nameRef = ((PsiAnnotation)value).getNameReferenceElement();

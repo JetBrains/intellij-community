@@ -23,9 +23,6 @@ import java.util.regex.Pattern;
 public class LombokHighlightErrorFilter implements HighlightInfoFilter {
 
   private static final class Holder {
-    static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED =
-      Pattern.compile(JavaErrorBundle.message("incompatible.types", "lombok.*AnyAnnotation\\[\\]", "__*"));
-
     static final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFixHook>>> registeredHooks;
 
     static {
@@ -59,12 +56,9 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     }
 
     // handle rest cases
-    String description = highlightInfo.getDescription();
     if (HighlightSeverity.ERROR.equals(highlightInfo.getSeverity())) {
       //Handling onX parameters
-      if (OnXAnnotationHandler.isOnXParameterAnnotation(highlightInfo, file)
-        || OnXAnnotationHandler.isOnXParameterValue(highlightInfo, file)
-        || (description != null && Holder.LOMBOK_ANY_ANNOTATION_REQUIRED.matcher(description).matches())) {
+      if (OnXAnnotationHandler.isOnXParameterAnnotation(highlightInfo, file)) {
         return false;
       }
     }
@@ -99,12 +93,14 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       @Override
       public void processHook(@NotNull PsiElement highlightedElement, @NotNull HighlightInfo highlightInfo) {
         PsiElement importantParent = PsiTreeUtil.getParentOfType(highlightedElement,
-          PsiMethod.class, PsiLambdaExpression.class, PsiMethodReferenceExpression.class, PsiClassInitializer.class
+                                                                 PsiMethod.class, PsiLambdaExpression.class,
+                                                                 PsiMethodReferenceExpression.class, PsiClassInitializer.class
         );
 
         // applicable only for methods
         if (importantParent instanceof PsiMethod) {
-          AddAnnotationFix fix = PsiQuickFixFactory.createAddAnnotationFix(LombokClassNames.SNEAKY_THROWS, (PsiModifierListOwner) importantParent);
+          AddAnnotationFix fix =
+            PsiQuickFixFactory.createAddAnnotationFix(LombokClassNames.SNEAKY_THROWS, (PsiModifierListOwner)importantParent);
           highlightInfo.registerFix(fix, null, null, null, null);
         }
       }
@@ -122,5 +118,4 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
 
     abstract public void processHook(@NotNull PsiElement highlightedElement, @NotNull HighlightInfo highlightInfo);
   }
-
 }
