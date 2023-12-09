@@ -21,6 +21,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.UIBundle
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -197,7 +198,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
 
     val height = height
     if (height != 0 && customTitleBar != null &&
-        Math.abs(customTitleBar.height - height) > 0.1) {
+        (Math.abs(customTitleBar.height - height) > 0.1 || MacUtil.isNativeBoundsEmpty(frame))) {
       customTitleBar.height = height.toFloat()
     }
   }
