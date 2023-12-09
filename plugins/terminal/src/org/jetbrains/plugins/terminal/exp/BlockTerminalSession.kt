@@ -64,7 +64,12 @@ class BlockTerminalSession(settings: JBTerminalSystemSettingsProviderBase,
       finally {
         ttyConnector.closeSafely()
         for (terminationListener in terminationListeners) {
-          terminationListener.run()
+          try {
+            terminationListener.run()
+          }
+          catch (t: Throwable) {
+            thisLogger().error("Unhandled exception in termination listener", t)
+          }
         }
       }
     }
