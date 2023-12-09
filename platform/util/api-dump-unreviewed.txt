@@ -1921,14 +1921,6 @@ a:com.intellij.openapi.util.text.StringUtil$BombedCharSequence
 - f:defuse():V
 - length():I
 - subSequence(I,I):java.lang.CharSequence
-f:com.intellij.openapi.util.text.TrigramBuilder
-- s:getTrigrams(java.lang.CharSequence):it.unimi.dsi.fastutil.ints.IntSet
-- s:getTrigramsAsMap(java.lang.CharSequence):java.util.Map
-- s:processTrigrams(java.lang.CharSequence,com.intellij.openapi.util.text.TrigramBuilder$TrigramProcessor):Z
-a:com.intellij.openapi.util.text.TrigramBuilder$TrigramProcessor
-- java.util.function.IntPredicate
-- <init>():V
-- consumeTrigramsCount(I):Z
 f:com.intellij.serialization.ClassUtil
 - s:getRawType(java.lang.reflect.Type):java.lang.Class
 - s:isMutableCollection(java.lang.Object):Z
