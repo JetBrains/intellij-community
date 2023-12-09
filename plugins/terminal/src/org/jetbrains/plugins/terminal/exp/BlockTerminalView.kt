@@ -27,7 +27,7 @@ import javax.swing.JPanel
 
 class BlockTerminalView(
   private val project: Project,
-  private val session: TerminalSession,
+  private val session: BlockTerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase,
   terminalTitle: TerminalTitle
 ) : TerminalContentView, TerminalCommandExecutor {
@@ -221,7 +221,7 @@ class BlockTerminalView(
         BlockTerminalController.KEY.name -> controller
         TerminalSelectionController.KEY.name -> selectionController
         TerminalFocusModel.KEY.name -> focusModel
-        TerminalSession.DATA_KEY.name -> session
+        BlockTerminalSession.DATA_KEY.name -> session
         else -> null
       }
     }

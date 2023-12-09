@@ -11,10 +11,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.terminal.completion.ShellEnvironment
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
-import org.jetbrains.plugins.terminal.exp.TerminalSession
+import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import java.time.Duration
 
-class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRuntimeDataProvider {
+class IJShellRuntimeDataProvider(private val session: BlockTerminalSession) : ShellRuntimeDataProvider {
   @Volatile
   private var cachedShellEnv: ShellEnvironment? = null
 

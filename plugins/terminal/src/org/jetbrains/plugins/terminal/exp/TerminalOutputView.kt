@@ -28,7 +28,7 @@ import kotlin.math.min
 
 class TerminalOutputView(
   private val project: Project,
-  session: TerminalSession,
+  session: BlockTerminalSession,
   settings: JBTerminalSystemSettingsProviderBase
 ) : Disposable {
   val controller: TerminalOutputController

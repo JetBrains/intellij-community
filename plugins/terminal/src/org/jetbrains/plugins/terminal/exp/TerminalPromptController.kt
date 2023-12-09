@@ -21,7 +21,7 @@ import kotlin.properties.Delegates
 class TerminalPromptController(
   project: Project,
   private val editor: EditorEx,
-  session: TerminalSession,
+  session: BlockTerminalSession,
   private val commandExecutor: TerminalCommandExecutor
 ) : ShellCommandListener {
   private val commandHistoryManager: CommandHistoryManager
@@ -47,7 +47,7 @@ class TerminalPromptController(
 
   init {
     editor.putUserData(IS_PROMPT_EDITOR_KEY, true)
-    editor.putUserData(TerminalSession.KEY, session)
+    editor.putUserData(BlockTerminalSession.KEY, session)
 
     val runtimeDataProvider = IJShellRuntimeDataProvider(session)
     editor.putUserData(IJShellRuntimeDataProvider.KEY, runtimeDataProvider)

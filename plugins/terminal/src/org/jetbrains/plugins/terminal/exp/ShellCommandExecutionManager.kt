@@ -13,7 +13,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
-internal class ShellCommandExecutionManager(private val session: TerminalSession, commandManager: ShellCommandManager) {
+internal class ShellCommandExecutionManager(private val session: BlockTerminalSession, commandManager: ShellCommandManager) {
 
   private val lock: Lock = Lock()
 

@@ -5,7 +5,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import java.awt.event.KeyEvent
 
 class BlockTerminalEventsHandler(
-  session: TerminalSession,
+  session: BlockTerminalSession,
   settings: JBTerminalSystemSettingsProviderBase,
   private val outputController: TerminalOutputController
 ) : SimpleTerminalEventsHandler(session, settings, outputController.outputModel) {

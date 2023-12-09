@@ -13,11 +13,11 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class ShellCommandOutputScraper(private val session: TerminalSession,
+internal class ShellCommandOutputScraper(private val session: BlockTerminalSession,
                                          private val textBuffer: TerminalTextBuffer,
                                          parentDisposable: Disposable) {
 
-  constructor(session: TerminalSession): this(session, session.model.textBuffer, session)
+  constructor(session: BlockTerminalSession): this(session, session.model.textBuffer, session)
 
   private val listeners: MutableList<ShellCommandOutputListener> = CopyOnWriteArrayList()
   private val contentChangedAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)

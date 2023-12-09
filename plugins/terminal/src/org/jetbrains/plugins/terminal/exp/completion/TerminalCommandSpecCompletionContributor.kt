@@ -10,14 +10,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.CommandSpecCompletion
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
-import org.jetbrains.plugins.terminal.exp.TerminalSession
+import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.getNextSuggestionsString
 import org.jetbrains.terminal.completion.BaseSuggestion
 
 internal class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    val session = parameters.editor.getUserData(TerminalSession.KEY)
+    val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
     val runtimeDataProvider = parameters.editor.getUserData(IJShellRuntimeDataProvider.KEY)
     if (session == null || runtimeDataProvider == null || parameters.completionType != CompletionType.BASIC) {
       return
@@ -115,7 +115,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   }
 
   private class TerminalCompletionContext(
-    val session: TerminalSession,
+    val session: BlockTerminalSession,
     val runtimeDataProvider: ShellRuntimeDataProvider,
     val shellSupport: TerminalShellSupport,
     val parameters: CompletionParameters

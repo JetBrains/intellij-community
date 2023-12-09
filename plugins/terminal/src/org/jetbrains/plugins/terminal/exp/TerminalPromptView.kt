@@ -28,7 +28,7 @@ import javax.swing.JPanel
 class TerminalPromptView(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProviderBase,
-  session: TerminalSession,
+  session: BlockTerminalSession,
   commandExecutor: TerminalCommandExecutor
 ) : PromptStateListener, Disposable {
   val controller: TerminalPromptController
@@ -92,7 +92,7 @@ class TerminalPromptView(
     }
   }
 
-  private fun createPromptTextField(session: TerminalSession): LanguageTextField {
+  private fun createPromptTextField(session: BlockTerminalSession): LanguageTextField {
     val language = TerminalShellSupport.findByShellType(session.shellIntegration.shellType)?.promptLanguage
                    ?: PlainTextLanguage.INSTANCE
     val textField = object : LanguageTextField(language, project, "", false) {

@@ -16,7 +16,7 @@ import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalModel
-import org.jetbrains.plugins.terminal.exp.TerminalSession
+import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 import org.junit.Assume
 import java.nio.file.Path
@@ -28,7 +28,7 @@ object TerminalSessionTestUtil {
   fun startBlockTerminalSession(project: Project,
                                 shellPath: String,
                                 parentDisposable: Disposable,
-                                initialTermSize: TermSize = TermSize(200, 20)): TerminalSession {
+                                initialTermSize: TermSize = TermSize(200, 20)): BlockTerminalSession {
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_REGISTRY).setValue(true, parentDisposable)
@@ -40,7 +40,7 @@ object TerminalSessionTestUtil {
     val ttyConnector = runner.createTtyConnector(process)
 
     val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().globalScheme)
-    val session = TerminalSession(runner.settingsProvider, colorPalette, configuredOptions.shellIntegration!!)
+    val session = BlockTerminalSession(runner.settingsProvider, colorPalette, configuredOptions.shellIntegration!!)
     Disposer.register(parentDisposable, session)
     session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model

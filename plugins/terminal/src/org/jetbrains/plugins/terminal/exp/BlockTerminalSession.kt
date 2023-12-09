@@ -18,9 +18,9 @@ import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
-                      val colorPalette: TerminalColorPalette,
-                      val shellIntegration: ShellIntegration) : Disposable {
+class BlockTerminalSession(settings: JBTerminalSystemSettingsProviderBase,
+                           val colorPalette: TerminalColorPalette,
+                           val shellIntegration: ShellIntegration) : Disposable {
   val model: TerminalModel
   internal val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
 
@@ -105,7 +105,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
   }
 
   companion object {
-    val KEY: Key<TerminalSession> = Key.create("TerminalSession")
-    val DATA_KEY: DataKey<TerminalSession> = DataKey.create("TerminalSession")
+    val KEY: Key<BlockTerminalSession> = Key.create("TerminalSession")
+    val DATA_KEY: DataKey<BlockTerminalSession> = DataKey.create("TerminalSession")
   }
 }

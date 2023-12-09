@@ -22,7 +22,7 @@ import kotlin.math.abs
  * Logic of mouse event handling is copied from [com.jediterm.terminal.model.JediTerminal]
  */
 open class SimpleTerminalEventsHandler(
-  private val session: TerminalSession,
+  private val session: BlockTerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase,
   protected val outputModel: TerminalOutputModel,
 ) : TerminalEventsHandler {

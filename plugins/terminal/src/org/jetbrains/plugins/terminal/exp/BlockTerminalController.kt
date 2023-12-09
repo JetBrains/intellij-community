@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 class BlockTerminalController(
   private val project: Project,
-  private val session: TerminalSession,
+  private val session: BlockTerminalSession,
   private val outputController: TerminalOutputController,
   private val promptController: TerminalPromptController,
   private val selectionController: TerminalSelectionController,

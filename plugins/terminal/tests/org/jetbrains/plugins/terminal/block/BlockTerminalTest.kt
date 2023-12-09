@@ -152,7 +152,7 @@ class BlockTerminalTest(private val shellPath: String) {
     assertCommandResult(0, MoveCursorToLineEndAndPrint.Helper.getExpectedOutput(termSize, textsToPrint), outputFuture)
   }
 
-  private fun createCommandSentDeferred(session: TerminalSession): CompletableDeferred<Unit> {
+  private fun createCommandSentDeferred(session: BlockTerminalSession): CompletableDeferred<Unit> {
     val generatorCommandSent = CompletableDeferred<Unit>()
     val generatorCommandSentDisposable = Disposer.newDisposable().also { disposable ->
       generatorCommandSent.invokeOnCompletion { Disposer.dispose(disposable) }
@@ -175,7 +175,7 @@ class BlockTerminalTest(private val shellPath: String) {
   private fun startBlockTerminalSession(termSize: TermSize = TermSize(80, 24)) =
     TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath, disposableRule.disposable, termSize)
 
-  private fun TerminalSession.sendCommandToExecuteWithoutAddingToHistory(shellCommand: String) {
+  private fun BlockTerminalSession.sendCommandToExecuteWithoutAddingToHistory(shellCommand: String) {
     this.sendCommandToExecute(" $shellCommand")
   }
 
@@ -194,7 +194,7 @@ class BlockTerminalTest(private val shellPath: String) {
   }
 }
 
-fun getCommandResultFuture(session: TerminalSession): CompletableFuture<CommandResult> {
+fun getCommandResultFuture(session: BlockTerminalSession): CompletableFuture<CommandResult> {
   val disposable = Disposer.newDisposable(session)
   val scraper = ShellCommandOutputScraper(session)
   val lastOutput: AtomicReference<StyledCommandOutput> = AtomicReference()

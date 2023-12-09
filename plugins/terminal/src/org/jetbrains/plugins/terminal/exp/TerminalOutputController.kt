@@ -20,7 +20,7 @@ import java.awt.Font
 
 class TerminalOutputController(
   private val editor: EditorEx,
-  private val session: TerminalSession,
+  private val session: BlockTerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase
 ) : TerminalModel.TerminalListener {
   val outputModel: TerminalOutputModel = TerminalOutputModel(editor)

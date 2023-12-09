@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.util.text.Strings
 import java.util.*
 
-class CommandHistoryManager(session: TerminalSession) {
+class CommandHistoryManager(session: BlockTerminalSession) {
   private val mutableHistory: MutableSet<String> = Collections.synchronizedSet(LinkedHashSet())
 
   /**

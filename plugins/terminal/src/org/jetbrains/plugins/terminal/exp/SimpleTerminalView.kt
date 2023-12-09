@@ -24,7 +24,7 @@ import javax.swing.JScrollPane
 class SimpleTerminalView(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProviderBase,
-  session: TerminalSession,
+  session: BlockTerminalSession,
   private val withVerticalScroll: Boolean = true
 ) : Disposable {
   private val editor: EditorImpl

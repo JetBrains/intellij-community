@@ -11,7 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TerminalCaretModel(
-  private val session: TerminalSession,
+  private val session: BlockTerminalSession,
   private val outputModel: TerminalOutputModel,
   private val editor: EditorEx,
   parentDisposable: Disposable,

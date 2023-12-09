@@ -56,7 +56,7 @@ class TerminalWidgetImpl(private val project: Project,
     val oldView = view
     view = if (options.shellIntegration?.withCommandBlocks == true) {
       val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().getGlobalScheme())
-      val session = TerminalSession(settings, colorPalette, options.shellIntegration)
+      val session = BlockTerminalSession(settings, colorPalette, options.shellIntegration)
       Disposer.register(this, session)
       BlockTerminalView(project, session, settings, terminalTitle)
     }

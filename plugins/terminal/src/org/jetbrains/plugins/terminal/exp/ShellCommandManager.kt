@@ -10,7 +10,7 @@ import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
-class ShellCommandManager(session: TerminalSession) {
+class ShellCommandManager(session: BlockTerminalSession) {
   private val listeners: CopyOnWriteArrayList<ShellCommandListener> = CopyOnWriteArrayList()
 
   @Volatile

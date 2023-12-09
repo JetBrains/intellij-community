@@ -24,7 +24,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @RunWith(JUnit4::class)
 class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
-  private lateinit var session: TerminalSession
+  private lateinit var session: BlockTerminalSession
   private lateinit var testDirectory: Path
 
   override fun tearDown() {

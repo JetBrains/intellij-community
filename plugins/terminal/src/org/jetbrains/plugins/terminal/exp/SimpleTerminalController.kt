@@ -20,7 +20,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 
 class SimpleTerminalController(
   settings: JBTerminalSystemSettingsProviderBase,
-  private val session: TerminalSession,
+  private val session: BlockTerminalSession,
   private val editor: EditorEx
 ) : Disposable {
   val document: Document

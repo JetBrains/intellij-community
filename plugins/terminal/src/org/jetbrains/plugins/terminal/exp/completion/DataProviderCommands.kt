@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.completion.ShellEnvironment
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.plugins.terminal.exp.TerminalSession
+import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.util.ShellType
 
 internal interface DataProviderCommand<T> {
@@ -14,7 +14,7 @@ internal interface DataProviderCommand<T> {
   val parameters: List<String>
   val defaultResult: T
 
-  fun isAvailable(session: TerminalSession): Boolean
+  fun isAvailable(session: BlockTerminalSession): Boolean
   fun parseResult(result: String): T
 }
 
@@ -23,7 +23,7 @@ internal class GetFilesCommand(path: String) : DataProviderCommand<List<String>>
   override val parameters: List<String> = listOf(path)
   override val defaultResult: List<String> = emptyList()
 
-  override fun isAvailable(session: TerminalSession): Boolean {
+  override fun isAvailable(session: BlockTerminalSession): Boolean {
     return session.isBashOrZsh()
   }
 
@@ -32,12 +32,12 @@ internal class GetFilesCommand(path: String) : DataProviderCommand<List<String>>
   }
 }
 
-internal class GetEnvironmentCommand(private val session: TerminalSession) : DataProviderCommand<ShellEnvironment?> {
+internal class GetEnvironmentCommand(private val session: BlockTerminalSession) : DataProviderCommand<ShellEnvironment?> {
   override val functionName: String = "__jetbrains_intellij_get_environment"
   override val parameters: List<String> = emptyList()
   override val defaultResult: ShellEnvironment? = null
 
-  override fun isAvailable(session: TerminalSession): Boolean {
+  override fun isAvailable(session: BlockTerminalSession): Boolean {
     return session.isBashOrZsh()
   }
 
@@ -86,7 +86,7 @@ internal class GetEnvironmentCommand(private val session: TerminalSession) : Dat
   }
 }
 
-private fun TerminalSession.isBashOrZsh(): Boolean {
+private fun BlockTerminalSession.isBashOrZsh(): Boolean {
   return shellIntegration.shellType == ShellType.ZSH
          || shellIntegration.shellType == ShellType.BASH
 }
