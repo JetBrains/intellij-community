@@ -687,6 +687,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
                                finalLBraceOffset,
                                offset,
                                0,
+                               false,
                                false);
             }
             else {
@@ -696,6 +697,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
                                offset,
                                offset,
                                0,
+                               false,
                                false);
             }
             editor.getCaretModel().moveToOffset(marker.getStartOffset() + 1);

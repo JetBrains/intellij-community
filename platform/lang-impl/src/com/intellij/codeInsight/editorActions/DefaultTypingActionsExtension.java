@@ -2,7 +2,10 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.formatting.service.FormattingServiceUtil;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -13,6 +16,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,6 +25,9 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static com.intellij.util.containers.ComparatorUtil.max;
+import static com.intellij.util.containers.ComparatorUtil.min;
 
 public class DefaultTypingActionsExtension implements TypingActionsExtension {
   private static final Logger LOG = Logger.getInstance(DefaultTypingActionsExtension.class);
@@ -60,11 +68,49 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
                      int startOffset,
                      int endOffset,
                      int anchorColumn,
-                     boolean indentBeforeReformat) {
-    if (startOffset < 0 || endOffset > editor.getDocument().getTextLength() || endOffset < startOffset) {
-      throw new IllegalArgumentException("Invalid offsets: startOffset="+startOffset+"; endOffset="+endOffset+"; document length="+editor.getDocument().getTextLength());
+                     boolean indentBeforeReformat,
+                     boolean formatInjected) {
+    if (formatInjected && !(editor instanceof EditorWindow)) {
+      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+      PsiFile psiFile = psiDocumentManager.getPsiFile(editor.getDocument());
+      if (psiFile != null) {
+        final List<DocumentWindow> injectedDocuments = InjectedLanguageManager.getInstance(project)
+          .getCachedInjectedDocumentsInRange(psiFile, new TextRange(startOffset, endOffset));
+        for (DocumentWindow injectedDocument : injectedDocuments) {
+          PsiFile injectedPsiFile = psiDocumentManager.getPsiFile(injectedDocument);
+          if (injectedPsiFile == null || CodeFormatterFacade.shouldDelegateToTopLevel(injectedPsiFile)) {
+            continue;
+          }
+          @SuppressWarnings("deprecation")
+          Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedPsiFile);
+          int injectedStartOffset = max(0, injectedDocument.hostToInjected(startOffset));
+          int injectedEndOffset = min(injectedDocument.getTextLength(), injectedDocument.hostToInjected(endOffset));
+
+          doFormat(project, injectedEditor, howtoReformat, injectedStartOffset, injectedEndOffset, anchorColumn, indentBeforeReformat);
+        }
+      }
     }
+
+    doFormat(project, editor, howtoReformat, startOffset, endOffset, anchorColumn, indentBeforeReformat);
+  }
+
+  private static void checkOffsets(Document document, int startOffset, int endOffset) {
+    if (startOffset < 0 || endOffset > document.getTextLength() || endOffset < startOffset) {
+      throw new IllegalArgumentException("Invalid offsets: startOffset="+startOffset+"; endOffset="+endOffset+"; document length="+document.getTextLength());
+    }
+  }
+
+  private void doFormat(@NotNull Project project,
+                        @NotNull Editor editor,
+                        int howtoReformat,
+                        int startOffset,
+                        int endOffset,
+                        int anchorColumn,
+                        boolean indentBeforeReformat) {
+    checkOffsets(editor.getDocument(), startOffset, endOffset);
+
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+
     switch (howtoReformat) {
       case CodeInsightSettings.INDENT_BLOCK -> indentBlock(project, editor, startOffset, endOffset, anchorColumn);
       case CodeInsightSettings.INDENT_EACH_LINE -> indentEachLine(project, editor, startOffset, endOffset);

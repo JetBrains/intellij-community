@@ -267,7 +267,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         : indentOptions;
       ApplicationManager.getApplication().runWriteAction(
         () -> typingActionsExtension
-          .format(project, editor, howtoReformat, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn, true)
+          .format(project, editor, howtoReformat, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn, true, true)
       );
     }
 
