@@ -101,7 +101,7 @@ open class ModuleImpl @ApiStatus.Internal constructor(
     emptyConstructorMethodType,
   )
 
-  override fun init(beforeComponentCreation: Runnable?) {
+  override fun init() {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
     registerComponents()
@@ -111,7 +111,6 @@ open class ModuleImpl @ApiStatus.Internal constructor(
                       fakeCorePluginDescriptor,
                       true)
     }
-    beforeComponentCreation?.run()
     @Suppress("DEPRECATION")
     createComponents()
   }

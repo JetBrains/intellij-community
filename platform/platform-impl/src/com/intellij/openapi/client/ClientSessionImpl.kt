@@ -64,10 +64,6 @@ abstract class ClientSessionImpl(
     sessionConstructorMethodType,
   ).addAll(super.supportedSignaturesOfLightServiceConstructors)
 
-  fun registerServices() {
-    registerComponents()
-  }
-
   fun preloadServices(syncScope: CoroutineScope) {
     assert(containerState.get() == ContainerState.PRE_INIT)
     val exceptionHandler = CoroutineExceptionHandler { _, exception ->
