@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.registry.Registry
@@ -19,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.alsoIfNull
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.CompressedRefs
@@ -35,6 +33,7 @@ import com.intellij.vcs.log.history.FileHistoryPaths.fileHistory
 import com.intellij.vcs.log.history.FileHistoryPaths.withFileHistory
 import com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
+import com.intellij.vcs.log.util.RevisionCollectorTask
 import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
@@ -43,11 +42,6 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.TimeSource.Monotonic.markNow
 
 internal class FileHistoryFilterer(private val logData: VcsLogData, private val logId: String) : VcsLogFilterer, Disposable {
@@ -197,7 +191,8 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
         } to false
       }
       else {
-        createFileHistoryTask(fileHistoryHandler, root, filePath, hash, commitCount == CommitCountStage.FIRST_STEP).waitForRevisions()
+        createFileHistoryTask(fileHistoryHandler, root, filePath, hash, commitCount == CommitCountStage.FIRST_STEP)
+          .waitForRevisions(100)
       }
 
       val finish = start.elapsedNow()
@@ -385,81 +380,28 @@ private fun <K : Any, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): Multi
 
 private data class CommitMetadataWithPath(@JvmField val commit: Int, @JvmField val metadata: VcsCommitMetadata, @JvmField val path: MaybeDeletedFilePath)
 
-private abstract class FileHistoryTask(val project: Project, val handler: VcsLogFileHistoryHandler, val root: VirtualFile,
-                                       val filePath: FilePath, val hash: Hash?, val indicator: ProgressIndicator) {
-  private val future: Future<*>
-  private val _revisions = ConcurrentLinkedQueue<CommitMetadataWithPath>()
-  private val exception = AtomicReference<VcsException>()
+private abstract class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHandler, val root: VirtualFile,
+                                       val filePath: FilePath, val hash: Hash?, indicator: ProgressIndicator) :
+  RevisionCollectorTask<CommitMetadataWithPath>(project, indicator) {
 
-  @Volatile
-  private var lastSize = 0
-
-  val isCancelled get() = indicator.isCanceled
-
-  init {
-    future = AppExecutorUtil.getAppExecutorService().submit {
-      ProgressManager.getInstance().runProcess(Runnable {
-        try {
-          val consumer: (VcsFileRevision) -> Unit = { revision ->
-            _revisions.add(createCommitMetadataWithPath(revision))
-          }
-          try {
-            handler.collectHistory(root, filePath, hash, consumer)
-          }
-          catch (_: UnsupportedOperationException) {
-            val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null
-            val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.alsoIfNull {
-              @Suppress("HardCodedStringLiteral")
-              throw VcsException("Could not find vcs for $root")
-            }
-            VcsCachingHistory.collect(vcs!!, filePath, revisionNumber, consumer)
-          }
-        }
-        catch (e: VcsException) {
-          exception.set(e)
-        }
-      }, indicator)
+  @Throws(VcsException::class)
+  override fun collectRevisions(consumer: (CommitMetadataWithPath) -> Unit) {
+    try {
+      handler.collectHistory(root, filePath, hash) { revision ->
+        consumer(createCommitMetadataWithPath(revision))
+      }
+    }
+    catch (_: UnsupportedOperationException) {
+      val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null
+      val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.alsoIfNull {
+        @Suppress("HardCodedStringLiteral")
+        throw VcsException("Could not find vcs for $root")
+      }
+      VcsCachingHistory.collect(vcs!!, filePath, revisionNumber) { revision ->
+        consumer(createCommitMetadataWithPath(revision))
+      }
     }
   }
 
   protected abstract fun createCommitMetadataWithPath(revision: VcsFileRevision): CommitMetadataWithPath
-
-  @Throws(VcsException::class)
-  fun waitForRevisions(): Pair<List<CommitMetadataWithPath>, Boolean> {
-    throwOnError()
-    while (_revisions.size == lastSize) {
-      try {
-        future.get(100, TimeUnit.MILLISECONDS)
-        ProgressManager.checkCanceled()
-        throwOnError()
-        return Pair(getRevisionsSnapshot(), true)
-      }
-      catch (_: TimeoutException) {
-        ProgressManager.checkCanceled()
-      }
-    }
-    return Pair(getRevisionsSnapshot(), false)
-  }
-
-  private fun getRevisionsSnapshot(): List<CommitMetadataWithPath> {
-    val list = _revisions.toList()
-    lastSize = list.size
-    return list
-  }
-
-  @Throws(VcsException::class)
-  private fun throwOnError() {
-    if (exception.get() != null) throw VcsException(exception.get())
-  }
-
-  fun cancel(wait: Boolean) {
-    indicator.cancel()
-    if (wait) {
-      try {
-        future.get(20, TimeUnit.MILLISECONDS)
-      }
-      catch (_: Throwable) {
-      }
-    }
-  }
 }
