@@ -618,7 +618,8 @@ public class TestCaseLoader {
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createClassNameFilter`
   @SuppressWarnings("unused")
   public static boolean isClassNameIncluded(String className) {
-    if (!ClassFinder.isSuitableTestClassName(className, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS)) {
+    String classNameWithoutPackage = StringsKt.substringAfterLast(className, '.', className);
+    if (!ClassFinder.isSuitableTestClassName(classNameWithoutPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS)) {
       return false;
     }
     if ("_FirstInSuiteTest".equals(className) || "_LastInSuiteTest".equals(className)) {
