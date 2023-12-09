@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.jps.entities.FacetId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.childrenFacets
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.util.containers.Interner
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
@@ -16,6 +17,10 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     get() = FacetEntity::class.java
   override val supportedFacetType: String
     get() = ALL_FACETS_TYPES_MARKER
+
+  // On large project we may get a lot of string duplicates from facets
+  // On test with 50_000 modules such duplicates eat around 25MB of memory
+  private val configurationStringInterner = Interner.createStringInterner()
 
   override fun loadEntitiesFromFacetState(moduleEntity: ModuleEntity,
                                           facetState: FacetState,
@@ -29,7 +34,8 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
                                 evaluateEntitySource: (FacetState) -> EntitySource) {
     facetStates.forEach { facetState ->
       val entitySource = evaluateEntitySource(facetState)
-      val configurationXmlTag = facetState.configuration?.let { JDOMUtil.write(it) }
+      val configurationXmlTagRaw = facetState.configuration?.let { JDOMUtil.write(it) }
+      val configurationXmlTag = configurationXmlTagRaw?.let { configurationStringInterner.intern(it) }
 
       // Check for existing facet it's needed in cases when we read sub-facet located in .xml but underling facet is from .iml,
       // thus same root facet will be declared in two places
