@@ -98,10 +98,13 @@ class BlockTerminalSession(settings: JBTerminalSystemSettingsProviderBase,
   }
 
   override fun dispose() {
-    executorServiceManager.shutdownWhenAllExecuted()
     // Complete to avoid memory leaks with hanging callbacks. If already completed, nothing will change.
     terminalStarterFuture.complete(null)
-    terminalStarterFuture.getNow(null)?.close()
+    terminalStarterFuture.getNow(null)?.let {
+      it.requestEmulatorStop()
+      it.close()
+    }
+    executorServiceManager.shutdownWhenAllExecuted()
   }
 
   companion object {
