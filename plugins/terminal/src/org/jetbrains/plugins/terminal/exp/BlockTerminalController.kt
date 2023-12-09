@@ -60,7 +60,7 @@ class BlockTerminalController(
     promptVisibilityAlarm.addRequest(Runnable {
       promptController.promptIsVisible = false
     }, 50)
-    session.sendCommandToExecute(command)
+    session.commandManager.sendCommandToExecute(command)
     session.model.isCommandRunning = true
   }
 

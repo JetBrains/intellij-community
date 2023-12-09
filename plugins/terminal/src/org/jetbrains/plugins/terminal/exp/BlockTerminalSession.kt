@@ -79,10 +79,6 @@ class BlockTerminalSession(settings: JBTerminalSystemSettingsProviderBase,
     TerminalUtil.addItem(terminationListeners, onTerminated, parentDisposable)
   }
 
-  fun sendCommandToExecute(shellCommand: String) {
-    commandManager.sendCommandToExecute(shellCommand)
-  }
-
   fun postResize(newSize: TermSize) {
     terminalStarterFuture.thenAccept {
       if (it != null && (newSize.columns != model.width || newSize.rows != model.height)) {

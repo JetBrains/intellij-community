@@ -99,7 +99,7 @@ class BlockTerminalTest(private val shellPath: String) {
         }
         withTimeout(20.seconds) { generatorCommandSent.await() }
         delay((1..50).random().milliseconds) // wait a little to start generator
-        session.sendCommandToExecute("echo foo")
+        session.sendCommandToExecuteWithoutAddingToHistory("echo foo")
         val env: ShellEnvironment? = withTimeout(20.seconds) { envListDeferred.await() }
         Assert.assertTrue(env != null && env.envs.isNotEmpty())
         assertCommandResult(0, "foo\n", outputFuture)
@@ -176,7 +176,7 @@ class BlockTerminalTest(private val shellPath: String) {
     TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath, disposableRule.disposable, termSize)
 
   private fun BlockTerminalSession.sendCommandToExecuteWithoutAddingToHistory(shellCommand: String) {
-    this.sendCommandToExecute(" $shellCommand")
+    this.commandManager.sendCommandToExecute(" $shellCommand")
   }
 
   @Suppress("SameParameterValue")

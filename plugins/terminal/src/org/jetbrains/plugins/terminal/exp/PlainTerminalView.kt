@@ -62,7 +62,7 @@ class PlainTerminalView(
   }
 
   override fun sendCommandToExecute(shellCommand: String) {
-    session.sendCommandToExecute(shellCommand)
+    session.commandManager.sendCommandToExecute(shellCommand)
   }
 
   override fun dispose() {}
