@@ -20,10 +20,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.alsoIfNull
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.CompressedRefs
-import com.intellij.vcs.log.data.DataPack
-import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.VcsLogProgress
+import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -90,25 +87,10 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
 
     cancelLastTask(false)
 
-    val factory = vcsLogObjectsFactory
-    val newHistoryTask = object : FileHistoryTask(project, historyHandler, root, filePath, hash, createProgressIndicator()) {
-      override fun createCommitMetadataWithPath(revision: VcsFileRevision): CommitMetadataWithPath {
-        return factory.createCommitMetadataWithPath(revision as VcsFileRevisionEx, root)
-      }
-    }
+    val newHistoryTask = FileHistoryTask(project, historyHandler, storage, vcsLogObjectsFactory, root,
+                                         filePath, hash, createProgressIndicator())
     fileHistoryTask = newHistoryTask
     return newHistoryTask
-  }
-
-  private fun VcsLogObjectsFactory.createCommitMetadataWithPath(revision: VcsFileRevisionEx, root: VirtualFile): CommitMetadataWithPath {
-    val commitHash = createHash(revision.revisionNumber.asString())
-    val metadata = createCommitMetadata(commitHash, emptyList(), revision.revisionDate.time, root,
-                                        CommitPresentationUtil.getSubject(revision.commitMessage!!),
-                                        revision.author!!, revision.authorEmail!!,
-                                        revision.commitMessage!!,
-                                        revision.committerName!!, revision.committerEmail!!, revision.authorDate!!.time)
-    return CommitMetadataWithPath(storage.getCommitIndex(commitHash, root), metadata,
-                                  MaybeDeletedFilePath(revision.path, revision.isDeleted))
   }
 
   private fun createProgressIndicator(): ProgressIndicator {
@@ -187,7 +169,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       val (revisions, isDone) = if (isFastStart) {
         cancelLastTask(false)
         fileHistoryHandler.getHistoryFast(root, filePath, hash, commitCount.count).map {
-          vcsLogObjectsFactory.createCommitMetadataWithPath(it, root)
+          vcsLogObjectsFactory.createCommitMetadataWithPath(storage, it, root)
         } to false
       }
       else {
@@ -380,8 +362,9 @@ private fun <K : Any, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): Multi
 
 private data class CommitMetadataWithPath(@JvmField val commit: Int, @JvmField val metadata: VcsCommitMetadata, @JvmField val path: MaybeDeletedFilePath)
 
-private abstract class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHandler, val root: VirtualFile,
-                                       val filePath: FilePath, val hash: Hash?, indicator: ProgressIndicator) :
+private class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHandler, val storage: VcsLogStorage,
+                              val factory: VcsLogObjectsFactory, val root: VirtualFile, val filePath: FilePath, val hash: Hash?,
+                              indicator: ProgressIndicator) :
   RevisionCollectorTask<CommitMetadataWithPath>(project, indicator) {
 
   @Throws(VcsException::class)
@@ -403,5 +386,19 @@ private abstract class FileHistoryTask(project: Project, val handler: VcsLogFile
     }
   }
 
-  protected abstract fun createCommitMetadataWithPath(revision: VcsFileRevision): CommitMetadataWithPath
+  fun createCommitMetadataWithPath(revision: VcsFileRevision): CommitMetadataWithPath {
+    return factory.createCommitMetadataWithPath(storage, revision as VcsFileRevisionEx, root)
+  }
+}
+
+private fun VcsLogObjectsFactory.createCommitMetadataWithPath(storage: VcsLogStorage, revision: VcsFileRevisionEx,
+                                                              root: VirtualFile): CommitMetadataWithPath {
+  val commitHash = createHash(revision.revisionNumber.asString())
+  val metadata = createCommitMetadata(commitHash, emptyList(), revision.revisionDate.time, root,
+                                      CommitPresentationUtil.getSubject(revision.commitMessage!!),
+                                      revision.author!!, revision.authorEmail!!,
+                                      revision.commitMessage!!,
+                                      revision.committerName!!, revision.committerEmail!!, revision.authorDate!!.time)
+  return CommitMetadataWithPath(storage.getCommitIndex(commitHash, root), metadata,
+                                MaybeDeletedFilePath(revision.path, revision.isDeleted))
 }
