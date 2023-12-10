@@ -3,12 +3,19 @@ package com.intellij.ae.database.counters.community.events
 
 import com.intellij.ae.database.activities.WritableDatabaseBackedCounterUserActivity
 import com.intellij.ae.database.runUpdateEvent
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.AsyncFileListener.ChangeApplier
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.util.validOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object TestFileCreatedUserActivity : WritableDatabaseBackedCounterUserActivity() {
   override val id = "test.file.created"
@@ -20,17 +27,28 @@ object TestFileCreatedUserActivity : WritableDatabaseBackedCounterUserActivity()
 
 internal class TestFileCreationListener : AsyncFileListener {
   override fun prepareChange(events: MutableList<out VFileEvent>): ChangeApplier {
-    val creationEvents = events.filterIsInstance<VFileCreateEvent>()
+    val filteredEvents = events.filter { it is VFileCreateEvent || it is VFileCopyEvent }
 
     return object : ChangeApplier {
       override fun afterVfsChange() {
-        for (event in creationEvents) {
+        for (event in filteredEvents) {
           val file = event.file ?: return
           val project = ProjectLocator.getInstance().guessProjectForFile(file) ?: return
           val isTest = TestSourcesFilter.isTestSources(file, project)
           if (isTest) {
             FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(TestFileCreatedUserActivity) {
-              it.write()
+              val psiFile = withContext(Dispatchers.EDT) {
+                PsiManagerEx.getInstance(project).findFile(file)?.validOrNull()
+              }
+
+              if (psiFile == null) {
+                return@runUpdateEvent
+              }
+
+              // try to write only actual tests, not test data and etc
+              if (psiFile.language != PlainTextLanguage.INSTANCE && !file.fileType.isBinary) {
+                it.write()
+              }
             }
           }
         }
