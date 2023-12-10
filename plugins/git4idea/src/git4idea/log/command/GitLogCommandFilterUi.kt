@@ -62,6 +62,18 @@ class GitLogCommandFilter(val command: @NlsSafe String) : VcsLogFilter {
   override fun getKey(): VcsLogFilterCollection.FilterKey<*> = KEY
   override fun getDisplayText(): String = command
   override fun toString(): String = "$GIT_LOG_LABEL $command"
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as GitLogCommandFilter
+
+    return command == other.command
+  }
+
+  override fun hashCode(): Int {
+    return command.hashCode()
+  }
 
   companion object {
     val KEY: VcsLogFilterCollection.FilterKey<GitLogCommandFilter> = VcsLogFilterCollection.FilterKey.create("command")

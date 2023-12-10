@@ -2676,7 +2676,7 @@ a:com.intellij.vcs.log.util.RevisionCollectorTask
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.progress.ProgressIndicator):V
 - f:cancel(Z):V
 - a:collectRevisions(kotlin.jvm.functions.Function1):V
-- a:collectRevisionsFast(kotlin.jvm.functions.Function1):V
+- collectRevisionsFast(kotlin.jvm.functions.Function1):V
 - pf:getProject():com.intellij.openapi.project.Project
 - pf:getRevisionsCount():I
 - f:isCancelled():Z
