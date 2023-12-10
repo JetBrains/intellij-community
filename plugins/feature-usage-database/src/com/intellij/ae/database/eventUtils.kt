@@ -2,6 +2,7 @@
 package com.intellij.ae.database
 
 import com.intellij.ae.database.activities.UserActivity
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.*
@@ -18,6 +19,7 @@ object AEEventUtils
  */
 inline fun <T : UserActivity> CoroutineScope.runUpdateEvent(activity: T, crossinline action: suspend (T) -> Unit) {
   if (ApplicationManager.getApplication().isUnitTestMode) return
+  if (AppMode.isRemoteDevHost()) return
   launch {
     withContext(Dispatchers.Default) {
       try {
