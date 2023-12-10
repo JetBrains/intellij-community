@@ -1,8 +1,8 @@
 <!-- Events should be registered in this file -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij.ae.database">
-    <fusBasedCounterUserActivity implementation="com.intellij.ae.database.counters.community.events.PluginsInstalledUserActivity$Factory"/>
-    <fusBasedCounterUserActivity implementation="com.intellij.ae.database.counters.community.events.AltEnterActionInvocation$Factory"/>
+    <fusEventCatcher implementation="com.intellij.ae.database.counters.community.events.PluginsInstalledUserActivity$Factory"/>
+    <fusEventCatcher implementation="com.intellij.ae.database.counters.community.events.AltEnterActionInvocation$Factory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

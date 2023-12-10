@@ -2,11 +2,12 @@
 package com.intellij.ae.database.counters.community.events
 
 import com.intellij.ae.database.baseEvents.FusBasedCounterUserActivity
-
+import com.intellij.ae.database.baseEvents.fus.FusEventCatcher
+import com.intellij.ae.database.baseEvents.fus.FusEventDefinitionBuilder
 
 object AltEnterActionInvocation : FusBasedCounterUserActivity() {
-  internal class Factory: FusBasedCounterUserActivity.Factory {
-    override fun getInstance(): FusBasedCounterUserActivity = AltEnterActionInvocation
+  internal class Factory : FusEventCatcher.Factory {
+    override fun getInstance(): FusEventCatcher = catcher
   }
 
   override fun define(): FusEventDefinitionBuilder {
