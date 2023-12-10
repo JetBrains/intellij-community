@@ -13,7 +13,7 @@ object AltEnterActionInvocation : FusBasedCounterUserActivity() {
   override fun define(): FusEventDefinitionBuilder {
     return definition("alt.enter.invocation") {
       event("actions", "action.finished") {
-        field("input_event", "Alt+Enter")
+        field("action_id", "ShowIntentionActions")
       }
     }
   }
