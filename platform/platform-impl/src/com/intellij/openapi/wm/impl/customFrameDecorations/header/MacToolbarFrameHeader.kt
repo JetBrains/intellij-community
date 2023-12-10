@@ -196,6 +196,9 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   override fun doLayout() {
     super.doLayout()
 
+    // during opening project JBR loses some events and _deliverMoveResizeEvent is not happened
+    // so we have swing frame with not empty bounds but with empty frame peer bounds and as result we have blank window
+    // if native bounds is empty we push custom header height that leads to sets native bounds
     val height = height
     if (height != 0 && customTitleBar != null &&
         (Math.abs(customTitleBar.height - height) > 0.1 || MacUtil.isNativeBoundsEmpty(frame))) {
