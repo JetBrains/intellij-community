@@ -24,6 +24,12 @@
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlinePropertyHandler"/>
   </extensions>
 
+  <actions>
+    <action class="org.jetbrains.kotlin.idea.k2.refactoring.internal.ShortenSelectionAction" internal="true" text="Shorten Selection">
+      <add-to-group group-id="KotlinInternalGroup"/>
+    </action>
+  </actions>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureQuickFixesRegistrar"/>
   </extensions>
