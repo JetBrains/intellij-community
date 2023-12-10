@@ -142,7 +142,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return new LocalTerminalDirectRunner(project);
   }
 
-  private @NotNull Map<String, String> getTerminalEnvironment(@NotNull String workingDir) {
+  private @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> patchEnvs, @NotNull String workingDir) {
     Map<String, String> envs = SystemInfo.isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
@@ -153,6 +153,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       LOG.info("No parent environment passed");
     }
 
+    envs.putAll(patchEnvs);
     if (!SystemInfo.isWindows) {
       envs.put("TERM", "xterm-256color");
     }
@@ -187,7 +188,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
     String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory());
-    Map<String, String> envs = getTerminalEnvironment(workingDir);
+    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir);
 
     List<String> initialCommand = doGetInitialCommand(baseOptions, envs);
     TerminalWidget widget = baseOptions.getWidget();
