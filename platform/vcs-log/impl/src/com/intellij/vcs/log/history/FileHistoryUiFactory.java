@@ -36,15 +36,8 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
     VcsLogFilterCollection filters = FileHistoryFilterer.createFilters(myFilePath, myHash, myRoot,
                                                                        properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));
     String logId = FileHistoryUi.getFileHistoryLogId(myFilePath, myHash);
-    FileHistoryFilterer filterer = new FileHistoryFilterer(logData, logId);
     VisiblePackRefresherImpl visiblePackRefresher = new VisiblePackRefresherImpl(project, logData, filters, PermanentGraph.SortType.Normal,
-                                                                                 filterer, logId) {
-      @Override
-      public void dispose() {
-        super.dispose();
-        Disposer.dispose(filterer); // disposing filterer after the refresher
-      }
-    };
+                                                                                 new FileHistoryFilterer(logData, logId), logId);
     FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot, logId,
                                          Objects.requireNonNull(logData.getLogProvider(myRoot).getDiffHandler()));
 

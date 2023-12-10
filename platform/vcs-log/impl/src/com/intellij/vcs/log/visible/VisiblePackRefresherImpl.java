@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -147,6 +148,9 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   @Override
   public void dispose() {
     myLogData.getIndex().removeListener(myIndexingFinishedListener);
+    if (myVcsLogFilterer instanceof Disposable disposableFilterer) {
+      Disposer.dispose(disposableFilterer);
+    }
   }
 
   private class MyTask extends Task.Backgroundable {
