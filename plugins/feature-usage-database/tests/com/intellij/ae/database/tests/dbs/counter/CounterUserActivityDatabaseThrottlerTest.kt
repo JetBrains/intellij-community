@@ -25,7 +25,10 @@ class CounterUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
 
     val onDatabaseDeath = mutableListOf<suspend () -> Unit>()
     val fakeDatabase = object : IInternalCounterUserActivityDatabase {
-      override suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity, diff: Int, instant: Instant) {
+      override suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity,
+                                        diff: Int,
+                                        instant: Instant,
+                                        extra: Map<String, String>?) {
         Assert.assertTrue(myActivity === activity)
         asserts(diff, instant, lock)
       }
@@ -154,7 +157,10 @@ class CounterUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
 
     timeoutRunBlocking {
       val fakeDatabase = object : IInternalCounterUserActivityDatabase {
-        override suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity, diff: Int, instant: Instant) {
+        override suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity,
+                                          diff: Int,
+                                          instant: Instant,
+                                          extra: Map<String, String>?) {
           endedEvents[activity.id] = diff
         }
 

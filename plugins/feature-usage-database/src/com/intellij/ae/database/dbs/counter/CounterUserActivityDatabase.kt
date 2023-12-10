@@ -66,7 +66,7 @@ class CounterUserActivityDatabase(cs: CoroutineScope) : ICounterUserActivityData
   /**
    * Writes event directly to database. Very internal API!
    */
-  override suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity, diff: Int, instant: Instant) {
+  override suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity, diff: Int, instant: Instant, extra: Map<String, String>?) {
     execute { database, metadata ->
       val updateActivityStatement = database.prepareStatement(
         "INSERT INTO counterUserActivity (activity_id, diff, created_at, ide_id) VALUES (?, ?, ?, ?)",

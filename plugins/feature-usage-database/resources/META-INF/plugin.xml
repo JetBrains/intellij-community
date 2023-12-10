@@ -24,4 +24,9 @@
       preload="true"
     />
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.ae.database.counters.community.events.PluginInstalledUserActivityServiceInitializer"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 </idea-plugin>

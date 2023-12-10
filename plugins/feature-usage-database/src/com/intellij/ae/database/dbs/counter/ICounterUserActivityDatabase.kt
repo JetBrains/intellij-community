@@ -9,7 +9,7 @@ interface ICounterUserActivityDatabase {
 }
 
 internal interface IInternalCounterUserActivityDatabase {
-  suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity, diff: Int, instant: Instant)
+  suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity, diff: Int, instant: Instant, extra: Map<String, String>? = null)
   fun executeBeforeConnectionClosed(action: suspend () -> Unit)
 }
 

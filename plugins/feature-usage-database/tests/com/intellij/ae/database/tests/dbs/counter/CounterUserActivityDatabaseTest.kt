@@ -20,8 +20,8 @@ class CounterUserActivityDatabaseTest : BasePlatformTestCase() {
     val result = item1+item2
 
     val activity = createActivity()
-    it.submitDirect(activity, item1, InstantUtils.Now)
-    it.submitDirect(activity, item2, InstantUtils.Now)
+    it.submitDirect(activity, item1, InstantUtils.Now, null)
+    it.submitDirect(activity, item2, InstantUtils.Now, null)
 
     val fromDb = it.getActivitySum(activity, InstantUtils.SomeTimeAgo, InstantUtils.NowButABitLater)
 

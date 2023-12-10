@@ -2,6 +2,8 @@
 package com.intellij.ae.database.activities
 
 import com.intellij.ae.database.dbs.counter.CounterUserActivityDatabase
+import com.intellij.ae.database.utils.InstantUtils
+import java.time.Instant
 
 
 interface CounterUserActivity : UserActivity
@@ -11,7 +13,7 @@ abstract class DatabaseBackedCounterUserActivity : CounterUserActivity {
 }
 
 abstract class WritableDatabaseBackedCounterUserActivity : DatabaseBackedCounterUserActivity() {
-  protected suspend fun submit(diff: Int) {
-    getDatabase().submit(this, diff)
+  protected suspend fun submit(diff: Int, eventTime: Instant = InstantUtils.Now) {
+    getDatabase().submit(this, diff, eventTime)
   }
 }

@@ -68,7 +68,7 @@ internal class CounterUserActivityDatabaseThrottler(private val cs: CoroutineSco
           .filter { it.value.count != 0 }
           .apply { logger.info("Started committing changes ($size)") }
           .forEach {
-            database.submitDirect(it.key, it.value.count, it.value.lastOccurance)
+            database.submitDirect(it.key, it.value.count, it.value.lastOccurance, null)
           }
         events.clear()
       }
