@@ -15,7 +15,6 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
@@ -38,6 +37,7 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 public class GoToHashOrRefPopup {
   private static final Logger LOG = Logger.getInstance(GoToHashOrRefPopup.class);
@@ -60,33 +60,32 @@ public class GoToHashOrRefPopup {
     myOnSelectedRef = onSelectedRef;
     VcsRefDescriptor vcsRefDescriptor = new VcsRefDescriptor(project, colorManager, comparator, roots);
     VcsRefCompletionProvider completionProvider = new VcsRefCompletionProvider(variants, roots, vcsRefDescriptor);
-    myTextField =
-      new TextFieldWithProgress(project, completionProvider) {
-        @Override
-        public void onOk() {
-          if (myFuture == null) {
-            String refText = StringUtil.trim(getText(), CharFilter.NOT_WHITESPACE_FILTER);
-            final Future<?> future = ((mySelectedRef == null || (!mySelectedRef.getName().equals(refText)))
-                                      ? myOnSelectedHash.fun(refText)
-                                      : myOnSelectedRef.fun(mySelectedRef));
-            myFuture = future;
-            showProgress();
-            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-              try {
-                future.get();
-                okPopup();
-              }
-              catch (CancellationException | InterruptedException ex) {
-                cancelPopup();
-              }
-              catch (ExecutionException ex) {
-                LOG.error(ex);
-                cancelPopup();
-              }
-            });
-          }
+    myTextField = new TextFieldWithProgress(project, completionProvider) {
+      @Override
+      public void onOk() {
+        if (myFuture == null) {
+          String refText = StringUtil.trim(getText(), CharFilter.NOT_WHITESPACE_FILTER);
+          final Future<?> future = ((mySelectedRef == null || (!mySelectedRef.getName().equals(refText)))
+                                    ? myOnSelectedHash.apply(refText)
+                                    : myOnSelectedRef.apply(mySelectedRef));
+          myFuture = future;
+          showProgress();
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              future.get();
+              okPopup();
+            }
+            catch (CancellationException | InterruptedException ex) {
+              cancelPopup();
+            }
+            catch (ExecutionException ex) {
+              LOG.error(ex);
+              cancelPopup();
+            }
+          });
         }
-      };
+      }
+    };
     myTextField.setAlignmentX(Component.LEFT_ALIGNMENT);
     myTextField.setBorder(JBUI.Borders.empty(3));
 
