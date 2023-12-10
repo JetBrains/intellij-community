@@ -111,7 +111,7 @@ public final class PersistentFSRecordAccessor {
     int contentId = records.getContentRecordId(newRecordId);
     int attributeRecordId = records.getAttributeRecordId(newRecordId);
     if (nameId != NULL_NAME_ID || contentId != DataEnumerator.NULL_ID || attributeRecordId != DataEnumerator.NULL_ID) {
-      throw new IOException("new record (id: " + nameId + ") has non-empty fields: " +
+      throw new IOException("new record (id: " + newRecordId + ") has non-empty fields: " +
                             "nameId= " + nameId + ", contentId=" + contentId + ", attributeId=" + attributeRecordId);
     }
   }
