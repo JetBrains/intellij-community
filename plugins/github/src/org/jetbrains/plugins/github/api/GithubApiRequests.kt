@@ -130,6 +130,17 @@ object GithubApiRequests {
     @JvmStatic
     fun delete(url: String) = Delete.json<Unit>(url).withOperationName("delete repository at $url")
 
+    object Content : Entity("/contents") {
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String, path: String, ref: String? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$path", getQuery(if (ref == null) "" else "ref=$ref")))
+
+      @JvmStatic
+      fun get(url: String) = Get.json<GithubContent>(url).withOperationName("get content")
+    }
+
     object Branches : Entity("/branches") {
       @JvmStatic
       fun pages(server: GithubServerPath, username: String, repoName: String) =
