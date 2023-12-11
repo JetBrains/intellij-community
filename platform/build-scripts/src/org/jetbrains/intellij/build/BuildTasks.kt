@@ -32,12 +32,6 @@ interface BuildTasks {
    */
   suspend fun buildDistributions()
 
-  fun buildDistributionsBlocking() {
-    runBlocking(Dispatchers.Default) {
-      buildDistributions()
-    }
-  }
-
   suspend fun compileModulesFromProduct()
 
   /**

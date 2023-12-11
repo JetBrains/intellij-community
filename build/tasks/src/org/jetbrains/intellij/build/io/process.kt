@@ -9,6 +9,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.io.File
 import java.nio.charset.MalformedInputException
@@ -181,6 +182,7 @@ private fun createClassPathFile(classPath: List<String>, classpathFile: Path): S
 }
 
 @JvmOverloads
+@Obsolete
 fun runProcessBlocking(args: List<String>, workingDir: Path? = null, timeoutMillis: Long = DEFAULT_TIMEOUT.inWholeMilliseconds) {
   runBlocking {
     runProcess(args = args,
