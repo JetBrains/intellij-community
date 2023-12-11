@@ -1309,27 +1309,32 @@ class PyDB(object):
         disable = kwargs.pop('disable', False)
         assert not kwargs
 
-        while frame is not None:
-            try:
-                # Make fast path faster!
-                abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
-            except:
-                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
+        if USE_LOW_IMPACT_MONITORING:
+            debugger = get_global_debugger()
+            if debugger:
+                enable_pep699_monitoring(debugger)
+        else:
+            while frame is not None:
+                try:
+                    # Make fast path faster!
+                    abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
+                except:
+                    abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
 
-            # Don't change the tracing on debugger-related files
-            file_type = get_file_type(abs_path_real_path_and_base[-1])
+                # Don't change the tracing on debugger-related files
+                file_type = get_file_type(abs_path_real_path_and_base[-1])
 
-            if file_type is None:
-                if disable:
-                    if frame.f_trace is not None and frame.f_trace is not NO_FTRACE:
-                        frame.f_trace = NO_FTRACE
+                if file_type is None:
+                    if disable:
+                        if frame.f_trace is not None and frame.f_trace is not NO_FTRACE:
+                            frame.f_trace = NO_FTRACE
 
-                elif frame.f_trace is not self.trace_dispatch:
-                    frame.f_trace = self.trace_dispatch
+                    elif frame.f_trace is not self.trace_dispatch:
+                        frame.f_trace = self.trace_dispatch
 
-            frame = frame.f_back
+                frame = frame.f_back
 
-        del frame
+            del frame
 
     def _create_pydb_command_thread(self):
         curr_pydb_command_thread = self.py_db_command_thread
@@ -1360,7 +1365,9 @@ class PyDB(object):
             # turn off frame evaluation for concurrency visualization
             self.frame_eval_func = None
 
-        self.patch_threads()
+        if not USE_LOW_IMPACT_MONITORING:
+            self.patch_threads()
+
         if enable_tracing_from_start:
             if USE_LOW_IMPACT_MONITORING:
                 enable_pep699_monitoring(self)
@@ -1821,7 +1828,7 @@ def _locked_settrace(
 
         debugger.enable_tracing(apply_to_all_threads=True)
 
-        if not trace_only_current_thread:
+        if not trace_only_current_thread and not USE_LOW_IMPACT_MONITORING:
             # Trace future threads?
             debugger.patch_threads()
 
@@ -1842,7 +1849,7 @@ def _locked_settrace(
 
         debugger.enable_tracing()
 
-        if not trace_only_current_thread:
+        if not trace_only_current_thread and not USE_LOW_IMPACT_MONITORING:
             # Trace future threads?
             debugger.patch_threads()
 
