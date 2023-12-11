@@ -28,7 +28,9 @@ internal data class NamedColorValue(@JvmField val name: String) : ColorValue
 
 internal data class AwtColorValue(@JvmField val color: Color) : ColorValue
 
-internal fun readColorMapFromJson(parser: JsonParser, result: MutableMap<String, ColorValue>): MutableMap<String, ColorValue> {
+internal fun readColorMapFromJson(parser: JsonParser,
+                                  result: MutableMap<String, ColorValue>,
+                                  warn: (String, Throwable?) -> Unit): MutableMap<String, ColorValue> {
   check(parser.currentToken() == JsonToken.START_OBJECT)
 
   l@
@@ -46,7 +48,7 @@ internal fun readColorMapFromJson(parser: JsonParser, result: MutableMap<String,
             result.put(key, AwtColorValue(color))
             continue@l
           }
-          logger<UITheme>().warn("$key=$text has # prefix but cannot be parsed as color")
+          warn("$key=$text has # prefix but cannot be parsed as color", null)
         }
         result.put(key, NamedColorValue(name = text))
       }
@@ -77,7 +79,7 @@ private fun logError(parser: JsonParser) {
                           ")")
 }
 
-internal fun initializeNamedColors(theme: UIThemeBean) {
+internal fun initializeNamedColors(theme: UIThemeBean, warn: (String, Throwable?) -> Unit) {
   val rawColorMap = theme.colorMap.rawMap
   if (rawColorMap.isNullOrEmpty()) {
     theme.colorMap.map = emptyMap()
@@ -93,13 +95,14 @@ internal fun initializeNamedColors(theme: UIThemeBean) {
       continue
     }
 
-    when (val color = rawColorMap.get((value as NamedColorValue).name)) {
+    val colorName = (value as NamedColorValue).name
+    when (val color = rawColorMap.get(colorName)) {
       null -> {
-        LOG.warn("Can't parse '$value' for key '$key'")
+        warn("Color $colorName is not mapped for key $key", null)
         colorMap.put(key, Gray.TRANSPARENT)
       }
       is AwtColorValue -> colorMap.put(key, color.color)
-      else -> LOG.warn("Can't handle value $color for key '$key'")
+      else -> warn("Can't handle value $color for key '$key'", null)
     }
   }
 

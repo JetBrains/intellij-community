@@ -60,15 +60,15 @@ internal class UIThemeBean {
 }
 
 @VisibleForTesting
-fun readThemeBeanForTest(@Language("json") data: String): Map<String, String?> {
-  val bean = readTheme(JsonFactory().createParser(data))
+fun readThemeBeanForTest(@Language("json") data: String, warn: (String, Throwable?) -> Unit): Map<String, String?> {
+  val bean = readTheme(JsonFactory().createParser(data), warn)
   return hashMapOf(
     "author" to bean.author,
     "name" to bean.name,
   )
 }
 
-internal fun readTheme(parser: JsonParser): UIThemeBean {
+internal fun readTheme(parser: JsonParser, warn: (String, Throwable?) -> Unit): UIThemeBean {
   check(parser.nextToken() == JsonToken.START_OBJECT)
   val bean = UIThemeBean()
   while (true) {
@@ -78,12 +78,12 @@ internal fun readTheme(parser: JsonParser): UIThemeBean {
           "icons" -> bean.icons = readMapFromJson(parser)
           "background" -> bean.background = readMapFromJson(parser)
           "emptyFrameBackground" -> bean.emptyFrameBackground = readMapFromJson(parser)
-          "colors" -> bean.colorMap.rawMap = readColorMapFromJson(parser, HashMap())
-          "iconColorsOnSelection" -> bean.iconColorOnSelectionMap.rawMap = readColorMapFromJson(parser, HashMap())
+          "colors" -> bean.colorMap.rawMap = readColorMapFromJson(parser, HashMap(), warn)
+          "iconColorsOnSelection" -> bean.iconColorOnSelectionMap.rawMap = readColorMapFromJson(parser, HashMap(), warn)
           "ui" -> {
             // ordered map is required (not clear why)
             val map = LinkedHashMap<String, Any?>(700)
-            readFlatMapFromJson(parser, map)
+            readFlatMapFromJson(parser = parser, result = map, warn = warn)
             putDefaultsIfAbsent(map)
             bean.ui = map
           }
@@ -144,7 +144,7 @@ internal fun readTheme(parser: JsonParser): UIThemeBean {
  *
  * Note: we intentionally do not expand "*" patterns here.
  */
-private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>) {
+private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>, warn: (String, Throwable?) -> Unit) {
   check(parser.currentToken() == JsonToken.START_OBJECT)
 
   val prefix = ArrayDeque<String>()
@@ -189,7 +189,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
         }
       }
       JsonToken.VALUE_STRING -> {
-        putEntry(prefix, result, parser, path) { parseStringValue(value = parser.text, key = it) }
+        putEntry(prefix, result, parser, path) { parseStringValue(value = parser.text, key = it, warn = warn) }
       }
       JsonToken.VALUE_NUMBER_INT -> {
         putEntry(prefix, result, parser, path) { parser.intValue }
