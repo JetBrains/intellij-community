@@ -34,7 +34,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (editor != null && file != null) {
-      element = getElementAtCaret(editor, file);
+      element = findRefactoringTargetInEditor(dataContext, this::isAvailableForLanguage);
       if (element != null) {
         RefactoringActionHandler handler = getHandler(element.getLanguage(), element);
         if (handler != null) {
