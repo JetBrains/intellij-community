@@ -148,11 +148,11 @@ class CompilationContextImpl private constructor(
 
       val messages = BuildMessagesImpl.create()
       if (options.printEnvironmentInfo) {
-        messages.block("Environment info") {
-          messages.info("Community home: ${communityHome.communityRoot}")
-          messages.info("Project home: $projectHome")
-          printEnvironmentDebugInfo()
-        }
+        Span.current().addEvent("environment info", Attributes.of(
+          AttributeKey.stringKey("community home"), communityHome.communityRoot.toString(),
+          AttributeKey.stringKey("project home"), projectHome.toString(),
+        ))
+        printEnvironmentDebugInfo()
       }
 
       if (options.printFreeSpace) {
