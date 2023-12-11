@@ -343,6 +343,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
               && JBR.isWindowMoveSupported()
               && !X11UiUtil.isWSL()
               && !X11UiUtil.isTileWM()
+              && !X11UiUtil.isUndefinedDesktop()
 
     internal val hideNativeLinuxTitleAvailable: Boolean
       get() = SystemInfoRt.isXWindow
