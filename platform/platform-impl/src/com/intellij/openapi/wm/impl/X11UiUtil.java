@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
@@ -302,6 +301,11 @@ public final class X11UiUtil {
   public static boolean isTileWM() {
     String desktop = System.getenv("XDG_CURRENT_DESKTOP");
     return SystemInfoRt.isUnix && !SystemInfoRt.isMac && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
+  }
+
+  public static boolean isUndefinedDesktop() {
+    String desktop = System.getenv("XDG_CURRENT_DESKTOP");
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && desktop == null;
   }
 
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
