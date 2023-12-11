@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.handler;
 import com.intellij.codeInsight.CustomExceptionHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
@@ -19,23 +22,59 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
 
   @Override
   public boolean isHandled(@Nullable PsiElement element, @NotNull PsiClassType exceptionType, PsiElement topElement) {
+    final PsiCodeBlock containingCodeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class, false);
+    if (isCodeBlockWithExceptionInConstructorCall(containingCodeBlock, exceptionType)) {
+      // call to a sibling or super constructor is excluded from the @SneakyThrows treatment
+      return false;
+    }
+
     PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, PsiTryStatement.class, PsiMethod.class);
     if (parent instanceof PsiLambdaExpression) {
       // lambda it's another scope, @SneakyThrows annotation can't neglect exceptions in lambda only on method, constructor
       return false;
-    } else if (parent instanceof PsiTryStatement && isHandledByTryCatch(exceptionType, (PsiTryStatement) parent)) {
+    }
+    if (parent instanceof PsiTryStatement && isHandledByTryCatch(exceptionType, (PsiTryStatement)parent)) {
       // that exception MAY be already handled by regular try-catch statement
       return false;
     }
 
-    if (topElement instanceof PsiTryStatement && isHandledByTryCatch(exceptionType, (PsiTryStatement) topElement)) {
+    if (topElement instanceof PsiTryStatement && isHandledByTryCatch(exceptionType, (PsiTryStatement)topElement)) {
       // that exception MAY be already handled by regular try-catch statement (don't forget about nested try-catch)
       return false;
-    } else if (!(topElement instanceof PsiCodeBlock)) {
+    }
+    if (!(topElement instanceof PsiCodeBlock)) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       return psiMethod != null && isExceptionHandled(psiMethod, exceptionType);
     }
     return false;
+  }
+
+  private static boolean isCodeBlockWithExceptionInConstructorCall(@Nullable PsiCodeBlock codeBlock,
+                                                                   @NotNull PsiClassType exceptionType) {
+    final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(codeBlock, PsiMethod.class);
+    if (null != containingMethod) {
+      final PsiMethodCallExpression thisOrSuperCallInConstructor =
+        JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(containingMethod);
+      if (null != thisOrSuperCallInConstructor) {
+        ExceptionTypesCollector visitor = new ExceptionTypesCollector();
+        thisOrSuperCallInConstructor.accept(visitor);
+        return visitor.exceptionTypes.contains(exceptionType);
+      }
+    }
+    return false;
+  }
+
+  private static class ExceptionTypesCollector extends JavaRecursiveElementWalkingVisitor {
+    private final Collection<PsiClassType> exceptionTypes = new HashSet<>();
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      PsiMethod method = expression.resolveMethod();
+      if (method != null) {
+        Collections.addAll(exceptionTypes, method.getThrowsList().getReferencedTypes());
+      }
+      super.visitMethodCallExpression(expression);
+    }
   }
 
   private static boolean isHandledByTryCatch(@NotNull PsiClassType exceptionType, PsiTryStatement topElement) {
@@ -49,11 +88,12 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
       return false;
     }
 
-    final Collection<PsiType> sneakedExceptionTypes = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, PsiType.class);
+    final Collection<PsiType> sneakedExceptionTypes =
+      PsiAnnotationUtil.getAnnotationValues(psiAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, PsiType.class);
     //Default SneakyThrows handles all exceptions
     return sneakedExceptionTypes.isEmpty()
-      || sneakedExceptionTypes.iterator().next().equalsToText(JAVA_LANG_THROWABLE)
-      || isExceptionHandled(exceptionClassType, sneakedExceptionTypes);
+           || sneakedExceptionTypes.iterator().next().equalsToText(JAVA_LANG_THROWABLE)
+           || isExceptionHandled(exceptionClassType, sneakedExceptionTypes);
   }
 
   private static boolean isExceptionHandled(@NotNull PsiClassType exceptionClassType, @NotNull Collection<PsiType> sneakedExceptionTypes) {
@@ -68,7 +108,7 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
     if (null != unhandledExceptionClass) {
       for (PsiType sneakedExceptionType : sneakedExceptionTypes) {
         if (sneakedExceptionType instanceof PsiClassType) {
-          final PsiClass sneakedExceptionClass = ((PsiClassType) sneakedExceptionType).resolve();
+          final PsiClass sneakedExceptionClass = ((PsiClassType)sneakedExceptionType).resolve();
 
           if (null != sneakedExceptionClass && unhandledExceptionClass.isInheritor(sneakedExceptionClass, true)) {
             return true;

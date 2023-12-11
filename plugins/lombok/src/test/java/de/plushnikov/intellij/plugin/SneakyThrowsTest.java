@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +134,7 @@ public class SneakyThrowsTest extends LightJavaCodeInsightTestCase {
 
 
 
-  private PsiMethodCallExpression createCall(@NonNls final String body) {
+  private PsiMethodCallExpression createCall(@NonNls @Language("JAVA") final String body) {
     final PsiFile file = createTestFile(body);
     PsiMethodCallExpression methodCall = findMethodCall(file);
     assertNotNull(methodCall);
@@ -141,7 +142,7 @@ public class SneakyThrowsTest extends LightJavaCodeInsightTestCase {
   }
 
   @NotNull
-  private PsiFile createTestFile(@NonNls String body) {
+  private PsiFile createTestFile(@NonNls @Language("JAVA") String body) {
     return createFile("test.java", "class Test { " + body +
       "void throwsAnotherException() throws AnotherException {}" +
       "void throwsMyException() throws MyException {}" +
