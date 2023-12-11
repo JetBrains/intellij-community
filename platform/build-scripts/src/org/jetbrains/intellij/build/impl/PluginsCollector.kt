@@ -136,7 +136,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     }
 
     if (skipImplementationDetailPlugins && xml.getAttributeValue("implementation-detail") == "true") {
-      context.messages.debug("PluginsCollector: skipping module '$moduleName' since 'implementation-detail' == 'true' in '$pluginXml'")
+      Span.current().addEvent("skip module '$moduleName' since 'implementation-detail' == 'true' in '$pluginXml'")
       continue
     }
 

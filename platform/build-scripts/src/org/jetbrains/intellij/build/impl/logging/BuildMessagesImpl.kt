@@ -7,13 +7,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
-import java.io.BufferedWriter
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
-import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.Consumer
@@ -50,7 +48,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
   }
 
   override fun log(level: System.Logger.Level, bundle: ResourceBundle?, format: String, vararg params: Any?) {
-    log(level = level, message = format, bundle  = bundle, thrown = null)
+    log(level = level, message = format, bundle = bundle, thrown = null)
   }
 
   override fun info(message: String) {
@@ -61,7 +59,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     processMessage(LogMessage(LogMessage.Kind.WARNING, message))
   }
 
-  override fun debug(message: String) {
+  fun debug(message: String) {
     processMessage(LogMessage(LogMessage.Kind.DEBUG, message))
   }
 
@@ -69,11 +67,11 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     debugLogger.setOutputFile(path)
   }
 
-  fun close() {
+  override fun close() {
     debugLogger.close()
   }
 
-  val debugLogFile: Path?
+  override val debugLogFile: Path?
     get() = debugLogger.getOutputFile()
 
   override fun error(message: String) {
@@ -164,25 +162,20 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
  * It firstly prints messages to a temp file and copies it to the real file after the build process cleans up the output directory.
  */
 private class DebugLogger {
-  private val tempFile: Path = Files.createTempFile("intellij-build", ".log")
-  private var output: BufferedWriter
+  private var output: Writer = StringWriter()
   private var outputFile: Path? = null
   private val loggers = ArrayList<PrintWriterBuildMessageLogger>()
-
-  init {
-    Files.createDirectories(tempFile.parent)
-    output = Files.newBufferedWriter(tempFile)
-  }
 
   @Synchronized
   fun setOutputFile(outputFile: Path) {
     this.outputFile = outputFile
-    output.close()
+    val oldOutput = output
+    oldOutput.close()
     Files.createDirectories(outputFile.parent)
-    if (Files.exists(tempFile)) {
-      Files.move(tempFile, outputFile, StandardCopyOption.REPLACE_EXISTING)
+    output = Files.newBufferedWriter(outputFile)
+    if (oldOutput is StringWriter && oldOutput.buffer.isNotEmpty()) {
+      output.write(oldOutput.buffer.toString())
     }
-    output = Files.newBufferedWriter(outputFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
     for (logger in loggers) {
       logger.setOutput(output)
     }
@@ -206,11 +199,11 @@ private class DebugLogger {
 }
 
 private class PrintWriterBuildMessageLogger(
-  private var output: BufferedWriter,
+  private var output: Writer,
   private val disposer: Consumer<PrintWriterBuildMessageLogger>,
 ) : BuildMessageLoggerBase() {
   @Synchronized
-  fun setOutput(output: BufferedWriter) {
+  fun setOutput(output: Writer) {
     this.output = output
   }
 
@@ -218,7 +211,7 @@ private class PrintWriterBuildMessageLogger(
   @Synchronized
   override fun printLine(line: String) {
     output.write(line)
-    output.write("\n")
+    output.write('\n'.code)
     output.flush()
   }
 

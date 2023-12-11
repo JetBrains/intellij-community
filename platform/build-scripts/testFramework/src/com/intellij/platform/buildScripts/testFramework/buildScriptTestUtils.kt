@@ -22,7 +22,6 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.buildDistributions
-import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.junit.jupiter.api.TestInfo
 import org.opentest4j.TestAbortedException
 import java.net.http.HttpConnectTimeoutException
@@ -192,7 +191,7 @@ private suspend fun doRunTestBuild(context: BuildContext,
           }
           span.setStatus(StatusCode.ERROR)
 
-          copyDebugLog(context.productProperties, context.messages as BuildMessagesImpl)
+          copyDebugLog(context.productProperties, context.messages)
 
           if (ExceptionUtilRt.causedBy(e, HttpConnectTimeoutException::class.java)) {
             //todo use com.intellij.platform.testFramework.io.ExternalResourcesChecker after next update of jps-bootstrap library
@@ -213,7 +212,7 @@ private suspend fun doRunTestBuild(context: BuildContext,
     }
 
     // close debug logging to prevent locking of output directory on Windows
-    (context.messages as BuildMessagesImpl).close()
+    context.messages.close()
 
     /**
      * Overridden in [org.jetbrains.intellij.build.impl.JpsCompilationRunner.runBuild]
@@ -234,7 +233,7 @@ private suspend fun doRunTestBuild(context: BuildContext,
   }
 }
 
-private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMessagesImpl) {
+private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMessages) {
   try {
     val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
     Files.createDirectories(targetFile.parent)

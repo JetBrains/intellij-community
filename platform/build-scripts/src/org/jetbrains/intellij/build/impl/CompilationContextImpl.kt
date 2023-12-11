@@ -194,7 +194,6 @@ class CompilationContextImpl private constructor(
       }
 
       messages.setDebugLogPath(context.paths.logDir.resolve("debug.log"))
-
       // this is not a proper place to initialize logging, but this is the only place called in most build scripts
       BuildMessagesHandler.initLogging(messages)
       return context
