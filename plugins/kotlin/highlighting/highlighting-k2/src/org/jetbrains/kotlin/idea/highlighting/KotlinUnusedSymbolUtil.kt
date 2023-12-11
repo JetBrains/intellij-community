@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.highlighting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.psi.*
@@ -113,7 +114,7 @@ object KotlinUnusedSymbolUtil {
   }
 
   context(KtAnalysisSession)
-  fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPoint: (PsiElement) -> Boolean): PsiElement? {
+  fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
       val symbol = declaration.getSymbol()
       if (declaration.languageVersionSettings.getFlag(
           AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && (symbol as? KtSymbolWithVisibility)?.visibility?.isPublicAPI == true) {
@@ -124,7 +125,7 @@ object KotlinUnusedSymbolUtil {
       val isCheapEnough = lazy(LazyThreadSafetyMode.NONE) {
           isCheapEnoughToSearchUsages(declaration)
       }
-      if (isEntryPoint(declaration, isCheapEnough, isJavaEntryPoint)) return null
+      if (isEntryPoint(declaration, isCheapEnough, isJavaEntryPointInspection)) return null
       if (declaration.isFinalizeMethod()) return null
       if (declaration is KtProperty && declaration.isSerializationImplicitlyUsedField()) return null
       if (declaration is KtNamedFunction && declaration.isSerializationImplicitlyUsedMethod()) return null
@@ -716,7 +717,7 @@ object KotlinUnusedSymbolUtil {
     }
 
   context(KtAnalysisSession)
-  private fun isEntryPoint(declaration: KtNamedDeclaration, isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>, isJavaEntryPoint: (PsiElement)->Boolean): Boolean {
+  private fun isEntryPoint(declaration: KtNamedDeclaration, isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>, isJavaEntryPoint: UnusedDeclarationInspectionBase): Boolean {
       if (declaration.hasKotlinAdditionalAnnotation()) return true
       val lightElement: PsiElement = when (declaration) {
           is KtClass -> {
@@ -739,7 +740,7 @@ object KotlinUnusedSymbolUtil {
               if (declaration is KtParameter && isAnnotationParameter(declaration)) {
                   val lightAnnotationMethods = LightClassUtil.getLightClassPropertyMethods(declaration).toList()
                   for (javaParameterPsi in lightAnnotationMethods) {
-                      if (isJavaEntryPoint.invoke(javaParameterPsi)) {
+                      if (isJavaEntryPoint.isEntryPoint(javaParameterPsi)) {
                           return true
                       }
                   }
@@ -756,6 +757,6 @@ object KotlinUnusedSymbolUtil {
 
       if (isCheapEnough.value == com.intellij.psi.search.PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false
 
-      return isJavaEntryPoint.invoke(lightElement)
+      return isJavaEntryPoint.isEntryPoint(lightElement)
   }
 }

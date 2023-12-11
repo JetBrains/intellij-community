@@ -158,7 +158,8 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
         ) {
             nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
         } else {
-            (KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration) { javaInspection.isEntryPoint(it) } ?: return)
+            val problem = KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration, javaInspection)
+            (problem ?: return)
         }
         val description = declaration.describe() ?: return
         val message = KotlinBaseHighlightingBundle.message("inspection.message.never.used", description)
