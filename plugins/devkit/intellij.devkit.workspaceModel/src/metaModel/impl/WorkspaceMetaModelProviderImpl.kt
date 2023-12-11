@@ -102,7 +102,12 @@ internal class WorkspaceMetaModelProviderImpl(
           .filterIsInstance<PropertyDescriptor>()
           .filter { it.kind.isReal }
         for ((propertyId, property) in properties.withIndex()) {
-          objType.addField(createOwnProperty(property, propertyId, objType))
+          val kind = computeKind(property)
+          if (kind !is ObjProperty.ValueKind.Computable ||
+              // We can't simply skip all `Computable` because some of them are SymbolicIds
+              property.overriddenDescriptors.isNotEmpty()) {
+            objType.addField(createOwnProperty(property, propertyId, objType))
+          }
         }
         classDescriptor.typeConstructor.supertypes.forEach { superType ->
           val superDescriptor = superType.constructor.declarationDescriptor
@@ -201,15 +206,15 @@ internal class WorkspaceMetaModelProviderImpl(
 
       knownTypes[javaClassFqn] = blobType
       return when {
-        isObject -> ValueType.Object<Any>(javaClassFqn, superTypes, createProperties(this@toValueType, knownTypes))
+        isObject -> ValueType.Object<Any>(javaClassFqn, superTypes, createProperties(this, knownTypes))
         isEnumClass -> {
           val values = unsubstitutedInnerClassesScope.getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS)
             .filterIsInstance<ClassDescriptor>().filter { it.isEnumEntry }.map { it.name.asString() }
-          ValueType.Enum<Any>(javaClassFqn, superTypes, values, createProperties(this@toValueType, knownTypes).withoutEnumFields())
+          ValueType.Enum<Any>(javaClassFqn, superTypes, values, createProperties(this, knownTypes).withoutEnumFields())
         }
         isSealed() -> {
           val subclasses = sealedSubclasses.map {
-            convertType(it.defaultType, hashMapOf(javaClassFqn to blobType), false) as ValueType.JvmClass<*>
+            convertType(it.defaultType, knownTypes, false) as ValueType.JvmClass<*>
           }
           ValueType.AbstractClass<Any>(javaClassFqn, superTypes, subclasses)
         }
@@ -218,10 +223,10 @@ internal class WorkspaceMetaModelProviderImpl(
             throw IncorrectObjInterfaceException("$javaClassFqn is abstract type. Abstract types are not supported in generator")
           }
           val inheritors = inheritors(javaPsiFacade, allScope)
-            .map { it.toValueType(hashMapOf(javaClassFqn to blobType), processAbstractTypes) }
+            .map { it.toValueType(knownTypes, processAbstractTypes) }
           ValueType.AbstractClass<Any>(javaClassFqn, superTypes, inheritors)
         }
-        else -> ValueType.FinalClass<Any>(javaClassFqn, superTypes, createProperties(this@toValueType, knownTypes))
+        else -> ValueType.FinalClass<Any>(javaClassFqn, superTypes, createProperties(this, knownTypes))
       }
     }
 
