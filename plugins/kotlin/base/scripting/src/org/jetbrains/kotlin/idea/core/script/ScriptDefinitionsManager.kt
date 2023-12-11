@@ -137,6 +137,9 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
     protected open fun getBundledScriptDefinitionContributor() =
         ScriptDefinitionContributor.find<BundledScriptDefinitionContributor>(project)
 
+    protected open fun executeUnderReadLock(block: () -> Unit) = runReadAction { block() }
+
+
     // FOR TESTS ONLY: END
 
     inner class NewLogicDelegate : LogicDelegate() {
@@ -144,7 +147,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         private val definitionsLock = ReentrantLock()
 
         // Support for insertion order is crucial because 'getSources()' is based on EP order in XML (default configuration source goes last)
-        private val definitionsBySource = ConcurrentHashMap<ScriptDefinitionsSource, List<ScriptDefinition>>()
+        private val definitionsBySource = mutableMapOf<ScriptDefinitionsSource, List<ScriptDefinition>>()
 
         @Volatile
         private var definitions: List<ScriptDefinition>? = null
@@ -189,7 +192,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
 
         // This function is aimed to fix locks acquisition order.
         // The internal block still may acquire the read lock, it just won't have an effect.
-        private fun withLocks(block: () -> Unit) = runReadAction { definitionsLock.withLock { block.invoke() } }
+        private fun withLocks(block: () -> Unit) = executeUnderReadLock { definitionsLock.withLock { block.invoke() } }
 
         private fun reloadDefinitionsInternal(sources: List<ScriptDefinitionsSource>): List<ScriptDefinition> {
             val scriptingSettings = kotlinScriptingSettingsSafe() ?: error("Kotlin script setting not found")

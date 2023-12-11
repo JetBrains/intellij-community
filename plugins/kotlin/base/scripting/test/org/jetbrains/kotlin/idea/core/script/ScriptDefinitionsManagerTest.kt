@@ -308,9 +308,10 @@ private class ScriptDefinitionsManagerUnderTest(val project: Project) : ScriptDe
 
     override fun isScratchFile(script: SourceCode): Boolean = false
 
-    override fun getBundledScriptDefinitionContributor(): BundledScriptDefinitionContributor {
-        return BundledScriptDefinitionContributor(project)
-    }
+    override fun getBundledScriptDefinitionContributor(): BundledScriptDefinitionContributor =
+        BundledScriptDefinitionContributor(project)
+
+    override fun executeUnderReadLock(block: () -> Unit) = block()
 }
 
 private open class TestSource : ScriptDefinitionsSource {
