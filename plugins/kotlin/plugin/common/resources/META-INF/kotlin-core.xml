@@ -244,6 +244,15 @@
                  defaultValue="false"
                  description="Enables dedicated Sealed class/interface templates in File-New-Kotlin File"/>
 
+    <completion.confidence
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.completion.confidence.EnableAutopopupInStringTemplate"/>
+    <completion.confidence
+            language="kotlin"
+            implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings"
+            id="kotlinSkipAutopopupInStrings"
+            order="after propertyKeys"/>
+
     <iconMapper mappingFile="KotlinIconMappings.json"/>
   </extensions>
 

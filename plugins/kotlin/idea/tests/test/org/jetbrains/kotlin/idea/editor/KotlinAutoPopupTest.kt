@@ -3,12 +3,20 @@ package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import kotlin.test.assertContains
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
+open class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
+    open val pluginKind: KotlinPluginKind = KotlinPluginKind.FE10_PLUGIN
+
+    override fun setUp() {
+        super.setUp()
+        checkKotlinPluginKind(pluginKind)
+    }
 
     fun testAfterLT() {
         myFixture.configureByText(KotlinFileType.INSTANCE, """

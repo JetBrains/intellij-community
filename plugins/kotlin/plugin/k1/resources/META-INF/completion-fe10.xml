@@ -37,15 +37,6 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinPlainTextSymbolCompletionContributor"/>
 
-    <completion.confidence
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.completion.confidence.EnableAutopopupInStringTemplate"/>
-    <completion.confidence
-            language="kotlin"
-            implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings"
-            id="kotlinSkipAutopopupInStrings"
-            order="after propertyKeys"/>
-
     <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter"/>
     <lookup.actionProvider implementation="org.jetbrains.kotlin.idea.completion.KotlinExcludeFromCompletionLookupActionProvider"/>
 
