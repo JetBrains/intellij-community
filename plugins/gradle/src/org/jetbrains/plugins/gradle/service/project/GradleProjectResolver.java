@@ -122,24 +122,19 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         throw new ExternalSystemException("Unsupported project resolver policy: " + resolverPolicy.getClass().getName());
       }
     }
+
+    // Create project preview model w/o request to gradle, there are two main reasons for the it:
+    // * Slow project open - even the simplest project info provided by gradle can be gathered too long (mostly because of new gradle distribution download and downloading build script dependencies)
+    // * Ability to open  an invalid projects (e.g. with errors in build scripts)
     if (isPreviewMode) {
-      // Create project preview model w/o request to gradle, there are two main reasons for the it:
-      // * Slow project open - even the simplest project info provided by gradle can be gathered too long (mostly because of new gradle distribution download and downloading build script dependencies)
-      // * Ability to open  an invalid projects (e.g. with errors in build scripts)
-      String projectName = new File(projectPath).getName();
-      ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectName, projectPath, projectPath);
-      DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
+      GradlePreviewCustomizer customizer = GradlePreviewCustomizer.Companion.getCustomizer(projectPath);
 
-      final String ideProjectPath = settings == null ? null : settings.getIdeProjectPath();
-      final String mainModuleFileDirectoryPath = ideProjectPath == null ? projectPath : ideProjectPath;
+      if (customizer != null) {
+        DataNode<ProjectData> previewRoot = customizer.perform(projectPath, settings);
+        if (previewRoot != null) return previewRoot;
+      }
 
-      ModuleData moduleData = new ModuleData(projectName, GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(),
-                                             projectName, mainModuleFileDirectoryPath, projectPath);
-      GradleModuleDataKt.setGradleIdentityPath(moduleData, ":");
-      projectDataNode
-        .createChild(ProjectKeys.MODULE, moduleData)
-        .createChild(ProjectKeys.CONTENT_ROOT, new ContentRootData(GradleConstants.SYSTEM_ID, projectPath));
-      return projectDataNode;
+      return DefaultGradlePreviewCustomizer.INSTANCE.perform(projectPath, settings);
     }
 
     DefaultProjectResolverContext resolverContext =
