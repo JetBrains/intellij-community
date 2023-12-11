@@ -14,7 +14,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
@@ -27,7 +26,6 @@ import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
@@ -156,8 +154,8 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
                                          dateFilterModel.getFilter(), userFilterModel.getFilter())
   }
 
+  @RequiresEdt
   override fun setFilters(collection: VcsLogFilterCollection) {
-    ThreadingAssertions.assertEventDispatchThread()
     branchFilterModel.setFilter(BranchFilters(collection.get(VcsLogFilterCollection.BRANCH_FILTER),
                                               collection.get(VcsLogFilterCollection.REVISION_FILTER),
                                               collection.get(VcsLogFilterCollection.RANGE_FILTER)))
@@ -288,7 +286,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
       get() = dataPackProvider.get()
 
     private fun createBranchFilter(values: List<String>): VcsLogBranchFilter {
-      return VcsLogFilterObject.fromBranchPatterns(values, ContainerUtil.map2Set(dataPack.refs.branches) { it.name })
+      return VcsLogFilterObject.fromBranchPatterns(values, dataPack.refs.branches.mapTo(mutableSetOf()) { it.name })
     }
 
     private fun createRevisionFilter(values: List<String>): VcsLogRevisionFilter {
@@ -380,8 +378,8 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
         return VcsLogFilterObject.fromRange(ranges)
       }
 
-      private fun getBranchFilterValues(filter: VcsLogBranchFilter): List<String?> {
-        return ArrayList(ContainerUtil.sorted<@NlsSafe String?>(filter.textPresentation))
+      private fun getBranchFilterValues(filter: VcsLogBranchFilter): List<String> {
+        return ArrayList(filter.textPresentation.sorted())
       }
 
       private fun getRevisionFilterValues(filter: VcsLogRevisionFilter): List<String> {
@@ -401,7 +399,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
         val branchFilterValues = filters.branchFilter?.let { getBranchFilterValues(it) } ?: emptyList()
         val revisionFilterValues = filters.revisionFilter?.let { getRevisionFilter2Presentation(it) } ?: emptyList()
         val rangeFilterValues = filters.rangeFilter?.let { getRangeFilterValues(filters.rangeFilter) } ?: emptyList()
-        return ContainerUtil.concat(branchFilterValues, revisionFilterValues, rangeFilterValues)
+        return branchFilterValues + revisionFilterValues + rangeFilterValues
       }
     }
   }
